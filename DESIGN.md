@@ -96,7 +96,7 @@ File extension: `.lcars.yaml`
 
 #### Stats (anything the combat engine tracks)
 
-Combat stats: `weapon_damage`, `shield_hp`, `shield_mitigation`, `hull_hp`, `armor`, `crit_chance`, `crit_damage`, `dodge_chance`, `armor_pierce`, `shield_pierce`, `accuracy`, `damage_reduction`, `isolytic_damage`, `burning_damage`, `shield_regen`
+Combat stats: `weapon_damage`, `shield_hp`, `shield_mitigation`, `hull_hp`, `armor`, `crit_chance`, `crit_damage`, `dodge_chance`, `armor_pierce`, `shield_pierce`, `accuracy`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `apex_shred`, `apex_barrier`, `burning_damage`, `shield_regen`
 
 Non-combat stats: `repair_speed`, `warp_speed`, `cargo_capacity`, `mining_rate`
 
