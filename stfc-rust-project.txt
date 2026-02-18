@@ -1,0 +1,229 @@
+stfc-optimizer/
+├── Cargo.toml
+├── README.md
+├── data/
+│   ├── officers.json          # Officer database (importable from Spocks.club)
+│   ├── ships.json             # Ship stat sheets
+│   ├── hostiles.json          # Hostile stat sheets
+│   └── synergies.json         # Manual synergy tags + learned synergy cache
+│
+├── src/
+│   ├── main.rs                # Entry: CLI arg parsing, starts server or runs CLI batch
+│   │
+│   ├── data/
+│   │   ├── mod.rs
+│   │   ├── officer.rs         # Officer struct, ability enums, slot constraints
+│   │   ├── ship.rs            # Ship stats
+│   │   ├── hostile.rs         # Hostile stats + special mechanics
+│   │   ├── synergy.rs         # Synergy definitions, co-occurrence matrix
+│   │   └── import.rs          # Spocks.club export parser, JSON/CSV loader
+│   │
+│   ├── combat/
+│   │   ├── mod.rs
+│   │   ├── engine.rs          # Core combat loop (single fight simulation)
+│   │   ├── buffs.rs           # Buff/debuff system, ability resolution, timing
+│   │   ├── abilities.rs       # Each ability type as a trait impl
+│   │   └── rng.rs             # Fast PRNG (xorshift128+, SplitMix64)
+│   │
+│   ├── optimizer/
+│   │   ├── mod.rs
+│   │   ├── monte_carlo.rs     # Monte Carlo runner (N sims → stats)
+│   │   ├── crew_generator.rs  # Exhaustive & synergy-prioritized crew enumeration
+│   │   ├── tiered.rs          # Two-pass: cheap filter → expensive confirmation
+│   │   ├── genetic.rs         # Genetic algorithm optimizer (for large spaces)
+│   │   ├── analytical.rs      # Closed-form expected damage calculator
+│   │   └── ranking.rs         # Score aggregation, multi-metric ranking
+│   │
+│   ├── parallel/
+│   │   ├── mod.rs
+│   │   ├── pool.rs            # Rayon-based work-stealing thread pool
+│   │   ├── batch.rs           # Batch distribution: crews → worker threads
+│   │   └── progress.rs        # Progress tracking, ETA, throughput metrics
+│   │
+│   └── server/
+│       ├── mod.rs
+│       ├── api.rs             # REST + WebSocket endpoints
+│       ├── routes.rs          # Route definitions
+│       └── static/            # Embedded frontend (built React/Svelte app)
+│           └── index.html
+│
+├── frontend/                  # Separate frontend project
+│   ├── package.json
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── components/
+│   │   │   ├── CrewBuilder.tsx     # Drag-and-drop crew assembly
+│   │   │   ├── SimResults.tsx      # Results table + charts
+│   │   │   ├── FightReplay.tsx     # Round-by-round visual replay
+│   │   │   ├── SynergyGraph.tsx    # Visual graph of officer synergies
+│   │   │   └── ImportWizard.tsx    # Spocks.club data import UI
+│   │   └── lib/
+│   │       ├── api.ts             # API client + WebSocket handler
+│   │       └── types.ts           # Shared types mirroring Rust structs
+│   └── dist/                      # Built output → embedded in Rust binary
+│
+└── tests/
+    ├── combat_tests.rs        # Validate combat engine vs known fight outcomes
+    ├── optimizer_tests.rs     # Regression tests for ranking stability
+    └── fixtures/
+        └── recorded_fights/   # Real fight data scraped for validation
+            ├── fight_001.json
+            └── ...
+
+───────────────────────────────────────────────────────────────
+KEY DESIGN DECISIONS
+───────────────────────────────────────────────────────────────
+
+## Combat Engine (combat/engine.rs)
+
+The hot loop. Every decision here affects throughput by millions of sims.
+
+- Pure function: simulate(ship, hostile, crew, seed) → FightResult
+- Zero allocations in the hot path (pre-allocated round buffer)
+- No trait objects or dynamic dispatch in the inner loop
+- All officer abilities resolved to a flat BuffSet before combat starts
+- Only abilities with per-round variance (Nero double shot, etc.)
+  are evaluated inside the loop; static buffs are pre-computed
+- SplitMix64 PRNG (~0.8ns per call, passes BigCrush)
+
+Expected throughput: 2-5M sims/sec/core on modern x86
+With 16 cores: 30-80M sims/sec
+
+## Crew Generator (optimizer/crew_generator.rs)
+
+Enumeration strategy with synergy priority:
+
+```
+pub struct CrewGenerator {
+    officers: Vec<Officer>,
+    synergies: SynergyIndex,
+    constraints: SlotConstraints,
+}
+
+impl CrewGenerator {
+    /// Yields crews in priority order:
+    /// 1. Synergy-tagged combos (manual + learned)
+    /// 2. High-tier officers in novel combinations  
+    /// 3. Exhaustive remainder (if enabled)
+    pub fn iter_prioritized(&self) -> impl Iterator<Item = Crew> {
+        self.synergy_combos()
+            .chain(self.high_tier_combos())
+            .chain(self.exhaustive_combos())
+    }
+}
+```
+
+## Synergy System (data/synergy.rs)
+
+```
+pub struct SynergyTag {
+    officers: Vec<OfficerId>,       // 2+ officers
+    mechanism: String,              // "shield_pierce_stack", "r1_burst"
+    expected_boost: f32,            // estimated score multiplier
+    source: SynergySource,         // Manual | Learned { sample_size, confidence }
+}
+
+pub struct SynergyIndex {
+    manual: Vec<SynergyTag>,
+    learned: CoOccurrenceMatrix,    // built from past simulation runs
+}
+
+impl SynergyIndex {
+    /// After a batch run, update learned synergies:
+    /// find officer pairs that co-occur in top-N results
+    /// disproportionately often vs. random baseline
+    pub fn learn_from_results(&mut self, results: &[RankedCrew]) { ... }
+}
+```
+
+## Tiered Simulation (optimizer/tiered.rs)
+
+```
+Phase 1: "Scouting"
+  - 100-500 sims per crew
+  - All synergy combos + random sample of others
+  - Keep top 5% by R1 kill rate
+  
+Phase 2: "Confirmation"  
+  - 5,000-50,000 sims per surviving crew
+  - Full statistical output (confidence intervals, percentiles)
+  - Final ranking with error bars
+
+Phase 3: "Deep dive" (optional, user-triggered)
+  - 100,000+ sims on top 10
+  - Per-round damage distribution histograms
+  - Sensitivity analysis (what if officer X is +1 tier?)
+```
+
+## Parallel Execution (parallel/batch.rs)
+
+```
+- Rayon's par_iter over crew combinations
+- Each thread owns its own PRNG (seeded from crew index)
+- Lock-free result collection via crossbeam channel
+- Progress updates pushed to frontend via WebSocket every 100ms
+- Backpressure: if frontend disconnects, simulations continue,
+  results are buffered to disk
+
+Scaling estimate for 280 officers:
+  ~800K 3-slot combos × 500 scouting sims = 400M sims
+  At 50M sims/sec (16 cores) = ~8 seconds for Phase 1
+  Top 5% = 40K combos × 10K sims = 400M sims  
+  Phase 2 = ~8 seconds
+  Total: ~16 seconds for a full sweep. Very usable.
+```
+
+## API Endpoints (server/api.rs)
+
+```
+GET  /api/officers              # list all officers (with filters)
+POST /api/officers/import       # upload Spocks.club export
+GET  /api/ships                 # list ships
+GET  /api/hostiles              # list hostiles
+
+POST /api/simulate              # run single crew simulation
+  → { ship, hostile, crew, num_sims }
+  ← { stats, sample_log }
+
+POST /api/optimize              # find best crews  
+  → { ship, hostile, constraints, strategy, num_sims }
+  ← WebSocket stream: { progress, partial_results, final_ranking }
+
+GET  /api/synergies             # get synergy graph data
+POST /api/synergies/learn       # trigger learning from past results
+```
+
+## Data Import (data/import.rs)
+
+Spocks.club export parsing pipeline:
+
+```
+1. Accept JSON or CSV upload via /api/officers/import
+2. Parse & validate: map officer names to canonical IDs
+3. Extract: tier, level, ability ranks → compute effective values
+4. Diff against existing database (flag new/changed officers)
+5. Store to data/officers.json (or SQLite if it grows)
+6. Rebuild synergy index with updated roster
+
+Future: if community mod exposes an API endpoint,
+add a "sync" button that pulls directly.
+```
+
+───────────────────────────────────────────────────────────────
+CARGO.TOML DEPENDENCIES
+───────────────────────────────────────────────────────────────
+
+[dependencies]
+rayon = "1.10"            # Parallel iterators
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+axum = "0.7"              # HTTP server
+axum-extra = "0.9"        # WebSocket support
+tower-http = "0.5"        # Static file serving, CORS
+crossbeam = "0.8"         # Lock-free channels
+rand = "0.8"              # PRNG traits
+csv = "1.3"               # CSV parsing for imports
+clap = "4"                # CLI argument parsing
+tracing = "0.1"           # Structured logging
+rust-embed = "8"          # Embed frontend dist/ in binary
