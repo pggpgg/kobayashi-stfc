@@ -1,9 +1,3 @@
-mod combat;
-mod data;
-mod optimizer;
-mod parallel;
-mod server;
-
 use std::env;
 
 #[derive(Debug, Clone, Copy)]
