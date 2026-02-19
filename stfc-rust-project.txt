@@ -16,7 +16,7 @@ stfc-optimizer/
 │   │   ├── ship.rs            # Ship stats
 │   │   ├── hostile.rs         # Hostile stats + special mechanics
 │   │   ├── synergy.rs         # Synergy definitions, co-occurrence matrix
-│   │   └── roster.rs          # Manual roster loader and validation helpers
+│   │   └── import.rs          # User-owned roster import parser and validation helpers
 │   │
 │   ├── combat/
 │   │   ├── mod.rs
@@ -56,7 +56,7 @@ stfc-optimizer/
 │   │   │   ├── SimResults.tsx      # Results table + charts
 │   │   │   ├── FightReplay.tsx     # Round-by-round visual replay
 │   │   │   ├── SynergyGraph.tsx    # Visual graph of officer synergies
-│   │   │   └── RosterMaintenanceGuide.tsx # Manual roster maintenance guidance UI
+│   │   │   └── RosterImportPanel.tsx # Import player-owned roster (tier/level)
 │   │   └── lib/
 │   │       ├── api.ts             # API client + WebSocket handler
 │   │       └── types.ts           # Shared types mirroring Rust structs
@@ -177,6 +177,7 @@ Scaling estimate for 280 officers:
 
 ```
 GET  /api/officers              # list all officers (with filters)
+POST /api/officers/import       # upload user-owned roster export
 GET  /api/ships                 # list ships
 GET  /api/hostiles              # list hostiles
 
@@ -192,20 +193,19 @@ GET  /api/synergies             # get synergy graph data
 POST /api/synergies/learn       # trigger learning from past results
 ```
 
-## Data Maintenance (data/roster.rs)
+## Data Model Split: Catalog + User Import (data/import.rs)
 
-Manual roster maintenance workflow:
+Global catalog maintenance + user roster import workflow:
 
 ```
-1. Update LCARS/YAML officer records in version control
+1. Maintainers update LCARS/YAML officer catalog in version control
 2. Parse & validate: map officer names to canonical IDs
 3. Extract: tier, level, ability ranks → compute effective values
 4. Diff against existing database (flag new/changed officers)
 5. Store to data/officers.json (or SQLite if it grows)
 6. Rebuild synergy index with updated roster
 
-Future: if community mod exposes an API endpoint,
-add a "sync" button that pulls directly.
+User-owned roster input can come from manual entry or imports (e.g., Spocks.club export).
 ```
 
 ───────────────────────────────────────────────────────────────

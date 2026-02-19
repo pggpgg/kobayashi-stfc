@@ -82,7 +82,7 @@ cargo build --release
 
 ### Data maintenance policy
 
-Officer roster and metadata updates are maintained manually and shipped infrequently in repository updates. There is currently no supported automated import workflow.
+The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports).
 
 ---
 
@@ -241,7 +241,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [ ] Crew generator (exhaustive + filtered)
 - [ ] Parallel batch execution
 - [ ] Web UI on localhost
-- [ ] Documented manual officer data refresh workflow
+- [ ] User-owned roster import workflow (e.g., Spocks.club export)
 - [ ] Synergy learning from simulation results
 - [ ] Genetic algorithm optimizer
 - [ ] Chain grinding simulation (multi-fight with carry-over)

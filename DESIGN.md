@@ -18,7 +18,7 @@ Officers are described using **LCARS** (Language for Combat Ability Resolution &
 6. [Optimizer Strategies](#6-optimizer-strategies)
 7. [Synergy System](#7-synergy-system)
 8. [Parallelism & Performance](#8-parallelism--performance)
-9. [Data Maintenance & Roster Updates](#9-data-maintenance--roster-updates)
+9. [Data Maintenance & User Roster Import](#9-data-maintenance--user-roster-import)
 10. [Frontend & UI](#10-frontend--ui)
 11. [Project Structure](#11-project-structure)
 12. [Dependencies](#12-dependencies)
@@ -642,25 +642,31 @@ SplitMix64: ~0.8ns per call, passes BigCrush, deterministic, trivially seedable 
 
 ---
 
-## 9. Data Maintenance & Roster Updates
+## 9. Data Maintenance & User Roster Import
 
-### 9.1 Scope Status
+### 9.1 Maintainer-Curated Global Officer Catalog
 
-Automated roster import, third-party account sync, and upload APIs are out of scope for the current implementation and are explicitly deferred.
+The canonical officer catalog (full inventory of available officers and their tier-by-tier skill progression) is maintained by project maintainers. Updates are applied manually when new officers are added to STFC.
 
-### 9.2 Manual Data-Maintenance Process
+### 9.2 User-Owned Roster Import
 
-Officer data is maintained manually in version-controlled LCARS YAML files:
+User-specific roster data (which officers a player owns, with current tier/level) is a separate dataset and should be importable to personalize simulation output.
+
+Accepted source formats can include exported data from community tools such as Spocks.club.
+
+### 9.3 Maintainer Data-Maintenance Process
+
+Global officer catalog updates are maintained manually in version-controlled LCARS YAML files:
 
 ```
 1. Edit/update `data/officers/*.lcars.yaml` entries.
 2. Validate schema and mechanics with `kobayashi validate`.
 3. Run simulation/regression checks to confirm no unintended balance drift.
 4. Commit reviewed changes in small, auditable batches.
-5. Publish updates infrequently as curated data refreshes.
+5. Publish curated catalog updates when new officers are released.
 ```
 
-### 9.3 Community Contribution
+### 9.4 Community Contribution
 
 Since officers are YAML files following the LCARS spec, a GitHub repository can accept pull requests for new or corrected officer definitions. Schema validation in CI catches errors automatically. This is how tu_optimize's card data was maintained.
 
@@ -684,7 +690,7 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 | **SimResults** | Results table + charts, sortable by multiple metrics |
 | **FightReplay** | Round-by-round visual replay of a sample fight |
 | **SynergyGraph** | Network visualization of officer synergies (nodes = officers, edges = synergy strength) |
-| **RosterMaintenanceGuide** | Documentation-driven workflow for manual officer data updates |
+| **RosterImportPanel** | Import player-owned officer list (tier/level) for personalization |
 | **PlayerProfile** | Quick mode bonus entry + advanced mode source editor |
 | **OptimizePanel** | Configuration for optimization runs (strategy, sim count, constraints) with live progress |
 
@@ -692,6 +698,7 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 
 ```
 GET  /api/officers                  # list all (with filters)
+POST /api/officers/import           # upload user-owned roster (e.g., Spocks.club export)
 GET  /api/ships                     # list ships
 GET  /api/hostiles                  # list hostiles
 POST /api/simulate                  # single crew simulation
@@ -737,7 +744,7 @@ kobayashi/
 │   │   ├── hostile.rs         # Hostile stats + special mechanics
 │   │   ├── synergy.rs         # Synergy definitions, co-occurrence matrix
 │   │   ├── profile.rs         # Player profile, bonus resolution
-│   │   └── roster.rs          # Manual roster loaders, validation helpers
+│   │   └── import.rs          # User roster import parser + validation helpers
 │   │
 │   ├── lcars/
 │   │   ├── mod.rs
@@ -784,7 +791,7 @@ kobayashi/
 │   │   │   ├── SimResults.tsx
 │   │   │   ├── FightReplay.tsx
 │   │   │   ├── SynergyGraph.tsx
-│   │   │   ├── RosterMaintenanceGuide.tsx
+│   │   │   ├── RosterImportPanel.tsx
 │   │   │   ├── PlayerProfile.tsx
 │   │   │   └── OptimizePanel.tsx
 │   │   └── lib/
@@ -844,4 +851,4 @@ jsonschema = "0.18"         # LCARS schema validation (optional)
 - **Auto-updater**: Check for new LCARS definitions on GitHub and pull updates.
 - **GPU acceleration**: Port combat engine to CUDA/WebGPU for billions of sims. Probably overkill but fun.
 - **Mobile companion**: PWA version that talks to the desktop KOBAYASHI instance on the local network.
-- **Automated roster sync (deferred)**: If a stable and trusted API emerges, revisit whether manual curation should remain the long-term policy.
+- **Direct account sync (deferred)**: If a stable and trusted API emerges, allow one-click refresh of user-owned roster data while keeping the global catalog maintainer-curated.
