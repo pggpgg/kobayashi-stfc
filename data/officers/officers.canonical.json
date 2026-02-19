@@ -66,7 +66,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.219901626E9"
     },
@@ -136,7 +136,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.29898163E8"
     },
@@ -206,7 +206,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "7.43931698E8"
     },
@@ -284,7 +284,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.100903263E9"
     },
@@ -354,7 +354,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.423547423E9"
     },
@@ -432,7 +432,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.4588229E9"
     },
@@ -502,7 +502,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.511887954E9"
     },
@@ -572,7 +572,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.39936167E8"
     },
@@ -638,7 +638,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.82462507E8"
     },
@@ -704,7 +704,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.835829612E9"
     },
@@ -772,7 +772,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.47523516E9"
     },
@@ -846,7 +846,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.8768657E7"
     },
@@ -914,7 +914,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.577339063E9"
     },
@@ -980,7 +980,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "5.66062509E8"
     },
@@ -1053,7 +1053,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.437818828E9"
     },
@@ -1122,7 +1122,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.518604778E9"
     },
@@ -1192,7 +1192,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "7.25106789E8"
     },
@@ -1262,7 +1262,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.178926216E9"
     },
@@ -1332,7 +1332,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.77664289E8"
     },
@@ -1402,7 +1402,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.258596709E9"
     },
@@ -1477,7 +1477,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.01708334E8"
     },
@@ -1547,7 +1547,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.923643019E9"
     },
@@ -1623,7 +1623,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.203492497E9"
     },
@@ -1693,7 +1693,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.486433247E9"
     },
@@ -1765,7 +1765,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.08323068E9"
     },
@@ -1831,7 +1831,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.525867544E9"
     },
@@ -1897,7 +1897,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.853520303E9"
     },
@@ -1963,7 +1963,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.150311506E9"
     },
@@ -2029,7 +2029,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.066988596E9"
     },
@@ -2098,7 +2098,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.94631754E8"
     },
@@ -2171,7 +2171,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.958876935E9"
     },
@@ -2240,7 +2240,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.722250154E9"
     },
@@ -2311,7 +2311,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.116563882E9"
     },
@@ -2382,7 +2382,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.019230068E9"
     },
@@ -2452,7 +2452,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.838190976E9"
     },
@@ -2524,7 +2524,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.730335425E9"
     },
@@ -2595,7 +2595,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.80486983E8"
     },
@@ -2663,7 +2663,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.250418815E9"
     },
@@ -2737,7 +2737,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.765885322E9"
     },
@@ -2809,7 +2809,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.40622131E8"
     },
@@ -2879,7 +2879,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "5.13311144E8"
     },
@@ -2949,7 +2949,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.865023367E9"
     },
@@ -3017,7 +3017,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.739192827E9"
     },
@@ -3091,7 +3091,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.613379706E9"
     },
@@ -3163,7 +3163,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.662189922E9"
     },
@@ -3234,7 +3234,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.963484044E9"
     },
@@ -3304,7 +3304,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.683164967E9"
     },
@@ -3375,7 +3375,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.070197892E9"
     },
@@ -3443,7 +3443,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.961190554E9"
     },
@@ -3520,7 +3520,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.339276935E9"
     },
@@ -3595,7 +3595,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.412597742E9"
     },
@@ -3668,7 +3668,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.02277539E9"
     },
@@ -3742,7 +3742,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.013113875E9"
     },
@@ -3810,7 +3810,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.816036121E9"
     },
@@ -3876,7 +3876,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.446409392E9"
     },
@@ -3944,7 +3944,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.131760724E9"
     },
@@ -4010,7 +4010,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.542999283E9"
     },
@@ -4083,7 +4083,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.449957978E9"
     },
@@ -4156,7 +4156,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.397371699E9"
     },
@@ -4225,7 +4225,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.852124874E9"
     },
@@ -4291,7 +4291,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.449938138E9"
     },
@@ -4366,7 +4366,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "5.0741564E8"
     },
@@ -4436,7 +4436,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.49329475E8"
     },
@@ -4509,7 +4509,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.549505702E9"
     },
@@ -4575,7 +4575,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.191841428E9"
     },
@@ -4641,7 +4641,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.583932904E9"
     },
@@ -4707,7 +4707,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.490516652E9"
     },
@@ -4783,7 +4783,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.862563009E9"
     },
@@ -4852,7 +4852,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "7.76602621E8"
     },
@@ -4927,7 +4927,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.681781473E9"
     },
@@ -4996,7 +4996,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.204519406E9"
     },
@@ -5064,7 +5064,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.580157615E9"
     },
@@ -5134,7 +5134,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.442833808E9"
     },
@@ -5200,7 +5200,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.09354959E8"
     },
@@ -5270,7 +5270,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.865735742E9"
     },
@@ -5338,7 +5338,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.083140166E9"
     },
@@ -5404,7 +5404,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.465017198E9"
     },
@@ -5480,7 +5480,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.039950897E9"
     },
@@ -5548,7 +5548,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.392608691E9"
     },
@@ -5621,7 +5621,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.310878702E9"
     },
@@ -5689,7 +5689,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.314108979E9"
     },
@@ -5762,7 +5762,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.553398304E9"
     },
@@ -5834,7 +5834,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.458469333E9"
     },
@@ -5904,7 +5904,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "6.77303054E8"
     },
@@ -5972,7 +5972,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.15673632E9"
     },
@@ -6042,7 +6042,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.628828668E9"
     },
@@ -6112,7 +6112,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.498836305E9"
     },
@@ -6182,7 +6182,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.039659244E9"
     },
@@ -6255,7 +6255,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.29076494E9"
     },
@@ -6332,7 +6332,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.86489522E9"
     },
@@ -6405,7 +6405,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.835531386E9"
     },
@@ -6482,7 +6482,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.592998124E9"
     },
@@ -6548,7 +6548,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.622062016E9"
     },
@@ -6626,7 +6626,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.852482387E9"
     },
@@ -6696,7 +6696,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.916661181E9"
     },
@@ -6764,7 +6764,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "6.68528267E8"
     },
@@ -6835,7 +6835,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.479870516E9"
     },
@@ -6903,7 +6903,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.427486959E9"
     },
@@ -6975,7 +6975,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.264304828E9"
     },
@@ -7041,7 +7041,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.528103772E9"
     },
@@ -7110,7 +7110,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.679776436E9"
     },
@@ -7180,7 +7180,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.62001435E9"
     },
@@ -7250,7 +7250,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.432668775E9"
     },
@@ -7316,7 +7316,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.608562191E9"
     },
@@ -7386,7 +7386,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.343910766E9"
     },
@@ -7458,7 +7458,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.602389738E9"
     },
@@ -7528,7 +7528,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.492633912E9"
     },
@@ -7596,7 +7596,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.880112208E9"
     },
@@ -7665,7 +7665,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.822661458E9"
     },
@@ -7739,7 +7739,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.39027623E8"
     },
@@ -7807,7 +7807,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.88947581E8"
     },
@@ -7873,7 +7873,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.601201375E9"
     },
@@ -7945,7 +7945,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "6.80147223E8"
     },
@@ -8016,7 +8016,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.50991574E8"
     },
@@ -8086,7 +8086,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.847497836E9"
     },
@@ -8154,7 +8154,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.465002315E9"
     },
@@ -8222,7 +8222,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.983456684E9"
     },
@@ -8290,7 +8290,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.13104893E8"
     },
@@ -8358,7 +8358,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.079282844E9"
     },
@@ -8433,7 +8433,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.729881938E9"
     },
@@ -8503,7 +8503,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.07877748E8"
     },
@@ -8574,7 +8574,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.64381082E9"
     },
@@ -8640,7 +8640,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.114234402E9"
     },
@@ -8710,7 +8710,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.333021829E9"
     },
@@ -8779,7 +8779,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.110037371E9"
     },
@@ -8848,7 +8848,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.63974291E9"
     },
@@ -8918,7 +8918,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.775384983E9"
     },
@@ -8984,7 +8984,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.221819893E9"
     },
@@ -9050,7 +9050,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.155462804E9"
     },
@@ -9122,7 +9122,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.353192478E9"
     },
@@ -9190,7 +9190,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.127234629E9"
     },
@@ -9267,7 +9267,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.341819707E9"
     },
@@ -9333,7 +9333,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.617168639E9"
     },
@@ -9401,7 +9401,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.184439996E9"
     },
@@ -9475,7 +9475,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.73853704E8"
     },
@@ -9541,7 +9541,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.628322562E9"
     },
@@ -9609,7 +9609,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.999633781E9"
     },
@@ -9681,7 +9681,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.871265794E9"
     },
@@ -9749,7 +9749,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "5.31187684E8"
     },
@@ -9819,7 +9819,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.35759625E8"
     },
@@ -9893,7 +9893,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.01426684E8"
     },
@@ -9965,7 +9965,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.2356472E9"
     },
@@ -10037,7 +10037,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.131537917E9"
     },
@@ -10111,7 +10111,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.598147546E9"
     },
@@ -10190,7 +10190,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.294120304E9"
     },
@@ -10267,7 +10267,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.3766267E7"
     },
@@ -10335,7 +10335,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.132174205E9"
     },
@@ -10405,7 +10405,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.990993357E9"
     },
@@ -10476,7 +10476,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "6.34330627E8"
     },
@@ -10571,7 +10571,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.402639187E9"
     },
@@ -10641,7 +10641,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.019272402E9"
     },
@@ -10716,7 +10716,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.97650232E8"
     },
@@ -10784,7 +10784,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "6.56972203E8"
     },
@@ -10856,7 +10856,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.785409233E9"
     },
@@ -10922,7 +10922,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.485791413E9"
     },
@@ -10988,7 +10988,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.84159747E9"
     },
@@ -11057,7 +11057,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.968109489E9"
     },
@@ -11123,7 +11123,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "6.31590783E8"
     },
@@ -11189,7 +11189,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.217575459E9"
     },
@@ -11257,7 +11257,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.859906553E9"
     },
@@ -11330,7 +11330,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.878219859E9"
     },
@@ -11402,7 +11402,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.028718336E9"
     },
@@ -11468,7 +11468,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.89647182E8"
     },
@@ -11534,7 +11534,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.245467973E9"
     },
@@ -11600,7 +11600,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.534264929E9"
     },
@@ -11666,7 +11666,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "8.68427019E8"
     },
@@ -11735,7 +11735,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.219055924E9"
     },
@@ -11801,7 +11801,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.3410162E7"
     },
@@ -11872,7 +11872,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.030703558E9"
     },
@@ -11942,7 +11942,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.038078185E9"
     },
@@ -12016,7 +12016,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.84894313E9"
     },
@@ -12087,7 +12087,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.109650513E9"
     },
@@ -12160,7 +12160,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "8.02343108E8"
     },
@@ -12230,7 +12230,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.82221633E8"
     },
@@ -12301,7 +12301,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.83632482E9"
     },
@@ -12372,7 +12372,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.484257385E9"
     },
@@ -12440,7 +12440,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.29940464E8"
     },
@@ -12514,7 +12514,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.860865109E9"
     },
@@ -12586,7 +12586,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.594947012E9"
     },
@@ -12652,7 +12652,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.334517642E9"
     },
@@ -12727,7 +12727,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.814065186E9"
     },
@@ -12802,7 +12802,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.409510538E9"
     },
@@ -12872,7 +12872,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.523093667E9"
     },
@@ -12942,7 +12942,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.349602017E9"
     },
@@ -13008,7 +13008,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.330179266E9"
     },
@@ -13082,7 +13082,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.248750548E9"
     },
@@ -13159,7 +13159,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.12289551E8"
     },
@@ -13231,7 +13231,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.76044746E8"
     },
@@ -13306,7 +13306,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.923667463E9"
     },
@@ -13376,7 +13376,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.7699744E7"
     },
@@ -13446,7 +13446,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "5.6060748E7"
     },
@@ -13512,7 +13512,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.155244352E9"
     },
@@ -13582,7 +13582,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.36948052E8"
     },
@@ -13652,7 +13652,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.651130337E9"
     },
@@ -13728,7 +13728,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.45898358E9"
     },
@@ -13797,7 +13797,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.304441016E9"
     },
@@ -13871,7 +13871,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.037089464E9"
     },
@@ -13943,7 +13943,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.61972881E8"
     },
@@ -14021,7 +14021,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.151676212E9"
     },
@@ -14090,7 +14090,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.567136252E9"
     },
@@ -14160,7 +14160,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.221659017E9"
     },
@@ -14228,7 +14228,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.62760002E9"
     },
@@ -14298,7 +14298,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "5.98126845E8"
     },
@@ -14372,7 +14372,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.742595916E9"
     },
@@ -14444,7 +14444,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.294474373E9"
     },
@@ -14514,7 +14514,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.543722471E9"
     },
@@ -14586,7 +14586,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.532505261E9"
     },
@@ -14659,7 +14659,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "5.97303582E8"
     },
@@ -14733,7 +14733,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.689277174E9"
     },
@@ -14806,7 +14806,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.936395808E9"
     },
@@ -14878,7 +14878,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.241990218E9"
     },
@@ -14950,7 +14950,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.426126747E9"
     },
@@ -15022,7 +15022,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.536491613E9"
     },
@@ -15096,7 +15096,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.702893021E9"
     },
@@ -15169,7 +15169,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.339117238E9"
     },
@@ -15243,7 +15243,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.7787926E7"
     },
@@ -15312,7 +15312,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.72479314E9"
     },
@@ -15386,7 +15386,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "7.83581005E8"
     },
@@ -15458,7 +15458,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.778731701E9"
     },
@@ -15526,7 +15526,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "7.66809588E8"
     },
@@ -15599,7 +15599,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.787886893E9"
     },
@@ -15665,7 +15665,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "7.55079845E8"
     },
@@ -15738,7 +15738,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.479942533E9"
     },
@@ -15810,7 +15810,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.354305961E9"
     },
@@ -15882,7 +15882,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.512227954E9"
     },
@@ -15958,7 +15958,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.173095604E9"
     },
@@ -16027,7 +16027,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.520801863E9"
     },
@@ -16098,7 +16098,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.455040265E9"
     },
@@ -16168,7 +16168,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.11443354E9"
     },
@@ -16234,7 +16234,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.556052341E9"
     },
@@ -16309,7 +16309,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.61377304E8"
     },
@@ -16379,7 +16379,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.148782205E9"
     },
@@ -16445,7 +16445,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.70544309E8"
     },
@@ -16517,7 +16517,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.421610149E9"
     },
@@ -16587,7 +16587,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.29857188E8"
     },
@@ -16653,7 +16653,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.395454844E9"
     },
@@ -16722,7 +16722,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.800794103E9"
     },
@@ -16792,7 +16792,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.106264505E9"
     },
@@ -16865,7 +16865,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.28154093E8"
     },
@@ -16939,7 +16939,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.983933897E9"
     },
@@ -17011,7 +17011,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.087036948E9"
     },
@@ -17085,7 +17085,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.849424588E9"
     },
@@ -17155,7 +17155,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.1508965E8"
     },
@@ -17227,7 +17227,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.382562951E9"
     },
@@ -17299,7 +17299,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.07451388E8"
     },
@@ -17369,7 +17369,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.23029416E8"
     },
@@ -17437,7 +17437,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.579242146E9"
     },
@@ -17508,7 +17508,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.757127113E9"
     },
@@ -17577,7 +17577,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.670351312E9"
     },
@@ -17649,7 +17649,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.75212688E9"
     },
@@ -17722,7 +17722,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.903302017E9"
     },
@@ -17794,7 +17794,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.120397875E9"
     },
@@ -17860,7 +17860,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.18103052E8"
     },
@@ -17932,7 +17932,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.769449499E9"
     },
@@ -17998,7 +17998,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.695272429E9"
     },
@@ -18070,7 +18070,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.394864658E9"
     },
@@ -18139,7 +18139,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.281026482E9"
     },
@@ -18207,7 +18207,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.235857051E9"
     },
@@ -18275,7 +18275,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.959514562E9"
     },
@@ -18350,7 +18350,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.033443887E9"
     },
@@ -18425,7 +18425,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.686255925E9"
     },
@@ -18497,7 +18497,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.517597941E9"
     },
@@ -18565,7 +18565,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.116707401E9"
     },
@@ -18638,7 +18638,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.925563045E9"
     },
@@ -18709,7 +18709,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.137482318E9"
     },
@@ -18782,7 +18782,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "8.07303933E8"
     },
@@ -18857,7 +18857,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "8.97691678E8"
     },
@@ -18931,7 +18931,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.35228856E9"
     },
@@ -19007,7 +19007,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.738777089E9"
     },
@@ -19080,7 +19080,7 @@
       "slot": "unknown",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.242236216E9"
     },
@@ -19148,7 +19148,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "2.593842933E9"
     },
@@ -19218,7 +19218,7 @@
       "slot": "science",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "9.8548875E7"
     },
@@ -19286,7 +19286,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.001921707E9"
     },
@@ -19357,7 +19357,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.381802332E9"
     },
@@ -19427,7 +19427,7 @@
       "slot": "n/a",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "4.07568868E8"
     },
@@ -19504,7 +19504,7 @@
       "slot": "engineering",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "3.594463469E9"
     },
@@ -19572,7 +19572,7 @@
       "slot": "command",
       "source": {
         "sheet": "RawOfficers",
-        "workbook": "Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx"
+        "workbook": "manual_curation"
       },
       "source_officer_id": "1.143746577E9"
     }
