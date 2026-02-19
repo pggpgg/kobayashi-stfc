@@ -8,10 +8,13 @@ from .mitigation import (
     mitigation,
 )
 
+from .validation import validate_mechanics
+
 __all__ = [
     "AttackerStats",
     "DefenderStats",
     "ShipType",
     "component_mitigation",
     "mitigation",
+    "validate_mechanics",
 ]
