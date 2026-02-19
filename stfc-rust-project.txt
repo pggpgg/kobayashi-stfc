@@ -2,7 +2,7 @@ stfc-optimizer/
 ├── Cargo.toml
 ├── README.md
 ├── data/
-│   ├── officers.json          # Officer database (importable from Spocks.club)
+│   ├── officers.json          # Officer database (manually curated in repository updates)
 │   ├── ships.json             # Ship stat sheets
 │   ├── hostiles.json          # Hostile stat sheets
 │   └── synergies.json         # Manual synergy tags + learned synergy cache
@@ -16,7 +16,7 @@ stfc-optimizer/
 │   │   ├── ship.rs            # Ship stats
 │   │   ├── hostile.rs         # Hostile stats + special mechanics
 │   │   ├── synergy.rs         # Synergy definitions, co-occurrence matrix
-│   │   └── import.rs          # Spocks.club export parser, JSON/CSV loader
+│   │   └── roster.rs          # Manual roster loader and validation helpers
 │   │
 │   ├── combat/
 │   │   ├── mod.rs
@@ -56,7 +56,7 @@ stfc-optimizer/
 │   │   │   ├── SimResults.tsx      # Results table + charts
 │   │   │   ├── FightReplay.tsx     # Round-by-round visual replay
 │   │   │   ├── SynergyGraph.tsx    # Visual graph of officer synergies
-│   │   │   └── ImportWizard.tsx    # Spocks.club data import UI
+│   │   │   └── RosterMaintenanceGuide.tsx # Manual roster maintenance guidance UI
 │   │   └── lib/
 │   │       ├── api.ts             # API client + WebSocket handler
 │   │       └── types.ts           # Shared types mirroring Rust structs
@@ -177,7 +177,6 @@ Scaling estimate for 280 officers:
 
 ```
 GET  /api/officers              # list all officers (with filters)
-POST /api/officers/import       # upload Spocks.club export
 GET  /api/ships                 # list ships
 GET  /api/hostiles              # list hostiles
 
@@ -193,12 +192,12 @@ GET  /api/synergies             # get synergy graph data
 POST /api/synergies/learn       # trigger learning from past results
 ```
 
-## Data Import (data/import.rs)
+## Data Maintenance (data/roster.rs)
 
-Spocks.club export parsing pipeline:
+Manual roster maintenance workflow:
 
 ```
-1. Accept JSON or CSV upload via /api/officers/import
+1. Update LCARS/YAML officer records in version control
 2. Parse & validate: map officer names to canonical IDs
 3. Extract: tier, level, ability ranks → compute effective values
 4. Diff against existing database (flag new/changed officers)
@@ -223,7 +222,7 @@ axum-extra = "0.9"        # WebSocket support
 tower-http = "0.5"        # Static file serving, CORS
 crossbeam = "0.8"         # Lock-free channels
 rand = "0.8"              # PRNG traits
-csv = "1.3"               # CSV parsing for imports
+csv = "1.3"               # Optional CSV parsing for curated data preparation
 clap = "4"                # CLI argument parsing
 tracing = "0.1"           # Structured logging
 rust-embed = "8"          # Embed frontend dist/ in binary
