@@ -1,0 +1,31 @@
+{
+  "seed": 1337,
+  "rounds": 2,
+  "expected_total_damage": 210.0,
+  "expected_event_order": [
+    "round_start",
+    "attack_roll",
+    "mitigation_calc",
+    "pierce_calc",
+    "crit_resolution",
+    "proc_triggers",
+    "damage_application",
+    "end_of_round_effects",
+    "round_start",
+    "attack_roll",
+    "mitigation_calc",
+    "pierce_calc",
+    "crit_resolution",
+    "proc_triggers",
+    "damage_application",
+    "end_of_round_effects"
+  ],
+  "numeric_expectations": {
+    "1.attack_roll.roll": 0.617753,
+    "1.pierce_calc.effective_mitigation": 0.8,
+    "1.damage_application.final_damage": 80.0,
+    "2.crit_resolution.multiplier": 1.5,
+    "2.damage_application.final_damage": 120.0,
+    "2.end_of_round_effects.running_total": 210.0
+  }
+}
