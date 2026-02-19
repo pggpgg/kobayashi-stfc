@@ -32,7 +32,6 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 - **Synergy discovery** — manually tag known synergies, and let KOBAYASHI discover new ones from simulation data
 - **Multithreaded** — embarrassingly parallel workload distributed across all CPU cores via Rayon
 - **Single binary** — download, run, open browser. No Docker, no Node, no dependencies
-- **Spocks.club import** — bring in your officer roster with tiers and levels
 
 ---
 
@@ -79,9 +78,11 @@ cargo build --release
 # - info: ignored non-combat tags (loot/mining/cargo/etc.)
 # Includes per-officer simulation_fidelity so ranking output can flag partial mechanics
 
-# Import your roster from Spocks.club
-./target/release/kobayashi import --file my_export.json
 ```
+
+### Data maintenance policy
+
+The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports).
 
 ---
 
@@ -240,7 +241,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [ ] Crew generator (exhaustive + filtered)
 - [ ] Parallel batch execution
 - [ ] Web UI on localhost
-- [ ] Spocks.club import pipeline
+- [ ] User-owned roster import workflow (e.g., Spocks.club export)
 - [ ] Synergy learning from simulation results
 - [ ] Genetic algorithm optimizer
 - [ ] Chain grinding simulation (multi-fight with carry-over)
@@ -253,7 +254,6 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 ## Acknowledgments
 
 - Inspired by [tu_optimize](https://github.com/zachanassian/tu_optimize), the Monte Carlo deck optimizer for Tyrant Unleashed
-- [Spocks.club](https://spocks.club) for officer data exports
 - The STFC community for reverse-engineering combat formulas
 - The name references the [Kobayashi Maru](https://memory-alpha.fandom.com/wiki/Kobayashi_Maru_scenario) — because the only way to win is to change the conditions of the test
 
