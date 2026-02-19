@@ -1,0 +1,56 @@
+[
+  {
+    "id": "iso-officer",
+    "name": "Iso Specialist",
+    "faction": "augment",
+    "group": "Test",
+    "rarity": "rare",
+    "slot": "science",
+    "source_officer_id": "1",
+    "source": {"sheet": "test"},
+    "abilities": [
+      {
+        "ability_id": "a1",
+        "modifier": "isolytic_damage",
+        "operation": "add",
+        "conditions": ["on_attack"]
+      }
+    ]
+  },
+  {
+    "id": "burn-miner",
+    "name": "Burn Miner",
+    "faction": "romulan",
+    "group": "Test",
+    "rarity": "epic",
+    "slot": "command",
+    "source_officer_id": "2",
+    "source": {"sheet": "test"},
+    "abilities": [
+      {
+        "ability_id": "a2",
+        "modifier": "burning_damage",
+        "operation": "multiply",
+        "conditions": ["mining_boost"]
+      }
+    ]
+  },
+  {
+    "id": "bad-data",
+    "name": "Bad Data",
+    "faction": "federation",
+    "group": "Test",
+    "rarity": "common",
+    "slot": "engineering",
+    "source_officer_id": "3",
+    "source": {"sheet": "test"},
+    "abilities": [
+      {
+        "ability_id": "a3",
+        "modifier": "",
+        "operation": "",
+        "conditions": ["mystery_condition"]
+      }
+    ]
+  }
+]
