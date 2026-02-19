@@ -73,6 +73,11 @@ cargo build --release
 ```bash
 # Validate LCARS officer definitions
 ./target/release/kobayashi validate --path data/officers
+# Emits severity levels:
+# - error: malformed effect/condition data
+# - warning: recognized mechanic exists but simulation support is partial/planned
+# - info: ignored non-combat tags (loot/mining/cargo/etc.)
+# Includes per-officer simulation_fidelity so ranking output can flag partial mechanics
 
 # Import your roster from Spocks.club
 ./target/release/kobayashi import --file my_export.json

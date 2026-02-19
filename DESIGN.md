@@ -102,6 +102,23 @@ Non-combat stats: `repair_speed`, `warp_speed`, `cargo_capacity`, `mining_rate`
 
 The stat list is extensible. The engine ignores stats it doesn't recognize (with a warning).
 
+#### Supported mechanics matrix
+
+The simulator tracks implementation status per combat mechanic. LCARS validation maps each effect/condition to this matrix so users can see whether a ranking is exact or partial.
+
+| Mechanic | LCARS cues (effects/conditions/stats) | Status |
+|---|---|---|
+| Mitigation | `shield_mitigation`, `damage_reduction` | **implemented** |
+| Piercing | `shield_pierce`, `armor_pierce` | **implemented** |
+| Armor | `armor` | **implemented** |
+| Critical | `crit_chance`, `crit_damage`, `on_critical` | **implemented** |
+| Extra attack | `extra_attack`, double-shot style triggers | **implemented** |
+| Burn | `burning_damage`, burn/ignite conditions | **partial** |
+| Regeneration | `shield_regen`, repair/heal effects | **partial** |
+| Isolytic | `isolytic_damage`, `isolytic_defense` | **planned** |
+| Apex | `apex_shred`, `apex_barrier` | **planned** |
+| Non-combat tags | mining/loot/cargo/warp effects | **planned (ignored in combat sim)** |
+
 #### Targets
 
 | Target | Description |
