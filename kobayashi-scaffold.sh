@@ -62,6 +62,8 @@ cat > src/main.rs << 'EOF'
 use clap::{Parser, Subcommand};
 use tracing::info;
 
+use optimizer::tiered::PreferredCrewInput;
+
 mod data;
 mod lcars;
 mod combat;
@@ -95,6 +97,14 @@ enum Commands {
         sims: u32,
         #[arg(short, long, default_value = "10")]
         top: usize,
+        /// Preferred crews to simulate first.
+        /// Format: captain_id,bridge_id,below_id[:optional_label]
+        #[arg(
+            long = "preferred-crew",
+            value_name = "CAPTAIN,BRIDGE,BELOW[:LABEL]",
+            action = clap::ArgAction::Append
+        )]
+        preferred_crews: Vec<String>,
     },
     /// Simulate a specific crew
     Simulate {
@@ -136,8 +146,26 @@ async fn main() -> anyhow::Result<()> {
             info!("⚔ KOBAYASHI starting on http://localhost:{}", port);
             server::run(port).await?;
         }
-        Commands::Optimize { ship, hostile, sims, top } => {
+        Commands::Optimize { ship, hostile, sims, top, preferred_crews } => {
             info!("Running optimization: {} vs {} ({} sims, top {})", ship, hostile, sims, top);
+            let preferred_inputs = preferred_crews
+                .iter()
+                .filter_map(|value| match PreferredCrewInput::parse(value) {
+                    Ok(input) => Some(input),
+                    Err(err) => {
+                        eprintln!("Skipping invalid --preferred-crew '{}': {}", value, err);
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            if !preferred_inputs.is_empty() {
+                println!(
+                    "Queued {} preferred crew(s) for preliminary simulation.",
+                    preferred_inputs.len()
+                );
+            }
+
             // TODO: load data, run optimizer, print results
             println!("Not yet implemented — coming soon!");
         }
@@ -188,6 +216,26 @@ pub struct Officer {
     pub captain_ability: Option<Ability>,
     pub bridge_ability: Option<Ability>,
     pub below_decks_ability: Option<Ability>,
+    #[serde(default)]
+    pub allowed_slots: Vec<CrewSlot>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum CrewSlot {
+    Captain,
+    Bridge,
+    Below,
+}
+
+impl Officer {
+    pub fn supports_slot(&self, slot: &CrewSlot) -> bool {
+        if self.allowed_slots.is_empty() {
+            // Backward compatible default for older datasets.
+            return true;
+        }
+        self.allowed_slots.contains(slot)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -890,6 +938,7 @@ use crate::lcars::resolver::BuffSet;
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
     pub win_rate: f64,
+    pub win_rate_ci95: (f64, f64),
     pub avg_rounds: f64,
     pub avg_hull_pct: f64,
     pub r1_kill_rate: f64,
@@ -926,8 +975,16 @@ pub fn run(
     let n = num_sims as f64;
     let w = wins as f64;
 
+    let win_rate = w / n;
+    let stderr = (win_rate * (1.0 - win_rate) / n).sqrt();
+    let ci95 = (
+        (win_rate - 1.96 * stderr).clamp(0.0, 1.0),
+        (win_rate + 1.96 * stderr).clamp(0.0, 1.0),
+    );
+
     SimulationResult {
-        win_rate: w / n,
+        win_rate,
+        win_rate_ci95: ci95,
         avg_rounds: if wins > 0 { total_rounds as f64 / w } else { f64::INFINITY },
         avg_hull_pct: if wins > 0 { total_hull_pct / w } else { 0.0 },
         r1_kill_rate: r1_kills as f64 / n,
@@ -942,8 +999,178 @@ cat > src/optimizer/crew_generator.rs << 'EOF'
 EOF
 
 cat > src/optimizer/tiered.rs << 'EOF'
-// Two-phase optimization: scouting pass → confirmation pass
-// TODO: implement tiered simulation runner
+use std::collections::{HashMap, HashSet};
+
+use crate::data::officer::{CrewSlot, Officer};
+use crate::optimizer::ranking::ResultBadge;
+
+#[derive(Debug, Clone)]
+pub struct PreferredCrewInput {
+    pub captain_id: String,
+    pub bridge_id: String,
+    pub below_id: String,
+    pub label: Option<String>,
+}
+
+impl PreferredCrewInput {
+    pub fn parse(raw: &str) -> Result<Self, String> {
+        let (triplet, label) = raw.split_once(':').map_or((raw, None), |(lhs, rhs)| (lhs, Some(rhs.to_string())));
+        let parts = triplet.split(',').map(|s| s.trim().to_string()).collect::<Vec<_>>();
+        if parts.len() != 3 || parts.iter().any(|s| s.is_empty()) {
+            return Err("expected format captain_id,bridge_id,below_id[:optional_label]".to_string());
+        }
+
+        Ok(Self {
+            captain_id: parts[0].clone(),
+            bridge_id: parts[1].clone(),
+            below_id: parts[2].clone(),
+            label,
+        })
+    }
+
+    pub fn officer_ids(&self) -> [&str; 3] {
+        [&self.captain_id, &self.bridge_id, &self.below_id]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CrewValidationError {
+    pub label: Option<String>,
+    pub message: String,
+}
+
+pub fn validate_preferred_crews(
+    preferred: &[PreferredCrewInput],
+    roster: &[Officer],
+) -> Result<(), Vec<CrewValidationError>> {
+    let index = roster.iter().map(|o| (o.id.as_str(), o)).collect::<HashMap<_, _>>();
+    let mut errors = Vec::new();
+
+    for crew in preferred {
+        let ids = crew.officer_ids();
+        let unique = ids.iter().copied().collect::<HashSet<_>>();
+        if unique.len() != 3 {
+            errors.push(CrewValidationError {
+                label: crew.label.clone(),
+                message: format!("crew {:?} uses duplicate officers", ids),
+            });
+            continue;
+        }
+
+        for id in ids {
+            if !index.contains_key(id) {
+                errors.push(CrewValidationError {
+                    label: crew.label.clone(),
+                    message: format!("officer '{id}' is missing from the roster"),
+                });
+            }
+        }
+
+        if let Some(captain) = index.get(crew.captain_id.as_str()) {
+            if !captain.supports_slot(&CrewSlot::Captain) {
+                errors.push(CrewValidationError {
+                    label: crew.label.clone(),
+                    message: format!("officer '{}' cannot be placed in captain slot", captain.id),
+                });
+            }
+        }
+        if let Some(bridge) = index.get(crew.bridge_id.as_str()) {
+            if !bridge.supports_slot(&CrewSlot::Bridge) {
+                errors.push(CrewValidationError {
+                    label: crew.label.clone(),
+                    message: format!("officer '{}' cannot be placed in bridge slot", bridge.id),
+                });
+            }
+        }
+        if let Some(below) = index.get(crew.below_id.as_str()) {
+            if !below.supports_slot(&CrewSlot::Below) {
+                errors.push(CrewValidationError {
+                    label: crew.label.clone(),
+                    message: format!("officer '{}' cannot be placed in below slot", below.id),
+                });
+            }
+        }
+    }
+
+    if errors.is_empty() { Ok(()) } else { Err(errors) }
+}
+
+#[derive(Debug, Clone)]
+pub struct OptimizerPlan {
+    pub preferred_first: Vec<PreferredCrewInput>,
+    pub discovered_pool_size: usize,
+    pub preliminary_limit: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct PlannedRun {
+    pub captain_id: String,
+    pub bridge_id: String,
+    pub below_id: String,
+    pub label: Option<String>,
+    pub badge: ResultBadge,
+}
+
+pub fn plan_runs(plan: &OptimizerPlan, discovered: Vec<[String; 3]>) -> Vec<PlannedRun> {
+    let mut runs = Vec::new();
+    let mut seen = HashSet::new();
+
+    for crew in &plan.preferred_first {
+        let key = format!("{}|{}|{}", crew.captain_id, crew.bridge_id, crew.below_id);
+        seen.insert(key);
+        runs.push(PlannedRun {
+            captain_id: crew.captain_id.clone(),
+            bridge_id: crew.bridge_id.clone(),
+            below_id: crew.below_id.clone(),
+            label: crew.label.clone(),
+            badge: ResultBadge::Preferred,
+        });
+    }
+
+    for discovered_crew in discovered.into_iter().take(plan.discovered_pool_size) {
+        let key = format!("{}|{}|{}", discovered_crew[0], discovered_crew[1], discovered_crew[2]);
+        let tie = seen.contains(&key);
+        runs.push(PlannedRun {
+            captain_id: discovered_crew[0].clone(),
+            bridge_id: discovered_crew[1].clone(),
+            below_id: discovered_crew[2].clone(),
+            label: None,
+            badge: if tie { ResultBadge::Tie } else { ResultBadge::Discovered },
+        });
+        seen.insert(key);
+    }
+
+    runs
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_preferred_triplet_with_label() {
+        let parsed = PreferredCrewInput::parse("khan,nero,tlaan:my_alpha").unwrap();
+        assert_eq!(parsed.captain_id, "khan");
+        assert_eq!(parsed.label.as_deref(), Some("my_alpha"));
+    }
+
+    #[test]
+    fn tie_badge_for_discovered_match() {
+        let plan = OptimizerPlan {
+            preferred_first: vec![PreferredCrewInput {
+                captain_id: "khan".to_string(),
+                bridge_id: "nero".to_string(),
+                below_id: "tlaan".to_string(),
+                label: Some("alpha".to_string()),
+            }],
+            discovered_pool_size: 1,
+            preliminary_limit: 1,
+        };
+        let runs = plan_runs(&plan, vec![["khan".to_string(), "nero".to_string(), "tlaan".to_string()]]);
+        assert!(matches!(runs[0].badge, ResultBadge::Preferred));
+        assert!(matches!(runs[1].badge, ResultBadge::Tie));
+    }
+}
 EOF
 
 cat > src/optimizer/genetic.rs << 'EOF'
@@ -960,6 +1187,13 @@ EOF
 cat > src/optimizer/ranking.rs << 'EOF'
 use crate::optimizer::monte_carlo::SimulationResult;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum ResultBadge {
+    Preferred,
+    Discovered,
+    Tie,
+}
+
 #[derive(Debug, Clone)]
 pub struct RankedCrew {
     pub captain_id: String,
@@ -967,6 +1201,8 @@ pub struct RankedCrew {
     pub below_id: String,
     pub result: SimulationResult,
     pub rank: usize,
+    pub badge: ResultBadge,
+    pub label: Option<String>,
 }
 
 /// Rank crews by primary metric, with tiebreakers.
@@ -1084,8 +1320,57 @@ async fn health() -> &'static str {
 EOF
 
 cat > src/server/api.rs << 'EOF'
-// REST + WebSocket API endpoints
-// TODO: implement /api/officers, /api/simulate, /api/optimize, etc.
+use serde::{Deserialize, Serialize};
+
+use crate::optimizer::ranking::ResultBadge;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PreferredCrewRequest {
+    pub captain_id: String,
+    pub bridge_id: String,
+    pub below_id: String,
+    #[serde(default)]
+    pub label: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OptimizeRequest {
+    pub ship: String,
+    pub hostile: String,
+    pub num_sims: u32,
+    #[serde(default)]
+    pub preferred_crews: Vec<PreferredCrewRequest>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CrewMetrics {
+    pub win_rate: f64,
+    pub win_rate_ci95: [f64; 2],
+    pub r1_kill_rate: f64,
+    pub hull_remaining: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RankedCrewResponse {
+    pub captain_id: String,
+    pub bridge_id: String,
+    pub below_id: String,
+    pub badge: ResultBadge,
+    pub label: Option<String>,
+    pub metrics: CrewMetrics,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OptimizeResponse {
+    pub preliminary: Vec<RankedCrewResponse>,
+    pub final_ranking: Vec<RankedCrewResponse>,
+}
+
+// TODO: implement /api/officers, /api/simulate, /api/optimize handlers.
+// Optimize handlers should:
+// 1) validate preferred crews
+// 2) emit preliminary results from preferred crews first
+// 3) merge with discovered crews and return badged final ranking
 EOF
 
 # ── Sample LCARS officer file ────────────────────────────────
