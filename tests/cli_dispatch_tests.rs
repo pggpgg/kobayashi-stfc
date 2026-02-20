@@ -31,17 +31,44 @@ fn simulate_command_dispatches_and_emits_json() {
 }
 
 #[test]
-fn optimize_command_dispatches_and_emits_json() {
-    let output = Command::new(bin())
+fn optimize_command_dispatches_and_emits_deterministic_json() {
+    let output_a = Command::new(bin())
+        .args(["optimize", "enterprise", "swarm", "20"])
+        .output()
+        .expect("optimize should run");
+    let output_b = Command::new(bin())
         .args(["optimize", "enterprise", "swarm", "20"])
         .output()
         .expect("optimize should run");
 
-    assert_eq!(output.status.code(), Some(0));
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(output_a.status.code(), Some(0));
+    assert_eq!(output_b.status.code(), Some(0));
+
+    let stdout_a = String::from_utf8_lossy(&output_a.stdout);
+    let stdout_b = String::from_utf8_lossy(&output_b.stdout);
+    assert_eq!(stdout_a, stdout_b);
+
     let payload: serde_json::Value =
-        serde_json::from_str(&stdout).expect("optimize should emit json");
-    assert!(payload.is_array());
+        serde_json::from_str(&stdout_a).expect("optimize should emit json");
+    let recommendations = payload
+        .as_array()
+        .expect("optimize payload should be an array");
+    assert!(!recommendations.is_empty());
+
+    let first = &recommendations[0];
+    assert!(first["win_rate"].as_f64().unwrap_or(0.0) > 0.0);
+
+    let first_hull = first["avg_hull_remaining"].as_f64().unwrap_or(0.0);
+    let saw_hull_delta = recommendations.iter().any(|recommendation| {
+        recommendation["avg_hull_remaining"]
+            .as_f64()
+            .map(|value| (value - first_hull).abs() > 1e-9)
+            .unwrap_or(false)
+    });
+    assert!(
+        saw_hull_delta,
+        "recommendations should reflect combat metric differences"
+    );
 }
 
 #[test]

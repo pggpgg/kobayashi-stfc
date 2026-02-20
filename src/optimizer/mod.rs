@@ -24,7 +24,7 @@ pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewR
         scenario.ship,
         scenario.hostile,
         &candidates,
-        scenario.simulation_count,
+        scenario.simulation_count.max(1),
         scenario.seed,
     );
     rank_results(simulation_results)

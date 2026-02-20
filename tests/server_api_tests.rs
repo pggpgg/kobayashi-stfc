@@ -40,9 +40,16 @@ fn optimize_endpoint_returns_ranked_recommendations() {
     assert!(first["avg_hull_remaining"].as_f64().is_some());
 
     let mut prior_score: Option<f64> = None;
+    let mut saw_non_trivial_metric = false;
     for recommendation in recommendations {
         let score = recommendation["win_rate"].as_f64().unwrap_or(0.0) * 0.8
             + recommendation["avg_hull_remaining"].as_f64().unwrap_or(0.0) * 0.2;
+        let win_rate = recommendation["win_rate"].as_f64().unwrap_or(0.0);
+        let avg_hull_remaining = recommendation["avg_hull_remaining"].as_f64().unwrap_or(0.0);
+        if (0.0..1.0).contains(&win_rate) || (0.0..1.0).contains(&avg_hull_remaining) {
+            saw_non_trivial_metric = true;
+        }
+
         if let Some(previous) = prior_score {
             assert!(
                 previous >= score,
@@ -51,6 +58,29 @@ fn optimize_endpoint_returns_ranked_recommendations() {
         }
         prior_score = Some(score);
     }
+
+    assert!(
+        saw_non_trivial_metric,
+        "combat-backed metrics should include non-trivial values"
+    );
+}
+
+#[test]
+fn optimize_endpoint_changes_with_seed() {
+    let response_a = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":7}"#,
+    );
+    let response_b = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":8}"#,
+    );
+
+    assert_eq!(response_a.status_code, 200);
+    assert_eq!(response_b.status_code, 200);
+    assert_ne!(response_a.body, response_b.body);
 }
 
 #[test]
