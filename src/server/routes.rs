@@ -89,7 +89,7 @@ fn index_html() -> String {
   </div>
 
   <div class="card">
-    <strong>Optimize (stub)</strong>
+    <strong>Optimize</strong>
     <label for="ship">Ship</label>
     <input id="ship" value="Saladin" />
     <label for="hostile">Hostile</label>
