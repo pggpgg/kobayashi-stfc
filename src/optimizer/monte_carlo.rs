@@ -12,6 +12,7 @@ pub fn run_monte_carlo(
     hostile: &str,
     candidates: &[CrewCandidate],
     iterations: usize,
+    seed: u64,
 ) -> Vec<SimulationResult> {
     candidates
         .iter()
@@ -23,6 +24,7 @@ pub fn run_monte_carlo(
                 &candidate.captain,
                 &candidate.bridge,
                 &candidate.below_decks,
+                seed,
             );
             let iter_factor = ((iterations.max(1) as f64).ln() / 10.0).min(0.15);
 
@@ -41,11 +43,18 @@ pub fn run_monte_carlo(
         .collect()
 }
 
-fn stable_seed(parts: &str, hostile: &str, captain: &str, bridge: &str, below_decks: &str) -> u64 {
-    [parts, hostile, captain, bridge, below_decks]
+fn stable_seed(
+    ship: &str,
+    hostile: &str,
+    captain: &str,
+    bridge: &str,
+    below_decks: &str,
+    seed: u64,
+) -> u64 {
+    [ship, hostile, captain, bridge, below_decks]
         .into_iter()
         .flat_map(str::bytes)
-        .fold(0_u64, |acc, b| {
+        .fold(seed, |acc, b| {
             acc.wrapping_mul(37).wrapping_add(u64::from(b))
         })
 }
