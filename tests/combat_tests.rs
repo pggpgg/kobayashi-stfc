@@ -1,7 +1,7 @@
 use kobayashi::combat::{
-    component_mitigation, mitigation, serialize_events_json, simulate_combat, AttackerStats,
-    CombatEvent, Combatant, DefenderStats, EventSource, ShipType, SimulationConfig, TraceCollector,
-    TraceMode, EPSILON,
+    aggregate_contributions, component_mitigation, mitigation, serialize_events_json,
+    simulate_combat, AttackerStats, CombatEvent, Combatant, DefenderStats, EventSource, ShipType,
+    SimulationConfig, StackContribution, StatStacking, TraceCollector, TraceMode, EPSILON,
 };
 use serde_json::{Map, Value};
 
@@ -178,4 +178,91 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     assert_eq!(first.events[1].event_type, "attack_roll");
     assert_eq!(first.events[2].event_type, "mitigation_calc");
     assert_eq!(first.events[3].event_type, "pierce_calc");
+}
+
+#[test]
+fn stacking_additive_only_stacks() {
+    let totals = aggregate_contributions(vec![
+        StackContribution::base("attack", 100.0),
+        StackContribution::base("attack", 50.0),
+        StackContribution::base("attack", 25.0),
+    ]);
+
+    let attack = totals
+        .get("attack")
+        .expect("attack totals should be present");
+    approx_eq(attack.base, 175.0, 1e-12);
+    approx_eq(attack.modifier, 0.0, 1e-12);
+    approx_eq(attack.flat, 0.0, 1e-12);
+    approx_eq(attack.compose(), 175.0, 1e-12);
+}
+
+#[test]
+fn stacking_modifier_only_stacks() {
+    let totals = aggregate_contributions(vec![
+        StackContribution::base("damage", 200.0),
+        StackContribution::modifier("damage", 0.10),
+        StackContribution::modifier("damage", 0.25),
+    ]);
+
+    let damage = totals
+        .get("damage")
+        .expect("damage totals should be present");
+    approx_eq(damage.modifier, 0.35, 1e-12);
+    approx_eq(damage.compose(), 270.0, 1e-12);
+}
+
+#[test]
+fn stacking_mixed_category_stacks() {
+    let totals = aggregate_contributions(vec![
+        StackContribution::base("crit", 100.0),
+        StackContribution::modifier("crit", 0.40),
+        StackContribution::flat("crit", 35.0),
+    ]);
+
+    let crit = totals.get("crit").expect("crit totals should be present");
+    approx_eq(crit.compose(), 175.0, 1e-12);
+}
+
+#[test]
+fn stacking_is_order_independent_within_categories() {
+    let contributions = vec![
+        StackContribution::base("attack", 100.0),
+        StackContribution::base("attack", 50.0),
+        StackContribution::modifier("attack", 0.30),
+        StackContribution::modifier("attack", 0.20),
+        StackContribution::flat("attack", 10.0),
+        StackContribution::flat("attack", 5.0),
+    ];
+
+    let ordered = aggregate_contributions(contributions.clone());
+    let mut reversed_contribs = contributions;
+    reversed_contribs.reverse();
+    let reversed = aggregate_contributions(reversed_contribs);
+
+    let ordered_totals = ordered
+        .get("attack")
+        .expect("ordered attack totals should exist");
+    let reversed_totals = reversed
+        .get("attack")
+        .expect("reversed attack totals should exist");
+
+    approx_eq(ordered_totals.base, reversed_totals.base, 1e-12);
+    approx_eq(ordered_totals.modifier, reversed_totals.modifier, 1e-12);
+    approx_eq(ordered_totals.flat, reversed_totals.flat, 1e-12);
+    approx_eq(ordered_totals.compose(), reversed_totals.compose(), 1e-12);
+
+    let mut stacking = StatStacking::new();
+    stacking.add_many(vec![
+        StackContribution::base("shield", 75.0),
+        StackContribution::modifier("shield", 0.5),
+        StackContribution::flat("shield", 8.0),
+    ]);
+    approx_eq(
+        stacking
+            .composed_for(&"shield")
+            .expect("shield value should exist"),
+        120.5,
+        1e-12,
+    );
 }
