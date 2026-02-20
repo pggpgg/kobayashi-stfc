@@ -1,3 +1,4 @@
+use crate::optimizer::optimize_crew;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize)]
@@ -44,33 +45,29 @@ pub fn optimize_payload(body: &str) -> Result<String, serde_json::Error> {
     let request: OptimizeRequest = serde_json::from_str(body)?;
     let sims = request.sims.unwrap_or(5000);
 
+    let ranked_results = optimize_crew(&request.ship, &request.hostile, sims);
+
     let response = OptimizeResponse {
         status: "ok",
-        engine: "optimizer_stub",
+        engine: "optimizer_v1",
         scenario: ScenarioSummary {
             ship: request.ship,
             hostile: request.hostile,
             sims,
         },
-        recommendations: vec![
-            CrewRecommendation {
-                captain: "Khan".to_string(),
-                bridge: "Nero".to_string(),
-                below_decks: "T'Laan".to_string(),
-                win_rate: 0.873,
-                avg_hull_remaining: 0.412,
-            },
-            CrewRecommendation {
-                captain: "Pike".to_string(),
-                bridge: "Moreau".to_string(),
-                below_decks: "Chen".to_string(),
-                win_rate: 0.831,
-                avg_hull_remaining: 0.368,
-            },
-        ],
+        recommendations: ranked_results
+            .into_iter()
+            .map(|result| CrewRecommendation {
+                captain: result.captain,
+                bridge: result.bridge,
+                below_decks: result.below_decks,
+                win_rate: result.win_rate,
+                avg_hull_remaining: result.avg_hull_remaining,
+            })
+            .collect(),
         notes: vec![
-            "This endpoint is infrastructure-first and currently returns stubbed recommendations.",
-            "Next step: wire into the Rust optimizer pipeline.",
+            "Recommendations are generated from candidate generation, simulation, and ranking passes.",
+            "Results are deterministic for the same ship, hostile, and simulation count.",
         ],
     };
 
