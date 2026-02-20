@@ -1,11 +1,12 @@
 use crate::optimizer::monte_carlo::SimulationResult;
+use serde::Serialize;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct RankingScore {
     pub value: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RankedCrewResult {
     pub captain: String,
     pub bridge: String,
