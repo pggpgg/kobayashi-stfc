@@ -1,7 +1,9 @@
 use kobayashi::combat::{
     aggregate_contributions, component_mitigation, mitigation, serialize_events_json,
-    simulate_combat, AttackerStats, CombatEvent, Combatant, DefenderStats, EventSource, ShipType,
-    SimulationConfig, StackContribution, StatStacking, TraceCollector, TraceMode, EPSILON,
+    simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, CombatEvent, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, ShipType,
+    SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode,
+    EPSILON,
 };
 use serde_json::{Map, Value};
 
@@ -168,8 +170,9 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         trace_mode: TraceMode::Events,
     };
 
-    let first = simulate_combat(&attacker, &defender, config);
-    let second = simulate_combat(&attacker, &defender, config);
+    let crew = CrewConfiguration::default();
+    let first = simulate_combat(&attacker, &defender, config, &crew);
+    let second = simulate_combat(&attacker, &defender, config, &crew);
 
     assert_eq!(first.events, second.events);
     assert_eq!(first.total_damage, second.total_damage);
@@ -264,5 +267,141 @@ fn stacking_is_order_independent_within_categories() {
             .expect("shield value should exist"),
         120.5,
         1e-12,
+    );
+}
+
+#[test]
+fn crew_slot_gating_matrix_controls_activation() {
+    let captain_ability = Ability {
+        name: "captain_strike".to_string(),
+        class: AbilityClass::CaptainManeuver,
+        timing: TimingWindow::AttackPhase,
+        boostable: true,
+        effect: AbilityEffect::AttackMultiplier(0.2),
+    };
+    let bridge_ability = Ability {
+        name: "bridge_targeting".to_string(),
+        class: AbilityClass::BridgeAbility,
+        timing: TimingWindow::AttackPhase,
+        boostable: true,
+        effect: AbilityEffect::PierceBonus(0.1),
+    };
+
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.15,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 0.0,
+        mitigation: 0.5,
+        pierce: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 9,
+        trace_mode: TraceMode::Events,
+    };
+
+    let valid_crew = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: captain_ability.clone(),
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: bridge_ability.clone(),
+                boosted: false,
+            },
+        ],
+    };
+    let wrong_seat_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::BelowDeck,
+            ability: captain_ability,
+            boosted: false,
+        }],
+    };
+
+    let valid = simulate_combat(&attacker, &defender, config, &valid_crew);
+    let wrong = simulate_combat(&attacker, &defender, config, &wrong_seat_crew);
+
+    assert!(valid.total_damage > wrong.total_damage);
+    assert_eq!(
+        valid
+            .events
+            .iter()
+            .filter(|event| event.event_type == "ability_activation")
+            .count(),
+        2
+    );
+    assert!(wrong
+        .events
+        .iter()
+        .all(|event| event.event_type != "ability_activation"));
+}
+
+#[test]
+fn boosted_non_boostable_abilities_are_filtered_out() {
+    let non_boostable = Ability {
+        name: "steady_hands".to_string(),
+        class: AbilityClass::BridgeAbility,
+        timing: TimingWindow::AttackPhase,
+        boostable: false,
+        effect: AbilityEffect::AttackMultiplier(0.5),
+    };
+
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.1,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 0.0,
+        mitigation: 0.2,
+        pierce: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 11,
+        trace_mode: TraceMode::Events,
+    };
+
+    let boosted = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: non_boostable.clone(),
+            boosted: true,
+        }],
+    };
+    let unboosted = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: non_boostable,
+            boosted: false,
+        }],
+    };
+
+    let boosted_result = simulate_combat(&attacker, &defender, config, &boosted);
+    let unboosted_result = simulate_combat(&attacker, &defender, config, &unboosted);
+
+    assert!(unboosted_result.total_damage > boosted_result.total_damage);
+    assert!(boosted_result
+        .events
+        .iter()
+        .all(|event| event.event_type != "ability_activation"));
+    assert_eq!(
+        unboosted_result
+            .events
+            .iter()
+            .filter(|event| event.event_type == "ability_activation")
+            .count(),
+        1
     );
 }

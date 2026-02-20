@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use crate::combat::abilities::{active_effects_for_timing, AbilityEffect, CrewConfiguration, TimingWindow};
 use crate::combat::rng::Rng;
 
 /// Combat mitigation parity implementation migrated from
@@ -185,12 +186,16 @@ pub fn simulate_combat(
     attacker: &Combatant,
     defender: &Combatant,
     config: SimulationConfig,
+    attacker_crew: &CrewConfiguration,
 ) -> SimulationResult {
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let mut total_damage = 0.0;
 
     for round_index in 1..=config.rounds {
+        let round_start_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
+        let attack_phase_effects = active_effects_for_timing(attacker_crew, TimingWindow::AttackPhase);
+
         trace.record(CombatEvent {
             event_type: "round_start".to_string(),
             round_index,
@@ -202,8 +207,30 @@ pub fn simulate_combat(
             values: Map::from_iter([
                 ("attacker".to_string(), Value::String(attacker.id.clone())),
                 ("defender".to_string(), Value::String(defender.id.clone())),
+                (
+                    "active_round_start_effects".to_string(),
+                    Value::from(round_start_effects.len() as u64),
+                ),
             ]),
         });
+
+        for effect in &attack_phase_effects {
+            trace.record(CombatEvent {
+                event_type: "ability_activation".to_string(),
+                round_index,
+                phase: "attack".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                values: Map::from_iter([("boosted".to_string(), Value::Bool(effect.boosted))]),
+            });
+        }
+
+        let (attack_multiplier, pierce_bonus) = aggregate_attack_modifiers(&attack_phase_effects);
+        let effective_attack = attacker.attack * attack_multiplier;
+        let effective_pierce = attacker.pierce + pierce_bonus;
 
         let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         trace.record(CombatEvent {
@@ -217,6 +244,10 @@ pub fn simulate_combat(
             values: Map::from_iter([
                 ("roll".to_string(), Value::from(round_f64(roll))),
                 ("base_attack".to_string(), Value::from(attacker.attack)),
+                (
+                    "effective_attack".to_string(),
+                    Value::from(round_f64(effective_attack)),
+                ),
             ]),
         });
 
@@ -238,7 +269,7 @@ pub fn simulate_combat(
             ]),
         });
 
-        let effective_mitigation = (mitigation_multiplier + attacker.pierce).max(0.0);
+        let effective_mitigation = (mitigation_multiplier + effective_pierce).max(0.0);
         trace.record(CombatEvent {
             event_type: "pierce_calc".to_string(),
             round_index,
@@ -249,7 +280,7 @@ pub fn simulate_combat(
                 ..EventSource::default()
             },
             values: Map::from_iter([
-                ("pierce".to_string(), Value::from(attacker.pierce)),
+                ("pierce".to_string(), Value::from(effective_pierce)),
                 (
                     "effective_mitigation".to_string(),
                     Value::from(round_f64(effective_mitigation)),
@@ -257,13 +288,31 @@ pub fn simulate_combat(
             ]),
         });
 
-        total_damage += attacker.attack * effective_mitigation;
+        total_damage += effective_attack * effective_mitigation;
     }
 
     SimulationResult {
         total_damage: round_f64(total_damage),
         events: trace.events(),
     }
+}
+
+fn aggregate_attack_modifiers(effects: &[crate::combat::abilities::ActiveAbilityEffect]) -> (f64, f64) {
+    let mut attack_multiplier = 1.0;
+    let mut pierce_bonus = 0.0;
+
+    for effect in effects {
+        match effect.effect {
+            AbilityEffect::AttackMultiplier(modifier) => {
+                attack_multiplier *= 1.0 + modifier;
+            }
+            AbilityEffect::PierceBonus(value) => {
+                pierce_bonus += value;
+            }
+        }
+    }
+
+    (attack_multiplier.max(0.0), pierce_bonus)
 }
 
 pub fn simulate_once() -> FightResult {
