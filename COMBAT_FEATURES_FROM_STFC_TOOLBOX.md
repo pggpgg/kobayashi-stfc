@@ -23,6 +23,11 @@ Source pages reviewed:
 2. **Separate raw combat pipeline from CSV combat log parser**
    - Add parser/import model for raw combat logs as a first-class input format.
    - Preserve subround-level events and intermediate stat state snapshots to support mechanics reverse-engineering.
+   - Encode canonical round/sub-round ordering from observed client event identifiers:
+     - `START_ROUND` → `HULL_REPAIR_START/END` (once per round, before first sub-round)
+     - Per sub-round: officer/ship abilities apply, then forbidden tech + chaos tech buffs, then attacks for that sub-round weapon index
+     - `END_ROUND`: burning tick (1% initial hull), temporary-effect cleanup, then next round (up to 100 rounds)
+   - Persist full ordered event stream (including repeated per-ship applications) even when the UI collapses duplicate ability/FT log lines.
 
 3. **Add Monte Carlo combat simulator mode**
    - Build simulation runner taking combat snapshot input + iteration count.
