@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
-    active_effects_for_timing, AbilityEffect, CrewConfiguration, TimingWindow,
+    active_effects_for_timing, AbilityEffect, ActiveAbilityEffect, CrewConfiguration, TimingWindow,
 };
 use crate::combat::rng::Rng;
 
@@ -198,12 +198,47 @@ pub fn simulate_combat(
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let mut total_damage = 0.0;
+    let combat_begin_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatBegin);
+
+    record_ability_activations(
+        &mut trace,
+        0,
+        "combat_begin",
+        attacker,
+        &combat_begin_effects,
+    );
 
     for round_index in 1..=config.rounds {
         let round_start_effects =
             active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
         let attack_phase_effects =
             active_effects_for_timing(attacker_crew, TimingWindow::AttackPhase);
+        let defense_phase_effects =
+            active_effects_for_timing(attacker_crew, TimingWindow::DefensePhase);
+        let round_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundEnd);
+
+        let mut phase_effects = EffectAccumulator::default();
+        phase_effects.add_effects(
+            TimingWindow::CombatBegin,
+            &combat_begin_effects,
+            attacker.attack,
+        );
+        phase_effects.add_effects(
+            TimingWindow::RoundStart,
+            &round_start_effects,
+            attacker.attack,
+        );
+        phase_effects.add_effects(
+            TimingWindow::AttackPhase,
+            &attack_phase_effects,
+            attacker.attack,
+        );
+        phase_effects.add_effects(
+            TimingWindow::DefensePhase,
+            &defense_phase_effects,
+            attacker.attack,
+        );
+        phase_effects.add_effects(TimingWindow::RoundEnd, &round_end_effects, attacker.attack);
 
         trace.record(CombatEvent {
             event_type: "round_start".to_string(),
@@ -223,23 +258,37 @@ pub fn simulate_combat(
             ]),
         });
 
-        for effect in &attack_phase_effects {
-            trace.record(CombatEvent {
-                event_type: "ability_activation".to_string(),
-                round_index,
-                phase: "attack".to_string(),
-                source: EventSource {
-                    officer_id: Some(attacker.id.clone()),
-                    ship_ability_id: Some(effect.ability_name.clone()),
-                    ..EventSource::default()
-                },
-                values: Map::from_iter([("boosted".to_string(), Value::Bool(effect.boosted))]),
-            });
-        }
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "round_start",
+            attacker,
+            &round_start_effects,
+        );
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "attack",
+            attacker,
+            &attack_phase_effects,
+        );
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "defense",
+            attacker,
+            &defense_phase_effects,
+        );
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "round_end",
+            attacker,
+            &round_end_effects,
+        );
 
-        let (attack_multiplier, pierce_bonus) = aggregate_attack_modifiers(&attack_phase_effects);
-        let effective_attack = attacker.attack * attack_multiplier;
-        let effective_pierce = attacker.pierce + pierce_bonus;
+        let effective_attack = attacker.attack * phase_effects.pre_attack_multiplier;
+        let effective_pierce = attacker.pierce + phase_effects.pre_attack_pierce_bonus;
 
         let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         trace.record(CombatEvent {
@@ -278,7 +327,9 @@ pub fn simulate_combat(
             ]),
         });
 
-        let effective_mitigation = (mitigation_multiplier + effective_pierce).max(0.0);
+        let effective_mitigation =
+            (mitigation_multiplier + effective_pierce + phase_effects.defense_mitigation_bonus)
+                .max(0.0);
         trace.record(CombatEvent {
             event_type: "pierce_calc".to_string(),
             round_index,
@@ -343,7 +394,10 @@ pub fn simulate_combat(
             ]),
         });
 
-        let damage = effective_attack * effective_mitigation * crit_multiplier * proc_multiplier;
+        let pre_attack_damage =
+            effective_attack * effective_mitigation * crit_multiplier * proc_multiplier;
+        let damage = pre_attack_damage * phase_effects.attack_phase_damage_multiplier
+            + phase_effects.attack_phase_flat_damage;
         total_damage += damage;
         trace.record(CombatEvent {
             event_type: "damage_application".to_string(),
@@ -363,7 +417,8 @@ pub fn simulate_combat(
             ]),
         });
 
-        total_damage += attacker.end_of_round_damage;
+        total_damage += attacker.end_of_round_damage * phase_effects.round_end_multiplier
+            + phase_effects.round_end_flat_damage;
         trace.record(CombatEvent {
             event_type: "end_of_round_effects".to_string(),
             round_index,
@@ -375,7 +430,10 @@ pub fn simulate_combat(
             values: Map::from_iter([
                 (
                     "bonus_damage".to_string(),
-                    Value::from(attacker.end_of_round_damage),
+                    Value::from(
+                        attacker.end_of_round_damage * phase_effects.round_end_multiplier
+                            + phase_effects.round_end_flat_damage,
+                    ),
                 ),
                 (
                     "running_total".to_string(),
@@ -391,24 +449,98 @@ pub fn simulate_combat(
     }
 }
 
-fn aggregate_attack_modifiers(
-    effects: &[crate::combat::abilities::ActiveAbilityEffect],
-) -> (f64, f64) {
-    let mut attack_multiplier = 1.0;
-    let mut pierce_bonus = 0.0;
+#[derive(Debug, Clone, Copy)]
+struct EffectAccumulator {
+    pre_attack_multiplier: f64,
+    pre_attack_pierce_bonus: f64,
+    attack_phase_damage_multiplier: f64,
+    attack_phase_flat_damage: f64,
+    defense_mitigation_bonus: f64,
+    round_end_multiplier: f64,
+    round_end_flat_damage: f64,
+}
 
-    for effect in effects {
-        match effect.effect {
-            AbilityEffect::AttackMultiplier(modifier) => {
-                attack_multiplier *= 1.0 + modifier;
-            }
-            AbilityEffect::PierceBonus(value) => {
-                pierce_bonus += value;
-            }
+impl Default for EffectAccumulator {
+    fn default() -> Self {
+        Self {
+            pre_attack_multiplier: 1.0,
+            pre_attack_pierce_bonus: 0.0,
+            attack_phase_damage_multiplier: 1.0,
+            attack_phase_flat_damage: 0.0,
+            defense_mitigation_bonus: 0.0,
+            round_end_multiplier: 1.0,
+            round_end_flat_damage: 0.0,
         }
     }
+}
 
-    (attack_multiplier.max(0.0), pierce_bonus)
+impl EffectAccumulator {
+    fn add_effects(
+        &mut self,
+        timing: TimingWindow,
+        effects: &[ActiveAbilityEffect],
+        base_attack: f64,
+    ) {
+        for effect in effects {
+            self.add_effect(timing, effect.effect, base_attack);
+        }
+        self.pre_attack_multiplier = self.pre_attack_multiplier.max(0.0);
+        self.attack_phase_damage_multiplier = self.attack_phase_damage_multiplier.max(0.0);
+        self.round_end_multiplier = self.round_end_multiplier.max(0.0);
+    }
+
+    fn add_effect(&mut self, timing: TimingWindow, effect: AbilityEffect, base_attack: f64) {
+        match timing {
+            TimingWindow::CombatBegin | TimingWindow::RoundStart => match effect {
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.pre_attack_multiplier *= 1.0 + modifier
+                }
+                AbilityEffect::PierceBonus(value) => self.pre_attack_pierce_bonus += value,
+            },
+            TimingWindow::AttackPhase => match effect {
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.attack_phase_damage_multiplier *= 1.0 + modifier
+                }
+                AbilityEffect::PierceBonus(value) => {
+                    self.attack_phase_flat_damage += value * base_attack * 0.5
+                }
+            },
+            TimingWindow::DefensePhase => match effect {
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.defense_mitigation_bonus += modifier
+                }
+                AbilityEffect::PierceBonus(value) => self.defense_mitigation_bonus += value,
+            },
+            TimingWindow::RoundEnd => match effect {
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.round_end_multiplier *= 1.0 + modifier
+                }
+                AbilityEffect::PierceBonus(value) => self.round_end_flat_damage += value,
+            },
+        }
+    }
+}
+
+fn record_ability_activations(
+    trace: &mut TraceCollector,
+    round_index: u32,
+    phase: &str,
+    attacker: &Combatant,
+    effects: &[ActiveAbilityEffect],
+) {
+    for effect in effects {
+        trace.record(CombatEvent {
+            event_type: "ability_activation".to_string(),
+            round_index,
+            phase: phase.to_string(),
+            source: EventSource {
+                officer_id: Some(attacker.id.clone()),
+                ship_ability_id: Some(effect.ability_name.clone()),
+                ..EventSource::default()
+            },
+            values: Map::from_iter([("boosted".to_string(), Value::Bool(effect.boosted))]),
+        });
+    }
 }
 
 pub fn simulate_once() -> FightResult {
