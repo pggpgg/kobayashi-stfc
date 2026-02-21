@@ -66,7 +66,8 @@ impl AbilityClass {
 }
 
 pub fn can_activate_in_seat(context: &CrewSeatContext) -> bool {
-    context.seat == context.ability.class.allowed_seat() && (context.ability.boostable || !context.boosted)
+    context.seat == context.ability.class.allowed_seat()
+        && (context.ability.boostable || !context.boosted)
 }
 
 pub fn active_effects_for_timing(
@@ -75,7 +76,9 @@ pub fn active_effects_for_timing(
 ) -> Vec<ActiveAbilityEffect> {
     crew.seats
         .iter()
-        .filter(|seat_context| can_activate_in_seat(seat_context) && seat_context.ability.timing == timing)
+        .filter(|seat_context| {
+            can_activate_in_seat(seat_context) && seat_context.ability.timing == timing
+        })
         .map(|seat_context| ActiveAbilityEffect {
             ability_name: seat_context.ability.name.clone(),
             effect: seat_context.ability.effect,

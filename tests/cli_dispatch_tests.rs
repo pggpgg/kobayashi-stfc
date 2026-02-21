@@ -26,7 +26,7 @@ fn simulate_command_dispatches_and_emits_json() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let payload: serde_json::Value =
         serde_json::from_str(&stdout).expect("simulate should emit json");
-    assert_eq!(payload["events"].as_array().map(Vec::len), Some(8));
+    assert_eq!(payload["events"].as_array().map(Vec::len), Some(16));
     assert!(payload["total_damage"].is_number());
 }
 
