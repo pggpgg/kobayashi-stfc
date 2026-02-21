@@ -312,11 +312,19 @@ officers:
 Per round, the engine processes effects in this order:
 
 1. Passive effects (always on)
-2. `on_round_start` triggers
-3. Player attacks → `on_attack` → `on_hit` / `on_critical` triggers
-4. Enemy attacks → `on_receive_damage` triggers
-5. `on_round_end` triggers
-6. Check `on_kill`, `on_shield_break`, `on_hull_breach`
+2. Round-start maintenance (`HULL_REPAIR_START` / `HULL_REPAIR_END`)
+3. For each sub-round (weapon index `i`):
+   - Apply officer + ship ability buffs
+   - Apply forbidden-tech and chaos-tech buffs
+   - Resolve all attacks using weapon `i`
+   - Process `on_attack` → `on_hit` / `on_critical` / `on_receive_damage`
+4. End-of-round effects (`on_round_end`)
+5. Burning tick and temporary-effect cleanup
+6. Check `on_kill`, `on_shield_break`, `on_hull_breach`, and round cap (100)
+
+Notes:
+- UI logs can collapse duplicate ability/forbidden-tech lines even when multiple ships apply the same source.
+- Ordering details for per-ship buff application are currently treated as implementation targets inferred from raw logs and should remain test-backed as fixtures expand.
 
 ### 3.7 Stacking Rules
 
