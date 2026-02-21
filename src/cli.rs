@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 
 use crate::combat::{simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode};
 use crate::data::import::import_spocks_export;
-use crate::data::validate::validate_officer_dataset;
+use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
 use crate::server;
 
@@ -148,18 +148,60 @@ fn handle_validate(args: &[String]) -> i32 {
         .map(String::as_str)
         .unwrap_or("data/officers/officers.canonical.json");
 
-    match validate_officer_dataset(path) {
-        Ok(()) => {
-            println!("validation passed: {path}");
-            0
+    let report = match validate_officer_dataset(path) {
+        Ok(report) => report,
+        Err(err) => {
+            eprintln!("validation failed: {err}");
+            return 1;
         }
-        Err(issues) => {
-            eprintln!("validation failed: {} issue(s)", issues.len());
-            for issue in issues {
-                eprintln!("- {issue}");
-            }
-            1
+    };
+
+    let errors: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == ValidationSeverity::Error)
+        .collect();
+    let warnings: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == ValidationSeverity::Warning)
+        .collect();
+    let infos: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == ValidationSeverity::Info)
+        .collect();
+
+    if !errors.is_empty() {
+        eprintln!(
+            "validation failed: errors={}, warnings={}, info={}",
+            errors.len(),
+            warnings.len(),
+            infos.len()
+        );
+    } else {
+        println!(
+            "validation summary: errors={}, warnings={}, info={}",
+            errors.len(),
+            warnings.len(),
+            infos.len()
+        );
+    }
+
+    for (label, diagnostics) in [("error", errors), ("warning", warnings), ("info", infos)] {
+        if diagnostics.is_empty() {
+            continue;
         }
+        println!("\n[{label}]");
+        for diagnostic in diagnostics {
+            println!("- {}: {}", diagnostic.context, diagnostic.message);
+        }
+    }
+
+    if report.has_errors() {
+        1
+    } else {
+        0
     }
 }
 
