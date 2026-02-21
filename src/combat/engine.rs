@@ -30,9 +30,11 @@ pub const BATTLESHIP_COEFFICIENTS: (f64, f64, f64) = (0.55, 0.2, 0.2);
 pub const EXPLORER_COEFFICIENTS: (f64, f64, f64) = (0.2, 0.55, 0.2);
 pub const INTERCEPTOR_COEFFICIENTS: (f64, f64, f64) = (0.2, 0.2, 0.55);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ShipType {
     Survey,
+    Armada,
     Battleship,
     Explorer,
     Interceptor,
@@ -152,6 +154,7 @@ impl ShipType {
     pub const fn coefficients(self) -> (f64, f64, f64) {
         match self {
             Self::Survey => SURVEY_COEFFICIENTS,
+            Self::Armada => SURVEY_COEFFICIENTS,
             Self::Battleship => BATTLESHIP_COEFFICIENTS,
             Self::Explorer => EXPLORER_COEFFICIENTS,
             Self::Interceptor => INTERCEPTOR_COEFFICIENTS,
@@ -226,6 +229,7 @@ pub fn apply_morale_primary_piercing(
             adjusted.accuracy *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
         }
         ShipType::Survey => {}
+        ShipType::Armada => {}
     }
 
     adjusted

@@ -87,6 +87,11 @@ fn golden_values_match_python_reference_for_each_ship_type() {
         1e-12,
     );
     approx_eq(
+        mitigation(defender, attacker, ShipType::Armada),
+        0.5489034243492552,
+        1e-12,
+    );
+    approx_eq(
         mitigation(defender, attacker, ShipType::Battleship),
         0.5914393181871193,
         1e-12,
@@ -99,6 +104,26 @@ fn golden_values_match_python_reference_for_each_ship_type() {
     approx_eq(
         mitigation(defender, attacker, ShipType::Interceptor),
         0.5914393181871193,
+        1e-12,
+    );
+}
+
+#[test]
+fn armada_mitigation_matches_survey_for_identical_stats() {
+    let defender = DefenderStats {
+        armor: 320.0,
+        shield_deflection: 275.0,
+        dodge: 145.0,
+    };
+    let attacker = AttackerStats {
+        armor_piercing: 210.0,
+        shield_piercing: 180.0,
+        accuracy: 110.0,
+    };
+
+    approx_eq(
+        mitigation(defender, attacker, ShipType::Armada),
+        mitigation(defender, attacker, ShipType::Survey),
         1e-12,
     );
 }
@@ -130,6 +155,11 @@ fn morale_boosts_only_primary_piercing_per_ship_type() {
     approx_eq(survey.armor_piercing, 100.0, 1e-12);
     approx_eq(survey.shield_piercing, 80.0, 1e-12);
     approx_eq(survey.accuracy, 60.0, 1e-12);
+
+    let armada = apply_morale_primary_piercing(attacker, ShipType::Armada);
+    approx_eq(armada.armor_piercing, 100.0, 1e-12);
+    approx_eq(armada.shield_piercing, 80.0, 1e-12);
+    approx_eq(armada.accuracy, 60.0, 1e-12);
 }
 
 #[test]
