@@ -1,10 +1,10 @@
 use std::env;
-use std::fs;
 use std::process;
 
 use kobayashi::combat::{
     simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
 };
+use kobayashi::data::import::import_spocks_export;
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
 
@@ -251,21 +251,68 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-fn import_command(args: &[String]) -> Result<(), String> {
+fn handle_import(args: &[String]) -> i32 {
     if args.len() != 1 {
-        return Err("usage: kobayashi import <path-to-json>".to_string());
+        eprintln!("usage: kobayashi import <path-to-export.json>");
+        return 2;
     }
 
-    let file = fs::read_to_string(&args[0]).map_err(|err| format!("failed to read file: {err}"))?;
-    let payload: serde_json::Value =
-        serde_json::from_str(&file).map_err(|err| format!("invalid json: {err}"))?;
-    let records = payload
-        .as_array()
-        .ok_or_else(|| "import file must contain a JSON array".to_string())?
-        .len();
+    match import_spocks_export(&args[0]) {
+        Ok(report) => {
+            println!(
+                "import summary: source='{}' output='{}' total={} matched={} unmatched={} ambiguous={} duplicates={} conflicts={}",
+                report.source_path,
+                report.output_path,
+                report.total_records,
+                report.matched_records,
+                report.unmatched_records,
+                report.ambiguous_records,
+                report.duplicate_records,
+                report.conflict_records
+            );
 
-    println!("import complete: records={records}");
-    Ok(())
+            if !report.unresolved.is_empty() {
+                println!("\nunresolved entries:");
+                for entry in &report.unresolved {
+                    println!(
+                        "- record[{}] name='{}' normalized='{}': {}",
+                        entry.record_index, entry.input_name, entry.normalized_name, entry.reason
+                    );
+                }
+            }
+
+            if !report.conflicts.is_empty() {
+                println!("\nconflicting imported states:");
+                for conflict in &report.conflicts {
+                    println!(
+                        "- officer='{}' first_record={} conflicting_record={}",
+                        conflict.canonical_officer_id,
+                        conflict.first_record_index,
+                        conflict.conflicting_record_index
+                    );
+                }
+            }
+
+            if report.has_critical_failures() {
+                eprintln!(
+                    "import failed with critical issues: unresolved={} conflicts={}",
+                    report.unresolved.len(),
+                    report.conflicts.len()
+                );
+                1
+            } else {
+                println!(
+                    "import complete: persisted {} canonical roster entries",
+                    report.roster_entries_written
+                );
+                0
+            }
+        }
+        Err(err) => {
+            eprintln!("import failed: {err}");
+            1
+        }
+    }
 }
 
 fn handle_validate(args: &[String]) -> i32 {
@@ -371,10 +418,7 @@ fn main() {
             }
         }
         Some(Command::Import) => {
-            if let Err(err) = import_command(&command_args) {
-                eprintln!("{err}");
-                exit_code = 2;
-            }
+            exit_code = handle_import(&command_args);
         }
         Some(Command::Validate) => {
             exit_code = handle_validate(&command_args);

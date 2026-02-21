@@ -130,10 +130,23 @@ fn handle_import(args: &[String]) -> i32 {
     match import_spocks_export(path) {
         Ok(report) => {
             println!(
-                "import complete: records={}, source='{}'",
-                report.record_count, report.source_path
+                "import summary: total={} matched={} unresolved={} conflicts={} output='{}'",
+                report.total_records,
+                report.matched_records,
+                report.unresolved.len(),
+                report.conflict_records,
+                report.output_path
             );
-            0
+            if report.has_critical_failures() {
+                eprintln!(
+                    "import failed with critical issues: unresolved={} conflicts={}",
+                    report.unresolved.len(),
+                    report.conflicts.len()
+                );
+                1
+            } else {
+                0
+            }
         }
         Err(err) => {
             eprintln!("import failed: {err}");
