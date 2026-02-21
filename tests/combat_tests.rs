@@ -1,9 +1,9 @@
 use kobayashi::combat::{
-    aggregate_contributions, component_mitigation, mitigation, serialize_events_json,
-    simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, CombatEvent, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, ShipType,
-    SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode,
-    EPSILON,
+    aggregate_contributions, apply_morale_primary_piercing, component_mitigation, mitigation,
+    mitigation_with_morale, serialize_events_json, simulate_combat, Ability, AbilityClass,
+    AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, DefenderStats, EventSource, ShipType, SimulationConfig, StackContribution,
+    StatStacking, TimingWindow, TraceCollector, TraceMode, EPSILON,
 };
 use serde_json::{Map, Value};
 
@@ -104,6 +104,63 @@ fn golden_values_match_python_reference_for_each_ship_type() {
 }
 
 #[test]
+fn morale_boosts_only_primary_piercing_per_ship_type() {
+    let attacker = AttackerStats {
+        armor_piercing: 100.0,
+        shield_piercing: 80.0,
+        accuracy: 60.0,
+    };
+
+    let battleship = apply_morale_primary_piercing(attacker, ShipType::Battleship);
+    approx_eq(battleship.shield_piercing, 88.0, 1e-12);
+    approx_eq(battleship.armor_piercing, 100.0, 1e-12);
+    approx_eq(battleship.accuracy, 60.0, 1e-12);
+
+    let interceptor = apply_morale_primary_piercing(attacker, ShipType::Interceptor);
+    approx_eq(interceptor.armor_piercing, 110.0, 1e-12);
+    approx_eq(interceptor.shield_piercing, 80.0, 1e-12);
+    approx_eq(interceptor.accuracy, 60.0, 1e-12);
+
+    let explorer = apply_morale_primary_piercing(attacker, ShipType::Explorer);
+    approx_eq(explorer.accuracy, 66.0, 1e-12);
+    approx_eq(explorer.armor_piercing, 100.0, 1e-12);
+    approx_eq(explorer.shield_piercing, 80.0, 1e-12);
+
+    let survey = apply_morale_primary_piercing(attacker, ShipType::Survey);
+    approx_eq(survey.armor_piercing, 100.0, 1e-12);
+    approx_eq(survey.shield_piercing, 80.0, 1e-12);
+    approx_eq(survey.accuracy, 60.0, 1e-12);
+}
+
+#[test]
+fn mitigation_with_morale_applies_primary_piercing_bonus_when_active() {
+    let defender = DefenderStats {
+        armor: 100.0,
+        shield_deflection: 80.0,
+        dodge: 60.0,
+    };
+    let attacker = AttackerStats {
+        armor_piercing: 50.0,
+        shield_piercing: 40.0,
+        accuracy: 30.0,
+    };
+
+    let baseline = mitigation_with_morale(defender, attacker, ShipType::Battleship, false);
+    let morale = mitigation_with_morale(defender, attacker, ShipType::Battleship, true);
+
+    approx_eq(
+        baseline,
+        mitigation(defender, attacker, ShipType::Battleship),
+        1e-12,
+    );
+    assert!(
+        morale < baseline,
+        "morale should lower mitigation and increase final damage"
+    );
+    approx_eq(morale, 0.5869213146636679, 1e-12);
+}
+
+#[test]
 fn trace_collector_records_only_when_enabled() {
     let event = CombatEvent {
         event_type: "round_start".to_string(),
@@ -148,6 +205,65 @@ fn serialize_events_json_matches_python_shape() {
         serde_json::json!({"officer_id": "nero"})
     );
     assert_eq!(parsed[0]["values"], serde_json::json!({"roll": 0.617753}));
+}
+
+#[test]
+fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
+    let attacker = Combatant {
+        id: "enterprise".to_string(),
+        attack: 120.0,
+        mitigation: 0.1,
+        pierce: 0.15,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 10.0,
+        mitigation: 0.35,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+
+    let no_morale = CrewConfiguration::default();
+    let morale_below_decks = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::BelowDeck,
+            ability: Ability {
+                name: "round_start_morale".to_string(),
+                class: AbilityClass::BelowDeck,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::Morale(1.0),
+            },
+            boosted: false,
+        }],
+    };
+
+    let config = SimulationConfig {
+        rounds: 2,
+        seed: 7,
+        trace_mode: TraceMode::Events,
+    };
+
+    let baseline = simulate_combat(&attacker, &defender, config, &no_morale);
+    let with_morale = simulate_combat(&attacker, &defender, config, &morale_below_decks);
+
+    assert!(with_morale.total_damage > baseline.total_damage);
+
+    let morale_events = with_morale
+        .events
+        .iter()
+        .filter(|event| event.event_type == "morale_activation")
+        .count();
+    assert_eq!(morale_events, 2);
 }
 
 #[test]
