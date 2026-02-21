@@ -219,7 +219,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
-        hull_health: 1000.0,
+        hull_health: 10000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -1009,4 +1009,89 @@ fn emits_ability_activation_for_each_timing_window() {
     assert!(phases.contains(&"attack"));
     assert!(phases.contains(&"defense"));
     assert!(phases.contains(&"round_end"));
+}
+
+#[test]
+fn combat_rounds_are_capped_at_100() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 1.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 150,
+            seed: 9,
+            trace_mode: TraceMode::Off,
+        },
+        &CrewConfiguration::default(),
+    );
+
+    assert_eq!(result.rounds_simulated, 100);
+}
+
+#[test]
+fn round_limit_declares_winner_by_hull_without_destruction() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 1.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10000.0,
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 100,
+            seed: 3,
+            trace_mode: TraceMode::Off,
+        },
+        &CrewConfiguration::default(),
+    );
+
+    assert!(result.winner_by_round_limit);
+    assert!(result.attacker_won);
+    assert!(result.attacker_hull_remaining > 0.0);
+    assert!(result.defender_hull_remaining > 0.0);
 }

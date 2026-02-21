@@ -19,6 +19,7 @@ pub struct FightResult {
 }
 
 pub const EPSILON: f64 = 1e-9;
+pub const MAX_COMBAT_ROUNDS: u32 = 100;
 pub const MORALE_PRIMARY_PIERCING_BONUS: f64 = 0.10;
 pub const HULL_BREACH_CRIT_BONUS: f64 = 1.5;
 pub const BURNING_HULL_DAMAGE_PER_ROUND: f64 = 0.01;
@@ -99,6 +100,11 @@ impl Default for SimulationConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimulationResult {
     pub total_damage: f64,
+    pub attacker_won: bool,
+    pub winner_by_round_limit: bool,
+    pub rounds_simulated: u32,
+    pub attacker_hull_remaining: f64,
+    pub defender_hull_remaining: f64,
     pub events: Vec<CombatEvent>,
 }
 
@@ -249,7 +255,8 @@ pub fn simulate_combat(
         &combat_begin_effects,
     );
 
-    for round_index in 1..=config.rounds {
+    let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
+    for round_index in 1..=rounds_to_simulate {
         let round_start_effects =
             active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
         let attack_phase_effects =
@@ -677,8 +684,23 @@ pub fn simulate_combat(
         });
     }
 
+    let attacker_hull_remaining = attacker.hull_health.max(0.0);
+    let defender_hull_remaining = (defender.hull_health - total_damage).max(0.0);
+    let winner_by_round_limit =
+        rounds_to_simulate == MAX_COMBAT_ROUNDS && defender_hull_remaining > 0.0;
+    let attacker_won = if winner_by_round_limit {
+        attacker_hull_remaining >= defender_hull_remaining
+    } else {
+        defender_hull_remaining <= 0.0
+    };
+
     SimulationResult {
         total_damage: round_f64(total_damage),
+        attacker_won,
+        winner_by_round_limit,
+        rounds_simulated: rounds_to_simulate,
+        attacker_hull_remaining: round_f64(attacker_hull_remaining),
+        defender_hull_remaining: round_f64(defender_hull_remaining),
         events: trace.events(),
     }
 }
