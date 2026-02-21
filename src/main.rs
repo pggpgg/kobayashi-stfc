@@ -5,6 +5,7 @@ use std::process;
 use kobayashi::combat::{
     simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
 };
+use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
 
 #[derive(Debug, Clone, Copy)]
@@ -267,39 +268,67 @@ fn import_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_command(args: &[String]) -> Result<(), String> {
-    if args.len() != 1 {
-        return Err("usage: kobayashi validate <path-to-json>".to_string());
+fn handle_validate(args: &[String]) -> i32 {
+    let path = args
+        .first()
+        .map(String::as_str)
+        .unwrap_or("data/officers/officers.canonical.json");
+
+    let report = match validate_officer_dataset(path) {
+        Ok(report) => report,
+        Err(err) => {
+            eprintln!("validation failed: {err}");
+            return 1;
+        }
+    };
+
+    let errors: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == ValidationSeverity::Error)
+        .collect();
+    let warnings: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == ValidationSeverity::Warning)
+        .collect();
+    let infos: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == ValidationSeverity::Info)
+        .collect();
+
+    if !errors.is_empty() {
+        eprintln!(
+            "validation failed: errors={}, warnings={}, info={}",
+            errors.len(),
+            warnings.len(),
+            infos.len()
+        );
+    } else {
+        println!(
+            "validation summary: errors={}, warnings={}, info={}",
+            errors.len(),
+            warnings.len(),
+            infos.len()
+        );
     }
 
-    let file = fs::read_to_string(&args[0]).map_err(|err| format!("failed to read file: {err}"))?;
-    let payload: serde_json::Value =
-        serde_json::from_str(&file).map_err(|err| format!("invalid json: {err}"))?;
+    for (label, diagnostics) in [("error", errors), ("warning", warnings), ("info", infos)] {
+        if diagnostics.is_empty() {
+            continue;
+        }
 
-    let rows = payload
-        .as_array()
-        .ok_or_else(|| "validation failed: expected root array".to_string())?;
-
-    let mut invalid_rows = 0usize;
-    for row in rows {
-        let id = row
-            .get("id")
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("");
-        let name = row
-            .get("name")
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("");
-        if id.trim().is_empty() || name.trim().is_empty() {
-            invalid_rows += 1;
+        println!("\n[{label}]");
+        for diagnostic in diagnostics {
+            println!("- {}: {}", diagnostic.context, diagnostic.message);
         }
     }
 
-    if invalid_rows > 0 {
-        Err(format!("validation failed: {invalid_rows} invalid records"))
+    if report.has_errors() {
+        1
     } else {
-        println!("validation passed: records={}", rows.len());
-        Ok(())
+        0
     }
 }
 
@@ -348,10 +377,7 @@ fn main() {
             }
         }
         Some(Command::Validate) => {
-            if let Err(err) = validate_command(&command_args) {
-                eprintln!("{err}");
-                exit_code = 1;
-            }
+            exit_code = handle_validate(&command_args);
         }
         None => {
             print_usage();
