@@ -48,10 +48,14 @@ pub fn run_monte_carlo(
                 );
                 let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
 
-                if result.total_damage >= effective_hull {
+                if result.attacker_won {
                     wins += 1;
-                    let remaining =
-                        ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0);
+                    let remaining = if result.winner_by_round_limit {
+                        (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
+                            .clamp(0.0, 1.0)
+                    } else {
+                        ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
+                    };
                     surviving_hull_sum += remaining;
                 }
             }
