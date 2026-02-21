@@ -158,6 +158,8 @@ LCARS supports stat modifiers, extra attacks, tags, decay/accumulate effects, co
 
 **Graceful degradation**: unknown effect types are logged and skipped — never crashed on. Officers can be defined before the engine fully supports all their mechanics.
 
+**Effect overlap:** yes — multiple effects can be active in the same round. The simulator evaluates every active timing window (`combat_begin`, `round_start`, `attack`, `defense`, `round_end`) and applies compatible effects together. Morale, Hull Breach, and Burning are tracked independently, so they can overlap within the same round when triggered.
+
 ### Synergy System
 
 KOBAYASHI treats synergies as a first-class concept:
