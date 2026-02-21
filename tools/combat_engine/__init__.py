@@ -5,6 +5,7 @@ from .mitigation import (
     DefenderStats,
     ShipType,
     component_mitigation,
+    isolytic_mitigation,
     mitigation,
 )
 
@@ -15,6 +16,7 @@ __all__ = [
     "DefenderStats",
     "ShipType",
     "component_mitigation",
+    "isolytic_mitigation",
     "mitigation",
     "validate_mechanics",
 ]
