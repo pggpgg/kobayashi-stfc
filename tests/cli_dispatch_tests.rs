@@ -86,7 +86,11 @@ fn import_command_returns_usage_without_path() {
 #[test]
 fn import_command_imports_json_file() {
     let path = unique_temp_path("import");
-    fs::write(&path, "[{\"id\":\"one\"},{\"id\":\"two\"}]").expect("fixture should be written");
+    fs::write(
+        &path,
+        "[{\"name\":\"SPOCK\",\"rank\":2},{\"name\":\"KIRK\",\"tier\":3}]",
+    )
+    .expect("fixture should be written");
 
     let output = Command::new(bin())
         .args(["import", path.to_string_lossy().as_ref()])
@@ -95,7 +99,9 @@ fn import_command_imports_json_file() {
 
     assert_eq!(output.status.code(), Some(0));
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("import complete: records=2"));
+    assert!(stdout.contains("import summary:"));
+    assert!(stdout.contains("matched=2"));
+    assert!(stdout.contains("import complete: persisted 2 canonical roster entries"));
 
     let _ = fs::remove_file(path);
 }
