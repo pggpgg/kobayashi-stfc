@@ -269,6 +269,176 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
 }
 
 #[test]
+fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
+    let attacker = Combatant {
+        id: "enterprise".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+
+    let baseline_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "damage_buff".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::AttackPhase,
+                boostable: true,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+            },
+            boosted: false,
+        }],
+    };
+
+    let assimilated_crew = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::BelowDeck,
+                ability: Ability {
+                    name: "dezoc_like_assimilate".to_string(),
+                    class: AbilityClass::BelowDeck,
+                    timing: TimingWindow::RoundStart,
+                    boostable: true,
+                    effect: AbilityEffect::Assimilated {
+                        chance: 1.0,
+                        duration_rounds: 2,
+                    },
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "damage_buff".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::AttackPhase,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(1.0),
+                },
+                boosted: false,
+            },
+        ],
+    };
+
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Events,
+    };
+
+    let baseline = simulate_combat(&attacker, &defender, config, &baseline_crew);
+    let with_assimilated = simulate_combat(&attacker, &defender, config, &assimilated_crew);
+
+    approx_eq(baseline.total_damage, 200.0, 1e-12);
+    approx_eq(with_assimilated.total_damage, 175.0, 1e-12);
+
+    let attack_activation = with_assimilated
+        .events
+        .iter()
+        .find(|event| {
+            event.event_type == "ability_activation"
+                && event.phase == "attack"
+                && event.source.ship_ability_id.as_deref() == Some("damage_buff")
+        })
+        .expect("attack ability activation should be present");
+    assert_eq!(attack_activation.values["assimilated"], Value::Bool(true));
+    approx_eq(
+        attack_activation.values["effectiveness_multiplier"]
+            .as_f64()
+            .expect("effectiveness multiplier as f64"),
+        0.75,
+        1e-12,
+    );
+}
+
+#[test]
+fn dezoc_style_assimilated_can_trigger_from_below_decks() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::BelowDeck,
+            ability: Ability {
+                name: "Dezoc".to_string(),
+                class: AbilityClass::BelowDeck,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::Assimilated {
+                    chance: 1.0,
+                    duration_rounds: 4,
+                },
+            },
+            boosted: false,
+        }],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 7,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+
+    let trigger_event = result
+        .events
+        .iter()
+        .find(|event| event.event_type == "assimilated_trigger")
+        .expect("assimilated trigger event should be emitted");
+    assert_eq!(trigger_event.phase, "round_start");
+    assert_eq!(trigger_event.values["triggered"], Value::Bool(true));
+    assert_eq!(
+        trigger_event.source.ship_ability_id.as_deref(),
+        Some("Dezoc")
+    );
+}
+
+#[test]
 fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
     let attacker = Combatant {
         id: "nero".to_string(),

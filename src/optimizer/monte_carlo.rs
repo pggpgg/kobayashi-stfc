@@ -178,6 +178,26 @@ fn seat_from_officer(
             .find(|ability| ability.is_round_start_trigger() && ability.applies_morale_state())
             .map(|ability| ability.morale_chance_for_tier(tier))
     });
+    let assimilated = officer.and_then(|officer| {
+        officer
+            .abilities
+            .iter()
+            .find(|ability| ability.applies_assimilated_state())
+            .map(|ability| {
+                let timing = if ability.is_round_start_trigger() {
+                    TimingWindow::RoundStart
+                } else {
+                    TimingWindow::AttackPhase
+                };
+                (
+                    timing,
+                    AbilityEffect::Assimilated {
+                        chance: ability.morale_chance_for_tier(tier),
+                        duration_rounds: ability.state_duration_rounds(),
+                    },
+                )
+            })
+    });
     let hull_breach = officer.and_then(|officer| {
         officer
             .abilities
@@ -220,7 +240,9 @@ fn seat_from_officer(
             })
     });
 
-    let (timing, effect) = if let Some((timing, effect)) = hull_breach {
+    let (timing, effect) = if let Some((timing, effect)) = assimilated {
+        (timing, effect)
+    } else if let Some((timing, effect)) = hull_breach {
         (timing, effect)
     } else if let Some((timing, effect)) = burning {
         (timing, effect)
@@ -350,6 +372,43 @@ mod tests {
 
         assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
         assert!(matches!(seat.ability.effect, AbilityEffect::Morale(1.0)));
+    }
+
+    #[test]
+    fn seat_from_officer_interprets_assimilated_profiles_including_below_decks() {
+        let mut officers = HashMap::new();
+        officers.insert(
+            normalize_lookup_key("Dezoc"),
+            Officer {
+                id: "dezoc".to_string(),
+                name: "Dezoc".to_string(),
+                slot: Some("science".to_string()),
+                abilities: vec![OfficerAbility {
+                    slot: "officer".to_string(),
+                    trigger: Some("RoundStart".to_string()),
+                    modifier: Some("AddState".to_string()),
+                    attributes: Some("num_rounds=4, state=64".to_string()),
+                    description: Some("Apply Assimilate".to_string()),
+                    chance_by_rank: vec![0.4, 0.45, 0.5],
+                }],
+            },
+        );
+
+        let seat = seat_from_officer(
+            "Dezoc (T2)",
+            CrewSeat::BelowDeck,
+            AbilityClass::BelowDeck,
+            &officers,
+        );
+
+        assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
+        assert!(matches!(
+            seat.ability.effect,
+            AbilityEffect::Assimilated {
+                chance,
+                duration_rounds: 4
+            } if (chance - 0.45).abs() < 1e-12
+        ));
     }
 
     #[test]

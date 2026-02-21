@@ -67,6 +67,27 @@ impl OfficerAbility {
             .clamp(0.0, 1.0)
     }
 
+    pub fn applies_assimilated_state(&self) -> bool {
+        let is_state_modifier = self
+            .modifier
+            .as_deref()
+            .map(|value| value.eq_ignore_ascii_case("AddState"))
+            .unwrap_or(false);
+        let normalized_attributes = self
+            .attributes
+            .as_deref()
+            .map(normalize_for_lookup)
+            .unwrap_or_default();
+        let has_assimilated_attribute = normalized_attributes.contains("state64");
+        let description_mentions_assimilated = self
+            .description
+            .as_deref()
+            .map(|value| normalize_for_lookup(value).contains("assimilat"))
+            .unwrap_or(false);
+
+        is_state_modifier && (has_assimilated_attribute || description_mentions_assimilated)
+    }
+
     pub fn applies_hull_breach_state(&self) -> bool {
         let is_state_modifier = self
             .modifier
