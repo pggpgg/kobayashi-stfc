@@ -62,12 +62,22 @@ fn handle_simulate(args: &[String]) -> i32 {
         attack: 120.0,
         mitigation: 0.1,
         pierce: 0.15,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let defender = Combatant {
         id: "hostile".to_string(),
         attack: 10.0,
         mitigation: 0.35,
         pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
 
     let result = simulate_combat(

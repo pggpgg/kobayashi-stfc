@@ -225,12 +225,22 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         attack: parsed.attacker_attack,
         mitigation: 0.0,
         pierce: parsed.attacker_pierce,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let defender = Combatant {
         id: parsed.defender_id,
         attack: 0.0,
         mitigation: parsed.defender_mitigation,
         pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let config = SimulationConfig {
         rounds: parsed.rounds,

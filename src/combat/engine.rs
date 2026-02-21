@@ -3,7 +3,9 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::combat::abilities::{active_effects_for_timing, AbilityEffect, CrewConfiguration, TimingWindow};
+use crate::combat::abilities::{
+    active_effects_for_timing, AbilityEffect, CrewConfiguration, TimingWindow,
+};
 use crate::combat::rng::Rng;
 
 /// Combat mitigation parity implementation migrated from
@@ -103,6 +105,11 @@ pub struct Combatant {
     pub attack: f64,
     pub mitigation: f64,
     pub pierce: f64,
+    pub crit_chance: f64,
+    pub crit_multiplier: f64,
+    pub proc_chance: f64,
+    pub proc_multiplier: f64,
+    pub end_of_round_damage: f64,
 }
 
 #[derive(Debug, Default)]
@@ -193,8 +200,10 @@ pub fn simulate_combat(
     let mut total_damage = 0.0;
 
     for round_index in 1..=config.rounds {
-        let round_start_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
-        let attack_phase_effects = active_effects_for_timing(attacker_crew, TimingWindow::AttackPhase);
+        let round_start_effects =
+            active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
+        let attack_phase_effects =
+            active_effects_for_timing(attacker_crew, TimingWindow::AttackPhase);
 
         trace.record(CombatEvent {
             event_type: "round_start".to_string(),
@@ -288,7 +297,92 @@ pub fn simulate_combat(
             ]),
         });
 
-        total_damage += effective_attack * effective_mitigation;
+        let crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+        let is_crit = crit_roll < attacker.crit_chance;
+        let crit_multiplier = if is_crit {
+            attacker.crit_multiplier
+        } else {
+            1.0
+        };
+        trace.record(CombatEvent {
+            event_type: "crit_resolution".to_string(),
+            round_index,
+            phase: "attack".to_string(),
+            source: EventSource {
+                officer_id: Some(attacker.id.clone()),
+                ship_ability_id: Some("crit_matrix".to_string()),
+                ..EventSource::default()
+            },
+            values: Map::from_iter([
+                ("roll".to_string(), Value::from(round_f64(crit_roll))),
+                ("is_crit".to_string(), Value::Bool(is_crit)),
+                ("multiplier".to_string(), Value::from(crit_multiplier)),
+            ]),
+        });
+
+        let proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+        let did_proc = proc_roll < attacker.proc_chance;
+        let proc_multiplier = if did_proc {
+            attacker.proc_multiplier
+        } else {
+            1.0
+        };
+        trace.record(CombatEvent {
+            event_type: "proc_triggers".to_string(),
+            round_index,
+            phase: "proc".to_string(),
+            source: EventSource {
+                officer_id: Some(attacker.id.clone()),
+                ship_ability_id: Some("officer_proc".to_string()),
+                ..EventSource::default()
+            },
+            values: Map::from_iter([
+                ("roll".to_string(), Value::from(round_f64(proc_roll))),
+                ("triggered".to_string(), Value::Bool(did_proc)),
+                ("multiplier".to_string(), Value::from(proc_multiplier)),
+            ]),
+        });
+
+        let damage = effective_attack * effective_mitigation * crit_multiplier * proc_multiplier;
+        total_damage += damage;
+        trace.record(CombatEvent {
+            event_type: "damage_application".to_string(),
+            round_index,
+            phase: "damage".to_string(),
+            source: EventSource {
+                officer_id: Some(attacker.id.clone()),
+                hostile_ability_id: Some(format!("{}_hull", defender.id)),
+                ..EventSource::default()
+            },
+            values: Map::from_iter([
+                ("final_damage".to_string(), Value::from(round_f64(damage))),
+                (
+                    "running_total".to_string(),
+                    Value::from(round_f64(total_damage)),
+                ),
+            ]),
+        });
+
+        total_damage += attacker.end_of_round_damage;
+        trace.record(CombatEvent {
+            event_type: "end_of_round_effects".to_string(),
+            round_index,
+            phase: "end".to_string(),
+            source: EventSource {
+                player_bonus_source: Some("artifact:radiation_array".to_string()),
+                ..EventSource::default()
+            },
+            values: Map::from_iter([
+                (
+                    "bonus_damage".to_string(),
+                    Value::from(attacker.end_of_round_damage),
+                ),
+                (
+                    "running_total".to_string(),
+                    Value::from(round_f64(total_damage)),
+                ),
+            ]),
+        });
     }
 
     SimulationResult {
@@ -297,7 +391,9 @@ pub fn simulate_combat(
     }
 }
 
-fn aggregate_attack_modifiers(effects: &[crate::combat::abilities::ActiveAbilityEffect]) -> (f64, f64) {
+fn aggregate_attack_modifiers(
+    effects: &[crate::combat::abilities::ActiveAbilityEffect],
+) -> (f64, f64) {
     let mut attack_multiplier = 1.0;
     let mut pierce_bonus = 0.0;
 
