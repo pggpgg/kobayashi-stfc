@@ -21,6 +21,7 @@ pub struct FightResult {
 pub const EPSILON: f64 = 1e-9;
 pub const MORALE_PRIMARY_PIERCING_BONUS: f64 = 0.10;
 pub const HULL_BREACH_CRIT_BONUS: f64 = 1.5;
+pub const BURNING_HULL_DAMAGE_PER_ROUND: f64 = 0.01;
 
 pub const SURVEY_COEFFICIENTS: (f64, f64, f64) = (0.3, 0.3, 0.3);
 pub const BATTLESHIP_COEFFICIENTS: (f64, f64, f64) = (0.55, 0.2, 0.2);
@@ -112,6 +113,7 @@ pub struct Combatant {
     pub proc_chance: f64,
     pub proc_multiplier: f64,
     pub end_of_round_damage: f64,
+    pub hull_health: f64,
 }
 
 #[derive(Debug, Default)]
@@ -236,6 +238,7 @@ pub fn simulate_combat(
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let mut total_damage = 0.0;
     let mut hull_breach_rounds_remaining = 0_u32;
+    let mut burning_rounds_remaining = 0_u32;
     let combat_begin_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatBegin);
 
     record_ability_activations(
@@ -456,6 +459,34 @@ pub fn simulate_combat(
                     ]),
                 });
             }
+
+            if let AbilityEffect::Burning {
+                chance,
+                duration_rounds,
+            } = effect.effect
+            {
+                let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = burning_roll < chance.clamp(0.0, 1.0);
+                if triggered {
+                    burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
+                }
+                trace.record(CombatEvent {
+                    event_type: "burning_trigger".to_string(),
+                    round_index,
+                    phase: "round_start".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(burning_roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
         }
 
         let hull_breach_active = hull_breach_rounds_remaining > 0;
@@ -529,6 +560,34 @@ pub fn simulate_combat(
                     ]),
                 });
             }
+
+            if let AbilityEffect::Burning {
+                chance,
+                duration_rounds,
+            } = effect.effect
+            {
+                let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = burning_roll < chance.clamp(0.0, 1.0);
+                if triggered {
+                    burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
+                }
+                trace.record(CombatEvent {
+                    event_type: "burning_trigger".to_string(),
+                    round_index,
+                    phase: "attack".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(burning_roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
         }
 
         let proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
@@ -577,8 +636,18 @@ pub fn simulate_combat(
             ]),
         });
 
-        total_damage += attacker.end_of_round_damage * phase_effects.round_end_multiplier
+        let bonus_damage = attacker.end_of_round_damage * phase_effects.round_end_multiplier
             + phase_effects.round_end_flat_damage;
+        let burning_damage = if burning_rounds_remaining > 0 {
+            defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
+        } else {
+            0.0
+        };
+        total_damage += bonus_damage + burning_damage;
+
+        if burning_rounds_remaining > 0 {
+            burning_rounds_remaining -= 1;
+        }
         if hull_breach_rounds_remaining > 0 {
             hull_breach_rounds_remaining -= 1;
         }
@@ -594,10 +663,11 @@ pub fn simulate_combat(
             values: Map::from_iter([
                 (
                     "bonus_damage".to_string(),
-                    Value::from(
-                        attacker.end_of_round_damage * phase_effects.round_end_multiplier
-                            + phase_effects.round_end_flat_damage,
-                    ),
+                    Value::from(round_f64(bonus_damage)),
+                ),
+                (
+                    "burning_damage".to_string(),
+                    Value::from(round_f64(burning_damage)),
                 ),
                 (
                     "running_total".to_string(),
@@ -662,6 +732,7 @@ impl EffectAccumulator {
                 AbilityEffect::PierceBonus(value) => self.pre_attack_pierce_bonus += value,
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::HullBreach { .. } => {}
+                AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::AttackPhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -672,6 +743,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::HullBreach { .. } => {}
+                AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::DefensePhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -680,6 +752,7 @@ impl EffectAccumulator {
                 AbilityEffect::PierceBonus(value) => self.defense_mitigation_bonus += value,
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::HullBreach { .. } => {}
+                AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::RoundEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -688,6 +761,7 @@ impl EffectAccumulator {
                 AbilityEffect::PierceBonus(value) => self.round_end_flat_damage += value,
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::HullBreach { .. } => {}
+                AbilityEffect::Burning { .. } => {}
             },
         }
     }

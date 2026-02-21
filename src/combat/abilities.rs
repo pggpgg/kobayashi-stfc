@@ -31,6 +31,10 @@ pub enum AbilityEffect {
         duration_rounds: u32,
         requires_critical: bool,
     },
+    Burning {
+        chance: f64,
+        duration_rounds: u32,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
