@@ -193,6 +193,22 @@ pub fn mitigation_with_morale(
     mitigation(defender, attacker, ship_type)
 }
 
+/// Compute isolytic damage from already-resolved regular attack damage.
+///
+/// Formula:
+/// `regular_attack_damage * (isolytic_damage_bonus + (1 + isolytic_damage_bonus) * isolytic_cascade_damage_bonus)`
+///
+/// This includes both base isolytic bonus and isolytic cascade bonus (for example,
+/// officer effects like Enterprise-E Data that add isolytic cascade damage).
+pub fn isolytic_damage(
+    regular_attack_damage: f64,
+    isolytic_damage_bonus: f64,
+    isolytic_cascade_damage_bonus: f64,
+) -> f64 {
+    regular_attack_damage.max(0.0)
+        * (isolytic_damage_bonus + (1.0 + isolytic_damage_bonus) * isolytic_cascade_damage_bonus)
+}
+
 pub fn apply_morale_primary_piercing(
     attacker: AttackerStats,
     ship_type: ShipType,

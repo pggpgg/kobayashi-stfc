@@ -1,9 +1,9 @@
 use kobayashi::combat::{
-    aggregate_contributions, apply_morale_primary_piercing, component_mitigation, mitigation,
-    mitigation_with_morale, serialize_events_json, simulate_combat, Ability, AbilityClass,
-    AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, DefenderStats, EventSource, ShipType, SimulationConfig, StackContribution,
-    StatStacking, TimingWindow, TraceCollector, TraceMode, EPSILON,
+    aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
+    mitigation, mitigation_with_morale, serialize_events_json, simulate_combat, Ability,
+    AbilityClass, AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration,
+    CrewSeat, CrewSeatContext, DefenderStats, EventSource, ShipType, SimulationConfig,
+    StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode, EPSILON,
 };
 use serde_json::{Map, Value};
 
@@ -1094,4 +1094,10 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
     assert!(result.attacker_won);
     assert!(result.attacker_hull_remaining > 0.0);
     assert!(result.defender_hull_remaining > 0.0);
+}
+
+#[test]
+fn isolytic_damage_matches_reference_formula() {
+    let damage = isolytic_damage(10_000.0, 0.3, 0.4);
+    approx_eq(damage, 8_200.0, 1e-12);
 }
