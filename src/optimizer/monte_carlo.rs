@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
+    mitigation, simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, ShipType, SimulationConfig,
+    TimingWindow, TraceMode,
 };
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::optimizer::crew_generator::CrewCandidate;
@@ -108,6 +109,7 @@ fn scenario_to_combat_input(
     let ship_hash = hash_identifier(ship);
     let hostile_hash = hash_identifier(hostile);
     let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
+    let defender_mitigation = computed_defender_mitigation(ship, hostile);
 
     CombatSimulationInput {
         attacker: Combatant {
@@ -125,7 +127,7 @@ fn scenario_to_combat_input(
         defender: Combatant {
             id: hostile.to_string(),
             attack: 0.0,
-            mitigation: 0.25 + (hostile_hash % 35) as f64 / 100.0,
+            mitigation: defender_mitigation,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
@@ -160,6 +162,39 @@ fn scenario_to_combat_input(
         defender_hull,
         base_seed,
     }
+}
+
+fn synthetic_ship_type(identifier_hash: u64) -> ShipType {
+    match identifier_hash % 4 {
+        0 => ShipType::Battleship,
+        1 => ShipType::Explorer,
+        2 => ShipType::Interceptor,
+        _ => ShipType::Survey,
+    }
+}
+
+fn synthetic_defender_stats(hostile_hash: u64) -> DefenderStats {
+    DefenderStats {
+        armor: 120.0 + (hostile_hash % 260) as f64,
+        shield_deflection: 110.0 + ((hostile_hash >> 11) % 240) as f64,
+        dodge: 90.0 + ((hostile_hash >> 23) % 220) as f64,
+    }
+}
+
+fn synthetic_attacker_stats(ship_hash: u64) -> AttackerStats {
+    AttackerStats {
+        armor_piercing: 85.0 + (ship_hash % 220) as f64,
+        shield_piercing: 80.0 + ((ship_hash >> 9) % 210) as f64,
+        accuracy: 75.0 + ((ship_hash >> 21) % 200) as f64,
+    }
+}
+
+fn computed_defender_mitigation(ship: &str, hostile: &str) -> f64 {
+    let attacker = synthetic_attacker_stats(hash_identifier(ship));
+    let defender_hash = hash_identifier(hostile);
+    let defender = synthetic_defender_stats(defender_hash);
+    let ship_type = synthetic_ship_type(defender_hash);
+    mitigation(defender, attacker, ship_type)
 }
 
 fn seat_from_officer(
@@ -551,6 +586,74 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn computed_mitigation_changes_with_defense_and_piercing_inputs() {
+        let ship_hash = hash_identifier("USS Enterprise");
+        let hostile_hash = hash_identifier("Hostile D4");
+        let ship_type = synthetic_ship_type(hostile_hash);
+
+        let base_defender = synthetic_defender_stats(hostile_hash);
+        let base_attacker = synthetic_attacker_stats(ship_hash);
+        let base = mitigation(base_defender, base_attacker, ship_type);
+
+        let stronger_defender = mitigation(
+            DefenderStats {
+                armor: base_defender.armor * 1.4,
+                shield_deflection: base_defender.shield_deflection * 1.4,
+                dodge: base_defender.dodge * 1.4,
+            },
+            base_attacker,
+            ship_type,
+        );
+        let stronger_attacker = mitigation(
+            base_defender,
+            AttackerStats {
+                armor_piercing: base_attacker.armor_piercing * 1.4,
+                shield_piercing: base_attacker.shield_piercing * 1.4,
+                accuracy: base_attacker.accuracy * 1.4,
+            },
+            ship_type,
+        );
+
+        assert_ne!(base, stronger_defender);
+        assert_ne!(base, stronger_attacker);
+    }
+
+    #[test]
+    fn computed_mitigation_is_bounded_between_zero_and_one() {
+        let samples = [
+            ("Mayflower", "Borg Cube"),
+            ("Saladin", "Klingon Patrol"),
+            ("Kelvin", "Romulan Interceptor"),
+            ("Defiant", "Dominion Cruiser"),
+        ];
+
+        for (ship, hostile) in samples {
+            let value = computed_defender_mitigation(ship, hostile);
+            assert!(
+                (0.0..=1.0).contains(&value),
+                "mitigation={value} for {ship} vs {hostile}"
+            );
+        }
+    }
+
+    #[test]
+    fn computed_mitigation_is_deterministic_for_same_inputs() {
+        let first = computed_defender_mitigation("Franklin", "Hostile Miner");
+        let second = computed_defender_mitigation("Franklin", "Hostile Miner");
+        assert_eq!(first, second);
+
+        let candidate = CrewCandidate {
+            captain: "Kirk".to_string(),
+            bridge: "Spock".to_string(),
+            below_decks: "Scotty".to_string(),
+        };
+        let officers = HashMap::new();
+
+        let one = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers);
+        let two = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers);
+        assert_eq!(one.defender.mitigation, two.defender.mitigation);
+    }
     #[test]
     fn seat_from_officer_uses_tiered_morale_chance() {
         let mut officers = HashMap::new();
