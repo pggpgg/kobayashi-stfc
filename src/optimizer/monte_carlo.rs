@@ -171,8 +171,31 @@ fn seat_from_officer(
             .find(|ability| ability.is_round_start_trigger() && ability.applies_morale_state())
             .map(|ability| ability.morale_chance_for_tier(tier))
     });
+    let hull_breach = officer.and_then(|officer| {
+        officer
+            .abilities
+            .iter()
+            .find(|ability| ability.applies_hull_breach_state())
+            .map(|ability| {
+                let timing = if ability.is_round_start_trigger() {
+                    TimingWindow::RoundStart
+                } else {
+                    TimingWindow::AttackPhase
+                };
+                (
+                    timing,
+                    AbilityEffect::HullBreach {
+                        chance: ability.morale_chance_for_tier(tier),
+                        duration_rounds: ability.state_duration_rounds(),
+                        requires_critical: ability.triggers_on_critical_shot(),
+                    },
+                )
+            })
+    });
 
-    let (timing, effect) = if let Some(chance) = morale_chance {
+    let (timing, effect) = if let Some((timing, effect)) = hull_breach {
+        (timing, effect)
+    } else if let Some(chance) = morale_chance {
         (TimingWindow::RoundStart, AbilityEffect::Morale(chance))
     } else if hash % 2 == 0 {
         (
@@ -300,6 +323,108 @@ mod tests {
         assert!(matches!(seat.ability.effect, AbilityEffect::Morale(1.0)));
     }
 
+    #[test]
+    fn seat_from_officer_interprets_hull_breach_profiles() {
+        let mut officers = HashMap::new();
+        officers.insert(
+            normalize_lookup_key("Lorca"),
+            Officer {
+                id: "lorca".to_string(),
+                name: "Lorca".to_string(),
+                slot: Some("officer".to_string()),
+                abilities: vec![OfficerAbility {
+                    slot: "officer".to_string(),
+                    trigger: Some("RoundStart".to_string()),
+                    modifier: Some("AddState".to_string()),
+                    attributes: Some("num_rounds=2, state=4".to_string()),
+                    description: Some("Apply Hull Breach".to_string()),
+                    chance_by_rank: vec![0.5, 0.6, 0.7],
+                }],
+            },
+        );
+
+        let lorca = seat_from_officer(
+            "Lorca (T2)",
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &officers,
+        );
+        assert_eq!(lorca.ability.timing, TimingWindow::RoundStart);
+        assert!(matches!(
+            lorca.ability.effect,
+            AbilityEffect::HullBreach {
+                chance,
+                duration_rounds: 2,
+                requires_critical: false
+            } if (chance - 0.6).abs() < 1e-12
+        ));
+
+        officers.insert(
+            normalize_lookup_key("Gorkon"),
+            Officer {
+                id: "gorkon".to_string(),
+                name: "Gorkon".to_string(),
+                slot: Some("officer".to_string()),
+                abilities: vec![OfficerAbility {
+                    slot: "officer".to_string(),
+                    trigger: Some("CriticalShotFired".to_string()),
+                    modifier: Some("AddState".to_string()),
+                    attributes: Some("num_rounds=3, state=4".to_string()),
+                    description: Some("Hull Breach on critical hit".to_string()),
+                    chance_by_rank: vec![0.7, 0.75, 0.8],
+                }],
+            },
+        );
+
+        let gorkon = seat_from_officer(
+            "Gorkon (T1)",
+            CrewSeat::Captain,
+            AbilityClass::CaptainManeuver,
+            &officers,
+        );
+        assert_eq!(gorkon.ability.timing, TimingWindow::AttackPhase);
+        assert!(matches!(
+            gorkon.ability.effect,
+            AbilityEffect::HullBreach {
+                chance,
+                duration_rounds: 3,
+                requires_critical: true
+            } if (chance - 0.7).abs() < 1e-12
+        ));
+
+        officers.insert(
+            normalize_lookup_key("B'Elanna Torres"),
+            Officer {
+                id: "belanna".to_string(),
+                name: "B'Elanna Torres".to_string(),
+                slot: Some("below_decks".to_string()),
+                abilities: vec![OfficerAbility {
+                    slot: "officer".to_string(),
+                    trigger: Some("RoundStart".to_string()),
+                    modifier: Some("AddState".to_string()),
+                    attributes: Some("num_rounds=1, state=4".to_string()),
+                    description: Some("Chance to apply Hull Breach".to_string()),
+                    chance_by_rank: vec![0.1, 0.15, 0.3],
+                }],
+            },
+        );
+
+        let belanna = seat_from_officer(
+            "B'Elanna Torres (T3)",
+            CrewSeat::BelowDeck,
+            AbilityClass::BelowDeck,
+            &officers,
+        );
+        assert_eq!(belanna.ability.timing, TimingWindow::RoundStart);
+        assert!(matches!(
+            belanna.ability.effect,
+            AbilityEffect::HullBreach {
+                chance,
+                duration_rounds: 1,
+                requires_critical: false
+            } if (chance - 0.3).abs() < 1e-12
+        ));
+    }
     #[test]
     fn seat_from_officer_uses_tiered_morale_chance() {
         let mut officers = HashMap::new();

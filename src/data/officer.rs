@@ -66,6 +66,53 @@ impl OfficerAbility {
             .unwrap_or(first)
             .clamp(0.0, 1.0)
     }
+
+    pub fn applies_hull_breach_state(&self) -> bool {
+        let is_state_modifier = self
+            .modifier
+            .as_deref()
+            .map(|value| value.eq_ignore_ascii_case("AddState"))
+            .unwrap_or(false);
+        let normalized_attributes = self
+            .attributes
+            .as_deref()
+            .map(normalize_for_lookup)
+            .unwrap_or_default();
+        let has_hull_breach_attribute = normalized_attributes.contains("state4");
+        let description_mentions_hull_breach = self
+            .description
+            .as_deref()
+            .map(|value| normalize_for_lookup(value).contains("hullbreach"))
+            .unwrap_or(false);
+
+        is_state_modifier && (has_hull_breach_attribute || description_mentions_hull_breach)
+    }
+
+    pub fn triggers_on_critical_shot(&self) -> bool {
+        self.trigger
+            .as_deref()
+            .map(|value| value.eq_ignore_ascii_case("CriticalShotFired"))
+            .unwrap_or(false)
+    }
+
+    pub fn state_duration_rounds(&self) -> u32 {
+        self.attributes
+            .as_deref()
+            .and_then(|attributes| {
+                attributes.split(',').find_map(|entry| {
+                    let mut parts = entry.splitn(2, '=');
+                    let key = parts.next()?.trim();
+                    let value = parts.next()?.trim();
+                    if key.eq_ignore_ascii_case("num_rounds") {
+                        value.parse::<u32>().ok().filter(|rounds| *rounds > 0)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .unwrap_or(1)
+    }
+
     pub fn is_round_start_trigger(&self) -> bool {
         self.trigger
             .as_deref()

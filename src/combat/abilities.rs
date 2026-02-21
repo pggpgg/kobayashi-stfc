@@ -26,6 +26,11 @@ pub enum AbilityEffect {
     AttackMultiplier(f64),
     PierceBonus(f64),
     Morale(f64),
+    HullBreach {
+        chance: f64,
+        duration_rounds: u32,
+        requires_critical: bool,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
