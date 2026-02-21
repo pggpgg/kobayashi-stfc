@@ -7,13 +7,14 @@ use crate::combat::abilities::{
     active_effects_for_timing, AbilityEffect, ActiveAbilityEffect, CrewConfiguration, TimingWindow,
 };
 use crate::combat::rng::Rng;
+use crate::combat::stacking::{StackContribution, StatStacking};
 
 /// Combat mitigation parity implementation migrated from
 /// `tools/combat_engine/mitigation.py`.
 ///
 /// The formulas and clamps in this module intentionally mirror the Python
 /// reference behavior exactly.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct FightResult {
     pub won: bool,
 }
@@ -474,7 +475,7 @@ pub fn simulate_combat(
             round_end_assimilated,
         );
 
-        let effective_attack = attacker.attack * phase_effects.pre_attack_multiplier;
+        let effective_attack = attacker.attack * phase_effects.pre_attack_multiplier();
         let morale_source = round_start_effects.iter().find_map(|effect| {
             if let AbilityEffect::Morale(chance) =
                 scale_effect(effect.effect, round_start_assimilated)
@@ -484,7 +485,7 @@ pub fn simulate_combat(
                 None
             }
         });
-        let mut effective_pierce = attacker.pierce + phase_effects.pre_attack_pierce_bonus;
+        let mut effective_pierce = attacker.pierce + phase_effects.pre_attack_pierce_bonus();
         if let Some((morale_source, morale_chance)) = morale_source {
             let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
             let morale_triggered = morale_roll < morale_chance;
@@ -553,7 +554,7 @@ pub fn simulate_combat(
         });
 
         let effective_mitigation =
-            (mitigation_multiplier + effective_pierce + phase_effects.defense_mitigation_bonus)
+            (mitigation_multiplier + effective_pierce + phase_effects.defense_mitigation_bonus())
                 .max(0.0);
         trace.record(CombatEvent {
             event_type: "pierce_calc".to_string(),
@@ -730,8 +731,9 @@ pub fn simulate_combat(
 
         let pre_attack_damage =
             effective_attack * effective_mitigation * crit_multiplier * proc_multiplier;
-        let damage = pre_attack_damage * phase_effects.attack_phase_damage_multiplier
-            + phase_effects.attack_phase_flat_damage;
+        phase_effects.set_pre_attack_damage_base(pre_attack_damage);
+        let pre_attack_damage = phase_effects.composed_pre_attack_damage();
+        let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
         total_damage += damage;
         trace.record(CombatEvent {
             event_type: "damage_application".to_string(),
@@ -755,8 +757,7 @@ pub fn simulate_combat(
             ]),
         });
 
-        let bonus_damage = attacker.end_of_round_damage * phase_effects.round_end_multiplier
-            + phase_effects.round_end_flat_damage;
+        let bonus_damage = phase_effects.compose_round_end_damage(attacker.end_of_round_damage);
         let burning_damage = if burning_rounds_remaining > 0 {
             defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
         } else {
@@ -820,28 +821,92 @@ pub fn simulate_combat(
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 struct EffectAccumulator {
-    pre_attack_multiplier: f64,
-    pre_attack_pierce_bonus: f64,
-    attack_phase_damage_multiplier: f64,
-    attack_phase_flat_damage: f64,
-    defense_mitigation_bonus: f64,
-    round_end_multiplier: f64,
-    round_end_flat_damage: f64,
+    stacks: StatStacking<EffectStatKey>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum EffectStatKey {
+    PreAttackMultiplier,
+    PreAttackPierceBonus,
+    DefenseMitigationBonus,
+    PreAttackDamage,
+    AttackPhaseDamage,
+    RoundEndDamage,
 }
 
 impl Default for EffectAccumulator {
     fn default() -> Self {
-        Self {
-            pre_attack_multiplier: 1.0,
-            pre_attack_pierce_bonus: 0.0,
-            attack_phase_damage_multiplier: 1.0,
-            attack_phase_flat_damage: 0.0,
-            defense_mitigation_bonus: 0.0,
-            round_end_multiplier: 1.0,
-            round_end_flat_damage: 0.0,
-        }
+        let mut stacks = StatStacking::new();
+        stacks.add(StackContribution::base(
+            EffectStatKey::PreAttackMultiplier,
+            1.0,
+        ));
+        stacks.add(StackContribution::base(
+            EffectStatKey::PreAttackPierceBonus,
+            0.0,
+        ));
+        stacks.add(StackContribution::base(
+            EffectStatKey::DefenseMitigationBonus,
+            0.0,
+        ));
+        stacks.add(StackContribution::base(EffectStatKey::PreAttackDamage, 0.0));
+        stacks.add(StackContribution::base(
+            EffectStatKey::AttackPhaseDamage,
+            0.0,
+        ));
+        stacks.add(StackContribution::base(EffectStatKey::RoundEndDamage, 0.0));
+
+        Self { stacks }
+    }
+}
+
+impl EffectAccumulator {
+    fn pre_attack_multiplier(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::PreAttackMultiplier)
+            .unwrap_or(1.0)
+            .max(0.0)
+    }
+
+    fn pre_attack_pierce_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::PreAttackPierceBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn defense_mitigation_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::DefenseMitigationBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn compose_attack_phase_damage(&self, pre_attack_damage: f64) -> f64 {
+        self.compose_damage_channel(EffectStatKey::AttackPhaseDamage, pre_attack_damage)
+    }
+
+    fn compose_round_end_damage(&self, round_end_damage: f64) -> f64 {
+        self.compose_damage_channel(EffectStatKey::RoundEndDamage, round_end_damage)
+    }
+
+    fn compose_damage_channel(&self, key: EffectStatKey, base: f64) -> f64 {
+        let mut totals = self.stacks.totals_for(&key).unwrap_or_default();
+        totals.base += base;
+        totals.compose()
+    }
+
+    fn set_pre_attack_damage_base(&mut self, base: f64) {
+        self.stacks.add(StackContribution::base(
+            EffectStatKey::PreAttackDamage,
+            base,
+        ));
+    }
+
+    fn composed_pre_attack_damage(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::PreAttackDamage)
+            .unwrap_or(0.0)
     }
 }
 
@@ -860,50 +925,57 @@ impl EffectAccumulator {
                 base_attack,
             );
         }
-        self.pre_attack_multiplier = self.pre_attack_multiplier.max(0.0);
-        self.attack_phase_damage_multiplier = self.attack_phase_damage_multiplier.max(0.0);
-        self.round_end_multiplier = self.round_end_multiplier.max(0.0);
     }
 
     fn add_effect(&mut self, timing: TimingWindow, effect: AbilityEffect, base_attack: f64) {
         match timing {
             TimingWindow::CombatBegin | TimingWindow::RoundStart => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => {
-                    self.pre_attack_multiplier *= 1.0 + modifier
-                }
-                AbilityEffect::PierceBonus(value) => self.pre_attack_pierce_bonus += value,
+                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
+                    StackContribution::modifier(EffectStatKey::PreAttackMultiplier, modifier),
+                ),
+                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
+                    EffectStatKey::PreAttackPierceBonus,
+                    value,
+                )),
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::AttackPhase => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => {
-                    self.attack_phase_damage_multiplier *= 1.0 + modifier
-                }
-                AbilityEffect::PierceBonus(value) => {
-                    self.attack_phase_flat_damage += value * base_attack * 0.5
-                }
+                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
+                    StackContribution::modifier(EffectStatKey::AttackPhaseDamage, modifier),
+                ),
+                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
+                    EffectStatKey::AttackPhaseDamage,
+                    value * base_attack * 0.5,
+                )),
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::DefensePhase => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => {
-                    self.defense_mitigation_bonus += modifier
-                }
-                AbilityEffect::PierceBonus(value) => self.defense_mitigation_bonus += value,
+                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
+                    StackContribution::flat(EffectStatKey::DefenseMitigationBonus, modifier),
+                ),
+                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
+                    EffectStatKey::DefenseMitigationBonus,
+                    value,
+                )),
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::RoundEnd => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => {
-                    self.round_end_multiplier *= 1.0 + modifier
-                }
-                AbilityEffect::PierceBonus(value) => self.round_end_flat_damage += value,
+                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
+                    StackContribution::modifier(EffectStatKey::RoundEndDamage, modifier),
+                ),
+                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
+                    EffectStatKey::RoundEndDamage,
+                    value,
+                )),
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
