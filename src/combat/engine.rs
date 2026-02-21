@@ -824,11 +824,13 @@ pub fn simulate_combat(
 #[derive(Debug, Clone)]
 struct EffectAccumulator {
     stacks: StatStacking<EffectStatKey>,
+    pre_attack_modifier_sum: f64,
+    attack_phase_damage_modifier_sum: f64,
+    round_end_modifier_sum: f64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum EffectStatKey {
-    PreAttackMultiplier,
     PreAttackPierceBonus,
     DefenseMitigationBonus,
     PreAttackDamage,
@@ -839,10 +841,6 @@ enum EffectStatKey {
 impl Default for EffectAccumulator {
     fn default() -> Self {
         let mut stacks = StatStacking::new();
-        stacks.add(StackContribution::base(
-            EffectStatKey::PreAttackMultiplier,
-            1.0,
-        ));
         stacks.add(StackContribution::base(
             EffectStatKey::PreAttackPierceBonus,
             0.0,
@@ -858,16 +856,18 @@ impl Default for EffectAccumulator {
         ));
         stacks.add(StackContribution::base(EffectStatKey::RoundEndDamage, 0.0));
 
-        Self { stacks }
+        Self {
+            stacks,
+            pre_attack_modifier_sum: 0.0,
+            attack_phase_damage_modifier_sum: 0.0,
+            round_end_modifier_sum: 0.0,
+        }
     }
 }
 
 impl EffectAccumulator {
     fn pre_attack_multiplier(&self) -> f64 {
-        self.stacks
-            .composed_for(&EffectStatKey::PreAttackMultiplier)
-            .unwrap_or(1.0)
-            .max(0.0)
+        (1.0 + self.pre_attack_modifier_sum).max(0.0)
     }
 
     fn pre_attack_pierce_bonus(&self) -> f64 {
@@ -891,9 +891,18 @@ impl EffectAccumulator {
     }
 
     fn compose_damage_channel(&self, key: EffectStatKey, base: f64) -> f64 {
-        let mut totals = self.stacks.totals_for(&key).unwrap_or_default();
-        totals.base += base;
-        totals.compose()
+        let flat = self
+            .stacks
+            .totals_for(&key)
+            .map(|totals| totals.flat)
+            .unwrap_or(0.0);
+        let multiplier = match key {
+            EffectStatKey::AttackPhaseDamage => 1.0 + self.attack_phase_damage_modifier_sum,
+            EffectStatKey::RoundEndDamage => 1.0 + self.round_end_modifier_sum,
+            _ => 1.0,
+        };
+
+        base * multiplier + flat
     }
 
     fn set_pre_attack_damage_base(&mut self, base: f64) {
@@ -930,9 +939,9 @@ impl EffectAccumulator {
     fn add_effect(&mut self, timing: TimingWindow, effect: AbilityEffect, base_attack: f64) {
         match timing {
             TimingWindow::CombatBegin | TimingWindow::RoundStart => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
-                    StackContribution::modifier(EffectStatKey::PreAttackMultiplier, modifier),
-                ),
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.pre_attack_modifier_sum += modifier;
+                }
                 AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
                     EffectStatKey::PreAttackPierceBonus,
                     value,
@@ -943,9 +952,9 @@ impl EffectAccumulator {
                 AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::AttackPhase => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
-                    StackContribution::modifier(EffectStatKey::AttackPhaseDamage, modifier),
-                ),
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.attack_phase_damage_modifier_sum += modifier;
+                }
                 AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
                     EffectStatKey::AttackPhaseDamage,
                     value * base_attack * 0.5,
@@ -969,9 +978,9 @@ impl EffectAccumulator {
                 AbilityEffect::Burning { .. } => {}
             },
             TimingWindow::RoundEnd => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
-                    StackContribution::modifier(EffectStatKey::RoundEndDamage, modifier),
-                ),
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.round_end_modifier_sum += modifier;
+                }
                 AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
                     EffectStatKey::RoundEndDamage,
                     value,

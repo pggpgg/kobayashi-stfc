@@ -1212,6 +1212,86 @@ fn emits_ability_activation_for_each_timing_window() {
 }
 
 #[test]
+fn additive_attack_modifiers_match_canonical_summed_behavior() {
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+    let defender = Combatant {
+        id: "target".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+
+    let two_ten_percent = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "round_start_ten_alpha".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::RoundStart,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "round_start_ten_beta".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                },
+                boosted: false,
+            },
+        ],
+    };
+    let single_twenty_percent = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "round_start_twenty".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::AttackMultiplier(0.2),
+            },
+            boosted: false,
+        }],
+    };
+
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 11,
+        trace_mode: TraceMode::Off,
+    };
+
+    let summed = simulate_combat(&attacker, &defender, config, &two_ten_percent);
+    let canonical = simulate_combat(&attacker, &defender, config, &single_twenty_percent);
+
+    approx_eq(summed.total_damage, 120.0, 1e-12);
+    approx_eq(summed.total_damage, canonical.total_damage, 1e-12);
+}
+
+#[test]
 fn combat_rounds_are_capped_at_100() {
     let attacker = Combatant {
         id: "attacker".to_string(),
