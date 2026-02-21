@@ -267,6 +267,143 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
 }
 
 #[test]
+fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 1.0,
+        crit_multiplier: 2.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "Lorca".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::HullBreach {
+                    chance: 1.0,
+                    duration_rounds: 2,
+                    requires_critical: false,
+                },
+            },
+            boosted: false,
+        }],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 7,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+
+    approx_eq(result.total_damage, 500.0, 1e-12);
+
+    let crit_event = result
+        .events
+        .iter()
+        .find(|event| event.event_type == "crit_resolution")
+        .expect("crit event should be present");
+    assert_eq!(crit_event.values["hull_breach_active"], Value::Bool(true));
+    approx_eq(
+        crit_event.values["multiplier"]
+            .as_f64()
+            .expect("multiplier as f64"),
+        5.0,
+        1e-12,
+    );
+}
+
+#[test]
+fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
+    let attacker = Combatant {
+        id: "gorkon_ship".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 1.0,
+        crit_multiplier: 1.5,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+    let defender = Combatant {
+        id: "target".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "Gorkon".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::AttackPhase,
+                boostable: true,
+                effect: AbilityEffect::HullBreach {
+                    chance: 1.0,
+                    duration_rounds: 3,
+                    requires_critical: true,
+                },
+            },
+            boosted: false,
+        }],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 7,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+
+    let hull_breach_event = result
+        .events
+        .iter()
+        .find(|event| event.event_type == "hull_breach_trigger")
+        .expect("hull breach trigger should be emitted");
+    assert_eq!(hull_breach_event.phase, "attack");
+    assert_eq!(hull_breach_event.values["triggered"], Value::Bool(true));
+    assert_eq!(
+        hull_breach_event.values["requires_critical"],
+        Value::Bool(true)
+    );
+}
+#[test]
 fn simulate_combat_uses_seed_and_emits_canonical_events() {
     let attacker = Combatant {
         id: "nero".to_string(),
