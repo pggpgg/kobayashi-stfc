@@ -23,6 +23,7 @@ pub const MAX_COMBAT_ROUNDS: u32 = 100;
 pub const MORALE_PRIMARY_PIERCING_BONUS: f64 = 0.10;
 pub const HULL_BREACH_CRIT_BONUS: f64 = 1.5;
 pub const BURNING_HULL_DAMAGE_PER_ROUND: f64 = 0.01;
+pub const ASSIMILATED_EFFECTIVENESS_MULTIPLIER: f64 = 0.75;
 
 pub const SURVEY_COEFFICIENTS: (f64, f64, f64) = (0.3, 0.3, 0.3);
 pub const BATTLESHIP_COEFFICIENTS: (f64, f64, f64) = (0.55, 0.2, 0.2);
@@ -261,14 +262,17 @@ pub fn simulate_combat(
     let mut total_damage = 0.0;
     let mut hull_breach_rounds_remaining = 0_u32;
     let mut burning_rounds_remaining = 0_u32;
+    let mut assimilated_rounds_remaining = 0_u32;
     let combat_begin_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatBegin);
 
+    let combat_begin_assimilated = assimilated_rounds_remaining > 0;
     record_ability_activations(
         &mut trace,
         0,
         "combat_begin",
         attacker,
         &combat_begin_effects,
+        combat_begin_assimilated,
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
@@ -286,23 +290,8 @@ pub fn simulate_combat(
             TimingWindow::CombatBegin,
             &combat_begin_effects,
             attacker.attack,
+            assimilated_rounds_remaining > 0,
         );
-        phase_effects.add_effects(
-            TimingWindow::RoundStart,
-            &round_start_effects,
-            attacker.attack,
-        );
-        phase_effects.add_effects(
-            TimingWindow::AttackPhase,
-            &attack_phase_effects,
-            attacker.attack,
-        );
-        phase_effects.add_effects(
-            TimingWindow::DefensePhase,
-            &defense_phase_effects,
-            attacker.attack,
-        );
-        phase_effects.add_effects(TimingWindow::RoundEnd, &round_end_effects, attacker.attack);
 
         trace.record(CombatEvent {
             event_type: "round_start".to_string(),
@@ -322,38 +311,170 @@ pub fn simulate_combat(
             ]),
         });
 
+        let round_start_assimilated = assimilated_rounds_remaining > 0;
         record_ability_activations(
             &mut trace,
             round_index,
             "round_start",
             attacker,
             &round_start_effects,
+            round_start_assimilated,
         );
+        phase_effects.add_effects(
+            TimingWindow::RoundStart,
+            &round_start_effects,
+            attacker.attack,
+            round_start_assimilated,
+        );
+
+        for effect in &round_start_effects {
+            let effective_effect = scale_effect(effect.effect, round_start_assimilated);
+
+            if let AbilityEffect::Assimilated {
+                chance,
+                duration_rounds,
+            } = effective_effect
+            {
+                let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
+                if triggered {
+                    assimilated_rounds_remaining =
+                        assimilated_rounds_remaining.max(duration_rounds.max(1));
+                }
+                trace.record(CombatEvent {
+                    event_type: "assimilated_trigger".to_string(),
+                    round_index,
+                    phase: "round_start".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
+
+            if let AbilityEffect::HullBreach {
+                chance,
+                duration_rounds,
+                requires_critical,
+            } = effective_effect
+            {
+                if requires_critical {
+                    continue;
+                }
+
+                let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
+                if triggered {
+                    hull_breach_rounds_remaining =
+                        hull_breach_rounds_remaining.max(duration_rounds.max(1));
+                }
+                trace.record(CombatEvent {
+                    event_type: "hull_breach_trigger".to_string(),
+                    round_index,
+                    phase: "round_start".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
+
+            if let AbilityEffect::Burning {
+                chance,
+                duration_rounds,
+            } = effective_effect
+            {
+                let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = burning_roll < chance.clamp(0.0, 1.0);
+                if triggered {
+                    burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
+                }
+                trace.record(CombatEvent {
+                    event_type: "burning_trigger".to_string(),
+                    round_index,
+                    phase: "round_start".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(burning_roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
+        }
+
+        let attack_phase_assimilated = assimilated_rounds_remaining > 0;
         record_ability_activations(
             &mut trace,
             round_index,
             "attack",
             attacker,
             &attack_phase_effects,
+            attack_phase_assimilated,
         );
+        phase_effects.add_effects(
+            TimingWindow::AttackPhase,
+            &attack_phase_effects,
+            attacker.attack,
+            attack_phase_assimilated,
+        );
+
+        let defense_phase_assimilated = assimilated_rounds_remaining > 0;
         record_ability_activations(
             &mut trace,
             round_index,
             "defense",
             attacker,
             &defense_phase_effects,
+            defense_phase_assimilated,
         );
+        phase_effects.add_effects(
+            TimingWindow::DefensePhase,
+            &defense_phase_effects,
+            attacker.attack,
+            defense_phase_assimilated,
+        );
+
+        let round_end_assimilated = assimilated_rounds_remaining > 0;
         record_ability_activations(
             &mut trace,
             round_index,
             "round_end",
             attacker,
             &round_end_effects,
+            round_end_assimilated,
+        );
+        phase_effects.add_effects(
+            TimingWindow::RoundEnd,
+            &round_end_effects,
+            attacker.attack,
+            round_end_assimilated,
         );
 
         let effective_attack = attacker.attack * phase_effects.pre_attack_multiplier;
         let morale_source = round_start_effects.iter().find_map(|effect| {
-            if let AbilityEffect::Morale(chance) = effect.effect {
+            if let AbilityEffect::Morale(chance) =
+                scale_effect(effect.effect, round_start_assimilated)
+            {
                 Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
             } else {
                 None
@@ -448,70 +569,6 @@ pub fn simulate_combat(
             ]),
         });
 
-        for effect in &round_start_effects {
-            if let AbilityEffect::HullBreach {
-                chance,
-                duration_rounds,
-                requires_critical,
-            } = effect.effect
-            {
-                if requires_critical {
-                    continue;
-                }
-
-                let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    hull_breach_rounds_remaining =
-                        hull_breach_rounds_remaining.max(duration_rounds.max(1));
-                }
-                trace.record(CombatEvent {
-                    event_type: "hull_breach_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-
-            if let AbilityEffect::Burning {
-                chance,
-                duration_rounds,
-            } = effect.effect
-            {
-                let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = burning_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
-                }
-                trace.record(CombatEvent {
-                    event_type: "burning_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(burning_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-        }
-
         let hull_breach_active = hull_breach_rounds_remaining > 0;
         let crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         let is_crit = crit_roll < attacker.crit_chance;
@@ -546,11 +603,42 @@ pub fn simulate_combat(
         });
 
         for effect in &attack_phase_effects {
+            let effective_effect = scale_effect(effect.effect, attack_phase_assimilated);
+
+            if let AbilityEffect::Assimilated {
+                chance,
+                duration_rounds,
+            } = effective_effect
+            {
+                let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
+                if triggered {
+                    assimilated_rounds_remaining =
+                        assimilated_rounds_remaining.max(duration_rounds.max(1));
+                }
+                trace.record(CombatEvent {
+                    event_type: "assimilated_trigger".to_string(),
+                    round_index,
+                    phase: "attack".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
+
             if let AbilityEffect::HullBreach {
                 chance,
                 duration_rounds,
                 requires_critical,
-            } = effect.effect
+            } = effective_effect
             {
                 if requires_critical && !is_crit {
                     continue;
@@ -587,7 +675,7 @@ pub fn simulate_combat(
             if let AbilityEffect::Burning {
                 chance,
                 duration_rounds,
-            } = effect.effect
+            } = effective_effect
             {
                 let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                 let triggered = burning_roll < chance.clamp(0.0, 1.0);
@@ -656,6 +744,10 @@ pub fn simulate_combat(
                     "running_total".to_string(),
                     Value::from(round_f64(total_damage)),
                 ),
+                (
+                    "assimilated_active".to_string(),
+                    Value::Bool(assimilated_rounds_remaining > 0),
+                ),
             ]),
         });
 
@@ -673,6 +765,9 @@ pub fn simulate_combat(
         }
         if hull_breach_rounds_remaining > 0 {
             hull_breach_rounds_remaining -= 1;
+        }
+        if assimilated_rounds_remaining > 0 {
+            assimilated_rounds_remaining -= 1;
         }
 
         trace.record(CombatEvent {
@@ -752,9 +847,14 @@ impl EffectAccumulator {
         timing: TimingWindow,
         effects: &[ActiveAbilityEffect],
         base_attack: f64,
+        assimilated_active: bool,
     ) {
         for effect in effects {
-            self.add_effect(timing, effect.effect, base_attack);
+            self.add_effect(
+                timing,
+                scale_effect(effect.effect, assimilated_active),
+                base_attack,
+            );
         }
         self.pre_attack_multiplier = self.pre_attack_multiplier.max(0.0);
         self.attack_phase_damage_multiplier = self.attack_phase_damage_multiplier.max(0.0);
@@ -769,6 +869,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::PierceBonus(value) => self.pre_attack_pierce_bonus += value,
                 AbilityEffect::Morale(_) => {}
+                AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
             },
@@ -780,6 +881,7 @@ impl EffectAccumulator {
                     self.attack_phase_flat_damage += value * base_attack * 0.5
                 }
                 AbilityEffect::Morale(_) => {}
+                AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
             },
@@ -789,6 +891,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::PierceBonus(value) => self.defense_mitigation_bonus += value,
                 AbilityEffect::Morale(_) => {}
+                AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
             },
@@ -798,6 +901,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::PierceBonus(value) => self.round_end_flat_damage += value,
                 AbilityEffect::Morale(_) => {}
+                AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
             },
@@ -811,7 +915,14 @@ fn record_ability_activations(
     phase: &str,
     attacker: &Combatant,
     effects: &[ActiveAbilityEffect],
+    assimilated_active: bool,
 ) {
+    let effectiveness_multiplier = if assimilated_active {
+        ASSIMILATED_EFFECTIVENESS_MULTIPLIER
+    } else {
+        1.0
+    };
+
     for effect in effects {
         trace.record(CombatEvent {
             event_type: "ability_activation".to_string(),
@@ -822,8 +933,56 @@ fn record_ability_activations(
                 ship_ability_id: Some(effect.ability_name.clone()),
                 ..EventSource::default()
             },
-            values: Map::from_iter([("boosted".to_string(), Value::Bool(effect.boosted))]),
+            values: Map::from_iter([
+                ("boosted".to_string(), Value::Bool(effect.boosted)),
+                (
+                    "effectiveness_multiplier".to_string(),
+                    Value::from(effectiveness_multiplier),
+                ),
+                ("assimilated".to_string(), Value::Bool(assimilated_active)),
+            ]),
         });
+    }
+}
+
+fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffect {
+    if !assimilated_active {
+        return effect;
+    }
+
+    match effect {
+        AbilityEffect::AttackMultiplier(modifier) => {
+            AbilityEffect::AttackMultiplier(modifier * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::PierceBonus(value) => {
+            AbilityEffect::PierceBonus(value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::Morale(chance) => {
+            AbilityEffect::Morale(chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::Assimilated {
+            chance,
+            duration_rounds,
+        } => AbilityEffect::Assimilated {
+            chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
+        },
+        AbilityEffect::HullBreach {
+            chance,
+            duration_rounds,
+            requires_critical,
+        } => AbilityEffect::HullBreach {
+            chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
+            requires_critical,
+        },
+        AbilityEffect::Burning {
+            chance,
+            duration_rounds,
+        } => AbilityEffect::Burning {
+            chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
+        },
     }
 }
 

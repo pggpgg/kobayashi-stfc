@@ -26,6 +26,10 @@ pub enum AbilityEffect {
     AttackMultiplier(f64),
     PierceBonus(f64),
     Morale(f64),
+    Assimilated {
+        chance: f64,
+        duration_rounds: u32,
+    },
     HullBreach {
         chance: f64,
         duration_rounds: u32,
