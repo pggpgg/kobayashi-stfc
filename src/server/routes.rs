@@ -44,9 +44,30 @@ pub fn route_request(method: &str, path: &str, body: &str) -> HttpResponse {
                 content_type: "application/json",
                 body: payload,
             },
-            Err(err) => error_response(400, "Bad Request", &format!("Invalid request body: {err}")),
+            Err(api::OptimizePayloadError::Parse(err)) => {
+                error_response(400, "Bad Request", &format!("Invalid request body: {err}"))
+            }
+            Err(api::OptimizePayloadError::Validation(validation)) => {
+                validation_error_response(400, "Bad Request", validation)
+            }
         },
         _ => error_response(404, "Not Found", "Route not found"),
+    }
+}
+
+fn validation_error_response(
+    status_code: u16,
+    status_text: &'static str,
+    payload: api::ValidationErrorResponse,
+) -> HttpResponse {
+    let fallback =
+        "{\n  \"status\": \"error\",\n  \"message\": \"Validation failed\"\n}".to_string();
+
+    HttpResponse {
+        status_code,
+        status_text,
+        content_type: "application/json",
+        body: serde_json::to_string_pretty(&payload).unwrap_or(fallback),
     }
 }
 

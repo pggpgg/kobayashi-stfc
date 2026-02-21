@@ -101,3 +101,121 @@ fn optimize_endpoint_rejects_invalid_payload() {
     assert_eq!(response.status_code, 400);
     assert!(response.body.contains("Invalid request body"));
 }
+
+#[test]
+fn optimize_endpoint_rejects_empty_ship_and_hostile() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"","hostile":"   ","sims":100}"#,
+    );
+
+    assert_eq!(response.status_code, 400);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+
+    assert_eq!(payload["status"], "error");
+    assert_eq!(payload["message"], "Validation failed");
+
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(
+        errors.iter().any(|error| {
+            error["field"] == "ship"
+                && error["messages"]
+                    .as_array()
+                    .is_some_and(|messages| !messages.is_empty())
+        }),
+        "ship validation error should be present"
+    );
+    assert!(
+        errors.iter().any(|error| {
+            error["field"] == "hostile"
+                && error["messages"]
+                    .as_array()
+                    .is_some_and(|messages| !messages.is_empty())
+        }),
+        "hostile validation error should be present"
+    );
+}
+
+#[test]
+fn optimize_endpoint_rejects_zero_sims() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"explorer_30","sims":0}"#,
+    );
+
+    assert_eq!(response.status_code, 400);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(errors.iter().any(|error| error["field"] == "sims"));
+}
+
+#[test]
+fn optimize_endpoint_rejects_very_large_sims() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"explorer_30","sims":5000000}"#,
+    );
+
+    assert_eq!(response.status_code, 400);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+
+    let sims_error = errors
+        .iter()
+        .find(|error| error["field"] == "sims")
+        .expect("sims validation error should be present");
+    assert!(
+        sims_error["messages"]
+            .as_array()
+            .is_some_and(|messages| !messages.is_empty()),
+        "sims error should contain at least one message"
+    );
+}
+
+#[test]
+fn optimize_validation_error_has_expected_schema() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"","hostile":"explorer_30","sims":0}"#,
+    );
+
+    assert_eq!(response.status_code, 400);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["status"], "error");
+    assert_eq!(payload["message"], "Validation failed");
+
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    for error in errors {
+        assert!(
+            error["field"].as_str().is_some(),
+            "field should be a string"
+        );
+        let messages = error["messages"]
+            .as_array()
+            .expect("messages should be an array");
+        assert!(
+            messages.iter().all(|message| message.as_str().is_some()),
+            "messages should contain strings"
+        );
+    }
+}
