@@ -19,6 +19,7 @@ pub struct FightResult {
 }
 
 pub const EPSILON: f64 = 1e-9;
+pub const MORALE_PRIMARY_PIERCING_BONUS: f64 = 0.10;
 
 pub const SURVEY_COEFFICIENTS: (f64, f64, f64) = (0.3, 0.3, 0.3);
 pub const BATTLESHIP_COEFFICIENTS: (f64, f64, f64) = (0.55, 0.2, 0.2);
@@ -169,6 +170,41 @@ pub fn mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: S
     total.clamp(0.0, 1.0)
 }
 
+pub fn mitigation_with_morale(
+    defender: DefenderStats,
+    attacker: AttackerStats,
+    ship_type: ShipType,
+    morale_active: bool,
+) -> f64 {
+    let attacker = if morale_active {
+        apply_morale_primary_piercing(attacker, ship_type)
+    } else {
+        attacker
+    };
+    mitigation(defender, attacker, ship_type)
+}
+
+pub fn apply_morale_primary_piercing(
+    attacker: AttackerStats,
+    ship_type: ShipType,
+) -> AttackerStats {
+    let mut adjusted = attacker;
+    match ship_type {
+        ShipType::Battleship => {
+            adjusted.shield_piercing *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
+        }
+        ShipType::Interceptor => {
+            adjusted.armor_piercing *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
+        }
+        ShipType::Explorer => {
+            adjusted.accuracy *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
+        }
+        ShipType::Survey => {}
+    }
+
+    adjusted
+}
+
 pub fn serialize_events_json(events: &[CombatEvent]) -> Result<String, serde_json::Error> {
     let payload: Vec<Value> = events
         .iter()
@@ -288,7 +324,43 @@ pub fn simulate_combat(
         );
 
         let effective_attack = attacker.attack * phase_effects.pre_attack_multiplier;
-        let effective_pierce = attacker.pierce + phase_effects.pre_attack_pierce_bonus;
+        let morale_source = round_start_effects.iter().find_map(|effect| {
+            if let AbilityEffect::Morale(chance) = effect.effect {
+                Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
+            } else {
+                None
+            }
+        });
+        let mut effective_pierce = attacker.pierce + phase_effects.pre_attack_pierce_bonus;
+        if let Some((morale_source, morale_chance)) = morale_source {
+            let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let morale_triggered = morale_roll < morale_chance;
+            if morale_triggered {
+                effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
+            }
+            trace.record(CombatEvent {
+                event_type: "morale_activation".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    ship_ability_id: Some(morale_source),
+                    ..EventSource::default()
+                },
+                values: Map::from_iter([
+                    ("triggered".to_string(), Value::Bool(morale_triggered)),
+                    ("roll".to_string(), Value::from(round_f64(morale_roll))),
+                    ("chance".to_string(), Value::from(round_f64(morale_chance))),
+                    (
+                        "applied_to".to_string(),
+                        Value::String("primary_piercing".to_string()),
+                    ),
+                    (
+                        "multiplier".to_string(),
+                        Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
+                    ),
+                ]),
+            });
+        }
 
         let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         trace.record(CombatEvent {
@@ -496,6 +568,7 @@ impl EffectAccumulator {
                     self.pre_attack_multiplier *= 1.0 + modifier
                 }
                 AbilityEffect::PierceBonus(value) => self.pre_attack_pierce_bonus += value,
+                AbilityEffect::Morale(_) => {}
             },
             TimingWindow::AttackPhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -504,18 +577,21 @@ impl EffectAccumulator {
                 AbilityEffect::PierceBonus(value) => {
                     self.attack_phase_flat_damage += value * base_attack * 0.5
                 }
+                AbilityEffect::Morale(_) => {}
             },
             TimingWindow::DefensePhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.defense_mitigation_bonus += modifier
                 }
                 AbilityEffect::PierceBonus(value) => self.defense_mitigation_bonus += value,
+                AbilityEffect::Morale(_) => {}
             },
             TimingWindow::RoundEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.round_end_multiplier *= 1.0 + modifier
                 }
                 AbilityEffect::PierceBonus(value) => self.round_end_flat_damage += value,
+                AbilityEffect::Morale(_) => {}
             },
         }
     }

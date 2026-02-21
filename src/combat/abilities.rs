@@ -25,6 +25,7 @@ pub enum CrewSeat {
 pub enum AbilityEffect {
     AttackMultiplier(f64),
     PierceBonus(f64),
+    Morale(f64),
 }
 
 #[derive(Debug, Clone, PartialEq)]

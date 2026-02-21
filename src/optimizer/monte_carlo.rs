@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+
 use crate::combat::{
     simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
     CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
 };
+use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::optimizer::crew_generator::CrewCandidate;
 
 #[derive(Debug, Clone)]
@@ -18,11 +21,16 @@ pub fn run_monte_carlo(
     iterations: usize,
     seed: u64,
 ) -> Vec<SimulationResult> {
+    let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
+        .ok()
+        .map(index_officers_by_name)
+        .unwrap_or_default();
+
     candidates
         .iter()
         .cloned()
         .map(|candidate| {
-            let input = scenario_to_combat_input(ship, hostile, &candidate, seed);
+            let input = scenario_to_combat_input(ship, hostile, &candidate, seed, &officer_index);
             let mut wins = 0usize;
             let mut surviving_hull_sum = 0.0;
 
@@ -83,6 +91,7 @@ fn scenario_to_combat_input(
     hostile: &str,
     candidate: &CrewCandidate,
     seed: u64,
+    officers_by_name: &HashMap<String, Officer>,
 ) -> CombatSimulationInput {
     let base_seed = stable_seed(
         ship,
@@ -124,16 +133,19 @@ fn scenario_to_combat_input(
                     &candidate.captain,
                     CrewSeat::Captain,
                     AbilityClass::CaptainManeuver,
+                    officers_by_name,
                 ),
                 seat_from_officer(
                     &candidate.bridge,
                     CrewSeat::Bridge,
                     AbilityClass::BridgeAbility,
+                    officers_by_name,
                 ),
                 seat_from_officer(
                     &candidate.below_decks,
                     CrewSeat::BelowDeck,
                     AbilityClass::BelowDeck,
+                    officers_by_name,
                 ),
             ],
         },
@@ -143,29 +155,82 @@ fn scenario_to_combat_input(
     }
 }
 
-fn seat_from_officer(id: &str, seat: CrewSeat, class: AbilityClass) -> CrewSeatContext {
+fn seat_from_officer(
+    id: &str,
+    seat: CrewSeat,
+    class: AbilityClass,
+    officers_by_name: &HashMap<String, Officer>,
+) -> CrewSeatContext {
     let hash = hash_identifier(id);
-    let effect = if hash % 2 == 0 {
-        AbilityEffect::AttackMultiplier(0.05 + ((hash >> 8) % 12) as f64 / 100.0)
+    let (lookup_name, tier) = split_name_and_tier(id);
+    let officer = officers_by_name.get(&normalize_lookup_key(&lookup_name));
+    let morale_chance = officer.and_then(|officer| {
+        officer
+            .abilities
+            .iter()
+            .find(|ability| ability.is_round_start_trigger() && ability.applies_morale_state())
+            .map(|ability| ability.morale_chance_for_tier(tier))
+    });
+
+    let (timing, effect) = if let Some(chance) = morale_chance {
+        (TimingWindow::RoundStart, AbilityEffect::Morale(chance))
+    } else if hash % 2 == 0 {
+        (
+            TimingWindow::AttackPhase,
+            AbilityEffect::AttackMultiplier(0.05 + ((hash >> 8) % 12) as f64 / 100.0),
+        )
     } else {
-        AbilityEffect::PierceBonus(0.01 + ((hash >> 8) % 12) as f64 / 100.0)
+        (
+            TimingWindow::AttackPhase,
+            AbilityEffect::PierceBonus(0.01 + ((hash >> 8) % 12) as f64 / 100.0),
+        )
     };
+
+    let ability_name = officer
+        .map(|officer| officer.name.clone())
+        .unwrap_or_else(|| id.to_string());
 
     CrewSeatContext {
         seat,
         ability: Ability {
-            name: format!(
-                "{}_{}",
-                id.to_ascii_lowercase(),
-                format!("{seat:?}").to_ascii_lowercase()
-            ),
+            name: ability_name,
             class,
-            timing: TimingWindow::AttackPhase,
+            timing,
             boostable: true,
             effect,
         },
         boosted: hash % 5 == 0,
     }
+}
+
+fn index_officers_by_name(officers: Vec<Officer>) -> HashMap<String, Officer> {
+    officers
+        .into_iter()
+        .map(|officer| (normalize_lookup_key(&officer.name), officer))
+        .collect()
+}
+
+fn normalize_lookup_key(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
+fn split_name_and_tier(input: &str) -> (String, Option<u8>) {
+    let trimmed = input.trim();
+    if let Some(open) = trimmed.rfind('(') {
+        if trimmed.ends_with(')') {
+            let inner = &trimmed[open + 1..trimmed.len() - 1];
+            if let Some(rest) = inner.strip_prefix('T').or_else(|| inner.strip_prefix('t')) {
+                if let Ok(tier) = rest.parse::<u8>() {
+                    return (trimmed[..open].trim().to_string(), Some(tier));
+                }
+            }
+        }
+    }
+    (trimmed.to_string(), None)
 }
 
 fn hash_identifier(value: &str) -> u64 {
@@ -197,4 +262,73 @@ fn stable_seed(
         .fold(seed, |acc, b| {
             acc.wrapping_mul(37).wrapping_add(u64::from(b))
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::officer::OfficerAbility;
+
+    #[test]
+    fn seat_from_officer_interprets_round_start_morale_from_profile() {
+        let mut officers = HashMap::new();
+        officers.insert(
+            normalize_lookup_key("Harry Kim"),
+            Officer {
+                id: "harry-kim-a79fdf".to_string(),
+                name: "Harry Kim".to_string(),
+                slot: Some("science".to_string()),
+                abilities: vec![OfficerAbility {
+                    slot: "officer".to_string(),
+                    trigger: Some("RoundStart".to_string()),
+                    modifier: Some("AddState".to_string()),
+                    attributes: Some("num_rounds=1, state=8".to_string()),
+                    description: Some("Apply Morale".to_string()),
+                    chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
+                }],
+            },
+        );
+
+        let seat = seat_from_officer(
+            "Harry Kim (T5)",
+            CrewSeat::BelowDeck,
+            AbilityClass::BelowDeck,
+            &officers,
+        );
+
+        assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
+        assert!(matches!(seat.ability.effect, AbilityEffect::Morale(1.0)));
+    }
+
+    #[test]
+    fn seat_from_officer_uses_tiered_morale_chance() {
+        let mut officers = HashMap::new();
+        officers.insert(
+            normalize_lookup_key("Harry Kim"),
+            Officer {
+                id: "harry-kim-a79fdf".to_string(),
+                name: "Harry Kim".to_string(),
+                slot: Some("science".to_string()),
+                abilities: vec![OfficerAbility {
+                    slot: "officer".to_string(),
+                    trigger: Some("RoundStart".to_string()),
+                    modifier: Some("AddState".to_string()),
+                    attributes: Some("num_rounds=1, state=8".to_string()),
+                    description: Some("Apply Morale".to_string()),
+                    chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
+                }],
+            },
+        );
+
+        let seat = seat_from_officer(
+            "Harry Kim (T2)",
+            CrewSeat::BelowDeck,
+            AbilityClass::BelowDeck,
+            &officers,
+        );
+
+        assert!(
+            matches!(seat.ability.effect, AbilityEffect::Morale(chance) if (chance - 0.15).abs() < 1e-12)
+        );
+    }
 }

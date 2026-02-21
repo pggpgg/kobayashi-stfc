@@ -18,6 +18,68 @@ pub struct Officer {
 #[derive(Debug, Clone, Deserialize)]
 pub struct OfficerAbility {
     pub slot: String,
+    #[serde(default)]
+    pub trigger: Option<String>,
+    #[serde(default)]
+    pub modifier: Option<String>,
+    #[serde(default)]
+    pub attributes: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub chance_by_rank: Vec<f64>,
+}
+
+impl OfficerAbility {
+    pub fn applies_morale_state(&self) -> bool {
+        let is_state_modifier = self
+            .modifier
+            .as_deref()
+            .map(|value| value.eq_ignore_ascii_case("AddState"))
+            .unwrap_or(false);
+        let has_morale_attribute = self
+            .attributes
+            .as_deref()
+            .map(|value| normalize_for_lookup(value).contains("state8"))
+            .unwrap_or(false);
+        let description_mentions_morale = self
+            .description
+            .as_deref()
+            .map(|value| normalize_for_lookup(value).contains("morale"))
+            .unwrap_or(false);
+
+        is_state_modifier && (has_morale_attribute || description_mentions_morale)
+    }
+
+    pub fn morale_chance_for_tier(&self, tier: Option<u8>) -> f64 {
+        let Some((&first, _rest)) = self.chance_by_rank.split_first() else {
+            return 1.0;
+        };
+
+        let index = tier
+            .and_then(|value| value.checked_sub(1))
+            .map(usize::from)
+            .unwrap_or(0);
+        self.chance_by_rank
+            .get(index)
+            .copied()
+            .unwrap_or(first)
+            .clamp(0.0, 1.0)
+    }
+    pub fn is_round_start_trigger(&self) -> bool {
+        self.trigger
+            .as_deref()
+            .map(|value| value.eq_ignore_ascii_case("RoundStart"))
+            .unwrap_or(false)
+    }
+}
+
+fn normalize_for_lookup(input: &str) -> String {
+    input
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
 }
 
 #[derive(Debug, Deserialize)]
