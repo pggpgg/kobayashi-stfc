@@ -103,6 +103,7 @@ fn scenario_to_combat_input(
     );
     let ship_hash = hash_identifier(ship);
     let hostile_hash = hash_identifier(hostile);
+    let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
 
     CombatSimulationInput {
         attacker: Combatant {
@@ -115,6 +116,7 @@ fn scenario_to_combat_input(
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
+            hull_health: 1000.0,
         },
         defender: Combatant {
             id: hostile.to_string(),
@@ -126,6 +128,7 @@ fn scenario_to_combat_input(
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
+            hull_health: defender_hull,
         },
         crew: CrewConfiguration {
             seats: vec![
@@ -150,7 +153,7 @@ fn scenario_to_combat_input(
             ],
         },
         rounds: 3 + (hostile_hash % 4) as u32,
-        defender_hull: 260.0 + ((hostile_hash >> 16) % 280) as f64,
+        defender_hull,
         base_seed,
     }
 }
@@ -192,8 +195,30 @@ fn seat_from_officer(
                 )
             })
     });
+    let burning = officer.and_then(|officer| {
+        officer
+            .abilities
+            .iter()
+            .find(|ability| ability.applies_burning_state())
+            .map(|ability| {
+                let timing = if ability.is_round_start_trigger() {
+                    TimingWindow::RoundStart
+                } else {
+                    TimingWindow::AttackPhase
+                };
+                (
+                    timing,
+                    AbilityEffect::Burning {
+                        chance: ability.morale_chance_for_tier(tier),
+                        duration_rounds: ability.state_duration_rounds(),
+                    },
+                )
+            })
+    });
 
     let (timing, effect) = if let Some((timing, effect)) = hull_breach {
+        (timing, effect)
+    } else if let Some((timing, effect)) = burning {
         (timing, effect)
     } else if let Some(chance) = morale_chance {
         (TimingWindow::RoundStart, AbilityEffect::Morale(chance))
@@ -425,6 +450,44 @@ mod tests {
             } if (chance - 0.3).abs() < 1e-12
         ));
     }
+
+    #[test]
+    fn seat_from_officer_interprets_burning_profiles() {
+        let mut officers = HashMap::new();
+        officers.insert(
+            normalize_lookup_key("Nero"),
+            Officer {
+                id: "nero".to_string(),
+                name: "Nero".to_string(),
+                slot: Some("captain".to_string()),
+                abilities: vec![OfficerAbility {
+                    slot: "officer".to_string(),
+                    trigger: Some("EnemyTakesHit".to_string()),
+                    modifier: Some("AddState".to_string()),
+                    attributes: Some("num_rounds=2, state=2".to_string()),
+                    description: Some("Apply Burning".to_string()),
+                    chance_by_rank: vec![0.25, 0.3, 0.35],
+                }],
+            },
+        );
+
+        let nero = seat_from_officer(
+            "Nero (T2)",
+            CrewSeat::Captain,
+            AbilityClass::CaptainManeuver,
+            &officers,
+        );
+
+        assert_eq!(nero.ability.timing, TimingWindow::AttackPhase);
+        assert!(matches!(
+            nero.ability.effect,
+            AbilityEffect::Burning {
+                chance,
+                duration_rounds: 2
+            } if (chance - 0.3).abs() < 1e-12
+        ));
+    }
+
     #[test]
     fn seat_from_officer_uses_tiered_morale_chance() {
         let mut officers = HashMap::new();

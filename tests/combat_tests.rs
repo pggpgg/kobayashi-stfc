@@ -219,6 +219,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -230,6 +231,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
 
     let no_morale = CrewConfiguration::default();
@@ -278,6 +280,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -289,6 +292,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
 
     let crew = CrewConfiguration {
@@ -349,6 +353,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -360,6 +365,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
 
     let crew = CrewConfiguration {
@@ -415,6 +421,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         proc_chance: 0.4,
         proc_multiplier: 1.25,
         end_of_round_damage: 3.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -426,6 +433,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let config = SimulationConfig {
         rounds: 2,
@@ -610,6 +618,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -621,6 +630,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -688,6 +698,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -699,6 +710,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -751,6 +763,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -762,6 +775,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -821,6 +835,71 @@ fn timing_windows_materially_change_damage_outcomes() {
 }
 
 #[test]
+fn burning_deals_one_percent_hull_per_round() {
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+    };
+    let defender = Combatant {
+        id: "target".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 500.0,
+    };
+
+    let burning_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "georgiou".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::Burning {
+                    chance: 1.0,
+                    duration_rounds: 2,
+                },
+            },
+            boosted: false,
+        }],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 3,
+            seed: 1,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_crew,
+    );
+
+    approx_eq(result.total_damage, 15.0, 1e-12);
+    let burning_ticks = result
+        .events
+        .iter()
+        .filter(|event| event.event_type == "end_of_round_effects")
+        .filter(|event| event.values["burning_damage"] == Value::from(5.0))
+        .count();
+    assert_eq!(burning_ticks, 3);
+}
+
+#[test]
 fn emits_ability_activation_for_each_timing_window() {
     let attacker = Combatant {
         id: "nero".to_string(),
@@ -832,6 +911,7 @@ fn emits_ability_activation_for_each_timing_window() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 1.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -843,6 +923,7 @@ fn emits_ability_activation_for_each_timing_window() {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
 
     let crew = CrewConfiguration {

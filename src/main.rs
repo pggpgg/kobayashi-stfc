@@ -230,6 +230,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let defender = Combatant {
         id: parsed.defender_id,
@@ -241,6 +242,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
+        hull_health: 1000.0,
     };
     let config = SimulationConfig {
         rounds: parsed.rounds,

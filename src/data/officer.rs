@@ -88,6 +88,27 @@ impl OfficerAbility {
         is_state_modifier && (has_hull_breach_attribute || description_mentions_hull_breach)
     }
 
+    pub fn applies_burning_state(&self) -> bool {
+        let is_state_modifier = self
+            .modifier
+            .as_deref()
+            .map(|value| value.eq_ignore_ascii_case("AddState"))
+            .unwrap_or(false);
+        let normalized_attributes = self
+            .attributes
+            .as_deref()
+            .map(normalize_for_lookup)
+            .unwrap_or_default();
+        let has_burning_attribute = normalized_attributes.contains("state2");
+        let description_mentions_burning = self
+            .description
+            .as_deref()
+            .map(|value| normalize_for_lookup(value).contains("burning"))
+            .unwrap_or(false);
+
+        is_state_modifier && (has_burning_attribute || description_mentions_burning)
+    }
+
     pub fn triggers_on_critical_shot(&self) -> bool {
         self.trigger
             .as_deref()
