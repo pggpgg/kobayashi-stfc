@@ -485,3 +485,194 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         1
     );
 }
+
+#[test]
+fn timing_windows_materially_change_damage_outcomes() {
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 0.0,
+        mitigation: 0.5,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 17,
+        trace_mode: TraceMode::Events,
+    };
+
+    let attack_phase_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "pierce_now".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::AttackPhase,
+                boostable: true,
+                effect: AbilityEffect::PierceBonus(0.2),
+            },
+            boosted: false,
+        }],
+    };
+    let round_start_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "pierce_early".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::PierceBonus(0.2),
+            },
+            boosted: false,
+        }],
+    };
+    let defense_phase_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "pierce_on_defense".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::DefensePhase,
+                boostable: true,
+                effect: AbilityEffect::PierceBonus(0.2),
+            },
+            boosted: false,
+        }],
+    };
+
+    let attack_phase = simulate_combat(&attacker, &defender, config, &attack_phase_crew);
+    let round_start = simulate_combat(&attacker, &defender, config, &round_start_crew);
+    let defense_phase = simulate_combat(&attacker, &defender, config, &defense_phase_crew);
+
+    assert!(round_start.total_damage > attack_phase.total_damage);
+    assert!(defense_phase.total_damage > attack_phase.total_damage);
+    approx_eq(attack_phase.total_damage, 60.0, 1e-12);
+    approx_eq(round_start.total_damage, 70.0, 1e-12);
+    approx_eq(defense_phase.total_damage, 70.0, 1e-12);
+}
+
+#[test]
+fn emits_ability_activation_for_each_timing_window() {
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 120.0,
+        mitigation: 0.0,
+        pierce: 0.1,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 1.0,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 0.0,
+        mitigation: 0.4,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+    };
+
+    let crew = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "combat_begin_alpha".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "round_start_alpha".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::BelowDeck,
+                ability: Ability {
+                    name: "attack_alpha".to_string(),
+                    class: AbilityClass::BelowDeck,
+                    timing: TimingWindow::AttackPhase,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "defense_alpha".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::DefensePhase,
+                    boostable: true,
+                    effect: AbilityEffect::PierceBonus(0.1),
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "round_end_alpha".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundEnd,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.2),
+                },
+                boosted: false,
+            },
+        ],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 19,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+
+    let phases: Vec<_> = result
+        .events
+        .iter()
+        .filter(|event| event.event_type == "ability_activation")
+        .map(|event| event.phase.as_str())
+        .collect();
+
+    assert!(phases.contains(&"combat_begin"));
+    assert!(phases.contains(&"round_start"));
+    assert!(phases.contains(&"attack"));
+    assert!(phases.contains(&"defense"));
+    assert!(phases.contains(&"round_end"));
+}
