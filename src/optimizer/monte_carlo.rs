@@ -101,12 +101,22 @@ fn scenario_to_combat_input(
             attack: 95.0 + (ship_hash % 70) as f64,
             mitigation: 0.0,
             pierce: 0.08 + ((ship_hash >> 8) % 14) as f64 / 100.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
         },
         defender: Combatant {
             id: hostile.to_string(),
             attack: 0.0,
             mitigation: 0.25 + (hostile_hash % 35) as f64 / 100.0,
             pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
         },
         crew: CrewConfiguration {
             seats: vec![

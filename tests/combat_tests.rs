@@ -157,12 +157,22 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         attack: 120.0,
         mitigation: 0.1,
         pierce: 0.15,
+        crit_chance: 0.5,
+        crit_multiplier: 1.8,
+        proc_chance: 0.4,
+        proc_multiplier: 1.25,
+        end_of_round_damage: 3.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
         attack: 10.0,
         mitigation: 0.35,
         pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let config = SimulationConfig {
         rounds: 2,
@@ -176,11 +186,61 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
 
     assert_eq!(first.events, second.events);
     assert_eq!(first.total_damage, second.total_damage);
-    assert_eq!(first.events.len(), 8);
-    assert_eq!(first.events[0].event_type, "round_start");
-    assert_eq!(first.events[1].event_type, "attack_roll");
-    assert_eq!(first.events[2].event_type, "mitigation_calc");
-    assert_eq!(first.events[3].event_type, "pierce_calc");
+    approx_eq(first.total_damage, 318.0, 1e-12);
+
+    assert_eq!(first.events.len(), 16);
+    let expected_event_types = vec![
+        "round_start",
+        "attack_roll",
+        "mitigation_calc",
+        "pierce_calc",
+        "crit_resolution",
+        "proc_triggers",
+        "damage_application",
+        "end_of_round_effects",
+    ];
+    for (index, expected) in expected_event_types.iter().enumerate() {
+        assert_eq!(first.events[index].event_type, *expected);
+        assert_eq!(first.events[index + 8].event_type, *expected);
+    }
+
+    let round_one_crit = &first.events[4];
+    let round_one_proc = &first.events[5];
+    assert_eq!(round_one_crit.values["is_crit"], Value::Bool(true));
+    assert_eq!(round_one_proc.values["triggered"], Value::Bool(true));
+    approx_eq(
+        round_one_crit.values["roll"]
+            .as_f64()
+            .expect("crit roll as f64"),
+        0.198961,
+        1e-12,
+    );
+    approx_eq(
+        round_one_proc.values["roll"]
+            .as_f64()
+            .expect("proc roll as f64"),
+        0.053962,
+        1e-12,
+    );
+
+    let round_two_crit = &first.events[12];
+    let round_two_proc = &first.events[13];
+    assert_eq!(round_two_crit.values["is_crit"], Value::Bool(false));
+    assert_eq!(round_two_proc.values["triggered"], Value::Bool(false));
+    approx_eq(
+        round_two_crit.values["roll"]
+            .as_f64()
+            .expect("crit roll as f64"),
+        0.660146,
+        1e-12,
+    );
+    approx_eq(
+        round_two_proc.values["roll"]
+            .as_f64()
+            .expect("proc roll as f64"),
+        0.766776,
+        1e-12,
+    );
 }
 
 #[test]
@@ -292,12 +352,22 @@ fn crew_slot_gating_matrix_controls_activation() {
         attack: 100.0,
         mitigation: 0.0,
         pierce: 0.15,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
         attack: 0.0,
         mitigation: 0.5,
         pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -360,12 +430,22 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         attack: 100.0,
         mitigation: 0.0,
         pierce: 0.1,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
         attack: 0.0,
         mitigation: 0.2,
         pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
