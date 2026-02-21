@@ -12,6 +12,7 @@ from tools.combat_engine.mitigation import (
     DefenderStats,
     ShipType,
     component_mitigation,
+    isolytic_mitigation,
     mitigation,
 )
 
@@ -61,3 +62,16 @@ def test_zero_defenses_produce_low_mitigation() -> None:
     total = mitigation(defender, attacker, ShipType.SURVEY)
 
     assert total == pytest.approx(0.1523922966, rel=1e-3)
+
+
+@pytest.mark.parametrize(
+    ("isolytic_defense", "expected"),
+    [
+        (0.0, 1.0),
+        (1.0, 0.5),
+        (4.0, 0.2),
+        (-5.0, 1.0),
+    ],
+)
+def test_isolytic_mitigation_vectors(isolytic_defense: float, expected: float) -> None:
+    assert isolytic_mitigation(isolytic_defense) == pytest.approx(expected)

@@ -51,6 +51,12 @@ def component_mitigation(defense: float, piercing: float) -> float:
     return 1.0 / (1.0 + 4.0 ** (1.1 - x))
 
 
+def isolytic_mitigation(isolytic_defense: float) -> float:
+    """Compute the mitigated portion of isolytic damage as 1 / (1 + defense)."""
+    safe_defense = max(0.0, isolytic_defense)
+    return 1.0 / (1.0 + safe_defense)
+
+
 def mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: ShipType) -> float:
     """Compute total mitigation using weighted multiplicative composition."""
     c_armor, c_shield, c_dodge = SHIP_TYPE_COEFFICIENTS[ship_type]
