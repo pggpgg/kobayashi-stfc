@@ -1,0 +1,11 @@
+{
+  "id": "baelosian_miner_51_survey",
+  "hostile_name": "Baelosian Miner",
+  "level": 51,
+  "ship_class": "survey",
+  "armor": 205092.0,
+  "shield_deflection": 215347.0,
+  "dodge": 205092.0,
+  "hull_health": 8091383.0,
+  "shield_health": 8422696.0
+}

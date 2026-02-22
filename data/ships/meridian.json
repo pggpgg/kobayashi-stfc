@@ -1,0 +1,13 @@
+{
+  "id": "meridian",
+  "ship_name": "MERIDIAN",
+  "ship_class": "survey",
+  "armor_piercing": 212.0,
+  "shield_piercing": 212.0,
+  "accuracy": 212.0,
+  "attack": 806.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 8534.0,
+  "shield_health": 4267.0
+}

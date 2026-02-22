@@ -1,0 +1,13 @@
+{
+  "id": "sanctus",
+  "ship_name": "SANCTUS",
+  "ship_class": "interceptor",
+  "armor_piercing": 316381.0,
+  "shield_piercing": 41130.0,
+  "accuracy": 31637.0,
+  "attack": 647662.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

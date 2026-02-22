@@ -1,0 +1,11 @@
+{
+  "id": "freebooter_battleship_43_battleship",
+  "hostile_name": "Freebooter Battleship",
+  "level": 43,
+  "ship_class": "battleship",
+  "armor": 144689.0,
+  "shield_deflection": 8246.0,
+  "dodge": 7853.0,
+  "hull_health": 39566615.0,
+  "shield_health": 3633298.0
+}

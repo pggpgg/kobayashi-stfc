@@ -1,0 +1,11 @@
+{
+  "id": "immortal_hunter_class_57_battleship",
+  "hostile_name": "Immortal Hunter Class",
+  "level": 57,
+  "ship_class": "battleship",
+  "armor": 8668095.0,
+  "shield_deflection": 395369.0,
+  "dodge": 395369.0,
+  "hull_health": 256589115.0,
+  "shield_health": 174945941.0
+}

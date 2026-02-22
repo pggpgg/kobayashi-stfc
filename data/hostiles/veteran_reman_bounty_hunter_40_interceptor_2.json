@@ -1,0 +1,11 @@
+{
+  "id": "veteran_reman_bounty_hunter_40_interceptor_2",
+  "hostile_name": "Veteran Reman Bounty Hunter",
+  "level": 40,
+  "ship_class": "interceptor",
+  "armor": 54866.0,
+  "shield_deflection": 54866.0,
+  "dodge": 219463.0,
+  "hull_health": 549780.0,
+  "shield_health": 549780.0
+}

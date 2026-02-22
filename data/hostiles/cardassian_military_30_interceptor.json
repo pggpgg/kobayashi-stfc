@@ -1,0 +1,11 @@
+{
+  "id": "cardassian_military_30_interceptor",
+  "hostile_name": "Cardassian Military",
+  "level": 30,
+  "ship_class": "interceptor",
+  "armor": 2100.0,
+  "shield_deflection": 2100.0,
+  "dodge": 8400.0,
+  "hull_health": 27840.0,
+  "shield_health": 27840.0
+}

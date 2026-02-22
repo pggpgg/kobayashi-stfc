@@ -1,0 +1,13 @@
+{
+  "id": "uss_enterprise_a",
+  "ship_name": "USS ENTERPRISE A",
+  "ship_class": "explorer",
+  "armor_piercing": 8142.0,
+  "shield_piercing": 8142.0,
+  "accuracy": 81424.0,
+  "attack": 396898.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 1229380.0,
+  "shield_health": 614690.0
+}

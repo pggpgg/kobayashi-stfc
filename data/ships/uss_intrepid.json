@@ -1,0 +1,13 @@
+{
+  "id": "uss_intrepid",
+  "ship_name": "USS INTREPID",
+  "ship_class": "battleship",
+  "armor_piercing": 1665.0,
+  "shield_piercing": 13990.0,
+  "accuracy": 2220.0,
+  "attack": 102480.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

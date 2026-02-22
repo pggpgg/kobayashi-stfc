@@ -1,0 +1,11 @@
+{
+  "id": "sunspot_pirate_51_interceptor",
+  "hostile_name": "Sunspot Pirate",
+  "level": 51,
+  "ship_class": "interceptor",
+  "armor": 17845.0,
+  "shield_deflection": 17845.0,
+  "dodge": 453439.0,
+  "hull_health": 9026063.0,
+  "shield_health": 9026063.0
+}

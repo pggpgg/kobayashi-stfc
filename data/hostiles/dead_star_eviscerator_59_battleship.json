@@ -1,0 +1,11 @@
+{
+  "id": "dead_star_eviscerator_59_battleship",
+  "hostile_name": "Dead Star Eviscerator",
+  "level": 59,
+  "ship_class": "battleship",
+  "armor": 6031509.0,
+  "shield_deflection": 237363.0,
+  "dodge": 237363.0,
+  "hull_health": 151629775.0,
+  "shield_health": 113720544.0
+}

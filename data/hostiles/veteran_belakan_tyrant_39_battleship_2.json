@@ -1,0 +1,11 @@
+{
+  "id": "veteran_belakan_tyrant_39_battleship_2",
+  "hostile_name": "Veteran Belakan Tyrant",
+  "level": 39,
+  "ship_class": "battleship",
+  "armor": 114364.0,
+  "shield_deflection": 28591.0,
+  "dodge": 28591.0,
+  "hull_health": 354610.0,
+  "shield_health": 265960.0
+}

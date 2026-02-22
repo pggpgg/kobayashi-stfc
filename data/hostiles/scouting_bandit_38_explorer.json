@@ -1,0 +1,11 @@
+{
+  "id": "scouting_bandit_38_explorer",
+  "hostile_name": "Scouting Bandit",
+  "level": 38,
+  "ship_class": "explorer",
+  "armor": 12714.0,
+  "shield_deflection": 50856.0,
+  "dodge": 12714.0,
+  "hull_health": 138570.0,
+  "shield_health": 146270.0
+}

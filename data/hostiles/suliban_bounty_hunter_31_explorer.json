@@ -1,0 +1,11 @@
+{
+  "id": "suliban_bounty_hunter_31_explorer",
+  "hostile_name": "Suliban Bounty Hunter",
+  "level": 31,
+  "ship_class": "explorer",
+  "armor": 2750.0,
+  "shield_deflection": 11000.0,
+  "dodge": 2750.0,
+  "hull_health": 37800.0,
+  "shield_health": 39900.0
+}

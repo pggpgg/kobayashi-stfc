@@ -1,0 +1,13 @@
+{
+  "id": "vahklas",
+  "ship_name": "VAHKLAS",
+  "ship_class": "explorer",
+  "armor_piercing": 209.0,
+  "shield_piercing": 209.0,
+  "accuracy": 1251.0,
+  "attack": 1101.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 11120.0,
+  "shield_health": 5560.0
+}

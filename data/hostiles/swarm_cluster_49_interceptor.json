@@ -1,0 +1,11 @@
+{
+  "id": "swarm_cluster_49_interceptor",
+  "hostile_name": "Swarm Cluster",
+  "level": 49,
+  "ship_class": "interceptor",
+  "armor": 319671.0,
+  "shield_deflection": 319671.0,
+  "dodge": 1598129.0,
+  "hull_health": 111864321.0,
+  "shield_health": 0.0
+}

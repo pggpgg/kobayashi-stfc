@@ -1,0 +1,11 @@
+{
+  "id": "veteran_klingon_patrol_38_battleship",
+  "hostile_name": "Veteran Klingon Patrol",
+  "level": 38,
+  "ship_class": "battleship",
+  "armor": 99363.0,
+  "shield_deflection": 28390.0,
+  "dodge": 33121.0,
+  "hull_health": 336050.0,
+  "shield_health": 252040.0
+}

@@ -1,0 +1,13 @@
+{
+  "id": "uss_franklin_a",
+  "ship_name": "USS FRANKLIN-A",
+  "ship_class": "explorer",
+  "armor_piercing": 1000.0,
+  "shield_piercing": 1000.0,
+  "accuracy": 7250.0,
+  "attack": 17160.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 54000.0,
+  "shield_health": 27000.0
+}

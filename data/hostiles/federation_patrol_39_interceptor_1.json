@@ -1,0 +1,11 @@
+{
+  "id": "federation_patrol_39_interceptor_1",
+  "hostile_name": "Federation Patrol",
+  "level": 39,
+  "ship_class": "interceptor",
+  "armor": 18849.0,
+  "shield_deflection": 21991.0,
+  "dodge": 65973.0,
+  "hull_health": 145730.0,
+  "shield_health": 199420.0
+}

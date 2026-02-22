@@ -1,0 +1,11 @@
+{
+  "id": "romulan_patrol_46_interceptor",
+  "hostile_name": "Romulan Patrol",
+  "level": 46,
+  "ship_class": "interceptor",
+  "armor": 18762.0,
+  "shield_deflection": 17869.0,
+  "dodge": 252873.0,
+  "hull_health": 5182165.0,
+  "shield_health": 4711059.0
+}

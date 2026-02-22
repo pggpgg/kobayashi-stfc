@@ -1,0 +1,11 @@
+{
+  "id": "assimilated_battleship_51_battleship",
+  "hostile_name": "Assimilated Battleship",
+  "level": 51,
+  "ship_class": "battleship",
+  "armor": 416428.0,
+  "shield_deflection": 17599.0,
+  "dodge": 17599.0,
+  "hull_health": 10923264.0,
+  "shield_health": 8192345.0
+}

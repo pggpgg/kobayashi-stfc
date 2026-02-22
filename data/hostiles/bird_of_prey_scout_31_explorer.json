@@ -1,0 +1,11 @@
+{
+  "id": "bird_of_prey_scout_31_explorer",
+  "hostile_name": "Bird of Prey Scout ⇯",
+  "level": 31,
+  "ship_class": "explorer",
+  "armor": 15257.0,
+  "shield_deflection": 71199.0,
+  "dodge": 13350.0,
+  "hull_health": 131650.0,
+  "shield_health": 190150.0
+}

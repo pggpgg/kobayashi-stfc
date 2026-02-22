@@ -1,0 +1,11 @@
+{
+  "id": "fearless_bandits_37_battleship_1",
+  "hostile_name": "Fearless Bandits",
+  "level": 37,
+  "ship_class": "battleship",
+  "armor": 41755.0,
+  "shield_deflection": 10439.0,
+  "dodge": 10439.0,
+  "hull_health": 125310.0,
+  "shield_health": 93990.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "assimilated_explorer_52_explorer",
+  "hostile_name": "Assimilated Explorer",
+  "level": 52,
+  "ship_class": "explorer",
+  "armor": 43109.0,
+  "shield_deflection": 724096.0,
+  "dodge": 43109.0,
+  "hull_health": 11630457.0,
+  "shield_health": 14802408.0
+}

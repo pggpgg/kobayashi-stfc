@@ -1,0 +1,11 @@
+{
+  "id": "klingon_scout_35_interceptor",
+  "hostile_name": "Klingon Scout ★",
+  "level": 35,
+  "ship_class": "interceptor",
+  "armor": 6169.0,
+  "shield_deflection": 7050.0,
+  "dodge": 32900.0,
+  "hull_health": 63480.0,
+  "shield_health": 63480.0
+}

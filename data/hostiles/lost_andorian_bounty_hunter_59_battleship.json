@@ -1,0 +1,11 @@
+{
+  "id": "lost_andorian_bounty_hunter_59_battleship",
+  "hostile_name": "Lost Andorian Bounty Hunter",
+  "level": 59,
+  "ship_class": "battleship",
+  "armor": 6822112.0,
+  "shield_deflection": 311170.0,
+  "dodge": 311170.0,
+  "hull_health": 201945136.0,
+  "shield_health": 137688935.0
+}

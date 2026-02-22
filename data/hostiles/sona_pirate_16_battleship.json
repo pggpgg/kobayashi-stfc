@@ -1,0 +1,11 @@
+{
+  "id": "sona_pirate_16_battleship",
+  "hostile_name": "Sona Pirate",
+  "level": 16,
+  "ship_class": "battleship",
+  "armor": 511.0,
+  "shield_deflection": 128.0,
+  "dodge": 128.0,
+  "hull_health": 1980.0,
+  "shield_health": 1490.0
+}

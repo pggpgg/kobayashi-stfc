@@ -1,0 +1,11 @@
+{
+  "id": "veteran_kriosian_outlaw_39_explorer",
+  "hostile_name": "Veteran Kriosian Outlaw",
+  "level": 39,
+  "ship_class": "explorer",
+  "armor": 28591.0,
+  "shield_deflection": 114364.0,
+  "dodge": 28591.0,
+  "hull_health": 319150.0,
+  "shield_health": 336880.0
+}

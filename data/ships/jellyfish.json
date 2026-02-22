@@ -1,0 +1,13 @@
+{
+  "id": "jellyfish",
+  "ship_name": "JELLYFISH",
+  "ship_class": "explorer",
+  "armor_piercing": 46.0,
+  "shield_piercing": 53.0,
+  "accuracy": 370.0,
+  "attack": 353.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2620.0,
+  "shield_health": 1310.0
+}

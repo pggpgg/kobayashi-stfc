@@ -1,0 +1,11 @@
+{
+  "id": "dessneran_bandit_40_explorer_1",
+  "hostile_name": "Dessneran Bandit",
+  "level": 40,
+  "ship_class": "explorer",
+  "armor": 19362.0,
+  "shield_deflection": 77449.0,
+  "dodge": 19362.0,
+  "hull_health": 214120.0,
+  "shield_health": 226020.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "klingon_war_army_36_explorer",
+  "hostile_name": "Klingon War Army",
+  "level": 36,
+  "ship_class": "explorer",
+  "armor": 9710.0,
+  "shield_deflection": 115544.0,
+  "dodge": 10196.0,
+  "hull_health": 2073559.0,
+  "shield_health": 2639076.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "jem_hadar_battleship_51_battleship",
+  "hostile_name": "Jem'Hadar Battleship",
+  "level": 51,
+  "ship_class": "battleship",
+  "armor": 454686.0,
+  "shield_deflection": 21776.0,
+  "dodge": 22644.0,
+  "hull_health": 13490009.0,
+  "shield_health": 10117439.0
+}

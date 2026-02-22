@@ -1,0 +1,11 @@
+{
+  "id": "exchange_transport_39_survey",
+  "hostile_name": "Exchange Transport",
+  "level": 39,
+  "ship_class": "survey",
+  "armor": 166668.0,
+  "shield_deflection": 166668.0,
+  "dodge": 166668.0,
+  "hull_health": 10073580.0,
+  "shield_health": 6072351.0
+}

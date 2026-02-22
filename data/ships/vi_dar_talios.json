@@ -1,0 +1,13 @@
+{
+  "id": "vi_dar_talios",
+  "ship_name": "VI'DAR TALIOS",
+  "ship_class": "interceptor",
+  "armor_piercing": 32500.0,
+  "shield_piercing": 3033.3333333333335,
+  "accuracy": 1533.3333333333333,
+  "attack": 289875.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.75,
+  "hull_health": 59000.0,
+  "shield_health": 29500.0
+}

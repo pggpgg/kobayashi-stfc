@@ -1,0 +1,11 @@
+{
+  "id": "klingon_fighter_32_interceptor",
+  "hostile_name": "Klingon Fighter",
+  "level": 32,
+  "ship_class": "interceptor",
+  "armor": 7875.0,
+  "shield_deflection": 9000.0,
+  "dodge": 42000.0,
+  "hull_health": 82800.0,
+  "shield_health": 82800.0
+}

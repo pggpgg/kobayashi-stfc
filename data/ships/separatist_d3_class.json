@@ -1,0 +1,13 @@
+{
+  "id": "separatist_d3_class",
+  "ship_name": "SEPARATIST D3 CLASS",
+  "ship_class": "interceptor",
+  "armor_piercing": 5628.0,
+  "shield_piercing": 541.0,
+  "accuracy": 619.0,
+  "attack": 20382.0,
+  "crit_chance": 0.15,
+  "crit_damage": 1.1,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

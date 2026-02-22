@@ -1,0 +1,11 @@
+{
+  "id": "corvallen_loyalist_44_explorer",
+  "hostile_name": "Corvallen Loyalist",
+  "level": 44,
+  "ship_class": "explorer",
+  "armor": 16383.0,
+  "shield_deflection": 195513.0,
+  "dodge": 15603.0,
+  "hull_health": 3641685.0,
+  "shield_health": 4213522.0
+}

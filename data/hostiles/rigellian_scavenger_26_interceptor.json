@@ -1,0 +1,11 @@
+{
+  "id": "rigellian_scavenger_26_interceptor",
+  "hostile_name": "Rigellian Scavenger",
+  "level": 26,
+  "ship_class": "interceptor",
+  "armor": 750.0,
+  "shield_deflection": 750.0,
+  "dodge": 3000.0,
+  "hull_health": 9600.0,
+  "shield_health": 9600.0
+}

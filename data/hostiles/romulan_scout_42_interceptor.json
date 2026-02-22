@@ -1,0 +1,11 @@
+{
+  "id": "romulan_scout_42_interceptor",
+  "hostile_name": "Romulan Scout ★",
+  "level": 42,
+  "ship_class": "interceptor",
+  "armor": 10240.0,
+  "shield_deflection": 9752.0,
+  "dodge": 19735.0,
+  "hull_health": 2377018.0,
+  "shield_health": 2160925.0
+}

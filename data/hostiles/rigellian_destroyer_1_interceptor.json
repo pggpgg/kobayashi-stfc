@@ -1,0 +1,11 @@
+{
+  "id": "rigellian_destroyer_1_interceptor",
+  "hostile_name": "Rigellian Destroyer",
+  "level": 1,
+  "ship_class": "interceptor",
+  "armor": 2.0,
+  "shield_deflection": 2.0,
+  "dodge": 7.0,
+  "hull_health": 30.0,
+  "shield_health": 30.0
+}

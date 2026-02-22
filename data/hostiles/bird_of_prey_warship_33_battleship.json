@@ -1,0 +1,11 @@
+{
+  "id": "bird_of_prey_warship_33_battleship",
+  "hostile_name": "Bird of Prey Warship ⇯",
+  "level": 33,
+  "ship_class": "battleship",
+  "armor": 108429.0,
+  "shield_deflection": 20330.0,
+  "dodge": 23235.0,
+  "hull_health": 309290.0,
+  "shield_health": 169510.0
+}

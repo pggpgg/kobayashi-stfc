@@ -1,0 +1,11 @@
+{
+  "id": "lost_takret_militia_29_explorer",
+  "hostile_name": "Lost Takret Militia",
+  "level": 29,
+  "ship_class": "explorer",
+  "armor": 2100.0,
+  "shield_deflection": 9800.0,
+  "dodge": 1838.0,
+  "hull_health": 28220.0,
+  "shield_health": 40760.0
+}

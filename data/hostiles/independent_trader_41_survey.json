@@ -1,0 +1,11 @@
+{
+  "id": "independent_trader_41_survey",
+  "hostile_name": "Independent Trader",
+  "level": 41,
+  "ship_class": "survey",
+  "armor": 83785.0,
+  "shield_deflection": 83785.0,
+  "dodge": 83785.0,
+  "hull_health": 2054908.0,
+  "shield_health": 2054908.0
+}

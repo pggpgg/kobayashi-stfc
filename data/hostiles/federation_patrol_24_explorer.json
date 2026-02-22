@@ -1,0 +1,11 @@
+{
+  "id": "federation_patrol_24_explorer",
+  "hostile_name": "Federation Patrol",
+  "level": 24,
+  "ship_class": "explorer",
+  "armor": 690.0,
+  "shield_deflection": 3220.0,
+  "dodge": 604.0,
+  "hull_health": 6670.0,
+  "shield_health": 9630.0
+}

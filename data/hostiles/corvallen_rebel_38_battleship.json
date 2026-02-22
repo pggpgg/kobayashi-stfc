@@ -1,0 +1,11 @@
+{
+  "id": "corvallen_rebel_38_battleship",
+  "hostile_name": "Corvallen Rebel",
+  "level": 38,
+  "ship_class": "battleship",
+  "armor": 77449.0,
+  "shield_deflection": 19362.0,
+  "dodge": 19362.0,
+  "hull_health": 237910.0,
+  "shield_health": 178430.0
+}

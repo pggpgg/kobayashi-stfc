@@ -1,0 +1,11 @@
+{
+  "id": "jem_hadar_cruiser_50_explorer",
+  "hostile_name": "Jem'Hadar Cruiser",
+  "level": 50,
+  "ship_class": "explorer",
+  "armor": 32979.0,
+  "shield_deflection": 481163.0,
+  "dodge": 32658.0,
+  "hull_health": 7616277.0,
+  "shield_health": 10662796.0
+}

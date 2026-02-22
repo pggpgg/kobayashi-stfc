@@ -1,0 +1,11 @@
+{
+  "id": "klingon_hunter_50_interceptor",
+  "hostile_name": "Klingon Hunter",
+  "level": 50,
+  "ship_class": "interceptor",
+  "armor": 29926.0,
+  "shield_deflection": 29926.0,
+  "dodge": 584370.0,
+  "hull_health": 11228643.0,
+  "shield_health": 11228643.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "romulan_enforcer_41_battleship",
+  "hostile_name": "Romulan Enforcer",
+  "level": 41,
+  "ship_class": "battleship",
+  "armor": 171674.0,
+  "shield_deflection": 8717.0,
+  "dodge": 8717.0,
+  "hull_health": 5416322.0,
+  "shield_health": 3692941.0
+}

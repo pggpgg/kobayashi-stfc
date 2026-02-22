@@ -1,0 +1,11 @@
+{
+  "id": "ferengi_observer_35_survey",
+  "hostile_name": "Ferengi Observer",
+  "level": 35,
+  "ship_class": "survey",
+  "armor": 25428.0,
+  "shield_deflection": 25428.0,
+  "dodge": 25428.0,
+  "hull_health": 184770.0,
+  "shield_health": 184770.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "veteran_federation_patrol_40_interceptor_1",
+  "hostile_name": "Veteran Federation Patrol",
+  "level": 40,
+  "ship_class": "interceptor",
+  "armor": 65839.0,
+  "shield_deflection": 76812.0,
+  "dodge": 230436.0,
+  "hull_health": 522290.0,
+  "shield_health": 714710.0
+}

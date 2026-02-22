@@ -1,0 +1,11 @@
+{
+  "id": "blacklight_pirate_59_interceptor",
+  "hostile_name": "Blacklight Pirate",
+  "level": 59,
+  "ship_class": "interceptor",
+  "armor": 262639.0,
+  "shield_deflection": 262639.0,
+  "dodge": 6673804.0,
+  "hull_health": 132847457.0,
+  "shield_health": 132847457.0
+}

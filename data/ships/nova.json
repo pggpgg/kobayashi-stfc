@@ -1,0 +1,13 @@
+{
+  "id": "nova",
+  "ship_name": "NOVA",
+  "ship_class": "survey",
+  "armor_piercing": 23132.0,
+  "shield_piercing": 23132.0,
+  "accuracy": 23132.0,
+  "attack": 24783.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 1211954.0,
+  "shield_health": 605977.0
+}

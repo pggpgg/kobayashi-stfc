@@ -1,0 +1,13 @@
+{
+  "id": "vorta_vor",
+  "ship_name": "VORTA VOR",
+  "ship_class": "survey",
+  "armor_piercing": 2772.0,
+  "shield_piercing": 3234.0,
+  "accuracy": 2426.0,
+  "attack": 3150.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 23700.0,
+  "shield_health": 11850.0
+}

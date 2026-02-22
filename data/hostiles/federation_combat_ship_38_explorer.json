@@ -1,0 +1,11 @@
+{
+  "id": "federation_combat_ship_38_explorer",
+  "hostile_name": "Federation Combat Ship",
+  "level": 38,
+  "ship_class": "explorer",
+  "armor": 9710.0,
+  "shield_deflection": 121321.0,
+  "dodge": 9710.0,
+  "hull_health": 1974818.0,
+  "shield_health": 2764747.0
+}

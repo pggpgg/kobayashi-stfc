@@ -1,0 +1,11 @@
+{
+  "id": "immortal_arrow_class_55_interceptor",
+  "hostile_name": "Immortal Arrow Class",
+  "level": 55,
+  "ship_class": "interceptor",
+  "armor": 222062.0,
+  "shield_deflection": 211480.0,
+  "dodge": 3498425.0,
+  "hull_health": 72971376.0,
+  "shield_health": 66337608.0
+}

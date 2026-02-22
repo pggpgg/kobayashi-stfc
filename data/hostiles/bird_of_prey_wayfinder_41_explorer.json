@@ -1,0 +1,11 @@
+{
+  "id": "bird_of_prey_wayfinder_41_explorer",
+  "hostile_name": "Bird of Prey Wayfinder ⇕",
+  "level": 41,
+  "ship_class": "explorer",
+  "armor": 31803.0,
+  "shield_deflection": 488654.0,
+  "dodge": 39754.0,
+  "hull_health": 7663098.0,
+  "shield_health": 10728346.0
+}

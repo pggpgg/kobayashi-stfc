@@ -1,0 +1,13 @@
+{
+  "id": "vrax",
+  "ship_name": "VRAX",
+  "ship_class": "survey",
+  "armor_piercing": 80850.0,
+  "shield_piercing": 86320.0,
+  "accuracy": 74310.0,
+  "attack": 85639.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2600300.0,
+  "shield_health": 1300150.0
+}

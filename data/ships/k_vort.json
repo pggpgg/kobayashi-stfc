@@ -1,0 +1,13 @@
+{
+  "id": "k_vort",
+  "ship_name": "K'VORT",
+  "ship_class": "survey",
+  "armor_piercing": 422.0,
+  "shield_piercing": 317.0,
+  "accuracy": 362.0,
+  "attack": 1612.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 14980.0,
+  "shield_health": 7490.0
+}

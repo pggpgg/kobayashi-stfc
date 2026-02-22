@@ -1,0 +1,13 @@
+{
+  "id": "rotarran",
+  "ship_name": "ROTARRAN",
+  "ship_class": "interceptor",
+  "armor_piercing": 563354.0,
+  "shield_piercing": 56333.0,
+  "accuracy": 56333.0,
+  "attack": 1639017.0,
+  "crit_chance": 0.1,
+  "crit_damage": 2.0,
+  "hull_health": 8322514.0,
+  "shield_health": 4161257.0
+}

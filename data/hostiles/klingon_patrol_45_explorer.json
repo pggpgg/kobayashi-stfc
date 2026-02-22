@@ -1,0 +1,11 @@
+{
+  "id": "klingon_patrol_45_explorer",
+  "hostile_name": "Klingon Patrol",
+  "level": 45,
+  "ship_class": "explorer",
+  "armor": 17312.0,
+  "shield_deflection": 220695.0,
+  "dodge": 18178.0,
+  "hull_health": 3911706.0,
+  "shield_health": 4978537.0
+}

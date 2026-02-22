@@ -1,0 +1,13 @@
+{
+  "id": "ecs_fortunate",
+  "ship_name": "ECS FORTUNATE",
+  "ship_class": "survey",
+  "armor_piercing": 0.0,
+  "shield_piercing": 0.0,
+  "accuracy": 0.0,
+  "attack": 100.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 220.0,
+  "shield_health": 110.0
+}

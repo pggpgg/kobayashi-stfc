@@ -1,0 +1,11 @@
+{
+  "id": "dead_star_mercenary_57_explorer",
+  "hostile_name": "Dead Star Mercenary",
+  "level": 57,
+  "ship_class": "explorer",
+  "armor": 275265.0,
+  "shield_deflection": 4623662.0,
+  "dodge": 275265.0,
+  "hull_health": 74265429.0,
+  "shield_health": 94519685.0
+}

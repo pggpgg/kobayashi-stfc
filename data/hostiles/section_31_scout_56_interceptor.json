@@ -1,0 +1,11 @@
+{
+  "id": "section_31_scout_56_interceptor",
+  "hostile_name": "Section 31 Scout ★",
+  "level": 56,
+  "ship_class": "interceptor",
+  "armor": 211480.0,
+  "shield_deflection": 222062.0,
+  "dodge": 4574863.0,
+  "hull_health": 66337608.0,
+  "shield_health": 72971376.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "romulan_patrol_21_battleship",
+  "hostile_name": "Romulan Patrol",
+  "level": 21,
+  "ship_class": "battleship",
+  "armor": 1820.0,
+  "shield_deflection": 341.0,
+  "dodge": 390.0,
+  "hull_health": 6240.0,
+  "shield_health": 3420.0
+}

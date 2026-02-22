@@ -1,0 +1,11 @@
+{
+  "id": "baelosian_guardian_56_battleship",
+  "hostile_name": "Baelosian Guardian",
+  "level": 56,
+  "ship_class": "battleship",
+  "armor": 3269741.0,
+  "shield_deflection": 164432.0,
+  "dodge": 156596.0,
+  "hull_health": 92389825.0,
+  "shield_health": 76221088.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "klingon_patrol_48_battleship",
+  "hostile_name": "Klingon Patrol",
+  "level": 48,
+  "ship_class": "battleship",
+  "armor": 266581.0,
+  "shield_deflection": 13232.0,
+  "dodge": 13894.0,
+  "hull_health": 8079020.0,
+  "shield_health": 6059235.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "pakled_thief_14_battleship",
+  "hostile_name": "Pakled Thief",
+  "level": 14,
+  "ship_class": "battleship",
+  "armor": 330.0,
+  "shield_deflection": 83.0,
+  "dodge": 83.0,
+  "hull_health": 960.0,
+  "shield_health": 720.0
+}

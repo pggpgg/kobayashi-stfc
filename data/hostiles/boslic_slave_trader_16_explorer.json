@@ -1,0 +1,11 @@
+{
+  "id": "boslic_slave_trader_16_explorer",
+  "hostile_name": "Boslic Slave Trader",
+  "level": 16,
+  "ship_class": "explorer",
+  "armor": 128.0,
+  "shield_deflection": 511.0,
+  "dodge": 128.0,
+  "hull_health": 1780.0,
+  "shield_health": 1880.0
+}

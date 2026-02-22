@@ -1,0 +1,11 @@
+{
+  "id": "baelosian_spearhead_55_interceptor",
+  "hostile_name": "Baelosian Spearhead",
+  "level": 55,
+  "ship_class": "interceptor",
+  "armor": 211480.0,
+  "shield_deflection": 222062.0,
+  "dodge": 3498425.0,
+  "hull_health": 66337608.0,
+  "shield_health": 72971376.0
+}

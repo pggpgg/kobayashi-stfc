@@ -1,0 +1,11 @@
+{
+  "id": "veteran_romulan_transport_39_survey_4",
+  "hostile_name": "Veteran Romulan Transport",
+  "level": 39,
+  "ship_class": "survey",
+  "armor": 109732.0,
+  "shield_deflection": 109732.0,
+  "dodge": 109732.0,
+  "hull_health": 824670.0,
+  "shield_health": 824670.0
+}

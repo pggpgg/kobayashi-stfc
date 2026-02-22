@@ -1,0 +1,11 @@
+{
+  "id": "veteran_klingon_patrol_39_interceptor_2",
+  "hostile_name": "Veteran Klingon Patrol",
+  "level": 39,
+  "ship_class": "interceptor",
+  "armor": 24841.0,
+  "shield_deflection": 28390.0,
+  "dodge": 132484.0,
+  "hull_health": 268840.0,
+  "shield_health": 268840.0
+}

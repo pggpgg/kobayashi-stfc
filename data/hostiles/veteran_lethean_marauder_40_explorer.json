@@ -1,0 +1,11 @@
+{
+  "id": "veteran_lethean_marauder_40_explorer",
+  "hostile_name": "Veteran Lethean Marauder",
+  "level": 40,
+  "ship_class": "explorer",
+  "armor": 54866.0,
+  "shield_deflection": 219463.0,
+  "dodge": 54866.0,
+  "hull_health": 618500.0,
+  "shield_health": 652860.0
+}
