@@ -1,11 +1,16 @@
 use crate::data::import::{load_imported_roster_ids, DEFAULT_IMPORT_OUTPUT_PATH};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 
+/// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
+pub const BRIDGE_SLOTS: usize = 2;
+/// Number of below-decks officer slots. Assumed fixed for now; will be configurable by ship level later.
+pub const BELOW_DECKS_SLOTS: usize = 3;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct CrewCandidate {
     pub captain: String,
-    pub bridge: String,
-    pub below_decks: String,
+    pub bridge: Vec<String>,
+    pub below_decks: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -55,10 +60,11 @@ impl CrewGenerator {
             })
             .unwrap_or_default();
 
-        // Only filter by imported roster when it has at least 3 officers; otherwise we cannot
-        // form any crew (captain, bridge, below_decks must be three distinct officers).
+        // Only filter by imported roster when we have enough officers for a full crew:
+        // 1 captain + BRIDGE_SLOTS bridge + BELOW_DECKS_SLOTS below decks (all distinct).
+        const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
         if let Some(roster_ids) = load_imported_roster_ids(DEFAULT_IMPORT_OUTPUT_PATH) {
-            if roster_ids.len() >= 3 {
+            if roster_ids.len() >= MIN_OFFICERS {
                 officers.retain(|officer| roster_ids.contains(&officer.id));
             }
         }
@@ -80,7 +86,10 @@ impl CrewGenerator {
             .filter(|officer| can_fill_position(officer, Position::BelowDecks))
             .collect();
 
-        if captains.is_empty() {
+        // Ensure enough variety: if few or no officers have a captain ability, allow any
+        // officer as captain so recommendations aren't all the same captain.
+        const MIN_CAPTAIN_POOL: usize = 3;
+        if captains.len() < MIN_CAPTAIN_POOL {
             captains = officers.iter().collect();
         }
         if bridge.is_empty() {
@@ -90,6 +99,11 @@ impl CrewGenerator {
             below_decks = officers.iter().collect();
         }
 
+        // Need at least 1 captain, 2 bridge, 3 below decks to form any crew.
+        if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < BELOW_DECKS_SLOTS {
+            return Vec::new();
+        }
+
         if self.strategy.use_seeded_shuffle {
             let base_seed = mix_seed(seed, ship, hostile);
             deterministic_shuffle(&mut captains, base_seed);
@@ -97,7 +111,10 @@ impl CrewGenerator {
             deterministic_shuffle(&mut below_decks, base_seed ^ 0x517C_C1B7_2722_0A95);
         }
 
-        let min_pool = captains.len().min(bridge.len()).min(below_decks.len());
+        let min_pool = captains
+            .len()
+            .min(bridge.len())
+            .min(below_decks.len());
         if min_pool <= self.strategy.exhaustive_pool_threshold {
             exhaustive_candidates(
                 &captains,
@@ -152,23 +169,49 @@ fn exhaustive_candidates(
     let mut candidates = Vec::new();
 
     for captain in captains {
-        for bridge_officer in bridge {
-            if captain.id == bridge_officer.id {
+        for (i, b1) in bridge.iter().enumerate() {
+            if b1.id == captain.id {
                 continue;
             }
-            for below_officer in below_decks {
-                if captain.id == below_officer.id || bridge_officer.id == below_officer.id {
+            for b2 in bridge.iter().skip(i + 1) {
+                if b2.id == captain.id || b2.id == b1.id {
                     continue;
                 }
-
-                candidates.push(CrewCandidate {
-                    captain: captain.name.clone(),
-                    bridge: bridge_officer.name.clone(),
-                    below_decks: below_officer.name.clone(),
-                });
-
-                if candidates.len() >= max_candidates {
-                    return candidates;
+                let used: std::collections::HashSet<&str> =
+                    [captain.id.as_str(), b1.id.as_str(), b2.id.as_str()].into_iter().collect();
+                for (di, d1) in below_decks.iter().enumerate() {
+                    if used.contains(d1.id.as_str()) {
+                        continue;
+                    }
+                    let used2: std::collections::HashSet<&str> =
+                        used.iter().copied().chain(std::iter::once(d1.id.as_str())).collect();
+                    for (dj, d2) in below_decks.iter().enumerate().skip(di + 1) {
+                        if used2.contains(d2.id.as_str()) {
+                            continue;
+                        }
+                        let used3: std::collections::HashSet<&str> = used2
+                            .iter()
+                            .copied()
+                            .chain(std::iter::once(d2.id.as_str()))
+                            .collect();
+                        for d3 in below_decks.iter().skip(dj + 1) {
+                            if used3.contains(d3.id.as_str()) {
+                                continue;
+                            }
+                            candidates.push(CrewCandidate {
+                                captain: captain.name.clone(),
+                                bridge: vec![b1.name.clone(), b2.name.clone()],
+                                below_decks: vec![
+                                    d1.name.clone(),
+                                    d2.name.clone(),
+                                    d3.name.clone(),
+                                ],
+                            });
+                            if candidates.len() >= max_candidates {
+                                return candidates;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -185,32 +228,59 @@ fn sampled_candidates(
     seed: u64,
 ) -> Vec<CrewCandidate> {
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
-    let bridge_limit = strategy.large_pool_bridge_limit.max(1).min(bridge.len());
+    let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
     let mut candidates = Vec::new();
+    let stride = ((seed as usize) % 5) + 1;
 
     for captain in captains.iter().take(captain_limit) {
-        let stride = ((seed as usize) % 5) + 1;
-
-        for (bridge_index, bridge_officer) in bridge.iter().take(bridge_limit).enumerate() {
-            if bridge_index % stride != 0 || captain.id == bridge_officer.id {
+        for (bi, b1) in bridge.iter().take(bridge_limit).enumerate() {
+            if b1.id == captain.id {
                 continue;
             }
-
-            for below_index in (0..below_decks.len()).step_by(stride) {
-                let below = below_decks[below_index];
-                if below.id == captain.id || below.id == bridge_officer.id {
+            for b2 in bridge.iter().take(bridge_limit).skip(bi + 1) {
+                if b2.id == captain.id || b2.id == b1.id {
                     continue;
                 }
-
-                candidates.push(CrewCandidate {
-                    captain: captain.name.clone(),
-                    bridge: bridge_officer.name.clone(),
-                    below_decks: below.name.clone(),
-                });
-
-                if candidates.len() >= strategy.max_candidates {
-                    return candidates;
+            let used: std::collections::HashSet<&str> =
+                [captain.id.as_str(), b1.id.as_str(), b2.id.as_str()].into_iter().collect();
+            let below_indices: Vec<usize> = (0..below_decks.len())
+                .step_by(stride)
+                .filter(|&i| !used.contains(below_decks[i].id.as_str()))
+                .collect();
+            for (ii, &di) in below_indices.iter().enumerate() {
+                let d1 = below_decks[di];
+                let used2: std::collections::HashSet<&str> =
+                    used.iter().copied().chain(std::iter::once(d1.id.as_str())).collect();
+                for &dj in below_indices.iter().skip(ii + 1) {
+                    let d2 = below_decks[dj];
+                    if used2.contains(d2.id.as_str()) {
+                        continue;
+                    }
+                    let used3: std::collections::HashSet<&str> = used2
+                        .iter()
+                        .copied()
+                        .chain(std::iter::once(d2.id.as_str()))
+                        .collect();
+                    for &dk in below_indices.iter().skip(ii + 2) {
+                        let d3 = below_decks[dk];
+                        if used3.contains(d3.id.as_str()) {
+                            continue;
+                        }
+                        candidates.push(CrewCandidate {
+                            captain: captain.name.clone(),
+                            bridge: vec![b1.name.clone(), b2.name.clone()],
+                            below_decks: vec![
+                                d1.name.clone(),
+                                d2.name.clone(),
+                                d3.name.clone(),
+                            ],
+                        });
+                        if candidates.len() >= strategy.max_candidates {
+                            return candidates;
+                        }
+                    }
                 }
+            }
             }
         }
     }

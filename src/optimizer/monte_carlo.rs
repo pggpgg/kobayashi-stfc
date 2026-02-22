@@ -7,7 +7,7 @@ use crate::combat::{
 };
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
-use crate::optimizer::crew_generator::CrewCandidate;
+use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
@@ -99,14 +99,9 @@ fn scenario_to_combat_input(
     seed: u64,
     officers_by_name: &HashMap<String, Officer>,
 ) -> CombatSimulationInput {
-    let base_seed = stable_seed(
-        ship,
-        hostile,
-        &candidate.captain,
-        &candidate.bridge,
-        &candidate.below_decks,
-        seed,
-    );
+    let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
+
+    let crew_seats = build_crew_seats(candidate, officers_by_name);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let defender_mitigation = computed_defender_mitigation(ship, hostile);
@@ -137,28 +132,7 @@ fn scenario_to_combat_input(
                 end_of_round_damage: 0.0,
                 hull_health: defender_hull,
             },
-            crew: CrewConfiguration {
-                seats: vec![
-                    seat_from_officer(
-                        &candidate.captain,
-                        CrewSeat::Captain,
-                        AbilityClass::CaptainManeuver,
-                        officers_by_name,
-                    ),
-                    seat_from_officer(
-                        &candidate.bridge,
-                        CrewSeat::Bridge,
-                        AbilityClass::BridgeAbility,
-                        officers_by_name,
-                    ),
-                    seat_from_officer(
-                        &candidate.below_decks,
-                        CrewSeat::BelowDeck,
-                        AbilityClass::BelowDeck,
-                        officers_by_name,
-                    ),
-                ],
-            },
+            crew: CrewConfiguration { seats: crew_seats.clone() },
             rounds,
             defender_hull,
             base_seed,
@@ -195,28 +169,7 @@ fn scenario_to_combat_input(
             end_of_round_damage: 0.0,
             hull_health: defender_hull,
         },
-        crew: CrewConfiguration {
-            seats: vec![
-                seat_from_officer(
-                    &candidate.captain,
-                    CrewSeat::Captain,
-                    AbilityClass::CaptainManeuver,
-                    officers_by_name,
-                ),
-                seat_from_officer(
-                    &candidate.bridge,
-                    CrewSeat::Bridge,
-                    AbilityClass::BridgeAbility,
-                    officers_by_name,
-                ),
-                seat_from_officer(
-                    &candidate.below_decks,
-                    CrewSeat::BelowDeck,
-                    AbilityClass::BelowDeck,
-                    officers_by_name,
-                ),
-            ],
-        },
+        crew: CrewConfiguration { seats: crew_seats },
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
         base_seed,
@@ -423,20 +376,73 @@ fn seeded_variance(seed: u64) -> f64 {
     0.85 + (unit * 0.30)
 }
 
+fn build_crew_seats(
+    candidate: &CrewCandidate,
+    officers_by_name: &HashMap<String, Officer>,
+) -> Vec<CrewSeatContext> {
+    let mut seats = Vec::with_capacity(1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS);
+    seats.push(seat_from_officer(
+        &candidate.captain,
+        CrewSeat::Captain,
+        AbilityClass::CaptainManeuver,
+        officers_by_name,
+    ));
+    for i in 0..BRIDGE_SLOTS {
+        let name = candidate
+            .bridge
+            .get(i)
+            .or_else(|| candidate.bridge.first())
+            .map(String::as_str)
+            .unwrap_or("");
+        if name.is_empty() {
+            continue;
+        }
+        seats.push(seat_from_officer(
+            name,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            officers_by_name,
+        ));
+    }
+    for i in 0..BELOW_DECKS_SLOTS {
+        let name = candidate
+            .below_decks
+            .get(i)
+            .or_else(|| candidate.below_decks.first())
+            .map(String::as_str)
+            .unwrap_or("");
+        if name.is_empty() {
+            continue;
+        }
+        seats.push(seat_from_officer(
+            name,
+            CrewSeat::BelowDeck,
+            AbilityClass::BelowDeck,
+            officers_by_name,
+        ));
+    }
+    seats
+}
+
 fn stable_seed(
     ship: &str,
     hostile: &str,
     captain: &str,
-    bridge: &str,
-    below_decks: &str,
+    bridge: &[String],
+    below_decks: &[String],
     seed: u64,
 ) -> u64 {
-    [ship, hostile, captain, bridge, below_decks]
+    let mut acc = seed;
+    for s in [ship, hostile, captain]
         .into_iter()
-        .flat_map(str::bytes)
-        .fold(seed, |acc, b| {
-            acc.wrapping_mul(37).wrapping_add(u64::from(b))
-        })
+        .chain(bridge.iter().map(String::as_str))
+        .chain(below_decks.iter().map(String::as_str))
+    {
+        for b in s.bytes() {
+            acc = acc.wrapping_mul(37).wrapping_add(u64::from(b));
+        }
+    }
+    acc
 }
 
 #[cfg(test)]
@@ -711,8 +717,8 @@ mod tests {
 
         let candidate = CrewCandidate {
             captain: "Kirk".to_string(),
-            bridge: "Spock".to_string(),
-            below_decks: "Scotty".to_string(),
+            bridge: vec!["Spock".to_string(), "Spock".to_string()],
+            below_decks: vec!["Scotty".to_string(), "Scotty".to_string(), "Scotty".to_string()],
         };
         let officers = HashMap::new();
 
