@@ -1,6 +1,8 @@
 pub mod building;
 pub mod forbidden_chaos;
 pub mod faction_reputation;
+pub mod syndicate_combat;
+pub mod syndicate_reputation;
 pub mod hostile;
 pub mod registry;
 pub mod import;

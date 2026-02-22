@@ -2,7 +2,7 @@ use std::env;
 use std::fmt::Write as _;
 
 use crate::combat::{simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode};
-use crate::data::import::import_spocks_export;
+use crate::data::import::{import_roster_csv, import_spocks_export};
 use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
 use crate::server;
@@ -135,11 +135,21 @@ fn handle_optimize(args: &[String]) -> i32 {
 
 fn handle_import(args: &[String]) -> i32 {
     let Some(path) = args.get(2) else {
-        eprintln!("usage: kobayashi import <path-to-export.json>");
+        eprintln!("usage: kobayashi import <path>");
+        eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
         return 2;
     };
 
-    match import_spocks_export(path) {
+    let result = if path.ends_with(".txt") {
+        import_roster_csv(path)
+    } else if path.ends_with(".json") {
+        import_spocks_export(path)
+    } else {
+        eprintln!("import expects a .txt file (roster) or .json file (Spocks export); got: {path}");
+        return 2;
+    };
+
+    match result {
         Ok(report) => {
             println!(
                 "import summary: total={} matched={} unresolved={} conflicts={} output='{}'",

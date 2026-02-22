@@ -1,8 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fs;
+use std::io::Cursor;
 use std::path::Path;
 
+use csv::ReaderBuilder;
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
@@ -67,10 +69,23 @@ impl ImportReport {
     }
 }
 
+/// Max officer tier (e.g. 3 in STFC). Used when only name is given.
+const MAX_OFFICER_TIER: u8 = 3;
+
+/// Max level for a given tier (tier 1 -> 10, tier 2 -> 20, tier 3 -> 30). Used when tier is given but level is not.
+fn max_level_for_tier(tier: u8) -> u16 {
+    match tier {
+        1 => 10,
+        2 => 20,
+        _ => 30,
+    }
+}
+
 #[derive(Debug)]
 pub enum ImportError {
     Read(std::io::Error),
     Parse(serde_json::Error),
+    ParseLine { line: usize, message: String },
     Write(std::io::Error),
 }
 
@@ -79,9 +94,46 @@ impl fmt::Display for ImportError {
         match self {
             Self::Read(err) => write!(f, "failed to read import file: {err}"),
             Self::Parse(err) => write!(f, "failed to parse import JSON: {err}"),
+            Self::ParseLine { line, message } => write!(f, "line {line}: {message}"),
             Self::Write(err) => write!(f, "failed to persist import output: {err}"),
         }
     }
+}
+
+/// Parses a tier cell: "T3", "Tier 2", "2", etc. Returns None if empty or invalid.
+fn parse_tier_cell(s: &str) -> Option<u8> {
+    let s = s.trim();
+    if s.is_empty() {
+        return None;
+    }
+    let s = s
+        .strip_prefix("tier")
+        .or_else(|| s.strip_prefix("Tier"))
+        .or_else(|| s.strip_prefix("tier "))
+        .or_else(|| s.strip_prefix("Tier "))
+        .or_else(|| s.strip_prefix("T"))
+        .or_else(|| s.strip_prefix("t"))
+        .or_else(|| s.strip_prefix("T "))
+        .or_else(|| s.strip_prefix("t "))
+        .unwrap_or(s);
+    s.trim().parse::<u8>().ok().filter(|&t| t >= 1)
+}
+
+/// Parses a level cell: "lvl 20", "LVL20", "20", etc. Returns None if empty or invalid.
+fn parse_level_cell(s: &str) -> Option<u16> {
+    let s = s.trim();
+    if s.is_empty() {
+        return None;
+    }
+    let s = s
+        .strip_prefix("lvl")
+        .or_else(|| s.strip_prefix("LVL"))
+        .or_else(|| s.strip_prefix("Lvl"))
+        .or_else(|| s.strip_prefix("lvl "))
+        .or_else(|| s.strip_prefix("LVL "))
+        .or_else(|| s.strip_prefix("Lvl "))
+        .unwrap_or(s);
+    s.trim().parse::<u16>().ok()
 }
 
 #[derive(Debug, Deserialize)]
@@ -148,11 +200,13 @@ struct SpocksOfficerRef {
     name: Option<String>,
 }
 
-pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
-    let raw = fs::read_to_string(path).map_err(ImportError::Read)?;
-    let export: SpocksExport = serde_json::from_str(&raw).map_err(ImportError::Parse)?;
-    let records = flatten_export(export);
+/// Raw record before name resolution: (raw_name, rank, tier, level).
+type RawRosterRecord = (String, Option<u8>, Option<u8>, Option<u16>);
 
+fn resolve_and_write_roster(
+    path: &str,
+    raw_records: &[RawRosterRecord],
+) -> Result<ImportReport, ImportError> {
     let alias_map = load_alias_map(DEFAULT_ALIAS_MAP_PATH)?;
     let canonical_by_name = load_canonical_index(DEFAULT_CANONICAL_OFFICERS_PATH)?;
 
@@ -163,27 +217,17 @@ pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
     let mut matched_records = 0usize;
     let mut ambiguous_records = 0usize;
 
-    for (index, record) in records.iter().enumerate() {
-        let raw_name = record
-            .name
-            .as_ref()
-            .or(record.id.as_ref())
-            .or(record
-                .officer
-                .as_ref()
-                .and_then(|officer| officer.name.as_ref()))
-            .or(record
-                .officer
-                .as_ref()
-                .and_then(|officer| officer.id.as_ref()))
-            .map(|value| value.trim())
-            .unwrap_or("");
+    for (index, (raw_name, rank, tier, level)) in raw_records.iter().enumerate() {
+        let raw_name = raw_name.trim();
+        if raw_name.is_empty() {
+            continue;
+        }
 
         let normalized_input = normalize_key(raw_name);
         let canonical_name = alias_map
             .get(&normalized_input)
             .cloned()
-            .unwrap_or_else(|| raw_name.trim().to_string());
+            .unwrap_or_else(|| raw_name.to_string());
         let normalized_name = normalize_key(&canonical_name);
 
         let Some(candidates) = canonical_by_name.get(&normalized_name) else {
@@ -218,9 +262,9 @@ pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
         let entry = RosterEntry {
             canonical_officer_id: candidate.id.clone(),
             canonical_name: candidate.name.clone(),
-            rank: record.rank,
-            tier: record.tier,
-            level: record.level,
+            rank: *rank,
+            tier: *tier,
+            level: *level,
         };
 
         if let Some((first_index, first_entry)) = resolved_by_id.get(&candidate.id) {
@@ -257,6 +301,7 @@ pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
         .collect();
     roster.sort_by(|a, b| a.canonical_officer_id.cmp(&b.canonical_officer_id));
 
+    let roster_len = roster.len();
     let output_payload = serde_json::json!({
         "source_path": path,
         "officers": roster,
@@ -275,21 +320,97 @@ pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
     Ok(ImportReport {
         source_path: path.to_string(),
         output_path: DEFAULT_IMPORT_OUTPUT_PATH.to_string(),
-        total_records: records.len(),
+        total_records: raw_records.len(),
         matched_records,
         unmatched_records: unresolved_count.saturating_sub(ambiguous_records),
         ambiguous_records,
         duplicate_records: duplicates.len(),
         conflict_records: conflict_count,
         critical_failures,
-        roster_entries_written: output_payload["officers"]
-            .as_array()
-            .map(|items| items.len())
-            .unwrap_or(0),
+        roster_entries_written: roster_len,
         unresolved,
         duplicates,
         conflicts,
     })
+}
+
+pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
+    let raw = fs::read_to_string(path).map_err(ImportError::Read)?;
+    let export: SpocksExport = serde_json::from_str(&raw).map_err(ImportError::Parse)?;
+    let records = flatten_export(export);
+
+    let raw_records: Vec<RawRosterRecord> = records
+        .iter()
+        .map(|r| {
+            let raw_name = r
+                .name
+                .as_ref()
+                .or(r.id.as_ref())
+                .or(r.officer.as_ref().and_then(|o| o.name.as_ref()))
+                .or(r.officer.as_ref().and_then(|o| o.id.as_ref()))
+                .map(|s| s.trim().to_string())
+                .unwrap_or_default();
+            (raw_name, r.rank, r.tier, r.level)
+        })
+        .collect();
+
+    resolve_and_write_roster(path, &raw_records)
+}
+
+/// Imports a roster from a comma-separated .txt file (name,tier,level per line).
+/// Uses the csv crate so names containing a comma can be quoted (e.g. `"Kirk, James",3,45`).
+/// Skips optional header "name,tier,level". Applies failsafe defaults: name only -> max tier+level; name+tier only -> max level for that tier.
+pub fn import_roster_csv(path: &str) -> Result<ImportReport, ImportError> {
+    let content = fs::read_to_string(path).map_err(ImportError::Read)?;
+    let mut raw_records: Vec<RawRosterRecord> = Vec::new();
+    let mut skip_next_if_header = true;
+
+    let mut rdr = ReaderBuilder::new()
+        .trim(csv::Trim::All)
+        .has_headers(false)
+        .from_reader(Cursor::new(content));
+
+    for (record_index, record) in rdr.records().enumerate() {
+        let line_num = record_index + 1;
+        let record = record.map_err(|e| ImportError::ParseLine {
+            line: line_num,
+            message: e.to_string(),
+        })?;
+
+        let name = record.get(0).unwrap_or("").trim();
+        if name.is_empty() {
+            let has_other = !record.get(1).unwrap_or("").trim().is_empty()
+                || !record.get(2).unwrap_or("").trim().is_empty();
+            if has_other {
+                return Err(ImportError::ParseLine {
+                    line: line_num,
+                    message: "missing officer name".to_string(),
+                });
+            }
+            continue;
+        }
+        if skip_next_if_header && name.eq_ignore_ascii_case("name") {
+            skip_next_if_header = false;
+            continue;
+        }
+        skip_next_if_header = false;
+
+        let mut tier = parse_tier_cell(record.get(1).unwrap_or(""));
+        let mut level = parse_level_cell(record.get(2).unwrap_or(""));
+
+        if tier.is_none() && level.is_none() {
+            tier = Some(MAX_OFFICER_TIER);
+            level = Some(max_level_for_tier(MAX_OFFICER_TIER));
+        } else if level.is_none() {
+            if let Some(t) = tier {
+                level = Some(max_level_for_tier(t));
+            }
+        }
+
+        raw_records.push((name.to_string(), None, tier, level));
+    }
+
+    resolve_and_write_roster(path, &raw_records)
 }
 
 fn flatten_export(export: SpocksExport) -> Vec<SpocksOfficerRecord> {

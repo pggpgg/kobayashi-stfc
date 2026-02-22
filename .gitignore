@@ -1,1 +1,14 @@
 /target
+
+# Fetched upstream (scripts/fetch_stfc_data.ps1)
+data/upstream/
+
+# User-specific sync output
+data/officers/roster.imported.json
+
+# Downloaded spreadsheets (e.g. Syndicate Progression)
+data/import/*.xlsx
+
+# Env files (secrets)
+.env
+.env.local
