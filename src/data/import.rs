@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 
 const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
 const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canonical.json";
-const DEFAULT_IMPORT_OUTPUT_PATH: &str = "data/officers/roster.imported.json";
+pub const DEFAULT_IMPORT_OUTPUT_PATH: &str = "data/officers/roster.imported.json";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RosterEntry {
     pub canonical_officer_id: String,
     pub canonical_name: String,
@@ -339,4 +339,22 @@ fn normalize_key(value: &str) -> String {
         .collect::<Vec<_>>()
         .join(" ")
         .to_uppercase()
+}
+
+/// Loads the set of canonical officer IDs from the imported roster file.
+/// Returns `None` if the file is missing or invalid (caller should then use the full canonical list).
+/// Returns `Some(ids)` to filter crew generation to only officers the player owns.
+pub fn load_imported_roster_ids(path: &str) -> Option<HashSet<String>> {
+    #[derive(Debug, Deserialize)]
+    struct ImportedRosterPayload {
+        officers: Vec<RosterEntry>,
+    }
+    let raw = fs::read_to_string(path).ok()?;
+    let payload: ImportedRosterPayload = serde_json::from_str(&raw).ok()?;
+    let ids = payload
+        .officers
+        .into_iter()
+        .map(|e| e.canonical_officer_id)
+        .collect();
+    Some(ids)
 }

@@ -1,3 +1,4 @@
+use crate::data::import::{load_imported_roster_ids, DEFAULT_IMPORT_OUTPUT_PATH};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -45,7 +46,7 @@ impl CrewGenerator {
     }
 
     pub fn generate_candidates(&self, ship: &str, hostile: &str, seed: u64) -> Vec<CrewCandidate> {
-        let officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
+        let mut officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
             .map(|loaded| {
                 loaded
                     .into_iter()
@@ -53,6 +54,12 @@ impl CrewGenerator {
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
+
+        if let Some(roster_ids) = load_imported_roster_ids(DEFAULT_IMPORT_OUTPUT_PATH) {
+            if !roster_ids.is_empty() {
+                officers.retain(|officer| roster_ids.contains(&officer.id));
+            }
+        }
 
         if officers.is_empty() {
             return Vec::new();

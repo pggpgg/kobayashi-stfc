@@ -278,6 +278,7 @@ pub fn simulate_combat(
         attacker,
         &combat_begin_effects,
         combat_begin_assimilated,
+    let mut defender_current_hull = defender.hull_health;
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
@@ -553,7 +554,9 @@ pub fn simulate_combat(
             ]),
         });
 
-        let effective_mitigation =
+        // Damage-through factor: fraction of attack that gets through (can exceed 1.0 with pierce).
+        // Pierce is additive to (1 - mitigation); no cap for pierce-bypass behavior.
+        let damage_through_factor =
             (mitigation_multiplier + effective_pierce + phase_effects.defense_mitigation_bonus())
                 .max(0.0);
         trace.record(CombatEvent {
@@ -562,14 +565,14 @@ pub fn simulate_combat(
             phase: "attack".to_string(),
             source: EventSource {
                 officer_id: Some(attacker.id.clone()),
-                player_bonus_source: Some("research:weapon_tech".to_string()),
+                player_bonus_source: Some("attack_pierce_bonus".to_string()),
                 ..EventSource::default()
             },
             values: Map::from_iter([
                 ("pierce".to_string(), Value::from(effective_pierce)),
                 (
-                    "effective_mitigation".to_string(),
-                    Value::from(round_f64(effective_mitigation)),
+                    "damage_through_factor".to_string(),
+                    Value::from(round_f64(damage_through_factor)),
                 ),
             ]),
         });
@@ -730,7 +733,7 @@ pub fn simulate_combat(
         });
 
         let pre_attack_damage =
-            effective_attack * effective_mitigation * crit_multiplier * proc_multiplier;
+            effective_attack * damage_through_factor * crit_multiplier * proc_multiplier;
         phase_effects.set_pre_attack_damage_base(pre_attack_damage);
         let pre_attack_damage = phase_effects.composed_pre_attack_damage();
         let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
@@ -758,6 +761,7 @@ pub fn simulate_combat(
         });
 
         let bonus_damage = phase_effects.compose_round_end_damage(attacker.end_of_round_damage);
+        // Burning: 1% of total (max) hull per round, not remaining (per STFC).
         let burning_damage = if burning_rounds_remaining > 0 {
             defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
         } else {
@@ -780,7 +784,7 @@ pub fn simulate_combat(
             round_index,
             phase: "end".to_string(),
             source: EventSource {
-                player_bonus_source: Some("artifact:radiation_array".to_string()),
+                player_bonus_source: Some("round_end_bonus".to_string()),
                 ..EventSource::default()
             },
             values: Map::from_iter([
@@ -955,6 +959,7 @@ impl EffectAccumulator {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.attack_phase_damage_modifier_sum += modifier;
                 }
+                // Conversion factor 0.5: pierce bonus in attack phase contributes flat damage as a fraction of base attack (tuning placeholder until STFC formula is confirmed).
                 AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
                     EffectStatKey::AttackPhaseDamage,
                     value * base_attack * 0.5,

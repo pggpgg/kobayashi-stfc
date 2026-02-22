@@ -22,7 +22,7 @@
   ],
   "numeric_expectations": {
     "1.attack_roll.roll": 0.617753,
-    "1.pierce_calc.effective_mitigation": 0.8,
+    "1.pierce_calc.damage_through_factor": 0.8,
     "1.damage_application.final_damage": 80.0,
     "2.crit_resolution.multiplier": 1.5,
     "2.damage_application.final_damage": 120.0,
