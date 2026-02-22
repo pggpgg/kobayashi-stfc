@@ -1,0 +1,4 @@
+name,tech_type,tier,stat,value,operator
+Ablative Armor,forbidden,1,hull_hp,0.05,add
+Ablative Armor,forbidden,1,shield_hp,0.05,add
+Weapon Damage Sample,forbidden,,weapon_damage,0.10,add
