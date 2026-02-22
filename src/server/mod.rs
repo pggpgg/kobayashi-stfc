@@ -3,6 +3,7 @@ use std::net::{TcpListener, TcpStream};
 
 pub mod api;
 pub mod routes;
+pub mod static_files;
 pub mod sync;
 
 const MAX_HEADER_SIZE: usize = 8 * 1024;

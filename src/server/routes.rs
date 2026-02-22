@@ -1,4 +1,5 @@
 use crate::server::api;
+use crate::server::static_files;
 use crate::server::sync;
 
 pub struct HttpResponse {
@@ -27,6 +28,9 @@ pub fn route_request(
     body: &str,
     sync_token: Option<&str>,
 ) -> HttpResponse {
+    if let Some(response) = static_files::try_serve_static(method, path) {
+        return response;
+    }
     match (method, path) {
         ("GET", "/") => HttpResponse {
             status_code: 200,
@@ -42,6 +46,116 @@ pub fn route_request(
                 body: payload,
             },
             Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+        },
+        (method, path) if method == "GET" && path.starts_with("/api/officers") && !path.starts_with("/api/officers/") => {
+            match api::officers_payload(path) {
+                Ok(payload) => HttpResponse {
+                    status_code: 200,
+                    status_text: "OK",
+                    content_type: "application/json",
+                    body: payload,
+                },
+                Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+            }
+        }
+        ("GET", "/api/ships") => match api::ships_payload() {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+        },
+        ("GET", "/api/hostiles") => match api::hostiles_payload() {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+        },
+        ("GET", "/api/data/version") => match api::data_version_payload() {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+        },
+        ("POST", "/api/simulate") => match api::simulate_payload(body) {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(api::SimulateError::Parse(err)) => {
+                error_response(400, "Bad Request", &format!("Invalid request body: {err}"))
+            }
+            Err(api::SimulateError::Validation(msg)) => {
+                error_response(400, "Bad Request", &msg)
+            }
+        },
+        ("GET", "/api/profile") => match api::profile_get_payload() {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+        },
+        ("PUT", "/api/profile") => match api::profile_put_payload(body) {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(400, "Bad Request", &err.to_string()),
+        },
+        ("POST", "/api/officers/import") => match api::officers_import_payload(body) {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(400, "Bad Request", &err.to_string()),
+        },
+        ("GET", "/api/presets") => match api::presets_list_payload() {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+        },
+        (method, path) if method == "GET" && path.starts_with("/api/presets/") => {
+            let id = path.trim_start_matches("/api/presets/").split('/').next().unwrap_or("");
+            match api::preset_get_payload(id) {
+                Ok(payload) => HttpResponse {
+                    status_code: 200,
+                    status_text: "OK",
+                    content_type: "application/json",
+                    body: payload,
+                },
+                Err(api::PresetError::NotFound) => error_response(404, "Not Found", "Preset not found"),
+                Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+            }
+        }
+        ("POST", "/api/presets") => match api::preset_post_payload(body) {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(400, "Bad Request", &err.to_string()),
         },
         ("POST", "/api/optimize") => match api::optimize_payload(body) {
             Ok(payload) => HttpResponse {

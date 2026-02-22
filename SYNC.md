@@ -53,7 +53,7 @@ Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1
 
 ## What gets synced
 
-- **Officers**: Each sync payload with `type: "officer"` is merged into `data/officers/roster.imported.json`. Game officer IDs (`oid`) are mapped to Kobayashi’s canonical officer IDs via `data/officers/id_registry.json`. The optimizer then uses this roster to restrict crew candidates to officers you own.
+- **Officers**: Each sync payload with `type: "officer"` is merged into `rosters/roster.imported.json`. Game officer IDs (`oid`) are mapped to Kobayashi’s canonical officer IDs via `data/officers/id_registry.json`. The optimizer then uses this roster to restrict crew candidates to officers you own.
 - **Other types** (research, buildings, ships, etc.): The server accepts the payloads and returns 200 but does not persist them yet. Persistence for future optimizer features can be added later.
 
 ## Officer ID mapping

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
 const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canonical.json";
-pub const DEFAULT_IMPORT_OUTPUT_PATH: &str = "data/officers/roster.imported.json";
+pub const DEFAULT_IMPORT_OUTPUT_PATH: &str = "rosters/roster.imported.json";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RosterEntry {

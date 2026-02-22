@@ -205,6 +205,7 @@ kobayashi/
 │   ├── hostiles.json        # Hostile stat sheets
 │   ├── synergies.json       # Synergy definitions
 │   └── profiles/            # Player profiles
+├── rosters/                 # Your roster files (.txt or .json); run `kobayashi import <file>`
 ├── frontend/                # Web UI (React/Svelte, embedded in binary)
 └── tests/                   # Combat validation, LCARS parsing, optimizer regression
 ```

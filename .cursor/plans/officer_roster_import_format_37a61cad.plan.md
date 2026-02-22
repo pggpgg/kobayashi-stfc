@@ -63,7 +63,7 @@ If the player skips the importer and edits the roster file by hand (or generates
 - **Per entry:**
   - `**canonical_officer_id`** (required): Must match an officer `id` from [data/officers/officers.canonical.json](data/officers/officers.canonical.json). The crew generator uses this set to restrict candidates to officers the player “owns” ([crew_generator.rs](src/optimizer/crew_generator.rs)).
   - `**canonical_name`** (required): Display name (typically the same as in the canonical list).
-  - `**rank`**, `**tier**`, `**level**` (optional): Omitted fields are serialized as absent; they can be used by the app for display or future logic.
+  - `**rank`**, `**tier`**, `**level**` (optional): Omitted fields are serialized as absent; they can be used by the app for display or future logic.
 
 **Optional top-level field:** `source_path` is often set by the importer or sync (e.g. `"stfc-mod sync"`); it is not required for manual files.
 
