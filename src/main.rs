@@ -263,17 +263,26 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+/// Roster files live here; a bare filename is resolved as rosters/<filename>.
+const ROSTERS_DIR: &str = "rosters";
+
 fn handle_import(args: &[String]) -> i32 {
     if args.len() != 1 {
         eprintln!("usage: kobayashi import <path>");
         eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
+        eprintln!("  roster files are usually in the '{ROSTERS_DIR}/' folder; a bare filename (e.g. my_roster.txt) is looked up there");
         return 2;
     }
-    let path = &args[0];
+    let raw = &args[0];
+    let path = if raw.contains('/') || raw.contains('\\') {
+        raw.clone()
+    } else {
+        format!("{ROSTERS_DIR}/{raw}")
+    };
     let result = if path.ends_with(".txt") {
-        import_roster_csv(path)
+        import_roster_csv(&path)
     } else if path.ends_with(".json") {
-        import_spocks_export(path)
+        import_spocks_export(&path)
     } else {
         eprintln!("import expects a .txt file (roster) or .json file (Spocks export); got: {path}");
         return 2;

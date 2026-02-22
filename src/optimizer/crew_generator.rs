@@ -55,8 +55,10 @@ impl CrewGenerator {
             })
             .unwrap_or_default();
 
+        // Only filter by imported roster when it has at least 3 officers; otherwise we cannot
+        // form any crew (captain, bridge, below_decks must be three distinct officers).
         if let Some(roster_ids) = load_imported_roster_ids(DEFAULT_IMPORT_OUTPUT_PATH) {
-            if !roster_ids.is_empty() {
+            if roster_ids.len() >= 3 {
                 officers.retain(|officer| roster_ids.contains(&officer.id));
             }
         }
