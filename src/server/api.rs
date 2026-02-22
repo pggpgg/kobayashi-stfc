@@ -5,7 +5,7 @@ use crate::data::import::{
 };
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::ship::{load_ship_index, DEFAULT_SHIPS_INDEX_PATH};
-use crate::optimizer::crew_generator::CrewCandidate;
+use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 use crate::optimizer::monte_carlo::{run_monte_carlo, SimulationResult};
 use crate::optimizer::{optimize_scenario, OptimizationScenario};
 use serde::{Deserialize, Serialize};
@@ -28,8 +28,8 @@ pub struct OptimizeRequest {
 #[derive(Debug, Clone, Serialize)]
 pub struct CrewRecommendation {
     pub captain: String,
-    pub bridge: String,
-    pub below_decks: String,
+    pub bridge: Vec<String>,
+    pub below_decks: Vec<String>,
     pub win_rate: f64,
     pub avg_hull_remaining: f64,
 }
@@ -229,6 +229,15 @@ fn officer_id_to_name(id: &str, officers: &[(String, String)]) -> String {
         .to_string()
 }
 
+fn pad_to_len(mut v: Vec<String>, len: usize) -> Vec<String> {
+    let first = v.first().cloned().unwrap_or_default();
+    while v.len() < len {
+        v.push(first.clone());
+    }
+    v.truncate(len);
+    v
+}
+
 fn binomial_95_ci(wins: u32, n: u32) -> [f64; 2] {
     if n == 0 {
         return [0.0, 0.0];
@@ -256,24 +265,36 @@ pub fn simulate_payload(body: &str) -> Result<String, SimulateError> {
         .as_ref()
         .map(|s| officer_id_to_name(s, &officers))
         .unwrap_or_else(|| "".to_string());
-    let bridge = req
+    let bridge_names: Vec<String> = req
         .crew
         .bridge
         .as_ref()
-        .and_then(|v| v.first())
-        .map(|s| officer_id_to_name(s, &officers))
-        .unwrap_or_else(|| "".to_string());
-    let below_decks = req
+        .map(|v| {
+            v.iter()
+                .map(|s| officer_id_to_name(s, &officers))
+                .take(BRIDGE_SLOTS)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let below_names: Vec<String> = req
         .crew
         .below_deck
         .as_ref()
-        .and_then(|v| v.first())
-        .map(|s| officer_id_to_name(s, &officers))
-        .unwrap_or_else(|| "".to_string());
+        .map(|v| {
+            v.iter()
+                .map(|s| officer_id_to_name(s, &officers))
+                .take(BELOW_DECKS_SLOTS)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
 
     if captain.is_empty() {
         return Err(SimulateError::Validation("crew.captain is required".to_string()));
     }
+
+    // Pad to fixed slot counts: 2 bridge, 3 below decks (repeat first if fewer provided).
+    let bridge = pad_to_len(bridge_names, BRIDGE_SLOTS);
+    let below_decks = pad_to_len(below_names, BELOW_DECKS_SLOTS);
 
     let candidate = CrewCandidate {
         captain: captain.clone(),
@@ -594,8 +615,8 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
             .into_iter()
             .map(|result| CrewRecommendation {
                 captain: result.captain,
-                bridge: result.bridge,
-                below_decks: result.below_decks,
+                bridge: result.bridge.clone(),
+                below_decks: result.below_decks.clone(),
                 win_rate: result.win_rate,
                 avg_hull_remaining: result.avg_hull_remaining,
             })

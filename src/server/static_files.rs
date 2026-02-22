@@ -4,6 +4,15 @@ use std::fs;
 
 use super::routes::HttpResponse;
 
+/// Returns true if frontend/dist (or dist) exists so the SPA can be served.
+pub fn static_files_available() -> bool {
+    let base = match std::env::current_dir() {
+        Ok(b) => b,
+        Err(_) => return false,
+    };
+    base.join("frontend/dist").canonicalize().is_ok() || base.join("dist").canonicalize().is_ok()
+}
+
 /// Try to serve a static file or SPA index. Returns None if static serving is not available
 /// or path is an API path.
 pub fn try_serve_static(method: &str, path: &str) -> Option<HttpResponse> {
