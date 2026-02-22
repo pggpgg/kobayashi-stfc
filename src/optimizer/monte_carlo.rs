@@ -5,6 +5,7 @@ use crate::combat::{
     CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, ShipType, SimulationConfig,
     TimingWindow, TraceMode,
 };
+use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::optimizer::crew_generator::CrewCandidate;
 
@@ -106,6 +107,64 @@ fn scenario_to_combat_input(
         &candidate.below_decks,
         seed,
     );
+
+    if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
+        let defender_mitigation = computed_defender_mitigation(ship, hostile);
+        let defender_hull = hostile_rec.hull_health;
+        let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level as u32));
+        return CombatSimulationInput {
+            attacker: Combatant {
+                id: ship.to_string(),
+                attack: ship_rec.attack,
+                mitigation: 0.0,
+                pierce: ((ship_rec.armor_piercing + ship_rec.shield_piercing) / 2.0 / 5000.0).clamp(0.0, 0.25),
+                crit_chance: ship_rec.crit_chance,
+                crit_multiplier: ship_rec.crit_damage,
+                proc_chance: 0.0,
+                proc_multiplier: 1.0,
+                end_of_round_damage: 0.0,
+                hull_health: ship_rec.hull_health,
+            },
+            defender: Combatant {
+                id: hostile.to_string(),
+                attack: 0.0,
+                mitigation: defender_mitigation,
+                pierce: 0.0,
+                crit_chance: 0.0,
+                crit_multiplier: 1.0,
+                proc_chance: 0.0,
+                proc_multiplier: 1.0,
+                end_of_round_damage: 0.0,
+                hull_health: defender_hull,
+            },
+            crew: CrewConfiguration {
+                seats: vec![
+                    seat_from_officer(
+                        &candidate.captain,
+                        CrewSeat::Captain,
+                        AbilityClass::CaptainManeuver,
+                        officers_by_name,
+                    ),
+                    seat_from_officer(
+                        &candidate.bridge,
+                        CrewSeat::Bridge,
+                        AbilityClass::BridgeAbility,
+                        officers_by_name,
+                    ),
+                    seat_from_officer(
+                        &candidate.below_decks,
+                        CrewSeat::BelowDeck,
+                        AbilityClass::BelowDeck,
+                        officers_by_name,
+                    ),
+                ],
+            },
+            rounds,
+            defender_hull,
+            base_seed,
+        };
+    }
+
     let ship_hash = hash_identifier(ship);
     let hostile_hash = hash_identifier(hostile);
     let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
@@ -190,6 +249,13 @@ fn synthetic_attacker_stats(ship_hash: u64) -> AttackerStats {
 }
 
 fn computed_defender_mitigation(ship: &str, hostile: &str) -> f64 {
+    if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
+        return mitigation(
+            hostile_rec.to_defender_stats(),
+            ship_rec.to_attacker_stats(),
+            hostile_rec.ship_type(),
+        );
+    }
     let attacker = synthetic_attacker_stats(hash_identifier(ship));
     let defender_hash = hash_identifier(hostile);
     let defender = synthetic_defender_stats(defender_hash);

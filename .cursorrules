@@ -1,0 +1,9 @@
+You are an expert game theory and optimization developer. We are building a Star Trek Fleet Command Fleet Optimizer.
+
+Data Integrity: Always reference the data/ folder for game constants.
+
+Math Accuracy: STFC uses specific "additive" vs "multiplicative" bonuses. Ensure all officer scripts distinguish between these.
+
+Architecture: Keep the optimization logic in src/optimizer/ and separate it from the UI.
+
+Style: Use clear variable names (e.g., base_attack_power instead of atk).
