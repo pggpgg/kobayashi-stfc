@@ -12,10 +12,23 @@ name = "import_forbidden_chaos"
 path = "src/bin/import_forbidden_chaos.rs"
 
 [[bin]]
+name = "import_syndicate_reputation"
+path = "src/bin/import_syndicate_reputation.rs"
+
+[[bin]]
+name = "inspect_syndicate_xlsx"
+path = "src/bin/inspect_syndicate_xlsx.rs"
+
+[[bin]]
+name = "syndicate_bonuses"
+path = "src/bin/syndicate_bonuses.rs"
+
+[[bin]]
 name = "validate_data"
 path = "src/bin/validate_data.rs"
 
 [dependencies]
+calamine = "0.24"
 chrono = { version = "0.4", default-features = false, features = ["std", "now"] }
 csv = "1"
 serde = { version = "1", features = ["derive"] }

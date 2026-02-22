@@ -1,14 +1,19 @@
 {
+  "ships": {
+    "source": "stfccommunity",
+    "data_version": "stfccommunity-main",
+    "last_updated": "2026-02-22",
+    "path": "ships/index.json"
+  },
   "hostiles": {
     "source": "stfccommunity",
     "data_version": "stfccommunity-main",
     "last_updated": "2026-02-22",
     "path": "hostiles/index.json"
   },
-  "ships": {
-    "source": "stfccommunity",
-    "data_version": "stfccommunity-main",
+  "syndicate_reputation": {
+    "source": "community_spreadsheet",
     "last_updated": "2026-02-22",
-    "path": "ships/index.json"
+    "path": "syndicate_reputation.json"
   }
 }

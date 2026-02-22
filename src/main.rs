@@ -4,7 +4,7 @@ use std::process;
 use kobayashi::combat::{
     simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
 };
-use kobayashi::data::import::import_spocks_export;
+use kobayashi::data::import::{import_roster_csv, import_spocks_export};
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
 
@@ -265,11 +265,21 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
 
 fn handle_import(args: &[String]) -> i32 {
     if args.len() != 1 {
-        eprintln!("usage: kobayashi import <path-to-export.json>");
+        eprintln!("usage: kobayashi import <path>");
+        eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
         return 2;
     }
+    let path = &args[0];
+    let result = if path.ends_with(".txt") {
+        import_roster_csv(path)
+    } else if path.ends_with(".json") {
+        import_spocks_export(path)
+    } else {
+        eprintln!("import expects a .txt file (roster) or .json file (Spocks export); got: {path}");
+        return 2;
+    };
 
-    match import_spocks_export(&args[0]) {
+    match result {
         Ok(report) => {
             println!(
                 "import summary: source='{}' output='{}' total={} matched={} unmatched={} ambiguous={} duplicates={} conflicts={}",

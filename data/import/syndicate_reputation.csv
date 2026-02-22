@@ -1,0 +1,5 @@
+level,stat,value,operator
+1,weapon_damage,0.01,add
+1,armor,0.01,add
+2,weapon_damage,0.02,add
+2,armor,0.02,add

@@ -3,13 +3,15 @@
     {
       "canonical_name": "Kirk",
       "canonical_officer_id": "kirk-1323b6",
+      "level": 45,
       "tier": 3
     },
     {
       "canonical_name": "Spock",
       "canonical_officer_id": "spock-c04738",
-      "rank": 2
+      "level": 20,
+      "tier": 2
     }
   ],
-  "source_path": "C:\\Users\\pierr\\AppData\\Local\\Temp\\kobayashi-import-1771736150152840800.json"
+  "source_path": "C:\\Users\\pierr\\AppData\\Local\\Temp\\kobayashi-roster-1771745718977197500.txt"
 }

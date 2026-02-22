@@ -15,6 +15,14 @@ fn unique_temp_path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("kobayashi-{name}-{stamp}.json"))
 }
 
+fn unique_temp_txt_path(name: &str) -> PathBuf {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("clock should be after unix epoch")
+        .as_nanos();
+    std::env::temp_dir().join(format!("kobayashi-{name}-{stamp}.txt"))
+}
+
 #[test]
 fn simulate_command_dispatches_and_emits_json() {
     let output = Command::new(bin())
@@ -110,6 +118,31 @@ fn import_command_imports_json_file() {
     assert!(stdout.contains("import summary:"));
     assert!(stdout.contains("matched=2"));
     assert!(stdout.contains("import complete: persisted 2 canonical roster entries"));
+
+    let _ = fs::remove_file(path);
+}
+
+#[test]
+fn import_command_imports_txt_roster() {
+    let path = unique_temp_txt_path("roster");
+    fs::write(
+        &path,
+        "name,tier,level\nKirk,3,45\nSpock,T2,",
+    )
+    .expect("roster fixture should be written");
+
+    let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let output = Command::new(bin())
+        .current_dir(&crate_root)
+        .args(["import", path.to_string_lossy().as_ref()])
+        .output()
+        .expect("import should run");
+
+    assert_eq!(output.status.code(), Some(0));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("import summary:"));
+    assert!(stdout.contains("import complete:"));
+    assert!(stdout.contains("persisted 2 canonical roster entries"));
 
     let _ = fs::remove_file(path);
 }
