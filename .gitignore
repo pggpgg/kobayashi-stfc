@@ -12,3 +12,6 @@ data/import/*.xlsx
 # Env files (secrets)
 .env
 .env.local
+
+# Simulator benchmark log (periodic runs)
+benchmark_log.csv
