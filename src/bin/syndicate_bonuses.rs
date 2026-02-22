@@ -38,12 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
         println!();
         for (key, value) in &sorted {
-            let pct = if *value >= 0.0 && *value <= 2.0 && value.fract() != 0.0 {
-                format!("{:.2}%", value * 100.0)
-            } else {
-                format!("{}", value)
-            };
-            println!("  {}: {}", key, pct);
+            println!("  {}: {:.2}%", key, value * 100.0);
         }
         println!("\nTotal combat entries: {}", sorted.len());
         return Ok(());
@@ -85,12 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     for (stat, value) in &cumulative {
-        let pct = if *value >= 0.0 && *value <= 2.0 && value.fract() != 0.0 {
-            format!("{:.2}%", value * 100.0)
-        } else {
-            format!("{}", value)
-        };
-        println!("  {}: {}", stat, pct);
+        println!("  {}: {:.2}%", stat, value * 100.0);
     }
     println!("\nTotal entries: {}", cumulative.len());
     Ok(())
