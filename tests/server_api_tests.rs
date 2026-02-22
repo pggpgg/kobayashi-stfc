@@ -2,7 +2,7 @@ use kobayashi::server::routes::route_request;
 
 #[test]
 fn health_endpoint_returns_ok_json() {
-    let response = route_request("GET", "/api/health", "");
+    let response = route_request("GET", "/api/health", "", None);
     assert_eq!(response.status_code, 200);
     assert_eq!(response.content_type, "application/json");
     assert!(response.body.contains("\"status\": \"ok\""));
@@ -11,7 +11,7 @@ fn health_endpoint_returns_ok_json() {
 #[test]
 fn optimize_endpoint_returns_ranked_recommendations() {
     let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":7}"#;
-    let response = route_request("POST", "/api/optimize", body);
+    let response = route_request("POST", "/api/optimize", body, None);
 
     assert_eq!(response.status_code, 200);
 
@@ -71,11 +71,13 @@ fn optimize_endpoint_changes_with_seed() {
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":7}"#,
+        None,
     );
     let response_b = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":8}"#,
+        None,
     );
 
     assert_eq!(response_a.status_code, 200);
@@ -87,8 +89,8 @@ fn optimize_endpoint_changes_with_seed() {
 fn optimize_endpoint_is_deterministic_for_fixed_seed() {
     let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":77}"#;
 
-    let response_a = route_request("POST", "/api/optimize", body);
-    let response_b = route_request("POST", "/api/optimize", body);
+    let response_a = route_request("POST", "/api/optimize", body, None);
+    let response_b = route_request("POST", "/api/optimize", body, None);
 
     assert_eq!(response_a.status_code, 200);
     assert_eq!(response_b.status_code, 200);
@@ -97,7 +99,7 @@ fn optimize_endpoint_is_deterministic_for_fixed_seed() {
 
 #[test]
 fn optimize_endpoint_rejects_invalid_payload() {
-    let response = route_request("POST", "/api/optimize", "{bad json}");
+    let response = route_request("POST", "/api/optimize", "{bad json}", None);
     assert_eq!(response.status_code, 400);
     assert!(response.body.contains("Invalid request body"));
 }
@@ -108,6 +110,7 @@ fn optimize_endpoint_rejects_empty_ship_and_hostile() {
         "POST",
         "/api/optimize",
         r#"{"ship":"","hostile":"   ","sims":100}"#,
+        None,
     );
 
     assert_eq!(response.status_code, 400);
@@ -147,6 +150,7 @@ fn optimize_endpoint_rejects_zero_sims() {
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":0}"#,
+        None,
     );
 
     assert_eq!(response.status_code, 400);
@@ -165,6 +169,7 @@ fn optimize_endpoint_rejects_very_large_sims() {
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":5000000}"#,
+        None,
     );
 
     assert_eq!(response.status_code, 400);
@@ -193,6 +198,7 @@ fn optimize_validation_error_has_expected_schema() {
         "POST",
         "/api/optimize",
         r#"{"ship":"","hostile":"explorer_30","sims":0}"#,
+        None,
     );
 
     assert_eq!(response.status_code, 400);

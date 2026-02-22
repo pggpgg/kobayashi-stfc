@@ -1,4 +1,5 @@
 use crate::server::api;
+use crate::server::sync;
 
 pub struct HttpResponse {
     pub status_code: u16,
@@ -20,7 +21,12 @@ impl HttpResponse {
     }
 }
 
-pub fn route_request(method: &str, path: &str, body: &str) -> HttpResponse {
+pub fn route_request(
+    method: &str,
+    path: &str,
+    body: &str,
+    sync_token: Option<&str>,
+) -> HttpResponse {
     match (method, path) {
         ("GET", "/") => HttpResponse {
             status_code: 200,
@@ -51,6 +57,7 @@ pub fn route_request(method: &str, path: &str, body: &str) -> HttpResponse {
                 validation_error_response(400, "Bad Request", validation)
             }
         },
+        ("POST", "/api/sync/ingress") => sync::ingress_payload(body, sync_token),
         _ => error_response(404, "Not Found", "Route not found"),
     }
 }

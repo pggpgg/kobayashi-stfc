@@ -3,6 +3,7 @@ use std::net::{TcpListener, TcpStream};
 
 pub mod api;
 pub mod routes;
+pub mod sync;
 
 const MAX_HEADER_SIZE: usize = 8 * 1024;
 const MAX_BODY_SIZE: usize = 1024 * 1024;
@@ -27,7 +28,12 @@ pub fn run_server(bind_addr: &str) -> std::io::Result<()> {
 
 fn handle_connection(stream: &mut TcpStream) -> std::io::Result<()> {
     let response = match read_http_request(stream) {
-        Ok(request) => routes::route_request(&request.method, &request.path, &request.body),
+        Ok(request) => routes::route_request(
+            &request.method,
+            &request.path,
+            &request.body,
+            request.sync_token.as_deref(),
+        ),
         Err(ParseError::BadRequest(message)) => {
             transport_error_response(400, "Bad Request", message)
         }
@@ -48,6 +54,8 @@ struct ParsedRequest {
     method: String,
     path: String,
     body: String,
+    /// Value of the stfc-sync-token request header, if present (for sync ingress auth).
+    sync_token: Option<String>,
 }
 
 #[derive(Debug)]
@@ -87,7 +95,7 @@ fn read_http_request<R: Read>(reader: &mut R) -> Result<ParsedRequest, ParseErro
     let header_bytes = &request_bytes[..header_end];
     let header_text = std::str::from_utf8(header_bytes)
         .map_err(|_| ParseError::BadRequest("Headers must be valid UTF-8"))?;
-    let (method, path, content_length) = parse_headers(header_text)?;
+    let (method, path, content_length, sync_token) = parse_headers(header_text)?;
 
     let body_len = content_length.unwrap_or(0);
     if body_len > MAX_BODY_SIZE {
@@ -122,10 +130,17 @@ fn read_http_request<R: Read>(reader: &mut R) -> Result<ParsedRequest, ParseErro
     let body = String::from_utf8(body_bytes[..body_len].to_vec())
         .map_err(|_| ParseError::BadRequest("Body must be valid UTF-8"))?;
 
-    Ok(ParsedRequest { method, path, body })
+    Ok(ParsedRequest {
+        method,
+        path,
+        body,
+        sync_token,
+    })
 }
 
-fn parse_headers(header_text: &str) -> Result<(String, String, Option<usize>), ParseError> {
+fn parse_headers(
+    header_text: &str,
+) -> Result<(String, String, Option<usize>, Option<String>), ParseError> {
     let mut lines = header_text.split("\r\n");
     let request_line = lines
         .next()
@@ -140,6 +155,7 @@ fn parse_headers(header_text: &str) -> Result<(String, String, Option<usize>), P
         .ok_or(ParseError::BadRequest("Missing request path"))?;
 
     let mut content_length = None;
+    let mut sync_token = None;
     for line in lines {
         if line.is_empty() {
             break;
@@ -155,10 +171,17 @@ fn parse_headers(header_text: &str) -> Result<(String, String, Option<usize>), P
                 .parse::<usize>()
                 .map_err(|_| ParseError::BadRequest("Invalid Content-Length header"))?;
             content_length = Some(length);
+        } else if name.eq_ignore_ascii_case("stfc-sync-token") {
+            sync_token = Some(value.trim().to_string());
         }
     }
 
-    Ok((method.to_string(), path.to_string(), content_length))
+    Ok((
+        method.to_string(),
+        path.to_string(),
+        content_length,
+        sync_token,
+    ))
 }
 
 fn find_header_terminator(buffer: &[u8]) -> Option<usize> {

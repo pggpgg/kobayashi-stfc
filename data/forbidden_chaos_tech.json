@@ -1,0 +1,35 @@
+{
+  "source": "community_spreadsheet",
+  "last_updated": "2026-02-22",
+  "items": [
+    {
+      "name": "Weapon Damage Sample",
+      "tech_type": "forbidden",
+      "tier": null,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.1,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "name": "Ablative Armor",
+      "tech_type": "forbidden",
+      "tier": 1,
+      "bonuses": [
+        {
+          "stat": "hull_hp",
+          "value": 0.05,
+          "operator": "add"
+        },
+        {
+          "stat": "shield_hp",
+          "value": 0.05,
+          "operator": "add"
+        }
+      ]
+    }
+  ]
+}

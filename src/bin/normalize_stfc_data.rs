@@ -9,8 +9,12 @@ use serde::Deserialize;
 
 const UPSTREAM_HOSTILES_SUFFIX: &str = "data/upstream/stfccommunity-data";
 const UPSTREAM_SHIPS_SUFFIX: &str = "data/upstream/stfccommunity-data/ships";
+const UPSTREAM_BUILDINGS_SUFFIX: &str = "data/upstream/stfccommunity-data/buildings";
+const UPSTREAM_FACTION_REP_SUFFIX: &str = "data/upstream/stfccommunity-data/faction_reputation";
 const OUT_HOSTILES_SUFFIX: &str = "data/hostiles";
 const OUT_SHIPS_SUFFIX: &str = "data/ships";
+const OUT_BUILDINGS_SUFFIX: &str = "data/buildings";
+const OUT_FACTION_REP_SUFFIX: &str = "data/faction_reputation";
 const SOURCE_NOTE: &str = "STFCcommunity baseline (outdated ~3y)";
 
 /// Resolve path relative to repo root (CARGO_MANIFEST_DIR when run via cargo).
@@ -134,13 +138,64 @@ struct RawShip {
     tiers: Vec<RawTier>,
 }
 
+// ----- Raw STFCcommunity building (partial) -----
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct RawBuildingBonusMeta {
+    #[serde(default)]
+    name: String,
+    #[serde(default)]
+    percentage: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawBuildingLevel {
+    #[serde(default)]
+    level: u32,
+    #[serde(default)]
+    bonuses: std::collections::HashMap<String, f64>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawBuilding {
+    #[serde(default)]
+    building_name: String,
+    #[serde(default)]
+    bonuses: std::collections::HashMap<String, RawBuildingBonusMeta>,
+    #[serde(default)]
+    levels: Vec<RawBuildingLevel>,
+}
+
+// ----- Raw STFCcommunity faction_reputation -----
+#[derive(Debug, Deserialize)]
+struct RawReputationTier {
+    #[serde(default)]
+    points_min: i64,
+    #[serde(default)]
+    reputation_id: u32,
+    #[serde(default)]
+    reputation_name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawFactionReputation {
+    #[serde(default)]
+    faction: String,
+    #[serde(default)]
+    reputation: Vec<RawReputationTier>,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data_version = std::env::var("STFC_DATA_VERSION").unwrap_or_else(|_| "stfccommunity-main".to_string());
 
     let hostiles_dir = repo_data_path(UPSTREAM_HOSTILES_SUFFIX);
     let ships_dir = repo_data_path(UPSTREAM_SHIPS_SUFFIX);
+    let buildings_dir = repo_data_path(UPSTREAM_BUILDINGS_SUFFIX);
+    let faction_rep_dir = repo_data_path(UPSTREAM_FACTION_REP_SUFFIX);
     let out_hostiles = repo_data_path(OUT_HOSTILES_SUFFIX);
     let out_ships = repo_data_path(OUT_SHIPS_SUFFIX);
+    let out_buildings = repo_data_path(OUT_BUILDINGS_SUFFIX);
+    let out_faction_rep = repo_data_path(OUT_FACTION_REP_SUFFIX);
 
     if !hostiles_dir.is_dir() {
         eprintln!(
@@ -249,7 +304,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let ship_index = kobayashi::data::ship::ShipIndex {
-        data_version: Some(data_version),
+        data_version: Some(data_version.clone()),
         source_note: Some(SOURCE_NOTE.to_string()),
         ships: ship_index_entries,
     };
@@ -257,6 +312,131 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         out_ships.join("index.json"),
         serde_json::to_string_pretty(&ship_index)?,
     )?;
+
+    // ----- Buildings (optional: upstream may not have been fetched) -----
+    let mut building_index_entries: Vec<kobayashi::data::building::BuildingIndexEntry> = Vec::new();
+    if buildings_dir.is_dir() {
+        fs::create_dir_all(&out_buildings)?;
+        for entry in fs::read_dir(&buildings_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().map_or(false, |e| e == "json") {
+                let id = path.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                let content = fs::read_to_string(&path)?;
+                let raw: RawBuilding = serde_json::from_str(&content).unwrap_or_else(|_| RawBuilding {
+                    building_name: id.clone(),
+                    bonuses: std::collections::HashMap::new(),
+                    levels: Vec::new(),
+                });
+                let rec = raw_to_building_record(&id, &raw);
+                building_index_entries.push(kobayashi::data::building::BuildingIndexEntry {
+                    id: rec.id.clone(),
+                    building_name: rec.building_name.clone(),
+                });
+                let out_path = out_buildings.join(format!("{}.json", rec.id));
+                fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;
+            }
+        }
+        let building_index = kobayashi::data::building::BuildingIndex {
+            data_version: Some(data_version.clone()),
+            source_note: Some(SOURCE_NOTE.to_string()),
+            buildings: building_index_entries.clone(),
+        };
+        fs::write(
+            out_buildings.join("index.json"),
+            serde_json::to_string_pretty(&building_index)?,
+        )?;
+    }
+
+    // ----- Faction reputation (optional) -----
+    let mut faction_list: Vec<String> = Vec::new();
+    if faction_rep_dir.is_dir() {
+        fs::create_dir_all(&out_faction_rep)?;
+        for entry in fs::read_dir(&faction_rep_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().map_or(false, |e| e == "json") {
+                let content = fs::read_to_string(&path)?;
+                let raw: RawFactionReputation = serde_json::from_str(&content).unwrap_or_else(|_| RawFactionReputation {
+                    faction: String::new(),
+                    reputation: Vec::new(),
+                });
+                let rec = kobayashi::data::faction_reputation::FactionReputationRecord {
+                    faction: raw.faction.clone(),
+                    reputation: raw
+                        .reputation
+                        .iter()
+                        .map(|t| kobayashi::data::faction_reputation::ReputationTier {
+                            points_min: t.points_min,
+                            reputation_id: t.reputation_id,
+                            reputation_name: t.reputation_name.clone(),
+                        })
+                        .collect(),
+                };
+                faction_list.push(rec.faction.clone());
+                let out_path = out_faction_rep.join(format!("{}.json", rec.faction));
+                fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;
+            }
+        }
+        let faction_index = kobayashi::data::faction_reputation::FactionReputationIndex {
+            data_version: Some(data_version.clone()),
+            source_note: Some(SOURCE_NOTE.to_string()),
+            factions: faction_list.clone(),
+        };
+        fs::write(
+            out_faction_rep.join("index.json"),
+            serde_json::to_string_pretty(&faction_index)?,
+        )?;
+    }
+
+    // ----- Registry -----
+    let last_updated = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let mut registry = kobayashi::data::registry::Registry::new();
+    registry.insert(
+        "hostiles".to_string(),
+        kobayashi::data::registry::DataSetEntry {
+            source: "stfccommunity".to_string(),
+            data_version: hostile_index.data_version.clone(),
+            last_updated: Some(last_updated.clone()),
+            path: "hostiles/index.json".to_string(),
+        },
+    );
+    registry.insert(
+        "ships".to_string(),
+        kobayashi::data::registry::DataSetEntry {
+            source: "stfccommunity".to_string(),
+            data_version: ship_index.data_version.clone(),
+            last_updated: Some(last_updated.clone()),
+            path: "ships/index.json".to_string(),
+        },
+    );
+    if !building_index_entries.is_empty() {
+        registry.insert(
+            "buildings".to_string(),
+            kobayashi::data::registry::DataSetEntry {
+                source: "stfccommunity".to_string(),
+                data_version: Some(data_version.clone()),
+                last_updated: Some(last_updated.clone()),
+                path: "buildings/index.json".to_string(),
+            },
+        );
+    }
+    if !faction_list.is_empty() {
+        registry.insert(
+            "faction_reputation".to_string(),
+            kobayashi::data::registry::DataSetEntry {
+                source: "stfccommunity".to_string(),
+                data_version: Some(data_version.clone()),
+                last_updated: Some(last_updated.clone()),
+                path: "faction_reputation/index.json".to_string(),
+            },
+        );
+    }
+    let registry_path = repo_data_path("data/registry.json");
+    if let Some(parent) = registry_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(registry_path, serde_json::to_string_pretty(&registry)?)?;
 
     // Validation: re-load index and one record each to ensure schema is loadable (only if we have data)
     if !hostile_index.hostiles.is_empty() {
@@ -279,13 +459,60 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!(
-        "Normalized {} hostiles and {} ships. data_version={:?} source_note={:?}",
+        "Normalized {} hostiles, {} ships, {} buildings, {} factions. data_version={:?} source_note={:?}",
         hostile_index.hostiles.len(),
         ship_index.ships.len(),
+        building_index_entries.len(),
+        faction_list.len(),
         hostile_index.data_version,
         hostile_index.source_note
     );
     Ok(())
+}
+
+fn bonus_name_to_stat(name: &str) -> String {
+    name.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphabetic() || c.is_numeric() { c } else { '_' })
+        .collect::<String>()
+        .split('_')
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("_")
+}
+
+fn raw_to_building_record(id: &str, raw: &RawBuilding) -> kobayashi::data::building::BuildingRecord {
+    let levels: Vec<kobayashi::data::building::BuildingLevel> = raw
+        .levels
+        .iter()
+        .map(|lvl| {
+            let bonuses: Vec<kobayashi::data::building::BonusEntry> = lvl
+                .bonuses
+                .iter()
+                .map(|(key, value)| {
+                    let stat = raw
+                        .bonuses
+                        .get(key)
+                        .map(|m| bonus_name_to_stat(&m.name))
+                        .unwrap_or_else(|| key.clone());
+                    kobayashi::data::building::BonusEntry {
+                        stat,
+                        value: *value,
+                        operator: "add".to_string(),
+                    }
+                })
+                .collect();
+            kobayashi::data::building::BuildingLevel {
+                level: lvl.level,
+                bonuses,
+            }
+        })
+        .collect();
+    kobayashi::data::building::BuildingRecord {
+        id: id.to_string(),
+        building_name: raw.building_name.clone(),
+        levels,
+    }
 }
 
 fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::ShipRecord> {
