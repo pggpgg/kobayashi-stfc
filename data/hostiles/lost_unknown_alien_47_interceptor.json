@@ -1,0 +1,11 @@
+{
+  "id": "lost_unknown_alien_47_interceptor",
+  "hostile_name": "Lost Unknown Alien",
+  "level": 47,
+  "ship_class": "interceptor",
+  "armor": 19235.0,
+  "shield_deflection": 19235.0,
+  "dodge": 297190.0,
+  "hull_health": 5561191.0,
+  "shield_health": 5561191.0
+}

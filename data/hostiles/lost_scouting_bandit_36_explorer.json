@@ -1,0 +1,11 @@
+{
+  "id": "lost_scouting_bandit_36_explorer",
+  "hostile_name": "Lost Scouting Bandit",
+  "level": 36,
+  "ship_class": "explorer",
+  "armor": 10935.0,
+  "shield_deflection": 51029.0,
+  "dodge": 9568.0,
+  "hull_health": 92940.0,
+  "shield_health": 134250.0
+}

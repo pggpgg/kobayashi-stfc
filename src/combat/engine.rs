@@ -280,8 +280,6 @@ pub fn simulate_combat(
         combat_begin_assimilated,
     );
 
-    let mut defender_current_hull = defender.hull_health;
-
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     for round_index in 1..=rounds_to_simulate {
         let round_start_effects =

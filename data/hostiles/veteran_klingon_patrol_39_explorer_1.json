@@ -1,0 +1,11 @@
+{
+  "id": "veteran_klingon_patrol_39_explorer_1",
+  "hostile_name": "Veteran Klingon Patrol",
+  "level": 39,
+  "ship_class": "explorer",
+  "armor": 35875.0,
+  "shield_deflection": 163999.0,
+  "dodge": 47833.0,
+  "hull_health": 440040.0,
+  "shield_health": 464480.0
+}

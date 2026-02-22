@@ -1,0 +1,11 @@
+{
+  "id": "immortal_dagger_class_50_explorer",
+  "hostile_name": "Immortal Dagger Class",
+  "level": 50,
+  "ship_class": "explorer",
+  "armor": 33618.0,
+  "shield_deflection": 444904.0,
+  "dodge": 32018.0,
+  "hull_health": 8133888.0,
+  "shield_health": 9411117.0
+}

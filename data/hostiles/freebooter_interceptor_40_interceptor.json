@@ -1,0 +1,11 @@
+{
+  "id": "freebooter_interceptor_40_interceptor",
+  "hostile_name": "Freebooter Interceptor",
+  "level": 40,
+  "ship_class": "interceptor",
+  "armor": 7913.0,
+  "shield_deflection": 8309.0,
+  "dodge": 95787.0,
+  "hull_health": 25064407.0,
+  "shield_health": 1933982.0
+}

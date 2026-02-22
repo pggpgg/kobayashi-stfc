@@ -1,0 +1,13 @@
+{
+  "id": "uss_defiant",
+  "ship_name": "USS DEFIANT",
+  "ship_class": "interceptor",
+  "armor_piercing": 18333.666666666668,
+  "shield_piercing": 2500.0,
+  "accuracy": 1849.0,
+  "attack": 213001.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 100000.0,
+  "shield_health": 50000.0
+}

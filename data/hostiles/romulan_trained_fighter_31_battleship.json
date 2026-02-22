@@ -1,0 +1,11 @@
+{
+  "id": "romulan_trained_fighter_31_battleship",
+  "hostile_name": "Romulan Trained Fighter",
+  "level": 31,
+  "ship_class": "battleship",
+  "armor": 32900.0,
+  "shield_deflection": 6169.0,
+  "dodge": 7050.0,
+  "hull_health": 89700.0,
+  "shield_health": 49160.0
+}

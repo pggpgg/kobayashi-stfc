@@ -1,0 +1,11 @@
+{
+  "id": "cardassian_militia_33_battleship",
+  "hostile_name": "Cardassian Militia",
+  "level": 33,
+  "ship_class": "battleship",
+  "armor": 20040.0,
+  "shield_deflection": 5010.0,
+  "dodge": 5010.0,
+  "hull_health": 58200.0,
+  "shield_health": 43650.0
+}

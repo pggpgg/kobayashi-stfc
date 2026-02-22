@@ -1,0 +1,11 @@
+{
+  "id": "lost_gorn_warship_51_interceptor",
+  "hostile_name": "Lost Gorn Warship",
+  "level": 51,
+  "ship_class": "interceptor",
+  "armor": 37337.0,
+  "shield_deflection": 37337.0,
+  "dodge": 648530.0,
+  "hull_health": 12297483.0,
+  "shield_health": 12297483.0
+}

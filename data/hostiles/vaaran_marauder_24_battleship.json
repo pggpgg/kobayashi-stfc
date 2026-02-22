@@ -1,0 +1,11 @@
+{
+  "id": "vaaran_marauder_24_battleship",
+  "hostile_name": "Vaaran Marauder",
+  "level": 24,
+  "ship_class": "battleship",
+  "armor": 2300.0,
+  "shield_deflection": 575.0,
+  "dodge": 575.0,
+  "hull_health": 7800.0,
+  "shield_health": 5850.0
+}

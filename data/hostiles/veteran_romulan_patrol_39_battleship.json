@@ -1,0 +1,11 @@
+{
+  "id": "veteran_romulan_patrol_39_battleship",
+  "hostile_name": "Veteran Romulan Patrol",
+  "level": 39,
+  "ship_class": "battleship",
+  "armor": 160110.0,
+  "shield_deflection": 30021.0,
+  "dodge": 34309.0,
+  "hull_health": 460990.0,
+  "shield_health": 252660.0
+}

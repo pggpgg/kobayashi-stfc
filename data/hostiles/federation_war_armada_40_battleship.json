@@ -1,0 +1,11 @@
+{
+  "id": "federation_war_armada_40_battleship",
+  "hostile_name": "Federation War Armada",
+  "level": 40,
+  "ship_class": "battleship",
+  "armor": 184754.0,
+  "shield_deflection": 10160.0,
+  "dodge": 9676.0,
+  "hull_health": 5505239.0,
+  "shield_health": 4541811.0
+}

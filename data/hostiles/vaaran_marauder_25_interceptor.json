@@ -1,0 +1,11 @@
+{
+  "id": "vaaran_marauder_25_interceptor",
+  "hostile_name": "Vaaran Marauder",
+  "level": 25,
+  "ship_class": "interceptor",
+  "armor": 625.0,
+  "shield_deflection": 625.0,
+  "dodge": 2500.0,
+  "hull_health": 7680.0,
+  "shield_health": 7680.0
+}

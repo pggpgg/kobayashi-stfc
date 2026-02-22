@@ -1,0 +1,11 @@
+{
+  "id": "actian_apex_35_interceptor",
+  "hostile_name": "Actian Apex",
+  "level": 35,
+  "ship_class": "interceptor",
+  "armor": 19414.0,
+  "shield_deflection": 326091.0,
+  "dodge": 19414.0,
+  "hull_health": 70708619.0,
+  "shield_health": 89992836.0
+}

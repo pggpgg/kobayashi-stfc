@@ -1,0 +1,13 @@
+{
+  "id": "corvus",
+  "ship_name": "CORVUS",
+  "ship_class": "explorer",
+  "armor_piercing": 19065.0,
+  "shield_piercing": 20878.0,
+  "accuracy": 226397.5,
+  "attack": 460231.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2754440.0,
+  "shield_health": 1377220.0
+}

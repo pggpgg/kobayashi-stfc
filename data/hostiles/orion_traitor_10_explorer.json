@@ -1,0 +1,11 @@
+{
+  "id": "orion_traitor_10_explorer",
+  "hostile_name": "Orion Traitor",
+  "level": 10,
+  "ship_class": "explorer",
+  "armor": 26.0,
+  "shield_deflection": 105.0,
+  "dodge": 26.0,
+  "hull_health": 430.0,
+  "shield_health": 450.0
+}

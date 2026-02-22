@@ -1,0 +1,11 @@
+{
+  "id": "ksg_scout_56_interceptor",
+  "hostile_name": "KSG Scout ★",
+  "level": 56,
+  "ship_class": "interceptor",
+  "armor": 211480.0,
+  "shield_deflection": 211480.0,
+  "dodge": 4803618.0,
+  "hull_health": 69654483.0,
+  "shield_health": 69654483.0
+}

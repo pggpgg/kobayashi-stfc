@@ -1,0 +1,11 @@
+{
+  "id": "lost_nausicaan_outlaw_28_interceptor",
+  "hostile_name": "Lost Nausicaan Outlaw",
+  "level": 28,
+  "ship_class": "interceptor",
+  "armor": 1444.0,
+  "shield_deflection": 1650.0,
+  "dodge": 7700.0,
+  "hull_health": 22080.0,
+  "shield_health": 22080.0
+}

@@ -1,0 +1,13 @@
+{
+  "id": "amalgam",
+  "ship_name": "AMALGAM",
+  "ship_class": "survey",
+  "armor_piercing": 477.0,
+  "shield_piercing": 477.0,
+  "accuracy": 477.0,
+  "attack": 1814.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 19200.0,
+  "shield_health": 9600.0
+}

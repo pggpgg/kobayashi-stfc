@@ -1,0 +1,11 @@
+{
+  "id": "doomsday_worm_45_interceptor",
+  "hostile_name": "Doomsday Worm",
+  "level": 45,
+  "ship_class": "interceptor",
+  "armor": 19235.0,
+  "shield_deflection": 19235.0,
+  "dodge": 283038.0,
+  "hull_health": 5296372.0,
+  "shield_health": 5296372.0
+}

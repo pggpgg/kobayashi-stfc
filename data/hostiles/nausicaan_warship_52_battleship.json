@@ -1,0 +1,11 @@
+{
+  "id": "nausicaan_warship_52_battleship",
+  "hostile_name": "Nausicaan Warship",
+  "level": 52,
+  "ship_class": "battleship",
+  "armor": 624402.0,
+  "shield_deflection": 25921.0,
+  "dodge": 25921.0,
+  "hull_health": 16205505.0,
+  "shield_health": 12153966.0
+}

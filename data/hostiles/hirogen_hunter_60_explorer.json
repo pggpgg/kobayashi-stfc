@@ -1,0 +1,11 @@
+{
+  "id": "hirogen_hunter_60_explorer",
+  "hostile_name": "Hirogen Hunter",
+  "level": 60,
+  "ship_class": "explorer",
+  "armor": 847109.0,
+  "shield_deflection": 12359242.0,
+  "dodge": 847109.0,
+  "hull_health": 195632657.0,
+  "shield_health": 273885934.0
+}

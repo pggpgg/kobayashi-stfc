@@ -1,0 +1,11 @@
+{
+  "id": "takret_raider_54_interceptor",
+  "hostile_name": "Takret Raider",
+  "level": 54,
+  "ship_class": "interceptor",
+  "armor": 70002.0,
+  "shield_deflection": 70002.0,
+  "dodge": 1778788.0,
+  "hull_health": 35408217.0,
+  "shield_health": 35408217.0
+}

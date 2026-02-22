@@ -1,0 +1,11 @@
+{
+  "id": "veteran_federation_patrol_38_battleship_2",
+  "hostile_name": "Veteran Federation Patrol",
+  "level": 38,
+  "ship_class": "battleship",
+  "armor": 92939.0,
+  "shield_deflection": 27107.0,
+  "dodge": 20330.0,
+  "hull_health": 226020.0,
+  "shield_health": 231970.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "benzar_smuggler_22_battleship",
+  "hostile_name": "Benzar Smuggler",
+  "level": 22,
+  "ship_class": "battleship",
+  "armor": 1750.0,
+  "shield_deflection": 438.0,
+  "dodge": 438.0,
+  "hull_health": 6000.0,
+  "shield_health": 4500.0
+}

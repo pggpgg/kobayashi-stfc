@@ -1,0 +1,11 @@
+{
+  "id": "ksg_defense_vessel_52_battleship",
+  "hostile_name": "KSG Defense Vessel",
+  "level": 52,
+  "ship_class": "battleship",
+  "armor": 664197.0,
+  "shield_deflection": 31810.0,
+  "dodge": 33402.0,
+  "hull_health": 19705931.0,
+  "shield_health": 14779349.0
+}

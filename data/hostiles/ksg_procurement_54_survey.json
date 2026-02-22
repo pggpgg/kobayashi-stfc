@@ -1,0 +1,11 @@
+{
+  "id": "ksg_procurement_54_survey",
+  "hostile_name": "KSG Procurement",
+  "level": 54,
+  "ship_class": "survey",
+  "armor": 804552.0,
+  "shield_deflection": 804552.0,
+  "dodge": 844782.0,
+  "hull_health": 33328654.0,
+  "shield_health": 31539405.0
+}

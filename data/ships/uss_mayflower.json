@@ -1,0 +1,13 @@
+{
+  "id": "uss_mayflower",
+  "ship_name": "USS MAYFLOWER",
+  "ship_class": "explorer",
+  "armor_piercing": 514.0,
+  "shield_piercing": 588.0,
+  "accuracy": 4978.5,
+  "attack": 11105.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 45860.0,
+  "shield_health": 22930.0
+}

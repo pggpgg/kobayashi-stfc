@@ -1,0 +1,11 @@
+{
+  "id": "hirogen_hunter_42_interceptor",
+  "hostile_name": "Hirogen Hunter",
+  "level": 42,
+  "ship_class": "interceptor",
+  "armor": 15421.0,
+  "shield_deflection": 15421.0,
+  "dodge": 211937.0,
+  "hull_health": 3913704.0,
+  "shield_health": 3913704.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "veteran_vulcan_renegade_39_explorer",
+  "hostile_name": "Veteran Vulcan Renegade",
+  "level": 39,
+  "ship_class": "explorer",
+  "armor": 23658.0,
+  "shield_deflection": 94632.0,
+  "dodge": 23658.0,
+  "hull_health": 262990.0,
+  "shield_health": 277600.0
+}

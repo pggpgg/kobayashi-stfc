@@ -1,0 +1,11 @@
+{
+  "id": "ksg_border_patrol_57_explorer",
+  "hostile_name": "KSG Border Patrol",
+  "level": 57,
+  "ship_class": "explorer",
+  "armor": 362668.0,
+  "shield_deflection": 5039330.0,
+  "dodge": 380783.0,
+  "hull_health": 87943035.0,
+  "shield_health": 111927576.0
+}

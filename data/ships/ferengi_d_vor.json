@@ -1,0 +1,13 @@
+{
+  "id": "ferengi_d_vor",
+  "ship_name": "FERENGI D'VOR",
+  "ship_class": "survey",
+  "armor_piercing": 79.0,
+  "shield_piercing": 79.0,
+  "accuracy": 79.0,
+  "attack": 269.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 1540.0,
+  "shield_health": 770.0
+}

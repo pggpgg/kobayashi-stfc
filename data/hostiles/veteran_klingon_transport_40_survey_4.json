@@ -1,0 +1,11 @@
+{
+  "id": "veteran_klingon_transport_40_survey_4",
+  "hostile_name": "Veteran Klingon Transport",
+  "level": 40,
+  "ship_class": "survey",
+  "armor": 121812.0,
+  "shield_deflection": 121812.0,
+  "dodge": 121812.0,
+  "hull_health": 1000970.0,
+  "shield_health": 1000970.0
+}

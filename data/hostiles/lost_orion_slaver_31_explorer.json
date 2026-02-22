@@ -1,0 +1,11 @@
+{
+  "id": "lost_orion_slaver_31_explorer",
+  "hostile_name": "Lost Orion Slaver",
+  "level": 31,
+  "ship_class": "explorer",
+  "armor": 3300.0,
+  "shield_deflection": 15400.0,
+  "dodge": 2888.0,
+  "hull_health": 35910.0,
+  "shield_health": 51870.0
+}

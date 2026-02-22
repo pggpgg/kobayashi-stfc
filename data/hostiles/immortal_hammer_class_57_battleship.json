@@ -1,0 +1,11 @@
+{
+  "id": "immortal_hammer_class_57_battleship",
+  "hostile_name": "Immortal Hammer Class",
+  "level": 57,
+  "ship_class": "battleship",
+  "armor": 4453236.0,
+  "shield_deflection": 203121.0,
+  "dodge": 203121.0,
+  "hull_health": 131822720.0,
+  "shield_health": 89878520.0
+}

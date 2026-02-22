@@ -1,0 +1,13 @@
+{
+  "id": "talla",
+  "ship_name": "TALLA",
+  "ship_class": "battleship",
+  "armor_piercing": 45.0,
+  "shield_piercing": 272.0,
+  "accuracy": 45.0,
+  "attack": 302.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

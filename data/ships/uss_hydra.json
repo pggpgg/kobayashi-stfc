@@ -1,0 +1,13 @@
+{
+  "id": "uss_hydra",
+  "ship_name": "USS HYDRA",
+  "ship_class": "survey",
+  "armor_piercing": 2426.0,
+  "shield_piercing": 2772.0,
+  "accuracy": 3234.0,
+  "attack": 3150.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 25940.0,
+  "shield_health": 12970.0
+}

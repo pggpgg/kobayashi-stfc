@@ -1,0 +1,11 @@
+{
+  "id": "klingon_transport_42_survey",
+  "hostile_name": "Klingon Transport",
+  "level": 42,
+  "ship_class": "survey",
+  "armor": 97191.0,
+  "shield_deflection": 97191.0,
+  "dodge": 102051.0,
+  "hull_health": 2753165.0,
+  "shield_health": 2502878.0
+}

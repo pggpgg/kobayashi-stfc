@@ -1,0 +1,13 @@
+{
+  "id": "b_rel",
+  "ship_name": "B'REL",
+  "ship_class": "explorer",
+  "armor_piercing": 2141.0,
+  "shield_piercing": 1606.0,
+  "accuracy": 14000.0,
+  "attack": 65379.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 144400.0,
+  "shield_health": 72200.0
+}

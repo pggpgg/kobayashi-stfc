@@ -1,0 +1,11 @@
+{
+  "id": "federation_patrol_51_battleship",
+  "hostile_name": "Federation Patrol",
+  "level": 51,
+  "ship_class": "battleship",
+  "armor": 384650.0,
+  "shield_deflection": 19001.0,
+  "dodge": 18096.0,
+  "hull_health": 10753817.0,
+  "shield_health": 8871832.0
+}

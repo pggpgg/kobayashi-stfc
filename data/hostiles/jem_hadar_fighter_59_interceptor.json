@@ -1,0 +1,11 @@
+{
+  "id": "jem_hadar_fighter_59_interceptor",
+  "hostile_name": "Jem'Hadar Fighter",
+  "level": 59,
+  "ship_class": "interceptor",
+  "armor": 588570.0,
+  "shield_deflection": 560521.0,
+  "dodge": 9272456.0,
+  "hull_health": 193408178.0,
+  "shield_health": 175825599.0
+}

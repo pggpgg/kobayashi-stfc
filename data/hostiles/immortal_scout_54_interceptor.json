@@ -1,0 +1,11 @@
+{
+  "id": "immortal_scout_54_interceptor",
+  "hostile_name": "Immortal Scout ★",
+  "level": 54,
+  "ship_class": "interceptor",
+  "armor": 97405.0,
+  "shield_deflection": 92763.0,
+  "dodge": 2422956.0,
+  "hull_health": 32007954.0,
+  "shield_health": 29098138.0
+}

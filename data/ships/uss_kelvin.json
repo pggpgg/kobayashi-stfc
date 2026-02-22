@@ -1,0 +1,13 @@
+{
+  "id": "uss_kelvin",
+  "ship_name": "USS KELVIN",
+  "ship_class": "interceptor",
+  "armor_piercing": 32000.0,
+  "shield_piercing": 3200.0,
+  "accuracy": 3840.0,
+  "attack": 72751.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 556532.0,
+  "shield_health": 278266.0
+}

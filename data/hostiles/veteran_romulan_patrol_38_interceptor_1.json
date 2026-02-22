@@ -1,0 +1,11 @@
+{
+  "id": "veteran_romulan_patrol_38_interceptor_1",
+  "hostile_name": "Veteran Romulan Patrol",
+  "level": 38,
+  "ship_class": "interceptor",
+  "armor": 33121.0,
+  "shield_deflection": 24841.0,
+  "dodge": 113558.0,
+  "hull_health": 303900.0,
+  "shield_health": 222080.0
+}

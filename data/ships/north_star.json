@@ -1,0 +1,13 @@
+{
+  "id": "north_star",
+  "ship_name": "NORTH STAR",
+  "ship_class": "survey",
+  "armor_piercing": 157.0,
+  "shield_piercing": 157.0,
+  "accuracy": 157.0,
+  "attack": 746.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 6100.0,
+  "shield_health": 3050.0
+}

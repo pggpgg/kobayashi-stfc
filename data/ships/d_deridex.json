@@ -1,0 +1,13 @@
+{
+  "id": "d_deridex",
+  "ship_name": "D'DERIDEX",
+  "ship_class": "battleship",
+  "armor_piercing": 56333.0,
+  "shield_piercing": 563354.0,
+  "accuracy": 56333.0,
+  "attack": 4913533.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 7053886.0,
+  "shield_health": 3526943.0
+}

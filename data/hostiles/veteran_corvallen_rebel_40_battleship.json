@@ -1,0 +1,11 @@
+{
+  "id": "veteran_corvallen_rebel_40_battleship",
+  "hostile_name": "Veteran Corvallen Rebel",
+  "level": 40,
+  "ship_class": "battleship",
+  "armor": 219463.0,
+  "shield_deflection": 54866.0,
+  "dodge": 54866.0,
+  "hull_health": 687220.0,
+  "shield_health": 515420.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "federation_transport_36_survey",
+  "hostile_name": "Federation Transport",
+  "level": 36,
+  "ship_class": "survey",
+  "armor": 31415.0,
+  "shield_deflection": 31415.0,
+  "dodge": 31415.0,
+  "hull_health": 230100.0,
+  "shield_health": 230100.0
+}

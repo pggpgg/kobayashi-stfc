@@ -1,0 +1,13 @@
+{
+  "id": "kehra",
+  "ship_name": "KEHRA",
+  "ship_class": "interceptor",
+  "armor_piercing": 589.0,
+  "shield_piercing": 98.0,
+  "accuracy": 98.0,
+  "attack": 3526.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

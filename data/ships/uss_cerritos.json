@@ -1,0 +1,13 @@
+{
+  "id": "uss_cerritos",
+  "ship_name": "USS CERRITOS",
+  "ship_class": "explorer",
+  "armor_piercing": 2141.0,
+  "shield_piercing": 1606.0,
+  "accuracy": 14000.0,
+  "attack": 50397.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 155800.0,
+  "shield_health": 77900.0
+}

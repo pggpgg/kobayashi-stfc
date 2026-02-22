@@ -1,0 +1,11 @@
+{
+  "id": "orion_slaver_51_explorer",
+  "hostile_name": "Orion Slaver",
+  "level": 51,
+  "ship_class": "explorer",
+  "armor": 28651.0,
+  "shield_deflection": 481254.0,
+  "dodge": 28651.0,
+  "hull_health": 7729919.0,
+  "shield_health": 9838084.0
+}

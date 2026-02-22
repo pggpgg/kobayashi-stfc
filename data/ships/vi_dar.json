@@ -1,0 +1,13 @@
+{
+  "id": "vi_dar",
+  "ship_name": "VI'DAR",
+  "ship_class": "interceptor",
+  "armor_piercing": 1536.0,
+  "shield_piercing": 256.0,
+  "accuracy": 256.0,
+  "attack": 75606.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

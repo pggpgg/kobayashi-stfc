@@ -1,0 +1,11 @@
+{
+  "id": "corvallen_mercenary_46_explorer",
+  "hostile_name": "Corvallen Mercenary",
+  "level": 46,
+  "ship_class": "explorer",
+  "armor": 19208.0,
+  "shield_deflection": 249120.0,
+  "dodge": 19208.0,
+  "hull_health": 4192220.0,
+  "shield_health": 5335556.0
+}

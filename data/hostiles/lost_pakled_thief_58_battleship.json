@@ -1,0 +1,11 @@
+{
+  "id": "lost_pakled_thief_58_battleship",
+  "hostile_name": "Lost Pakled Thief",
+  "level": 58,
+  "ship_class": "battleship",
+  "armor": 5250733.0,
+  "shield_deflection": 239496.0,
+  "dodge": 239496.0,
+  "hull_health": 155429868.0,
+  "shield_health": 105974194.0
+}

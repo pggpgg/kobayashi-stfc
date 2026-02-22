@@ -1,0 +1,11 @@
+{
+  "id": "reckless_bandit_37_interceptor",
+  "hostile_name": "Reckless Bandit",
+  "level": 37,
+  "ship_class": "interceptor",
+  "armor": 10439.0,
+  "shield_deflection": 10439.0,
+  "dodge": 41755.0,
+  "hull_health": 100250.0,
+  "shield_health": 100250.0
+}

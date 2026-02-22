@@ -1,0 +1,13 @@
+{
+  "id": "uss_crozier",
+  "ship_name": "USS CROZIER",
+  "ship_class": "battleship",
+  "armor_piercing": 31637.0,
+  "shield_piercing": 316381.0,
+  "accuracy": 41130.0,
+  "attack": 902275.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 4049798.0,
+  "shield_health": 2024899.0
+}

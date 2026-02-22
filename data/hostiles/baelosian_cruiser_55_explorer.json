@@ -1,0 +1,11 @@
+{
+  "id": "baelosian_cruiser_55_explorer",
+  "hostile_name": "Baelosian Cruiser",
+  "level": 55,
+  "ship_class": "explorer",
+  "armor": 213811.0,
+  "shield_deflection": 3119490.0,
+  "dodge": 213811.0,
+  "hull_health": 49377961.0,
+  "shield_health": 69129199.0
+}

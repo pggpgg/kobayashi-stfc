@@ -1,0 +1,11 @@
+{
+  "id": "takret_militia_9_battleship",
+  "hostile_name": "Takret Militia",
+  "level": 9,
+  "ship_class": "battleship",
+  "armor": 80.0,
+  "shield_deflection": 20.0,
+  "dodge": 20.0,
+  "hull_health": 340.0,
+  "shield_health": 250.0
+}

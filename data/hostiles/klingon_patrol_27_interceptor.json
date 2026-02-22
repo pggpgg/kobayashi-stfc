@@ -1,0 +1,11 @@
+{
+  "id": "klingon_patrol_27_interceptor",
+  "hostile_name": "Klingon Patrol",
+  "level": 27,
+  "ship_class": "interceptor",
+  "armor": 1050.0,
+  "shield_deflection": 1200.0,
+  "dodge": 5600.0,
+  "hull_health": 15460.0,
+  "shield_health": 15460.0
+}

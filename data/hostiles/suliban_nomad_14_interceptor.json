@@ -1,0 +1,11 @@
+{
+  "id": "suliban_nomad_14_interceptor",
+  "hostile_name": "Suliban Nomad",
+  "level": 14,
+  "ship_class": "interceptor",
+  "armor": 83.0,
+  "shield_deflection": 83.0,
+  "dodge": 330.0,
+  "hull_health": 770.0,
+  "shield_health": 770.0
+}

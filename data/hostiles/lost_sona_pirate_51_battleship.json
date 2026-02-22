@@ -1,0 +1,11 @@
+{
+  "id": "lost_sona_pirate_51_battleship",
+  "hostile_name": "Lost Sona Pirate",
+  "level": 51,
+  "ship_class": "battleship",
+  "armor": 463515.0,
+  "shield_deflection": 21142.0,
+  "dodge": 21142.0,
+  "hull_health": 13720768.0,
+  "shield_health": 9355006.0
+}

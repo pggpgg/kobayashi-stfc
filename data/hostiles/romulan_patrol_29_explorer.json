@@ -1,0 +1,11 @@
+{
+  "id": "romulan_patrol_29_explorer",
+  "hostile_name": "Romulan Patrol",
+  "level": 29,
+  "ship_class": "explorer",
+  "armor": 2450.0,
+  "shield_deflection": 7350.0,
+  "dodge": 2100.0,
+  "hull_health": 38610.0,
+  "shield_health": 29780.0
+}

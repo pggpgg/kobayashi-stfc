@@ -1,0 +1,11 @@
+{
+  "id": "federation_trader_29_survey",
+  "hostile_name": "Federation Trader",
+  "level": 29,
+  "ship_class": "survey",
+  "armor": 4200.0,
+  "shield_deflection": 4200.0,
+  "dodge": 4200.0,
+  "hull_health": 41760.0,
+  "shield_health": 41760.0
+}

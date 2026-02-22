@@ -1,0 +1,11 @@
+{
+  "id": "assimilated_ship_27_interceptor",
+  "hostile_name": "Assimilated Ship",
+  "level": 27,
+  "ship_class": "interceptor",
+  "armor": 1000.0,
+  "shield_deflection": 1000.0,
+  "dodge": 4000.0,
+  "hull_health": 13440.0,
+  "shield_health": 13440.0
+}

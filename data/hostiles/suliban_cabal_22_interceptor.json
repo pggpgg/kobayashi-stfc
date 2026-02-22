@@ -1,0 +1,11 @@
+{
+  "id": "suliban_cabal_22_interceptor",
+  "hostile_name": "Suliban Cabal",
+  "level": 22,
+  "ship_class": "interceptor",
+  "armor": 438.0,
+  "shield_deflection": 438.0,
+  "dodge": 1750.0,
+  "hull_health": 4800.0,
+  "shield_health": 4800.0
+}

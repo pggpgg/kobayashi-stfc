@@ -1,0 +1,11 @@
+{
+  "id": "romulan_trader_42_survey",
+  "hostile_name": "Romulan Trader",
+  "level": 42,
+  "ship_class": "survey",
+  "armor": 102051.0,
+  "shield_deflection": 97191.0,
+  "dodge": 97191.0,
+  "hull_health": 2884268.0,
+  "shield_health": 2383693.0
+}

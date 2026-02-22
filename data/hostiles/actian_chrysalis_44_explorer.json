@@ -1,0 +1,11 @@
+{
+  "id": "actian_chrysalis_44_explorer",
+  "hostile_name": "Actian Chrysalis",
+  "level": 44,
+  "ship_class": "explorer",
+  "armor": 94670.0,
+  "shield_deflection": 1590181.0,
+  "dodge": 94670.0,
+  "hull_health": 597672650.0,
+  "shield_health": 760674668.0
+}

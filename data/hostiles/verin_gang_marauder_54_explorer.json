@@ -1,0 +1,11 @@
+{
+  "id": "verin_gang_marauder_54_explorer",
+  "hostile_name": "Verin Gang Marauder",
+  "level": 54,
+  "ship_class": "explorer",
+  "armor": 112395.0,
+  "shield_deflection": 1887904.0,
+  "dodge": 112395.0,
+  "hull_health": 30323590.0,
+  "shield_health": 38593681.0
+}

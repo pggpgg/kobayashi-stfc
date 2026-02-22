@@ -1,0 +1,13 @@
+{
+  "id": "k_t_inga",
+  "ship_name": "K'T'INGA",
+  "ship_class": "battleship",
+  "armor_piercing": 3200.0,
+  "shield_piercing": 32000.0,
+  "accuracy": 3840.0,
+  "attack": 91746.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

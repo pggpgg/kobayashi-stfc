@@ -1,0 +1,13 @@
+{
+  "id": "uss_saladin",
+  "ship_name": "USS SALADIN",
+  "ship_class": "interceptor",
+  "armor_piercing": 7922.0,
+  "shield_piercing": 966.0,
+  "accuracy": 1127.0,
+  "attack": 101617.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 2000.0,
+  "shield_health": 1000.0
+}

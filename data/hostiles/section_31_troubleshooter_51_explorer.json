@@ -1,0 +1,11 @@
+{
+  "id": "section_31_troubleshooter_51_explorer",
+  "hostile_name": "Section 31 Troubleshooter",
+  "level": 51,
+  "ship_class": "explorer",
+  "armor": 148082.0,
+  "shield_deflection": 2160511.0,
+  "dodge": 148082.0,
+  "hull_health": 34198423.0,
+  "shield_health": 47877829.0
+}

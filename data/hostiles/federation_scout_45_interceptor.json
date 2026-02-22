@@ -1,0 +1,11 @@
+{
+  "id": "federation_scout_45_interceptor",
+  "hostile_name": "Federation Scout ★",
+  "level": 45,
+  "ship_class": "interceptor",
+  "armor": 15421.0,
+  "shield_deflection": 16192.0,
+  "dodge": 31595.0,
+  "hull_health": 3727337.0,
+  "shield_health": 4100071.0
+}

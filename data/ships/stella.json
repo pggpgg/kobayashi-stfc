@@ -1,0 +1,13 @@
+{
+  "id": "stella",
+  "ship_name": "STELLA",
+  "ship_class": "battleship",
+  "armor_piercing": 378.0,
+  "shield_piercing": 2645.0,
+  "accuracy": 378.0,
+  "attack": 23420.0,
+  "crit_chance": 0.05,
+  "crit_damage": 1.15,
+  "hull_health": 12974.0,
+  "shield_health": 6487.0
+}

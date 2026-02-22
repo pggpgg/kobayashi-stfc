@@ -1,0 +1,11 @@
+{
+  "id": "ksg_protection_vessel_59_interceptor",
+  "hostile_name": "KSG Protection Vessel",
+  "level": 59,
+  "ship_class": "interceptor",
+  "armor": 1130987.0,
+  "shield_deflection": 1130987.0,
+  "dodge": 19644967.0,
+  "hull_health": 372509563.0,
+  "shield_health": 372509563.0
+}

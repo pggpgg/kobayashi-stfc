@@ -1,0 +1,11 @@
+{
+  "id": "veteran_federation_patrol_40_explorer_2",
+  "hostile_name": "Veteran Federation Patrol",
+  "level": 40,
+  "ship_class": "explorer",
+  "armor": 65839.0,
+  "shield_deflection": 307248.0,
+  "dodge": 57609.0,
+  "hull_health": 587580.0,
+  "shield_health": 848720.0
+}

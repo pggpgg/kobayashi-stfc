@@ -1,0 +1,11 @@
+{
+  "id": "gorn_marauder_40_interceptor_1",
+  "hostile_name": "Gorn Marauder",
+  "level": 40,
+  "ship_class": "interceptor",
+  "armor": 19362.0,
+  "shield_deflection": 19362.0,
+  "dodge": 77449.0,
+  "hull_health": 190330.0,
+  "shield_health": 190330.0
+}

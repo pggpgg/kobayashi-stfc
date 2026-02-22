@@ -1,0 +1,13 @@
+{
+  "id": "ecs_horizon",
+  "ship_name": "ECS HORIZON",
+  "ship_class": "survey",
+  "armor_piercing": 220.0,
+  "shield_piercing": 220.0,
+  "accuracy": 220.0,
+  "attack": 970.5,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 8820.0,
+  "shield_health": 4410.0
+}

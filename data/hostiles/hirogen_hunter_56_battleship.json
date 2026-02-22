@@ -1,0 +1,11 @@
+{
+  "id": "hirogen_hunter_56_battleship",
+  "hostile_name": "Hirogen Hunter",
+  "level": 56,
+  "ship_class": "battleship",
+  "armor": 5250733.0,
+  "shield_deflection": 239496.0,
+  "dodge": 239496.0,
+  "hull_health": 155429868.0,
+  "shield_health": 105974194.0
+}

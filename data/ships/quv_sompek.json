@@ -1,0 +1,13 @@
+{
+  "id": "quv_sompek",
+  "ship_name": "QUV'SOMPEK",
+  "ship_class": "explorer",
+  "armor_piercing": 41130.0,
+  "shield_piercing": 31637.0,
+  "accuracy": 316381.0,
+  "attack": 1140472.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 4659798.0,
+  "shield_health": 2329899.0
+}

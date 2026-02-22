@@ -1,0 +1,11 @@
+{
+  "id": "vaaran_marauder_33_explorer",
+  "hostile_name": "Vaaran Marauder",
+  "level": 33,
+  "ship_class": "explorer",
+  "armor": 5010.0,
+  "shield_deflection": 20040.0,
+  "dodge": 5010.0,
+  "hull_health": 52380.0,
+  "shield_health": 55290.0
+}

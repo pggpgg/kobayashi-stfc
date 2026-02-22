@@ -1,0 +1,11 @@
+{
+  "id": "borg_tactical_probe_54_battleship",
+  "hostile_name": "Borg Tactical Probe",
+  "level": 54,
+  "ship_class": "battleship",
+  "armor": 1441440.0,
+  "shield_deflection": 1406240.0,
+  "dodge": 12024320.0,
+  "hull_health": 406407800.0,
+  "shield_health": 544851800.0
+}

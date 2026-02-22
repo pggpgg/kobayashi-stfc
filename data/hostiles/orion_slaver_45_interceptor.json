@@ -1,0 +1,11 @@
+{
+  "id": "orion_slaver_45_interceptor",
+  "hostile_name": "Orion Slaver",
+  "level": 45,
+  "ship_class": "interceptor",
+  "armor": 16600.0,
+  "shield_deflection": 16600.0,
+  "dodge": 225923.0,
+  "hull_health": 4190430.0,
+  "shield_health": 4190430.0
+}

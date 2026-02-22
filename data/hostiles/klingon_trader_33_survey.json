@@ -1,0 +1,11 @@
+{
+  "id": "klingon_trader_33_survey",
+  "hostile_name": "Klingon Trader",
+  "level": 33,
+  "ship_class": "survey",
+  "armor": 11750.0,
+  "shield_deflection": 11750.0,
+  "dodge": 11750.0,
+  "hull_health": 82800.0,
+  "shield_health": 82800.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "freebooter_explorer_56_explorer",
+  "hostile_name": "Freebooter Explorer",
+  "level": 56,
+  "ship_class": "explorer",
+  "armor": 54296.0,
+  "shield_deflection": 878536.0,
+  "dodge": 57011.0,
+  "hull_health": 871878656.0,
+  "shield_health": 15500065.0
+}

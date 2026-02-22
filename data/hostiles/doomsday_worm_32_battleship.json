@@ -1,0 +1,11 @@
+{
+  "id": "doomsday_worm_32_battleship",
+  "hostile_name": "Doomsday Worm",
+  "level": 32,
+  "ship_class": "battleship",
+  "armor": 23500.0,
+  "shield_deflection": 5875.0,
+  "dodge": 5875.0,
+  "hull_health": 69000.0,
+  "shield_health": 51750.0
+}

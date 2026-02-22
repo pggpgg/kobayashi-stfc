@@ -1,0 +1,11 @@
+{
+  "id": "nausicaan_outlaw_16_interceptor",
+  "hostile_name": "Nausicaan Outlaw",
+  "level": 16,
+  "ship_class": "interceptor",
+  "armor": 128.0,
+  "shield_deflection": 128.0,
+  "dodge": 511.0,
+  "hull_health": 1580.0,
+  "shield_health": 1580.0
+}

@@ -1,0 +1,13 @@
+{
+  "id": "envoy",
+  "ship_name": "ENVOY",
+  "ship_class": "survey",
+  "armor_piercing": 50.0,
+  "shield_piercing": 50.0,
+  "accuracy": 50.0,
+  "attack": 172.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "hull_health": 1280.0,
+  "shield_health": 640.0
+}

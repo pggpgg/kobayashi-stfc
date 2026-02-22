@@ -1,0 +1,11 @@
+{
+  "id": "separatist_26_interceptor",
+  "hostile_name": "Separatist ⇕",
+  "level": 26,
+  "ship_class": "interceptor",
+  "armor": 11813.0,
+  "shield_deflection": 13500.0,
+  "dodge": 63000.0,
+  "hull_health": 3500000.0,
+  "shield_health": 200000.0
+}

@@ -1,0 +1,11 @@
+{
+  "id": "doomsday_worm_43_explorer",
+  "hostile_name": "Doomsday Worm",
+  "level": 43,
+  "ship_class": "explorer",
+  "armor": 17312.0,
+  "shield_deflection": 220695.0,
+  "dodge": 17312.0,
+  "hull_health": 3725434.0,
+  "shield_health": 4741464.0
+}

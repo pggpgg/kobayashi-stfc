@@ -1,0 +1,11 @@
+{
+  "id": "arkonian_trader_39_survey",
+  "hostile_name": "Arkonian Trader",
+  "level": 39,
+  "ship_class": "survey",
+  "armor": 68333.0,
+  "shield_deflection": 68333.0,
+  "dodge": 68333.0,
+  "hull_health": 510190.0,
+  "shield_health": 510190.0
+}
