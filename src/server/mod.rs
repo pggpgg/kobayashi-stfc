@@ -12,6 +12,15 @@ const MAX_BODY_SIZE: usize = 1024 * 1024;
 pub fn run_server(bind_addr: &str) -> std::io::Result<()> {
     let listener = TcpListener::bind(bind_addr)?;
     println!("kobayashi server listening on http://{bind_addr}");
+    if static_files::static_files_available() {
+        println!("  SPA: serving frontend from frontend/dist");
+    } else {
+        println!(
+            "  SPA: not found (you see the legacy API console). \
+             To use the MVP UI: cd frontend, run 'npm install' then 'npm run build', \
+             then restart the server from the project root."
+        );
+    }
 
     for stream in listener.incoming() {
         match stream {
