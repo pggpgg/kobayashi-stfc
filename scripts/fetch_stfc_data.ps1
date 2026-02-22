@@ -7,7 +7,8 @@ $RepoZip = "https://github.com/STFCcommunity/data/archive/refs/heads/main.zip"
 $UpstreamDir = "data/upstream/stfccommunity-data"
 $ZipPath = "data/upstream/stfccommunity-data.zip"
 
-$RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+# Repo root = directory that contains the scripts/ folder
+$RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
 New-Item -ItemType Directory -Force -Path "data/upstream" | Out-Null
