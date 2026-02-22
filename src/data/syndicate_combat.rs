@@ -1,5 +1,22 @@
 //! Syndicate reputation combat bonuses: resolve (syndicate_level, ops_level) to cumulative
 //! engine stat bonuses. Uses Section > Subsection > Bracket labels from the imported sheet.
+//!
+//! **Source of truth:** The mapping from spreadsheet columns to engine stat keys must match
+//! the **"Syndicate bonuses Descriptions"** sheet in the Syndicate Progression workbook.
+//! Each column maps to exactly one engine stat to avoid double-counting or wrong conflations.
+//!
+//! | Sheet column (section)           | Engine key              |
+//! |---------------------------------|-------------------------|
+//! | Officer_Stats > Officer_Attack  | officer_attack          |
+//! | Officer_Stats > Officer_Defense | officer_defense         |
+//! | Officer_Stats > Officer_Health | officer_health          |
+//! | Ship_Stats > HHP (Hull Health) | hull_hp                 |
+//! | Ship_Stats > SHP (Shield Health)| shield_hp               |
+//! | Ship_Stats > Piercing           | armor_piercing, shield_piercing |
+//! | Ship_Stats > Mitigation        | shield_mitigation       |
+//! | Combat > Damage (main)         | weapon_damage           |
+//! | Combat > Defense_Platform_Damage| defense_platform_damage |
+//! | Combat > Damage_to_Stations    | damage_to_stations      |
 
 use std::collections::HashMap;
 
@@ -18,18 +35,19 @@ pub fn ops_level_to_band(ops_level: u32) -> &'static str {
 }
 
 /// Returns the engine/LCARS stat key(s) for a syndicate stat name, if it is a combat stat.
-/// Officer Attack and Combat > Damage are separate columns in the sheet; only Combat > Damage
-/// is "weapon damage" in-game. Officer Attack is kept as officer_attack to avoid double-counting.
+/// Mapping follows the "Syndicate bonuses Descriptions" sheet: one column → one (or same) stat(s).
+/// Officer Attack / Combat Damage, Officer Health / HHP, Officer Defense / Mitigation are
+/// distinct columns and must not be merged into a single key.
 fn syndicate_stat_to_engine_keys(stat: &str) -> Option<&'static [&'static str]> {
     let s = stat;
     if s.contains("Officer_Stats_>_Officer_Attack") {
         return Some(&["officer_attack"]);
     }
     if s.contains("Officer_Stats_>_Officer_Defense") {
-        return Some(&["shield_mitigation"]);
+        return Some(&["officer_defense"]);
     }
     if s.contains("Officer_Stats_>_Officer_Health") {
-        return Some(&["hull_hp"]);
+        return Some(&["officer_health"]);
     }
     if s.contains("Ship_Stats_>_Piercing") {
         return Some(&["armor_piercing", "shield_piercing"]);
