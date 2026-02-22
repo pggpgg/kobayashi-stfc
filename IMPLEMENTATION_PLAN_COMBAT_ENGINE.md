@@ -2,104 +2,85 @@
 
 This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases with concrete deliverables.
 
-## Phase 1 — Deterministic combat math foundation
+---
 
-### 1. Mitigation model (first implementation target)
-**Goal:** Ship-accurate mitigation with clear inputs/outputs and test vectors.
+## Completed
 
-- Add core function:
-  - `mitigation(defender, attacker, ship_type) -> f64`
-- Implement component function:
-  - `f(x) = 1 / (1 + 4^(1.1 - x))`, with `x = defense / piercing`
-- Implement weighted multiplicative combination:
-  - `1 - (1 - cA*fA) * (1 - cS*fS) * (1 - cD*fD)`
-- Add ship-type coefficient table:
-  - Surveys `[0.3, 0.3, 0.3]`
-  - Battleship `[0.55, 0.2, 0.2]`
-  - Explorer `[0.2, 0.55, 0.2]`
-  - Interceptor `[0.2, 0.2, 0.55]`
+### Phase 1 — Deterministic combat math foundation (done)
+- **1. Mitigation model:** `component_mitigation`, `mitigation(defender, attacker, ship_type)`, ship-type coefficient table (Survey/Armada/Battleship/Explorer/Interceptor), golden tests and edge-case tests in `tests/combat_tests.rs`. CLI `simulate` uses the engine (attacker/defender stats).
+- **2. Effect stacking:** `StackCategory` (Base/Modifier/Flat), `total = A * (1 + B) + C` in `src/combat/stacking.rs`, tests for additive/modifier/mixed and ordering independence.
 
-**Definition of done**
-- Unit tests for known ratios and edge cases (low/high piercing, zero/near-zero defenses).
-- Deterministic “golden” test vectors with expected mitigation to <=0.1% tolerance.
+### Phase 2 — Ability semantics and timing (done)
+- **3. Ability activation:** Ability classes (captain/bridge/below-deck), seat gating, `active_effects_for_timing` in `src/combat/abilities.rs`; engine applies effects by timing window.
+- **4. Boostability:** `boostable` on effects, timing windows (combat begin, round start/attack/defense/round end), assimilated scaling.
 
-### 2. Effect stacking primitives
-**Goal:** Build the universal composition rule before adding officer-specific mechanics.
+### Phase 3 (partial) — Monte Carlo runner (done)
+- **6. Monte Carlo simulator:** `run_monte_carlo` in `src/optimizer/monte_carlo.rs` takes iterations and scenario payload; aggregates win rate and hull remaining; used by optimizer.
 
-- Implement stack groups by effect kind/stat key.
-- Apply canonical combination:
-  - `total = A * (1 + B) + C`
-- Define strict typing/category for each effect source:
-  - base (`A`), modifier (`B`), flat (`C`)
-
-**Definition of done**
-- Tests for additive-only, modifier-only, mixed stacks.
-- Tests for ordering independence (commutativity inside each category).
-
-## Phase 2 — Ability semantics and timing
-
-### 3. Ability type activation rules
-**Goal:** Correctly determine whether each officer effect is active.
-
-- Model ability classes:
-  - captain maneuver
-  - bridge ability
-  - below-deck ability
-- Enforce seat/slot gating.
-- Enforce scaling source rules (tier/synergy distinctions).
-
-### 4. Boostability and timing gates
-**Goal:** Prevent over-applying boosts and mirror observed timing behavior.
-
-- Add boost metadata to effects (boostable/non-boostable).
-- Restrict boosts to supported timing windows (combat begin/subround end).
-- Include explicit exclusions for non-boostable effects.
-
-**Definition of done for Phase 2**
-- Activation matrix tests by seat configuration.
-- Cross-tests with stacked boosts and unboostable controls.
-
-## Phase 3 — Simulation and ingestion infrastructure
-
-### 5. Raw combat log ingestion
-**Goal:** Parse raw logs into an internal event model usable by simulator validation.
-
-- Create parser for raw-log format.
-- Normalize to event timeline + per-round snapshots.
-
-### 6. Monte Carlo simulator runner
-**Goal:** Use deterministic engine + RNG wrapper to generate outcome distributions.
-
-- Add simulation API taking `iterations` and scenario payload.
-- Emit summary stats + percentile bands.
-
-**Definition of done for Phase 3**
-- Replay/parity checks between parsed combat logs and engine outputs for selected fixtures.
-- Performance baseline recorded for a standard scenario.
-
-## Phase 4 — Fidelity and diagnostics
-
-### 7. Compatibility toggles and known quirks
-- Add optional duplicate-officer bug compatibility mode.
-- Add temporary-combat-only state support and end-of-combat rollback.
-
-### 8. Explainability + scenario tooling
-- Add mitigation sensitivity table generator (+N defense/piercing deltas).
-- Add “why” trace output for mitigation and stack decomposition.
-
-**Definition of done for Phase 4**
-- Debug trace snapshots included in fixtures.
-- Sensitivity outputs validated against reference calculations.
+### Sprint 1 (done)
+- Mitigation module, ship-type map, unit tests with golden vectors, CLI entrypoint (`simulate`), and tolerance behavior are in place.
 
 ---
 
-## Immediate next execution slice (Sprint 1)
+## Remaining work
 
-Focus exclusively on **Phase 1.1 Mitigation model**:
+### Phase 3 — Raw combat log ingestion (not started)
 
-1. Introduce core mitigation module + ship-type coefficient map.
-2. Add unit tests with hand-computed vectors.
-3. Add a small CLI/dev entrypoint to print mitigation for a supplied stat block.
-4. Document assumptions and tolerance thresholds.
+**5. Raw combat log ingestion**
 
-This produces a stable mathematical core that subsequent effect and ability work can build on.
+**Goal:** Parse raw STFC combat logs into an internal event model so simulator output can be compared to real combat (replay/parity checks).
+
+**Plan:**
+1. Define the expected raw-log format (e.g. paste from game UI or toolbox export) and document it in this repo (e.g. `docs/combat_log_format.md` or a fixture example).
+2. Add a parser in `src/` (e.g. `src/combat/log_ingest.rs` or under `src/data/`) that:
+   - Reads raw log text or structured export.
+   - Produces an internal event timeline (round index, phase, damage, mitigation, etc.) and/or per-round snapshots (attacker/defender stats, damage dealt).
+3. Normalize to a type that can be compared to `SimulationResult` and trace events (e.g. same event types and value names as `CombatEvent` where applicable).
+4. Add tests: parse at least one fixture log and assert on event count, round count, and key numeric fields.
+
+**Definition of done**
+- Parser exists and is tested against one or more fixture logs.
+- Documented format (or sample) so new logs can be added for parity checks in Phase 3 DoD (replay/parity between parsed logs and engine output).
+
+---
+
+### Phase 4 — Fidelity and diagnostics (not started)
+
+**7. Compatibility toggles and known quirks**
+
+**Goal:** Support optional game quirks and temporary state so the simulator can match observed behavior when needed.
+
+**Plan:**
+1. **Duplicate-officer bug mode:** Add a config flag (e.g. on `SimulationConfig` or optimizer scenario) that, when enabled, allows the same officer to appear in more than one seat (or applies a specific stacking/activation rule that mirrors the in-game bug). Document the behavior and when to enable it.
+2. **Temporary combat-only state and rollback:** Identify which state (e.g. morale, assimilated, hull breach, burning) is temporary and must be reset or not carried across combats. Ensure `simulate_combat` does not mutate long-lived state; if any shared state is ever introduced, add end-of-combat rollback when this mode is on.
+3. Add tests or scenarios that run with toggles on/off and assert expected differences (e.g. duplicate officer changes outcome when toggle is on).
+
+**Definition of done**
+- At least one compatibility toggle (e.g. duplicate-officer) is implemented and gated by config.
+- No unintended long-lived combat state; rollback or clear documentation of what is combat-local.
+
+---
+
+**8. Explainability + scenario tooling**
+
+**Goal:** Help users and developers see why a given mitigation or damage number is what it is, and how sensitive it is to inputs.
+
+**Plan:**
+1. **Mitigation sensitivity table:** Add a small CLI subcommand or library function that, for a given defender/attacker/ship-type baseline, prints a table of mitigation values for small deltas (e.g. defense +10%, pierce +10%, or ±N to each stat). Output can be text or CSV. Validate a few cells against the existing `mitigation()` function.
+2. **“Why” trace for mitigation and stacks:** Extend or document the existing event trace so that:
+   - Mitigation: trace already includes `mitigation_calc` and `pierce_calc` with `damage_through_factor`; add a short doc or comment in code that describes how to interpret these for “why did this much damage get through.”
+   - Stack decomposition: for key stats (e.g. pre-attack damage, attack-phase damage), ensure trace or a helper can show base vs modifier vs flat contributions where applicable (e.g. in `EffectAccumulator` or in a debug-only trace). Document how to read it.
+3. Add fixture traces or test assertions that check sensitivity table outputs against reference values and that “why” trace fields are present for a known scenario.
+
+**Definition of done**
+- Sensitivity table generator implemented and at least one output validated against `mitigation()`.
+- Trace or docs explain how to interpret mitigation and stack decomposition for a given run.
+- Fixtures or tests cover sensitivity and trace shape.
+
+---
+
+## Suggested next execution slice
+
+1. **Phase 3.5 — Raw combat log ingestion:** Define log format (or adopt an existing one), implement parser, add fixture and tests. This unblocks replay/parity work.
+2. **Phase 4.8 — Explainability (sensitivity + trace):** Add mitigation sensitivity table and document “why” from existing trace. Low risk, high value for tuning and debugging.
+3. **Phase 4.7 — Compatibility toggles:** Add duplicate-officer mode and document combat-local state/rollback once real logs or community reports clarify the exact quirk.
