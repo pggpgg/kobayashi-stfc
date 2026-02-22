@@ -4,18 +4,25 @@
 //! Run after scripts/fetch_stfc_data.ps1.
 
 use std::fs;
-use std::path::Path;
 
 use serde::Deserialize;
 
-const UPSTREAM_HOSTILES: &str = "data/upstream/stfccommunity-data";
-const UPSTREAM_SHIPS: &str = "data/upstream/stfccommunity-data/ships";
-const OUT_HOSTILES: &str = "data/hostiles";
-const OUT_SHIPS: &str = "data/ships";
+const UPSTREAM_HOSTILES_SUFFIX: &str = "data/upstream/stfccommunity-data";
+const UPSTREAM_SHIPS_SUFFIX: &str = "data/upstream/stfccommunity-data/ships";
+const OUT_HOSTILES_SUFFIX: &str = "data/hostiles";
+const OUT_SHIPS_SUFFIX: &str = "data/ships";
 const SOURCE_NOTE: &str = "STFCcommunity baseline (outdated ~3y)";
 
+/// Resolve path relative to repo root (CARGO_MANIFEST_DIR when run via cargo).
+fn repo_data_path(suffix: &str) -> std::path::PathBuf {
+    if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        return std::path::PathBuf::from(manifest_dir).join(suffix);
+    }
+    std::path::PathBuf::from(suffix)
+}
+
 // ----- Raw STFCcommunity hostile (partial) -----
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct RawHostileStatsDefense {
     #[serde(default)]
     armor: f64,
@@ -25,7 +32,7 @@ struct RawHostileStatsDefense {
     shield_deflect: f64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct RawHostileStatsHealth {
     #[serde(default)]
     hull_health: f64,
@@ -33,7 +40,7 @@ struct RawHostileStatsHealth {
     shield_health: f64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct RawHostileStats {
     #[serde(default)]
     defense: RawHostileStatsDefense,
@@ -73,6 +80,7 @@ struct RawWeaponsInfo {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct RawShieldInfo {
     #[serde(default)]
     shield_deflection: f64,
@@ -81,12 +89,14 @@ struct RawShieldInfo {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct RawImpulseInfo {
     #[serde(default)]
     dodge: f64,
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct RawComponentAdditionalInfo {
     #[serde(default)]
     weapons_info: Option<RawWeaponsInfo>,
@@ -97,6 +107,7 @@ struct RawComponentAdditionalInfo {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct RawComponent {
     #[serde(default)]
     name: String,
@@ -105,6 +116,7 @@ struct RawComponent {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct RawTier {
     #[serde(default)]
     tier: u32,
@@ -125,14 +137,35 @@ struct RawShip {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data_version = std::env::var("STFC_DATA_VERSION").unwrap_or_else(|_| "stfccommunity-main".to_string());
 
-    fs::create_dir_all(OUT_HOSTILES)?;
-    fs::create_dir_all(OUT_SHIPS)?;
+    let hostiles_dir = repo_data_path(UPSTREAM_HOSTILES_SUFFIX);
+    let ships_dir = repo_data_path(UPSTREAM_SHIPS_SUFFIX);
+    let out_hostiles = repo_data_path(OUT_HOSTILES_SUFFIX);
+    let out_ships = repo_data_path(OUT_SHIPS_SUFFIX);
+
+    if !hostiles_dir.is_dir() {
+        eprintln!(
+            "error: upstream hostiles directory not found: {}",
+            hostiles_dir.display()
+        );
+        eprintln!("Run the fetch script first: powershell -ExecutionPolicy Bypass -File scripts/fetch_stfc_data.ps1");
+        std::process::exit(1);
+    }
+    if !ships_dir.is_dir() {
+        eprintln!(
+            "error: upstream ships directory not found: {}",
+            ships_dir.display()
+        );
+        eprintln!("Run the fetch script first: powershell -ExecutionPolicy Bypass -File scripts/fetch_stfc_data.ps1");
+        std::process::exit(1);
+    }
+
+    fs::create_dir_all(&out_hostiles)?;
+    fs::create_dir_all(&out_ships)?;
 
     // ----- Hostiles -----
     let mut hostile_index_entries: Vec<kobayashi::data::hostile::HostileIndexEntry> = Vec::new();
-    let hostiles_dir = Path::new(UPSTREAM_HOSTILES);
-    if hostiles_dir.is_dir() {
-        for entry in fs::read_dir(hostiles_dir)? {
+    {
+        for entry in fs::read_dir(&hostiles_dir)? {
             let entry = entry?;
             let path = entry.path();
             if path.extension().map_or(false, |e| e == "json") {
@@ -164,26 +197,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     level: rec.level,
                     ship_class: rec.ship_class.clone(),
                 });
-                let out_path = Path::new(OUT_HOSTILES).join(format!("{}.json", rec.id));
+                let out_path = out_hostiles.join(format!("{}.json", rec.id));
                 fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;
             }
         }
     }
+
+    if hostile_index_entries.is_empty() {
+        eprintln!("warning: no hostile JSON files found in {}", hostiles_dir.display());
+    }
+
     let hostile_index = kobayashi::data::hostile::HostileIndex {
         data_version: Some(data_version.clone()),
         source_note: Some(SOURCE_NOTE.to_string()),
         hostiles: hostile_index_entries,
     };
     fs::write(
-        Path::new(OUT_HOSTILES).join("index.json"),
+        out_hostiles.join("index.json"),
         serde_json::to_string_pretty(&hostile_index)?,
     )?;
 
     // ----- Ships -----
     let mut ship_index_entries: Vec<kobayashi::data::ship::ShipIndexEntry> = Vec::new();
-    let ships_dir = Path::new(UPSTREAM_SHIPS);
-    if ships_dir.is_dir() {
-        for entry in fs::read_dir(ships_dir)? {
+    {
+        for entry in fs::read_dir(&ships_dir)? {
             let entry = entry?;
             let path = entry.path();
             if path.extension().map_or(false, |e| e == "json") {
@@ -200,36 +237,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         ship_name: rec.ship_name.clone(),
                         ship_class: rec.ship_class.clone(),
                     });
-                    let out_path = Path::new(OUT_SHIPS).join(format!("{}.json", rec.id));
+                    let out_path = out_ships.join(format!("{}.json", rec.id));
                     fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;
                 }
             }
         }
     }
+
+    if ship_index_entries.is_empty() {
+        eprintln!("warning: no ship JSON files found in {}", ships_dir.display());
+    }
+
     let ship_index = kobayashi::data::ship::ShipIndex {
         data_version: Some(data_version),
         source_note: Some(SOURCE_NOTE.to_string()),
         ships: ship_index_entries,
     };
     fs::write(
-        Path::new(OUT_SHIPS).join("index.json"),
+        out_ships.join("index.json"),
         serde_json::to_string_pretty(&ship_index)?,
     )?;
 
-    // Validation: re-load index and one record each to ensure schema is loadable
-    let hostile_index_path = format!("{}/index.json", OUT_HOSTILES);
-    let re_hostile_index =
-        kobayashi::data::hostile::load_hostile_index(&hostile_index_path).ok_or("Failed to re-load hostile index")?;
-    if let Some(first) = re_hostile_index.hostiles.first() {
-        kobayashi::data::hostile::load_hostile_record(Path::new(OUT_HOSTILES), &first.id)
-            .ok_or("Failed to re-load a hostile record")?;
+    // Validation: re-load index and one record each to ensure schema is loadable (only if we have data)
+    if !hostile_index.hostiles.is_empty() {
+        let hostile_index_path = out_hostiles.join("index.json");
+        let re_hostile_index = kobayashi::data::hostile::load_hostile_index(hostile_index_path.to_str().unwrap())
+            .ok_or("Failed to re-load hostile index")?;
+        if let Some(first) = re_hostile_index.hostiles.first() {
+            kobayashi::data::hostile::load_hostile_record(&out_hostiles, &first.id)
+                .ok_or("Failed to re-load a hostile record")?;
+        }
     }
-    let ship_index_path = format!("{}/index.json", OUT_SHIPS);
-    let re_ship_index =
-        kobayashi::data::ship::load_ship_index(&ship_index_path).ok_or("Failed to re-load ship index")?;
-    if let Some(first) = re_ship_index.ships.first() {
-        kobayashi::data::ship::load_ship_record(Path::new(OUT_SHIPS), &first.id)
-            .ok_or("Failed to re-load a ship record")?;
+    if !ship_index.ships.is_empty() {
+        let ship_index_path = out_ships.join("index.json");
+        let re_ship_index =
+            kobayashi::data::ship::load_ship_index(ship_index_path.to_str().unwrap()).ok_or("Failed to re-load ship index")?;
+        if let Some(first) = re_ship_index.ships.first() {
+            kobayashi::data::ship::load_ship_record(&out_ships, &first.id)
+                .ok_or("Failed to re-load a ship record")?;
+        }
     }
 
     println!(
@@ -250,7 +296,6 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
     let mut attack = 0.0f64;
     let mut crit_chance = 0.1f64;
     let mut crit_damage = 1.5f64;
-    let mut hull_health = 0.0f64;
     let mut shield_health = 0.0f64;
     let mut weapon_count = 0u32;
 
@@ -282,7 +327,7 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
     if shield_health <= 0.0 {
         shield_health = 1000.0;
     }
-    hull_health = shield_health * 2.0;
+    let hull_health = shield_health * 2.0;
 
     Some(kobayashi::data::ship::ShipRecord {
         id: id.to_string(),
