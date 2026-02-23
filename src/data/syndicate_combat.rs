@@ -84,6 +84,9 @@ fn syndicate_stat_to_engine_keys(stat: &str) -> Option<&'static [&'static str]> 
     if s.contains("PvP_Apex_Barrier") || s.contains("PvE_Apex_Barrier") {
         return Some(&["apex_barrier"]);
     }
+    if s.contains("PvP_Apex_Shred") || s.contains("PvE_Apex_Shred") || s.contains("Apex_Shred") {
+        return Some(&["apex_shred"]);
+    }
     None
 }
 

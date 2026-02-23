@@ -28,6 +28,8 @@ fn main() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -40,6 +42,8 @@ fn main() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let rounds_per_combat = 100u32;
     let config = SimulationConfig {

@@ -11,6 +11,7 @@ from tools.combat_engine.mitigation import (
     AttackerStats,
     DefenderStats,
     ShipType,
+    apex_barrier_damage_factor,
     component_mitigation,
     isolytic_mitigation,
     mitigation,
@@ -75,3 +76,18 @@ def test_zero_defenses_produce_low_mitigation() -> None:
 )
 def test_isolytic_mitigation_vectors(isolytic_defense: float, expected: float) -> None:
     assert isolytic_mitigation(isolytic_defense) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    ("apex_barrier", "apex_shred", "expected"),
+    [
+        (0.0, 0.0, 1.0),
+        (10_000.0, 0.0, 0.5),
+        (10_000.0, 1.0, 2.0 / 3.0),
+        (20_000.0, 0.0, 1.0 / 3.0),
+    ],
+)
+def test_apex_barrier_damage_factor(
+    apex_barrier: float, apex_shred: float, expected: float
+) -> None:
+    assert apex_barrier_damage_factor(apex_barrier, apex_shred) == pytest.approx(expected, rel=1e-9)

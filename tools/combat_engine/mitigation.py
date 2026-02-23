@@ -67,3 +67,15 @@ def mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: Ship
 
     total = 1.0 - (1.0 - c_armor * f_armor) * (1.0 - c_shield * f_shield) * (1.0 - c_dodge * f_dodge)
     return max(0.0, min(1.0, total))
+
+
+def apex_barrier_damage_factor(apex_barrier: float, apex_shred: float) -> float:
+    """Fraction of damage that gets through after Apex Barrier (and Apex Shred).
+
+    effective_barrier = apex_barrier / (1 + apex_shred)
+    factor = 10000 / (10000 + effective_barrier)
+
+    Matches stfc-toolbox game-mechanics and Rust engine.
+    """
+    effective_barrier = apex_barrier / max(1.0 + apex_shred, EPSILON)
+    return 10000.0 / (10000.0 + effective_barrier)

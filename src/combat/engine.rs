@@ -124,6 +124,12 @@ pub struct Combatant {
     pub proc_multiplier: f64,
     pub end_of_round_damage: f64,
     pub hull_health: f64,
+    /// Defender stat: reduces damage after other mitigation. Effective barrier is divided by (1 + attacker apex_shred).
+    #[serde(default)]
+    pub apex_barrier: f64,
+    /// Attacker stat: reduces defender's effective apex_barrier. Stored as decimal (1.0 = 100%).
+    #[serde(default)]
+    pub apex_shred: f64,
 }
 
 #[derive(Debug, Default)]
@@ -281,6 +287,10 @@ pub fn simulate_combat(
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
+    let effective_barrier = defender.apex_barrier
+        / (1.0 + attacker.apex_shred).max(EPSILON);
+    let apex_damage_factor = 10000.0 / (10000.0 + effective_barrier);
+
     for round_index in 1..=rounds_to_simulate {
         let round_start_effects =
             active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
@@ -736,7 +746,8 @@ pub fn simulate_combat(
         phase_effects.set_pre_attack_damage_base(pre_attack_damage);
         let pre_attack_damage = phase_effects.composed_pre_attack_damage();
         let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
-        total_damage += damage;
+        let damage_after_apex = damage * apex_damage_factor;
+        total_damage += damage_after_apex;
         trace.record(CombatEvent {
             event_type: "damage_application".to_string(),
             round_index,
@@ -747,7 +758,7 @@ pub fn simulate_combat(
                 ..EventSource::default()
             },
             values: Map::from_iter([
-                ("final_damage".to_string(), Value::from(round_f64(damage))),
+                ("final_damage".to_string(), Value::from(round_f64(damage_after_apex))),
                 (
                     "running_total".to_string(),
                     Value::from(round_f64(total_damage)),
@@ -766,7 +777,7 @@ pub fn simulate_combat(
         } else {
             0.0
         };
-        total_damage += bonus_damage + burning_damage;
+        total_damage += (bonus_damage + burning_damage) * apex_damage_factor;
 
         if burning_rounds_remaining > 0 {
             burning_rounds_remaining -= 1;
