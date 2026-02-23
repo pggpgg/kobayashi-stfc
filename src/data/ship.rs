@@ -38,6 +38,9 @@ pub struct ShipRecord {
     /// Apex Shred: reduces defender's effective Apex Barrier. Stored as decimal (1.0 = 100%).
     #[serde(default)]
     pub apex_shred: f64,
+    /// Isolytic damage bonus (decimal). Used in combat isolytic_damage().
+    #[serde(default)]
+    pub isolytic_damage: f64,
 }
 
 /// Index of all ships for name resolution. Includes data_version.

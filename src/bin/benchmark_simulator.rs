@@ -32,6 +32,8 @@ fn main() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -48,6 +50,8 @@ fn main() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let rounds_per_combat = 100u32;
     let config = SimulationConfig {

@@ -237,6 +237,8 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
             shield_mitigation: 0.8,
             apex_barrier: 0.0,
             apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
         },
         &load_profile(DEFAULT_PROFILE_PATH),
     );
@@ -255,6 +257,8 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: parsed.rounds,

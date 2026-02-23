@@ -31,6 +31,9 @@ pub struct HostileRecord {
     /// Apex Barrier: true damage mitigation applied after other mitigation.
     #[serde(default)]
     pub apex_barrier: f64,
+    /// Isolytic defense: flat reduction to isolytic damage taken.
+    #[serde(default)]
+    pub isolytic_defense: f64,
 }
 
 /// Index of all hostiles for name/level resolution. Includes data_version.
