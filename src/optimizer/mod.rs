@@ -6,7 +6,7 @@ pub mod ranking;
 pub mod tiered;
 
 use crate::optimizer::crew_generator::CrewGenerator;
-use crate::optimizer::monte_carlo::run_monte_carlo;
+use crate::optimizer::monte_carlo::run_monte_carlo_parallel;
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,7 @@ pub struct OptimizationScenario<'a> {
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
     let generator = CrewGenerator::new();
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
-    let simulation_results = run_monte_carlo(
+    let simulation_results = run_monte_carlo_parallel(
         scenario.ship,
         scenario.hostile,
         &candidates,

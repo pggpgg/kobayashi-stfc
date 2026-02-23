@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use rayon::prelude::*;
+
 use crate::combat::{
     mitigation, simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
     CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, ShipType, SimulationConfig,
@@ -23,63 +25,88 @@ pub fn run_monte_carlo(
     iterations: usize,
     seed: u64,
 ) -> Vec<SimulationResult> {
+    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, false)
+}
+
+/// Like [run_monte_carlo] but distributes candidates across all CPU cores via Rayon.
+/// Use for large candidate lists (e.g. optimizer sweeps). Results order matches input order.
+pub fn run_monte_carlo_parallel(
+    ship: &str,
+    hostile: &str,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+) -> Vec<SimulationResult> {
+    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, true)
+}
+
+fn run_monte_carlo_with_parallelism(
+    ship: &str,
+    hostile: &str,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    parallel: bool,
+) -> Vec<SimulationResult> {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
         .map(index_officers_by_name)
         .unwrap_or_default();
 
-    candidates
-        .iter()
-        .cloned()
-        .map(|candidate| {
-            let input = scenario_to_combat_input(ship, hostile, &candidate, seed, &officer_index);
-            let mut wins = 0usize;
-            let mut surviving_hull_sum = 0.0;
+    let run_one = |candidate: &CrewCandidate| {
+        let input = scenario_to_combat_input(ship, hostile, candidate, seed, &officer_index);
+        let mut wins = 0usize;
+        let mut surviving_hull_sum = 0.0;
 
-            for iteration in 0..iterations {
-                let iteration_seed = input.base_seed.wrapping_add(iteration as u64);
-                let result = simulate_combat(
-                    &input.attacker,
-                    &input.defender,
-                    SimulationConfig {
-                        rounds: input.rounds,
-                        seed: iteration_seed,
-                        trace_mode: TraceMode::Off,
-                    },
-                    &input.crew,
-                );
-                let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
+        for iteration in 0..iterations {
+            let iteration_seed = input.base_seed.wrapping_add(iteration as u64);
+            let result = simulate_combat(
+                &input.attacker,
+                &input.defender,
+                SimulationConfig {
+                    rounds: input.rounds,
+                    seed: iteration_seed,
+                    trace_mode: TraceMode::Off,
+                },
+                &input.crew,
+            );
+            let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
 
-                if result.attacker_won {
-                    wins += 1;
-                    let remaining = if result.winner_by_round_limit {
-                        (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
-                            .clamp(0.0, 1.0)
-                    } else {
-                        ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
-                    };
-                    surviving_hull_sum += remaining;
-                }
+            if result.attacker_won {
+                wins += 1;
+                let remaining = if result.winner_by_round_limit {
+                    (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
+                        .clamp(0.0, 1.0)
+                } else {
+                    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
+                };
+                surviving_hull_sum += remaining;
             }
+        }
 
-            let win_rate = if iterations == 0 {
-                0.0
-            } else {
-                wins as f64 / iterations as f64
-            };
-            let avg_hull_remaining = if iterations == 0 {
-                0.0
-            } else {
-                surviving_hull_sum / iterations as f64
-            };
+        let win_rate = if iterations == 0 {
+            0.0
+        } else {
+            wins as f64 / iterations as f64
+        };
+        let avg_hull_remaining = if iterations == 0 {
+            0.0
+        } else {
+            surviving_hull_sum / iterations as f64
+        };
 
-            SimulationResult {
-                candidate,
-                win_rate,
-                avg_hull_remaining,
-            }
-        })
-        .collect()
+        SimulationResult {
+            candidate: candidate.clone(),
+            win_rate,
+            avg_hull_remaining,
+        }
+    };
+
+    if parallel {
+        candidates.par_iter().map(run_one).collect()
+    } else {
+        candidates.iter().map(run_one).collect()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -119,6 +146,8 @@ fn scenario_to_combat_input(
                 proc_multiplier: 1.0,
                 end_of_round_damage: 0.0,
                 hull_health: ship_rec.hull_health,
+                shield_health: ship_rec.shield_health,
+                shield_mitigation: ship_rec.shield_mitigation.unwrap_or(0.8),
                 apex_barrier: 0.0,
                 apex_shred: ship_rec.apex_shred,
             },
@@ -133,6 +162,8 @@ fn scenario_to_combat_input(
                 proc_multiplier: 1.0,
                 end_of_round_damage: 0.0,
                 hull_health: defender_hull,
+                shield_health: hostile_rec.shield_health,
+                shield_mitigation: hostile_rec.shield_mitigation.unwrap_or(0.8),
                 apex_barrier: hostile_rec.apex_barrier,
                 apex_shred: 0.0,
             },
@@ -160,6 +191,8 @@ fn scenario_to_combat_input(
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
             hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.8,
             apex_barrier: 0.0,
             apex_shred: 0.0,
         },
@@ -174,6 +207,8 @@ fn scenario_to_combat_input(
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
             hull_health: defender_hull,
+            shield_health: 400.0,
+            shield_mitigation: 0.8,
             apex_barrier: 0.0,
             apex_shred: 0.0,
         },

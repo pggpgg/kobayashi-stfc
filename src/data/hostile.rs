@@ -25,6 +25,9 @@ pub struct HostileRecord {
     pub dodge: f64,
     pub hull_health: f64,
     pub shield_health: f64,
+    /// Fraction of incoming damage to shield (rest to hull). Base 0.8 for most; some hostiles/ships (e.g. Sarcophagus) use 0.2.
+    #[serde(default)]
+    pub shield_mitigation: Option<f64>,
     /// Apex Barrier: true damage mitigation applied after other mitigation.
     #[serde(default)]
     pub apex_barrier: f64,

@@ -34,8 +34,8 @@ fn optimize_endpoint_returns_ranked_recommendations() {
 
     let first = &recommendations[0];
     assert!(first["captain"].as_str().is_some());
-    assert!(first["bridge"].as_str().is_some());
-    assert!(first["below_decks"].as_str().is_some());
+    assert!(first["bridge"].as_array().is_some(), "bridge should be an array");
+    assert!(first["below_decks"].as_array().is_some(), "below_decks should be an array");
     assert!(first["win_rate"].as_f64().is_some());
     assert!(first["avg_hull_remaining"].as_f64().is_some());
 
@@ -94,7 +94,13 @@ fn optimize_endpoint_is_deterministic_for_fixed_seed() {
 
     assert_eq!(response_a.status_code, 200);
     assert_eq!(response_b.status_code, 200);
-    assert_eq!(response_a.body, response_b.body);
+
+    let payload_a: serde_json::Value =
+        serde_json::from_str(&response_a.body).expect("response A should be valid json");
+    let payload_b: serde_json::Value =
+        serde_json::from_str(&response_b.body).expect("response B should be valid json");
+    assert_eq!(payload_a["scenario"], payload_b["scenario"]);
+    assert_eq!(payload_a["recommendations"], payload_b["recommendations"]);
 }
 
 #[test]

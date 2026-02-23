@@ -251,6 +251,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -265,6 +267,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -279,6 +283,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 10_000.0,
         apex_shred: 0.0,
     };
@@ -306,12 +312,155 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 1.0, // 100% shred
     };
     let with_shred = simulate_combat(&attacker_100_pct_shred, &defender_10k_barrier, config, &crew);
     // Effective barrier = 10000/(1+1) = 5000, factor = 10000/(10000+5000) = 2/3. Engine rounds total_damage.
     approx_eq(with_shred.total_damage, 200.0 * (10000.0 / 15000.0), 0.01);
+}
+
+/// Shield mitigation (STFC Toolbox game-mechanics): S * damage to shield, (1-S) * damage to hull.
+/// When shields are depleted, all damage goes to hull.
+#[test]
+fn shield_mitigation_splits_damage_between_shield_and_hull() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 200.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    // Defender with 500 SHP, 80% shield mitigation → 80% of damage to shield, 20% to hull.
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 500.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+    let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    // 200 damage: 80% = 160 to shield, 20% = 40 to hull.
+    approx_eq(result.total_damage, 200.0, 1e-12);
+    approx_eq(result.defender_shield_remaining, 500.0 - 160.0, 1e-12);
+    approx_eq(result.defender_hull_remaining, 1000.0 - 40.0, 1e-12);
+}
+
+#[test]
+fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 1000.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    // Defender has only 100 SHP; 80% of 1000 = 800 to shield → 100 absorbed, 700 overflow to hull. 20% = 200 to hull. Total hull = 900.
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 2000.0,
+        shield_health: 100.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+    let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    approx_eq(result.total_damage, 1000.0, 1e-12);
+    approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
+    approx_eq(result.defender_hull_remaining, 2000.0 - 900.0, 1e-12); // 900 hull damage (200 + 700 overflow)
+}
+
+#[test]
+fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 500.0,
+        shield_health: 50.0, // Round 1: 80% of 100 = 80 to shield → 50 absorbed, 30 overflow; 20% = 20 to hull. Shield gone. Hull takes 20+30 = 50.
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 3,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+    let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
+    // Round 1: 50 hull damage. Round 2 and 3: 100% to hull = 100 each. Total hull damage = 50 + 100 + 100 = 250.
+    assert!(result.defender_hull_remaining <= (500.0 - 250.0) + 1.0);
+    assert!(result.defender_hull_remaining >= (500.0 - 250.0) - 1.0);
 }
 
 #[test]
@@ -327,6 +476,8 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -341,6 +492,8 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 10_000.0,
         apex_shred: 0.0,
     };
@@ -389,6 +542,8 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -403,6 +558,8 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 5_000.0,
         apex_shred: 0.0,
     };
@@ -450,6 +607,8 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -464,6 +623,8 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -515,6 +676,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -529,6 +692,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -621,6 +786,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -635,6 +802,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -693,6 +862,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -707,6 +878,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -770,6 +943,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -784,6 +959,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -842,6 +1019,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         proc_multiplier: 1.25,
         end_of_round_damage: 3.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -856,6 +1035,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1043,6 +1224,8 @@ fn crew_slot_gating_matrix_controls_activation() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1057,6 +1240,8 @@ fn crew_slot_gating_matrix_controls_activation() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1127,6 +1312,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1141,6 +1328,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1196,6 +1385,8 @@ fn timing_windows_materially_change_damage_outcomes() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1210,6 +1401,8 @@ fn timing_windows_materially_change_damage_outcomes() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1283,6 +1476,8 @@ fn burning_deals_one_percent_hull_per_round() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1297,6 +1492,8 @@ fn burning_deals_one_percent_hull_per_round() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 500.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1352,6 +1549,8 @@ fn emits_ability_activation_for_each_timing_window() {
         proc_multiplier: 1.0,
         end_of_round_damage: 1.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1366,6 +1565,8 @@ fn emits_ability_activation_for_each_timing_window() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1468,6 +1669,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1482,6 +1685,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1552,6 +1757,8 @@ fn combat_rounds_are_capped_at_100() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1566,6 +1773,8 @@ fn combat_rounds_are_capped_at_100() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1597,6 +1806,8 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -1611,6 +1822,8 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };

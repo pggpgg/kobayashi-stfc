@@ -770,7 +770,7 @@ pub fn simulate_combat(
         let damage_after_apex = damage * apex_damage_factor;
 
         // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
-        // When shields are depleted, all damage goes to hull.
+        // https://stfc-toolbox.vercel.app/game-mechanics — "Shield mitigation": shp_damage_taken = S * total_unmitigated_damage, hhp_damage_taken = (1-S) * total_unmitigated_damage. Base S ≈ 0.8 (80% to shields). When shields are depleted, all damage goes to hull.
         let shield_mitigation = if defender_shield_remaining > 0.0 {
             defender_shield_mitigation
         } else {
