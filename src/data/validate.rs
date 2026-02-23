@@ -394,8 +394,6 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
         key,
         "isolytic_damage"
             | "isolytic_defense"
-            | "apex_shred"
-            | "apex_barrier"
             | "mining_rate"
             | "repair_speed"
             | "warp_speed"
@@ -403,6 +401,10 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
     ) || key.contains("loot")
     {
         return Some(MechanicSupport::Planned);
+    }
+
+    if matches!(key, "apex_shred" | "apex_barrier") {
+        return Some(MechanicSupport::Implemented);
     }
 
     None

@@ -25,6 +25,9 @@ pub struct HostileRecord {
     pub dodge: f64,
     pub hull_health: f64,
     pub shield_health: f64,
+    /// Apex Barrier: true damage mitigation applied after other mitigation.
+    #[serde(default)]
+    pub apex_barrier: f64,
 }
 
 /// Index of all hostiles for name/level resolution. Includes data_version.

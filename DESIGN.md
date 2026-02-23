@@ -116,7 +116,7 @@ The simulator tracks implementation status per combat mechanic. LCARS validation
 | Burn | `burning_damage`, burn/ignite conditions | **partial** |
 | Regeneration | `shield_regen`, repair/heal effects | **partial** |
 | Isolytic | `isolytic_damage`, `isolytic_defense` | **planned** |
-| Apex | `apex_shred`, `apex_barrier` | **planned** |
+| Apex | `apex_shred`, `apex_barrier` | **partial** (engine implemented; officer/ability stacking can be added later) |
 | Non-combat tags | mining/loot/cargo/warp effects | **planned (ignored in combat sim)** |
 
 #### Targets

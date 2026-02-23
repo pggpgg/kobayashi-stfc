@@ -32,6 +32,9 @@ pub struct ShipRecord {
     pub crit_damage: f64,
     pub hull_health: f64,
     pub shield_health: f64,
+    /// Apex Shred: reduces defender's effective Apex Barrier. Stored as decimal (1.0 = 100%).
+    #[serde(default)]
+    pub apex_shred: f64,
 }
 
 /// Index of all ships for name resolution. Includes data_version.

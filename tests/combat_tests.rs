@@ -238,6 +238,83 @@ fn serialize_events_json_matches_python_shape() {
 }
 
 #[test]
+fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
+    // One round, no mitigation/pierce/crit/proc: damage = attack. Apex factor = 10000/(10000+effective_barrier).
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 200.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let defender_no_barrier = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let defender_10k_barrier = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10000.0,
+        apex_barrier: 10_000.0,
+        apex_shred: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+    let crew = CrewConfiguration::default();
+
+    let no_barrier = simulate_combat(&attacker, &defender_no_barrier, config, &crew);
+    let with_10k_barrier = simulate_combat(&attacker, &defender_10k_barrier, config, &crew);
+    // 10k barrier, 0 shred: factor = 10000/(10000+10000) = 0.5 → 50% damage gets through.
+    approx_eq(no_barrier.total_damage, 200.0, 1e-12);
+    approx_eq(with_10k_barrier.total_damage, 100.0, 1e-12);
+
+    let attacker_100_pct_shred = Combatant {
+        id: "attacker".to_string(),
+        attack: 200.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 1.0, // 100% shred
+    };
+    let with_shred = simulate_combat(&attacker_100_pct_shred, &defender_10k_barrier, config, &crew);
+    // Effective barrier = 10000/(1+1) = 5000, factor = 10000/(10000+5000) = 2/3. Engine rounds total_damage.
+    approx_eq(with_shred.total_damage, 200.0 * (10000.0 / 15000.0), 0.01);
+}
+
+#[test]
 fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
     let attacker = Combatant {
         id: "enterprise".to_string(),
@@ -250,6 +327,8 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -262,6 +341,8 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let no_morale = CrewConfiguration::default();
@@ -311,6 +392,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -323,6 +406,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let baseline_crew = CrewConfiguration {
@@ -413,6 +498,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -425,6 +512,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -481,6 +570,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -493,6 +584,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -554,6 +647,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -566,6 +661,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -622,6 +719,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         proc_multiplier: 1.25,
         end_of_round_damage: 3.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -634,6 +733,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let config = SimulationConfig {
         rounds: 2,
@@ -819,6 +920,8 @@ fn crew_slot_gating_matrix_controls_activation() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -831,6 +934,8 @@ fn crew_slot_gating_matrix_controls_activation() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -899,6 +1004,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -911,6 +1018,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -964,6 +1073,8 @@ fn timing_windows_materially_change_damage_outcomes() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -976,6 +1087,8 @@ fn timing_windows_materially_change_damage_outcomes() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1047,6 +1160,8 @@ fn burning_deals_one_percent_hull_per_round() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -1059,6 +1174,8 @@ fn burning_deals_one_percent_hull_per_round() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 500.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let burning_crew = CrewConfiguration {
@@ -1112,6 +1229,8 @@ fn emits_ability_activation_for_each_timing_window() {
         proc_multiplier: 1.0,
         end_of_round_damage: 1.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -1124,6 +1243,8 @@ fn emits_ability_activation_for_each_timing_window() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -1224,6 +1345,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -1236,6 +1359,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let two_ten_percent = CrewConfiguration {
@@ -1304,6 +1429,8 @@ fn combat_rounds_are_capped_at_100() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1316,6 +1443,8 @@ fn combat_rounds_are_capped_at_100() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let result = simulate_combat(
@@ -1345,6 +1474,8 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 10000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1357,6 +1488,8 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 5000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let result = simulate_combat(

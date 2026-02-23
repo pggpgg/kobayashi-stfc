@@ -68,6 +68,8 @@ fn handle_simulate(args: &[String]) -> i32 {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
     let defender = Combatant {
         id: "hostile".to_string(),
@@ -80,6 +82,8 @@ fn handle_simulate(args: &[String]) -> i32 {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
     };
 
     let result = simulate_combat(
