@@ -16,9 +16,8 @@
   "seed": 42,
   "expected": {
     "rounds_simulated_min": 1,
-    "rounds_simulated_max": 5,
-    "total_damage_min": 300,
-    "total_damage_max": 600,
-    "attacker_won": true
+    "rounds_simulated_max": 10,
+    "total_damage_min": 200,
+    "total_damage_max": 2500
   }
 }

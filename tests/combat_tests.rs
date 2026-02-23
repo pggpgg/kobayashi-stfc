@@ -281,6 +281,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender_no_barrier = Combatant {
         id: "defender".to_string(),
@@ -297,6 +299,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender_10k_barrier = Combatant {
         id: "defender".to_string(),
@@ -313,6 +317,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         shield_mitigation: 0.8,
         apex_barrier: 10_000.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -342,6 +348,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 1.0, // 100% shred
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let with_shred = simulate_combat(&attacker_100_pct_shred, &defender_10k_barrier, config, &crew);
     // Effective barrier = 10000/(1+1) = 5000, factor = 10000/(10000+5000) = 2/3. Engine rounds total_damage.
@@ -367,6 +375,8 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     // Defender with 500 SHP, 80% shield mitigation → 80% of damage to shield, 20% to hull.
     let defender = Combatant {
@@ -384,6 +394,8 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -414,6 +426,8 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     // Defender has only 100 SHP; 80% of 1000 = 800 to shield → 100 absorbed, 700 overflow to hull. 20% = 200 to hull. Total hull = 900.
     let defender = Combatant {
@@ -431,6 +445,8 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -460,6 +476,8 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -476,6 +494,8 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 3,
@@ -506,6 +526,8 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -522,6 +544,8 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         shield_mitigation: 0.8,
         apex_barrier: 10_000.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -572,6 +596,8 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender_no_bonus = Combatant {
         id: "defender".to_string(),
@@ -588,6 +614,8 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         shield_mitigation: 0.8,
         apex_barrier: 5_000.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -637,6 +665,8 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -653,6 +683,8 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let no_morale = CrewConfiguration::default();
@@ -706,6 +738,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -722,6 +756,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let baseline_crew = CrewConfiguration {
@@ -816,6 +852,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -832,6 +870,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -892,6 +932,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -908,6 +950,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -973,6 +1017,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -989,6 +1035,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -1049,6 +1097,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -1065,6 +1115,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 2,
@@ -1254,6 +1306,8 @@ fn crew_slot_gating_matrix_controls_activation() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -1270,6 +1324,8 @@ fn crew_slot_gating_matrix_controls_activation() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1342,6 +1398,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -1358,6 +1416,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1415,6 +1475,8 @@ fn timing_windows_materially_change_damage_outcomes() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -1431,6 +1493,8 @@ fn timing_windows_materially_change_damage_outcomes() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1506,6 +1570,8 @@ fn burning_deals_one_percent_hull_per_round() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -1522,6 +1588,8 @@ fn burning_deals_one_percent_hull_per_round() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let burning_crew = CrewConfiguration {
@@ -1579,6 +1647,8 @@ fn emits_ability_activation_for_each_timing_window() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -1595,6 +1665,8 @@ fn emits_ability_activation_for_each_timing_window() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let crew = CrewConfiguration {
@@ -1699,6 +1771,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -1715,6 +1789,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let two_ten_percent = CrewConfiguration {
@@ -1787,6 +1863,8 @@ fn combat_rounds_are_capped_at_100() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1803,6 +1881,8 @@ fn combat_rounds_are_capped_at_100() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let result = simulate_combat(
@@ -1837,6 +1917,8 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1853,6 +1935,8 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let crew_no_regen = CrewConfiguration::default();
     let crew_with_regen = CrewConfiguration {
@@ -1928,6 +2012,8 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1944,6 +2030,8 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let result = simulate_combat(
@@ -1967,4 +2055,65 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
 fn isolytic_damage_matches_reference_formula() {
     let damage = isolytic_damage(10_000.0, 0.3, 0.4);
     approx_eq(damage, 8_200.0, 1e-12);
+}
+
+#[test]
+fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+    };
+    let attacker_no_iso = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+    };
+    let mut attacker_with_iso = attacker_no_iso.clone();
+    attacker_with_iso.isolytic_damage = 0.2;
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 5,
+        trace_mode: TraceMode::Off,
+    };
+    let crew = CrewConfiguration::default();
+    let result_no_iso = simulate_combat(&attacker_no_iso, &defender, config, &crew);
+    let result_with_iso = simulate_combat(&attacker_with_iso, &defender, config, &crew);
+    assert!(
+        result_with_iso.total_damage > result_no_iso.total_damage,
+        "isolytic_damage should increase total damage"
+    );
+    let mut defender_with_def = defender.clone();
+    defender_with_def.isolytic_defense = 50.0;
+    let result_def = simulate_combat(&attacker_with_iso, &defender_with_def, config, &crew);
+    assert!(
+        result_def.total_damage <= result_with_iso.total_damage + 1e-6,
+        "isolytic_defense should not increase damage taken"
+    );
 }

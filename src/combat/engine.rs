@@ -139,6 +139,12 @@ pub struct Combatant {
     /// Attacker stat: reduces defender's effective apex_barrier. Stored as decimal (1.0 = 100%).
     #[serde(default)]
     pub apex_shred: f64,
+    /// Attacker: isolytic damage bonus (decimal, e.g. 0.15 = 15% of regular damage as isolytic). Used in isolytic_damage().
+    #[serde(default)]
+    pub isolytic_damage: f64,
+    /// Defender: flat reduction to isolytic damage taken (or mitigation-style; applied after isolytic_damage()).
+    #[serde(default)]
+    pub isolytic_defense: f64,
 }
 
 fn default_shield_mitigation() -> f64 {
@@ -784,6 +790,15 @@ pub fn simulate_combat(
         let pre_attack_damage = phase_effects.composed_pre_attack_damage();
         let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
         let damage_after_apex = damage * apex_damage_factor;
+
+        // Isolytic: extra damage from attacker isolytic_damage bonus, reduced by defender isolytic_defense.
+        let isolytic_component = isolytic_damage(
+            damage_after_apex,
+            attacker.isolytic_damage.max(0.0),
+            0.0,
+        );
+        let isolytic_net = (isolytic_component - defender.isolytic_defense.max(0.0)).max(0.0);
+        let damage_after_apex = damage_after_apex + isolytic_net;
 
         // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
         // https://stfc-toolbox.vercel.app/game-mechanics — "Shield mitigation": shp_damage_taken = S * total_unmitigated_damage, hhp_damage_taken = (1-S) * total_unmitigated_damage. Base S ≈ 0.8 (80% to shields). When shields are depleted, all damage goes to hull.

@@ -74,6 +74,8 @@ fn handle_simulate(args: &[String]) -> i32 {
             shield_mitigation: 0.8,
             apex_barrier: 0.0,
             apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
         },
         &load_profile(DEFAULT_PROFILE_PATH),
     );
@@ -92,6 +94,8 @@ fn handle_simulate(args: &[String]) -> i32 {
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
     };
 
     let result = simulate_combat(
