@@ -109,6 +109,9 @@ pub struct SimulationResult {
     pub rounds_simulated: u32,
     pub attacker_hull_remaining: f64,
     pub defender_hull_remaining: f64,
+    /// Defender shield HP remaining at end of combat (0 when shields were depleted).
+    #[serde(default)]
+    pub defender_shield_remaining: f64,
     pub events: Vec<CombatEvent>,
 }
 
@@ -124,12 +127,22 @@ pub struct Combatant {
     pub proc_multiplier: f64,
     pub end_of_round_damage: f64,
     pub hull_health: f64,
+    /// Maximum shield hit points. When defending, damage is split between shield and hull by shield_mitigation until shields are depleted.
+    #[serde(default)]
+    pub shield_health: f64,
+    /// Fraction of incoming (unmitigated, post-apex) damage that goes to shield; rest goes to hull. Base 0.8 (80% shields, 20% hull). When shields are depleted, all damage goes to hull.
+    #[serde(default = "default_shield_mitigation")]
+    pub shield_mitigation: f64,
     /// Defender stat: reduces damage after other mitigation. Effective barrier is divided by (1 + attacker apex_shred).
     #[serde(default)]
     pub apex_barrier: f64,
     /// Attacker stat: reduces defender's effective apex_barrier. Stored as decimal (1.0 = 100%).
     #[serde(default)]
     pub apex_shred: f64,
+}
+
+fn default_shield_mitigation() -> f64 {
+    0.8
 }
 
 #[derive(Debug, Default)]
@@ -270,7 +283,9 @@ pub fn simulate_combat(
 ) -> SimulationResult {
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
-    let mut total_damage = 0.0;
+    let mut total_hull_damage = 0.0;
+    let mut total_shield_damage = 0.0;
+    let mut defender_shield_remaining = defender.shield_health.max(0.0);
     let mut hull_breach_rounds_remaining = 0_u32;
     let mut burning_rounds_remaining = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
@@ -287,6 +302,7 @@ pub fn simulate_combat(
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
+    let defender_shield_mitigation = defender.shield_mitigation.clamp(0.0, 1.0);
 
     for round_index in 1..=rounds_to_simulate {
         let round_start_effects =
@@ -752,7 +768,26 @@ pub fn simulate_combat(
         let pre_attack_damage = phase_effects.composed_pre_attack_damage();
         let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
         let damage_after_apex = damage * apex_damage_factor;
-        total_damage += damage_after_apex;
+
+        // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
+        // When shields are depleted, all damage goes to hull.
+        let shield_mitigation = if defender_shield_remaining > 0.0 {
+            defender_shield_mitigation
+        } else {
+            0.0
+        };
+        let shield_portion = damage_after_apex * shield_mitigation;
+        let hull_portion = damage_after_apex * (1.0 - shield_mitigation);
+        let actual_shield_damage = shield_portion.min(defender_shield_remaining);
+        let shield_overflow = shield_portion - actual_shield_damage;
+        let hull_damage_this_round = hull_portion + shield_overflow;
+
+        defender_shield_remaining = (defender_shield_remaining - actual_shield_damage).max(0.0);
+        total_hull_damage += hull_damage_this_round;
+        total_shield_damage += actual_shield_damage;
+
+        let shield_broke_this_round = actual_shield_damage > 0.0 && defender_shield_remaining <= 0.0;
+
         trace.record(CombatEvent {
             event_type: "damage_application".to_string(),
             round_index,
@@ -763,10 +798,21 @@ pub fn simulate_combat(
                 ..EventSource::default()
             },
             values: Map::from_iter([
-                ("final_damage".to_string(), Value::from(round_f64(damage_after_apex))),
+                ("damage_after_apex".to_string(), Value::from(round_f64(damage_after_apex))),
+                ("shield_mitigation".to_string(), Value::from(round_f64(shield_mitigation))),
+                ("shield_damage".to_string(), Value::from(round_f64(actual_shield_damage))),
+                ("hull_damage".to_string(), Value::from(round_f64(hull_damage_this_round))),
                 (
-                    "running_total".to_string(),
-                    Value::from(round_f64(total_damage)),
+                    "running_hull_damage".to_string(),
+                    Value::from(round_f64(total_hull_damage)),
+                ),
+                (
+                    "defender_shield_remaining".to_string(),
+                    Value::from(round_f64(defender_shield_remaining)),
+                ),
+                (
+                    "shield_broke".to_string(),
+                    Value::Bool(shield_broke_this_round),
                 ),
                 (
                     "assimilated_active".to_string(),
@@ -782,7 +828,8 @@ pub fn simulate_combat(
         } else {
             0.0
         };
-        total_damage += (bonus_damage + burning_damage) * apex_damage_factor;
+        // Round-end and burning apply to hull only (shields do not absorb these).
+        total_hull_damage += (bonus_damage + burning_damage) * apex_damage_factor;
 
         if burning_rounds_remaining > 0 {
             burning_rounds_remaining -= 1;
@@ -812,15 +859,16 @@ pub fn simulate_combat(
                     Value::from(round_f64(burning_damage)),
                 ),
                 (
-                    "running_total".to_string(),
-                    Value::from(round_f64(total_damage)),
+                    "running_hull_damage".to_string(),
+                    Value::from(round_f64(total_hull_damage)),
                 ),
             ]),
         });
     }
 
+    let total_damage = total_hull_damage + total_shield_damage;
     let attacker_hull_remaining = attacker.hull_health.max(0.0);
-    let defender_hull_remaining = (defender.hull_health - total_damage).max(0.0);
+    let defender_hull_remaining = (defender.hull_health - total_hull_damage).max(0.0);
     let winner_by_round_limit =
         rounds_to_simulate == MAX_COMBAT_ROUNDS && defender_hull_remaining > 0.0;
     let attacker_won = if winner_by_round_limit {
@@ -836,6 +884,7 @@ pub fn simulate_combat(
         rounds_simulated: rounds_to_simulate,
         attacker_hull_remaining: round_f64(attacker_hull_remaining),
         defender_hull_remaining: round_f64(defender_hull_remaining),
+        defender_shield_remaining: round_f64(defender_shield_remaining),
         events: trace.events(),
     }
 }

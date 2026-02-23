@@ -241,7 +241,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [x] LCARS schema and parser
 - [x] Monte Carlo simulation runner
 - [x] CLI interface
-- [ ] LCARS ability resolver (YAML → BuffSet)
+- [x] LCARS ability resolver (YAML → BuffSet)
 - [ ] Tiered optimization with synergy prioritization
 - [ ] Crew generator (exhaustive + filtered)
 - [ ] Parallel batch execution
