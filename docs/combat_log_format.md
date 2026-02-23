@@ -55,8 +55,8 @@ The game can export a fight log as a **tab-separated** file with several section
 **Sections (in order):**
 
 1. **Summary** — Header row starting with `Player Name`. Two data rows: player (attacker) and enemy (defender).
-   - Key columns: `Outcome` (VICTORY/DEFEAT), `Hull Health Remaining`, `Shield Health Remaining`.
-   - Player row outcome = attacker_won; defender hull/shield remaining come from the enemy row.
+   - Key columns: `Outcome` (VICTORY/DEFEAT), `Ship Name`, `Officer One`, `Officer Two`, `Officer Three`, `Hull Health Remaining`, `Shield Health Remaining`.
+   - Player row outcome = attacker_won; defender hull/shield remaining come from the enemy row. `Ship Name` is used to infer attacker ship type; officer columns are used to build crew (see below). `"--"` or empty cells are treated as absent.
 
 2. **Rewards** — Optional; header `Reward Name`, then reward rows. Skipped for combat parity.
 
@@ -70,8 +70,8 @@ The game can export a fight log as a **tab-separated** file with several section
    - Shield mitigation is defaulted to 0.8 if not present.
 
 4. **Events** — Header row starting with `Round`. One row per battle event (Attack, Shield Depleted, Combatant Destroyed, etc.).
-   - Columns: `Round`, `Type`, `Critical Hit?`, `Hull Damage`, `Shield Damage`, `Total Damage`, …
-   - Parsed for optional round-by-round comparison; summary parity uses total damage from summary (initial HP − remaining).
+   - Columns are looked up by **header name** (not by position), so the parser tolerates reordered or added columns. Used names: `Round`, `Type`, `Critical Hit?`, `Hull Damage`, `Shield Damage`, `Total Damage`.
+   - Summary parity uses total damage from summary (initial HP − remaining).
 
 **Mapping to engine:**
 
@@ -79,7 +79,11 @@ The game can export a fight log as a **tab-separated** file with several section
 - Defender mitigation and attacker pierce are computed with `mitigation()` and `pierce_damage_through_bonus()` from `DefenderStats` and `AttackerStats` derived from the fleet rows.
 - Ship type for mitigation weights is inferred from names (e.g. `HOSTILE BATTLESHIP` → Battleship); default Battleship if unknown.
 
-**Sample:** `fight samples/realta vs takret militia 10.csv` at repo root. Calibration test: `fight_export_realta_vs_takret_militia_10_matches_simulation` in `tests/recorded_fight_calibration_tests.rs`.
+**Crew from export:** Use `export_to_crew(export)` or `export_to_combat_input(export)` to get a `CrewConfiguration` from the summary officer slots. Slot convention: **Officer One** = captain, **Officer Two** = first bridge slot, **Officer Three** = second bridge slot; below_decks = [] unless the format is extended. Officer names are matched to canonical officers (`data/officers/officers.canonical.json`); unknown or empty slots are skipped. Use the returned crew when calling `simulate_combat` so the simulator runs with the same crew as the recorded fight.
+
+**Attacker ship type:** Inferred from the player’s **Ship Name** in the summary. Known name → type mappings: `REALTA` → Explorer; names containing `BATTLESHIP`, `EXPLORER`, `INTERCEPTOR`, `SURVEY`, or `ARMADA` use that class. Default is Battleship if unknown. Stored as `attacker_ship_type` on `FightExport` for consistency and future use (e.g. morale primary piercing by ship type).
+
+**Sample:** `fight samples/realta vs takret militia 10.csv` at repo root. Calibration test: `fight_export_realta_vs_takret_militia_10_matches_simulation` in `tests/recorded_fight_calibration_tests.rs` (uses `export_to_combat_input` and passes the crew into `simulate_combat`).
 
 ## Fixtures
 

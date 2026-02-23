@@ -5,8 +5,8 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    export_to_combatants, parse_fight_export, simulate_combat, Combatant, CrewConfiguration,
-    SimulationConfig, TraceMode,
+    export_to_combat_input, parse_fight_export, simulate_combat, Combatant, CrewConfiguration,
+    ShipType, SimulationConfig, TraceMode,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -107,14 +107,17 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
     assert_eq!(export.defender_hull_remaining, 0.0);
     assert_eq!(export.defender_shield_remaining, 0.0);
     assert!((export.total_damage - 830.0).abs() < 1.0, "total damage to defender (360+470)");
+    assert_eq!(export.player_ship_name.as_deref(), Some("REALTA"));
+    assert_eq!(export.attacker_ship_type, ShipType::Explorer);
+    assert_eq!(export.player_officer_one.as_deref(), Some("Livis"));
 
-    let (attacker, defender) = export_to_combatants(&export);
+    let (attacker, defender, crew) = export_to_combat_input(&export);
     let config = SimulationConfig {
         rounds: 10,
         seed: 42,
         trace_mode: TraceMode::Off,
     };
-    let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let result = simulate_combat(&attacker, &defender, config, &crew);
 
     assert_eq!(
         result.attacker_won, export.attacker_won,
