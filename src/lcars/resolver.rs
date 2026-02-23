@@ -3,8 +3,10 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityEffect, CrewConfiguration, CrewSeat, CrewSeatContext, TimingWindow,
+    Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
+    TimingWindow,
 };
+use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsEffect, LcarsOfficer};
 
 /// Options when resolving officer abilities (e.g. officer tier for scaling).
@@ -31,6 +33,12 @@ impl BuffSet {
     /// callers can do that in a follow-up. This returns the dynamic part.
     pub fn to_crew_config(&self) -> &CrewConfiguration {
         &self.crew
+    }
+
+    /// Apply this BuffSet's static_buffs to a Combatant (isolytic_damage, isolytic_defense, shield_mitigation).
+    /// Call this when building a Combatant from ship/hostile + crew resolved via [resolve_crew_to_buff_set].
+    pub fn apply_static_buffs_to_combatant(&self, combatant: Combatant) -> Combatant {
+        profile::apply_static_buffs_to_combatant(combatant, &self.static_buffs)
     }
 }
 
@@ -93,6 +101,18 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
                 "apex_barrier" => Some((timing, AbilityEffect::ApexBarrierBonus(value))),
                 "shield_regen" | "shield_hp_repair" => Some((timing, AbilityEffect::ShieldRegen(value))),
                 "hull_repair" | "hull_hp_repair" => Some((timing, AbilityEffect::HullRegen(value))),
+                "isolytic_damage" => {
+                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    Some((timing, AbilityEffect::IsolyticDamageBonus(add)))
+                }
+                "isolytic_defense" => {
+                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    Some((timing, AbilityEffect::IsolyticDefenseBonus(add)))
+                }
+                "shield_mitigation" => {
+                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
+                }
                 _ => None,
             }
         }
@@ -210,8 +230,67 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lcars::parser::load_lcars_file;
+    use crate::combat::AbilityEffect;
+    use crate::lcars::parser::{load_lcars_file, LcarsAbility, LcarsEffect, LcarsOfficer};
     use std::path::Path;
+
+    fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
+        LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some(stat.to_string()),
+            target: None,
+            operator: Some("add".to_string()),
+            value: Some(value),
+            trigger: Some(trigger.to_string()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+        }
+    }
+
+    #[test]
+    fn resolve_effect_maps_isolytic_and_shield_mitigation_to_ability_effects() {
+        let officer = LcarsOfficer {
+            id: "test".to_string(),
+            name: "Test".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+        };
+        let options = ResolveOptions { tier: Some(5) };
+        let ability_iso = LcarsAbility {
+            name: "iso".to_string(),
+            effects: vec![lcars_effect_stat_modify("isolytic_damage", 0.15, "on_round_start")],
+        };
+        let contexts =
+            resolve_officer_ability(&officer, &ability_iso, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        assert_eq!(contexts.len(), 1);
+        assert!(matches!(contexts[0].ability.effect, AbilityEffect::IsolyticDamageBonus(v) if (v - 0.15).abs() < 1e-12));
+
+        let ability_def = LcarsAbility {
+            name: "def".to_string(),
+            effects: vec![lcars_effect_stat_modify("isolytic_defense", 20.0, "on_round_start")],
+        };
+        let contexts_def =
+            resolve_officer_ability(&officer, &ability_def, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        assert_eq!(contexts_def.len(), 1);
+        assert!(matches!(contexts_def[0].ability.effect, AbilityEffect::IsolyticDefenseBonus(v) if (v - 20.0).abs() < 1e-12));
+
+        let ability_shield = LcarsAbility {
+            name: "shield".to_string(),
+            effects: vec![lcars_effect_stat_modify("shield_mitigation", 0.05, "on_combat_start")],
+        };
+        let contexts_shield =
+            resolve_officer_ability(&officer, &ability_shield, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        assert_eq!(contexts_shield.len(), 1);
+        assert!(matches!(contexts_shield[0].ability.effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.05).abs() < 1e-12));
+    }
 
     #[test]
     fn resolve_khan_from_lcars_yaml() {

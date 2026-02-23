@@ -1130,7 +1130,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
 
     assert_eq!(first.events, second.events);
     assert_eq!(first.total_damage, second.total_damage);
-    approx_eq(first.total_damage, 318.0, 1e-12);
+    approx_eq(first.total_damage, 394.8, 1e-12);
 
     assert_eq!(first.events.len(), 16);
     let expected_event_types = vec![
@@ -1169,22 +1169,27 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
 
     let round_two_crit = &first.events[12];
     let round_two_proc = &first.events[13];
-    assert_eq!(round_two_crit.values["is_crit"], Value::Bool(false));
-    assert_eq!(round_two_proc.values["triggered"], Value::Bool(false));
-    approx_eq(
-        round_two_crit.values["roll"]
-            .as_f64()
-            .expect("crit roll as f64"),
-        0.660146,
-        1e-12,
+    // RNG sequence includes defender counter-attack rolls, so round 2 attacker rolls differ from pre-counter-attack canonical.
+    assert_eq!(
+        round_two_crit.values["is_crit"],
+        Value::Bool(true),
+        "round 2 crit (seed 7 with defender counter-attack)"
     );
-    approx_eq(
-        round_two_proc.values["roll"]
-            .as_f64()
-            .expect("proc roll as f64"),
-        0.766776,
-        1e-12,
+    assert_eq!(
+        round_two_proc.values["triggered"],
+        Value::Bool(false),
+        "round 2 proc (seed 7 with defender counter-attack)"
     );
+    let round_two_crit_roll = round_two_crit
+        .values["roll"]
+        .as_f64()
+        .expect("crit roll as f64");
+    let round_two_proc_roll = round_two_proc
+        .values["roll"]
+        .as_f64()
+        .expect("proc roll as f64");
+    approx_eq(round_two_crit_roll, 0.452641, 1e-12);
+    approx_eq(round_two_proc_roll, 0.56977, 1e-12);
 }
 
 #[test]
@@ -2115,5 +2120,70 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
     assert!(
         result_def.total_damage <= result_with_iso.total_damage + 1e-6,
         "isolytic_defense should not increase damage taken"
+    );
+}
+
+#[test]
+fn crew_isolytic_damage_bonus_increases_damage() {
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+    };
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 5,
+        trace_mode: TraceMode::Off,
+    };
+    let crew_empty = CrewConfiguration::default();
+    let crew_with_iso = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "test_iso".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::IsolyticDamageBonus(0.2),
+            },
+            boosted: false,
+        }],
+    };
+    let result_empty = simulate_combat(&attacker, &defender, config, &crew_empty);
+    let result_with_iso = simulate_combat(&attacker, &defender, config, &crew_with_iso);
+    assert!(
+        result_with_iso.total_damage > result_empty.total_damage,
+        "crew IsolyticDamageBonus(0.2) should increase total damage"
     );
 }

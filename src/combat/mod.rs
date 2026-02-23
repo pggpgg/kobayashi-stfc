@@ -1,6 +1,7 @@
 pub mod abilities;
 pub mod buffs;
 pub mod engine;
+pub mod export_csv;
 pub mod log_ingest;
 pub mod rng;
 pub mod stacking;
@@ -16,6 +17,10 @@ pub use engine::{
     SimulationResult, TraceCollector, TraceMode, BATTLESHIP_COEFFICIENTS, EPSILON,
     EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS, MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP,
     SURVEY_COEFFICIENTS,
+};
+pub use export_csv::{
+    export_to_combatants, export_to_attacker, export_to_defender, parse_fight_export,
+    ship_type_from_name, FightExport, FightExportEvent,
 };
 pub use log_ingest::{
     ingested_events_to_combat_events, ingested_to_comparable, parse_combat_log_json,
