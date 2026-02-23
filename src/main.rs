@@ -5,6 +5,7 @@ use kobayashi::combat::{
     simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
 };
 use kobayashi::data::import::{import_roster_csv, import_spocks_export};
+use kobayashi::data::profile::{apply_profile_to_attacker, load_profile, DEFAULT_PROFILE_PATH};
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
 
@@ -220,22 +221,25 @@ fn optimize_command(args: &[String]) -> Result<(), String> {
 
 fn simulate_command(args: &[String]) -> Result<(), String> {
     let parsed = parse_simulate_args(args)?;
-    let attacker = Combatant {
-        id: parsed.attacker_id,
-        attack: parsed.attacker_attack,
-        mitigation: 0.0,
-        pierce: parsed.attacker_pierce,
-        crit_chance: 0.0,
-        crit_multiplier: 1.0,
-        proc_chance: 0.0,
-        proc_multiplier: 1.0,
-        end_of_round_damage: 0.0,
-        hull_health: 1000.0,
-        shield_health: 0.0,
-        shield_mitigation: 0.8,
-        apex_barrier: 0.0,
-        apex_shred: 0.0,
-    };
+    let attacker = apply_profile_to_attacker(
+        Combatant {
+            id: parsed.attacker_id,
+            attack: parsed.attacker_attack,
+            mitigation: 0.0,
+            pierce: parsed.attacker_pierce,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.8,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+        },
+        &load_profile(DEFAULT_PROFILE_PATH),
+    );
     let defender = Combatant {
         id: parsed.defender_id,
         attack: 0.0,

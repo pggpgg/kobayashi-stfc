@@ -1,9 +1,10 @@
 use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
-    mitigation, mitigation_with_morale, serialize_events_json, simulate_combat, Ability,
-    AbilityClass, AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration,
-    CrewSeat, CrewSeatContext, DefenderStats, EventSource, ShipType, SimulationConfig,
-    StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode, EPSILON,
+    mitigation, mitigation_with_morale, pierce_damage_through_bonus, serialize_events_json,
+    simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, CombatEvent, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, ShipType,
+    SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode,
+    EPSILON, PIERCE_CAP,
 };
 use serde_json::{Map, Value};
 
@@ -106,6 +107,31 @@ fn golden_values_match_python_reference_for_each_ship_type() {
         0.5914393181871193,
         1e-12,
     );
+}
+
+#[test]
+fn pierce_damage_through_bonus_derived_from_mitigation() {
+    let defender = DefenderStats {
+        armor: 100.0,
+        shield_deflection: 80.0,
+        dodge: 60.0,
+    };
+    let attacker = AttackerStats {
+        armor_piercing: 50.0,
+        shield_piercing: 40.0,
+        accuracy: 30.0,
+    };
+    for ship_type in [
+        ShipType::Survey,
+        ShipType::Battleship,
+        ShipType::Explorer,
+        ShipType::Interceptor,
+    ] {
+        let mit = mitigation(defender, attacker, ship_type);
+        let pierce = pierce_damage_through_bonus(defender, attacker, ship_type);
+        approx_eq(pierce, PIERCE_CAP * (1.0 - mit), 1e-12);
+        assert!(pierce >= 0.0 && pierce <= PIERCE_CAP);
+    }
 }
 
 #[test]
@@ -1791,6 +1817,98 @@ fn combat_rounds_are_capped_at_100() {
     );
 
     assert_eq!(result.rounds_simulated, 100);
+}
+
+#[test]
+fn round_end_regen_restores_shield_and_reduces_hull_damage() {
+    use kobayashi::combat::CrewSeatContext;
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 150.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.3,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 600.0,
+        shield_health: 200.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let crew_no_regen = CrewConfiguration::default();
+    let crew_with_regen = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "ShieldRegen".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundEnd,
+                    boostable: false,
+                    effect: AbilityEffect::ShieldRegen(60.0),
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "HullRegen".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundEnd,
+                    boostable: false,
+                    effect: AbilityEffect::HullRegen(40.0),
+                },
+                boosted: false,
+            },
+        ],
+    };
+    let result_no_regen = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 2,
+            seed: 99,
+            trace_mode: TraceMode::Off,
+        },
+        &crew_no_regen,
+    );
+    let result_with_regen = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 2,
+            seed: 99,
+            trace_mode: TraceMode::Off,
+        },
+        &crew_with_regen,
+    );
+    assert!(
+        result_with_regen.defender_shield_remaining >= result_no_regen.defender_shield_remaining,
+        "regen should preserve or increase shield"
+    );
+    assert!(
+        result_with_regen.defender_hull_remaining >= result_no_regen.defender_hull_remaining,
+        "regen should preserve or increase hull"
+    );
 }
 
 #[test]

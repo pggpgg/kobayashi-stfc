@@ -91,6 +91,8 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
                 }
                 "apex_shred" => Some((timing, AbilityEffect::ApexShredBonus(value))),
                 "apex_barrier" => Some((timing, AbilityEffect::ApexBarrierBonus(value))),
+                "shield_regen" | "shield_hp_repair" => Some((timing, AbilityEffect::ShieldRegen(value))),
+                "hull_repair" | "hull_hp_repair" => Some((timing, AbilityEffect::HullRegen(value))),
                 _ => None,
             }
         }

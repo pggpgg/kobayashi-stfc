@@ -1,0 +1,24 @@
+{
+  "description": "Calibration scenario: attacker vs defender, deterministic seed for regression.",
+  "attacker": {
+    "attack": 250,
+    "pierce": 0.12,
+    "hull_health": 1000,
+    "shield_health": 0
+  },
+  "defender": {
+    "mitigation": 0.2,
+    "hull_health": 400,
+    "shield_health": 200,
+    "shield_mitigation": 0.8
+  },
+  "rounds": 10,
+  "seed": 42,
+  "expected": {
+    "rounds_simulated_min": 1,
+    "rounds_simulated_max": 5,
+    "total_damage_min": 300,
+    "total_damage_max": 600,
+    "attacker_won": true
+  }
+}
