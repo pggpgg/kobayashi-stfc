@@ -315,6 +315,129 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
 }
 
 #[test]
+fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 200.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10000.0,
+        apex_barrier: 10_000.0,
+        apex_shred: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+    let crew_no_apex = CrewConfiguration::default();
+    let crew_with_apex_shred = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "Officer (Apex Shred)".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::ApexShredBonus(0.15),
+            },
+            boosted: false,
+        }],
+    };
+
+    let without = simulate_combat(&attacker, &defender, config, &crew_no_apex);
+    let with_ability = simulate_combat(&attacker, &defender, config, &crew_with_apex_shred);
+    // Without officer: factor = 10000/(10000+10000) = 0.5 → 100 damage.
+    approx_eq(without.total_damage, 100.0, 1e-12);
+    // With +15% Apex Shred: effective_barrier = 10000/1.15 ≈ 8695.65, factor ≈ 10000/18695.65 ≈ 0.535 → ~107 damage.
+    assert!(
+        with_ability.total_damage > without.total_damage,
+        "officer Apex Shred should increase damage through barrier"
+    );
+    approx_eq(with_ability.total_damage, 200.0 * (10000.0 / (10000.0 + 10_000.0 / 1.15)), 0.5);
+}
+
+#[test]
+fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 200.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+    };
+    let defender_no_bonus = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10000.0,
+        apex_barrier: 5_000.0,
+        apex_shred: 0.0,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+    let crew_no_apex = CrewConfiguration::default();
+    let crew_with_apex_barrier = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "Officer (Apex Barrier)".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::ApexBarrierBonus(5000.0),
+            },
+            boosted: false,
+        }],
+    };
+
+    let without = simulate_combat(&attacker, &defender_no_bonus, config, &crew_no_apex);
+    let with_ability = simulate_combat(&attacker, &defender_no_bonus, config, &crew_with_apex_barrier);
+    // Defender has 5k base barrier; officer adds 5k → effective 10k. Without officer: factor = 10000/15000 = 2/3 → 133.33. With officer: factor = 10000/20000 = 0.5 → 100.
+    assert!(
+        with_ability.total_damage < without.total_damage,
+        "officer Apex Barrier bonus should reduce damage taken"
+    );
+    approx_eq(without.total_damage, 200.0 * (10000.0 / 15000.0), 0.5);
+    approx_eq(with_ability.total_damage, 100.0, 0.5);
+}
+
+#[test]
 fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
     let attacker = Combatant {
         id: "enterprise".to_string(),
