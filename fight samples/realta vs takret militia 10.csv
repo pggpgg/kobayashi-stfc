@@ -1,0 +1,20 @@
+Player Name	Player Level	Outcome	Ship Name	Ship Level	Ship Strength	Ship XP	Officer One	Officer Two	Officer Three	Hull Health	Hull Health Remaining	Shield Health	Shield Health Remaining	Location	Timestamp
+HiggsBozo	58	VICTORY	REALTA	20	373989	0	Livis	--	--	346912	346895	385383	385307	Bulut	2026-02-23 7:21:55 AM
+Takret Militia	10	DEFEAT	HOSTILE BATTLESHIP	10	1870	0	Takret Militia	--	--	470	0	360	0	Bulut	2026-02-23 7:21:55 AM
+
+Reward Name	Count
+Tritanium	236
+Mega Chest	1
+
+Fleet Type	Attack	Defense	Health	Ship Ability	Captain Maneuver	Officer One Ability	Officer Two Ability	Officer Three Ability	Officer Attack Bonus	Damage Per Round	Armour Pierce	Shield Pierce	Accuracy	Critical Chance	Critical Damage	Officer Defense Bonus	Armour	Shield Deflection	Dodge	Officer Health Bonus	Shield Health	Hull Health	Impulse Speed	Warp Range	Warp Speed	Cargo Capacity	Protected Cargo	Mining Bonus	Debuff applied	Buff applied
+Player Fleet 1	4761	3080	366148	Enhanced Shield	Wartime Repairs	Bolstered	--	--	1	3928	55	54	820	0.22	2.95	1	66	528	22	1	385383	346912	218	32	53	19200	0	1	NO	NO
+Enemy Fleet 1	670	785	415	ship_ability_name_{0}	--	--	--	--	0	460	26	158	26	0.1	1.5	0	105	26	26	0	360	470	12	2	2	0	0	1	NO	NO
+
+Round	Battle Event	Type	Attacker Name	Attacker Alliance	Attacker Ship	Attacker - Is Armada?	Target Name	Target Alliance	Target Ship	Target - Is Armada?	Hyperthermic Decay %	Hyperthermic Stablizer %	Critical Hit?	Hull Damage	Shield Damage	Mitigated Damage	Mitigated Isolytic Damage	Mitigated Apex Barrier	Total Damage	Total Isolytic Damage	Ability Type	Ability Value	Ability Name	Ability Owner Name	Target Defeated	Target Destroyed	Charging Weapons %
+1	1	Attack	Takret Militia	--	HOSTILE BATTLESHIP	NO	HiggsBozo	INFINITE	REALTA	NO	--	--	YES	8	36	89	0	0	133	0	--	--	--	--	--	--	--
+1	2	Attack	HiggsBozo	INFINITE	REALTA	NO	Takret Militia	--	HOSTILE BATTLESHIP	NO	--	--	NO	369	1387	740	0	0	1935	561	--	--	--	--	--	--	--
+1	3	Shield Depleted	Takret Militia	--	HOSTILE BATTLESHIP	NO	HiggsBozo	INFINITE	HOSTILE BATTLESHIP	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--	--
+1	4	Attack	Takret Militia	--	HOSTILE BATTLESHIP	NO	HiggsBozo	INFINITE	REALTA	NO	--	--	NO	9	40	99	0	0	148	0	--	--	--	--	--	--	--
+1	5	Attack	HiggsBozo	INFINITE	REALTA	NO	Takret Militia	--	HOSTILE BATTLESHIP	NO	--	--	YES	10003	0	4217	0	0	11023	3197	--	--	--	--	--	--	--
+1	6	Combatant Destroyed	Takret Militia	--	HOSTILE BATTLESHIP	NO	HiggsBozo	INFINITE	HOSTILE BATTLESHIP	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--
+
