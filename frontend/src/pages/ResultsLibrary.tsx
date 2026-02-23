@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPresets, fetchPreset } from '../lib/api';
-import type { PresetSummary, Preset } from '../lib/api';
+import type { PresetSummary } from '../lib/api';
 
 export default function ResultsLibrary() {
   const [presets, setPresets] = useState<PresetSummary[]>([]);

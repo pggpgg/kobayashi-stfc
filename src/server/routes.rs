@@ -157,6 +157,22 @@ pub fn route_request(
             },
             Err(err) => error_response(400, "Bad Request", &err.to_string()),
         },
+        (method, path) if method == "GET" && path.starts_with("/api/optimize/estimate") => {
+            match api::optimize_estimate_payload(path) {
+                Ok(payload) => HttpResponse {
+                    status_code: 200,
+                    status_text: "OK",
+                    content_type: "application/json",
+                    body: payload,
+                },
+                Err(api::OptimizePayloadError::Parse(err)) => {
+                    error_response(400, "Bad Request", &format!("Invalid request: {err}"))
+                }
+                Err(api::OptimizePayloadError::Validation(validation)) => {
+                    validation_error_response(400, "Bad Request", validation)
+                }
+            }
+        }
         ("POST", "/api/optimize") => match api::optimize_payload(body) {
             Ok(payload) => HttpResponse {
                 status_code: 200,
@@ -236,8 +252,15 @@ fn index_html() -> String {
     <input id="ship" value="Saladin" />
     <label for="hostile">Hostile</label>
     <input id="hostile" value="Explorer_30" />
-    <label for="sims">Simulations</label>
-    <input id="sims" type="number" value="5000" />
+    <label for="sims">Fight iterations per crew</label>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <input id="sims" type="number" min="1" max="100000" value="5000" style="width:90px" />
+      <button type="button" class="sims-preset" data-sims="1000">1k</button>
+      <button type="button" class="sims-preset" data-sims="5000">5k</button>
+      <button type="button" class="sims-preset" data-sims="10000">10k</button>
+      <button type="button" class="sims-preset" data-sims="50000">50k</button>
+    </div>
+    <p id="estimate-msg" style="margin:8px 0 0;font-size:0.9rem;color:#666;"></p>
     <div><button id="optimize-btn">POST /api/optimize</button></div>
   </div>
 
@@ -245,12 +268,48 @@ fn index_html() -> String {
 
   <script>
     const output = document.getElementById('output');
+    const shipEl = document.getElementById('ship');
+    const hostileEl = document.getElementById('hostile');
+    const simsEl = document.getElementById('sims');
+    const estimateEl = document.getElementById('estimate-msg');
+
+    let estimateTimer = null;
+    function fetchEstimate() {
+      const ship = shipEl.value.trim();
+      const hostile = hostileEl.value.trim();
+      const sims = Math.max(1, Math.min(100000, Number(simsEl.value) || 5000));
+      if (!ship || !hostile) { estimateEl.textContent = ''; return; }
+      const url = '/api/optimize/estimate?ship=' + encodeURIComponent(ship) + '&hostile=' + encodeURIComponent(hostile) + '&sims=' + sims;
+      fetch(url).then(r => r.ok ? r.json() : null).then(data => {
+        if (data) estimateEl.textContent = 'Estimated time: ~' + (data.estimated_seconds < 1 ? '<1' : data.estimated_seconds.toFixed(1)) + ' s (' + data.estimated_candidates + ' crews)';
+        else estimateEl.textContent = '';
+      }).catch(() => { estimateEl.textContent = ''; });
+    }
+    function scheduleEstimate() {
+      if (estimateTimer) clearTimeout(estimateTimer);
+      estimateTimer = setTimeout(fetchEstimate, 300);
+    }
+    shipEl.addEventListener('input', scheduleEstimate);
+    hostileEl.addEventListener('input', scheduleEstimate);
+    simsEl.addEventListener('input', scheduleEstimate);
+    fetchEstimate();
+
+    document.querySelectorAll('.sims-preset').forEach(btn => {
+      btn.addEventListener('click', () => { simsEl.value = btn.dataset.sims; scheduleEstimate(); });
+    });
 
     async function request(path, options) {
       output.textContent = 'Loading…';
       const response = await fetch(path, options);
       const text = await response.text();
-      output.textContent = `HTTP ${response.status}\n${text}`;
+      let display = 'HTTP ' + response.status + '\\n' + text;
+      if (options && options.method === 'POST' && path === '/api/optimize') {
+        try {
+          const j = JSON.parse(text);
+          if (j.duration_ms != null) display = 'Completed in ' + (j.duration_ms / 1000).toFixed(1) + ' s\\n\\n' + display;
+        } catch (e) {}
+      }
+      output.textContent = display;
     }
 
     document.getElementById('health-btn').addEventListener('click', () => {
@@ -259,9 +318,9 @@ fn index_html() -> String {
 
     document.getElementById('optimize-btn').addEventListener('click', () => {
       const payload = {
-        ship: document.getElementById('ship').value,
-        hostile: document.getElementById('hostile').value,
-        sims: Number(document.getElementById('sims').value),
+        ship: shipEl.value,
+        hostile: hostileEl.value,
+        sims: Math.max(1, Math.min(100000, Number(simsEl.value) || 5000)),
       };
       request('/api/optimize', {
         method: 'POST',

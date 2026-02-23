@@ -86,10 +86,7 @@ impl CrewGenerator {
             .filter(|officer| can_fill_position(officer, Position::BelowDecks))
             .collect();
 
-        // Ensure enough variety: if few or no officers have a captain ability, allow any
-        // officer as captain so recommendations aren't all the same captain.
-        const MIN_CAPTAIN_POOL: usize = 3;
-        if captains.len() < MIN_CAPTAIN_POOL {
+        if captains.is_empty() {
             captains = officers.iter().collect();
         }
         if bridge.is_empty() {

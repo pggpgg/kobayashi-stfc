@@ -113,6 +113,28 @@ export interface OptimizeResponse {
   status: string;
   scenario: { ship: string; hostile: string; sims: number; seed: number };
   recommendations: CrewRecommendation[];
+  duration_ms?: number;
+}
+
+export interface OptimizeEstimate {
+  estimated_candidates: number;
+  sims_per_crew: number;
+  estimated_seconds: number;
+}
+
+export async function getOptimizeEstimate(params: {
+  ship: string;
+  hostile: string;
+  sims?: number;
+}): Promise<OptimizeEstimate> {
+  const sims = params.sims ?? 5000;
+  const url = `${API_BASE}/api/optimize/estimate?ship=${encodeURIComponent(params.ship)}&hostile=${encodeURIComponent(params.hostile)}&sims=${sims}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(t || res.statusText);
+  }
+  return res.json();
 }
 
 export async function optimize(params: {

@@ -5,7 +5,7 @@ use crate::data::import::{
 };
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::ship::{load_ship_index, DEFAULT_SHIPS_INDEX_PATH};
-use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
+use crate::optimizer::crew_generator::{CrewGenerator, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 use crate::optimizer::monte_carlo::{run_monte_carlo, SimulationResult};
 use crate::optimizer::{optimize_scenario, OptimizationScenario};
 use serde::{Deserialize, Serialize};
@@ -13,6 +13,7 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 use std::fmt;
+use std::time::Instant;
 
 const DEFAULT_SIMS: u32 = 5000;
 const MAX_SIMS: u32 = 100_000;
@@ -40,6 +41,8 @@ pub struct OptimizeResponse {
     pub engine: &'static str,
     pub scenario: ScenarioSummary,
     pub recommendations: Vec<CrewRecommendation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<u64>,
     pub notes: Vec<&'static str>,
 }
 
@@ -200,8 +203,10 @@ pub struct SimulateRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct SimulateCrew {
     pub captain: Option<String>,
-    pub bridge: Option<Vec<String>>,
-    pub below_deck: Option<Vec<String>>,
+    /// Bridge officer IDs; null entries mean "no officer" in that slot.
+    pub bridge: Option<Vec<Option<String>>>,
+    /// Below-deck officer IDs; null entries mean "no officer" in that slot.
+    pub below_deck: Option<Vec<Option<String>>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -271,8 +276,8 @@ pub fn simulate_payload(body: &str) -> Result<String, SimulateError> {
         .as_ref()
         .map(|v| {
             v.iter()
-                .map(|s| officer_id_to_name(s, &officers))
                 .take(BRIDGE_SLOTS)
+                .map(|s| s.as_ref().map(|id| officer_id_to_name(id, &officers)).unwrap_or_default())
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
@@ -282,8 +287,8 @@ pub fn simulate_payload(body: &str) -> Result<String, SimulateError> {
         .as_ref()
         .map(|v| {
             v.iter()
-                .map(|s| officer_id_to_name(s, &officers))
                 .take(BELOW_DECKS_SLOTS)
+                .map(|s| s.as_ref().map(|id| officer_id_to_name(id, &officers)).unwrap_or_default())
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
@@ -587,6 +592,9 @@ pub fn data_version_payload() -> Result<String, serde_json::Error> {
     serde_json::to_string_pretty(&response)
 }
 
+/// Rough seconds per (candidate × sim) on a typical multi-core machine; used for time estimates.
+const ESTIMATE_SEC_PER_CANDIDATE_SIM: f64 = 4e-9;
+
 pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
     let request: OptimizeRequest =
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
@@ -600,7 +608,9 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
         simulation_count: sims as usize,
         seed,
     };
+    let start = Instant::now();
     let ranked_results = optimize_scenario(&scenario);
+    let duration_ms = start.elapsed().as_millis() as u64;
 
     let response = OptimizeResponse {
         status: "ok",
@@ -621,6 +631,7 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
                 avg_hull_remaining: result.avg_hull_remaining,
             })
             .collect(),
+        duration_ms: Some(duration_ms),
         notes: vec![
             "Recommendations are generated from candidate generation, simulation, and ranking passes.",
             "Results are deterministic for the same ship, hostile, simulation count, and seed.",
@@ -628,6 +639,53 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
     };
 
     serde_json::to_string_pretty(&response).map_err(OptimizePayloadError::Parse)
+}
+
+/// Parses query string for optimize estimate: ship, hostile, sims.
+fn parse_optimize_estimate_query(query: &str) -> (String, String, u32) {
+    let mut ship = String::new();
+    let mut hostile = String::new();
+    let mut sims = DEFAULT_SIMS;
+    for pair in query.split('&') {
+        if let Some((key, value)) = pair.split_once('=') {
+            let key = key.trim();
+            let value = value.trim();
+            match key {
+                "ship" => ship = value.to_string(),
+                "hostile" => hostile = value.to_string(),
+                "sims" => sims = value.parse().unwrap_or(DEFAULT_SIMS),
+                _ => {}
+            }
+        }
+    }
+    (ship, hostile, sims)
+}
+
+pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadError> {
+    let query = path.split('?').nth(1).unwrap_or("");
+    let (ship, hostile, sims) = parse_optimize_estimate_query(query);
+    let sims = sims.clamp(1, MAX_SIMS);
+    if ship.trim().is_empty() || hostile.trim().is_empty() {
+        return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
+            status: "error",
+            message: "Validation failed",
+            errors: vec![ValidationIssue {
+                field: "ship",
+                messages: vec!["ship and hostile are required for estimate".to_string()],
+            }],
+        }));
+    }
+    let generator = CrewGenerator::new();
+    let candidates = generator.generate_candidates(&ship, &hostile, 0);
+    let estimated_candidates = candidates.len();
+    let estimated_seconds = (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;
+    let estimated_seconds = estimated_seconds.max(0.1).min(3600.0); // clamp to 0.1s–1h for display
+    let payload = serde_json::json!({
+        "estimated_candidates": estimated_candidates,
+        "sims_per_crew": sims,
+        "estimated_seconds": (estimated_seconds * 10.0).round() / 10.0,
+    });
+    serde_json::to_string_pretty(&payload).map_err(OptimizePayloadError::Parse)
 }
 
 fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), OptimizePayloadError> {
