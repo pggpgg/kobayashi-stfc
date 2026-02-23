@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use rayon::prelude::*;
 
 use crate::combat::{
-    mitigation, simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, ShipType, SimulationConfig,
-    TimingWindow, TraceMode,
+    mitigation, pierce_damage_through_bonus, simulate_combat, Ability, AbilityClass, AbilityEffect,
+    AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
+    ShipType, SimulationConfig, TimingWindow, TraceMode,
 };
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::profile::{apply_profile_to_attacker, load_profile, PlayerProfile, DEFAULT_PROFILE_PATH};
 use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 
 #[derive(Debug, Clone)]
@@ -52,9 +53,10 @@ fn run_monte_carlo_with_parallelism(
         .ok()
         .map(index_officers_by_name)
         .unwrap_or_default();
+    let profile = load_profile(DEFAULT_PROFILE_PATH);
 
     let run_one = |candidate: &CrewCandidate| {
-        let input = scenario_to_combat_input(ship, hostile, candidate, seed, &officer_index);
+        let input = scenario_to_combat_input(ship, hostile, candidate, seed, &officer_index, &profile);
         let mut wins = 0usize;
         let mut surviving_hull_sum = 0.0;
 
@@ -125,6 +127,7 @@ fn scenario_to_combat_input(
     candidate: &CrewCandidate,
     seed: u64,
     officers_by_name: &HashMap<String, Officer>,
+    profile: &PlayerProfile,
 ) -> CombatSimulationInput {
     let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
 
@@ -135,22 +138,29 @@ fn scenario_to_combat_input(
         let defender_hull = hostile_rec.hull_health;
         let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level as u32));
         return CombatSimulationInput {
-            attacker: Combatant {
-                id: ship.to_string(),
-                attack: ship_rec.attack,
-                mitigation: 0.0,
-                pierce: ((ship_rec.armor_piercing + ship_rec.shield_piercing) / 2.0 / 5000.0).clamp(0.0, 0.25),
-                crit_chance: ship_rec.crit_chance,
-                crit_multiplier: ship_rec.crit_damage,
-                proc_chance: 0.0,
-                proc_multiplier: 1.0,
-                end_of_round_damage: 0.0,
-                hull_health: ship_rec.hull_health,
-                shield_health: ship_rec.shield_health,
-                shield_mitigation: ship_rec.shield_mitigation.unwrap_or(0.8),
-                apex_barrier: 0.0,
-                apex_shred: ship_rec.apex_shred,
-            },
+            attacker: apply_profile_to_attacker(
+                Combatant {
+                    id: ship.to_string(),
+                    attack: ship_rec.attack,
+                    mitigation: 0.0,
+                    pierce: pierce_damage_through_bonus(
+                        hostile_rec.to_defender_stats(),
+                        ship_rec.to_attacker_stats(),
+                        hostile_rec.ship_type(),
+                    ),
+                    crit_chance: ship_rec.crit_chance,
+                    crit_multiplier: ship_rec.crit_damage,
+                    proc_chance: 0.0,
+                    proc_multiplier: 1.0,
+                    end_of_round_damage: 0.0,
+                    hull_health: ship_rec.hull_health,
+                    shield_health: ship_rec.shield_health,
+                    shield_mitigation: ship_rec.shield_mitigation.unwrap_or(0.8),
+                    apex_barrier: 0.0,
+                    apex_shred: ship_rec.apex_shred,
+                },
+                profile,
+            ),
             defender: Combatant {
                 id: hostile.to_string(),
                 attack: 0.0,
@@ -180,22 +190,25 @@ fn scenario_to_combat_input(
     let defender_mitigation = computed_defender_mitigation(ship, hostile);
 
     CombatSimulationInput {
-        attacker: Combatant {
-            id: ship.to_string(),
-            attack: 95.0 + (ship_hash % 70) as f64,
-            mitigation: 0.0,
-            pierce: 0.08 + ((ship_hash >> 8) % 14) as f64 / 100.0,
-            crit_chance: 0.0,
-            crit_multiplier: 1.0,
-            proc_chance: 0.0,
-            proc_multiplier: 1.0,
-            end_of_round_damage: 0.0,
-            hull_health: 1000.0,
-            shield_health: 0.0,
-            shield_mitigation: 0.8,
-            apex_barrier: 0.0,
-            apex_shred: 0.0,
-        },
+        attacker: apply_profile_to_attacker(
+            Combatant {
+                id: ship.to_string(),
+                attack: 95.0 + (ship_hash % 70) as f64,
+                mitigation: 0.0,
+                pierce: 0.08 + ((ship_hash >> 8) % 14) as f64 / 100.0,
+                crit_chance: 0.0,
+                crit_multiplier: 1.0,
+                proc_chance: 0.0,
+                proc_multiplier: 1.0,
+                end_of_round_damage: 0.0,
+                hull_health: 1000.0,
+                shield_health: 0.0,
+                shield_mitigation: 0.8,
+                apex_barrier: 0.0,
+                apex_shred: 0.0,
+            },
+            profile,
+        ),
         defender: Combatant {
             id: hostile.to_string(),
             attack: 0.0,
@@ -839,9 +852,10 @@ mod tests {
             below_decks: vec!["Scotty".to_string(), "Scotty".to_string(), "Scotty".to_string()],
         };
         let officers = HashMap::new();
+        let profile = PlayerProfile::default();
 
-        let one = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers);
-        let two = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers);
+        let one = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile);
+        let two = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile);
         assert_eq!(one.defender.mitigation, two.defender.mitigation);
     }
     #[test]

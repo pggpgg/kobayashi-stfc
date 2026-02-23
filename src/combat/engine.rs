@@ -190,6 +190,22 @@ pub fn component_mitigation(defense: f64, piercing: f64) -> f64 {
     1.0 / (1.0 + 4.0_f64.powf(1.1 - x))
 }
 
+/// Maximum pierce damage-through bonus (additive to (1 - mitigation)).
+pub const PIERCE_CAP: f64 = 0.25;
+
+/// Pierce damage-through bonus derived from defender/attacker stats and ship type.
+/// Uses the same defense/piercing ratios as mitigation (STFC Toolbox). Formula:
+/// `pierce = 0.25 * (1 - mitigation(defender, attacker, ship_type))`, clamped to [0, PIERCE_CAP].
+/// So when mitigation is low (high pierce vs defense), pierce bonus is high; when mitigation is high, pierce is low.
+pub fn pierce_damage_through_bonus(
+    defender: DefenderStats,
+    attacker: AttackerStats,
+    ship_type: ShipType,
+) -> f64 {
+    let mit = mitigation(defender, attacker, ship_type);
+    (PIERCE_CAP * (1.0 - mit)).clamp(0.0, PIERCE_CAP)
+}
+
 /// Compute total mitigation using weighted multiplicative composition.
 pub fn mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: ShipType) -> f64 {
     let (c_armor, c_shield, c_dodge) = ship_type.coefficients();
@@ -831,6 +847,13 @@ pub fn simulate_combat(
         // Round-end and burning apply to hull only (shields do not absorb these).
         total_hull_damage += (bonus_damage + burning_damage) * apex_damage_factor;
 
+        // Regen: shield and hull restoration at round end (from officer/data regen effects).
+        let shield_regen = phase_effects.composed_shield_regen();
+        let hull_regen = phase_effects.composed_hull_regen();
+        defender_shield_remaining = (defender_shield_remaining + shield_regen)
+            .min(defender.shield_health.max(0.0));
+        total_hull_damage = (total_hull_damage - hull_regen).max(0.0);
+
         if burning_rounds_remaining > 0 {
             burning_rounds_remaining -= 1;
         }
@@ -906,6 +929,8 @@ enum EffectStatKey {
     RoundEndDamage,
     ApexShredBonus,
     ApexBarrierBonus,
+    ShieldRegen,
+    HullRegen,
 }
 
 impl Default for EffectAccumulator {
@@ -927,6 +952,8 @@ impl Default for EffectAccumulator {
         stacks.add(StackContribution::base(EffectStatKey::RoundEndDamage, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::ApexShredBonus, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::ApexBarrierBonus, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::ShieldRegen, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::HullRegen, 0.0));
 
         Self {
             stacks,
@@ -963,6 +990,18 @@ impl EffectAccumulator {
     fn composed_apex_barrier_bonus(&self) -> f64 {
         self.stacks
             .composed_for(&EffectStatKey::ApexBarrierBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_shield_regen(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::ShieldRegen)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_hull_regen(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::HullRegen)
             .unwrap_or(0.0)
     }
 
@@ -1034,6 +1073,8 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShieldRegen(_) => {}
+                AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
                 }
@@ -1054,6 +1095,8 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShieldRegen(_) => {}
+                AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
                 }
@@ -1073,6 +1116,8 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShieldRegen(_) => {}
+                AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
                 }
@@ -1092,6 +1137,12 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShieldRegen(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldRegen, v));
+                }
+                AbilityEffect::HullRegen(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::HullRegen, v));
+                }
                 AbilityEffect::ApexShredBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
                 }
@@ -1182,6 +1233,12 @@ fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffec
         }
         AbilityEffect::ApexBarrierBonus(v) => {
             AbilityEffect::ApexBarrierBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::ShieldRegen(v) => {
+            AbilityEffect::ShieldRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::HullRegen(v) => {
+            AbilityEffect::HullRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
     }
 }

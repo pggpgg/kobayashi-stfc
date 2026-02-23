@@ -326,6 +326,19 @@ Notes:
 - UI logs can collapse duplicate ability/forbidden-tech lines even when multiple ships apply the same source.
 - Ordering details for per-ship buff application are currently treated as implementation targets inferred from raw logs and should remain test-backed as fixtures expand.
 
+#### Sub-round and weapon-index ordering (reference)
+
+Canonical STFC client order (from community toolbox / combat logs), for parity and future sub-round support:
+
+1. **Start of round:** `START_ROUND` → hull repair window (`HULL_REPAIR_START` / `HULL_REPAIR_END`), once per round.
+2. **Per sub-round (weapon index 0, 1, …):**  
+   - Officer/ship abilities for that sub-round.  
+   - Forbidden tech and chaos tech buffs.  
+   - All attacks for that weapon index.  
+3. **End of round:** `END_ROUND` → burning tick (e.g. 1% initial hull), temporary-effect cleanup, then next round (max 100).
+
+The current engine uses a single attack phase per round (no explicit weapon-index loop). When ingested logs or parity tests show ordering-sensitive differences, sub-round or weapon-index structure can be added to the loop and validated against fixtures (see [docs/combat_log_format.md](docs/combat_log_format.md)).
+
 ### 3.7 Stacking Rules
 
 - Same stat, same operator from different sources: all apply

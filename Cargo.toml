@@ -31,10 +31,19 @@ path = "src/bin/validate_data.rs"
 name = "benchmark_simulator"
 path = "src/bin/benchmark_simulator.rs"
 
+[[bin]]
+name = "benchmark_parallel_speedup"
+path = "src/bin/benchmark_parallel_speedup.rs"
+
 [[bench]]
 name = "simulator"
 harness = false
 path = "benches/simulator_bench.rs"
+
+[[bench]]
+name = "monte_carlo_parallel"
+harness = false
+path = "benches/monte_carlo_parallel_bench.rs"
 
 [dependencies]
 calamine = "0.24"

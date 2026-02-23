@@ -39,6 +39,10 @@ pub enum AbilityEffect {
         chance: f64,
         duration_rounds: u32,
     },
+    /// Shield HP restored per round (round end). Flat value.
+    ShieldRegen(f64),
+    /// Hull HP restored per round (round end). Reduces effective hull damage taken.
+    HullRegen(f64),
     /// Officer-granted Apex Shred; value is decimal (0.15 = +15%).
     ApexShredBonus(f64),
     /// Officer-granted Apex Barrier; value is flat integer (e.g. 1000).

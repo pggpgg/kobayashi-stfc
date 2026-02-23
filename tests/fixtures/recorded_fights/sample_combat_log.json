@@ -1,0 +1,56 @@
+{
+  "rounds_simulated": 2,
+  "total_damage": 380.5,
+  "attacker_won": true,
+  "winner_by_round_limit": false,
+  "defender_hull_remaining": 0.0,
+  "defender_shield_remaining": 0.0,
+  "events": [
+    {
+      "event_type": "round_start",
+      "round_index": 1,
+      "phase": "round",
+      "values": {}
+    },
+    {
+      "event_type": "damage_application",
+      "round_index": 1,
+      "phase": "damage",
+      "values": {
+        "damage_after_apex": 200.0,
+        "shield_damage": 160.0,
+        "hull_damage": 40.0,
+        "running_hull_damage": 40.0
+      }
+    },
+    {
+      "event_type": "end_of_round_effects",
+      "round_index": 1,
+      "phase": "end",
+      "values": { "running_hull_damage": 40.0 }
+    },
+    {
+      "event_type": "round_start",
+      "round_index": 2,
+      "phase": "round",
+      "values": {}
+    },
+    {
+      "event_type": "damage_application",
+      "round_index": 2,
+      "phase": "damage",
+      "values": {
+        "damage_after_apex": 340.5,
+        "shield_damage": 0.0,
+        "hull_damage": 340.5,
+        "running_hull_damage": 380.5
+      }
+    },
+    {
+      "event_type": "end_of_round_effects",
+      "round_index": 2,
+      "phase": "end",
+      "values": { "running_hull_damage": 380.5 }
+    }
+  ]
+}

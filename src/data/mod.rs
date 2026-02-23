@@ -1,13 +1,14 @@
 pub mod building;
 pub mod forbidden_chaos;
 pub mod faction_reputation;
-pub mod syndicate_combat;
-pub mod syndicate_reputation;
 pub mod hostile;
-pub mod registry;
 pub mod import;
 pub mod loader;
 pub mod officer;
+pub mod profile;
+pub mod registry;
 pub mod ship;
+pub mod syndicate_combat;
+pub mod syndicate_reputation;
 pub mod synergy;
 pub mod validate;
