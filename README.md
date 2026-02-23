@@ -15,6 +15,14 @@ A high-performance Monte Carlo combat simulator and crew optimizer for [Star Tre
 
 ---
 
+## Web UI Overview
+
+![KOBAYASHI Web Interface](docs/web-ui-screenshot.png)
+
+The web interface lets you configure ship, hostile, and crew, run simulations or optimizations, and view results — all from your browser at `http://localhost:3000`.
+
+---
+
 ## What is this?
 
 STFC has **280+ officers** and growing. Each one has abilities that interact differently depending on slot, rank, synergies, and the hostile you're fighting. Factor in ship stats, research, buildings, reputation, artifacts, exocomps, and forbidden tech — and finding the optimal crew becomes a combinatorial nightmare.
