@@ -287,9 +287,6 @@ pub fn simulate_combat(
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
-    let effective_barrier = defender.apex_barrier
-        / (1.0 + attacker.apex_shred).max(EPSILON);
-    let apex_damage_factor = 10000.0 / (10000.0 + effective_barrier);
 
     for round_index in 1..=rounds_to_simulate {
         let round_start_effects =
@@ -468,6 +465,14 @@ pub fn simulate_combat(
             attacker.attack,
             defense_phase_assimilated,
         );
+
+        let effective_apex_shred = (attacker.apex_shred + phase_effects.composed_apex_shred_bonus())
+            .max(0.0);
+        let effective_apex_barrier = (defender.apex_barrier + phase_effects.composed_apex_barrier_bonus())
+            .max(0.0);
+        let effective_barrier = effective_apex_barrier
+            / (1.0 + effective_apex_shred).max(EPSILON);
+        let apex_damage_factor = 10000.0 / (10000.0 + effective_barrier);
 
         let round_end_assimilated = assimilated_rounds_remaining > 0;
         record_ability_activations(
@@ -850,6 +855,8 @@ enum EffectStatKey {
     PreAttackDamage,
     AttackPhaseDamage,
     RoundEndDamage,
+    ApexShredBonus,
+    ApexBarrierBonus,
 }
 
 impl Default for EffectAccumulator {
@@ -869,6 +876,8 @@ impl Default for EffectAccumulator {
             0.0,
         ));
         stacks.add(StackContribution::base(EffectStatKey::RoundEndDamage, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::ApexShredBonus, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::ApexBarrierBonus, 0.0));
 
         Self {
             stacks,
@@ -893,6 +902,18 @@ impl EffectAccumulator {
     fn defense_mitigation_bonus(&self) -> f64 {
         self.stacks
             .composed_for(&EffectStatKey::DefenseMitigationBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_apex_shred_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::ApexShredBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_apex_barrier_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::ApexBarrierBonus)
             .unwrap_or(0.0)
     }
 
@@ -964,6 +985,12 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ApexShredBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                }
+                AbilityEffect::ApexBarrierBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
             },
             TimingWindow::AttackPhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -978,6 +1005,12 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ApexShredBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                }
+                AbilityEffect::ApexBarrierBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
             },
             TimingWindow::DefensePhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
@@ -991,6 +1024,12 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ApexShredBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                }
+                AbilityEffect::ApexBarrierBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
             },
             TimingWindow::RoundEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -1004,6 +1043,12 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ApexShredBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                }
+                AbilityEffect::ApexBarrierBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
             },
         }
     }
@@ -1083,6 +1128,12 @@ fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffec
             chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             duration_rounds,
         },
+        AbilityEffect::ApexShredBonus(v) => {
+            AbilityEffect::ApexShredBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::ApexBarrierBonus(v) => {
+            AbilityEffect::ApexBarrierBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
     }
 }
 

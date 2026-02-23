@@ -384,12 +384,69 @@ fn seeded_variance(seed: u64) -> f64 {
     0.85 + (unit * 0.30)
 }
 
+fn trigger_to_timing_window(trigger: Option<&str>) -> Option<TimingWindow> {
+    match trigger.as_ref().and_then(|t| Some(t.trim())) {
+        Some("CombatStart") => Some(TimingWindow::CombatBegin),
+        Some("RoundStart") => Some(TimingWindow::RoundStart),
+        _ => None,
+    }
+}
+
+fn apex_ability_contexts(
+    officer_id: &str,
+    seat: CrewSeat,
+    class: AbilityClass,
+    officers_by_name: &HashMap<String, Officer>,
+) -> Vec<CrewSeatContext> {
+    let (lookup_name, tier) = split_name_and_tier(officer_id);
+    let Some(officer) = officers_by_name.get(&normalize_lookup_key(&lookup_name)) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for ability in &officer.abilities {
+        let Some(timing) = trigger_to_timing_window(ability.trigger.as_deref()) else {
+            continue;
+        };
+        let (effect, name_suffix) = if ability.modifier_is_apex_shred() {
+            (
+                AbilityEffect::ApexShredBonus(ability.value_for_tier(tier)),
+                " (Apex Shred)",
+            )
+        } else if ability.modifier_is_apex_barrier() {
+            (
+                AbilityEffect::ApexBarrierBonus(ability.value_for_tier(tier)),
+                " (Apex Barrier)",
+            )
+        } else {
+            continue;
+        };
+        out.push(CrewSeatContext {
+            seat,
+            ability: Ability {
+                name: format!("{}{}", officer.name, name_suffix),
+                class,
+                timing,
+                boostable: false,
+                effect,
+            },
+            boosted: false,
+        });
+    }
+    out
+}
+
 fn build_crew_seats(
     candidate: &CrewCandidate,
     officers_by_name: &HashMap<String, Officer>,
 ) -> Vec<CrewSeatContext> {
     let mut seats = Vec::with_capacity(1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS);
     seats.push(seat_from_officer(
+        &candidate.captain,
+        CrewSeat::Captain,
+        AbilityClass::CaptainManeuver,
+        officers_by_name,
+    ));
+    seats.extend(apex_ability_contexts(
         &candidate.captain,
         CrewSeat::Captain,
         AbilityClass::CaptainManeuver,
@@ -411,6 +468,12 @@ fn build_crew_seats(
             AbilityClass::BridgeAbility,
             officers_by_name,
         ));
+        seats.extend(apex_ability_contexts(
+            name,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            officers_by_name,
+        ));
     }
     for i in 0..BELOW_DECKS_SLOTS {
         let name = candidate
@@ -423,6 +486,12 @@ fn build_crew_seats(
             continue;
         }
         seats.push(seat_from_officer(
+            name,
+            CrewSeat::BelowDeck,
+            AbilityClass::BelowDeck,
+            officers_by_name,
+        ));
+        seats.extend(apex_ability_contexts(
             name,
             CrewSeat::BelowDeck,
             AbilityClass::BelowDeck,

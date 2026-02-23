@@ -39,6 +39,10 @@ pub enum AbilityEffect {
         chance: f64,
         duration_rounds: u32,
     },
+    /// Officer-granted Apex Shred; value is decimal (0.15 = +15%).
+    ApexShredBonus(f64),
+    /// Officer-granted Apex Barrier; value is flat integer (e.g. 1000).
+    ApexBarrierBonus(f64),
 }
 
 #[derive(Debug, Clone, PartialEq)]

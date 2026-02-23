@@ -28,6 +28,8 @@ pub struct OfficerAbility {
     pub description: Option<String>,
     #[serde(default)]
     pub chance_by_rank: Vec<f64>,
+    #[serde(default)]
+    pub value_by_rank: Vec<f64>,
 }
 
 impl OfficerAbility {
@@ -160,6 +162,35 @@ impl OfficerAbility {
             .as_deref()
             .map(|value| value.eq_ignore_ascii_case("RoundStart"))
             .unwrap_or(false)
+    }
+
+    pub fn modifier_is_apex_shred(&self) -> bool {
+        self.modifier
+            .as_deref()
+            .map(|m| m.eq_ignore_ascii_case("ApexShred"))
+            .unwrap_or(false)
+    }
+
+    pub fn modifier_is_apex_barrier(&self) -> bool {
+        self.modifier
+            .as_deref()
+            .map(|m| m.eq_ignore_ascii_case("ApexBarrier"))
+            .unwrap_or(false)
+    }
+
+    /// Value at given tier (1-based); 0 if value_by_rank is empty or index out of range.
+    pub fn value_for_tier(&self, tier: Option<u8>) -> f64 {
+        let Some((&first, _rest)) = self.value_by_rank.split_first() else {
+            return 0.0;
+        };
+        let index = tier
+            .and_then(|t| t.checked_sub(1))
+            .map(usize::from)
+            .unwrap_or(0);
+        self.value_by_rank
+            .get(index)
+            .copied()
+            .unwrap_or(first)
     }
 }
 
