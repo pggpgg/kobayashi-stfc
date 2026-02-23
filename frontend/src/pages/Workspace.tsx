@@ -11,8 +11,8 @@ import {
   type CrewState,
   type PinsState,
 } from '../lib/types';
-import { simulate, optimize, savePreset } from '../lib/api';
-import type { SimulateStats } from '../lib/api';
+import { simulate, optimize, savePreset, getOptimizeEstimate } from '../lib/api';
+import type { SimulateStats, OptimizeEstimate } from '../lib/api';
 import type { CrewRecommendation } from '../lib/api';
 import type { Preset } from '../lib/api';
 
@@ -33,6 +33,9 @@ export default function Workspace() {
   const [savePresetName, setSavePresetName] = useState('');
   const [showSavePreset, setShowSavePreset] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
+  const [simsPerCrew, setSimsPerCrew] = useState(5000);
+  const [estimate, setEstimate] = useState<OptimizeEstimate | null>(null);
+  const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<number | null>(null);
 
   useEffect(() => {
     const preset = (location.state as { preset?: Preset } | null)?.preset;
@@ -49,6 +52,24 @@ export default function Workspace() {
       navigate('.', { replace: true, state: {} });
     }
   }, [location.state, navigate]);
+
+  useEffect(() => {
+    const ship = shipId || 'Saladin';
+    const hostile = scenarioId || 'Explorer_30';
+    if (!ship || !hostile) {
+      setEstimate(null);
+      return;
+    }
+    let cancelled = false;
+    getOptimizeEstimate({ ship, hostile, sims: simsPerCrew })
+      .then((data) => {
+        if (!cancelled) setEstimate(data);
+      })
+      .catch(() => {
+        if (!cancelled) setEstimate(null);
+      });
+    return () => { cancelled = true; };
+  }, [shipId, scenarioId, simsPerCrew]);
 
   useEffect(() => {
     const n = belowDeckSlotCount(shipLevel);
@@ -96,14 +117,16 @@ export default function Workspace() {
   const handleRunOptimize = async () => {
     setError(null);
     setLoadingOptimize(true);
+    setLastOptimizeDurationMs(null);
     try {
       const res = await optimize({
         ship: shipId || 'Saladin',
         hostile: scenarioId || 'Explorer_30',
-        sims: 5000,
+        sims: simsPerCrew,
       });
       setRecommendations(res.recommendations ?? []);
       setSimResult(null);
+      if (res.duration_ms != null) setLastOptimizeDurationMs(res.duration_ms);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -144,6 +167,10 @@ export default function Workspace() {
         shipLevel={shipLevel}
         onShipLevelChange={setShipLevel}
         crew={crew}
+        simsPerCrew={simsPerCrew}
+        onSimsPerCrewChange={setSimsPerCrew}
+        estimate={estimate}
+        lastOptimizeDurationMs={lastOptimizeDurationMs}
         onRunSim={handleRunSim}
         onRunOptimize={handleRunOptimize}
         onSavePreset={() => setShowSavePreset(true)}

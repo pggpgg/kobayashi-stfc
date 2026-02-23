@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { fetchShips, fetchHostiles } from '../lib/api';
-import type { ShipListItem, HostileListItem } from '../lib/api';
+import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api';
 import type { CrewState } from '../lib/types';
+
+const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 
 interface WorkspaceHeaderProps {
   shipId: string;
@@ -11,6 +13,10 @@ interface WorkspaceHeaderProps {
   shipLevel: number;
   onShipLevelChange: (level: number) => void;
   crew: CrewState;
+  simsPerCrew: number;
+  onSimsPerCrewChange: (n: number) => void;
+  estimate: OptimizeEstimate | null;
+  lastOptimizeDurationMs: number | null;
   onRunSim: () => void;
   onRunOptimize: () => void;
   onSavePreset: () => void;
@@ -25,6 +31,10 @@ export default function WorkspaceHeader({
   onScenarioIdChange,
   shipLevel,
   onShipLevelChange,
+  simsPerCrew,
+  onSimsPerCrewChange,
+  estimate,
+  lastOptimizeDurationMs,
   onRunSim,
   onRunOptimize,
   onSavePreset,
@@ -131,6 +141,61 @@ export default function WorkspaceHeader({
       >
         <option>Preset</option>
       </select>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          flexWrap: 'wrap',
+        }}
+      >
+        <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          Fight iterations/crew
+          <input
+            type="number"
+            min={1}
+            max={100000}
+            value={simsPerCrew}
+            onChange={(e) => onSimsPerCrewChange(Math.max(1, Math.min(100000, Number(e.target.value) || 1000)))}
+            style={{
+              width: 72,
+              padding: '0.35rem 0.5rem',
+              background: 'var(--bg)',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              color: 'var(--text)',
+            }}
+          />
+        </label>
+        {SIMS_PRESETS.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onSimsPerCrewChange(n)}
+            style={{
+              padding: '0.35rem 0.5rem',
+              background: simsPerCrew === n ? 'var(--accent)' : 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              color: simsPerCrew === n ? 'var(--bg)' : 'var(--text)',
+              fontSize: '0.8rem',
+            }}
+          >
+            {n >= 1000 ? `${n / 1000}k` : n}
+          </button>
+        ))}
+      </div>
+      {estimate != null && (
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          Est. ~{estimate.estimated_seconds < 1 ? '<1' : estimate.estimated_seconds.toFixed(1)} s
+          {estimate.estimated_candidates > 0 && ` (${estimate.estimated_candidates} crews)`}
+        </span>
+      )}
+      {lastOptimizeDurationMs != null && (
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          Completed in {(lastOptimizeDurationMs / 1000).toFixed(1)} s
+        </span>
+      )}
       <div style={{ flex: 1, minWidth: 8 }} />
       <button
         type="button"
