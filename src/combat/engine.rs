@@ -308,6 +308,8 @@ pub fn simulate_combat(
     let mut total_hull_damage = 0.0;
     let mut total_shield_damage = 0.0;
     let mut defender_shield_remaining = defender.shield_health.max(0.0);
+    let mut attacker_shield_remaining = attacker.shield_health.max(0.0);
+    let mut total_attacker_hull_damage = 0.0;
     let mut hull_breach_rounds_remaining = 0_u32;
     let mut burning_rounds_remaining = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
@@ -324,9 +326,10 @@ pub fn simulate_combat(
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
-    let defender_shield_mitigation = defender.shield_mitigation.clamp(0.0, 1.0);
+    let mut rounds_completed = 0u32;
 
     for round_index in 1..=rounds_to_simulate {
+        rounds_completed = round_index;
         let round_start_effects =
             active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
         let attack_phase_effects =
@@ -792,18 +795,23 @@ pub fn simulate_combat(
         let damage_after_apex = damage * apex_damage_factor;
 
         // Isolytic: extra damage from attacker isolytic_damage bonus, reduced by defender isolytic_defense.
+        // Officer/ability effects add via EffectAccumulator (composed_isolytic_damage_bonus, composed_isolytic_defense_bonus).
+        let effective_isolytic_damage = (attacker.isolytic_damage + phase_effects.composed_isolytic_damage_bonus()).max(0.0);
+        let effective_isolytic_defense = (defender.isolytic_defense + phase_effects.composed_isolytic_defense_bonus()).max(0.0);
         let isolytic_component = isolytic_damage(
             damage_after_apex,
-            attacker.isolytic_damage.max(0.0),
+            effective_isolytic_damage,
             0.0,
         );
-        let isolytic_net = (isolytic_component - defender.isolytic_defense.max(0.0)).max(0.0);
+        let isolytic_net = (isolytic_component - effective_isolytic_defense).max(0.0);
         let damage_after_apex = damage_after_apex + isolytic_net;
 
         // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
         // https://stfc-toolbox.vercel.app/game-mechanics — "Shield mitigation": shp_damage_taken = S * total_unmitigated_damage, hhp_damage_taken = (1-S) * total_unmitigated_damage. Base S ≈ 0.8 (80% to shields). When shields are depleted, all damage goes to hull.
+        // Officer/ability effects add via EffectAccumulator (composed_shield_mitigation_bonus).
+        let effective_shield_mitigation = (defender.shield_mitigation + phase_effects.composed_shield_mitigation_bonus()).clamp(0.0, 1.0);
         let shield_mitigation = if defender_shield_remaining > 0.0 {
-            defender_shield_mitigation
+            effective_shield_mitigation
         } else {
             0.0
         };
@@ -852,6 +860,36 @@ pub fn simulate_combat(
             ]),
         });
 
+        // Defender counter-attack: defender deals damage to attacker (ship runs out of HHP ends fight).
+        let def_mitigation_mult = (1.0 - attacker.mitigation).max(0.0);
+        let def_damage_through = (def_mitigation_mult + defender.pierce).max(0.0);
+        let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+        let def_crit_mult = if def_crit_roll < defender.crit_chance {
+            defender.crit_multiplier
+        } else {
+            1.0
+        };
+        let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+        let def_proc_mult = if def_proc_roll < defender.proc_chance {
+            defender.proc_multiplier
+        } else {
+            1.0
+        };
+        let def_to_attacker_damage =
+            defender.attack * def_damage_through * def_crit_mult * def_proc_mult;
+        let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
+            attacker.shield_mitigation.clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let att_shield_portion = def_to_attacker_damage * att_shield_mitigation;
+        let att_hull_portion = def_to_attacker_damage * (1.0 - att_shield_mitigation);
+        let att_actual_shield_damage = att_shield_portion.min(attacker_shield_remaining);
+        let att_shield_overflow = att_shield_portion - att_actual_shield_damage;
+        let att_hull_damage_this_round = att_hull_portion + att_shield_overflow;
+        attacker_shield_remaining = (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
+        total_attacker_hull_damage += att_hull_damage_this_round;
+
         let bonus_damage = phase_effects.compose_round_end_damage(attacker.end_of_round_damage);
         // Burning: 1% of total (max) hull per round, not remaining (per STFC).
         let burning_damage = if burning_rounds_remaining > 0 {
@@ -861,6 +899,7 @@ pub fn simulate_combat(
         };
         // Round-end and burning apply to hull only (shields do not absorb these).
         total_hull_damage += (bonus_damage + burning_damage) * apex_damage_factor;
+        total_attacker_hull_damage += defender.end_of_round_damage;
 
         // Regen: shield and hull restoration at round end (from officer/data regen effects).
         let shield_regen = phase_effects.composed_shield_regen();
@@ -902,24 +941,36 @@ pub fn simulate_combat(
                 ),
             ]),
         });
+
+        // Fight ends when defender or attacker runs out of hull (HHP).
+        let defender_hull_now = (defender.hull_health - total_hull_damage).max(0.0);
+        let attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        if defender_hull_now <= 0.0 || attacker_hull_now <= 0.0 {
+            break;
+        }
     }
 
     let total_damage = total_hull_damage + total_shield_damage;
-    let attacker_hull_remaining = attacker.hull_health.max(0.0);
+    let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
     let defender_hull_remaining = (defender.hull_health - total_hull_damage).max(0.0);
-    let winner_by_round_limit =
-        rounds_to_simulate == MAX_COMBAT_ROUNDS && defender_hull_remaining > 0.0;
-    let attacker_won = if winner_by_round_limit {
+    let winner_by_round_limit = rounds_completed == MAX_COMBAT_ROUNDS
+        && defender_hull_remaining > 0.0
+        && attacker_hull_remaining > 0.0;
+    let attacker_won = if attacker_hull_remaining <= 0.0 {
+        false
+    } else if defender_hull_remaining <= 0.0 {
+        true
+    } else if winner_by_round_limit {
         attacker_hull_remaining >= defender_hull_remaining
     } else {
-        defender_hull_remaining <= 0.0
+        false
     };
 
     SimulationResult {
         total_damage: round_f64(total_damage),
         attacker_won,
         winner_by_round_limit,
-        rounds_simulated: rounds_to_simulate,
+        rounds_simulated: rounds_completed,
         attacker_hull_remaining: round_f64(attacker_hull_remaining),
         defender_hull_remaining: round_f64(defender_hull_remaining),
         defender_shield_remaining: round_f64(defender_shield_remaining),
@@ -946,6 +997,9 @@ enum EffectStatKey {
     ApexBarrierBonus,
     ShieldRegen,
     HullRegen,
+    IsolyticDamageBonus,
+    IsolyticDefenseBonus,
+    ShieldMitigationBonus,
 }
 
 impl Default for EffectAccumulator {
@@ -969,6 +1023,9 @@ impl Default for EffectAccumulator {
         stacks.add(StackContribution::base(EffectStatKey::ApexBarrierBonus, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::ShieldRegen, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::HullRegen, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::IsolyticDamageBonus, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::IsolyticDefenseBonus, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::ShieldMitigationBonus, 0.0));
 
         Self {
             stacks,
@@ -1017,6 +1074,24 @@ impl EffectAccumulator {
     fn composed_hull_regen(&self) -> f64 {
         self.stacks
             .composed_for(&EffectStatKey::HullRegen)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_isolytic_damage_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::IsolyticDamageBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_isolytic_defense_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::IsolyticDefenseBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_shield_mitigation_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::ShieldMitigationBonus)
             .unwrap_or(0.0)
     }
 
@@ -1096,6 +1171,15 @@ impl EffectAccumulator {
                 AbilityEffect::ApexBarrierBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
                 }
+                AbilityEffect::IsolyticDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                }
+                AbilityEffect::IsolyticDefenseBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::ShieldMitigationBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
+                }
             },
             TimingWindow::AttackPhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -1118,6 +1202,15 @@ impl EffectAccumulator {
                 AbilityEffect::ApexBarrierBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
                 }
+                AbilityEffect::IsolyticDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                }
+                AbilityEffect::IsolyticDefenseBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::ShieldMitigationBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
+                }
             },
             TimingWindow::DefensePhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
@@ -1138,6 +1231,15 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
+                AbilityEffect::IsolyticDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                }
+                AbilityEffect::IsolyticDefenseBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::ShieldMitigationBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
             },
             TimingWindow::RoundEnd => match effect {
@@ -1163,6 +1265,15 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
+                AbilityEffect::IsolyticDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                }
+                AbilityEffect::IsolyticDefenseBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::ShieldMitigationBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
             },
         }
@@ -1254,6 +1365,15 @@ fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffec
         }
         AbilityEffect::HullRegen(v) => {
             AbilityEffect::HullRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::IsolyticDamageBonus(v) => {
+            AbilityEffect::IsolyticDamageBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::IsolyticDefenseBonus(v) => {
+            AbilityEffect::IsolyticDefenseBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::ShieldMitigationBonus(v) => {
+            AbilityEffect::ShieldMitigationBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
     }
 }

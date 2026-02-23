@@ -47,6 +47,12 @@ pub enum AbilityEffect {
     ApexShredBonus(f64),
     /// Officer-granted Apex Barrier; value is flat integer (e.g. 1000).
     ApexBarrierBonus(f64),
+    /// Officer-granted isolytic damage bonus (decimal, e.g. 0.1 = +10%).
+    IsolyticDamageBonus(f64),
+    /// Officer-granted isolytic defense; flat reduction to isolytic damage taken.
+    IsolyticDefenseBonus(f64),
+    /// Officer-granted shield mitigation; additive to base (clamped 0..1).
+    ShieldMitigationBonus(f64),
 }
 
 #[derive(Debug, Clone, PartialEq)]

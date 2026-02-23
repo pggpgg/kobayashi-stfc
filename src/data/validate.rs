@@ -376,6 +376,8 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
             | "accuracy"
             | "all_defenses"
             | "all_piercing"
+            | "isolytic_damage"
+            | "isolytic_defense"
     ) {
         return Some(MechanicSupport::Implemented);
     }
@@ -392,12 +394,7 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
 
     if matches!(
         key,
-        "isolytic_damage"
-            | "isolytic_defense"
-            | "mining_rate"
-            | "repair_speed"
-            | "warp_speed"
-            | "cargo_capacity"
+        "mining_rate" | "repair_speed" | "warp_speed" | "cargo_capacity"
     ) || key.contains("loot")
     {
         return Some(MechanicSupport::Planned);
