@@ -6,8 +6,10 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, pierce_damage_through_bonus, AttackerStats, Combatant, DefenderStats, ShipType,
+    mitigation, pierce_damage_through_bonus, AttackerStats, Combatant, CrewConfiguration,
+    DefenderStats, ShipType,
 };
+use crate::optimizer::monte_carlo::crew_from_officer_names;
 
 /// Parsed game fight export (multi-section TSV).
 #[derive(Debug, Clone)]
@@ -28,6 +30,16 @@ pub struct FightExport {
     pub enemy_fleet: HashMap<String, String>,
     /// Per-event records (round, type, hull_damage, shield_damage, total_damage, etc.).
     pub events: Vec<FightExportEvent>,
+    /// Player ship name from summary (e.g. "REALTA").
+    pub player_ship_name: Option<String>,
+    /// Officer One from summary (captain slot); "--" or empty stored as None.
+    pub player_officer_one: Option<String>,
+    /// Officer Two from summary (first bridge slot).
+    pub player_officer_two: Option<String>,
+    /// Officer Three from summary (second bridge slot).
+    pub player_officer_three: Option<String>,
+    /// Attacker (player) ship type inferred from player_ship_name.
+    pub attacker_ship_type: ShipType,
 }
 
 /// Single event row from the events section.
@@ -59,6 +71,60 @@ fn get_f64(map: &HashMap<String, String>, key: &str) -> f64 {
         .unwrap_or(0.0)
 }
 
+/// Return None for empty or "--" so we don't store placeholder values.
+fn optional_cell(value: Option<&String>) -> Option<String> {
+    value.and_then(|s| {
+        let t = s.trim();
+        if t.is_empty() || t.eq_ignore_ascii_case("--") {
+            None
+        } else {
+            Some(t.to_string())
+        }
+    })
+}
+
+/// Column indices for the events section, derived from the header row by name.
+struct EventColumns {
+    round: usize,
+    event_type: usize,
+    critical_hit: Option<usize>,
+    hull_damage: Option<usize>,
+    shield_damage: Option<usize>,
+    total_damage: Option<usize>,
+}
+
+fn find_event_columns(header: &[String]) -> EventColumns {
+    fn find(header: &[String], name: &str) -> Option<usize> {
+        header
+            .iter()
+            .position(|h| h.trim().eq_ignore_ascii_case(name))
+    }
+    EventColumns {
+        round: find(header, "Round").unwrap_or(0),
+        event_type: find(header, "Type").unwrap_or(2),
+        critical_hit: find(header, "Critical Hit?"),
+        hull_damage: find(header, "Hull Damage"),
+        shield_damage: find(header, "Shield Damage"),
+        total_damage: find(header, "Total Damage"),
+    }
+}
+
+fn get_event_cell(row: &[String], col: Option<usize>) -> Option<&str> {
+    col.and_then(|i| row.get(i)).map(String::as_str).map(str::trim)
+}
+
+fn get_event_f64(row: &[String], col: Option<usize>) -> f64 {
+    get_event_cell(row, col)
+        .and_then(|s| s.parse::<f64>().ok())
+        .unwrap_or(0.0)
+}
+
+fn get_event_bool_yes(row: &[String], col: Option<usize>) -> bool {
+    get_event_cell(row, col)
+        .map(|s| s.eq_ignore_ascii_case("YES"))
+        .unwrap_or(false)
+}
+
 /// Parse a full fight export string (tab-separated, multi-section).
 pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
     let lines: Vec<&str> = input.lines().map(str::trim).filter(|s| !s.is_empty()).collect();
@@ -74,6 +140,11 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
     let mut enemy_fleet = HashMap::new();
     let mut events = Vec::new();
     let mut total_damage = 0.0;
+    let mut player_ship_name: Option<String> = None;
+    let mut player_officer_one: Option<String> = None;
+    let mut player_officer_two: Option<String> = None;
+    let mut player_officer_three: Option<String> = None;
+    let mut attacker_ship_type = ShipType::Battleship;
 
     let mut i = 0;
     while i < lines.len() {
@@ -102,6 +173,11 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
                 .get("Shield Health Remaining")
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(0.0);
+            player_ship_name = optional_cell(player_map.get("Ship Name"));
+            player_officer_one = optional_cell(player_map.get("Officer One"));
+            player_officer_two = optional_cell(player_map.get("Officer Two"));
+            player_officer_three = optional_cell(player_map.get("Officer Three"));
+            attacker_ship_type = ship_type_from_name(player_ship_name.as_deref().unwrap_or(""));
             i += 2;
             continue;
         }
@@ -129,7 +205,8 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
         }
 
         // Events section: header "Round", then event rows (numeric first column)
-        if first == "Round" && row.len() > 18 {
+        if first == "Round" && row.len() > 2 {
+            let event_columns = find_event_columns(&row);
             i += 1;
             while i < lines.len() {
                 let event_row = parse_tsv_row(lines[i]);
@@ -137,17 +214,19 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
                     i += 1;
                     continue;
                 }
-                let round_str = event_row.get(0).map(String::as_str).unwrap_or("");
+                let round_str = get_event_cell(&event_row, Some(event_columns.round)).unwrap_or("");
                 let round: u32 = round_str.parse().unwrap_or(0);
                 if round == 0 && round_str != "0" {
                     break; // not a numeric round, next section or end
                 }
                 rounds = rounds.max(round);
-                let event_type = event_row.get(2).cloned().unwrap_or_default();
-                let hull_damage = event_row.get(14).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-                let shield_damage = event_row.get(15).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-                let total = event_row.get(19).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-                let critical = event_row.get(13).map(|s| s.eq_ignore_ascii_case("YES")).unwrap_or(false);
+                let event_type = get_event_cell(&event_row, Some(event_columns.event_type))
+                    .unwrap_or("")
+                    .to_string();
+                let hull_damage = get_event_f64(&event_row, event_columns.hull_damage);
+                let shield_damage = get_event_f64(&event_row, event_columns.shield_damage);
+                let total = get_event_f64(&event_row, event_columns.total_damage);
+                let critical = get_event_bool_yes(&event_row, event_columns.critical_hit);
                 events.push(FightExportEvent {
                     round,
                     event_type,
@@ -181,12 +260,23 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
         player_fleet,
         enemy_fleet,
         events,
+        player_ship_name,
+        player_officer_one,
+        player_officer_two,
+        player_officer_three,
+        attacker_ship_type,
     })
 }
 
 /// Infer ship type from fleet/ship name string.
+/// Known player ship names (no class keyword) are mapped explicitly; hostiles use keywords (e.g. HOSTILE BATTLESHIP).
 pub fn ship_type_from_name(name: &str) -> ShipType {
-    let n = name.to_uppercase();
+    let n = name.trim().to_uppercase();
+    // Known player ship names (STFC convention)
+    if n == "REALTA" {
+        return ShipType::Explorer;
+    }
+    // Class keywords (hostiles and generic)
     if n.contains("BATTLESHIP") {
         ShipType::Battleship
     } else if n.contains("EXPLORER") {
@@ -299,4 +389,29 @@ pub fn export_to_combatants(export: &FightExport) -> (Combatant, Combatant) {
         "hostile".to_string(),
     );
     (attacker, defender)
+}
+
+/// Build crew configuration from export officer slots.
+/// Officer One = captain, Officer Two/Three = bridge; below_decks = [].
+/// Returns default crew if no officers present.
+pub fn export_to_crew(export: &FightExport) -> CrewConfiguration {
+    let captain = export.player_officer_one.as_deref();
+    let bridge: Vec<String> = [
+        export.player_officer_two.clone(),
+        export.player_officer_three.clone(),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    let below_decks: Vec<String> = vec![];
+    crew_from_officer_names(captain, bridge, below_decks)
+}
+
+/// Full combat input from export: (attacker, defender, crew). Use for simulation with same crew as recorded fight.
+pub fn export_to_combat_input(
+    export: &FightExport,
+) -> (Combatant, Combatant, CrewConfiguration) {
+    let (attacker, defender) = export_to_combatants(export);
+    let crew = export_to_crew(export);
+    (attacker, defender, crew)
 }
