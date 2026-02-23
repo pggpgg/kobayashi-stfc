@@ -1,12 +1,10 @@
-import type { CrewState } from '../lib/types';
-
 interface OptimizePanelProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
-  crew: CrewState;
+  crew: import('../lib/types').CrewState;
 }
 
-export default function OptimizePanel({ collapsed, onToggleCollapsed, crew }: OptimizePanelProps) {
+export default function OptimizePanel({ collapsed, onToggleCollapsed }: OptimizePanelProps) {
   if (collapsed) {
     return (
       <aside
