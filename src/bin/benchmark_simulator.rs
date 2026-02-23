@@ -28,6 +28,8 @@ fn main() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };
@@ -42,6 +44,8 @@ fn main() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 1000.0,
+        shield_health: 800.0,
+        shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
     };

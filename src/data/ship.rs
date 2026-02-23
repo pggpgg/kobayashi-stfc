@@ -32,6 +32,9 @@ pub struct ShipRecord {
     pub crit_damage: f64,
     pub hull_health: f64,
     pub shield_health: f64,
+    /// Fraction of incoming damage to shield (rest to hull). Base 0.8 for most ships; Sarcophagus is 0.2 (STFC Toolbox).
+    #[serde(default)]
+    pub shield_mitigation: Option<f64>,
     /// Apex Shred: reduces defender's effective Apex Barrier. Stored as decimal (1.0 = 100%).
     #[serde(default)]
     pub apex_shred: f64,

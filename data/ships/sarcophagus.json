@@ -1,13 +1,1 @@
-{
-  "id": "sarcophagus",
-  "ship_name": "SARCOPHAGUS",
-  "ship_class": "battleship",
-  "armor_piercing": 417.0,
-  "shield_piercing": 2497.0,
-  "accuracy": 417.0,
-  "attack": 1155.0,
-  "crit_chance": 0.1,
-  "crit_damage": 1.5,
-  "hull_health": 2000.0,
-  "shield_health": 1000.0
-}
+{"id":"sarcophagus","ship_name":"SARCOPHAGUS","ship_class":"battleship","armor_piercing":417,"shield_piercing":2497,"accuracy":417,"attack":1155,"crit_chance":0.1,"crit_damage":1.5,"hull_health":2000,"shield_health":1000,"shield_mitigation":0.2}

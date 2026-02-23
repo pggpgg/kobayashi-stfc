@@ -245,6 +245,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     dodge: raw.stats.defense.dodge,
                     hull_health: raw.stats.health.hull_health,
                     shield_health: raw.stats.health.shield_health,
+                    shield_mitigation: None,
                     apex_barrier: 0.0,
                 };
                 hostile_index_entries.push(kobayashi::data::hostile::HostileIndexEntry {
@@ -569,6 +570,7 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
         crit_damage,
         hull_health,
         shield_health,
+        shield_mitigation: None,
         apex_shred: 0.0,
     })
 }
