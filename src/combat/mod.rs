@@ -19,8 +19,8 @@ pub use engine::{
     SURVEY_COEFFICIENTS,
 };
 pub use export_csv::{
-    export_to_combatants, export_to_attacker, export_to_defender, parse_fight_export,
-    ship_type_from_name, FightExport, FightExportEvent,
+    export_to_combat_input, export_to_combatants, export_to_attacker, export_to_crew,
+    export_to_defender, parse_fight_export, ship_type_from_name, FightExport, FightExportEvent,
 };
 pub use log_ingest::{
     ingested_events_to_combat_events, ingested_to_comparable, parse_combat_log_json,

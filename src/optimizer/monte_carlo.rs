@@ -402,6 +402,42 @@ fn index_officers_by_name(officers: Vec<Officer>) -> HashMap<String, Officer> {
         .collect()
 }
 
+fn is_empty_or_placeholder(s: &str) -> bool {
+    let t = s.trim();
+    t.is_empty() || t.eq_ignore_ascii_case("--")
+}
+
+/// Build a [CrewConfiguration] from officer names (e.g. from a fight export).
+/// Convention: captain = Officer One, bridge = Officer Two then Officer Three, below_decks = [].
+/// Empty or "--" names are skipped. Uses canonical officers from [DEFAULT_CANONICAL_OFFICERS_PATH].
+pub fn crew_from_officer_names(
+    captain: Option<&str>,
+    bridge: Vec<String>,
+    below_decks: Vec<String>,
+) -> CrewConfiguration {
+    let captain_str = captain
+        .filter(|s| !is_empty_or_placeholder(s))
+        .unwrap_or("")
+        .to_string();
+    let bridge_filtered: Vec<String> = bridge
+        .into_iter()
+        .filter(|s| !is_empty_or_placeholder(s))
+        .collect();
+    let below_filtered: Vec<String> = below_decks
+        .into_iter()
+        .filter(|s| !is_empty_or_placeholder(s))
+        .collect();
+    let candidate = CrewCandidate {
+        captain: captain_str,
+        bridge: bridge_filtered,
+        below_decks: below_filtered,
+    };
+    let officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH).unwrap_or_default();
+    let officers_by_name = index_officers_by_name(officers);
+    let seats = build_crew_seats(&candidate, &officers_by_name);
+    CrewConfiguration { seats }
+}
+
 fn normalize_lookup_key(value: &str) -> String {
     value
         .chars()
