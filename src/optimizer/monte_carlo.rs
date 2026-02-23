@@ -543,6 +543,7 @@ mod tests {
                     attributes: Some("num_rounds=1, state=8".to_string()),
                     description: Some("Apply Morale".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
+                    value_by_rank: vec![],
                 }],
             },
         );
@@ -574,6 +575,7 @@ mod tests {
                     attributes: Some("num_rounds=4, state=64".to_string()),
                     description: Some("Apply Assimilate".to_string()),
                     chance_by_rank: vec![0.4, 0.45, 0.5],
+                    value_by_rank: vec![],
                 }],
             },
         );
@@ -611,6 +613,7 @@ mod tests {
                     attributes: Some("num_rounds=2, state=4".to_string()),
                     description: Some("Apply Hull Breach".to_string()),
                     chance_by_rank: vec![0.5, 0.6, 0.7],
+                    value_by_rank: vec![],
                 }],
             },
         );
@@ -644,6 +647,7 @@ mod tests {
                     attributes: Some("num_rounds=3, state=4".to_string()),
                     description: Some("Hull Breach on critical hit".to_string()),
                     chance_by_rank: vec![0.7, 0.75, 0.8],
+                    value_by_rank: vec![],
                 }],
             },
         );
@@ -677,6 +681,7 @@ mod tests {
                     attributes: Some("num_rounds=1, state=4".to_string()),
                     description: Some("Chance to apply Hull Breach".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3],
+                    value_by_rank: vec![],
                 }],
             },
         );
@@ -714,6 +719,7 @@ mod tests {
                     attributes: Some("num_rounds=2, state=2".to_string()),
                     description: Some("Apply Burning".to_string()),
                     chance_by_rank: vec![0.25, 0.3, 0.35],
+                    value_by_rank: vec![],
                 }],
             },
         );
@@ -819,6 +825,7 @@ mod tests {
                     attributes: Some("num_rounds=1, state=8".to_string()),
                     description: Some("Apply Morale".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
+                    value_by_rank: vec![],
                 }],
             },
         );
