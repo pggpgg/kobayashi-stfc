@@ -435,8 +435,9 @@ struct FightResult {
 | Single sim, single core | < 1 μs |
 | Sims/sec, single core | 2–5 million |
 | Sims/sec, 16 cores | 30–80 million |
-| Full 800K crew sweep (Phase 1, 500 sims each) | ~8 seconds |
-| Full sweep Phase 1 + Phase 2 | ~16 seconds |
+| Full exhaustive sweep (current: all combos, user sim count) | ~3 min typical |
+| Phase 1 scouting only (planned, tiered) | ~8 seconds |
+| Phase 1 + Phase 2 (planned, tiered) | ~16 seconds |
 
 ---
 
@@ -511,6 +512,8 @@ Modeling every individual research node is a huge data entry burden and may not 
 
 ## 6. Optimizer Strategies
 
+**Current implementation:** The optimizer runs a full exhaustive sweep — it evaluates the full candidate set (from the crew generator) with the requested number of sims per crew and ranks results. Tiered simulation (scouting → confirmation) and genetic algorithm are planned but not yet wired in; the code has placeholders in `src/optimizer/tiered.rs` and `src/optimizer/genetic.rs`.
+
 ### 6.1 Monte Carlo Simulation
 
 The baseline approach. Run N thousand iterations of a given crew vs. a given hostile, with RNG for crit rolls, proc chances, etc. Track win rate, average rounds to kill, average hull remaining, and R1 kill rate. Works well because STFC combat has meaningful randomness.
@@ -519,7 +522,7 @@ The baseline approach. Run N thousand iterations of a given crew vs. a given hos
 
 Reduce combat to closed-form math: expected damage per round given stats. Skip simulation entirely and just compute the answer. Dramatically faster, but only works for abilities without complex variance. Useful as a fast pre-filter.
 
-### 6.3 Tiered Simulation (recommended default)
+### 6.3 Tiered Simulation (planned; recommended default when implemented)
 
 ```
 Phase 1: "Scouting"
@@ -566,7 +569,7 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 ### 6.8 Recommended Approach
 
-**Tiered simulation with synergy prioritization** as the default, with genetic algorithm available for full below-decks optimization. Analytical pre-filtering to prune obviously bad combos before any simulation runs.
+**Planned:** Tiered simulation with synergy prioritization as the default, with genetic algorithm available for full below-decks optimization. Analytical pre-filtering to prune obviously bad combos before any simulation runs. **Current:** full exhaustive sweep with the requested sim count per crew.
 
 ---
 
@@ -651,14 +654,14 @@ Each simulation is independent — the problem is embarrassingly parallel. KOBAY
 
 ### 8.2 Scaling Estimates
 
-For ~280 officers with 3 crew slots:
+For ~280 officers with 3 crew slots. **Current optimizer:** full exhaustive sweep (all crew combos with requested sim count per crew; no tiered pass). **Planned:** tiered (scouting → confirmation) and genetic algorithm for large spaces.
 
 | Scenario | Combos | Sims | Total Sims | Time (16 cores) |
 |---|---|---|---|---|
-| Phase 1 scouting | ~800K | 500 each | 400M | ~8 sec |
-| Phase 2 top 5% | ~40K | 10K each | 400M | ~8 sec |
-| Full sweep | ~800K | 10K each | 8B | ~160 sec |
-| With 5 below-decks | billions | — | — | genetic algo needed |
+| Full sweep (current) | ~800K | user choice (e.g. 10K each) | e.g. 8B | ~3 min typical |
+| Phase 1 scouting (planned) | ~800K | 500 each | 400M | ~8 sec |
+| Phase 2 top 5% (planned) | ~40K | 10K each | 400M | ~8 sec |
+| With 5 below-decks | billions | — | — | genetic algo (planned) |
 
 ### 8.3 PRNG Choice
 
