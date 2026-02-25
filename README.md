@@ -228,11 +228,11 @@ The server is a **custom blocking TCP HTTP server** (no Axum, no Tokio): a singl
 
 ### Adding or updating officers
 
-Officer definitions live in `data/officers/*.lcars.yaml`. LCARS is the source of truth for combat abilities; the canonical JSON can be regenerated from LCARS if needed.
+Officer definitions live in `data/officers/officers.lcars.yaml`. LCARS is the source of truth for combat abilities; the canonical JSON can be regenerated from LCARS if needed.
 
 To add or update officers:
 
-1. Create or edit the appropriate faction file (e.g. `federation.lcars.yaml`, `independent.lcars.yaml`)
+1. Edit `data/officers/officers.lcars.yaml`
 2. Follow the [LCARS schema](DESIGN.md#3-lcars-language-specification)
 3. Run `kobayashi validate data/officers` to validate LCARS files (or `kobayashi validate data/officers/officers.canonical.json` for canonical JSON)
 4. Submit a PR

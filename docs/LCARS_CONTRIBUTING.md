@@ -4,16 +4,12 @@ This guide explains how to add or update officer definitions in KOBAYASHI's LCAR
 
 ## Overview
 
-LCARS (Language for Combat Ability Resolution & Simulation) is the declarative YAML format for officer abilities. Officer definitions live in `data/officers/*.lcars.yaml`, grouped by faction.
+LCARS (Language for Combat Ability Resolution & Simulation) is the declarative YAML format for officer abilities. All officer definitions live in a single file: `data/officers/officers.lcars.yaml`.
 
 ## File Organization
 
-- `federation.lcars.yaml` — Federation officers
-- `klingon.lcars.yaml` — Klingon officers
-- `romulan.lcars.yaml` — Romulan officers
-- `independent.lcars.yaml` — Independent, Unknown, and other factions
-- `neutral.lcars.yaml` — Neutral faction
-- `section31.lcars.yaml` — Section 31 officers
+- **Naming:** Only files matching `*.lcars.yaml` or `*.lcars.yml` are loaded when the app reads an officers directory. Other YAML files (e.g. config) in the same folder are ignored. Use this naming for any LCARS officer file.
+- `officers.lcars.yaml` — All officers (all factions). Each officer has an `id`, `name`, optional `faction`, `rarity`, `group`, and up to three ability blocks (captain, bridge, below decks).
 
 ## Officer Structure
 
@@ -96,7 +92,7 @@ Validation checks:
 
 ## Regenerating from Canonical
 
-To regenerate LCARS files from `officers.canonical.json`:
+To regenerate LCARS from `officers.canonical.json` (this produces multiple faction files):
 
 ```bash
 kobayashi generate-lcars data/officers/officers.canonical.json --output data/officers
@@ -106,6 +102,12 @@ Or use the standalone binary:
 
 ```bash
 cargo run --bin generate_lcars -- data/officers/officers.canonical.json --output data/officers
+```
+
+To merge all `*.lcars.yaml` files in `data/officers` into a single `officers.lcars.yaml` (and remove the others):
+
+```bash
+cargo run --bin merge_lcars -- data/officers
 ```
 
 ## Using LCARS in Simulation

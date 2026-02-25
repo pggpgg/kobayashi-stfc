@@ -92,7 +92,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 LCARS is a YAML-based DSL for describing officer abilities declaratively. Each officer has up to three ability sets (captain, bridge, below_decks), each containing one or more effects. Effects are composed from a vocabulary of primitives.
 
-File extension: `.lcars.yaml`
+**File naming:** Use extension `.lcars.yaml` (or `.lcars.yml`). When loading a directory (e.g. `data/officers`), only files whose names match `*.lcars.yaml` or `*.lcars.yml` are loaded; other YAML files in the same directory are ignored so that config or other data is not parsed as officers.
 
 ### 3.2 Primitives
 
@@ -683,7 +683,7 @@ Accepted source formats can include exported data from community tools such as S
 Global officer catalog updates are maintained manually in version-controlled LCARS YAML files:
 
 ```
-1. Edit/update `data/officers/*.lcars.yaml` entries.
+1. Edit/update `data/officers/officers.lcars.yaml` entries.
 2. Validate schema and mechanics with `kobayashi validate`.
 3. Run simulation/regression checks to confirm no unintended balance drift.
 4. Commit reviewed changes in small, auditable batches.
@@ -747,10 +747,7 @@ kobayashi/
 ├── README.md
 ├── data/
 │   ├── officers/              # LCARS officer definitions
-│   │   ├── augments.lcars.yaml
-│   │   ├── federation.lcars.yaml
-│   │   ├── romulan.lcars.yaml
-│   │   ├── klingon.lcars.yaml
+│   │   ├── officers.lcars.yaml   # all officers (single file)
 │   │   └── ...
 │   ├── ships.json
 │   ├── hostiles.json
