@@ -31,7 +31,7 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 - **Player profile support** — account for your research, buildings, reputation, and other non-officer bonuses
 - **Synergy discovery** — manually tag known synergies, and let KOBAYASHI discover new ones from simulation data
 - **Multithreaded** — embarrassingly parallel workload distributed across all CPU cores via Rayon
-- **Single binary** — download, run, open browser. No Docker, no Node, no dependencies
+- **Local server + Web UI** — run the server from the project root, open browser. No Docker; frontend is built separately and served from disk
 
 ---
 
@@ -198,7 +198,7 @@ kobayashi/
 │   ├── combat/              # Combat engine (the hot loop), PRNG, buff system
 │   ├── optimizer/           # Monte Carlo, tiered sim, genetic algo, ranking
 │   ├── parallel/            # Rayon thread pool, batch distribution, progress
-│   └── server/              # Axum web server, REST + WebSocket API
+│   └── server/              # Custom HTTP server, REST API (no WebSocket)
 ├── data/
 │   ├── officers/            # LCARS officer definitions (.lcars.yaml)
 │   ├── ships.json           # Ship stat sheets
@@ -206,9 +206,13 @@ kobayashi/
 │   ├── synergies.json       # Synergy definitions
 │   └── profiles/            # Player profiles
 ├── rosters/                 # Your roster files (.txt or .json); run `kobayashi import <file>`
-├── frontend/                # Web UI (React/Svelte, embedded in binary)
+├── frontend/                # Web UI (React); build with npm, served from frontend/dist
 └── tests/                   # Combat validation, LCARS parsing, optimizer regression
 ```
+
+### Architecture (actual)
+
+The server is a **custom blocking TCP HTTP server** (no Axum, no Tokio): a single-threaded `TcpListener` accept loop in `src/server/mod.rs`. The API is **REST only**; there is no WebSocket support, so long-running optimize requests block other requests until they complete. The **frontend is not embedded** in the binary: the SPA is built with `npm run build` in `frontend/` and served from the filesystem (`frontend/dist` or `dist`) when the server is run from the project root. Run the server from the project root so it can find `frontend/dist` and `data/`.
 
 ---
 
@@ -253,7 +257,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [ ] Tiered optimization with synergy prioritization
 - [ ] Crew generator (exhaustive + filtered)
 - [x] Parallel batch execution
-- [ ] Web UI on localhost
+- [x] Web UI on localhost
 - [ ] User-owned roster import workflow (e.g., Spocks.club export)
 - [ ] Synergy learning from simulation results
 - [ ] Genetic algorithm optimizer

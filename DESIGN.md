@@ -38,7 +38,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ### Design Principles
 
-- **Single binary**: Rust backend with embedded frontend. Download, run, open browser. No Docker, no Node, no dependencies.
+- **Local server + Web UI**: Rust backend with a custom HTTP server. The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) when the server is run from the project root. No Docker; run from project root so the server finds `frontend/dist` and `data/`.
 - **Community-driven data**: Officers defined in LCARS (YAML), hostiles and ships in JSON. Community contributes definitions via pull requests. Schema validation catches errors automatically.
 - **Graceful degradation**: Unknown ability types are logged and skipped, not crashed on. Accuracy improves incrementally as more mechanics are supported.
 - **Performance-first**: The combat engine is the hot loop. Zero allocations, no dynamic dispatch, pre-computed buffs. Target: 2–5M simulations/sec/core.
@@ -47,32 +47,34 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ## 2. Architecture
 
+**Actual stack:** Custom blocking TCP HTTP server (single-threaded `TcpListener` in `src/server/mod.rs`). No Axum, no Tokio. REST API only; WebSocket (e.g. for optimize progress) is planned but not implemented. Frontend is served from the filesystem (`frontend/dist`) when present, not embedded in the binary.
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    FRONTEND                         │
-│  React/Svelte on localhost:3000                     │
+│  React on localhost:3000 (served from frontend/dist)│
 │  ┌─────────┐ ┌──────────┐ ┌───────────┐            │
 │  │  Crew   │ │   Sim    │ │  Synergy  │            │
 │  │ Builder │ │ Results  │ │   Graph   │            │
 │  └────┬────┘ └────┬─────┘ └─────┬─────┘            │
 │       └───────────┼─────────────┘                   │
-│              WebSocket + REST                       │
+│              REST (WebSocket planned)                │
 ├─────────────────────────────────────────────────────┤
 │                  RUST BACKEND                       │
 │                                                     │
-│  ┌──────────┐  ┌───────────┐  ┌──────────────────┐ │
-│  │  Axum    │  │ Optimizer │  │  Combat Engine   │ │
-│  │  Server  │──│  Layer    │──│  (hot loop)      │ │
-│  └──────────┘  └───────────┘  └──────────────────┘ │
-│                      │                    │         │
-│  ┌──────────┐  ┌─────┴─────┐  ┌──────────┴───────┐ │
-│  │ Roster   │  │  Synergy  │  │  LCARS Parser    │ │
-│  │ Updates  │  │  Index    │  │  & Validator     │ │
-│  └──────────┘  └───────────┘  └──────────────────┘ │
-│                      │                              │
-│  ┌───────────────────┴──────────────────────┐      │
-│  │  Data Layer: officers.lcars.yaml,        │      │
-│  │  ships.json, hostiles.json, profiles.json│      │
+│  ┌──────────────────┐  ┌───────────┐  ┌──────────┐ │
+│  │ Custom HTTP      │  │ Optimizer │  │  Combat  │ │
+│  │ Server (blocking)│──│  Layer    │──│  Engine  │ │
+│  └──────────────────┘  └───────────┘  └──────────┘ │
+│           │                    │             │      │
+│  ┌────────┴────────┐  ┌────────┴───┐  ┌─────┴────┐ │
+│  │ Roster / Static │  │  Synergy   │  │  LCARS   │ │
+│  │ (frontend/dist) │  │  Index     │  │  Parser  │ │
+│  └─────────────────┘  └───────────┘  └──────────┘ │
+│                              │                      │
+│  ┌───────────────────────────┴──────────────┐      │
+│  │  Data Layer: officers, ships, hostiles,  │      │
+│  │  profiles (filesystem, run from root)     │      │
 │  └──────────────────────────────────────────┘      │
 │                                                     │
 │  ┌──────────────────────────────────────────┐      │
@@ -644,9 +646,8 @@ This front-loads the most promising candidates, meaning even if the user cancels
 Each simulation is independent — the problem is embarrassingly parallel. KOBAYASHI uses Rayon's work-stealing thread pool to distribute crew combos across all cores.
 
 - Each thread owns its own PRNG instance (seeded deterministically from crew index)
-- Lock-free result collection via crossbeam channel
-- Progress updates pushed to frontend via WebSocket every 100ms
-- Backpressure: if frontend disconnects, simulations continue, results buffered to disk
+- Lock-free result collection (e.g. via channel or shared output)
+- Progress: not yet streamed to the frontend (REST only; WebSocket or polling planned)
 
 ### 8.2 Scaling Estimates
 
@@ -699,7 +700,7 @@ Since officers are YAML files following the LCARS spec, a GitHub repository can 
 
 ### 10.1 Delivery
 
-The frontend is a React or Svelte app, built to static files and embedded in the Rust binary via `rust-embed`. No separate frontend server needed.
+The frontend is a React app, built to static files (`npm run build` in `frontend/`). It is **not embedded** in the Rust binary: the server serves it from the filesystem (`frontend/dist` or `dist`) when run from the project root. No separate frontend dev server is needed for production; the same server serves both the API and the SPA.
 
 ### 10.2 Styling
 
@@ -729,7 +730,7 @@ POST /api/simulate                  # single crew simulation
   ← { stats, sample_log }
 POST /api/optimize                  # find best crews
   → { ship, hostile, constraints, strategy, num_sims }
-  ← WebSocket stream: { progress, partial_results, final_ranking }
+  ← REST: single response with final_ranking (progress/streaming planned)
 GET  /api/synergies                 # synergy graph data
 POST /api/synergies/learn           # trigger learning from past results
 GET  /api/profile                   # player profile
@@ -799,11 +800,10 @@ kobayashi/
 │   │   └── progress.rs        # Progress tracking, ETA, throughput
 │   │
 │   └── server/
-│       ├── mod.rs
-│       ├── api.rs             # REST + WebSocket endpoints
+│       ├── mod.rs             # Custom TCP HTTP server (blocking)
+│       ├── api.rs             # REST endpoints
 │       ├── routes.rs          # Route definitions
-│       └── static/            # Embedded frontend
-│           └── index.html
+│       └── static_files.rs   # Serve SPA from frontend/dist
 │
 ├── frontend/
 │   ├── package.json
@@ -820,7 +820,7 @@ kobayashi/
 │   │   └── lib/
 │   │       ├── api.ts
 │   │       └── types.ts
-│   └── dist/                  # Built → embedded in Rust binary
+│   └── dist/                  # Built → served from disk by server
 │
 └── tests/
     ├── combat_tests.rs
@@ -837,22 +837,18 @@ kobayashi/
 
 ## 12. Dependencies
 
+The backend does **not** use Tokio or Axum. The server is a custom blocking TCP implementation. Example core dependencies:
+
 ```toml
 [dependencies]
 rayon = "1.10"              # Parallel iterators, work-stealing
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"          # LCARS parsing
-tokio = { version = "1", features = ["full"] }
-axum = "0.7"                # HTTP server
-axum-extra = "0.9"          # WebSocket
-tower-http = "0.5"          # Static file serving, CORS
-crossbeam = "0.8"           # Lock-free channels
+# No tokio/axum: custom HTTP server in src/server
 rand = "0.8"                # PRNG traits
 clap = "4"                  # CLI args
-tracing = "0.1"             # Structured logging
-rust-embed = "8"            # Embed frontend in binary
-jsonschema = "0.18"         # LCARS schema validation (optional)
+# ... (see Cargo.toml for full list; no rust-embed, frontend served from disk)
 ```
 
 ---
