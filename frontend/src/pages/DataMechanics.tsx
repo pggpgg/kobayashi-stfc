@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchDataVersion } from '../lib/api';
+import { fetchDataVersion, formatApiError } from '../lib/api';
 import type { DataVersionResponse } from '../lib/api';
 
 export default function DataMechanics() {
@@ -13,7 +13,7 @@ export default function DataMechanics() {
         if (!c) setData(v);
       })
       .catch((e) => {
-        if (!c) setError(e instanceof Error ? e.message : String(e));
+        if (!c) setError(formatApiError(e));
       });
     return () => { c = true; };
   }, []);

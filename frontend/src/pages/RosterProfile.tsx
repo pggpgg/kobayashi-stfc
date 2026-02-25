@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { importRoster, fetchProfile, updateProfile } from '../lib/api';
+import { importRoster, fetchProfile, updateProfile, formatApiError } from '../lib/api';
 import type { ImportReport, PlayerProfile } from '../lib/api';
 
 type Tab = 'roster' | 'bonuses';
@@ -28,7 +28,7 @@ export default function RosterProfile() {
       const report = await importRoster(paste);
       setImportResult(report);
     } catch (e) {
-      setImportError(e instanceof Error ? e.message : String(e));
+      setImportError(formatApiError(e));
     }
   };
 
@@ -38,7 +38,7 @@ export default function RosterProfile() {
       await updateProfile(profile);
       setProfileDirty(false);
     } catch (e) {
-      setProfileError(e instanceof Error ? e.message : String(e));
+      setProfileError(formatApiError(e));
     }
   };
 
