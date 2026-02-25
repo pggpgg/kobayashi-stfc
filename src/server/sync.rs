@@ -13,6 +13,9 @@ use std::time::UNIX_EPOCH;
 pub const DEFAULT_GAME_ID_MAP_PATH: &str = "data/officers/id_registry.json";
 
 static SYNC_ROSTER_MTX: Mutex<()> = Mutex::new(());
+static SYNC_RESEARCH_MTX: Mutex<()> = Mutex::new(());
+static SYNC_BUILDINGS_MTX: Mutex<()> = Mutex::new(());
+static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 
 /// Handles POST /api/sync/ingress: validates token, parses body, dispatches by type.
 pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
@@ -57,7 +60,25 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
             }
         }
-        "research" | "buildings" | "ships" | "resources" | "missions" | "battlelogs"
+        "research" => {
+            match apply_research_sync(&payload, import::DEFAULT_RESEARCH_IMPORT_PATH) {
+                Ok(accepted_count) => vec![format!("research({accepted_count})")],
+                Err(e) => return json_error_response(500, "Internal Server Error", &e.to_string()),
+            }
+        }
+        "buildings" => {
+            match apply_buildings_sync(&payload, import::DEFAULT_BUILDINGS_IMPORT_PATH) {
+                Ok(accepted_count) => vec![format!("buildings({accepted_count})")],
+                Err(e) => return json_error_response(500, "Internal Server Error", &e.to_string()),
+            }
+        }
+        "ships" => {
+            match apply_ships_sync(&payload, import::DEFAULT_SHIPS_IMPORT_PATH) {
+                Ok(accepted_count) => vec![format!("ships({accepted_count})")],
+                Err(e) => return json_error_response(500, "Internal Server Error", &e.to_string()),
+            }
+        }
+        "resources" | "missions" | "battlelogs"
         | "traits" | "tech" | "slots" | "buffs" | "inventory" | "jobs" => {
             vec![type_str.to_string()]
         }
@@ -198,6 +219,170 @@ fn load_existing_roster(path: &str) -> Option<Vec<import::RosterEntry>> {
     Some(payload.officers)
 }
 
+// ----- Research sync -----
+
+#[derive(Debug, Deserialize)]
+struct SyncResearchItem {
+    #[serde(rename = "type", default)]
+    _type: Option<String>,
+    #[serde(default)]
+    rid: Option<i64>,
+    #[serde(default)]
+    level: Option<i64>,
+}
+
+fn apply_research_sync(
+    payload: &[serde_json::Value],
+    output_path: &str,
+) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+    let _guard = SYNC_RESEARCH_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut by_rid: HashMap<i64, import::ResearchEntry> = import::load_imported_research(output_path)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|e| (e.rid, e))
+        .collect();
+
+    let mut accepted = 0usize;
+    for item in payload {
+        let item: SyncResearchItem = match serde_json::from_value(item.clone()) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+        let Some(rid) = item.rid else { continue };
+        let level = item.level.unwrap_or(0);
+        by_rid.insert(rid, import::ResearchEntry { rid, level });
+        accepted += 1;
+    }
+
+    let mut research: Vec<import::ResearchEntry> = by_rid.into_values().collect();
+    research.sort_by(|a, b| a.rid.cmp(&b.rid));
+
+    let output_payload = serde_json::json!({
+        "source_path": "stfc-mod sync",
+        "research": research,
+    });
+    if let Some(parent) = std::path::Path::new(output_path).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    Ok(accepted)
+}
+
+// ----- Buildings sync -----
+
+#[derive(Debug, Deserialize)]
+struct SyncBuildingItem {
+    #[serde(rename = "type", default)]
+    _type: Option<String>,
+    #[serde(default)]
+    bid: Option<i64>,
+    #[serde(default)]
+    level: Option<i64>,
+}
+
+fn apply_buildings_sync(
+    payload: &[serde_json::Value],
+    output_path: &str,
+) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+    let _guard = SYNC_BUILDINGS_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut by_bid: HashMap<i64, import::BuildingEntry> =
+        import::load_imported_buildings(output_path)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|e| (e.bid, e))
+            .collect();
+
+    let mut accepted = 0usize;
+    for item in payload {
+        let item: SyncBuildingItem = match serde_json::from_value(item.clone()) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+        let Some(bid) = item.bid else { continue };
+        let level = item.level.unwrap_or(0);
+        by_bid.insert(bid, import::BuildingEntry { bid, level });
+        accepted += 1;
+    }
+
+    let mut buildings: Vec<import::BuildingEntry> = by_bid.into_values().collect();
+    buildings.sort_by(|a, b| a.bid.cmp(&b.bid));
+
+    let output_payload = serde_json::json!({
+        "source_path": "stfc-mod sync",
+        "buildings": buildings,
+    });
+    if let Some(parent) = std::path::Path::new(output_path).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    Ok(accepted)
+}
+
+// ----- Ships sync -----
+
+#[derive(Debug, Deserialize)]
+struct SyncShipItem {
+    #[serde(rename = "type", default)]
+    _type: Option<String>,
+    #[serde(default)]
+    psid: Option<i64>,
+    #[serde(default)]
+    tier: Option<i64>,
+    #[serde(default)]
+    level: Option<i64>,
+    #[serde(default)]
+    level_percentage: Option<f64>,
+    #[serde(default)]
+    hull_id: Option<i64>,
+    #[serde(default)]
+    components: Option<Vec<i64>>,
+}
+
+fn apply_ships_sync(
+    payload: &[serde_json::Value],
+    output_path: &str,
+) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+    let _guard = SYNC_SHIPS_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut by_psid: HashMap<i64, import::ShipEntry> = import::load_imported_ships(output_path)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|e| (e.psid, e))
+        .collect();
+
+    let mut accepted = 0usize;
+    for item in payload {
+        let item: SyncShipItem = match serde_json::from_value(item.clone()) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+        let Some(psid) = item.psid else { continue };
+        let hull_id = item.hull_id.unwrap_or(0);
+        let entry = import::ShipEntry {
+            psid,
+            tier: item.tier.unwrap_or(0),
+            level: item.level.unwrap_or(0),
+            level_percentage: item.level_percentage.unwrap_or(-1.0),
+            hull_id,
+            components: item.components.unwrap_or_default(),
+        };
+        by_psid.insert(psid, entry);
+        accepted += 1;
+    }
+
+    let mut ships: Vec<import::ShipEntry> = by_psid.into_values().collect();
+    ships.sort_by(|a, b| a.psid.cmp(&b.psid));
+
+    let output_payload = serde_json::json!({
+        "source_path": "stfc-mod sync",
+        "ships": ships,
+    });
+    if let Some(parent) = std::path::Path::new(output_path).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    Ok(accepted)
+}
+
 fn ok_accepted_response(accepted: &[String]) -> HttpResponse {
     let body = serde_json::json!({
         "status": "ok",
@@ -226,10 +411,8 @@ fn json_error_response(status_code: u16, status_text: &'static str, message: &st
     }
 }
 
-/// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
-pub fn sync_status_payload() -> HttpResponse {
-    let roster_path = import::DEFAULT_IMPORT_OUTPUT_PATH;
-    let last_modified_iso: Option<String> = std::fs::metadata(roster_path)
+fn last_modified_iso(path: &str) -> Option<String> {
+    std::fs::metadata(path)
         .ok()
         .and_then(|m| m.modified().ok())
         .and_then(|t| {
@@ -239,12 +422,30 @@ pub fn sync_status_payload() -> HttpResponse {
                     .single()
                     .map(|dt| dt.to_rfc3339())
             })
-        });
+        })
+}
+
+/// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
+/// Also includes research_path, buildings_path, ships_path and their last_modified_iso when present.
+pub fn sync_status_payload() -> HttpResponse {
+    let roster_path = import::DEFAULT_IMPORT_OUTPUT_PATH;
+    let research_path = import::DEFAULT_RESEARCH_IMPORT_PATH;
+    let buildings_path = import::DEFAULT_BUILDINGS_IMPORT_PATH;
+    let ships_path = import::DEFAULT_SHIPS_IMPORT_PATH;
+
     let body = serde_json::json!({
         "roster_path": roster_path,
-        "last_modified_iso": last_modified_iso,
+        "last_modified_iso": last_modified_iso(roster_path),
+        "research_path": research_path,
+        "research_last_modified_iso": last_modified_iso(research_path),
+        "buildings_path": buildings_path,
+        "buildings_last_modified_iso": last_modified_iso(buildings_path),
+        "ships_path": ships_path,
+        "ships_last_modified_iso": last_modified_iso(ships_path),
     });
-    let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string());
+    let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
+        r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string()
+    });
     HttpResponse {
         status_code: 200,
         status_text: "OK",
@@ -256,6 +457,7 @@ pub fn sync_status_payload() -> HttpResponse {
 #[cfg(test)]
 mod tests {
     use super::ingress_payload;
+    use crate::data::import;
 
     #[test]
     fn ingress_empty_array_returns_200_and_accepted() {
@@ -281,8 +483,55 @@ mod tests {
 
     #[test]
     fn ingress_research_type_returns_200() {
-        let r = ingress_payload(r#"[{"type":"research","rid":"r1","level":1}]"#, None);
+        let r = ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, None);
         assert_eq!(r.status_code, 200);
         assert!(r.body.contains("research"));
+    }
+
+    #[test]
+    fn ingress_research_persists_to_file() {
+        let r = ingress_payload(r#"[{"type":"research","rid":919291,"level":3}]"#, None);
+        assert_eq!(r.status_code, 200);
+        assert!(r.body.contains("research(1)"));
+        let entries = import::load_imported_research(import::DEFAULT_RESEARCH_IMPORT_PATH)
+            .expect("research.imported.json should exist after sync");
+        assert!(
+            entries.iter().any(|e| e.rid == 919291 && e.level == 3),
+            "expected rid=919291 level=3 in {:?}",
+            entries
+        );
+    }
+
+    #[test]
+    fn ingress_buildings_persist_to_file() {
+        let r = ingress_payload(r#"[{"type":"buildings","bid":919292,"level":5}]"#, None);
+        assert_eq!(r.status_code, 200);
+        assert!(r.body.contains("buildings(1)"));
+        let entries = import::load_imported_buildings(import::DEFAULT_BUILDINGS_IMPORT_PATH)
+            .expect("buildings.imported.json should exist after sync");
+        assert!(
+            entries.iter().any(|e| e.bid == 919292 && e.level == 5),
+            "expected bid=919292 level=5 in {:?}",
+            entries
+        );
+    }
+
+    #[test]
+    fn ingress_ships_persist_to_file() {
+        let r = ingress_payload(
+            r#"[{"type":"ships","psid":919293,"tier":2,"level":10,"level_percentage":0.5,"hull_id":100,"components":[1,2,3]}]"#,
+            None,
+        );
+        assert_eq!(r.status_code, 200);
+        assert!(r.body.contains("ships(1)"));
+        let entries = import::load_imported_ships(import::DEFAULT_SHIPS_IMPORT_PATH)
+            .expect("ships.imported.json should exist after sync");
+        assert!(
+            entries.iter().any(|e| {
+                e.psid == 919293 && e.tier == 2 && e.level == 10 && e.hull_id == 100
+            }),
+            "expected psid=919293 in {:?}",
+            entries
+        );
     }
 }
