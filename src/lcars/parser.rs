@@ -178,7 +178,8 @@ pub fn load_lcars_file(path: impl AsRef<Path>) -> Result<LcarsFile, Box<dyn std:
     Ok(parsed)
 }
 
-/// Load all `.lcars.yaml` / `.lcars.yml` files from a directory and merge officers.
+/// Load all `*.lcars.yaml` and `*.lcars.yml` files from a directory and merge officers.
+/// Only filenames matching these patterns are loaded; other YAML files in the directory are ignored.
 pub fn load_lcars_dir(dir: impl AsRef<Path>) -> Result<Vec<LcarsOfficer>, Box<dyn std::error::Error + Send + Sync>> {
     let mut officers = Vec::new();
     let dir = dir.as_ref();
@@ -189,8 +190,9 @@ pub fn load_lcars_dir(dir: impl AsRef<Path>) -> Result<Vec<LcarsOfficer>, Box<dy
         let entry = entry?;
         let path = entry.path();
         if path.is_file() {
-            let ext = path.extension();
-            if ext.map_or(false, |e| e == "yaml" || e == "yml") {
+            let name = path.file_name().and_then(|n| n.to_str());
+            let is_lcars = name.map_or(false, |n| n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml"));
+            if is_lcars {
                 if let Ok(file) = load_lcars_file(&path) {
                     officers.extend(file.officers);
                 }

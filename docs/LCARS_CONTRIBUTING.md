@@ -8,6 +8,7 @@ LCARS (Language for Combat Ability Resolution & Simulation) is the declarative Y
 
 ## File Organization
 
+- **Naming:** Only files matching `*.lcars.yaml` or `*.lcars.yml` are loaded when the app reads an officers directory. Other YAML files (e.g. config) in the same folder are ignored. Use this naming for any LCARS officer file.
 - `officers.lcars.yaml` — All officers (all factions). Each officer has an `id`, `name`, optional `faction`, `rarity`, `group`, and up to three ability blocks (captain, bridge, below decks).
 
 ## Officer Structure

@@ -92,7 +92,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 LCARS is a YAML-based DSL for describing officer abilities declaratively. Each officer has up to three ability sets (captain, bridge, below_decks), each containing one or more effects. Effects are composed from a vocabulary of primitives.
 
-File extension: `.lcars.yaml`
+**File naming:** Use extension `.lcars.yaml` (or `.lcars.yml`). When loading a directory (e.g. `data/officers`), only files whose names match `*.lcars.yaml` or `*.lcars.yml` are loaded; other YAML files in the same directory are ignored so that config or other data is not parsed as officers.
 
 ### 3.2 Primitives
 
