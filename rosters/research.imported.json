@@ -1,0 +1,13 @@
+{
+  "research": [
+    {
+      "level": 1,
+      "rid": 1
+    },
+    {
+      "level": 3,
+      "rid": 919291
+    }
+  ],
+  "source_path": "stfc-mod sync"
+}

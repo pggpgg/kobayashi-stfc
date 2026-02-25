@@ -11,6 +11,42 @@ const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
 const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canonical.json";
 pub const DEFAULT_IMPORT_OUTPUT_PATH: &str = "rosters/roster.imported.json";
 
+/// Path for synced research state (stfc-mod sync). Load with [load_imported_research].
+pub const DEFAULT_RESEARCH_IMPORT_PATH: &str = "rosters/research.imported.json";
+/// Path for synced buildings state (stfc-mod sync). Load with [load_imported_buildings].
+pub const DEFAULT_BUILDINGS_IMPORT_PATH: &str = "rosters/buildings.imported.json";
+/// Path for synced ships state (stfc-mod sync). Load with [load_imported_ships].
+pub const DEFAULT_SHIPS_IMPORT_PATH: &str = "rosters/ships.imported.json";
+
+// ----- Synced game state (research, buildings, ships) from stfc-mod sync -----
+
+/// One research project level from imported/synced state.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ResearchEntry {
+    pub rid: i64,
+    pub level: i64,
+}
+
+/// One building level from imported/synced state.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BuildingEntry {
+    pub bid: i64,
+    pub level: i64,
+}
+
+/// One player ship from imported/synced state.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ShipEntry {
+    pub psid: i64,
+    pub tier: i64,
+    pub level: i64,
+    #[serde(default)]
+    pub level_percentage: f64,
+    pub hull_id: i64,
+    #[serde(default)]
+    pub components: Vec<i64>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RosterEntry {
     pub canonical_officer_id: String,
@@ -496,4 +532,45 @@ fn load_imported_roster_ids_inner(path: &str, unlocked_only: bool) -> Option<Has
         .map(|e| e.canonical_officer_id)
         .collect();
     Some(ids)
+}
+
+// ----- Loaders for synced research / buildings / ships -----
+
+#[derive(Debug, Deserialize)]
+struct ImportedResearchFile {
+    research: Vec<ResearchEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImportedBuildingsFile {
+    buildings: Vec<BuildingEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImportedShipsFile {
+    ships: Vec<ShipEntry>,
+}
+
+/// Loads research entries from a synced/imported JSON file (e.g. [DEFAULT_RESEARCH_IMPORT_PATH]).
+/// Returns `None` if the file is missing or invalid.
+pub fn load_imported_research(path: &str) -> Option<Vec<ResearchEntry>> {
+    let raw = fs::read_to_string(path).ok()?;
+    let payload: ImportedResearchFile = serde_json::from_str(&raw).ok()?;
+    Some(payload.research)
+}
+
+/// Loads building entries from a synced/imported JSON file (e.g. [DEFAULT_BUILDINGS_IMPORT_PATH]).
+/// Returns `None` if the file is missing or invalid.
+pub fn load_imported_buildings(path: &str) -> Option<Vec<BuildingEntry>> {
+    let raw = fs::read_to_string(path).ok()?;
+    let payload: ImportedBuildingsFile = serde_json::from_str(&raw).ok()?;
+    Some(payload.buildings)
+}
+
+/// Loads ship entries from a synced/imported JSON file (e.g. [DEFAULT_SHIPS_IMPORT_PATH]).
+/// Returns `None` if the file is missing or invalid.
+pub fn load_imported_ships(path: &str) -> Option<Vec<ShipEntry>> {
+    let raw = fs::read_to_string(path).ok()?;
+    let payload: ImportedShipsFile = serde_json::from_str(&raw).ok()?;
+    Some(payload.ships)
 }
