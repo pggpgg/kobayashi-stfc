@@ -27,8 +27,8 @@ struct CanonicalOfficer {
     group: Option<String>,
     #[serde(default)]
     rarity: Option<String>,
-    #[serde(default)]
-    slot: Option<String>,
+    #[serde(default, rename = "slot")]
+    _slot: Option<String>,
     #[serde(default)]
     abilities: Vec<CanonicalAbility>,
 }
@@ -47,8 +47,8 @@ struct CanonicalAbility {
     target: Option<String>,
     #[serde(default)]
     attributes: Option<String>,
-    #[serde(default)]
-    description: Option<String>,
+    #[serde(default, rename = "description")]
+    _description: Option<String>,
     #[serde(default)]
     chance_by_rank: Vec<f64>,
     #[serde(default)]
@@ -189,7 +189,7 @@ fn convert_officer(o: CanonicalOfficer) -> LcarsOfficer {
 
 fn convert_ability_to_effect(
     a: &CanonicalAbility,
-    officer_name: &str,
+    _officer_name: &str,
 ) -> Option<LcarsEffect> {
     let modifier = a.modifier.as_deref().unwrap_or("");
     let trigger = map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"));
@@ -379,7 +379,7 @@ fn scaling_from_ranks(
     if modifier.eq_ignore_ascii_case("AddState") {
         let base_chance = chance_by_rank.first().copied().unwrap_or(0.0);
         let last_chance = chance_by_rank.last().copied().unwrap_or(base_chance);
-        let per_chance = if max_rank > 1 {
+        let _per_chance = if max_rank > 1 {
             (last_chance - base_chance) / (max_rank - 1) as f64
         } else {
             0.0
