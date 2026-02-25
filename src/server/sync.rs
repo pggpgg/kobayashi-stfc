@@ -19,10 +19,13 @@ static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 
 /// Handles POST /api/sync/ingress: validates token, parses body, dispatches by type.
 pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
+    eprintln!("[sync] POST /api/sync/ingress received, body_len={}", body.len());
+
     let expected_token = std::env::var("KOBAYASHI_SYNC_TOKEN").ok();
     if let Some(ref expected) = expected_token {
         let provided = sync_token.unwrap_or("").trim();
         if provided != expected.as_str() {
+            eprintln!("[sync] 401 Unauthorized (invalid or missing stfc-sync-token)");
             return json_error_response(401, "Unauthorized", "Invalid or missing stfc-sync-token");
         }
     }
@@ -30,6 +33,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
     let payload: Vec<serde_json::Value> = match serde_json::from_str(body) {
         Ok(arr) => arr,
         Err(e) => {
+            eprintln!("[sync] 400 Bad Request: body is not a JSON array: {e}");
             return json_error_response(
                 400,
                 "Bad Request",
@@ -39,6 +43,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
     };
 
     if payload.is_empty() {
+        eprintln!("[sync] 200 OK accepted=[] (empty array)");
         return ok_accepted_response(&[]);
     }
 
@@ -48,41 +53,66 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
         .and_then(|v| v.as_str())
         .unwrap_or("unknown");
     let type_lower = type_str.to_ascii_lowercase();
+    eprintln!("[sync] type={type_str} count={}", payload.len());
 
     let accepted = match type_lower.as_str() {
         "officer" => {
             match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, import::DEFAULT_IMPORT_OUTPUT_PATH) {
                 Ok(accepted_count) => {
+                    eprintln!("[sync] 200 OK accepted officer({accepted_count})");
                     vec![format!("officer({accepted_count})")]
                 }
                 Err(e) => {
+                    eprintln!("[sync] 500 Internal Server Error (officer): {e}");
                     return json_error_response(500, "Internal Server Error", &e.to_string());
                 }
             }
         }
         "research" => {
             match apply_research_sync(&payload, import::DEFAULT_RESEARCH_IMPORT_PATH) {
-                Ok(accepted_count) => vec![format!("research({accepted_count})")],
-                Err(e) => return json_error_response(500, "Internal Server Error", &e.to_string()),
+                Ok(accepted_count) => {
+                    eprintln!("[sync] 200 OK accepted research({accepted_count})");
+                    vec![format!("research({accepted_count})")]
+                }
+                Err(e) => {
+                    eprintln!("[sync] 500 Internal Server Error (research): {e}");
+                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                }
             }
         }
         "buildings" => {
             match apply_buildings_sync(&payload, import::DEFAULT_BUILDINGS_IMPORT_PATH) {
-                Ok(accepted_count) => vec![format!("buildings({accepted_count})")],
-                Err(e) => return json_error_response(500, "Internal Server Error", &e.to_string()),
+                Ok(accepted_count) => {
+                    eprintln!("[sync] 200 OK accepted buildings({accepted_count})");
+                    vec![format!("buildings({accepted_count})")]
+                }
+                Err(e) => {
+                    eprintln!("[sync] 500 Internal Server Error (buildings): {e}");
+                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                }
             }
         }
         "ships" => {
             match apply_ships_sync(&payload, import::DEFAULT_SHIPS_IMPORT_PATH) {
-                Ok(accepted_count) => vec![format!("ships({accepted_count})")],
-                Err(e) => return json_error_response(500, "Internal Server Error", &e.to_string()),
+                Ok(accepted_count) => {
+                    eprintln!("[sync] 200 OK accepted ships({accepted_count})");
+                    vec![format!("ships({accepted_count})")]
+                }
+                Err(e) => {
+                    eprintln!("[sync] 500 Internal Server Error (ships): {e}");
+                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                }
             }
         }
         "resources" | "missions" | "battlelogs"
         | "traits" | "tech" | "slots" | "buffs" | "inventory" | "jobs" => {
+            eprintln!("[sync] 200 OK accepted {} (not persisted)", type_str);
             vec![type_str.to_string()]
         }
-        _ => vec![type_str.to_string()],
+        _ => {
+            eprintln!("[sync] 200 OK accepted {} (unknown type)", type_str);
+            vec![type_str.to_string()]
+        }
     };
 
     ok_accepted_response(&accepted)
