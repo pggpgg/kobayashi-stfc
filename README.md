@@ -26,7 +26,7 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 ### Key Features
 
 - **Monte Carlo combat simulation** — models crits, proc chances, shield mitigation, armor, ability timing, and more
-- **Smart crew optimization** — synergy-prioritized search, tiered simulation (fast scouting pass → expensive confirmation), genetic algorithm for large search spaces
+- **Smart crew optimization** — full exhaustive sweep today; tiered simulation (scouting → confirmation) and genetic algorithm for large search spaces planned
 - **LCARS officer definitions** — every officer ability is described in a declarative YAML-based language, no code changes needed to add new officers
 - **Player profile support** — account for your research, buildings, reputation, and other non-officer bonuses
 - **Synergy discovery** — manually tag known synergies, and let KOBAYASHI discover new ones from simulation data
@@ -106,7 +106,9 @@ KOBAYASHI's core is a fast, deterministic combat simulator written in Rust. Each
 
 ### The Optimizer
 
-Given a ship and a hostile, the optimizer searches the crew space using a tiered approach:
+Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. A **tiered approach** (scouting pass → confirmation on top candidates) and **genetic algorithm** for large search spaces are planned but not yet wired in.
+
+*Planned tiered strategy (when implemented):*
 
 | Phase | Sims per crew | What it does |
 |---|---|---|
@@ -120,9 +122,9 @@ Synergy-tagged crews are tested first, so even if you cancel early, you likely h
 
 | Scenario | Time |
 |---|---|
-| Full Phase 1 scouting (~800K combos) | ~8 seconds |
-| Phase 1 + Phase 2 | ~16 seconds |
-| Full exhaustive sweep | ~3 minutes |
+| Full exhaustive sweep (current) | ~3 minutes |
+| Phase 1 scouting only (planned) | ~8 seconds |
+| Phase 1 + Phase 2 (planned) | ~16 seconds |
 
 ### LCARS — The Officer Description Language
 
@@ -256,16 +258,16 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [x] Monte Carlo simulation runner
 - [x] CLI interface
 - [x] LCARS ability resolver (YAML → BuffSet)
-- [ ] Tiered optimization with synergy prioritization
+- [ ] Tiered optimization with synergy prioritization (planned)
 - [ ] Crew generator (exhaustive + filtered)
 - [x] Parallel batch execution
-- [x] Web UI on localhost
+- [x] Web UI on localhost (MVP)
 - [ ] User-owned roster import workflow (e.g., Spocks.club export)
-- [ ] Synergy learning from simulation results
-- [ ] Genetic algorithm optimizer
-- [ ] Chain grinding simulation (multi-fight with carry-over)
-- [ ] Armada mode (multi-ship combat)
-- [ ] Sensitivity analysis ("what if I promote this officer?")
+- [ ] Synergy learning from simulation results (planned)
+- [ ] Genetic algorithm optimizer (planned)
+- [ ] Chain grinding simulation (multi-fight with carry-over) (planned)
+- [ ] Armada mode (multi-ship combat) (planned)
+- [ ] Sensitivity analysis ("what if I promote this officer?") (planned)
 - [x] Full 280+ officer LCARS database
 
 ---
