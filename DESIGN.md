@@ -328,18 +328,18 @@ Notes:
 
 **Combat-begin and pre-combat stats:** Combat_begin effects are applied at the start of each round to a fresh per-round effect accumulator (see engine loop). They are not re-accumulated across rounds, so they behave as permanent pre-combat modifiers. The first round uses the same effective stats as later rounds (same accumulator build: combat_begin → round_start → attack → defense → round_end).
 
-#### Sub-round and weapon-index ordering (reference)
+#### Sub-round and weapon-index ordering
 
-Canonical STFC client order (from community toolbox / combat logs), for parity and future sub-round support:
+The engine implements the canonical STFC client order (from community toolbox / combat logs):
 
 1. **Start of round:** `START_ROUND` → hull repair window (`HULL_REPAIR_START` / `HULL_REPAIR_END`), once per round.
 2. **Per sub-round (weapon index 0, 1, …):**  
-   - Officer/ship abilities for that sub-round.  
+   - Officer/ship abilities for that sub-round (AttackPhase, DefensePhase with current weapon base).  
    - Forbidden tech and chaos tech buffs.  
-   - All attacks for that weapon index.  
-3. **End of round:** `END_ROUND` → burning tick (e.g. 1% initial hull), temporary-effect cleanup, then next round (max 100).
+   - Attacker fires weapon `i` (if present), then defender fires weapon `i` (if present).  
+3. **End of round:** `END_ROUND` → ability activation record, burning tick (e.g. 1% initial hull), regen, temporary-effect cleanup, then next round (max 100).
 
-The current engine uses a single attack phase per round (no explicit weapon-index loop). When ingested logs or parity tests show ordering-sensitive differences, sub-round or weapon-index structure can be added to the loop and validated against fixtures (see [docs/combat_log_format.md](docs/combat_log_format.md)).
+Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon with the scalar `attack` is used (backward compatible). Trace events for attack/damage include optional `weapon_index` for parity with logs (see [docs/combat_log_format.md](docs/combat_log_format.md)).
 
 ### 3.7 Stacking Rules
 
@@ -870,6 +870,8 @@ jsonschema = "0.18"         # LCARS schema validation (optional)
 
 - **Chain grinding simulation**: Model N sequential fights with hull/shield carry-over between fights. Optimize for fights-before-repair, not just single-fight metrics. (Mudd's repair ability becomes relevant here.)
 - **Armada mode**: Multi-ship combat with ally-targeting abilities.
+- **Per-weapon pierce/crit/proc**: When STFC or upstream data differentiates pierce/crit/proc by weapon, add optional per-weapon fields to data and engine (see [COMBAT_FEATURES_FROM_STFC_TOOLBOX.md](COMBAT_FEATURES_FROM_STFC_TOOLBOX.md) §13).
+- **After-shot effects affecting next shot(s)**: Officer effects that trigger after a shot and modify the next shot(s) in the same round (e.g. +crit chance for next shot). Requires SubroundEnd or “after shot” timing and carrying buff state between sub-rounds (see [COMBAT_FEATURES_FROM_STFC_TOOLBOX.md](COMBAT_FEATURES_FROM_STFC_TOOLBOX.md) §14).
 - **Sensitivity analysis**: "What if I promote officer X to the next rank? How much does my best crew improve?"
 - **Auto-updater**: Check for new LCARS definitions on GitHub and pull updates.
 - **GPU acceleration**: Port combat engine to CUDA/WebGPU for billions of sims. Probably overkill but fun.

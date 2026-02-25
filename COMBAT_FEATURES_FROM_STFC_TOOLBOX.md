@@ -81,6 +81,16 @@ Source pages reviewed:
       - final multiplicative combination
       - stack decomposition (`A`, `B`, `C`)
 
+## Future / optional (sub-round and weapons)
+
+13. **Per-weapon pierce/crit/proc in data and engine when STFC differentiates them**
+    - Today only attack is per-weapon; pierce, crit_chance, crit_multiplier, proc_chance, proc_multiplier are combatant-level for all weapons.
+    - When upstream or STFC data differs by weapon, add optional per-weapon fields to `WeaponStats` / `WeaponRecord`, normalizer output, and engine resolution (fallback to combatant-level when absent).
+
+14. **Officer effects that trigger after a shot and affect the next shot(s) in the same round**
+    - Some officers grant e.g. extra crit chance or crit damage to the *next* shot(s) of that round (effects that trigger “after a shot” and apply to subsequent sub-rounds).
+    - Requires a timing such as SubroundEnd (or “after shot”) and carrying buff state (e.g. “+X% crit chance for next shot”) into the next sub-round within the same round; apply when resolving the following weapon(s).
+
 ## Suggested implementation order
 
 1. Mitigation model + tests

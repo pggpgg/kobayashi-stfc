@@ -30,6 +30,7 @@ Each event in `events`:
 | `round_index` | number | 1-based round. |
 | `phase` | string | e.g. `round`, `attack`, `damage`, `end`. |
 | `values` | object (optional) | Key-value pairs (e.g. `final_damage`, `running_total`, `shield_damage`, `hull_damage`). |
+| `weapon_index` | number (optional) | Sub-round (weapon) index when the simulator uses multi-weapon resolution; omitted for round-level events. |
 
 Event types aligned with simulator trace for parity:
 
@@ -38,15 +39,15 @@ Event types aligned with simulator trace for parity:
 - `mitigation_calc` — mitigation used
 - `end_of_round_effects` — bonus/burning
 
-## Round/sub-round ordering (reference)
+## Round/sub-round ordering
 
-Canonical order from STFC client (for future sub-round support):
+The simulator implements canonical STFC order:
 
 1. `START_ROUND` → `HULL_REPAIR_START` / `HULL_REPAIR_END`
-2. Per sub-round: officer/ship abilities → forbidden/chaos tech → attacks (weapon index)
+2. Per sub-round (weapon index 0, 1, …): officer/ship abilities → forbidden/chaos tech → attacker weapon `i` → defender weapon `i`
 3. `END_ROUND`: burning tick (1% initial hull), cleanup, next round (max 100)
 
-The ingested format does not require sub-round granularity; per-round events are sufficient for summary parity.
+Trace events for attack/damage include optional `weapon_index` when multi-weapon resolution is used. The ingested format may include sub-round granularity for parity; per-round events remain sufficient for summary parity.
 
 ### Game CSV/TSV export
 

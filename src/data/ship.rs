@@ -6,7 +6,13 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::{AttackerStats, ShipType};
+use crate::combat::{AttackerStats, ShipType, WeaponStats};
+
+/// Per-weapon attack for multi-weapon / sub-round support. When present on ShipRecord, used to build Combatant.weapons.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WeaponRecord {
+    pub attack: f64,
+}
 
 #[derive(Debug, Clone)]
 pub struct Ship {
@@ -41,6 +47,9 @@ pub struct ShipRecord {
     /// Isolytic damage bonus (decimal). Used in combat isolytic_damage().
     #[serde(default)]
     pub isolytic_damage: f64,
+    /// Per-weapon attack values. When present, used to build Combatant.weapons for sub-round resolution.
+    #[serde(default)]
+    pub weapons: Option<Vec<WeaponRecord>>,
 }
 
 /// Index of all ships for name resolution. Includes data_version.
@@ -71,6 +80,18 @@ impl ShipRecord {
 
     pub fn ship_type(&self) -> ShipType {
         crate::data::hostile::ship_class_to_type(&self.ship_class)
+    }
+
+    /// Per-weapon stats for sub-round resolution. If weapons list is present, returns it; otherwise one weapon with scalar attack.
+    pub fn to_weapons(&self) -> Vec<WeaponStats> {
+        self.weapons
+            .as_ref()
+            .map(|w| {
+                w.iter()
+                    .map(|r| WeaponStats { attack: r.attack })
+                    .collect()
+            })
+            .unwrap_or_else(|| vec![WeaponStats { attack: self.attack }])
     }
 }
 

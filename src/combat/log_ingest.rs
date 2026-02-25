@@ -71,6 +71,7 @@ pub fn ingested_events_to_combat_events(events: &[IngestedEvent]) -> Vec<CombatE
             phase: e.phase.clone(),
             source: EventSource::default(),
             values: e.values.clone(),
+            weapon_index: None,
         })
         .collect()
 }

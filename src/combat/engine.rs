@@ -75,6 +75,9 @@ pub struct CombatEvent {
     pub source: EventSource,
     #[serde(default)]
     pub values: Map<String, Value>,
+    /// Sub-round (weapon) index when tracing multi-weapon resolution. Omitted when None.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub weapon_index: Option<u32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -115,6 +118,12 @@ pub struct SimulationResult {
     pub events: Vec<CombatEvent>,
 }
 
+/// Per-weapon stats for sub-round resolution. Combatant-level pierce/crit/proc apply to all weapons.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WeaponStats {
+    pub attack: f64,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Combatant {
     pub id: String,
@@ -145,10 +154,33 @@ pub struct Combatant {
     /// Defender: flat reduction to isolytic damage taken (or mitigation-style; applied after isolytic_damage()).
     #[serde(default)]
     pub isolytic_defense: f64,
+    /// Per-weapon attack values for sub-round resolution. If empty, one weapon with scalar `attack` is used (backward compat).
+    #[serde(default)]
+    pub weapons: Vec<WeaponStats>,
 }
 
 fn default_shield_mitigation() -> f64 {
     0.8
+}
+
+impl Combatant {
+    /// Number of weapons (sub-rounds per round). Empty weapons list is treated as one weapon using scalar `attack`.
+    pub fn weapon_count(&self) -> usize {
+        self.weapons.len().max(1)
+    }
+
+    /// Attack value for weapon at index. Returns None if index >= weapon_count (caller should not fire).
+    pub fn weapon_attack(&self, weapon_index: usize) -> Option<f64> {
+        if self.weapons.is_empty() {
+            if weapon_index == 0 {
+                Some(self.attack)
+            } else {
+                None
+            }
+        } else {
+            self.weapons.get(weapon_index).map(|w| w.attack)
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -290,6 +322,9 @@ pub fn serialize_events_json(events: &[CombatEvent]) -> Result<String, serde_jso
             object.insert("phase".to_string(), Value::String(event.phase.clone()));
             object.insert("source".to_string(), serialize_source(&event.source));
             object.insert("values".to_string(), Value::Object(event.values.clone()));
+            if let Some(wi) = event.weapon_index {
+                object.insert("weapon_index".to_string(), Value::from(wi));
+            }
             Value::Object(object)
         })
         .collect();
@@ -354,6 +389,7 @@ pub fn simulate_combat(
                 ship_ability_id: Some("baseline_round".to_string()),
                 ..EventSource::default()
             },
+            weapon_index: None,
             values: Map::from_iter([
                 ("attacker".to_string(), Value::String(attacker.id.clone())),
                 ("defender".to_string(), Value::String(defender.id.clone())),
@@ -403,6 +439,7 @@ pub fn simulate_combat(
                         ship_ability_id: Some(effect.ability_name.clone()),
                         ..EventSource::default()
                     },
+                    weapon_index: None,
                     values: Map::from_iter([
                         ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
                         ("triggered".to_string(), Value::Bool(triggered)),
@@ -437,6 +474,7 @@ pub fn simulate_combat(
                         ship_ability_id: Some(effect.ability_name.clone()),
                         ..EventSource::default()
                     },
+                    weapon_index: None,
                     values: Map::from_iter([
                         ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
                         ("triggered".to_string(), Value::Bool(triggered)),
@@ -465,6 +503,7 @@ pub fn simulate_combat(
                         ship_ability_id: Some(effect.ability_name.clone()),
                         ..EventSource::default()
                     },
+                    weapon_index: None,
                     values: Map::from_iter([
                         ("roll".to_string(), Value::from(round_f64(burning_roll))),
                         ("triggered".to_string(), Value::Bool(triggered)),
@@ -475,63 +514,17 @@ pub fn simulate_combat(
             }
         }
 
-        let attack_phase_assimilated = assimilated_rounds_remaining > 0;
-        record_ability_activations(
-            &mut trace,
-            round_index,
-            "attack",
-            attacker,
-            &attack_phase_effects,
-            attack_phase_assimilated,
-        );
-        phase_effects.add_effects(
-            TimingWindow::AttackPhase,
-            &attack_phase_effects,
-            attacker.attack,
-            attack_phase_assimilated,
-        );
-
-        let defense_phase_assimilated = assimilated_rounds_remaining > 0;
-        record_ability_activations(
-            &mut trace,
-            round_index,
-            "defense",
-            attacker,
-            &defense_phase_effects,
-            defense_phase_assimilated,
-        );
-        phase_effects.add_effects(
-            TimingWindow::DefensePhase,
-            &defense_phase_effects,
-            attacker.attack,
-            defense_phase_assimilated,
-        );
-
-        let effective_apex_shred = (attacker.apex_shred + phase_effects.composed_apex_shred_bonus())
-            .max(0.0);
-        let effective_apex_barrier = (defender.apex_barrier + phase_effects.composed_apex_barrier_bonus())
-            .max(0.0);
-        let effective_barrier = effective_apex_barrier
-            / (1.0 + effective_apex_shred).max(EPSILON);
-        let apex_damage_factor = 10000.0 / (10000.0 + effective_barrier);
-
-        let round_end_assimilated = assimilated_rounds_remaining > 0;
-        record_ability_activations(
-            &mut trace,
-            round_index,
-            "round_end",
-            attacker,
-            &round_end_effects,
-            round_end_assimilated,
-        );
+        let round_end_assimilated_early = assimilated_rounds_remaining > 0;
         phase_effects.add_effects(
             TimingWindow::RoundEnd,
             &round_end_effects,
             attacker.attack,
-            round_end_assimilated,
+            round_end_assimilated_early,
         );
+        let phase_effects_round = phase_effects.clone();
+        let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
 
-        let effective_attack = attacker.attack * phase_effects.pre_attack_multiplier();
+        let mut effective_pierce = attacker.pierce + phase_effects_round.pre_attack_pierce_bonus();
         let morale_source = round_start_effects.iter().find_map(|effect| {
             if let AbilityEffect::Morale(chance) =
                 scale_effect(effect.effect, round_start_assimilated)
@@ -541,7 +534,6 @@ pub fn simulate_combat(
                 None
             }
         });
-        let mut effective_pierce = attacker.pierce + phase_effects.pre_attack_pierce_bonus();
         if let Some((morale_source, morale_chance)) = morale_source {
             let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
             let morale_triggered = morale_roll < morale_chance;
@@ -556,6 +548,7 @@ pub fn simulate_combat(
                     ship_ability_id: Some(morale_source),
                     ..EventSource::default()
                 },
+                weapon_index: None,
                 values: Map::from_iter([
                     ("triggered".to_string(), Value::Bool(morale_triggered)),
                     ("roll".to_string(), Value::from(round_f64(morale_roll))),
@@ -572,35 +565,84 @@ pub fn simulate_combat(
             });
         }
 
-        let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        trace.record(CombatEvent {
-            event_type: "attack_roll".to_string(),
+        let attack_phase_assimilated = assimilated_rounds_remaining > 0;
+        record_ability_activations(
+            &mut trace,
             round_index,
-            phase: "attack".to_string(),
-            source: EventSource {
-                officer_id: Some(attacker.id.clone()),
-                ..EventSource::default()
-            },
-            values: Map::from_iter([
-                ("roll".to_string(), Value::from(round_f64(roll))),
-                ("base_attack".to_string(), Value::from(attacker.attack)),
-                (
-                    "effective_attack".to_string(),
-                    Value::from(round_f64(effective_attack)),
-                ),
-            ]),
-        });
+            "attack",
+            attacker,
+            &attack_phase_effects,
+            attack_phase_assimilated,
+        );
+        let defense_phase_assimilated = assimilated_rounds_remaining > 0;
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "defense",
+            attacker,
+            &defense_phase_effects,
+            defense_phase_assimilated,
+        );
 
-        let mitigation_multiplier = (1.0 - defender.mitigation).max(0.0);
-        trace.record(CombatEvent {
-            event_type: "mitigation_calc".to_string(),
-            round_index,
-            phase: "defense".to_string(),
-            source: EventSource {
-                hostile_ability_id: Some(format!("{}_mitigation", defender.id)),
-                ..EventSource::default()
-            },
-            values: Map::from_iter([
+        for weapon_index in 0..num_sub_rounds {
+            let mut phase_effects = phase_effects_round.clone();
+            let weapon_base = attacker.weapon_attack(weapon_index).unwrap_or(attacker.attack);
+            phase_effects.add_effects(
+                TimingWindow::AttackPhase,
+                &attack_phase_effects,
+                weapon_base,
+                attack_phase_assimilated,
+            );
+            phase_effects.add_effects(
+                TimingWindow::DefensePhase,
+                &defense_phase_effects,
+                weapon_base,
+                defense_phase_assimilated,
+            );
+
+            let effective_apex_shred = (attacker.apex_shred + phase_effects.composed_apex_shred_bonus())
+            .max(0.0);
+            let effective_apex_barrier = (defender.apex_barrier + phase_effects.composed_apex_barrier_bonus())
+                .max(0.0);
+            let effective_barrier = effective_apex_barrier
+                / (1.0 + effective_apex_shred).max(EPSILON);
+            let apex_damage_factor = 10000.0 / (10000.0 + effective_barrier);
+
+            let weapon_index_u = weapon_index as u32;
+            if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
+            let effective_attack = attacker_weapon_attack * phase_effects.pre_attack_multiplier();
+
+            let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            trace.record(CombatEvent {
+                event_type: "attack_roll".to_string(),
+                round_index,
+                phase: "attack".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: Some(weapon_index_u),
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(roll))),
+                    ("base_attack".to_string(), Value::from(attacker_weapon_attack)),
+                    (
+                        "effective_attack".to_string(),
+                        Value::from(round_f64(effective_attack)),
+                    ),
+                ]),
+            });
+
+            let mitigation_multiplier = (1.0 - defender.mitigation).max(0.0);
+            trace.record(CombatEvent {
+                event_type: "mitigation_calc".to_string(),
+                round_index,
+                phase: "defense".to_string(),
+                source: EventSource {
+                    hostile_ability_id: Some(format!("{}_mitigation", defender.id)),
+                    ..EventSource::default()
+                },
+                weapon_index: Some(weapon_index_u),
+                values: Map::from_iter([
                 ("mitigation".to_string(), Value::from(defender.mitigation)),
                 (
                     "multiplier".to_string(),
@@ -623,6 +665,7 @@ pub fn simulate_combat(
                 player_bonus_source: Some("attack_pierce_bonus".to_string()),
                 ..EventSource::default()
             },
+            weapon_index: None,
             values: Map::from_iter([
                 ("pierce".to_string(), Value::from(effective_pierce)),
                 (
@@ -654,6 +697,7 @@ pub fn simulate_combat(
                 ship_ability_id: Some("crit_matrix".to_string()),
                 ..EventSource::default()
             },
+            weapon_index: None,
             values: Map::from_iter([
                 ("roll".to_string(), Value::from(round_f64(crit_roll))),
                 ("is_crit".to_string(), Value::Bool(is_crit)),
@@ -688,6 +732,7 @@ pub fn simulate_combat(
                         ship_ability_id: Some(effect.ability_name.clone()),
                         ..EventSource::default()
                     },
+                    weapon_index: None,
                     values: Map::from_iter([
                         ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
                         ("triggered".to_string(), Value::Bool(triggered)),
@@ -722,6 +767,7 @@ pub fn simulate_combat(
                         ship_ability_id: Some(effect.ability_name.clone()),
                         ..EventSource::default()
                     },
+                    weapon_index: None,
                     values: Map::from_iter([
                         ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
                         ("triggered".to_string(), Value::Bool(triggered)),
@@ -754,6 +800,7 @@ pub fn simulate_combat(
                         ship_ability_id: Some(effect.ability_name.clone()),
                         ..EventSource::default()
                     },
+                    weapon_index: None,
                     values: Map::from_iter([
                         ("roll".to_string(), Value::from(round_f64(burning_roll))),
                         ("triggered".to_string(), Value::Bool(triggered)),
@@ -780,6 +827,7 @@ pub fn simulate_combat(
                 ship_ability_id: Some("officer_proc".to_string()),
                 ..EventSource::default()
             },
+            weapon_index: None,
             values: Map::from_iter([
                 ("roll".to_string(), Value::from(round_f64(proc_roll))),
                 ("triggered".to_string(), Value::Bool(did_proc)),
@@ -836,6 +884,7 @@ pub fn simulate_combat(
                 hostile_ability_id: Some(format!("{}_hull", defender.id)),
                 ..EventSource::default()
             },
+            weapon_index: Some(weapon_index_u),
             values: Map::from_iter([
                 ("damage_after_apex".to_string(), Value::from(round_f64(damage_after_apex))),
                 ("shield_mitigation".to_string(), Value::from(round_f64(shield_mitigation))),
@@ -859,7 +908,9 @@ pub fn simulate_combat(
                 ),
             ]),
         });
+            }
 
+            if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {
         // Defender counter-attack: defender deals damage to attacker (ship runs out of HHP ends fight).
         let def_mitigation_mult = (1.0 - attacker.mitigation).max(0.0);
         let def_damage_through = (def_mitigation_mult + defender.pierce).max(0.0);
@@ -876,7 +927,7 @@ pub fn simulate_combat(
             1.0
         };
         let def_to_attacker_damage =
-            defender.attack * def_damage_through * def_crit_mult * def_proc_mult;
+            defender_weapon_attack * def_damage_through * def_crit_mult * def_proc_mult;
         let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
             attacker.shield_mitigation.clamp(0.0, 1.0)
         } else {
@@ -889,8 +940,22 @@ pub fn simulate_combat(
         let att_hull_damage_this_round = att_hull_portion + att_shield_overflow;
         attacker_shield_remaining = (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
         total_attacker_hull_damage += att_hull_damage_this_round;
+            }
+        }
 
-        let bonus_damage = phase_effects.compose_round_end_damage(attacker.end_of_round_damage);
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "round_end",
+            attacker,
+            &round_end_effects,
+            round_end_assimilated_early,
+        );
+
+        let round_end_apex_shred = (attacker.apex_shred + phase_effects_round.composed_apex_shred_bonus()).max(0.0);
+        let round_end_apex_barrier = (defender.apex_barrier + phase_effects_round.composed_apex_barrier_bonus()).max(0.0);
+        let round_end_apex_factor = 10000.0 / (10000.0 + round_end_apex_barrier / (1.0 + round_end_apex_shred).max(EPSILON));
+        let bonus_damage = phase_effects_round.compose_round_end_damage(attacker.end_of_round_damage);
         // Burning: 1% of total (max) hull per round, not remaining (per STFC).
         let burning_damage = if burning_rounds_remaining > 0 {
             defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
@@ -898,12 +963,12 @@ pub fn simulate_combat(
             0.0
         };
         // Round-end and burning apply to hull only (shields do not absorb these).
-        total_hull_damage += (bonus_damage + burning_damage) * apex_damage_factor;
+        total_hull_damage += (bonus_damage + burning_damage) * round_end_apex_factor;
         total_attacker_hull_damage += defender.end_of_round_damage;
 
         // Regen: shield and hull restoration at round end (from officer/data regen effects).
-        let shield_regen = phase_effects.composed_shield_regen();
-        let hull_regen = phase_effects.composed_hull_regen();
+        let shield_regen = phase_effects_round.composed_shield_regen();
+        let hull_regen = phase_effects_round.composed_hull_regen();
         defender_shield_remaining = (defender_shield_remaining + shield_regen)
             .min(defender.shield_health.max(0.0));
         total_hull_damage = (total_hull_damage - hull_regen).max(0.0);
@@ -926,6 +991,7 @@ pub fn simulate_combat(
                 player_bonus_source: Some("round_end_bonus".to_string()),
                 ..EventSource::default()
             },
+            weapon_index: None,
             values: Map::from_iter([
                 (
                     "bonus_damage".to_string(),
@@ -1304,6 +1370,7 @@ fn record_ability_activations(
                 ship_ability_id: Some(effect.ability_name.clone()),
                 ..EventSource::default()
             },
+            weapon_index: None,
             values: Map::from_iter([
                 ("boosted".to_string(), Value::Bool(effect.boosted)),
                 (
