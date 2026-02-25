@@ -37,7 +37,8 @@ fn get_bonus(profile: &PlayerProfile, key: &str) -> f64 {
 /// Apply LCARS/officer static buffs to a Combatant (e.g. from [BuffSet::static_buffs]).
 /// Intended for use when building a Combatant from ship/hostile + crew where crew is resolved via
 /// [crate::lcars::resolve_crew_to_buff_set]. Keys applied: isolytic_damage, isolytic_defense,
-/// shield_mitigation (additive; shield_mitigation clamped to [0, 1]).
+/// shield_mitigation (additive; shield_mitigation clamped to [0, 1]), weapon_damage (mult to attack),
+/// hull_hp, shield_hp (mult), shield_pierce/armor_pierce (add to pierce), crit_chance (add), crit_damage (mult).
 pub fn apply_static_buffs_to_combatant(
     combatant: Combatant,
     static_buffs: &HashMap<String, f64>,
@@ -48,8 +49,21 @@ pub fn apply_static_buffs_to_combatant(
     let isolytic_damage_add = static_buffs.get("isolytic_damage").copied().unwrap_or(0.0);
     let isolytic_defense_add = static_buffs.get("isolytic_defense").copied().unwrap_or(0.0);
     let shield_mitigation_add = static_buffs.get("shield_mitigation").copied().unwrap_or(0.0);
+    let weapon_mult = static_buffs.get("weapon_damage").copied().unwrap_or(1.0);
+    let hull_mult = static_buffs.get("hull_hp").copied().unwrap_or(1.0);
+    let shield_mult = static_buffs.get("shield_hp").copied().unwrap_or(1.0);
+    let pierce_add = static_buffs.get("shield_pierce").copied().unwrap_or(0.0)
+        + static_buffs.get("armor_pierce").copied().unwrap_or(0.0);
+    let crit_chance_add = static_buffs.get("crit_chance").copied().unwrap_or(0.0);
+    let crit_damage_mult = static_buffs.get("crit_damage").copied().unwrap_or(1.0);
 
     Combatant {
+        attack: combatant.attack * weapon_mult,
+        hull_health: combatant.hull_health * hull_mult,
+        shield_health: combatant.shield_health * shield_mult,
+        pierce: (combatant.pierce + pierce_add).max(0.0),
+        crit_chance: (combatant.crit_chance + crit_chance_add).max(0.0).min(1.0),
+        crit_multiplier: (combatant.crit_multiplier * crit_damage_mult).max(0.0),
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
         shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add)

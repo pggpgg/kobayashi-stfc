@@ -123,6 +123,32 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
             // as a proxy for "extra damage this round" (simplified). Full extra_attack would need engine support.
             Some((timing, AbilityEffect::AttackMultiplier(1.0 + chance * (mult - 1.0))))
         }
+        "morale" => {
+            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            Some((timing, AbilityEffect::Morale(chance)))
+        }
+        "assimilated" => {
+            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            Some((timing, AbilityEffect::Assimilated {
+                chance,
+                duration_rounds: 1,
+            }))
+        }
+        "hull_breach" => {
+            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            Some((timing, AbilityEffect::HullBreach {
+                chance,
+                duration_rounds: 1,
+                requires_critical: false,
+            }))
+        }
+        "burning" => {
+            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            Some((timing, AbilityEffect::Burning {
+                chance,
+                duration_rounds: 1,
+            }))
+        }
         "tag" => None, // Non-combat; skip.
         _ => None,
     }
