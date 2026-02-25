@@ -1,6 +1,6 @@
 use crate::data::hostile::{load_hostile_index, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::import::{
-    import_roster_csv, import_spocks_export, load_imported_roster_ids,
+    import_roster_csv, import_spocks_export, load_imported_roster_ids_unlocked_only,
     DEFAULT_IMPORT_OUTPUT_PATH,
 };
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
@@ -111,7 +111,7 @@ pub struct OfficerListItem {
 pub fn officers_payload(path: &str) -> Result<String, serde_json::Error> {
     let officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH).unwrap_or_default();
     let owned_ids = if parse_owned_only(path) {
-        load_imported_roster_ids(DEFAULT_IMPORT_OUTPUT_PATH)
+        load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH)
     } else {
         None
     };

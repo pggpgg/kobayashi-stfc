@@ -1,4 +1,4 @@
-use crate::data::import::{load_imported_roster_ids, DEFAULT_IMPORT_OUTPUT_PATH};
+use crate::data::import::{load_imported_roster_ids_unlocked_only, DEFAULT_IMPORT_OUTPUT_PATH};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 
 /// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
@@ -63,7 +63,7 @@ impl CrewGenerator {
         // Only filter by imported roster when we have enough officers for a full crew:
         // 1 captain + BRIDGE_SLOTS bridge + BELOW_DECKS_SLOTS below decks (all distinct).
         const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
-        if let Some(roster_ids) = load_imported_roster_ids(DEFAULT_IMPORT_OUTPUT_PATH) {
+        if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH) {
             if roster_ids.len() >= MIN_OFFICERS {
                 officers.retain(|officer| roster_ids.contains(&officer.id));
             }
