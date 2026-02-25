@@ -78,14 +78,14 @@ cargo build --release
 ### Other commands
 
 ```bash
-# Validate LCARS officer definitions
-./target/release/kobayashi validate --path data/officers
-# Emits severity levels:
-# - error: malformed effect/condition data
-# - warning: recognized mechanic exists but simulation support is partial/planned
-# - info: ignored non-combat tags (loot/mining/cargo/etc.)
-# Includes per-officer simulation_fidelity so ranking output can flag partial mechanics
+# Validate LCARS officer definitions (emits error/warning/info per mechanic)
+./target/release/kobayashi validate data/officers
 
+# Regenerate LCARS from canonical JSON
+./target/release/kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers]
+
+# Use LCARS as officer source for simulation (default: canonical)
+KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladin --hostile explorer_30 --sims 5000
 ```
 
 ### Data maintenance policy
@@ -224,14 +224,22 @@ kobayashi/
 
 ### Adding or updating officers
 
-Officer definitions live in `data/officers/*.lcars.yaml`. To add a new officer:
+Officer definitions live in `data/officers/*.lcars.yaml`. LCARS is the source of truth for combat abilities; the canonical JSON can be regenerated from LCARS if needed.
 
-1. Create or edit the appropriate faction file
+To add or update officers:
+
+1. Create or edit the appropriate faction file (e.g. `federation.lcars.yaml`, `independent.lcars.yaml`)
 2. Follow the [LCARS schema](DESIGN.md#3-lcars-language-specification)
-3. Run `kobayashi validate` to check your definition
+3. Run `kobayashi validate data/officers` to validate LCARS files (or `kobayashi validate data/officers/officers.canonical.json` for canonical JSON)
 4. Submit a PR
 
-Contributions for all 280+ officers are very welcome — this is a community effort.
+To regenerate LCARS from the canonical spreadsheet export:
+
+```bash
+kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers]
+```
+
+See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) for the modifier mapping reference and validation details.
 
 ### Validating against real fights
 
@@ -260,7 +268,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [ ] Chain grinding simulation (multi-fight with carry-over)
 - [ ] Armada mode (multi-ship combat)
 - [ ] Sensitivity analysis ("what if I promote this officer?")
-- [ ] Full 280+ officer LCARS database
+- [x] Full 280+ officer LCARS database
 
 ---
 

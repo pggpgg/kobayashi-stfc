@@ -1,8 +1,11 @@
 use std::collections::HashSet;
 use std::fmt;
 use std::fs;
+use std::path::Path;
 
 use serde_json::{Map, Value};
+
+use crate::lcars;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ValidationSeverity {
@@ -111,7 +114,132 @@ const OPERATOR_ENUM: &[&str] = &[
     "sub",
 ];
 
+/// Validate a path: if directory, validate LCARS YAML files; if file, validate canonical JSON.
 pub fn validate_officer_dataset(path: &str) -> Result<ValidationReport, String> {
+    let p = Path::new(path);
+    if p.is_dir() {
+        validate_lcars_dir(path)
+    } else {
+        validate_officer_dataset_canonical(path)
+    }
+}
+
+/// Validate LCARS YAML files in a directory.
+pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
+    let officers = lcars::load_lcars_dir(path)
+        .map_err(|e| format!("failed to load LCARS from '{path}': {e}"))?;
+
+    let mut report = ValidationReport::default();
+    let mut seen_ids = HashSet::new();
+
+    for (file_index, officer) in officers.iter().enumerate() {
+        let base_context = format!("officer[{file_index}] id='{}'", officer.id);
+
+        if officer.id.trim().is_empty() {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{base_context}"),
+                "missing non-empty 'id'",
+            );
+        } else if !seen_ids.insert(officer.id.clone()) {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{base_context}"),
+                format!("duplicate id '{}'", officer.id),
+            );
+        }
+
+        if officer.name.trim().is_empty() {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{base_context}"),
+                "missing non-empty 'name'",
+            );
+        }
+
+        if officer.captain_ability.is_none()
+            && officer.bridge_ability.is_none()
+            && officer.below_decks_ability.is_none()
+        {
+            report.push(
+                ValidationSeverity::Warning,
+                format!("{base_context}"),
+                "officer has no abilities defined",
+            );
+        }
+
+        for (slot, ability_opt) in [
+            ("captain_ability", &officer.captain_ability),
+            ("bridge_ability", &officer.bridge_ability),
+            ("below_decks_ability", &officer.below_decks_ability),
+        ] {
+            if let Some(ability) = ability_opt {
+                validate_lcars_ability(&mut report, &base_context, slot, ability);
+            }
+        }
+    }
+
+    Ok(report)
+}
+
+fn validate_lcars_ability(
+    report: &mut ValidationReport,
+    base_context: &str,
+    slot: &str,
+    ability: &lcars::LcarsAbility,
+) {
+    let context = format!("{base_context}.{slot}");
+    if ability.name.trim().is_empty() {
+        report.push(
+            ValidationSeverity::Warning,
+            context.clone(),
+            "ability has empty name",
+        );
+    }
+    for (i, effect) in ability.effects.iter().enumerate() {
+        let eff_ctx = format!("{context}.effects[{i}]");
+        if effect.effect_type.trim().is_empty() {
+            report.push(
+                ValidationSeverity::Error,
+                eff_ctx.clone(),
+                "effect has empty type",
+            );
+        }
+        if effect.effect_type == "stat_modify" {
+            if let Some(ref stat) = effect.stat {
+                if let Some(support) = mechanic_support_for_lcars_stat(stat) {
+                    if matches!(support, MechanicSupport::Partial) {
+                        report.push(
+                            ValidationSeverity::Warning,
+                            eff_ctx.clone(),
+                            format!("stat '{stat}' maps to partially implemented mechanic"),
+                        );
+                    } else if matches!(support, MechanicSupport::Planned) {
+                        report.push(
+                            ValidationSeverity::Info,
+                            eff_ctx,
+                            format!("stat '{stat}' maps to planned mechanic"),
+                        );
+                    }
+                }
+            } else {
+                report.push(
+                    ValidationSeverity::Warning,
+                    eff_ctx,
+                    "stat_modify effect missing 'stat'",
+                );
+            }
+        }
+    }
+}
+
+fn mechanic_support_for_lcars_stat(stat: &str) -> Option<MechanicSupport> {
+    let key = stat.to_lowercase().replace('-', "_");
+    mechanic_support_for_key(&key)
+}
+
+/// Validate canonical JSON officer dataset.
+pub fn validate_officer_dataset_canonical(path: &str) -> Result<ValidationReport, String> {
     let raw = fs::read_to_string(path).map_err(|err| format!("unable to read '{path}': {err}"))?;
     let payload: Value = serde_json::from_str(&raw)
         .map_err(|err| format!("unable to parse json '{path}': {err}"))?;

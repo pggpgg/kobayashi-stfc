@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
 use rayon::prelude::*;
+
+use std::collections::HashMap;
 
 use crate::combat::{
     mitigation, pierce_damage_through_bonus, simulate_combat, Ability, AbilityClass, AbilityEffect,
@@ -9,8 +9,17 @@ use crate::combat::{
 };
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
-use crate::data::profile::{apply_profile_to_attacker, load_profile, PlayerProfile, DEFAULT_PROFILE_PATH};
+use crate::data::profile::{apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile, PlayerProfile, DEFAULT_PROFILE_PATH};
+use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
+
+const DEFAULT_LCARS_OFFICERS_DIR: &str = "data/officers";
+
+#[derive(Debug, Clone)]
+struct LcarsOfficerData {
+    by_id: HashMap<String, crate::lcars::LcarsOfficer>,
+    name_to_id: HashMap<String, String>,
+}
 
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
@@ -41,6 +50,12 @@ pub fn run_monte_carlo_parallel(
     run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, true)
 }
 
+fn use_lcars_officer_source() -> bool {
+    std::env::var("KOBAYASHI_OFFICER_SOURCE")
+        .map(|v| v.eq_ignore_ascii_case("lcars"))
+        .unwrap_or(false)
+}
+
 fn run_monte_carlo_with_parallelism(
     ship: &str,
     hostile: &str,
@@ -55,8 +70,34 @@ fn run_monte_carlo_with_parallelism(
         .unwrap_or_default();
     let profile = load_profile(DEFAULT_PROFILE_PATH);
 
+    let lcars_data = if use_lcars_officer_source() {
+        load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR)
+            .ok()
+            .map(|officers| {
+                let by_id = index_lcars_officers_by_id(officers);
+                let name_to_id: HashMap<String, String> = by_id
+                    .values()
+                    .map(|o| (normalize_lookup_key(&o.name), o.id.clone()))
+                    .collect();
+                LcarsOfficerData {
+                    by_id,
+                    name_to_id,
+                }
+            })
+    } else {
+        None
+    };
+
     let run_one = |candidate: &CrewCandidate| {
-        let input = scenario_to_combat_input(ship, hostile, candidate, seed, &officer_index, &profile);
+        let input = scenario_to_combat_input(
+            ship,
+            hostile,
+            candidate,
+            seed,
+            &officer_index,
+            &profile,
+            lcars_data.as_ref(),
+        );
         let mut wins = 0usize;
         let mut surviving_hull_sum = 0.0;
 
@@ -128,17 +169,51 @@ fn scenario_to_combat_input(
     seed: u64,
     officers_by_name: &HashMap<String, Officer>,
     profile: &PlayerProfile,
+    lcars_data: Option<&LcarsOfficerData>,
 ) -> CombatSimulationInput {
     let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
 
-    let crew_seats = build_crew_seats(candidate, officers_by_name);
+    let (crew_seats, static_buffs) = if let Some(lcars) = lcars_data {
+        let captain_id = lcars
+            .name_to_id
+            .get(&normalize_lookup_key(&split_name_and_tier(&candidate.captain).0))
+            .cloned();
+        let bridge_ids: Vec<String> = candidate
+            .bridge
+            .iter()
+            .filter_map(|n| {
+                lcars.name_to_id.get(&normalize_lookup_key(&split_name_and_tier(n).0)).cloned()
+            })
+            .collect();
+        let below_ids: Vec<String> = candidate
+            .below_decks
+            .iter()
+            .filter_map(|n| {
+                lcars.name_to_id.get(&normalize_lookup_key(&split_name_and_tier(n).0)).cloned()
+            })
+            .collect();
+
+        if let Some(cap_id) = captain_id {
+            let buff_set = resolve_crew_to_buff_set(
+                &cap_id,
+                &bridge_ids,
+                &below_ids,
+                &lcars.by_id,
+                &ResolveOptions::default(),
+            );
+            (buff_set.to_crew_config().seats.clone(), buff_set.static_buffs)
+        } else {
+            (build_crew_seats(candidate, officers_by_name), HashMap::new())
+        }
+    } else {
+        (build_crew_seats(candidate, officers_by_name), HashMap::new())
+    };
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let defender_mitigation = computed_defender_mitigation(ship, hostile);
         let defender_hull = hostile_rec.hull_health;
         let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level as u32));
-        return CombatSimulationInput {
-            attacker: apply_profile_to_attacker(
+        let mut attacker = apply_profile_to_attacker(
                 Combatant {
                     id: ship.to_string(),
                     attack: ship_rec.attack,
@@ -162,7 +237,12 @@ fn scenario_to_combat_input(
                 isolytic_defense: 0.0,
             },
                 profile,
-            ),
+            );
+        if !static_buffs.is_empty() {
+            attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
+        }
+        return CombatSimulationInput {
+            attacker,
             defender: Combatant {
                 id: hostile.to_string(),
                 attack: 0.0,
@@ -193,8 +273,7 @@ fn scenario_to_combat_input(
     let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
     let defender_mitigation = computed_defender_mitigation(ship, hostile);
 
-    CombatSimulationInput {
-        attacker: apply_profile_to_attacker(
+    let mut attacker = apply_profile_to_attacker(
             Combatant {
                 id: ship.to_string(),
                 attack: 95.0 + (ship_hash % 70) as f64,
@@ -214,7 +293,13 @@ fn scenario_to_combat_input(
                 isolytic_defense: 0.0,
             },
             profile,
-        ),
+        );
+    if !static_buffs.is_empty() {
+        attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
+    }
+
+    CombatSimulationInput {
+        attacker,
         defender: Combatant {
             id: hostile.to_string(),
             attack: 0.0,
@@ -898,8 +983,8 @@ mod tests {
         let officers = HashMap::new();
         let profile = PlayerProfile::default();
 
-        let one = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile);
-        let two = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile);
+        let one = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile, None);
+        let two = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile, None);
         assert_eq!(one.defender.mitigation, two.defender.mitigation);
     }
     #[test]

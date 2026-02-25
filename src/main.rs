@@ -16,6 +16,7 @@ enum Command {
     Optimize,
     Import,
     Validate,
+    GenerateLcars,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,6 +45,7 @@ fn parse_command() -> Option<Command> {
         Some("optimize") => Some(Command::Optimize),
         Some("import") => Some(Command::Import),
         Some("validate") => Some(Command::Validate),
+        Some("generate-lcars") => Some(Command::GenerateLcars),
         _ => None,
     }
 }
@@ -426,9 +428,44 @@ fn handle_validate(args: &[String]) -> i32 {
     }
 }
 
+fn handle_generate_lcars(args: &[String]) -> i32 {
+    let exe = match env::current_exe() {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("generate-lcars: cannot get current exe: {e}");
+            return 1;
+        }
+    };
+    let dir = exe.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let candidates = ["generate_lcars.exe", "generate_lcars"];
+    let bin = candidates
+        .iter()
+        .map(|name| dir.join(name))
+        .find(|p| p.exists());
+    match bin {
+        Some(b) => run_generate_lcars_bin(&b, args),
+        None => {
+            eprintln!("generate-lcars: binary not found. Run: cargo build --bin generate_lcars");
+            1
+        }
+    }
+}
+
+fn run_generate_lcars_bin(bin: &std::path::Path, args: &[String]) -> i32 {
+    let mut cmd = process::Command::new(bin);
+    cmd.args(args);
+    match cmd.status() {
+        Ok(status) => status.code().unwrap_or(1),
+        Err(e) => {
+            eprintln!("generate-lcars failed: {e}");
+            1
+        }
+    }
+}
+
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars> [args]\n\
 simulate: kobayashi simulate <rounds> <seed>\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> --attacker-pierce <f64>\n\
                        --defender-id <id> --defender-mitigation <f64> --rounds <u32> --seed <u64> [--trace-events]\n\
@@ -469,6 +506,9 @@ fn main() {
         }
         Some(Command::Validate) => {
             exit_code = handle_validate(&command_args);
+        }
+        Some(Command::GenerateLcars) => {
+            exit_code = handle_generate_lcars(&command_args);
         }
         None => {
             print_usage();

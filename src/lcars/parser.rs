@@ -3,16 +3,16 @@
 use std::fs;
 use std::path::Path;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Root structure of an LCARS YAML file (e.g. one file per faction).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LcarsFile {
     pub officers: Vec<LcarsOfficer>,
 }
 
 /// Single officer definition with up to three ability blocks.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LcarsOfficer {
     pub id: String,
     pub name: String,
@@ -31,7 +31,7 @@ pub struct LcarsOfficer {
 }
 
 /// One ability block (captain, bridge, or below decks) with a name and effects.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LcarsAbility {
     pub name: String,
     #[serde(default)]
@@ -40,7 +40,7 @@ pub struct LcarsAbility {
 
 /// Single effect within an ability. Unknown `type` values are preserved and
 /// skipped at resolve time (graceful degradation).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LcarsEffect {
     #[serde(rename = "type")]
     pub effect_type: String,
@@ -71,7 +71,7 @@ pub struct LcarsEffect {
 }
 
 /// Duration of an effect. In YAML: `permanent` (string) or `rounds: N` (map).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LcarsDuration {
     Permanent(String),
@@ -88,7 +88,7 @@ impl LcarsDuration {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LcarsScaling {
     #[serde(default)]
     pub base: Option<f64>,
@@ -121,7 +121,7 @@ impl LcarsScaling {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LcarsCondition {
     #[serde(rename = "type")]
     pub condition_type: String,

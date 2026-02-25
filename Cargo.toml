@@ -28,6 +28,10 @@ name = "validate_data"
 path = "src/bin/validate_data.rs"
 
 [[bin]]
+name = "generate_lcars"
+path = "src/bin/generate_lcars.rs"
+
+[[bin]]
 name = "benchmark_simulator"
 path = "src/bin/benchmark_simulator.rs"
 
