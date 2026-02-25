@@ -241,6 +241,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
             apex_shred: 0.0,
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
+            weapons: vec![],
         },
         &load_profile(DEFAULT_PROFILE_PATH),
     );
@@ -261,6 +262,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     };
     let config = SimulationConfig {
         rounds: parsed.rounds,

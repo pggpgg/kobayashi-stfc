@@ -38,6 +38,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     };
     let defender = Combatant {
         id: "cal_defender".to_string(),
@@ -56,6 +57,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     };
     let config = SimulationConfig {
         rounds: 10,

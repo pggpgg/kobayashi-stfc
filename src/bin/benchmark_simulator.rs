@@ -34,6 +34,7 @@ fn main() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -52,6 +53,7 @@ fn main() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     };
     let rounds_per_combat = 100u32;
     let config = SimulationConfig {

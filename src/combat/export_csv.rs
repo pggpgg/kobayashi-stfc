@@ -326,6 +326,7 @@ pub fn export_to_attacker(
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     }
 }
 
@@ -359,6 +360,7 @@ pub fn export_to_defender(
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     }
 }
 

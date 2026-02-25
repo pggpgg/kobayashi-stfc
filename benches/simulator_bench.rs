@@ -26,6 +26,7 @@ fn default_attacker() -> Combatant {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     }
 }
 
@@ -47,6 +48,7 @@ fn default_defender() -> Combatant {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        weapons: vec![],
     }
 }
 

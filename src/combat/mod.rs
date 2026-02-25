@@ -14,7 +14,7 @@ pub use engine::{
     apply_morale_primary_piercing, component_mitigation, isolytic_damage, mitigation,
     mitigation_with_morale, pierce_damage_through_bonus, serialize_events_json, simulate_combat,
     AttackerStats, CombatEvent, Combatant, DefenderStats, EventSource, ShipType, SimulationConfig,
-    SimulationResult, TraceCollector, TraceMode, BATTLESHIP_COEFFICIENTS, EPSILON,
+    SimulationResult, TraceCollector, TraceMode, WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON,
     EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS, MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP,
     SURVEY_COEFFICIENTS,
 };

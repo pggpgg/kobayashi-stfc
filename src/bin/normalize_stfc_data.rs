@@ -528,6 +528,7 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
     let mut crit_damage = 1.5f64;
     let mut shield_health = 0.0f64;
     let mut weapon_count = 0u32;
+    let mut weapon_attacks: Vec<f64> = Vec::new();
 
     for comp in &tier.components {
         if let Some(ref info) = comp.additional_info {
@@ -536,7 +537,9 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
                 armor_piercing += w.armor_pierce;
                 shield_piercing += w.shield_pierce;
                 accuracy += w.accuracy;
-                attack += (w.max_damage + w.min_damage) * 0.5;
+                let per_weapon = (w.max_damage + w.min_damage) * 0.5;
+                attack += per_weapon;
+                weapon_attacks.push(per_weapon);
                 crit_chance = w.crit_chance;
                 crit_damage = w.crit_damage;
             }
@@ -559,6 +562,17 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
     }
     let hull_health = shield_health * 2.0;
 
+    let weapons = if weapon_attacks.is_empty() {
+        None
+    } else {
+        Some(
+            weapon_attacks
+                .into_iter()
+                .map(|a| kobayashi::data::ship::WeaponRecord { attack: a })
+                .collect(),
+        )
+    };
+
     Some(kobayashi::data::ship::ShipRecord {
         id: id.to_string(),
         ship_name: raw.ship_name.clone(),
@@ -574,5 +588,6 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
         shield_mitigation: None,
         apex_shred: 0.0,
         isolytic_damage: 0.0,
+        weapons,
     })
 }

@@ -122,6 +122,7 @@ mod tests {
             shield_health: 0.0,
             shield_mitigation,
             apex_barrier: 0.0,
+            weapons: vec![],
             apex_shred: 0.0,
             isolytic_damage,
             isolytic_defense,

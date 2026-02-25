@@ -235,6 +235,7 @@ fn scenario_to_combat_input(
                 apex_shred: ship_rec.apex_shred,
                 isolytic_damage: ship_rec.isolytic_damage,
                 isolytic_defense: 0.0,
+                weapons: ship_rec.to_weapons(),
             },
                 profile,
             );
@@ -260,6 +261,7 @@ fn scenario_to_combat_input(
                 apex_shred: 0.0,
                 isolytic_damage: 0.0,
                 isolytic_defense: hostile_rec.isolytic_defense,
+                weapons: vec![],
             },
             crew: CrewConfiguration { seats: crew_seats.clone() },
             rounds,
@@ -291,6 +293,7 @@ fn scenario_to_combat_input(
                 apex_shred: 0.0,
                 isolytic_damage: 0.0,
                 isolytic_defense: 0.0,
+                weapons: vec![],
             },
             profile,
         );
@@ -309,6 +312,7 @@ fn scenario_to_combat_input(
             crit_multiplier: 1.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
+            weapons: vec![],
             end_of_round_damage: 0.0,
             hull_health: defender_hull,
             shield_health: 400.0,
