@@ -42,6 +42,9 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 - Parser exists and is tested against one or more fixture logs.
 - Documented format (or sample) so new logs can be added for parity checks in Phase 3 DoD (replay/parity between parsed logs and engine output).
 
+**Future / TODO**
+- **Sub-round events:** Add `weapon_index` to `IngestedEvent`, parse it from JSON, and pass it through in `ingested_events_to_combat_events`. Format already documents optional `weapon_index`; parser currently ignores it. Needed for per-weapon parity when logs include sub-round granularity.
+
 ---
 
 ### Phase 4 — Fidelity and diagnostics (not started)
