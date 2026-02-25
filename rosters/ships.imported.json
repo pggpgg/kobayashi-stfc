@@ -1,0 +1,17 @@
+{
+  "ships": [
+    {
+      "components": [
+        1,
+        2,
+        3
+      ],
+      "hull_id": 100,
+      "level": 10,
+      "level_percentage": 0.5,
+      "psid": 919293,
+      "tier": 2
+    }
+  ],
+  "source_path": "stfc-mod sync"
+}
