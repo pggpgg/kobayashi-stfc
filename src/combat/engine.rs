@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
-    active_effects_for_timing, AbilityEffect, ActiveAbilityEffect, CrewConfiguration, TimingWindow,
+    active_effects_for_timing, filter_effects_by_condition, AbilityEffect, ActiveAbilityEffect,
+    CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::rng::Rng;
 use crate::combat::stacking::{StackContribution, StatStacking};
@@ -349,6 +350,20 @@ pub fn simulate_combat(
     let mut burning_rounds_remaining = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
     let combat_begin_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatBegin);
+    let combat_begin_ctx = CombatContext {
+        round_index: 0,
+        defender_hull_pct: 1.0,
+        defender_shield_pct: 1.0,
+        attacker_hull_pct: 1.0,
+        attacker_shield_pct: 1.0,
+    };
+    let combat_begin_filtered =
+        filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
+    let shield_break_effects = active_effects_for_timing(attacker_crew, TimingWindow::ShieldBreak);
+    let kill_effects = active_effects_for_timing(attacker_crew, TimingWindow::Kill);
+    let hull_breach_effects = active_effects_for_timing(attacker_crew, TimingWindow::HullBreach);
+    let receive_damage_effects = active_effects_for_timing(attacker_crew, TimingWindow::ReceiveDamage);
+    let combat_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatEnd);
 
     let combat_begin_assimilated = assimilated_rounds_remaining > 0;
     record_ability_activations(
@@ -356,7 +371,7 @@ pub fn simulate_combat(
         0,
         "combat_begin",
         attacker,
-        &combat_begin_effects,
+        &combat_begin_filtered,
         combat_begin_assimilated,
     );
 
@@ -373,12 +388,31 @@ pub fn simulate_combat(
             active_effects_for_timing(attacker_crew, TimingWindow::DefensePhase);
         let round_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundEnd);
 
+        let combat_ctx = CombatContext {
+            round_index,
+            defender_hull_pct: 1.0
+                - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: 1.0
+                - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+        };
+
         let mut phase_effects = EffectAccumulator::default();
         phase_effects.add_effects(
             TimingWindow::CombatBegin,
-            &combat_begin_effects,
+            &combat_begin_filtered,
             attacker.attack,
             assimilated_rounds_remaining > 0,
+            round_index,
         );
 
         trace.record(CombatEvent {
@@ -401,22 +435,24 @@ pub fn simulate_combat(
         });
 
         let round_start_assimilated = assimilated_rounds_remaining > 0;
+        let round_start_filtered = filter_effects_by_condition(&round_start_effects, &combat_ctx);
         record_ability_activations(
             &mut trace,
             round_index,
             "round_start",
             attacker,
-            &round_start_effects,
+            &round_start_filtered,
             round_start_assimilated,
         );
         phase_effects.add_effects(
             TimingWindow::RoundStart,
-            &round_start_effects,
+            &round_start_filtered,
             attacker.attack,
             round_start_assimilated,
+            round_index,
         );
 
-        for effect in &round_start_effects {
+        for effect in &round_start_filtered {
             let effective_effect = scale_effect(effect.effect, round_start_assimilated);
 
             if let AbilityEffect::Assimilated {
@@ -515,17 +551,20 @@ pub fn simulate_combat(
         }
 
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
+        let round_end_filtered = filter_effects_by_condition(&round_end_effects, &combat_ctx);
         phase_effects.add_effects(
             TimingWindow::RoundEnd,
-            &round_end_effects,
+            &round_end_filtered,
             attacker.attack,
             round_end_assimilated_early,
+            round_index,
         );
-        let phase_effects_round = phase_effects.clone();
+        let mut phase_effects_round = phase_effects.clone();
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
+        let mut hull_breach_threshold_fired = false;
 
         let mut effective_pierce = attacker.pierce + phase_effects_round.pre_attack_pierce_bonus();
-        let morale_source = round_start_effects.iter().find_map(|effect| {
+        let morale_source = round_start_filtered.iter().find_map(|effect| {
             if let AbilityEffect::Morale(chance) =
                 scale_effect(effect.effect, round_start_assimilated)
             {
@@ -566,12 +605,17 @@ pub fn simulate_combat(
         }
 
         let attack_phase_assimilated = assimilated_rounds_remaining > 0;
+        let attack_phase_filtered =
+            filter_effects_by_condition(&attack_phase_effects, &combat_ctx);
+        let defense_phase_filtered =
+            filter_effects_by_condition(&defense_phase_effects, &combat_ctx);
+
         record_ability_activations(
             &mut trace,
             round_index,
             "attack",
             attacker,
-            &attack_phase_effects,
+            &attack_phase_filtered,
             attack_phase_assimilated,
         );
         let defense_phase_assimilated = assimilated_rounds_remaining > 0;
@@ -580,7 +624,7 @@ pub fn simulate_combat(
             round_index,
             "defense",
             attacker,
-            &defense_phase_effects,
+            &defense_phase_filtered,
             defense_phase_assimilated,
         );
 
@@ -589,15 +633,17 @@ pub fn simulate_combat(
             let weapon_base = attacker.weapon_attack(weapon_index).unwrap_or(attacker.attack);
             phase_effects.add_effects(
                 TimingWindow::AttackPhase,
-                &attack_phase_effects,
+                &attack_phase_filtered,
                 weapon_base,
                 attack_phase_assimilated,
+                round_index,
             );
             phase_effects.add_effects(
                 TimingWindow::DefensePhase,
-                &defense_phase_effects,
+                &defense_phase_filtered,
                 weapon_base,
                 defense_phase_assimilated,
+                round_index,
             );
 
             let effective_apex_shred = (attacker.apex_shred + phase_effects.composed_apex_shred_bonus())
@@ -709,7 +755,7 @@ pub fn simulate_combat(
             ]),
         });
 
-        for effect in &attack_phase_effects {
+        for effect in &attack_phase_filtered {
             let effective_effect = scale_effect(effect.effect, attack_phase_assimilated);
 
             if let AbilityEffect::Assimilated {
@@ -874,6 +920,32 @@ pub fn simulate_combat(
         total_shield_damage += actual_shield_damage;
 
         let shield_broke_this_round = actual_shield_damage > 0.0 && defender_shield_remaining <= 0.0;
+        if shield_broke_this_round {
+            let shield_break_filtered =
+                filter_effects_by_condition(&shield_break_effects, &combat_ctx);
+            phase_effects_round.add_effects(
+                TimingWindow::ShieldBreak,
+                &shield_break_filtered,
+                weapon_base,
+                attack_phase_assimilated,
+                round_index,
+            );
+        }
+
+        let defender_hull_pct = 1.0
+            - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+        if !hull_breach_threshold_fired && defender_hull_pct < 0.5 {
+            hull_breach_threshold_fired = true;
+            let hull_breach_filtered =
+                filter_effects_by_condition(&hull_breach_effects, &combat_ctx);
+            phase_effects_round.add_effects(
+                TimingWindow::HullBreach,
+                &hull_breach_filtered,
+                weapon_base,
+                attack_phase_assimilated,
+                round_index,
+            );
+        }
 
         trace.record(CombatEvent {
             event_type: "damage_application".to_string(),
@@ -940,6 +1012,17 @@ pub fn simulate_combat(
         let att_hull_damage_this_round = att_hull_portion + att_shield_overflow;
         attacker_shield_remaining = (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
         total_attacker_hull_damage += att_hull_damage_this_round;
+        if att_hull_damage_this_round > 0.0 {
+            let receive_damage_filtered =
+                filter_effects_by_condition(&receive_damage_effects, &combat_ctx);
+            phase_effects_round.add_effects(
+                TimingWindow::ReceiveDamage,
+                &receive_damage_filtered,
+                defender_weapon_attack,
+                assimilated_rounds_remaining > 0,
+                round_index,
+            );
+        }
             }
         }
 
@@ -948,7 +1031,7 @@ pub fn simulate_combat(
             round_index,
             "round_end",
             attacker,
-            &round_end_effects,
+            &round_end_filtered,
             round_end_assimilated_early,
         );
 
@@ -1010,11 +1093,29 @@ pub fn simulate_combat(
 
         // Fight ends when defender or attacker runs out of hull (HHP).
         let defender_hull_now = (defender.hull_health - total_hull_damage).max(0.0);
-        let attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        let mut attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        if defender_hull_now <= 0.0 {
+            let on_kill_regen = sum_on_kill_hull_regen(
+                &kill_effects,
+                assimilated_rounds_remaining > 0,
+            );
+            total_attacker_hull_damage =
+                (total_attacker_hull_damage - on_kill_regen * attacker.hull_health.max(0.0)).max(0.0);
+            attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        }
         if defender_hull_now <= 0.0 || attacker_hull_now <= 0.0 {
             break;
         }
     }
+
+    record_ability_activations(
+        &mut trace,
+        rounds_completed,
+        "combat_end",
+        attacker,
+        &combat_end_effects,
+        false,
+    );
 
     let total_damage = total_hull_damage + total_shield_damage;
     let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
@@ -1205,17 +1306,25 @@ impl EffectAccumulator {
         effects: &[ActiveAbilityEffect],
         base_attack: f64,
         assimilated_active: bool,
+        round_index: u32,
     ) {
         for effect in effects {
             self.add_effect(
                 timing,
                 scale_effect(effect.effect, assimilated_active),
                 base_attack,
+                round_index,
             );
         }
     }
 
-    fn add_effect(&mut self, timing: TimingWindow, effect: AbilityEffect, base_attack: f64) {
+    fn add_effect(
+        &mut self,
+        timing: TimingWindow,
+        effect: AbilityEffect,
+        base_attack: f64,
+        round_index: u32,
+    ) {
         match timing {
             TimingWindow::CombatBegin | TimingWindow::RoundStart => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -1245,6 +1354,25 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
+                }
+                AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::DecayingAttackMultiplier {
+                    initial,
+                    decay_per_round,
+                    floor,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial - r * decay_per_round).max(floor);
+                    self.pre_attack_modifier_sum += value - 1.0;
+                }
+                AbilityEffect::AccumulatingAttackMultiplier {
+                    initial,
+                    growth_per_round,
+                    ceiling,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial + r * growth_per_round).min(ceiling);
+                    self.pre_attack_modifier_sum += value - 1.0;
                 }
             },
             TimingWindow::AttackPhase => match effect {
@@ -1277,6 +1405,25 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
+                AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::DecayingAttackMultiplier {
+                    initial,
+                    decay_per_round,
+                    floor,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial - r * decay_per_round).max(floor);
+                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                }
+                AbilityEffect::AccumulatingAttackMultiplier {
+                    initial,
+                    growth_per_round,
+                    ceiling,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial + r * growth_per_round).min(ceiling);
+                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                }
             },
             TimingWindow::DefensePhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
@@ -1307,6 +1454,9 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
+                AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::DecayingAttackMultiplier { .. }
+                | AbilityEffect::AccumulatingAttackMultiplier { .. } => {}
             },
             TimingWindow::RoundEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -1341,9 +1491,102 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
+                AbilityEffect::OnKillHullRegen(_) => {} // Handled separately when kill detected
+                AbilityEffect::DecayingAttackMultiplier {
+                    initial,
+                    decay_per_round,
+                    floor,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial - r * decay_per_round).max(floor);
+                    self.round_end_modifier_sum += value - 1.0;
+                }
+                AbilityEffect::AccumulatingAttackMultiplier {
+                    initial,
+                    growth_per_round,
+                    ceiling,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial + r * growth_per_round).min(ceiling);
+                    self.round_end_modifier_sum += value - 1.0;
+                }
+            },
+            TimingWindow::ShieldBreak
+            | TimingWindow::Kill
+            | TimingWindow::HullBreach
+            | TimingWindow::ReceiveDamage
+            | TimingWindow::CombatEnd => match effect {
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.pre_attack_modifier_sum += modifier;
+                }
+                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
+                    EffectStatKey::PreAttackPierceBonus,
+                    value,
+                )),
+                AbilityEffect::Morale(_) => {}
+                AbilityEffect::Assimilated { .. } => {}
+                AbilityEffect::HullBreach { .. } => {}
+                AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShieldRegen(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldRegen, v));
+                }
+                AbilityEffect::HullRegen(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::HullRegen, v));
+                }
+                AbilityEffect::ApexShredBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                }
+                AbilityEffect::ApexBarrierBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
+                AbilityEffect::IsolyticDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                }
+                AbilityEffect::IsolyticDefenseBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::ShieldMitigationBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
+                }
+                AbilityEffect::OnKillHullRegen(_) => {} // Handled separately when kill detected
+                AbilityEffect::DecayingAttackMultiplier {
+                    initial,
+                    decay_per_round,
+                    floor,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial - r * decay_per_round).max(floor);
+                    self.pre_attack_modifier_sum += value - 1.0;
+                }
+                AbilityEffect::AccumulatingAttackMultiplier {
+                    initial,
+                    growth_per_round,
+                    ceiling,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial + r * growth_per_round).min(ceiling);
+                    self.pre_attack_modifier_sum += value - 1.0;
+                }
             },
         }
     }
+}
+
+/// Sum OnKillHullRegen from kill effects for application when defender dies.
+fn sum_on_kill_hull_regen(
+    effects: &[ActiveAbilityEffect],
+    assimilated_active: bool,
+) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| {
+            if let AbilityEffect::OnKillHullRegen(v) = scale_effect(e.effect, assimilated_active) {
+                Some(v)
+            } else {
+                None
+            }
+        })
+        .sum()
 }
 
 fn record_ability_activations(
@@ -1442,6 +1685,27 @@ fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffec
         AbilityEffect::ShieldMitigationBonus(v) => {
             AbilityEffect::ShieldMitigationBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
+        AbilityEffect::OnKillHullRegen(v) => {
+            AbilityEffect::OnKillHullRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::DecayingAttackMultiplier {
+            initial,
+            decay_per_round,
+            floor,
+        } => AbilityEffect::DecayingAttackMultiplier {
+            initial: 1.0 + (initial - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            decay_per_round,
+            floor,
+        },
+        AbilityEffect::AccumulatingAttackMultiplier {
+            initial,
+            growth_per_round,
+            ceiling,
+        } => AbilityEffect::AccumulatingAttackMultiplier {
+            initial: 1.0 + (initial - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            growth_per_round,
+            ceiling,
+        },
     }
 }
 

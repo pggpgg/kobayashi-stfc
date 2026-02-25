@@ -68,6 +68,32 @@ pub struct LcarsEffect {
     // tag (non-combat)
     #[serde(default)]
     pub tag: Option<String>,
+    // accumulate: effects that grow over time
+    #[serde(default)]
+    pub accumulate: Option<LcarsAccumulate>,
+    // decay: effects that decrease over time
+    #[serde(default)]
+    pub decay: Option<LcarsDecay>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LcarsAccumulate {
+    #[serde(rename = "type", default)]
+    pub type_: Option<String>,
+    #[serde(default)]
+    pub amount: Option<f64>,
+    #[serde(default)]
+    pub ceiling: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LcarsDecay {
+    #[serde(rename = "type", default)]
+    pub type_: Option<String>,
+    #[serde(default)]
+    pub amount: Option<f64>,
+    #[serde(default)]
+    pub floor: Option<f64>,
 }
 
 /// Duration of an effect. In YAML: `permanent` (string) or `rounds: N` (map).
@@ -129,6 +155,18 @@ pub struct LcarsCondition {
     pub stat: Option<String>,
     #[serde(default)]
     pub threshold_pct: Option<f64>,
+    #[serde(default)]
+    pub min: Option<u32>,
+    #[serde(default)]
+    pub max: Option<u32>,
+    #[serde(default)]
+    pub faction: Option<String>,
+    #[serde(default)]
+    pub group: Option<String>,
+    #[serde(default)]
+    pub min_members: Option<u32>,
+    #[serde(default)]
+    pub tag: Option<String>,
     #[serde(default)]
     pub conditions: Option<Vec<LcarsCondition>>,
 }

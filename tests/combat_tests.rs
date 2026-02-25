@@ -576,6 +576,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
                 timing: TimingWindow::CombatBegin,
                 boostable: false,
                 effect: AbilityEffect::ApexShredBonus(0.15),
+                condition: None,
             },
             boosted: false,
         }],
@@ -648,6 +649,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
                 timing: TimingWindow::CombatBegin,
                 boostable: false,
                 effect: AbilityEffect::ApexBarrierBonus(5000.0),
+                condition: None,
             },
             boosted: false,
         }],
@@ -715,6 +717,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
                 timing: TimingWindow::RoundStart,
                 boostable: true,
                 effect: AbilityEffect::Morale(1.0),
+                condition: None,
             },
             boosted: false,
         }],
@@ -789,6 +792,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
                 timing: TimingWindow::AttackPhase,
                 boostable: true,
                 effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: None,
             },
             boosted: false,
         }],
@@ -807,6 +811,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
                         chance: 1.0,
                         duration_rounds: 2,
                     },
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -818,6 +823,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
                     timing: TimingWindow::AttackPhase,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(1.0),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -908,6 +914,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
                     chance: 1.0,
                     duration_rounds: 4,
                 },
+                condition: None,
             },
             boosted: false,
         }],
@@ -991,6 +998,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
                     duration_rounds: 2,
                     requires_critical: false,
                 },
+                condition: None,
             },
             boosted: false,
         }],
@@ -1078,6 +1086,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
                     duration_rounds: 3,
                     requires_critical: true,
                 },
+                condition: None,
             },
             boosted: false,
         }],
@@ -1315,6 +1324,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         timing: TimingWindow::AttackPhase,
         boostable: true,
         effect: AbilityEffect::AttackMultiplier(0.2),
+        condition: None,
     };
     let bridge_ability = Ability {
         name: "bridge_targeting".to_string(),
@@ -1322,6 +1332,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         timing: TimingWindow::AttackPhase,
         boostable: true,
         effect: AbilityEffect::PierceBonus(0.1),
+        condition: None,
     };
 
     let attacker = Combatant {
@@ -1416,6 +1427,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         timing: TimingWindow::AttackPhase,
         boostable: false,
         effect: AbilityEffect::AttackMultiplier(0.5),
+        condition: None,
     };
 
     let attacker = Combatant {
@@ -1550,6 +1562,7 @@ fn timing_windows_materially_change_damage_outcomes() {
                 timing: TimingWindow::AttackPhase,
                 boostable: true,
                 effect: AbilityEffect::PierceBonus(0.2),
+                condition: None,
             },
             boosted: false,
         }],
@@ -1563,6 +1576,7 @@ fn timing_windows_materially_change_damage_outcomes() {
                 timing: TimingWindow::RoundStart,
                 boostable: true,
                 effect: AbilityEffect::PierceBonus(0.2),
+                condition: None,
             },
             boosted: false,
         }],
@@ -1576,6 +1590,7 @@ fn timing_windows_materially_change_damage_outcomes() {
                 timing: TimingWindow::DefensePhase,
                 boostable: true,
                 effect: AbilityEffect::PierceBonus(0.2),
+                condition: None,
             },
             boosted: false,
         }],
@@ -1645,6 +1660,7 @@ fn burning_deals_one_percent_hull_per_round() {
                     chance: 1.0,
                     duration_rounds: 2,
                 },
+                condition: None,
             },
             boosted: false,
         }],
@@ -1722,6 +1738,7 @@ fn emits_ability_activation_for_each_timing_window() {
                     timing: TimingWindow::CombatBegin,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -1733,6 +1750,7 @@ fn emits_ability_activation_for_each_timing_window() {
                     timing: TimingWindow::RoundStart,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -1744,6 +1762,7 @@ fn emits_ability_activation_for_each_timing_window() {
                     timing: TimingWindow::AttackPhase,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -1755,6 +1774,7 @@ fn emits_ability_activation_for_each_timing_window() {
                     timing: TimingWindow::DefensePhase,
                     boostable: true,
                     effect: AbilityEffect::PierceBonus(0.1),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -1766,6 +1786,7 @@ fn emits_ability_activation_for_each_timing_window() {
                     timing: TimingWindow::RoundEnd,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.2),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -1848,6 +1869,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
                     timing: TimingWindow::RoundStart,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -1859,6 +1881,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
                     timing: TimingWindow::RoundStart,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -1873,6 +1896,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
                 timing: TimingWindow::RoundStart,
                 boostable: true,
                 effect: AbilityEffect::AttackMultiplier(0.2),
+                condition: None,
             },
             boosted: false,
         }],
@@ -1889,6 +1913,142 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
 
     approx_eq(summed.total_damage, 120.0, 1e-12);
     approx_eq(summed.total_damage, canonical.total_damage, 1e-12);
+}
+
+#[test]
+fn decaying_attack_multiplier_reduces_damage_over_rounds() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let decay_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "decay".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::DecayingAttackMultiplier {
+                    initial: 1.2,
+                    decay_per_round: 0.05,
+                    floor: 1.0,
+                },
+                condition: None,
+            },
+            boosted: false,
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 5,
+        seed: 42,
+        trace_mode: TraceMode::Off,
+    };
+    let result = simulate_combat(&attacker, &defender, config, &decay_crew);
+    assert!(result.total_damage > 0.0);
+    assert!(result.rounds_simulated >= 2);
+}
+
+#[test]
+fn accumulating_attack_multiplier_increases_damage_over_rounds() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let accumulate_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "accumulate".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::AccumulatingAttackMultiplier {
+                    initial: 1.0,
+                    growth_per_round: 0.05,
+                    ceiling: 1.2,
+                },
+                condition: None,
+            },
+            boosted: false,
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 5,
+        seed: 42,
+        trace_mode: TraceMode::Off,
+    };
+    let result = simulate_combat(&attacker, &defender, config, &accumulate_crew);
+    assert!(result.total_damage > 0.0);
+    assert!(result.rounds_simulated >= 2);
 }
 
 #[test]
@@ -1998,6 +2158,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
                     timing: TimingWindow::RoundEnd,
                     boostable: false,
                     effect: AbilityEffect::ShieldRegen(60.0),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -2009,6 +2170,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
                     timing: TimingWindow::RoundEnd,
                     boostable: false,
                     effect: AbilityEffect::HullRegen(40.0),
+                    condition: None,
                 },
                 boosted: false,
             },
@@ -2226,6 +2388,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
                 timing: TimingWindow::RoundStart,
                 boostable: true,
                 effect: AbilityEffect::IsolyticDamageBonus(0.2),
+                condition: None,
             },
             boosted: false,
         }],

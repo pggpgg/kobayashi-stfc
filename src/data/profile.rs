@@ -56,6 +56,9 @@ pub fn apply_static_buffs_to_combatant(
         + static_buffs.get("armor_pierce").copied().unwrap_or(0.0);
     let crit_chance_add = static_buffs.get("crit_chance").copied().unwrap_or(0.0);
     let crit_damage_mult = static_buffs.get("crit_damage").copied().unwrap_or(1.0);
+    let armor_add = static_buffs.get("armor").copied().unwrap_or(0.0);
+    let damage_reduction_add = static_buffs.get("damage_reduction").copied().unwrap_or(0.0);
+    let dodge_add = static_buffs.get("dodge").copied().unwrap_or(0.0);
 
     Combatant {
         attack: combatant.attack * weapon_mult,
@@ -67,6 +70,9 @@ pub fn apply_static_buffs_to_combatant(
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
         shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add)
+            .max(0.0)
+            .min(1.0),
+        mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add)
             .max(0.0)
             .min(1.0),
         ..combatant
