@@ -462,10 +462,27 @@ fn normalize_key(value: &str) -> String {
         .to_uppercase()
 }
 
+/// True if a roster entry represents an actually unlocked officer (not just "in roster" with 0/0/0).
+fn is_unlocked(entry: &RosterEntry) -> bool {
+    let r = entry.rank.unwrap_or(0);
+    let l = entry.level.unwrap_or(0);
+    r > 0 || l > 0
+}
+
 /// Loads the set of canonical officer IDs from the imported roster file.
 /// Returns `None` if the file is missing or invalid (caller should then use the full canonical list).
 /// Returns `Some(ids)` to filter crew generation to only officers the player owns.
 pub fn load_imported_roster_ids(path: &str) -> Option<HashSet<String>> {
+    load_imported_roster_ids_inner(path, false)
+}
+
+/// Like `load_imported_roster_ids` but only includes officers that are actually unlocked
+/// (rank > 0 or level > 0). Use for "owned only" UI so officers synced as 0/0/0 (not yet unlocked) are excluded.
+pub fn load_imported_roster_ids_unlocked_only(path: &str) -> Option<HashSet<String>> {
+    load_imported_roster_ids_inner(path, true)
+}
+
+fn load_imported_roster_ids_inner(path: &str, unlocked_only: bool) -> Option<HashSet<String>> {
     #[derive(Debug, Deserialize)]
     struct ImportedRosterPayload {
         officers: Vec<RosterEntry>,
@@ -475,6 +492,7 @@ pub fn load_imported_roster_ids(path: &str) -> Option<HashSet<String>> {
     let ids = payload
         .officers
         .into_iter()
+        .filter(|e| !unlocked_only || is_unlocked(e))
         .map(|e| e.canonical_officer_id)
         .collect();
     Some(ids)

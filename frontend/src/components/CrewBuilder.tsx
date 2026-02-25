@@ -265,7 +265,7 @@ function TypeAheadSlot({
   const filtered = query.trim()
     ? officers.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
     : officers;
-  const limited = filtered.slice(0, 12);
+  const limited = filtered.slice(0, 200);
 
   useEffect(() => {
     if (!open) setQuery('');

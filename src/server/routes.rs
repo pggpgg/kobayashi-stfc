@@ -187,6 +187,7 @@ pub fn route_request(
                 validation_error_response(400, "Bad Request", validation)
             }
         },
+        ("GET", "/api/sync/status") => sync::sync_status_payload(),
         ("POST", "/api/sync/ingress") => sync::ingress_payload(body, sync_token),
         _ => error_response(404, "Not Found", "Route not found"),
     }
