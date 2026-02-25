@@ -44,7 +44,11 @@ export default function SimResults({
       <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>SimResults</h2>
 
       {(loadingSim || loadingOptimize) && (
-        <p style={{ margin: 0, color: 'var(--text-muted)' }}>Running…</p>
+        <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+          {loadingOptimize
+            ? 'Optimization in progress… This may take a minute depending on scenario.'
+            : 'Running…'}
+        </p>
       )}
 
       {hasSim && !loadingSim && (

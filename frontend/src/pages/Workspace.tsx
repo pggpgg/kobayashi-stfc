@@ -11,7 +11,7 @@ import {
   type CrewState,
   type PinsState,
 } from '../lib/types';
-import { simulate, optimize, savePreset, getOptimizeEstimate } from '../lib/api';
+import { simulate, optimize, savePreset, getOptimizeEstimate, formatApiError } from '../lib/api';
 import type { SimulateStats, OptimizeEstimate } from '../lib/api';
 import type { CrewRecommendation } from '../lib/api';
 import type { Preset } from '../lib/api';
@@ -108,7 +108,7 @@ export default function Workspace() {
       setSimResult(res.stats);
       setRecommendations([]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(formatApiError(e));
     } finally {
       setLoadingSim(false);
     }
@@ -128,7 +128,7 @@ export default function Workspace() {
       setSimResult(null);
       if (res.duration_ms != null) setLastOptimizeDurationMs(res.duration_ms);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(formatApiError(e));
     } finally {
       setLoadingOptimize(false);
     }
@@ -151,7 +151,7 @@ export default function Workspace() {
       setShowSavePreset(false);
       setSavePresetName('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(formatApiError(e));
     } finally {
       setSavingPreset(false);
     }

@@ -1,4 +1,60 @@
-const API_BASE = '';
+/**
+ * Base URL for API requests. Empty string = same origin.
+ * Set at build time via VITE_API_BASE (e.g. for deployment behind a proxy).
+ */
+export const API_BASE = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE != null
+  ? String(import.meta.env.VITE_API_BASE).replace(/\/$/, '')
+  : '';
+
+/** Structured error from the API (status code + server message when available). */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+function codeFromStatus(status: number): string {
+  if (status >= 500) return 'SERVER_ERROR';
+  if (status === 404) return 'NOT_FOUND';
+  if (status === 400 || status === 422) return 'VALIDATION';
+  if (status === 401 || status === 403) return 'AUTH';
+  return 'ERROR';
+}
+
+/** Parse error response body; returns an ApiError with server message when JSON has status/message. */
+export async function parseApiError(res: Response, bodyText: string): Promise<ApiError> {
+  let message = bodyText || res.statusText;
+  const code = codeFromStatus(res.status);
+  try {
+    const json = JSON.parse(bodyText) as { message?: string; status?: string };
+    if (typeof json.message === 'string' && json.message.trim()) {
+      message = json.message.trim();
+    }
+  } catch {
+    // keep message as bodyText or statusText
+  }
+  return new ApiError(message, res.status, code);
+}
+
+/** Format any thrown value for user display; adds retry hint for server errors. */
+export function formatApiError(e: unknown): string {
+  const message = e instanceof Error ? e.message : String(e);
+  if (e instanceof ApiError && e.code === 'SERVER_ERROR') {
+    return `${message} Try again later.`;
+  }
+  return message;
+}
+
+async function checkOk(res: Response): Promise<void> {
+  if (res.ok) return;
+  const text = await res.text();
+  throw await parseApiError(res, text);
+}
 
 export interface OfficerListItem {
   id: string;
@@ -34,28 +90,28 @@ export interface DataVersionResponse {
 export async function fetchOfficers(ownedOnly = false): Promise<OfficerListItem[]> {
   const url = ownedOnly ? `${API_BASE}/api/officers?owned_only=1` : `${API_BASE}/api/officers`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(res.statusText);
+  await checkOk(res);
   const data = await res.json();
   return data.officers ?? [];
 }
 
 export async function fetchShips(): Promise<ShipListItem[]> {
   const res = await fetch(`${API_BASE}/api/ships`);
-  if (!res.ok) throw new Error(res.statusText);
+  await checkOk(res);
   const data = await res.json();
   return data.ships ?? [];
 }
 
 export async function fetchHostiles(): Promise<HostileListItem[]> {
   const res = await fetch(`${API_BASE}/api/hostiles`);
-  if (!res.ok) throw new Error(res.statusText);
+  await checkOk(res);
   const data = await res.json();
   return data.hostiles ?? [];
 }
 
 export async function fetchDataVersion(): Promise<DataVersionResponse> {
   const res = await fetch(`${API_BASE}/api/data/version`);
-  if (!res.ok) throw new Error(res.statusText);
+  await checkOk(res);
   return res.json();
 }
 
@@ -94,10 +150,7 @@ export async function simulate(params: {
       num_sims: params.num_sims ?? 5000,
     }),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
+  await checkOk(res);
   return res.json();
 }
 
@@ -130,10 +183,7 @@ export async function getOptimizeEstimate(params: {
   const sims = params.sims ?? 5000;
   const url = `${API_BASE}/api/optimize/estimate?ship=${encodeURIComponent(params.ship)}&hostile=${encodeURIComponent(params.hostile)}&sims=${sims}`;
   const res = await fetch(url);
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
+  await checkOk(res);
   return res.json();
 }
 
@@ -153,10 +203,7 @@ export async function optimize(params: {
       seed: params.seed,
     }),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
+  await checkOk(res);
   return res.json();
 }
 
@@ -176,10 +223,7 @@ export async function importRoster(body: string): Promise<ImportReport> {
     headers: { 'Content-Type': 'text/plain' },
     body: body.trim(),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
+  await checkOk(res);
   return res.json();
 }
 
@@ -189,7 +233,7 @@ export interface PlayerProfile {
 
 export async function fetchProfile(): Promise<PlayerProfile> {
   const res = await fetch(`${API_BASE}/api/profile`);
-  if (!res.ok) throw new Error(res.statusText);
+  await checkOk(res);
   return res.json();
 }
 
@@ -199,10 +243,7 @@ export async function updateProfile(profile: PlayerProfile): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(profile),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
+  await checkOk(res);
 }
 
 export interface PresetCrew {
@@ -228,14 +269,14 @@ export interface PresetSummary {
 
 export async function fetchPresets(): Promise<PresetSummary[]> {
   const res = await fetch(`${API_BASE}/api/presets`);
-  if (!res.ok) throw new Error(res.statusText);
+  await checkOk(res);
   const data = await res.json();
   return data.presets ?? [];
 }
 
 export async function fetchPreset(id: string): Promise<Preset> {
   const res = await fetch(`${API_BASE}/api/presets/${encodeURIComponent(id)}`);
-  if (!res.ok) throw new Error(res.statusText);
+  await checkOk(res);
   return res.json();
 }
 
@@ -255,9 +296,6 @@ export async function savePreset(preset: {
       crew: preset.crew,
     }),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
+  await checkOk(res);
   return res.json();
 }

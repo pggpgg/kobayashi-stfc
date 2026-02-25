@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchPresets, fetchPreset } from '../lib/api';
+import { fetchPresets, fetchPreset, formatApiError } from '../lib/api';
 import type { PresetSummary } from '../lib/api';
 
 export default function ResultsLibrary() {
@@ -16,7 +16,7 @@ export default function ResultsLibrary() {
         if (!c) setPresets(list);
       })
       .catch((e) => {
-        if (!c) setError(e instanceof Error ? e.message : String(e));
+        if (!c) setError(formatApiError(e));
       })
       .finally(() => {
         if (!c) setLoading(false);
@@ -30,7 +30,7 @@ export default function ResultsLibrary() {
       const preset = await fetchPreset(id);
       navigate('/', { state: { preset } });
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(formatApiError(e));
     }
   };
 
