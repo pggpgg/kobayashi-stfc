@@ -3,9 +3,11 @@
 
 use crate::data::import;
 use crate::server::routes::HttpResponse;
+use chrono::TimeZone;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Mutex;
+use std::time::UNIX_EPOCH;
 
 /// Default path for game officer id -> canonical_officer_id mapping (same as id_registry).
 pub const DEFAULT_GAME_ID_MAP_PATH: &str = "data/officers/id_registry.json";
@@ -42,8 +44,9 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
         .get("type")
         .and_then(|v| v.as_str())
         .unwrap_or("unknown");
+    let type_lower = type_str.to_ascii_lowercase();
 
-    let accepted = match type_str {
+    let accepted = match type_lower.as_str() {
         "officer" => {
             match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, import::DEFAULT_IMPORT_OUTPUT_PATH) {
                 Ok(accepted_count) => {
@@ -218,6 +221,33 @@ fn json_error_response(status_code: u16, status_text: &'static str, message: &st
     HttpResponse {
         status_code,
         status_text,
+        content_type: "application/json",
+        body: body_str,
+    }
+}
+
+/// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
+pub fn sync_status_payload() -> HttpResponse {
+    let roster_path = import::DEFAULT_IMPORT_OUTPUT_PATH;
+    let last_modified_iso: Option<String> = std::fs::metadata(roster_path)
+        .ok()
+        .and_then(|m| m.modified().ok())
+        .and_then(|t| {
+            t.duration_since(UNIX_EPOCH).ok().and_then(|d| {
+                chrono::Utc
+                    .timestamp_opt(d.as_secs() as i64, d.subsec_nanos())
+                    .single()
+                    .map(|dt| dt.to_rfc3339())
+            })
+        });
+    let body = serde_json::json!({
+        "roster_path": roster_path,
+        "last_modified_iso": last_modified_iso,
+    });
+    let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string());
+    HttpResponse {
+        status_code: 200,
+        status_text: "OK",
         content_type: "application/json",
         body: body_str,
     }
