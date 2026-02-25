@@ -683,7 +683,7 @@ Accepted source formats can include exported data from community tools such as S
 Global officer catalog updates are maintained manually in version-controlled LCARS YAML files:
 
 ```
-1. Edit/update `data/officers/*.lcars.yaml` entries.
+1. Edit/update `data/officers/officers.lcars.yaml` entries.
 2. Validate schema and mechanics with `kobayashi validate`.
 3. Run simulation/regression checks to confirm no unintended balance drift.
 4. Commit reviewed changes in small, auditable batches.
@@ -747,10 +747,7 @@ kobayashi/
 ├── README.md
 ├── data/
 │   ├── officers/              # LCARS officer definitions
-│   │   ├── augments.lcars.yaml
-│   │   ├── federation.lcars.yaml
-│   │   ├── romulan.lcars.yaml
-│   │   ├── klingon.lcars.yaml
+│   │   ├── officers.lcars.yaml   # all officers (single file)
 │   │   └── ...
 │   ├── ships.json
 │   ├── hostiles.json

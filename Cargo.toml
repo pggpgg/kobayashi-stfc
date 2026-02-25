@@ -39,6 +39,10 @@ path = "src/bin/benchmark_simulator.rs"
 name = "benchmark_parallel_speedup"
 path = "src/bin/benchmark_parallel_speedup.rs"
 
+[[bin]]
+name = "merge_lcars"
+path = "src/bin/merge_lcars.rs"
+
 [[bench]]
 name = "simulator"
 harness = false

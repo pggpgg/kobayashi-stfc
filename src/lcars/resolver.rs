@@ -441,7 +441,7 @@ mod tests {
 
     #[test]
     fn resolve_khan_from_lcars_yaml() {
-        let path = Path::new("data/officers/augments.lcars.yaml");
+        let path = Path::new("data/officers/officers.lcars.yaml");
         if !path.exists() {
             return; // skip if data not present (e.g. in minimal checkouts)
         }
