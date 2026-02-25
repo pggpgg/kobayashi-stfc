@@ -7,8 +7,9 @@ pub mod rng;
 pub mod stacking;
 
 pub use abilities::{
-    active_effects_for_timing, can_activate_in_seat, Ability, AbilityClass, AbilityEffect,
-    ActiveAbilityEffect, CrewConfiguration, CrewSeat, CrewSeatContext, TimingWindow,
+    active_effects_for_timing, can_activate_in_seat, Ability, AbilityClass, AbilityCondition,
+    AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration, CrewSeat, CrewSeatContext,
+    TimingWindow,
 };
 pub use engine::{
     apply_morale_primary_piercing, component_mitigation, isolytic_damage, mitigation,

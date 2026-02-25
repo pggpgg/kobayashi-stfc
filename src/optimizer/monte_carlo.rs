@@ -173,7 +173,7 @@ fn scenario_to_combat_input(
 ) -> CombatSimulationInput {
     let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
 
-    let (crew_seats, static_buffs) = if let Some(lcars) = lcars_data {
+    let (crew_seats, static_buffs, proc_chance, proc_multiplier) = if let Some(lcars) = lcars_data {
         let captain_id = lcars
             .name_to_id
             .get(&normalize_lookup_key(&split_name_and_tier(&candidate.captain).0))
@@ -201,16 +201,39 @@ fn scenario_to_combat_input(
                 &lcars.by_id,
                 &ResolveOptions::default(),
             );
-            (buff_set.to_crew_config().seats.clone(), buff_set.static_buffs)
+            (
+                buff_set.to_crew_config().seats.clone(),
+                buff_set.static_buffs,
+                buff_set.proc_chance,
+                buff_set.proc_multiplier,
+            )
         } else {
-            (build_crew_seats(candidate, officers_by_name), HashMap::new())
+            (
+                build_crew_seats(candidate, officers_by_name),
+                HashMap::new(),
+                0.0,
+                1.0,
+            )
         }
     } else {
-        (build_crew_seats(candidate, officers_by_name), HashMap::new())
+        (
+            build_crew_seats(candidate, officers_by_name),
+            HashMap::new(),
+            0.0,
+            1.0,
+        )
     };
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
-        let defender_mitigation = computed_defender_mitigation(ship, hostile);
+        let mut attacker_stats = ship_rec.to_attacker_stats();
+        attacker_stats.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
+        let defender_mitigation =
+            mitigation(hostile_rec.to_defender_stats(), attacker_stats, hostile_rec.ship_type());
+        let pierce = pierce_damage_through_bonus(
+            hostile_rec.to_defender_stats(),
+            attacker_stats,
+            hostile_rec.ship_type(),
+        );
         let defender_hull = hostile_rec.hull_health;
         let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level as u32));
         let mut attacker = apply_profile_to_attacker(
@@ -218,15 +241,11 @@ fn scenario_to_combat_input(
                     id: ship.to_string(),
                     attack: ship_rec.attack,
                     mitigation: 0.0,
-                    pierce: pierce_damage_through_bonus(
-                        hostile_rec.to_defender_stats(),
-                        ship_rec.to_attacker_stats(),
-                        hostile_rec.ship_type(),
-                    ),
+                    pierce,
                     crit_chance: ship_rec.crit_chance,
                     crit_multiplier: ship_rec.crit_damage,
-                    proc_chance: 0.0,
-                    proc_multiplier: 1.0,
+                    proc_chance,
+                    proc_multiplier,
                     end_of_round_damage: 0.0,
                     hull_health: ship_rec.hull_health,
                     shield_health: ship_rec.shield_health,
@@ -283,8 +302,8 @@ fn scenario_to_combat_input(
                 pierce: 0.08 + ((ship_hash >> 8) % 14) as f64 / 100.0,
                 crit_chance: 0.0,
                 crit_multiplier: 1.0,
-                proc_chance: 0.0,
-                proc_multiplier: 1.0,
+                proc_chance,
+                proc_multiplier,
                 end_of_round_damage: 0.0,
                 hull_health: 1000.0,
                 shield_health: 0.0,
@@ -479,6 +498,7 @@ fn seat_from_officer(
             timing,
             boostable: true,
             effect,
+            condition: None,
         },
         boosted: hash % 5 == 0,
     }
@@ -609,6 +629,7 @@ fn apex_ability_contexts(
                 timing,
                 boostable: false,
                 effect,
+                condition: None,
             },
             boosted: false,
         });

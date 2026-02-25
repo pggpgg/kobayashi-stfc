@@ -3,11 +3,11 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
-    TimingWindow,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, TimingWindow,
 };
 use crate::data::profile;
-use crate::lcars::parser::{LcarsAbility, LcarsEffect, LcarsOfficer};
+use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
 
 /// Options when resolving officer abilities (e.g. officer tier for scaling).
 #[derive(Debug, Clone, Default)]
@@ -25,6 +25,10 @@ pub struct BuffSet {
     pub static_buffs: HashMap<String, f64>,
     /// Per-round and triggered effects: the crew configuration the engine evaluates each round.
     pub crew: CrewConfiguration,
+    /// Extra attack proc chance (0.0–1.0). When set, engine rolls per attack; on success, damage × proc_multiplier.
+    pub proc_chance: f64,
+    /// Extra attack proc multiplier (e.g. 2.0 for double shot). Applied when proc triggers.
+    pub proc_multiplier: f64,
 }
 
 impl BuffSet {
@@ -42,6 +46,49 @@ impl BuffSet {
     }
 }
 
+fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCondition> {
+    let ty = c.condition_type.trim().to_lowercase();
+    Some(match ty.as_str() {
+        "stat_below" => AbilityCondition::StatBelow {
+            stat: c.stat.clone().unwrap_or_else(|| "hull_hp".to_string()),
+            threshold_pct: c.threshold_pct.unwrap_or(0.5),
+        },
+        "stat_above" => AbilityCondition::StatAbove {
+            stat: c.stat.clone().unwrap_or_else(|| "hull_hp".to_string()),
+            threshold_pct: c.threshold_pct.unwrap_or(0.8),
+        },
+        "round_range" => AbilityCondition::RoundRange {
+            min: c.min.unwrap_or(1),
+            max: c.max.unwrap_or(100),
+        },
+        "and" => {
+            let conds: Vec<AbilityCondition> = c
+                .conditions
+                .as_ref()?
+                .iter()
+                .filter_map(lcars_condition_to_ability_condition)
+                .collect();
+            if conds.is_empty() {
+                return None;
+            }
+            AbilityCondition::And(conds)
+        }
+        "or" => {
+            let conds: Vec<AbilityCondition> = c
+                .conditions
+                .as_ref()?
+                .iter()
+                .filter_map(lcars_condition_to_ability_condition)
+                .collect();
+            if conds.is_empty() {
+                return None;
+            }
+            AbilityCondition::Or(conds)
+        }
+        _ => return None,
+    })
+}
+
 /// Map LCARS trigger string to engine timing window. Unknown triggers return None (effect skipped).
 fn trigger_to_timing(trigger: Option<&str>) -> Option<TimingWindow> {
     match trigger.map(str::trim) {
@@ -52,6 +99,11 @@ fn trigger_to_timing(trigger: Option<&str>) -> Option<TimingWindow> {
         Some("on_hit") | Some("on_critical") => Some(TimingWindow::AttackPhase),
         Some("on_defense") => Some(TimingWindow::DefensePhase),
         Some("on_round_end") => Some(TimingWindow::RoundEnd),
+        Some("on_shield_break") => Some(TimingWindow::ShieldBreak),
+        Some("on_kill") => Some(TimingWindow::Kill),
+        Some("on_hull_breach") => Some(TimingWindow::HullBreach),
+        Some("on_receive_damage") => Some(TimingWindow::ReceiveDamage),
+        Some("on_combat_end") => Some(TimingWindow::CombatEnd),
         _ => None,
     }
 }
@@ -86,8 +138,34 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
             // Map stat + operator to engine effect. Multiplicative damage -> AttackMultiplier; pierce -> PierceBonus.
             match stat {
                 "weapon_damage" | "attack" => {
-                    let mult = if op == "multiply" { value } else { 1.0 + value };
-                    Some((timing, AbilityEffect::AttackMultiplier(mult)))
+                    if let Some(ref decay) = effect.decay {
+                        let initial = value;
+                        let decay_per_round = decay.amount.unwrap_or(0.0);
+                        let floor = decay.floor.unwrap_or(1.0);
+                        Some((
+                            timing,
+                            AbilityEffect::DecayingAttackMultiplier {
+                                initial,
+                                decay_per_round,
+                                floor,
+                            },
+                        ))
+                    } else if let Some(ref acc) = effect.accumulate {
+                        let initial = value;
+                        let growth_per_round = acc.amount.unwrap_or(0.0);
+                        let ceiling = acc.ceiling.unwrap_or(2.0);
+                        Some((
+                            timing,
+                            AbilityEffect::AccumulatingAttackMultiplier {
+                                initial,
+                                growth_per_round,
+                                ceiling,
+                            },
+                        ))
+                    } else {
+                        let mult = if op == "multiply" { value } else { 1.0 + value };
+                        Some((timing, AbilityEffect::AttackMultiplier(mult)))
+                    }
                 }
                 "shield_pierce" | "armor_pierce" => {
                     let add = if op == "multiply" { value - 1.0 } else { value };
@@ -100,7 +178,13 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
                 "apex_shred" => Some((timing, AbilityEffect::ApexShredBonus(value))),
                 "apex_barrier" => Some((timing, AbilityEffect::ApexBarrierBonus(value))),
                 "shield_regen" | "shield_hp_repair" => Some((timing, AbilityEffect::ShieldRegen(value))),
-                "hull_repair" | "hull_hp_repair" => Some((timing, AbilityEffect::HullRegen(value))),
+                "hull_repair" | "hull_hp_repair" => {
+                    if timing == TimingWindow::Kill {
+                        Some((timing, AbilityEffect::OnKillHullRegen(value)))
+                    } else {
+                        Some((timing, AbilityEffect::HullRegen(value)))
+                    }
+                }
                 "isolytic_damage" => {
                     let add = if op == "multiply" { value - 1.0 } else { value };
                     Some((timing, AbilityEffect::IsolyticDamageBonus(add)))
@@ -117,11 +201,9 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
             }
         }
         "extra_attack" => {
-            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
-            let mult = effect.multiplier.unwrap_or(1.0);
-            // Engine represents extra shot as proc_chance/proc_multiplier on Combatant; we emit attack multiplier
-            // as a proxy for "extra damage this round" (simplified). Full extra_attack would need engine support.
-            Some((timing, AbilityEffect::AttackMultiplier(1.0 + chance * (mult - 1.0))))
+            // extra_attack is handled via BuffSet.proc_chance/proc_multiplier, not crew seats.
+            // Return None so it's not added to crew; resolve_crew_to_buff_set accumulates proc separately.
+            None
         }
         "morale" => {
             let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
@@ -165,6 +247,10 @@ pub fn resolve_officer_ability(
     let mut contexts = Vec::new();
     for effect in &ability.effects {
         if let Some((timing, effect_effect)) = resolve_effect(effect, &ability.name, options) {
+            let condition = effect
+                .condition
+                .as_ref()
+                .and_then(lcars_condition_to_ability_condition);
             contexts.push(CrewSeatContext {
                 seat,
                 ability: Ability {
@@ -173,6 +259,7 @@ pub fn resolve_officer_ability(
                     timing,
                     boostable: true,
                     effect: effect_effect,
+                    condition,
                 },
                 boosted: false,
             });
@@ -194,6 +281,8 @@ pub fn resolve_crew_to_buff_set(
 ) -> BuffSet {
     let mut static_buffs: HashMap<String, f64> = HashMap::new();
     let mut seats: Vec<CrewSeatContext> = Vec::new();
+    let mut proc_chance = 0.0_f64;
+    let mut proc_multiplier = 1.0_f64;
 
     let mut add_ability = |officer: &LcarsOfficer, ability: &LcarsAbility, seat: CrewSeat, class: AbilityClass| {
         for effect in &ability.effects {
@@ -242,9 +331,39 @@ pub fn resolve_crew_to_buff_set(
         }
     }
 
+    for (_officer, ability) in [captain_id]
+        .iter()
+        .filter_map(|id| officers.get(*id).and_then(|o| o.captain_ability.as_ref().map(|a| (o, a))))
+        .chain(bridge.iter().filter_map(|id| {
+            officers.get(id.as_str()).and_then(|o| o.bridge_ability.as_ref().map(|a| (o, a)))
+        }))
+        .chain(below_decks.iter().filter_map(|id| {
+            officers
+                .get(id.as_str())
+                .and_then(|o| o.below_decks_ability.as_ref().map(|a| (o, a)))
+        }))
+    {
+        for effect in &ability.effects {
+            if effect.effect_type == "extra_attack" {
+                let chance = effect
+                    .chance
+                    .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(options.tier)))
+                    .unwrap_or(0.0)
+                    .clamp(0.0, 1.0);
+                let mult = effect.multiplier.unwrap_or(2.0).max(1.0);
+                if chance > proc_chance || (chance == proc_chance && mult > proc_multiplier) {
+                    proc_chance = chance;
+                    proc_multiplier = mult;
+                }
+            }
+        }
+    }
+
     BuffSet {
         static_buffs,
         crew: CrewConfiguration { seats },
+        proc_chance,
+        proc_multiplier,
     }
 }
 
@@ -274,6 +393,8 @@ mod tests {
             chance: None,
             multiplier: None,
             tag: None,
+            accumulate: None,
+            decay: None,
         }
     }
 
