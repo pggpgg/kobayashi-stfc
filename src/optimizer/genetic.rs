@@ -24,6 +24,8 @@ pub struct GeneticConfig {
     pub elitism_count: usize,
     /// Stop early if best fitness has not improved for this many generations.
     pub stagnation_limit: Option<usize>,
+    /// When true, below-decks pool only includes officers that have a below-decks ability.
+    pub only_below_decks_with_ability: bool,
 }
 
 impl Default for GeneticConfig {
@@ -36,6 +38,7 @@ impl Default for GeneticConfig {
             tournament_size: 3,
             elitism_count: 2,
             stagnation_limit: Some(10),
+            only_below_decks_with_ability: false,
         }
     }
 }
@@ -325,7 +328,7 @@ pub fn run_genetic_optimizer(
     seed: u64,
     mut on_progress: impl FnMut(usize, usize, f32),
 ) -> Vec<CrewCandidate> {
-    let pools = match build_officer_pools() {
+    let pools = match build_officer_pools(config.only_below_decks_with_ability) {
         Some(p) => p,
         None => return Vec::new(),
     };

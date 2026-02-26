@@ -7,6 +7,8 @@ interface OptimizePanelProps {
   optimizeTotalCrews: number | null;
   maxCandidates: number | null;
   onMaxCandidatesChange: (value: number | null) => void;
+  prioritizeBelowDecksAbility: boolean;
+  onPrioritizeBelowDecksAbilityChange: (value: boolean) => void;
 }
 
 export default function OptimizePanel({
@@ -17,6 +19,8 @@ export default function OptimizePanel({
   optimizeTotalCrews,
   maxCandidates,
   onMaxCandidatesChange,
+  prioritizeBelowDecksAbility,
+  onPrioritizeBelowDecksAbilityChange,
 }: OptimizePanelProps) {
   if (collapsed) {
     return (
@@ -147,6 +151,15 @@ export default function OptimizePanel({
             color: 'var(--text)',
           }}
         />
+      </label>
+      <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={prioritizeBelowDecksAbility}
+          onChange={(e) => onPrioritizeBelowDecksAbilityChange(e.target.checked)}
+          style={{ margin: 0 }}
+        />
+        <span>Only below-decks officers with ability</span>
       </label>
       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
         {loadingOptimize &&
