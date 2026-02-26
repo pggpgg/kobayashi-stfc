@@ -44,6 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
         let record = by_name.entry(name.clone()).or_insert_with(|| {
             kobayashi::data::forbidden_chaos::ForbiddenChaosRecord {
+                fid: None,
                 name: name.clone(),
                 tech_type: row.tech_type.trim().to_string(),
                 tier: row.tier.and_then(|t| if t > 0 { Some(t) } else { None }),

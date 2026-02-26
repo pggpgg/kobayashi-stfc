@@ -1,5 +1,6 @@
 //! Player profile: effective_bonuses applied as pre-combat modifier layer (DESIGN §5).
 //! Keys match engine/LCARS stats: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce, etc.
+//! Bonuses from synced forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
 
 use std::collections::HashMap;
 use std::fs;
@@ -8,6 +9,8 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use crate::combat::Combatant;
+use crate::data::forbidden_chaos::ForbiddenChaosList;
+use crate::data::import::ForbiddenTechEntry;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlayerProfile {
@@ -16,6 +19,32 @@ pub struct PlayerProfile {
 }
 
 pub const DEFAULT_PROFILE_PATH: &str = "data/profile.json";
+
+/// Merges bonuses from player's synced forbidden/chaos tech into `profile.bonuses`.
+/// For each imported tech entry (by `fid`), looks up the catalog by `fid`; if the catalog
+/// has a matching `fid`, applies that record's bonuses (additive for "add", multiplicative for "mult").
+/// Catalog entries without `fid` are skipped for sync-based lookup.
+pub fn merge_forbidden_tech_bonuses_into_profile(
+    profile: &mut PlayerProfile,
+    imported_ft: &[ForbiddenTechEntry],
+    catalog: &ForbiddenChaosList,
+) {
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    for entry in imported_ft {
+        let Some(record) = by_fid.get(&entry.fid) else {
+            continue;
+        };
+        for bonus in &record.bonuses {
+            let current = profile.bonuses.get(&bonus.stat).copied().unwrap_or(0.0);
+            profile.bonuses
+                .insert(bonus.stat.clone(), current + bonus.value);
+        }
+    }
+}
 
 /// Load profile from JSON file. Returns default (empty bonuses) if file missing or invalid.
 pub fn load_profile(path: &str) -> PlayerProfile {

@@ -11,7 +11,12 @@ use crate::data::hostile::HostileRecord;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::ship::ShipRecord;
-use crate::data::profile::{apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile, PlayerProfile, DEFAULT_PROFILE_PATH};
+use crate::data::forbidden_chaos;
+use crate::data::import;
+use crate::data::profile::{
+    apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
+    merge_forbidden_tech_bonuses_into_profile, PlayerProfile, DEFAULT_PROFILE_PATH,
+};
 use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 
@@ -91,7 +96,13 @@ fn run_monte_carlo_with_parallelism(
         .ok()
         .map(index_officers_by_name)
         .unwrap_or_default();
-    let profile = load_profile(DEFAULT_PROFILE_PATH);
+    let mut profile = load_profile(DEFAULT_PROFILE_PATH);
+    if let (Some(imported_ft), Some(catalog)) = (
+        import::load_imported_forbidden_tech(import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH),
+        forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH),
+    ) {
+        merge_forbidden_tech_bonuses_into_profile(&mut profile, &imported_ft, &catalog);
+    }
 
     let lcars_data = if use_lcars_officer_source() {
         load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR)
