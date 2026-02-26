@@ -39,6 +39,8 @@ pub struct OptimizationScenario<'a> {
     pub max_candidates: Option<usize>,
     /// Which optimizer to use. When Genetic, max_candidates is ignored and GA config is used.
     pub strategy: OptimizerStrategy,
+    /// When true, below-decks pool only includes officers that have a below-decks ability.
+    pub only_below_decks_with_ability: bool,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -50,6 +52,7 @@ impl Default for OptimizationScenario<'_> {
             seed: 0,
             max_candidates: Some(128),
             strategy: OptimizerStrategy::Exhaustive,
+            only_below_decks_with_ability: false,
         }
     }
 }
@@ -65,6 +68,7 @@ pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewR
 fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
     let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
         max_candidates: scenario.max_candidates,
+        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
@@ -86,7 +90,10 @@ pub fn optimize_scenario_genetic<F>(
 where
     F: FnMut(usize, usize, f32),
 {
-    let config = GeneticConfig::default();
+    let config = GeneticConfig {
+        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        ..GeneticConfig::default()
+    };
     run_genetic_optimizer_ranked(
         scenario.ship,
         scenario.hostile,
@@ -111,6 +118,7 @@ where
             let generator = CrewGenerator::with_strategy(
                 crate::optimizer::crew_generator::CandidateStrategy {
                     max_candidates: scenario.max_candidates,
+                    only_below_decks_with_ability: scenario.only_below_decks_with_ability,
                     ..crate::optimizer::crew_generator::CandidateStrategy::default()
                 },
             );
@@ -120,6 +128,8 @@ where
             if total == 0 {
                 return Vec::new();
             }
+            // Report total immediately so UI shows "0 / total" while first batch runs.
+            on_progress(0, total as u32);
 
             let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
             let ranges = batch_ranges(total, num_batches);
@@ -142,7 +152,10 @@ where
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
-            let config = GeneticConfig::default();
+            let config = GeneticConfig {
+                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                ..GeneticConfig::default()
+            };
             run_genetic_optimizer_ranked(
                 scenario.ship,
                 scenario.hostile,
@@ -163,6 +176,7 @@ pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCre
         seed: 0,
         max_candidates: Some(128),
         strategy: OptimizerStrategy::Exhaustive,
+        only_below_decks_with_ability: false,
     })
 }
 
@@ -179,6 +193,7 @@ mod tests {
             seed: 42,
             max_candidates: None,
             strategy: OptimizerStrategy::Genetic,
+            only_below_decks_with_ability: false,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {

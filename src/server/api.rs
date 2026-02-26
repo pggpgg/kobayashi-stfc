@@ -34,6 +34,8 @@ pub struct OptimizeRequest {
     pub max_candidates: Option<u32>,
     /// Optimizer strategy: "exhaustive" (default) or "genetic".
     pub strategy: Option<String>,
+    /// When true, below-decks pool only includes officers that have a below-decks ability.
+    pub prioritize_below_decks_ability: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -635,6 +637,7 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
         seed,
         max_candidates: request.max_candidates.map(|n| n as usize),
         strategy,
+        only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
     };
     let start = Instant::now();
     let ranked_results = optimize_scenario(&scenario);
@@ -771,6 +774,7 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
     let job_id_clone = job_id.clone();
     let max_candidates = request.max_candidates.map(|n| n as usize);
     let strategy = parse_strategy(request.strategy.as_ref());
+    let prioritize_below_decks_ability = request.prioritize_below_decks_ability.unwrap_or(false);
     std::thread::spawn(move || {
         let scenario = OptimizationScenario {
             ship: &ship,
@@ -779,6 +783,7 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
             seed,
             max_candidates,
             strategy,
+            only_below_decks_with_ability: prioritize_below_decks_ability,
         };
         let start = Instant::now();
         let ranked_results = optimize_scenario_with_progress(&scenario, |crews_done, total_crews| {
@@ -890,12 +895,13 @@ pub fn optimize_status_payload(job_id: &str) -> Result<String, OptimizeStatusErr
     serde_json::to_string_pretty(&response).map_err(OptimizeStatusError::Serialize)
 }
 
-/// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates.
-fn parse_optimize_estimate_query(query: &str) -> (String, String, u32, Option<u32>) {
+/// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates, optional prioritize_below_decks_ability.
+fn parse_optimize_estimate_query(query: &str) -> (String, String, u32, Option<u32>, bool) {
     let mut ship = String::new();
     let mut hostile = String::new();
     let mut sims = DEFAULT_SIMS;
     let mut max_candidates: Option<u32> = None;
+    let mut prioritize_below_decks_ability = false;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
             let key = key.trim();
@@ -905,16 +911,18 @@ fn parse_optimize_estimate_query(query: &str) -> (String, String, u32, Option<u3
                 "hostile" => hostile = value.to_string(),
                 "sims" => sims = value.parse().unwrap_or(DEFAULT_SIMS),
                 "max_candidates" => max_candidates = value.parse().ok(),
+                "prioritize_below_decks_ability" => prioritize_below_decks_ability = value.eq_ignore_ascii_case("true") || value == "1",
                 _ => {}
             }
         }
     }
-    (ship, hostile, sims, max_candidates)
+    (ship, hostile, sims, max_candidates, prioritize_below_decks_ability)
 }
 
 pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadError> {
     let query = path.split('?').nth(1).unwrap_or("");
-    let (ship, hostile, sims, max_candidates) = parse_optimize_estimate_query(query);
+    let (ship, hostile, sims, max_candidates, prioritize_below_decks_ability) =
+        parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
         return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -930,6 +938,7 @@ pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadEr
         Some(cap) if cap <= MAX_CANDIDATES => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 max_candidates: Some(cap as usize),
+                only_below_decks_with_ability: prioritize_below_decks_ability,
                 ..CandidateStrategy::default()
             });
             generator.generate_candidates(&ship, &hostile, 0).len()
@@ -945,7 +954,10 @@ pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadEr
             }));
         }
         None => {
-            let generator = CrewGenerator::new();
+            let generator = CrewGenerator::with_strategy(CandidateStrategy {
+                only_below_decks_with_ability: prioritize_below_decks_ability,
+                ..CandidateStrategy::default()
+            });
             generator.count_candidates(&ship, &hostile, 0)
         }
     };

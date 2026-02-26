@@ -37,6 +37,7 @@ export default function Workspace() {
   const [savingPreset, setSavingPreset] = useState(false);
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [maxCandidates, setMaxCandidates] = useState<number | null>(null);
+  const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] = useState(false);
   const [estimate, setEstimate] = useState<OptimizeEstimate | null>(null);
   const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<number | null>(null);
   const [optimizeProgress, setOptimizeProgress] = useState<number | null>(null);
@@ -73,6 +74,7 @@ export default function Workspace() {
       hostile,
       sims: simsPerCrew,
       max_candidates: maxCandidates ?? undefined,
+      prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
     })
       .then((data) => {
         if (!cancelled) setEstimate(data);
@@ -81,7 +83,7 @@ export default function Workspace() {
         if (!cancelled) setEstimate(null);
       });
     return () => { cancelled = true; };
-  }, [shipId, scenarioId, simsPerCrew, maxCandidates]);
+  }, [shipId, scenarioId, simsPerCrew, maxCandidates, prioritizeBelowDecksAbility]);
 
   useEffect(() => {
     const n = belowDeckSlotCount(shipLevel);
@@ -139,6 +141,7 @@ export default function Workspace() {
         hostile: scenarioId || 'Explorer_30',
         sims: simsPerCrew,
         max_candidates: maxCandidates ?? undefined,
+        prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
       });
       const poll = () => {
         getOptimizeStatus(job_id)
@@ -374,6 +377,8 @@ export default function Workspace() {
           optimizeTotalCrews={optimizeTotalCrews}
           maxCandidates={maxCandidates}
           onMaxCandidatesChange={setMaxCandidates}
+          prioritizeBelowDecksAbility={prioritizeBelowDecksAbility}
+          onPrioritizeBelowDecksAbilityChange={setPrioritizeBelowDecksAbility}
         />
       </div>
     </div>

@@ -14,9 +14,19 @@ pub struct OfficerPools {
     pub below_decks: Vec<String>,
 }
 
+/// True if the officer has at least one ability with slot "below_decks".
+fn has_below_decks_ability(officer: &Officer) -> bool {
+    officer
+        .abilities
+        .iter()
+        .any(|a| a.slot.eq_ignore_ascii_case("below_decks"))
+}
+
 /// Builds captain, bridge, and below-decks pools from loaded officers and roster filter.
+/// When `only_below_decks_with_ability` is true, the below-decks pool is restricted to officers
+/// that have a below-decks ability; no fallback to all officers is applied in that case.
 /// Returns `None` if there are not enough officers to form any valid crew.
-pub fn build_officer_pools() -> Option<OfficerPools> {
+pub fn build_officer_pools(only_below_decks_with_ability: bool) -> Option<OfficerPools> {
     let mut officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .map(|loaded| {
             loaded
@@ -53,14 +63,25 @@ pub fn build_officer_pools() -> Option<OfficerPools> {
         .map(|o| o.name.clone())
         .collect();
 
+    if only_below_decks_with_ability {
+        below_decks = officers
+            .iter()
+            .filter(|officer| {
+                can_fill_position(officer, Position::BelowDecks)
+                    && has_below_decks_ability(officer)
+            })
+            .map(|o| o.name.clone())
+            .collect();
+        // Do not fallback to all officers when user requested this filter.
+    } else if below_decks.is_empty() {
+        below_decks = officers.iter().map(|o| o.name.clone()).collect();
+    }
+
     if captains.is_empty() {
         captains = officers.iter().map(|o| o.name.clone()).collect();
     }
     if bridge.is_empty() {
         bridge = officers.iter().map(|o| o.name.clone()).collect();
-    }
-    if below_decks.is_empty() {
-        below_decks = officers.iter().map(|o| o.name.clone()).collect();
     }
 
     if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < BELOW_DECKS_SLOTS {
@@ -89,6 +110,8 @@ pub struct CandidateStrategy {
     pub large_pool_captain_limit: usize,
     pub large_pool_bridge_limit: usize,
     pub use_seeded_shuffle: bool,
+    /// When true, below-decks pool only includes officers that have a below-decks ability.
+    pub only_below_decks_with_ability: bool,
 }
 
 impl Default for CandidateStrategy {
@@ -99,6 +122,7 @@ impl Default for CandidateStrategy {
             large_pool_captain_limit: 10,
             large_pool_bridge_limit: 12,
             use_seeded_shuffle: true,
+            only_below_decks_with_ability: false,
         }
     }
 }
@@ -120,7 +144,7 @@ impl CrewGenerator {
     }
 
     pub fn generate_candidates(&self, ship: &str, hostile: &str, seed: u64) -> Vec<CrewCandidate> {
-        let mut pools = match build_officer_pools() {
+        let mut pools = match build_officer_pools(self.strategy.only_below_decks_with_ability) {
             Some(p) => p,
             None => return Vec::new(),
         };
@@ -158,7 +182,7 @@ impl CrewGenerator {
     /// Returns the number of crew combinations without allocating candidates.
     /// Used for estimate when no cap is set. Uses same exhaustive/sampled branch as generate_candidates.
     pub fn count_candidates(&self, ship: &str, hostile: &str, seed: u64) -> usize {
-        let mut pools = match build_officer_pools() {
+        let mut pools = match build_officer_pools(self.strategy.only_below_decks_with_ability) {
             Some(p) => p,
             None => return 0,
         };
