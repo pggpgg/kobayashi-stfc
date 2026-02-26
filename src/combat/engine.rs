@@ -899,13 +899,14 @@ pub fn simulate_combat(
         let damage_after_apex = damage * apex_damage_factor;
 
         // Isolytic: extra damage from attacker isolytic_damage bonus, reduced by defender isolytic_defense.
-        // Officer/ability effects add via EffectAccumulator (composed_isolytic_damage_bonus, composed_isolytic_defense_bonus).
+        // Officer/ability effects add via EffectAccumulator (composed_isolytic_damage_bonus, composed_isolytic_defense_bonus, composed_isolytic_cascade_damage_bonus).
         let effective_isolytic_damage = (attacker.isolytic_damage + phase_effects.composed_isolytic_damage_bonus()).max(0.0);
         let effective_isolytic_defense = (defender.isolytic_defense + phase_effects.composed_isolytic_defense_bonus()).max(0.0);
+        let effective_isolytic_cascade = phase_effects.composed_isolytic_cascade_damage_bonus().max(0.0);
         let isolytic_component = isolytic_damage(
             damage_after_apex,
             effective_isolytic_damage,
-            0.0,
+            effective_isolytic_cascade,
         );
         let isolytic_net = (isolytic_component - effective_isolytic_defense).max(0.0);
         let damage_after_apex = damage_after_apex + isolytic_net;
@@ -1176,6 +1177,7 @@ enum EffectStatKey {
     HullRegen,
     IsolyticDamageBonus,
     IsolyticDefenseBonus,
+    IsolyticCascadeDamageBonus,
     ShieldMitigationBonus,
 }
 
@@ -1202,6 +1204,7 @@ impl Default for EffectAccumulator {
         stacks.add(StackContribution::base(EffectStatKey::HullRegen, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::IsolyticDamageBonus, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::IsolyticDefenseBonus, 0.0));
+        stacks.add(StackContribution::base(EffectStatKey::IsolyticCascadeDamageBonus, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::ShieldMitigationBonus, 0.0));
 
         Self {
@@ -1263,6 +1266,12 @@ impl EffectAccumulator {
     fn composed_isolytic_defense_bonus(&self) -> f64 {
         self.stacks
             .composed_for(&EffectStatKey::IsolyticDefenseBonus)
+            .unwrap_or(0.0)
+    }
+
+    fn composed_isolytic_cascade_damage_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::IsolyticCascadeDamageBonus)
             .unwrap_or(0.0)
     }
 
@@ -1378,6 +1387,9 @@ impl EffectAccumulator {
                 AbilityEffect::IsolyticDefenseBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
                 }
+                AbilityEffect::IsolyticCascadeDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticCascadeDamageBonus, v));
+                }
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
@@ -1428,6 +1440,9 @@ impl EffectAccumulator {
                 AbilityEffect::IsolyticDefenseBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
                 }
+                AbilityEffect::IsolyticCascadeDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticCascadeDamageBonus, v));
+                }
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
@@ -1477,6 +1492,9 @@ impl EffectAccumulator {
                 AbilityEffect::IsolyticDefenseBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
                 }
+                AbilityEffect::IsolyticCascadeDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticCascadeDamageBonus, v));
+                }
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
                 }
@@ -1513,6 +1531,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::IsolyticCascadeDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticCascadeDamageBonus, v));
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
@@ -1570,6 +1591,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::IsolyticCascadeDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticCascadeDamageBonus, v));
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldMitigationBonus, v));
@@ -1707,6 +1731,9 @@ fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffec
         }
         AbilityEffect::IsolyticDefenseBonus(v) => {
             AbilityEffect::IsolyticDefenseBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::IsolyticCascadeDamageBonus(v) => {
+            AbilityEffect::IsolyticCascadeDamageBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::ShieldMitigationBonus(v) => {
             AbilityEffect::ShieldMitigationBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)

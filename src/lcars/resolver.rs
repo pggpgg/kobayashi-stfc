@@ -193,6 +193,10 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
                     let add = if op == "multiply" { value - 1.0 } else { value };
                     Some((timing, AbilityEffect::IsolyticDefenseBonus(add)))
                 }
+                "isolytic_cascade" | "isolytic_cascade_damage" => {
+                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    Some((timing, AbilityEffect::IsolyticCascadeDamageBonus(add)))
+                }
                 "shield_mitigation" => {
                     let add = if op == "multiply" { value - 1.0 } else { value };
                     Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
@@ -437,6 +441,15 @@ mod tests {
             resolve_officer_ability(&officer, &ability_shield, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
         assert_eq!(contexts_shield.len(), 1);
         assert!(matches!(contexts_shield[0].ability.effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.05).abs() < 1e-12));
+
+        let ability_cascade = LcarsAbility {
+            name: "cascade".to_string(),
+            effects: vec![lcars_effect_stat_modify("isolytic_cascade_damage", 0.2, "on_round_start")],
+        };
+        let contexts_cascade =
+            resolve_officer_ability(&officer, &ability_cascade, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        assert_eq!(contexts_cascade.len(), 1);
+        assert!(matches!(contexts_cascade[0].ability.effect, AbilityEffect::IsolyticCascadeDamageBonus(v) if (v - 0.2).abs() < 1e-12));
     }
 
     #[test]

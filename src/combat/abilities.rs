@@ -61,6 +61,8 @@ pub enum AbilityEffect {
     IsolyticDamageBonus(f64),
     /// Officer-granted isolytic defense; flat reduction to isolytic damage taken.
     IsolyticDefenseBonus(f64),
+    /// Officer-granted isolytic cascade damage bonus (decimal). Multiplied by (1 + isolytic_damage_bonus) in isolytic_damage().
+    IsolyticCascadeDamageBonus(f64),
     /// Officer-granted shield mitigation; additive to base (clamped 0..1).
     ShieldMitigationBonus(f64),
     /// Hull HP restored when this ship gets a kill (on_kill). Reduces total_attacker_hull_damage.
