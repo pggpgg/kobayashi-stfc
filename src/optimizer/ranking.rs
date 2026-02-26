@@ -12,6 +12,8 @@ pub struct RankedCrewResult {
     pub bridge: Vec<String>,
     pub below_decks: Vec<String>,
     pub win_rate: f64,
+    pub stall_rate: f64,
+    pub loss_rate: f64,
     pub avg_hull_remaining: f64,
     pub score: RankingScore,
 }
@@ -26,6 +28,8 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
                 bridge: result.candidate.bridge.clone(),
                 below_decks: result.candidate.below_decks.clone(),
                 win_rate: result.win_rate,
+                stall_rate: result.stall_rate,
+                loss_rate: result.loss_rate,
                 avg_hull_remaining: result.avg_hull_remaining,
                 score: RankingScore { value: score },
             }
