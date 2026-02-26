@@ -7,7 +7,9 @@ use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_P
 use crate::data::ship::{load_ship_index, DEFAULT_SHIPS_INDEX_PATH};
 use crate::optimizer::crew_generator::{CandidateStrategy, CrewGenerator, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 use crate::optimizer::monte_carlo::{run_monte_carlo, SimulationResult};
-use crate::optimizer::{optimize_scenario, optimize_scenario_with_progress, OptimizationScenario};
+use crate::optimizer::{
+    optimize_scenario, optimize_scenario_with_progress, OptimizerStrategy, OptimizationScenario,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -30,6 +32,8 @@ pub struct OptimizeRequest {
     pub seed: Option<u64>,
     /// When None, all crew combinations are explored. When Some(n), generation stops after n candidates.
     pub max_candidates: Option<u32>,
+    /// Optimizer strategy: "exhaustive" (default) or "genetic".
+    pub strategy: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -609,12 +613,20 @@ pub fn data_version_payload() -> Result<String, serde_json::Error> {
 /// Rough seconds per (candidate × sim) on a typical multi-core machine; used for time estimates.
 const ESTIMATE_SEC_PER_CANDIDATE_SIM: f64 = 4e-9;
 
+fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
+    match s.as_deref() {
+        Some(v) if v.trim().eq_ignore_ascii_case("genetic") => OptimizerStrategy::Genetic,
+        _ => OptimizerStrategy::Exhaustive,
+    }
+}
+
 pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
     let request: OptimizeRequest =
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
     let seed = request.seed.unwrap_or(0);
+    let strategy = parse_strategy(request.strategy.as_ref());
 
     let scenario = OptimizationScenario {
         ship: &request.ship,
@@ -622,14 +634,32 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
         simulation_count: sims as usize,
         seed,
         max_candidates: request.max_candidates.map(|n| n as usize),
+        strategy,
     };
     let start = Instant::now();
     let ranked_results = optimize_scenario(&scenario);
     let duration_ms = start.elapsed().as_millis() as u64;
 
+    let (engine, notes) = match strategy {
+        OptimizerStrategy::Exhaustive => (
+            "optimizer_v1",
+            vec![
+                "Recommendations are generated from candidate generation, simulation, and ranking passes.",
+                "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+            ],
+        ),
+        OptimizerStrategy::Genetic => (
+            "genetic",
+            vec![
+                "Recommendations from genetic algorithm (evolution + final Monte Carlo ranking).",
+                "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+            ],
+        ),
+    };
+
     let response = OptimizeResponse {
         status: "ok",
-        engine: "optimizer_v1",
+        engine,
         scenario: ScenarioSummary {
             ship: request.ship,
             hostile: request.hostile,
@@ -649,10 +679,7 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
             })
             .collect(),
         duration_ms: Some(duration_ms),
-        notes: vec![
-            "Recommendations are generated from candidate generation, simulation, and ranking passes.",
-            "Results are deterministic for the same ship, hostile, simulation count, and seed.",
-        ],
+        notes,
     };
 
     serde_json::to_string_pretty(&response).map_err(OptimizePayloadError::Parse)
@@ -743,6 +770,7 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
     let hostile = request.hostile.clone();
     let job_id_clone = job_id.clone();
     let max_candidates = request.max_candidates.map(|n| n as usize);
+    let strategy = parse_strategy(request.strategy.as_ref());
     std::thread::spawn(move || {
         let scenario = OptimizationScenario {
             ship: &ship,
@@ -750,6 +778,7 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
             simulation_count: sims as usize,
             seed,
             max_candidates,
+            strategy,
         };
         let start = Instant::now();
         let ranked_results = optimize_scenario_with_progress(&scenario, |crews_done, total_crews| {
@@ -768,9 +797,26 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
         });
         let duration_ms = start.elapsed().as_millis() as u64;
 
+        let (engine, notes) = match strategy {
+            OptimizerStrategy::Exhaustive => (
+                "optimizer_v1",
+                vec![
+                    "Recommendations are generated from candidate generation, simulation, and ranking passes.",
+                    "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+                ],
+            ),
+            OptimizerStrategy::Genetic => (
+                "genetic",
+                vec![
+                    "Recommendations from genetic algorithm (evolution + final Monte Carlo ranking).",
+                    "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+                ],
+            ),
+        };
+
         let response = OptimizeResponse {
             status: "ok",
-            engine: "optimizer_v1",
+            engine,
             scenario: ScenarioSummary {
                 ship: ship.clone(),
                 hostile: hostile.clone(),
@@ -790,10 +836,7 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
                 })
                 .collect(),
             duration_ms: Some(duration_ms),
-            notes: vec![
-                "Recommendations are generated from candidate generation, simulation, and ranking passes.",
-                "Results are deterministic for the same ship, hostile, simulation count, and seed.",
-            ],
+            notes,
         };
 
         if let Ok(mut map) = optimize_jobs().lock() {
