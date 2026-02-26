@@ -11,6 +11,14 @@
       "level_percentage": 0.5,
       "psid": 919293,
       "tier": 2
+    },
+    {
+      "components": [],
+      "hull_id": 200,
+      "level": 15,
+      "level_percentage": 0.0,
+      "psid": 919295,
+      "tier": 3
     }
   ],
   "source_path": "stfc-mod sync"
