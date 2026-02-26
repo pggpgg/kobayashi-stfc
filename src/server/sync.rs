@@ -95,7 +95,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
             }
         }
-        "buildings" => {
+        "buildings" | "module" => {
             match apply_buildings_sync(&payload, import::DEFAULT_BUILDINGS_IMPORT_PATH) {
                 Ok(accepted_count) => {
                     eprintln!("[sync] 200 OK accepted buildings({accepted_count})");
@@ -107,7 +107,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
             }
         }
-        "ships" => {
+        "ships" | "ship" => {
             match apply_ships_sync(&payload, import::DEFAULT_SHIPS_IMPORT_PATH) {
                 Ok(accepted_count) => {
                     eprintln!("[sync] 200 OK accepted ships({accepted_count})");
@@ -576,6 +576,39 @@ mod tests {
                 e.psid == 919293 && e.tier == 2 && e.level == 10 && e.hull_id == 100
             }),
             "expected psid=919293 in {:?}",
+            entries
+        );
+    }
+
+    #[test]
+    fn ingress_module_type_persists_to_file() {
+        let r = ingress_payload(r#"[{"type":"module","bid":919294,"level":7}]"#, None);
+        assert_eq!(r.status_code, 200);
+        assert!(r.body.contains("buildings(1)"));
+        let entries = import::load_imported_buildings(import::DEFAULT_BUILDINGS_IMPORT_PATH)
+            .expect("buildings.imported.json should exist after sync");
+        assert!(
+            entries.iter().any(|e| e.bid == 919294 && e.level == 7),
+            "expected bid=919294 level=7 in {:?}",
+            entries
+        );
+    }
+
+    #[test]
+    fn ingress_ship_type_persists_to_file() {
+        let r = ingress_payload(
+            r#"[{"type":"ship","psid":919295,"tier":3,"level":15,"level_percentage":0.0,"hull_id":200,"components":[]}]"#,
+            None,
+        );
+        assert_eq!(r.status_code, 200);
+        assert!(r.body.contains("ships(1)"));
+        let entries = import::load_imported_ships(import::DEFAULT_SHIPS_IMPORT_PATH)
+            .expect("ships.imported.json should exist after sync");
+        assert!(
+            entries.iter().any(|e| {
+                e.psid == 919295 && e.tier == 3 && e.level == 15 && e.hull_id == 200
+            }),
+            "expected psid=919295 in {:?}",
             entries
         );
     }
