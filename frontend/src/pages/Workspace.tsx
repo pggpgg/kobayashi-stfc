@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import WorkspaceHeader from '../components/WorkspaceHeader';
 import CrewBuilder from '../components/CrewBuilder';
@@ -11,10 +11,12 @@ import {
   type CrewState,
   type PinsState,
 } from '../lib/types';
-import { simulate, optimize, savePreset, getOptimizeEstimate, formatApiError } from '../lib/api';
+import { simulate, optimizeStart, getOptimizeStatus, savePreset, getOptimizeEstimate, formatApiError } from '../lib/api';
 import type { SimulateStats, OptimizeEstimate } from '../lib/api';
 import type { CrewRecommendation } from '../lib/api';
 import type { Preset } from '../lib/api';
+
+const POLL_INTERVAL_MS = 350;
 
 export default function Workspace() {
   const location = useLocation();
@@ -36,6 +38,10 @@ export default function Workspace() {
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [estimate, setEstimate] = useState<OptimizeEstimate | null>(null);
   const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<number | null>(null);
+  const [optimizeProgress, setOptimizeProgress] = useState<number | null>(null);
+  const [optimizeCrewsDone, setOptimizeCrewsDone] = useState<number | null>(null);
+  const [optimizeTotalCrews, setOptimizeTotalCrews] = useState<number | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const preset = (location.state as { preset?: Preset } | null)?.preset;
@@ -118,21 +124,76 @@ export default function Workspace() {
     setError(null);
     setLoadingOptimize(true);
     setLastOptimizeDurationMs(null);
+    setOptimizeProgress(0);
+    setOptimizeCrewsDone(0);
+    setOptimizeTotalCrews(null);
     try {
-      const res = await optimize({
+      const { job_id } = await optimizeStart({
         ship: shipId || 'Saladin',
         hostile: scenarioId || 'Explorer_30',
         sims: simsPerCrew,
       });
-      setRecommendations(res.recommendations ?? []);
-      setSimResult(null);
-      if (res.duration_ms != null) setLastOptimizeDurationMs(res.duration_ms);
+      const poll = () => {
+        getOptimizeStatus(job_id)
+          .then((status) => {
+            if (status.progress != null) setOptimizeProgress(status.progress);
+            if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
+            if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
+            if (status.status === 'done' && status.result) {
+              if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+              }
+              setRecommendations(status.result.recommendations ?? []);
+              setSimResult(null);
+              if (status.result.duration_ms != null) setLastOptimizeDurationMs(status.result.duration_ms);
+              setLoadingOptimize(false);
+              setOptimizeProgress(null);
+              setOptimizeCrewsDone(null);
+              setOptimizeTotalCrews(null);
+            } else if (status.status === 'error') {
+              if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+              }
+              setError(status.error ?? 'Optimization failed');
+              setLoadingOptimize(false);
+              setOptimizeProgress(null);
+              setOptimizeCrewsDone(null);
+              setOptimizeTotalCrews(null);
+            }
+          })
+          .catch((e) => {
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            setError(formatApiError(e));
+            setLoadingOptimize(false);
+            setOptimizeProgress(null);
+            setOptimizeCrewsDone(null);
+            setOptimizeTotalCrews(null);
+          });
+      };
+      poll();
+      pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
     } catch (e) {
       setError(formatApiError(e));
-    } finally {
       setLoadingOptimize(false);
+      setOptimizeProgress(null);
+      setOptimizeCrewsDone(null);
+      setOptimizeTotalCrews(null);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSavePreset = async () => {
     setError(null);
@@ -176,6 +237,9 @@ export default function Workspace() {
         onSavePreset={() => setShowSavePreset(true)}
         loadingSim={loadingSim}
         loadingOptimize={loadingOptimize}
+        optimizeProgress={optimizeProgress}
+        optimizeCrewsDone={optimizeCrewsDone}
+        optimizeTotalCrews={optimizeTotalCrews}
       />
       {showSavePreset && (
         <div
@@ -288,6 +352,9 @@ export default function Workspace() {
               recommendations={recommendations}
               loadingSim={loadingSim}
               loadingOptimize={loadingOptimize}
+              optimizeProgress={optimizeProgress}
+              optimizeCrewsDone={optimizeCrewsDone}
+              optimizeTotalCrews={optimizeTotalCrews}
             />
           </div>
         </section>
@@ -295,6 +362,9 @@ export default function Workspace() {
           collapsed={rightPanelCollapsed}
           onToggleCollapsed={() => setRightPanelCollapsed(!rightPanelCollapsed)}
           crew={crew}
+          loadingOptimize={loadingOptimize}
+          optimizeCrewsDone={optimizeCrewsDone}
+          optimizeTotalCrews={optimizeTotalCrews}
         />
       </div>
     </div>

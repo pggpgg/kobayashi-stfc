@@ -22,6 +22,9 @@ interface WorkspaceHeaderProps {
   onSavePreset: () => void;
   loadingSim: boolean;
   loadingOptimize: boolean;
+  optimizeProgress: number | null;
+  optimizeCrewsDone: number | null;
+  optimizeTotalCrews: number | null;
 }
 
 export default function WorkspaceHeader({
@@ -40,6 +43,9 @@ export default function WorkspaceHeader({
   onSavePreset,
   loadingSim,
   loadingOptimize,
+  optimizeProgress,
+  optimizeCrewsDone,
+  optimizeTotalCrews,
 }: WorkspaceHeaderProps) {
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
@@ -196,6 +202,34 @@ export default function WorkspaceHeader({
           Completed in {(lastOptimizeDurationMs / 1000).toFixed(1)} s
         </span>
       )}
+      {loadingOptimize && optimizeProgress != null && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
+          <div
+            style={{
+              flex: 1,
+              height: 6,
+              background: 'var(--border)',
+              borderRadius: 3,
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${optimizeProgress}%`,
+                height: '100%',
+                background: 'var(--accent)',
+                borderRadius: 3,
+                transition: 'width 0.2s ease',
+              }}
+            />
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            {optimizeTotalCrews != null && optimizeCrewsDone != null && optimizeTotalCrews > 0
+              ? `${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
+              : `${optimizeProgress}%`}
+          </span>
+        </div>
+      )}
       <div style={{ flex: 1, minWidth: 8 }} />
       <button
         type="button"
@@ -236,7 +270,9 @@ export default function WorkspaceHeader({
           color: 'var(--bg)',
         }}
       >
-        {loadingOptimize ? 'Running…' : 'Run Optimize'}
+        {loadingOptimize
+          ? (optimizeProgress != null ? `Optimizing… ${optimizeProgress}%` : 'Running…')
+          : 'Run Optimize'}
       </button>
     </header>
   );

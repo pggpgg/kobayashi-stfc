@@ -2,9 +2,18 @@ interface OptimizePanelProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   crew: import('../lib/types').CrewState;
+  loadingOptimize: boolean;
+  optimizeCrewsDone: number | null;
+  optimizeTotalCrews: number | null;
 }
 
-export default function OptimizePanel({ collapsed, onToggleCollapsed }: OptimizePanelProps) {
+export default function OptimizePanel({
+  collapsed,
+  onToggleCollapsed,
+  loadingOptimize,
+  optimizeCrewsDone,
+  optimizeTotalCrews,
+}: OptimizePanelProps) {
   if (collapsed) {
     return (
       <aside
@@ -104,7 +113,12 @@ export default function OptimizePanel({ collapsed, onToggleCollapsed }: Optimize
         </select>
       </label>
       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-        Live status: — sims, — sims/sec
+        {loadingOptimize &&
+        optimizeCrewsDone != null &&
+        optimizeTotalCrews != null &&
+        optimizeTotalCrews > 0
+          ? `Live status: ${optimizeCrewsDone} / ${optimizeTotalCrews} crews`
+          : 'Live status: — sims, — sims/sec'}
       </p>
     </aside>
   );

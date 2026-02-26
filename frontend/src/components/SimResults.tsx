@@ -7,6 +7,9 @@ interface SimResultsProps {
   recommendations: CrewRecommendation[];
   loadingSim: boolean;
   loadingOptimize: boolean;
+  optimizeProgress: number | null;
+  optimizeCrewsDone: number | null;
+  optimizeTotalCrews: number | null;
 }
 
 export default function SimResults({
@@ -14,6 +17,9 @@ export default function SimResults({
   recommendations,
   loadingSim,
   loadingOptimize,
+  optimizeProgress,
+  optimizeCrewsDone,
+  optimizeTotalCrews,
 }: SimResultsProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const hasSim = simResult != null;
@@ -44,11 +50,40 @@ export default function SimResults({
       <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>SimResults</h2>
 
       {(loadingSim || loadingOptimize) && (
-        <p style={{ margin: 0, color: 'var(--text-muted)' }}>
-          {loadingOptimize
-            ? 'Optimization in progress… This may take a minute depending on scenario.'
-            : 'Running…'}
-        </p>
+        <div style={{ marginBottom: '0.75rem' }}>
+          <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+            {loadingOptimize
+              ? 'Optimization in progress… This may take a minute depending on scenario.'
+              : 'Running…'}
+          </p>
+          {loadingOptimize && optimizeProgress != null && (
+            <div style={{ marginTop: 8 }}>
+              <div
+                style={{
+                  height: 10,
+                  background: 'var(--border)',
+                  borderRadius: 5,
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${optimizeProgress}%`,
+                    height: '100%',
+                    background: 'var(--accent)',
+                    borderRadius: 5,
+                    transition: 'width 0.2s ease',
+                  }}
+                />
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                {optimizeTotalCrews != null && optimizeCrewsDone != null
+                  ? `${optimizeCrewsDone} / ${optimizeTotalCrews} crews (${optimizeProgress}%)`
+                  : `${optimizeProgress}%`}
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
       {hasSim && !loadingSim && (
