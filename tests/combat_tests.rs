@@ -2396,6 +2396,101 @@ fn crew_isolytic_damage_bonus_increases_damage() {
 }
 
 #[test]
+fn crew_isolytic_cascade_damage_bonus_increases_damage() {
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 5,
+        trace_mode: TraceMode::Off,
+    };
+    let crew_base_iso = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "iso".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: true,
+                effect: AbilityEffect::IsolyticDamageBonus(0.1),
+                condition: None,
+            },
+            boosted: false,
+        }],
+    };
+    let crew_iso_and_cascade = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "iso".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: true,
+                    effect: AbilityEffect::IsolyticDamageBonus(0.1),
+                    condition: None,
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "cascade".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::RoundStart,
+                    boostable: true,
+                    effect: AbilityEffect::IsolyticCascadeDamageBonus(0.2),
+                    condition: None,
+                },
+                boosted: false,
+            },
+        ],
+    };
+    let result_base = simulate_combat(&attacker, &defender, config, &crew_base_iso);
+    let result_cascade = simulate_combat(&attacker, &defender, config, &crew_iso_and_cascade);
+    assert!(
+        result_cascade.total_damage > result_base.total_damage,
+        "IsolyticCascadeDamageBonus(0.2) on top of IsolyticDamageBonus(0.1) should increase total damage per formula"
+    );
+}
+
+#[test]
 fn two_weapon_combatant_produces_two_damage_events_per_round() {
     let attacker = Combatant {
         id: "attacker".to_string(),

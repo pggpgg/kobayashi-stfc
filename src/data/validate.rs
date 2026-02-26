@@ -506,6 +506,8 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
             | "all_piercing"
             | "isolytic_damage"
             | "isolytic_defense"
+            | "isolytic_cascade"
+            | "isolytic_cascade_damage"
     ) {
         return Some(MechanicSupport::Implemented);
     }

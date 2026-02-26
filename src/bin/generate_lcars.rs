@@ -301,6 +301,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "ApexBarrier" => MappedEffect::StatModify("apex_barrier".into(), "add".into(), val),
         "IsolyticDamage" => MappedEffect::StatModify("isolytic_damage".into(), "add".into(), val),
         "IsolyticDefense" => MappedEffect::StatModify("isolytic_defense".into(), "add".into(), val),
+        "IsolyticCascade" | "IsolyticCascadeDamage" => {
+            MappedEffect::StatModify("isolytic_cascade_damage".into(), "add".into(), val)
+        }
         "ShieldHPRepair" | "ShieldRegen" => MappedEffect::StatModify("shield_regen".into(), "add".into(), val),
         "HullHPRepair" | "HullRegen" => MappedEffect::StatModify("hull_hp_repair".into(), "add".into(), val),
         "AddState" => {
