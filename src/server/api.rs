@@ -7,13 +7,16 @@ use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_P
 use crate::data::ship::{load_ship_index, DEFAULT_SHIPS_INDEX_PATH};
 use crate::optimizer::crew_generator::{CrewGenerator, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 use crate::optimizer::monte_carlo::{run_monte_carlo, SimulationResult};
-use crate::optimizer::{optimize_scenario, OptimizationScenario};
+use crate::optimizer::{optimize_scenario, optimize_scenario_with_progress, OptimizationScenario};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
 use std::fmt;
-use std::time::Instant;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Mutex, OnceLock};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const DEFAULT_SIMS: u32 = 5000;
 const MAX_SIMS: u32 = 100_000;
@@ -649,6 +652,193 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
     };
 
     serde_json::to_string_pretty(&response).map_err(OptimizePayloadError::Parse)
+}
+
+// --- Optimize job store (for progress polling) ---
+
+#[derive(Debug, Clone)]
+pub enum OptimizeJobStatus {
+    Running,
+    Done,
+    Error,
+}
+
+#[derive(Debug, Clone)]
+pub struct OptimizeJobState {
+    pub status: OptimizeJobStatus,
+    pub progress: u8,
+    pub crews_done: u32,
+    pub total_crews: u32,
+    pub result: Option<OptimizeResponse>,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OptimizeStartResponse {
+    pub job_id: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OptimizeStatusResponse {
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub progress: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub crews_done: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_crews: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub result: Option<OptimizeResponse>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+static OPTIMIZE_JOB_COUNTER: OnceLock<AtomicU64> = OnceLock::new();
+static OPTIMIZE_JOBS: OnceLock<Mutex<HashMap<String, OptimizeJobState>>> = OnceLock::new();
+
+fn optimize_jobs() -> &'static Mutex<HashMap<String, OptimizeJobState>> {
+    OPTIMIZE_JOBS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn next_job_id() -> String {
+    let counter = OPTIMIZE_JOB_COUNTER.get_or_init(|| AtomicU64::new(0));
+    let n = counter.fetch_add(1, Ordering::Relaxed);
+    let ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis();
+    format!("opt_{}_{}", ms, n)
+}
+
+/// Start an optimize job in the background; returns job_id immediately.
+pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError> {
+    let request: OptimizeRequest =
+        serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
+    let sims = request.sims.unwrap_or(DEFAULT_SIMS);
+    validate_request(&request, sims)?;
+    let seed = request.seed.unwrap_or(0);
+
+    let job_id = next_job_id();
+    let jobs = optimize_jobs();
+    {
+        let mut map = jobs.lock().unwrap();
+        map.insert(
+            job_id.clone(),
+            OptimizeJobState {
+                status: OptimizeJobStatus::Running,
+                progress: 0,
+                crews_done: 0,
+                total_crews: 0,
+                result: None,
+                error: None,
+            },
+        );
+    }
+
+    let ship = request.ship.clone();
+    let hostile = request.hostile.clone();
+    let job_id_clone = job_id.clone();
+    std::thread::spawn(move || {
+        let scenario = OptimizationScenario {
+            ship: &ship,
+            hostile: &hostile,
+            simulation_count: sims as usize,
+            seed,
+        };
+        let start = Instant::now();
+        let ranked_results = optimize_scenario_with_progress(&scenario, |crews_done, total_crews| {
+            let progress = if total_crews == 0 {
+                0
+            } else {
+                ((crews_done as f64 / total_crews as f64) * 100.0).round().min(100.0) as u8
+            };
+            if let Ok(mut map) = optimize_jobs().lock() {
+                if let Some(state) = map.get_mut(&job_id_clone) {
+                    state.progress = progress;
+                    state.crews_done = crews_done;
+                    state.total_crews = total_crews;
+                }
+            }
+        });
+        let duration_ms = start.elapsed().as_millis() as u64;
+
+        let response = OptimizeResponse {
+            status: "ok",
+            engine: "optimizer_v1",
+            scenario: ScenarioSummary {
+                ship: ship.clone(),
+                hostile: hostile.clone(),
+                sims,
+                seed,
+            },
+            recommendations: ranked_results
+                .into_iter()
+                .map(|result| CrewRecommendation {
+                    captain: result.captain,
+                    bridge: result.bridge.clone(),
+                    below_decks: result.below_decks.clone(),
+                    win_rate: result.win_rate,
+                    stall_rate: result.stall_rate,
+                    loss_rate: result.loss_rate,
+                    avg_hull_remaining: result.avg_hull_remaining,
+                })
+                .collect(),
+            duration_ms: Some(duration_ms),
+            notes: vec![
+                "Recommendations are generated from candidate generation, simulation, and ranking passes.",
+                "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+            ],
+        };
+
+        if let Ok(mut map) = optimize_jobs().lock() {
+            if let Some(state) = map.get_mut(&job_id_clone) {
+                state.status = OptimizeJobStatus::Done;
+                state.progress = 100;
+                state.result = Some(response);
+            }
+        }
+    });
+
+    let start_response = OptimizeStartResponse { job_id };
+    serde_json::to_string_pretty(&start_response).map_err(OptimizePayloadError::Parse)
+}
+
+#[derive(Debug)]
+pub enum OptimizeStatusError {
+    NotFound,
+    Serialize(serde_json::Error),
+}
+
+impl fmt::Display for OptimizeStatusError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NotFound => write!(f, "Job not found"),
+            Self::Serialize(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for OptimizeStatusError {}
+
+/// Return current status (and result when done) for an optimize job.
+pub fn optimize_status_payload(job_id: &str) -> Result<String, OptimizeStatusError> {
+    let jobs = optimize_jobs();
+    let map = jobs.lock().unwrap();
+    let state = map.get(job_id).ok_or(OptimizeStatusError::NotFound)?;
+    let status_str = match &state.status {
+        OptimizeJobStatus::Running => "running",
+        OptimizeJobStatus::Done => "done",
+        OptimizeJobStatus::Error => "error",
+    };
+    let response = OptimizeStatusResponse {
+        status: status_str.to_string(),
+        progress: Some(state.progress),
+        crews_done: Some(state.crews_done),
+        total_crews: Some(state.total_crews),
+        result: state.result.clone(),
+        error: state.error.clone(),
+    };
+    serde_json::to_string_pretty(&response).map_err(OptimizeStatusError::Serialize)
 }
 
 /// Parses query string for optimize estimate: ship, hostile, sims.

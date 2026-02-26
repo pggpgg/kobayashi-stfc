@@ -211,6 +211,45 @@ export async function optimize(params: {
   return res.json();
 }
 
+export interface OptimizeStartResponse {
+  job_id: string;
+}
+
+export interface OptimizeStatusResponse {
+  status: string;
+  progress?: number;
+  crews_done?: number;
+  total_crews?: number;
+  result?: OptimizeResponse;
+  error?: string;
+}
+
+export async function optimizeStart(params: {
+  ship: string;
+  hostile: string;
+  sims?: number;
+  seed?: number;
+}): Promise<OptimizeStartResponse> {
+  const res = await fetch(`${API_BASE}/api/optimize/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ship: params.ship,
+      hostile: params.hostile,
+      sims: params.sims ?? 5000,
+      seed: params.seed,
+    }),
+  });
+  await checkOk(res);
+  return res.json();
+}
+
+export async function getOptimizeStatus(jobId: string): Promise<OptimizeStatusResponse> {
+  const res = await fetch(`${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`);
+  await checkOk(res);
+  return res.json();
+}
+
 export interface ImportReport {
   source_path: string;
   output_path: string;

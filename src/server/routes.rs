@@ -173,6 +173,35 @@ pub fn route_request(
                 }
             }
         }
+        ("POST", "/api/optimize/start") => match api::optimize_start_payload(body) {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(api::OptimizePayloadError::Parse(err)) => {
+                error_response(400, "Bad Request", &format!("Invalid request body: {err}"))
+            }
+            Err(api::OptimizePayloadError::Validation(validation)) => {
+                validation_error_response(400, "Bad Request", validation)
+            }
+        },
+        (method, path) if method == "GET" && path.starts_with("/api/optimize/status/") => {
+            let job_id = path.trim_start_matches("/api/optimize/status/").split('/').next().unwrap_or("");
+            match api::optimize_status_payload(job_id) {
+                Ok(payload) => HttpResponse {
+                    status_code: 200,
+                    status_text: "OK",
+                    content_type: "application/json",
+                    body: payload,
+                },
+                Err(api::OptimizeStatusError::NotFound) => error_response(404, "Not Found", "Job not found"),
+                Err(api::OptimizeStatusError::Serialize(err)) => {
+                    error_response(500, "Internal Server Error", &err.to_string())
+                }
+            }
+        }
         ("POST", "/api/optimize") => match api::optimize_payload(body) {
             Ok(payload) => HttpResponse {
                 status_code: 200,
