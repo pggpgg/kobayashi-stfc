@@ -15,3 +15,6 @@ data/import/*.xlsx
 
 # Simulator benchmark log (periodic runs)
 benchmark_log.csv
+
+# Sync ingress log (append-only when POST /api/sync/ingress is received)
+sync.log
