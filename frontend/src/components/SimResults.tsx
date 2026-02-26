@@ -61,15 +61,18 @@ export default function SimResults({
           }}
         >
           <strong>Last sim (current crew)</strong>
-          <div style={{ marginTop: 4 }}>
-            Win rate: {(simResult.win_rate * 100).toFixed(2)}% (n={simResult.n})
+          <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem' }}>
+            <span>Win rate: {(simResult.win_rate * 100).toFixed(2)}%</span>
+            <span>Stall rate: {(simResult.stall_rate * 100).toFixed(2)}%</span>
+            <span>Loss rate: {(simResult.loss_rate * 100).toFixed(2)}%</span>
+            <span>Avg hull remaining: {(simResult.avg_hull_remaining * 100).toFixed(2)}%</span>
+            <span style={{ color: 'var(--text-muted)' }}>(n={simResult.n})</span>
             {simResult.win_rate_95_ci && (
-              <span style={{ marginLeft: 8, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 95% CI: [{simResult.win_rate_95_ci[0].toFixed(3)}, {simResult.win_rate_95_ci[1].toFixed(3)}]
               </span>
             )}
           </div>
-          <div>Avg hull remaining: {(simResult.avg_hull_remaining * 100).toFixed(2)}%</div>
         </div>
       )}
 
@@ -87,6 +90,8 @@ export default function SimResults({
                 <th style={{ textAlign: 'left', padding: '0.4rem' }}>Bridge</th>
                 <th style={{ textAlign: 'left', padding: '0.4rem' }}>Below Deck</th>
                 <th style={{ textAlign: 'right', padding: '0.4rem' }}>Win %</th>
+                <th style={{ textAlign: 'right', padding: '0.4rem' }}>Stall %</th>
+                <th style={{ textAlign: 'right', padding: '0.4rem' }}>Loss %</th>
                 <th style={{ textAlign: 'right', padding: '0.4rem' }}>Hull %</th>
               </tr>
             </thead>
@@ -115,6 +120,12 @@ export default function SimResults({
                     {(r.win_rate * 100).toFixed(2)}
                   </td>
                   <td style={{ padding: '0.4rem', textAlign: 'right' }}>
+                    {(r.stall_rate * 100).toFixed(2)}
+                  </td>
+                  <td style={{ padding: '0.4rem', textAlign: 'right' }}>
+                    {(r.loss_rate * 100).toFixed(2)}
+                  </td>
+                  <td style={{ padding: '0.4rem', textAlign: 'right' }}>
                     {(r.avg_hull_remaining * 100).toFixed(2)}
                   </td>
                 </tr>
@@ -138,13 +149,15 @@ export default function SimResults({
                   const r = recommendations[idx];
                   const prev = j === 0 ? null : recommendations[selectedList[j - 1]];
                   const deltaWin = prev != null ? (r.win_rate - prev.win_rate) * 100 : 0;
+                  const deltaStall = prev != null ? (r.stall_rate - prev.stall_rate) * 100 : 0;
+                  const deltaLoss = prev != null ? (r.loss_rate - prev.loss_rate) * 100 : 0;
                   const deltaHull = prev != null ? (r.avg_hull_remaining - prev.avg_hull_remaining) * 100 : 0;
                   return (
                     <div key={idx} style={{ fontSize: '0.85rem' }}>
                       <span style={{ fontWeight: 600 }}>#{idx + 1}</span> {r.captain} / {r.bridge} / {r.below_decks}
                       {prev != null && (
                         <span style={{ marginLeft: 8, color: 'var(--text-muted)' }}>
-                          Δ Win {deltaWin >= 0 ? '+' : ''}{deltaWin.toFixed(2)}%, Δ Hull {deltaHull >= 0 ? '+' : ''}{deltaHull.toFixed(2)}%
+                          Δ Win {deltaWin >= 0 ? '+' : ''}{deltaWin.toFixed(2)}%, Δ Stall {deltaStall >= 0 ? '+' : ''}{deltaStall.toFixed(2)}%, Δ Loss {deltaLoss >= 0 ? '+' : ''}{deltaLoss.toFixed(2)}%, Δ Hull {deltaHull >= 0 ? '+' : ''}{deltaHull.toFixed(2)}%
                         </span>
                       )}
                     </div>

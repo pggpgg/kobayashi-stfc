@@ -123,6 +123,8 @@ export interface SimulateCrew {
 
 export interface SimulateStats {
   win_rate: number;
+  stall_rate: number;
+  loss_rate: number;
   avg_hull_remaining: number;
   n: number;
   win_rate_95_ci?: [number, number];
@@ -159,6 +161,8 @@ export interface CrewRecommendation {
   bridge: string;
   below_decks: string;
   win_rate: number;
+  stall_rate: number;
+  loss_rate: number;
   avg_hull_remaining: number;
 }
 

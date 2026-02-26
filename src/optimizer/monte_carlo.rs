@@ -46,6 +46,8 @@ struct SharedScenarioData {
 pub struct SimulationResult {
     pub candidate: CrewCandidate,
     pub win_rate: f64,
+    pub stall_rate: f64,
+    pub loss_rate: f64,
     pub avg_hull_remaining: f64,
 }
 
@@ -171,6 +173,8 @@ fn run_monte_carlo_with_parallelism(
     let run_one = |candidate: &CrewCandidate| {
         let input = scenario_to_combat_input_from_shared(&shared, candidate, seed);
         let mut wins = 0usize;
+        let mut stalls = 0usize;
+        let mut losses = 0usize;
         let mut surviving_hull_sum = 0.0;
 
         for iteration in 0..iterations {
@@ -187,8 +191,15 @@ fn run_monte_carlo_with_parallelism(
             );
             let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
 
-            if result.attacker_won {
+            if result.winner_by_round_limit {
+                stalls += 1;
+            } else if result.attacker_won {
                 wins += 1;
+            } else {
+                losses += 1;
+            }
+
+            if result.attacker_won {
                 let remaining = if result.winner_by_round_limit {
                     (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
                         .clamp(0.0, 1.0)
@@ -199,20 +210,21 @@ fn run_monte_carlo_with_parallelism(
             }
         }
 
-        let win_rate = if iterations == 0 {
-            0.0
-        } else {
-            wins as f64 / iterations as f64
-        };
+        let n = iterations as f64;
+        let win_rate = if iterations == 0 { 0.0 } else { wins as f64 / n };
+        let stall_rate = if iterations == 0 { 0.0 } else { stalls as f64 / n };
+        let loss_rate = if iterations == 0 { 0.0 } else { losses as f64 / n };
         let avg_hull_remaining = if iterations == 0 {
             0.0
         } else {
-            surviving_hull_sum / iterations as f64
+            surviving_hull_sum / n
         };
 
         SimulationResult {
             candidate: candidate.clone(),
             win_rate,
+            stall_rate,
+            loss_rate,
             avg_hull_remaining,
         }
     };

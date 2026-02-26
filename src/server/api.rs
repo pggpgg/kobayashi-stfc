@@ -32,6 +32,8 @@ pub struct CrewRecommendation {
     pub bridge: Vec<String>,
     pub below_decks: Vec<String>,
     pub win_rate: f64,
+    pub stall_rate: f64,
+    pub loss_rate: f64,
     pub avg_hull_remaining: f64,
 }
 
@@ -219,6 +221,8 @@ pub struct SimulateResponse {
 #[derive(Debug, Clone, Serialize)]
 pub struct SimulateStats {
     pub win_rate: f64,
+    pub stall_rate: f64,
+    pub loss_rate: f64,
     pub avg_hull_remaining: f64,
     pub n: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -321,6 +325,8 @@ pub fn simulate_payload(body: &str) -> Result<String, SimulateError> {
             below_decks,
         },
         win_rate: 0.0,
+        stall_rate: 0.0,
+        loss_rate: 0.0,
         avg_hull_remaining: 0.0,
     });
 
@@ -331,6 +337,8 @@ pub fn simulate_payload(body: &str) -> Result<String, SimulateError> {
         status: "ok",
         stats: SimulateStats {
             win_rate: result.win_rate,
+            stall_rate: result.stall_rate,
+            loss_rate: result.loss_rate,
             avg_hull_remaining: result.avg_hull_remaining,
             n: num_sims,
             win_rate_95_ci: Some(ci),
@@ -628,6 +636,8 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
                 bridge: result.bridge.clone(),
                 below_decks: result.below_decks.clone(),
                 win_rate: result.win_rate,
+                stall_rate: result.stall_rate,
+                loss_rate: result.loss_rate,
                 avg_hull_remaining: result.avg_hull_remaining,
             })
             .collect(),

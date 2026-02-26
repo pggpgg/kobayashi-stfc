@@ -65,6 +65,8 @@ fn main() {
     // Sanity: same number of results
     for (i, (a, b)) in results_seq.iter().zip(results_par.iter()).enumerate() {
         assert!((a.win_rate - b.win_rate).abs() < 1e-9, "result {} win_rate mismatch", i);
+        assert!((a.stall_rate - b.stall_rate).abs() < 1e-9, "result {} stall_rate mismatch", i);
+        assert!((a.loss_rate - b.loss_rate).abs() < 1e-9, "result {} loss_rate mismatch", i);
         assert!((a.avg_hull_remaining - b.avg_hull_remaining).abs() < 1e-9, "result {} avg_hull_remaining mismatch", i);
     }
     println!("(Results match sequential vs parallel)");
