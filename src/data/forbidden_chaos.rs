@@ -7,6 +7,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForbiddenChaosRecord {
+    /// Game ID (fid) from sync payload; when set, used to match imported forbidden tech.
+    #[serde(default)]
+    pub fid: Option<i64>,
     pub name: String,
     #[serde(default)]
     pub tech_type: String,

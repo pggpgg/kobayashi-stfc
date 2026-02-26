@@ -17,8 +17,10 @@ pub const DEFAULT_RESEARCH_IMPORT_PATH: &str = "rosters/research.imported.json";
 pub const DEFAULT_BUILDINGS_IMPORT_PATH: &str = "rosters/buildings.imported.json";
 /// Path for synced ships state (stfc-mod sync). Load with [load_imported_ships].
 pub const DEFAULT_SHIPS_IMPORT_PATH: &str = "rosters/ships.imported.json";
+/// Path for synced forbidden/chaos tech state (stfc-mod sync). Load with [load_imported_forbidden_tech].
+pub const DEFAULT_FORBIDDEN_TECH_IMPORT_PATH: &str = "rosters/forbidden_tech.imported.json";
 
-// ----- Synced game state (research, buildings, ships) from stfc-mod sync -----
+// ----- Synced game state (research, buildings, ships, forbidden tech) from stfc-mod sync -----
 
 /// One research project level from imported/synced state.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -45,6 +47,16 @@ pub struct ShipEntry {
     pub hull_id: i64,
     #[serde(default)]
     pub components: Vec<i64>,
+}
+
+/// One forbidden/chaos tech from imported/synced state (stfc-mod type "ft").
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ForbiddenTechEntry {
+    pub fid: i64,
+    pub tier: i64,
+    pub level: i64,
+    #[serde(default)]
+    pub shard_count: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -551,6 +563,11 @@ struct ImportedShipsFile {
     ships: Vec<ShipEntry>,
 }
 
+#[derive(Debug, Deserialize)]
+struct ImportedForbiddenTechFile {
+    forbidden_tech: Vec<ForbiddenTechEntry>,
+}
+
 /// Loads research entries from a synced/imported JSON file (e.g. [DEFAULT_RESEARCH_IMPORT_PATH]).
 /// Returns `None` if the file is missing or invalid.
 pub fn load_imported_research(path: &str) -> Option<Vec<ResearchEntry>> {
@@ -573,4 +590,12 @@ pub fn load_imported_ships(path: &str) -> Option<Vec<ShipEntry>> {
     let raw = fs::read_to_string(path).ok()?;
     let payload: ImportedShipsFile = serde_json::from_str(&raw).ok()?;
     Some(payload.ships)
+}
+
+/// Loads forbidden/chaos tech entries from a synced/imported JSON file (e.g. [DEFAULT_FORBIDDEN_TECH_IMPORT_PATH]).
+/// Returns `None` if the file is missing or invalid.
+pub fn load_imported_forbidden_tech(path: &str) -> Option<Vec<ForbiddenTechEntry>> {
+    let raw = fs::read_to_string(path).ok()?;
+    let payload: ImportedForbiddenTechFile = serde_json::from_str(&raw).ok()?;
+    Some(payload.forbidden_tech)
 }

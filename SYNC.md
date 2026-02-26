@@ -57,6 +57,7 @@ Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1
 - **Research**: Payloads with `type: "research"` are merged into `rosters/research.imported.json` (by `rid`). Load with `load_imported_research` (path `rosters/research.imported.json`).
 - **Buildings**: Payloads with `type: "buildings"` or `type: "module"` (the mod sends `"module"`) are merged into `rosters/buildings.imported.json` (by `bid`). Load with `load_imported_buildings` (path `rosters/buildings.imported.json`).
 - **Ships**: Payloads with `type: "ships"` or `type: "ship"` (the mod sends `"ship"`) are merged into `rosters/ships.imported.json` (by `psid`). Load with `load_imported_ships` (path `rosters/ships.imported.json`).
+- **Forbidden tech (ft)**: Payloads with `type: "ft"` are merged into `rosters/forbidden_tech.imported.json` (by `fid`). Load with `load_imported_forbidden_tech` (path `rosters/forbidden_tech.imported.json`). Player forbidden-tech state is used to compute bonuses (from `data/forbidden_chaos_tech.json` by `fid`) and merge them into the player profile used by the Monte Carlo optimizer.
 - **Other types** (resources, missions, battlelogs, traits, tech, slots, buffs, inventory, jobs): The server accepts the payloads and returns 200 but does not persist them.
 
 ## Officer ID mapping
@@ -75,7 +76,7 @@ To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the 
 - **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; 401 if token is required and missing/invalid; 400 if body is not a JSON array.
 
 - **Endpoint**: `GET /api/sync/status`
-- **Response**: 200 with JSON `{ "roster_path": "rosters/roster.imported.json", "last_modified_iso": "<ISO8601 or null if file missing>", "research_path", "buildings_path", "ships_path" (each with optional last_modified_iso) }` so you can see when each imported file was last updated by sync.
+- **Response**: 200 with JSON `{ "roster_path": "rosters/roster.imported.json", "last_modified_iso": "<ISO8601 or null if file missing>", "research_path", "research_last_modified_iso", "buildings_path", "buildings_last_modified_iso", "ships_path", "ships_last_modified_iso", "forbidden_tech_path", "forbidden_tech_last_modified_iso" }` so you can see when each imported file was last updated by sync.
 
 ## Sync payload reference
 
@@ -87,5 +88,6 @@ The request body is a JSON array; the first element’s `type` field determines 
 | **research** | `type`, `rid` (int64), `level` (int32) | One object per research project level. Persisted to `rosters/research.imported.json`. |
 | **buildings** / **module** | `type`, `bid` (int64), `level` (int32) | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `rosters/buildings.imported.json`. |
 | **ships** / **ship** | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `rosters/ships.imported.json`. |
+| **ft** | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64) | Forbidden/chaos tech. Persisted to `rosters/forbidden_tech.imported.json`. Bonuses from `data/forbidden_chaos_tech.json` (by `fid`) are merged into the player profile for the optimizer. |
 
 Other types (resources, missions, battlelogs, traits, tech, slots, buffs, inventory, jobs) are accepted (200) but not persisted.

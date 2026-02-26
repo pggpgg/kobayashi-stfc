@@ -28,6 +28,7 @@ static SYNC_ROSTER_MTX: Mutex<()> = Mutex::new(());
 static SYNC_RESEARCH_MTX: Mutex<()> = Mutex::new(());
 static SYNC_BUILDINGS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
+static SYNC_FT_MTX: Mutex<()> = Mutex::new(());
 
 /// Handles POST /api/sync/ingress: validates token, parses body, dispatches by type.
 pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
@@ -115,6 +116,18 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
                 Err(e) => {
                     eprintln!("[sync] 500 Internal Server Error (ships): {e}");
+                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                }
+            }
+        }
+        "ft" => {
+            match apply_ft_sync(&payload, import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH) {
+                Ok(accepted_count) => {
+                    eprintln!("[sync] 200 OK accepted ft({accepted_count})");
+                    vec![format!("ft({accepted_count})")]
+                }
+                Err(e) => {
+                    eprintln!("[sync] 500 Internal Server Error (ft): {e}");
                     return json_error_response(500, "Internal Server Error", &e.to_string());
                 }
             }
@@ -428,6 +441,65 @@ fn apply_ships_sync(
     Ok(accepted)
 }
 
+// ----- Forbidden tech (ft) sync -----
+
+#[derive(Debug, Deserialize)]
+struct SyncFtItem {
+    #[serde(rename = "type", default)]
+    _type: Option<String>,
+    #[serde(default)]
+    fid: Option<i64>,
+    #[serde(default)]
+    tier: Option<i64>,
+    #[serde(default)]
+    level: Option<i64>,
+    #[serde(default, rename = "shard_count")]
+    shard_count: Option<i64>,
+}
+
+fn apply_ft_sync(
+    payload: &[serde_json::Value],
+    output_path: &str,
+) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+    let _guard = SYNC_FT_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut by_fid: HashMap<i64, import::ForbiddenTechEntry> =
+        import::load_imported_forbidden_tech(output_path)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|e| (e.fid, e))
+            .collect();
+
+    let mut accepted = 0usize;
+    for item in payload {
+        let item: SyncFtItem = match serde_json::from_value(item.clone()) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+        let Some(fid) = item.fid else { continue };
+        let entry = import::ForbiddenTechEntry {
+            fid,
+            tier: item.tier.unwrap_or(0),
+            level: item.level.unwrap_or(0),
+            shard_count: item.shard_count.unwrap_or(0),
+        };
+        by_fid.insert(fid, entry);
+        accepted += 1;
+    }
+
+    let mut forbidden_tech: Vec<import::ForbiddenTechEntry> = by_fid.into_values().collect();
+    forbidden_tech.sort_by(|a, b| a.fid.cmp(&b.fid));
+
+    let output_payload = serde_json::json!({
+        "source_path": "stfc-mod sync",
+        "forbidden_tech": forbidden_tech,
+    });
+    if let Some(parent) = std::path::Path::new(output_path).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    Ok(accepted)
+}
+
 fn ok_accepted_response(accepted: &[String]) -> HttpResponse {
     let body = serde_json::json!({
         "status": "ok",
@@ -471,12 +543,13 @@ fn last_modified_iso(path: &str) -> Option<String> {
 }
 
 /// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
-/// Also includes research_path, buildings_path, ships_path and their last_modified_iso when present.
+/// Also includes research_path, buildings_path, ships_path, forbidden_tech_path and their last_modified_iso when present.
 pub fn sync_status_payload() -> HttpResponse {
     let roster_path = import::DEFAULT_IMPORT_OUTPUT_PATH;
     let research_path = import::DEFAULT_RESEARCH_IMPORT_PATH;
     let buildings_path = import::DEFAULT_BUILDINGS_IMPORT_PATH;
     let ships_path = import::DEFAULT_SHIPS_IMPORT_PATH;
+    let forbidden_tech_path = import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH;
 
     let body = serde_json::json!({
         "roster_path": roster_path,
@@ -487,6 +560,8 @@ pub fn sync_status_payload() -> HttpResponse {
         "buildings_last_modified_iso": last_modified_iso(buildings_path),
         "ships_path": ships_path,
         "ships_last_modified_iso": last_modified_iso(ships_path),
+        "forbidden_tech_path": forbidden_tech_path,
+        "forbidden_tech_last_modified_iso": last_modified_iso(forbidden_tech_path),
     });
     let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
         r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string()
@@ -609,6 +684,25 @@ mod tests {
                 e.psid == 919295 && e.tier == 3 && e.level == 15 && e.hull_id == 200
             }),
             "expected psid=919295 in {:?}",
+            entries
+        );
+    }
+
+    #[test]
+    fn ingress_ft_persists_to_file() {
+        let r = ingress_payload(
+            r#"[{"type":"ft","fid":919296,"tier":1,"level":5,"shard_count":10}]"#,
+            None,
+        );
+        assert_eq!(r.status_code, 200);
+        assert!(r.body.contains("ft(1)"));
+        let entries = import::load_imported_forbidden_tech(import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH)
+            .expect("forbidden_tech.imported.json should exist after sync");
+        assert!(
+            entries.iter().any(|e| {
+                e.fid == 919296 && e.tier == 1 && e.level == 5 && e.shard_count == 10
+            }),
+            "expected fid=919296 in {:?}",
             entries
         );
     }
