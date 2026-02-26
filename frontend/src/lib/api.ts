@@ -183,9 +183,18 @@ export async function getOptimizeEstimate(params: {
   ship: string;
   hostile: string;
   sims?: number;
+  max_candidates?: number | null;
 }): Promise<OptimizeEstimate> {
   const sims = params.sims ?? 5000;
-  const url = `${API_BASE}/api/optimize/estimate?ship=${encodeURIComponent(params.ship)}&hostile=${encodeURIComponent(params.hostile)}&sims=${sims}`;
+  const search = new URLSearchParams({
+    ship: params.ship,
+    hostile: params.hostile,
+    sims: String(sims),
+  });
+  if (params.max_candidates != null && params.max_candidates > 0) {
+    search.set('max_candidates', String(params.max_candidates));
+  }
+  const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
   const res = await fetch(url);
   await checkOk(res);
   return res.json();
@@ -196,16 +205,21 @@ export async function optimize(params: {
   hostile: string;
   sims?: number;
   seed?: number;
+  max_candidates?: number | null;
 }): Promise<OptimizeResponse> {
+  const body: Record<string, unknown> = {
+    ship: params.ship,
+    hostile: params.hostile,
+    sims: params.sims ?? 5000,
+    seed: params.seed,
+  };
+  if (params.max_candidates != null && params.max_candidates > 0) {
+    body.max_candidates = params.max_candidates;
+  }
   const res = await fetch(`${API_BASE}/api/optimize`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ship: params.ship,
-      hostile: params.hostile,
-      sims: params.sims ?? 5000,
-      seed: params.seed,
-    }),
+    body: JSON.stringify(body),
   });
   await checkOk(res);
   return res.json();
@@ -229,16 +243,21 @@ export async function optimizeStart(params: {
   hostile: string;
   sims?: number;
   seed?: number;
+  max_candidates?: number | null;
 }): Promise<OptimizeStartResponse> {
+  const body: Record<string, unknown> = {
+    ship: params.ship,
+    hostile: params.hostile,
+    sims: params.sims ?? 5000,
+    seed: params.seed,
+  };
+  if (params.max_candidates != null && params.max_candidates > 0) {
+    body.max_candidates = params.max_candidates;
+  }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ship: params.ship,
-      hostile: params.hostile,
-      sims: params.sims ?? 5000,
-      seed: params.seed,
-    }),
+    body: JSON.stringify(body),
   });
   await checkOk(res);
   return res.json();

@@ -5,6 +5,8 @@ interface OptimizePanelProps {
   loadingOptimize: boolean;
   optimizeCrewsDone: number | null;
   optimizeTotalCrews: number | null;
+  maxCandidates: number | null;
+  onMaxCandidatesChange: (value: number | null) => void;
 }
 
 export default function OptimizePanel({
@@ -13,6 +15,8 @@ export default function OptimizePanel({
   loadingOptimize,
   optimizeCrewsDone,
   optimizeTotalCrews,
+  maxCandidates,
+  onMaxCandidatesChange,
 }: OptimizePanelProps) {
   if (collapsed) {
     return (
@@ -111,6 +115,38 @@ export default function OptimizePanel({
           <option>Win rate</option>
           <option>Hull remaining</option>
         </select>
+      </label>
+      <label style={{ fontSize: '0.85rem' }}>
+        Max crews (optional)
+        <input
+          type="number"
+          min={1}
+          max={2_000_000}
+          step={1}
+          placeholder="No limit"
+          value={maxCandidates ?? ''}
+          onChange={(e) => {
+            const raw = e.target.value.trim();
+            if (raw === '') {
+              onMaxCandidatesChange(null);
+              return;
+            }
+            const n = parseInt(raw, 10);
+            if (!Number.isNaN(n) && n >= 1) {
+              onMaxCandidatesChange(Math.min(n, 2_000_000));
+            }
+          }}
+          style={{
+            display: 'block',
+            marginTop: 4,
+            width: '100%',
+            padding: '0.4rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            color: 'var(--text)',
+          }}
+        />
       </label>
       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
         {loadingOptimize &&

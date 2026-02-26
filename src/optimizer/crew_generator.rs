@@ -16,7 +16,8 @@ pub struct CrewCandidate {
 #[derive(Debug, Clone)]
 pub struct CandidateStrategy {
     pub exhaustive_pool_threshold: usize,
-    pub max_candidates: usize,
+    /// When Some(n), generation stops after n candidates. When None, all combinations are generated.
+    pub max_candidates: Option<usize>,
     pub large_pool_captain_limit: usize,
     pub large_pool_bridge_limit: usize,
     pub use_seeded_shuffle: bool,
@@ -26,7 +27,7 @@ impl Default for CandidateStrategy {
     fn default() -> Self {
         Self {
             exhaustive_pool_threshold: 12,
-            max_candidates: 128,
+            max_candidates: Some(128),
             large_pool_captain_limit: 10,
             large_pool_bridge_limit: 12,
             use_seeded_shuffle: true,
@@ -129,6 +130,81 @@ impl CrewGenerator {
             )
         }
     }
+
+    /// Returns the number of crew combinations without allocating candidates.
+    /// Used for estimate when no cap is set. Uses same exhaustive/sampled branch as generate_candidates.
+    pub fn count_candidates(&self, ship: &str, hostile: &str, seed: u64) -> usize {
+        let mut officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
+            .map(|loaded| {
+                loaded
+                    .into_iter()
+                    .filter(|officer| !officer.name.trim().is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
+        if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH) {
+            if roster_ids.len() >= MIN_OFFICERS {
+                officers.retain(|officer| roster_ids.contains(&officer.id));
+            }
+        }
+
+        if officers.is_empty() {
+            return 0;
+        }
+
+        let mut captains: Vec<&Officer> = officers
+            .iter()
+            .filter(|officer| is_captain_eligible(officer))
+            .collect();
+        let mut bridge: Vec<&Officer> = officers
+            .iter()
+            .filter(|officer| can_fill_position(officer, Position::Bridge))
+            .collect();
+        let mut below_decks: Vec<&Officer> = officers
+            .iter()
+            .filter(|officer| can_fill_position(officer, Position::BelowDecks))
+            .collect();
+
+        if captains.is_empty() {
+            captains = officers.iter().collect();
+        }
+        if bridge.is_empty() {
+            bridge = officers.iter().collect();
+        }
+        if below_decks.is_empty() {
+            below_decks = officers.iter().collect();
+        }
+
+        if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < BELOW_DECKS_SLOTS {
+            return 0;
+        }
+
+        if self.strategy.use_seeded_shuffle {
+            let base_seed = mix_seed(seed, ship, hostile);
+            deterministic_shuffle(&mut captains, base_seed);
+            deterministic_shuffle(&mut bridge, base_seed ^ 0x9E37_79B9_7F4A_7C15);
+            deterministic_shuffle(&mut below_decks, base_seed ^ 0x517C_C1B7_2722_0A95);
+        }
+
+        let min_pool = captains
+            .len()
+            .min(bridge.len())
+            .min(below_decks.len());
+        if min_pool <= self.strategy.exhaustive_pool_threshold {
+            exhaustive_count(&captains, &bridge, &below_decks, None)
+        } else {
+            sampled_count(
+                &captains,
+                &bridge,
+                &below_decks,
+                &self.strategy,
+                mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
+                None,
+            )
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -161,7 +237,7 @@ fn exhaustive_candidates(
     captains: &[&Officer],
     bridge: &[&Officer],
     below_decks: &[&Officer],
-    max_candidates: usize,
+    max_candidates: Option<usize>,
 ) -> Vec<CrewCandidate> {
     let mut candidates = Vec::new();
 
@@ -204,8 +280,10 @@ fn exhaustive_candidates(
                                     d3.name.clone(),
                                 ],
                             });
-                            if candidates.len() >= max_candidates {
-                                return candidates;
+                            if let Some(cap) = max_candidates {
+                                if candidates.len() >= cap {
+                                    return candidates;
+                                }
                             }
                         }
                     }
@@ -215,6 +293,64 @@ fn exhaustive_candidates(
     }
 
     candidates
+}
+
+fn exhaustive_count(
+    captains: &[&Officer],
+    bridge: &[&Officer],
+    below_decks: &[&Officer],
+    max_count: Option<usize>,
+) -> usize {
+    const ESTIMATE_CAP: usize = 2_000_000;
+    let mut count = 0_usize;
+
+    for captain in captains {
+        for (i, b1) in bridge.iter().enumerate() {
+            if b1.id == captain.id {
+                continue;
+            }
+            for b2 in bridge.iter().skip(i + 1) {
+                if b2.id == captain.id || b2.id == b1.id {
+                    continue;
+                }
+                let used: std::collections::HashSet<&str> =
+                    [captain.id.as_str(), b1.id.as_str(), b2.id.as_str()].into_iter().collect();
+                for (di, d1) in below_decks.iter().enumerate() {
+                    if used.contains(d1.id.as_str()) {
+                        continue;
+                    }
+                    let used2: std::collections::HashSet<&str> =
+                        used.iter().copied().chain(std::iter::once(d1.id.as_str())).collect();
+                    for (dj, d2) in below_decks.iter().enumerate().skip(di + 1) {
+                        if used2.contains(d2.id.as_str()) {
+                            continue;
+                        }
+                        let used3: std::collections::HashSet<&str> = used2
+                            .iter()
+                            .copied()
+                            .chain(std::iter::once(d2.id.as_str()))
+                            .collect();
+                        for d3 in below_decks.iter().skip(dj + 1) {
+                            if used3.contains(d3.id.as_str()) {
+                                continue;
+                            }
+                            count += 1;
+                            if let Some(cap) = max_count {
+                                if count >= cap {
+                                    return count;
+                                }
+                            }
+                            if count >= ESTIMATE_CAP {
+                                return ESTIMATE_CAP;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    count
 }
 
 fn sampled_candidates(
@@ -272,8 +408,10 @@ fn sampled_candidates(
                                 d3.name.clone(),
                             ],
                         });
-                        if candidates.len() >= strategy.max_candidates {
-                            return candidates;
+                        if let Some(cap) = strategy.max_candidates {
+                            if candidates.len() >= cap {
+                                return candidates;
+                            }
                         }
                     }
                 }
@@ -283,6 +421,73 @@ fn sampled_candidates(
     }
 
     candidates
+}
+
+fn sampled_count(
+    captains: &[&Officer],
+    bridge: &[&Officer],
+    below_decks: &[&Officer],
+    strategy: &CandidateStrategy,
+    seed: u64,
+    max_count: Option<usize>,
+) -> usize {
+    let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
+    let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
+    let mut count = 0_usize;
+    let stride = ((seed as usize) % 5) + 1;
+    const ESTIMATE_CAP: usize = 2_000_000;
+
+    for captain in captains.iter().take(captain_limit) {
+        for (bi, b1) in bridge.iter().take(bridge_limit).enumerate() {
+            if b1.id == captain.id {
+                continue;
+            }
+            for b2 in bridge.iter().take(bridge_limit).skip(bi + 1) {
+                if b2.id == captain.id || b2.id == b1.id {
+                    continue;
+                }
+                let used: std::collections::HashSet<&str> =
+                    [captain.id.as_str(), b1.id.as_str(), b2.id.as_str()].into_iter().collect();
+                let below_indices: Vec<usize> = (0..below_decks.len())
+                    .step_by(stride)
+                    .filter(|&i| !used.contains(below_decks[i].id.as_str()))
+                    .collect();
+                for (ii, &di) in below_indices.iter().enumerate() {
+                    let d1 = below_decks[di];
+                    let used2: std::collections::HashSet<&str> =
+                        used.iter().copied().chain(std::iter::once(d1.id.as_str())).collect();
+                    for &dj in below_indices.iter().skip(ii + 1) {
+                        let d2 = below_decks[dj];
+                        if used2.contains(d2.id.as_str()) {
+                            continue;
+                        }
+                        let used3: std::collections::HashSet<&str> = used2
+                            .iter()
+                            .copied()
+                            .chain(std::iter::once(d2.id.as_str()))
+                            .collect();
+                        for &dk in below_indices.iter().skip(ii + 2) {
+                            let d3 = below_decks[dk];
+                            if used3.contains(d3.id.as_str()) {
+                                continue;
+                            }
+                            count += 1;
+                            if let Some(cap) = max_count {
+                                if count >= cap {
+                                    return count;
+                                }
+                            }
+                            if count >= ESTIMATE_CAP {
+                                return ESTIMATE_CAP;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    count
 }
 
 fn deterministic_shuffle<T>(items: &mut [T], seed: u64) {
@@ -318,7 +523,7 @@ mod tests {
     #[test]
     fn generation_is_deterministic_for_same_seed() {
         let generator = CrewGenerator::with_strategy(CandidateStrategy {
-            max_candidates: 32,
+            max_candidates: Some(32),
             ..CandidateStrategy::default()
         });
 
@@ -332,7 +537,7 @@ mod tests {
     fn generation_produces_minimum_candidate_breadth() {
         let generator = CrewGenerator::with_strategy(CandidateStrategy {
             exhaustive_pool_threshold: 8,
-            max_candidates: 24,
+            max_candidates: Some(24),
             large_pool_captain_limit: 5,
             large_pool_bridge_limit: 6,
             ..CandidateStrategy::default()
