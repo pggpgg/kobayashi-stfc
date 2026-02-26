@@ -59,6 +59,13 @@ impl CategoryTotals {
         }
     }
 
+    /// Adds another CategoryTotals into self (for merging two accumulators).
+    pub fn add_from(&mut self, other: &CategoryTotals) {
+        self.base += other.base;
+        self.modifier += other.modifier;
+        self.flat += other.flat;
+    }
+
     pub fn compose(self) -> f64 {
         self.base * (1.0 + self.modifier) + self.flat
     }
@@ -105,6 +112,23 @@ impl<K: Ord> StatStacking<K> {
             .iter()
             .map(|(key, totals)| (key, totals.compose()))
             .collect()
+    }
+
+    pub fn clear(&mut self) {
+        self.totals.clear();
+    }
+
+    /// Merges state from `other` into self (adds totals per key). Used to restore round base without cloning.
+    pub fn merge_from(&mut self, other: &StatStacking<K>)
+    where
+        K: Clone,
+    {
+        for (key, totals) in &other.totals {
+            self.totals
+                .entry(key.clone())
+                .or_default()
+                .add_from(totals);
+        }
     }
 }
 

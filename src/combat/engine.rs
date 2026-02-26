@@ -204,6 +204,14 @@ impl TraceCollector {
         }
     }
 
+    /// Records an event only when tracing is enabled. The closure is not called when disabled,
+    /// avoiding allocation and construction of CombatEvent when TraceMode::Off.
+    pub fn record_if(&mut self, f: impl FnOnce() -> CombatEvent) {
+        if self.enabled {
+            self.events.push(f());
+        }
+    }
+
     pub fn events(self) -> Vec<CombatEvent> {
         self.events
     }
@@ -365,6 +373,12 @@ pub fn simulate_combat(
     let receive_damage_effects = active_effects_for_timing(attacker_crew, TimingWindow::ReceiveDamage);
     let combat_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatEnd);
 
+    // Pre-compute effects by timing once per combat; round loop only filters by condition.
+    let round_start_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
+    let attack_phase_effects = active_effects_for_timing(attacker_crew, TimingWindow::AttackPhase);
+    let defense_phase_effects = active_effects_for_timing(attacker_crew, TimingWindow::DefensePhase);
+    let round_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundEnd);
+
     let combat_begin_assimilated = assimilated_rounds_remaining > 0;
     record_ability_activations(
         &mut trace,
@@ -380,13 +394,6 @@ pub fn simulate_combat(
 
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
-        let round_start_effects =
-            active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
-        let attack_phase_effects =
-            active_effects_for_timing(attacker_crew, TimingWindow::AttackPhase);
-        let defense_phase_effects =
-            active_effects_for_timing(attacker_crew, TimingWindow::DefensePhase);
-        let round_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundEnd);
 
         let combat_ctx = CombatContext {
             round_index,
@@ -415,7 +422,7 @@ pub fn simulate_combat(
             round_index,
         );
 
-        trace.record(CombatEvent {
+        trace.record_if(|| CombatEvent {
             event_type: "round_start".to_string(),
             round_index,
             phase: "round".to_string(),
@@ -466,7 +473,7 @@ pub fn simulate_combat(
                     assimilated_rounds_remaining =
                         assimilated_rounds_remaining.max(duration_rounds.max(1));
                 }
-                trace.record(CombatEvent {
+                trace.record_if(|| CombatEvent {
                     event_type: "assimilated_trigger".to_string(),
                     round_index,
                     phase: "round_start".to_string(),
@@ -501,7 +508,7 @@ pub fn simulate_combat(
                     hull_breach_rounds_remaining =
                         hull_breach_rounds_remaining.max(duration_rounds.max(1));
                 }
-                trace.record(CombatEvent {
+                trace.record_if(|| CombatEvent {
                     event_type: "hull_breach_trigger".to_string(),
                     round_index,
                     phase: "round_start".to_string(),
@@ -530,7 +537,7 @@ pub fn simulate_combat(
                 if triggered {
                     burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
                 }
-                trace.record(CombatEvent {
+                trace.record_if(|| CombatEvent {
                     event_type: "burning_trigger".to_string(),
                     round_index,
                     phase: "round_start".to_string(),
@@ -579,7 +586,7 @@ pub fn simulate_combat(
             if morale_triggered {
                 effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
             }
-            trace.record(CombatEvent {
+            trace.record_if(|| CombatEvent {
                 event_type: "morale_activation".to_string(),
                 round_index,
                 phase: "round_start".to_string(),
@@ -628,8 +635,11 @@ pub fn simulate_combat(
             defense_phase_assimilated,
         );
 
+        let weapon_round_base = phase_effects_round.clone();
+        let mut phase_effects = EffectAccumulator::default();
         for weapon_index in 0..num_sub_rounds {
-            let mut phase_effects = phase_effects_round.clone();
+            phase_effects.clear();
+            phase_effects.merge_from(&weapon_round_base);
             let weapon_base = attacker.weapon_attack(weapon_index).unwrap_or(attacker.attack);
             phase_effects.add_effects(
                 TimingWindow::AttackPhase,
@@ -659,7 +669,7 @@ pub fn simulate_combat(
             let effective_attack = attacker_weapon_attack * phase_effects.pre_attack_multiplier();
 
             let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-            trace.record(CombatEvent {
+            trace.record_if(|| CombatEvent {
                 event_type: "attack_roll".to_string(),
                 round_index,
                 phase: "attack".to_string(),
@@ -679,7 +689,7 @@ pub fn simulate_combat(
             });
 
             let mitigation_multiplier = (1.0 - defender.mitigation).max(0.0);
-            trace.record(CombatEvent {
+            trace.record_if(|| CombatEvent {
                 event_type: "mitigation_calc".to_string(),
                 round_index,
                 phase: "defense".to_string(),
@@ -702,7 +712,7 @@ pub fn simulate_combat(
         let damage_through_factor =
             (mitigation_multiplier + effective_pierce + phase_effects.defense_mitigation_bonus())
                 .max(0.0);
-        trace.record(CombatEvent {
+        trace.record_if(|| CombatEvent {
             event_type: "pierce_calc".to_string(),
             round_index,
             phase: "attack".to_string(),
@@ -734,7 +744,7 @@ pub fn simulate_combat(
         } else {
             1.0
         };
-        trace.record(CombatEvent {
+        trace.record_if(|| CombatEvent {
             event_type: "crit_resolution".to_string(),
             round_index,
             phase: "attack".to_string(),
@@ -769,7 +779,7 @@ pub fn simulate_combat(
                     assimilated_rounds_remaining =
                         assimilated_rounds_remaining.max(duration_rounds.max(1));
                 }
-                trace.record(CombatEvent {
+                trace.record_if(|| CombatEvent {
                     event_type: "assimilated_trigger".to_string(),
                     round_index,
                     phase: "attack".to_string(),
@@ -804,7 +814,7 @@ pub fn simulate_combat(
                     hull_breach_rounds_remaining =
                         hull_breach_rounds_remaining.max(duration_rounds.max(1));
                 }
-                trace.record(CombatEvent {
+                trace.record_if(|| CombatEvent {
                     event_type: "hull_breach_trigger".to_string(),
                     round_index,
                     phase: "attack".to_string(),
@@ -837,7 +847,7 @@ pub fn simulate_combat(
                 if triggered {
                     burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
                 }
-                trace.record(CombatEvent {
+                trace.record_if(|| CombatEvent {
                     event_type: "burning_trigger".to_string(),
                     round_index,
                     phase: "attack".to_string(),
@@ -864,7 +874,7 @@ pub fn simulate_combat(
         } else {
             1.0
         };
-        trace.record(CombatEvent {
+        trace.record_if(|| CombatEvent {
             event_type: "proc_triggers".to_string(),
             round_index,
             phase: "proc".to_string(),
@@ -947,7 +957,7 @@ pub fn simulate_combat(
             );
         }
 
-        trace.record(CombatEvent {
+        trace.record_if(|| CombatEvent {
             event_type: "damage_application".to_string(),
             round_index,
             phase: "damage".to_string(),
@@ -1066,7 +1076,7 @@ pub fn simulate_combat(
             assimilated_rounds_remaining -= 1;
         }
 
-        trace.record(CombatEvent {
+        trace.record_if(|| CombatEvent {
             event_type: "end_of_round_effects".to_string(),
             round_index,
             phase: "end".to_string(),
@@ -1296,6 +1306,22 @@ impl EffectAccumulator {
         self.stacks
             .composed_for(&EffectStatKey::PreAttackDamage)
             .unwrap_or(0.0)
+    }
+
+    /// Clears all state (stacks and modifier sums). Used with [EffectAccumulator::merge_from] to reset per weapon.
+    fn clear(&mut self) {
+        self.stacks.clear();
+        self.pre_attack_modifier_sum = 0.0;
+        self.attack_phase_damage_modifier_sum = 0.0;
+        self.round_end_modifier_sum = 0.0;
+    }
+
+    /// Merges state from `other` into self. Used to restore round base without cloning the full accumulator.
+    fn merge_from(&mut self, other: &EffectAccumulator) {
+        self.stacks.merge_from(&other.stacks);
+        self.pre_attack_modifier_sum = other.pre_attack_modifier_sum;
+        self.attack_phase_damage_modifier_sum = other.attack_phase_damage_modifier_sum;
+        self.round_end_modifier_sum = other.round_end_modifier_sum;
     }
 }
 
@@ -1604,7 +1630,7 @@ fn record_ability_activations(
     };
 
     for effect in effects {
-        trace.record(CombatEvent {
+        trace.record_if(|| CombatEvent {
             event_type: "ability_activation".to_string(),
             round_index,
             phase: phase.to_string(),

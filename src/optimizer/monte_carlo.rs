@@ -7,8 +7,10 @@ use crate::combat::{
     AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
     ShipType, SimulationConfig, TimingWindow, TraceMode,
 };
+use crate::data::hostile::HostileRecord;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::ship::ShipRecord;
 use crate::data::profile::{apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile, PlayerProfile, DEFAULT_PROFILE_PATH};
 use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
@@ -19,6 +21,25 @@ const DEFAULT_LCARS_OFFICERS_DIR: &str = "data/officers";
 struct LcarsOfficerData {
     by_id: HashMap<String, crate::lcars::LcarsOfficer>,
     name_to_id: HashMap<String, String>,
+}
+
+/// Pre-resolved data for (ship, hostile) shared across all candidates in one Monte Carlo run.
+struct SharedScenarioData {
+    ship: String,
+    hostile: String,
+    officer_index: HashMap<String, Officer>,
+    profile: PlayerProfile,
+    lcars_data: Option<LcarsOfficerData>,
+    ship_rec: Option<ShipRecord>,
+    #[allow(dead_code)]
+    hostile_rec: Option<HostileRecord>,
+    /// When both ship and hostile resolved: defender combatant, rounds, defender_hull, pierce.
+    cached_defender: Option<Combatant>,
+    cached_rounds: Option<u32>,
+    cached_defender_hull: Option<f64>,
+    cached_pierce: Option<f64>,
+    #[allow(dead_code)]
+    cached_defender_mitigation: Option<f64>,
 }
 
 #[derive(Debug, Clone)]
@@ -88,16 +109,67 @@ fn run_monte_carlo_with_parallelism(
         None
     };
 
+    let ship_rec = resolve_ship(ship);
+    let hostile_rec = resolve_hostile(hostile);
+
+    let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
+        if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
+            let attacker_stats = ship_r.to_attacker_stats();
+            let defender_mitigation =
+                mitigation(hostile_r.to_defender_stats(), attacker_stats, hostile_r.ship_type());
+            let pierce = pierce_damage_through_bonus(
+                hostile_r.to_defender_stats(),
+                attacker_stats,
+                hostile_r.ship_type(),
+            );
+            let defender = Combatant {
+                id: hostile.to_string(),
+                attack: 0.0,
+                mitigation: defender_mitigation,
+                pierce: 0.0,
+                crit_chance: 0.0,
+                crit_multiplier: 1.0,
+                proc_chance: 0.0,
+                proc_multiplier: 1.0,
+                end_of_round_damage: 0.0,
+                hull_health: hostile_r.hull_health,
+                shield_health: hostile_r.shield_health,
+                shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
+                apex_barrier: hostile_r.apex_barrier,
+                apex_shred: 0.0,
+                isolytic_damage: 0.0,
+                isolytic_defense: hostile_r.isolytic_defense,
+                weapons: vec![],
+            };
+            let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+            (
+                Some(defender),
+                Some(rounds),
+                Some(hostile_r.hull_health),
+                Some(pierce),
+                Some(defender_mitigation),
+            )
+        } else {
+            (None, None, None, None, None)
+        };
+
+    let shared = SharedScenarioData {
+        ship: ship.to_string(),
+        hostile: hostile.to_string(),
+        officer_index,
+        profile,
+        lcars_data,
+        ship_rec,
+        hostile_rec,
+        cached_defender,
+        cached_rounds,
+        cached_defender_hull,
+        cached_pierce,
+        cached_defender_mitigation,
+    };
+
     let run_one = |candidate: &CrewCandidate| {
-        let input = scenario_to_combat_input(
-            ship,
-            hostile,
-            candidate,
-            seed,
-            &officer_index,
-            &profile,
-            lcars_data.as_ref(),
-        );
+        let input = scenario_to_combat_input_from_shared(&shared, candidate, seed);
         let mut wins = 0usize;
         let mut surviving_hull_sum = 0.0;
 
@@ -162,18 +234,138 @@ struct CombatSimulationInput {
     base_seed: u64,
 }
 
-fn scenario_to_combat_input(
-    ship: &str,
-    hostile: &str,
+/// Build combat input from pre-resolved shared data and candidate. Resolves ship/hostile only once per run.
+fn scenario_to_combat_input_from_shared(
+    shared: &SharedScenarioData,
     candidate: &CrewCandidate,
     seed: u64,
-    officers_by_name: &HashMap<String, Officer>,
-    profile: &PlayerProfile,
-    lcars_data: Option<&LcarsOfficerData>,
 ) -> CombatSimulationInput {
-    let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
+    let base_seed = stable_seed(
+        &shared.ship,
+        &shared.hostile,
+        &candidate.captain,
+        &candidate.bridge,
+        &candidate.below_decks,
+        seed,
+    );
 
-    let (crew_seats, static_buffs, proc_chance, proc_multiplier) = if let Some(lcars) = lcars_data {
+    let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
+        build_crew_and_buffs(candidate, &shared.officer_index, shared.lcars_data.as_ref());
+
+    if let (Some(ref ship_rec), Some(ref defender), Some(rounds), Some(defender_hull)) = (
+        &shared.ship_rec,
+        &shared.cached_defender,
+        shared.cached_rounds,
+        shared.cached_defender_hull,
+    ) {
+        let mut attacker = apply_profile_to_attacker(
+            Combatant {
+                id: shared.ship.clone(),
+                attack: ship_rec.attack,
+                mitigation: 0.0,
+                pierce: shared.cached_pierce.unwrap_or(0.0),
+                crit_chance: ship_rec.crit_chance,
+                crit_multiplier: ship_rec.crit_damage,
+                proc_chance,
+                proc_multiplier,
+                end_of_round_damage: 0.0,
+                hull_health: ship_rec.hull_health,
+                shield_health: ship_rec.shield_health,
+                shield_mitigation: ship_rec.shield_mitigation.unwrap_or(0.8),
+                apex_barrier: 0.0,
+                apex_shred: ship_rec.apex_shred,
+                isolytic_damage: ship_rec.isolytic_damage,
+                isolytic_defense: 0.0,
+                weapons: ship_rec.to_weapons(),
+            },
+            &shared.profile,
+        );
+        if !static_buffs.is_empty() {
+            attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
+        }
+        return CombatSimulationInput {
+            attacker,
+            defender: defender.clone(),
+            crew: CrewConfiguration {
+                seats: crew_seats.clone(),
+            },
+            rounds,
+            defender_hull,
+            base_seed,
+        };
+    }
+
+    let ship_hash = hash_identifier(&shared.ship);
+    let hostile_hash = hash_identifier(&shared.hostile);
+    let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
+    let defender_mitigation = computed_defender_mitigation(&shared.ship, &shared.hostile);
+
+    let mut attacker = apply_profile_to_attacker(
+        Combatant {
+            id: shared.ship.clone(),
+            attack: 95.0 + (ship_hash % 70) as f64,
+            mitigation: 0.0,
+            pierce: 0.08 + ((ship_hash >> 8) % 14) as f64 / 100.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance,
+            proc_multiplier,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.8,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            weapons: vec![],
+        },
+        &shared.profile,
+    );
+    if !static_buffs.is_empty() {
+        attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
+    }
+
+    CombatSimulationInput {
+        attacker,
+        defender: Combatant {
+            id: shared.hostile.clone(),
+            attack: 0.0,
+            mitigation: defender_mitigation,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            weapons: vec![],
+            end_of_round_damage: 0.0,
+            hull_health: defender_hull,
+            shield_health: 400.0,
+            shield_mitigation: 0.8,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+        },
+        crew: CrewConfiguration { seats: crew_seats },
+        rounds: 3 + (hostile_hash % 4) as u32,
+        defender_hull,
+        base_seed,
+    }
+}
+
+/// Build (crew_seats, static_buffs, proc_chance, proc_multiplier) from candidate and officer data.
+fn build_crew_and_buffs(
+    candidate: &CrewCandidate,
+    officers_by_name: &HashMap<String, Officer>,
+    lcars_data: Option<&LcarsOfficerData>,
+) -> (
+    Vec<CrewSeatContext>,
+    HashMap<String, f64>,
+    f64,
+    f64,
+) {
+    if let Some(lcars) = lcars_data {
         let captain_id = lcars
             .name_to_id
             .get(&normalize_lookup_key(&split_name_and_tier(&candidate.captain).0))
@@ -182,14 +374,20 @@ fn scenario_to_combat_input(
             .bridge
             .iter()
             .filter_map(|n| {
-                lcars.name_to_id.get(&normalize_lookup_key(&split_name_and_tier(n).0)).cloned()
+                lcars
+                    .name_to_id
+                    .get(&normalize_lookup_key(&split_name_and_tier(n).0))
+                    .cloned()
             })
             .collect();
         let below_ids: Vec<String> = candidate
             .below_decks
             .iter()
             .filter_map(|n| {
-                lcars.name_to_id.get(&normalize_lookup_key(&split_name_and_tier(n).0)).cloned()
+                lcars
+                    .name_to_id
+                    .get(&normalize_lookup_key(&split_name_and_tier(n).0))
+                    .cloned()
             })
             .collect();
 
@@ -222,7 +420,23 @@ fn scenario_to_combat_input(
             0.0,
             1.0,
         )
-    };
+    }
+}
+
+#[allow(dead_code)] // used by unit tests (computed_mitigation_is_deterministic_for_same_inputs)
+fn scenario_to_combat_input(
+    ship: &str,
+    hostile: &str,
+    candidate: &CrewCandidate,
+    seed: u64,
+    officers_by_name: &HashMap<String, Officer>,
+    profile: &PlayerProfile,
+    lcars_data: Option<&LcarsOfficerData>,
+) -> CombatSimulationInput {
+    let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
+
+    let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
+        build_crew_and_buffs(candidate, officers_by_name, lcars_data);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let mut attacker_stats = ship_rec.to_attacker_stats();
