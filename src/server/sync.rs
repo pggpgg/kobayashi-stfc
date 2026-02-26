@@ -3,14 +3,26 @@
 
 use crate::data::import;
 use crate::server::routes::HttpResponse;
-use chrono::TimeZone;
+use chrono::{TimeZone, Utc};
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::io::Write;
 use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
 
 /// Default path for game officer id -> canonical_officer_id mapping (same as id_registry).
 pub const DEFAULT_GAME_ID_MAP_PATH: &str = "data/officers/id_registry.json";
+
+/// Log file for sync ingress (append-only). Written when POST /api/sync/ingress is received.
+pub const SYNC_LOG_PATH: &str = "sync.log";
+
+fn append_sync_log(line: &str) {
+    let _ = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(SYNC_LOG_PATH)
+        .and_then(|mut f| writeln!(f, "{}", line));
+}
 
 static SYNC_ROSTER_MTX: Mutex<()> = Mutex::new(());
 static SYNC_RESEARCH_MTX: Mutex<()> = Mutex::new(());
@@ -19,7 +31,10 @@ static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 
 /// Handles POST /api/sync/ingress: validates token, parses body, dispatches by type.
 pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
-    eprintln!("[sync] POST /api/sync/ingress received, body_len={}", body.len());
+    let body_len = body.len();
+    let ts = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ");
+    append_sync_log(&format!("{} POST /api/sync/ingress body_len={}", ts, body_len));
+    eprintln!("[sync] POST /api/sync/ingress received, body_len={}", body_len);
 
     let expected_token = std::env::var("KOBAYASHI_SYNC_TOKEN").ok();
     if let Some(ref expected) = expected_token {
