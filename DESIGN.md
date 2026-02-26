@@ -681,6 +681,8 @@ User-specific roster data (which officers a player owns, with current tier/level
 
 Accepted source formats can include exported data from community tools such as Spocks.club.
 
+**Simulator sync with officer tools:** When an imported roster (or stfc-mod sync) is available, the simulator uses **per-officer tier** from that roster when resolving LCARS abilities. Ability values (e.g. scaling with rank: `value_at_rank`, `chance_at_rank`) are computed using each officer's tier, so simulation results (static buffs, proc chances, phase effects) match the player's actual officer levels. The same roster data is used for officer list filtering, candidate generation, and resolution; sim results are aligned with stfc-mod (or imported roster) when sync is used.
+
 ### 9.3 Maintainer Data-Maintenance Process
 
 Global officer catalog updates are maintained manually in version-controlled LCARS YAML files:

@@ -517,6 +517,19 @@ fn is_unlocked(entry: &RosterEntry) -> bool {
     r > 0 || l > 0
 }
 
+/// Loads full roster entries (with rank/tier/level) from the imported roster file.
+/// Returns `None` if the file is missing or invalid.
+/// Use for per-officer tier in resolution so simulator ability values match the player's officer levels.
+pub fn load_imported_roster(path: &str) -> Option<Vec<RosterEntry>> {
+    #[derive(Debug, Deserialize)]
+    struct ImportedRosterPayload {
+        officers: Vec<RosterEntry>,
+    }
+    let raw = fs::read_to_string(path).ok()?;
+    let payload: ImportedRosterPayload = serde_json::from_str(&raw).ok()?;
+    Some(payload.officers)
+}
+
 /// Loads the set of canonical officer IDs from the imported roster file.
 /// Returns `None` if the file is missing or invalid (caller should then use the full canonical list).
 /// Returns `Some(ids)` to filter crew generation to only officers the player owns.

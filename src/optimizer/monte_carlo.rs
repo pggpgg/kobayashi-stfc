@@ -12,7 +12,7 @@ use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::ship::ShipRecord;
 use crate::data::forbidden_chaos;
-use crate::data::import;
+use crate::data::import::{self, DEFAULT_IMPORT_OUTPUT_PATH};
 use crate::data::profile::{
     apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
     merge_forbidden_tech_bonuses_into_profile, PlayerProfile, DEFAULT_PROFILE_PATH,
@@ -35,6 +35,8 @@ struct SharedScenarioData {
     officer_index: HashMap<String, Officer>,
     profile: PlayerProfile,
     lcars_data: Option<LcarsOfficerData>,
+    /// Per-officer tier from imported roster; used when resolving abilities so sim matches player levels.
+    resolve_options: ResolveOptions,
     ship_rec: Option<ShipRecord>,
     #[allow(dead_code)]
     hostile_rec: Option<HostileRecord>,
@@ -122,6 +124,23 @@ fn run_monte_carlo_with_parallelism(
         None
     };
 
+    let resolve_options = import::load_imported_roster(DEFAULT_IMPORT_OUTPUT_PATH)
+        .map(|entries| {
+            let officer_tiers: HashMap<String, u8> = entries
+                .into_iter()
+                .filter_map(|e| e.tier.map(|t| (e.canonical_officer_id, t)))
+                .collect();
+            ResolveOptions {
+                tier: None,
+                officer_tiers: if officer_tiers.is_empty() {
+                    None
+                } else {
+                    Some(officer_tiers)
+                },
+            }
+        })
+        .unwrap_or_default();
+
     let ship_rec = resolve_ship(ship);
     let hostile_rec = resolve_hostile(hostile);
 
@@ -172,6 +191,7 @@ fn run_monte_carlo_with_parallelism(
         officer_index,
         profile,
         lcars_data,
+        resolve_options,
         ship_rec,
         hostile_rec,
         cached_defender,
@@ -273,7 +293,7 @@ fn scenario_to_combat_input_from_shared(
     );
 
     let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
-        build_crew_and_buffs(candidate, &shared.officer_index, shared.lcars_data.as_ref());
+        build_crew_and_buffs(candidate, &shared.officer_index, shared.lcars_data.as_ref(), &shared.resolve_options);
 
     if let (Some(ref ship_rec), Some(ref defender), Some(rounds), Some(defender_hull)) = (
         &shared.ship_rec,
@@ -382,6 +402,7 @@ fn build_crew_and_buffs(
     candidate: &CrewCandidate,
     officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
+    resolve_options: &ResolveOptions,
 ) -> (
     Vec<CrewSeatContext>,
     HashMap<String, f64>,
@@ -420,7 +441,7 @@ fn build_crew_and_buffs(
                 &bridge_ids,
                 &below_ids,
                 &lcars.by_id,
-                &ResolveOptions::default(),
+                resolve_options,
             );
             (
                 buff_set.to_crew_config().seats.clone(),
@@ -459,7 +480,7 @@ fn scenario_to_combat_input(
     let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
 
     let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
-        build_crew_and_buffs(candidate, officers_by_name, lcars_data);
+        build_crew_and_buffs(candidate, officers_by_name, lcars_data, &ResolveOptions::default());
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let mut attacker_stats = ship_rec.to_attacker_stats();
