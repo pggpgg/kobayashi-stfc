@@ -512,7 +512,7 @@ Modeling every individual research node is a huge data entry burden and may not 
 
 ## 6. Optimizer Strategies
 
-**Current implementation:** The optimizer runs a full exhaustive sweep — it evaluates the full candidate set (from the crew generator) with the requested number of sims per crew and ranks results. Tiered simulation (scouting → confirmation) and genetic algorithm are planned but not yet wired in; the code has placeholders in `src/optimizer/tiered.rs` and `src/optimizer/genetic.rs`.
+**Current implementation:** The optimizer supports two strategies. **Exhaustive** (default): full candidate set from the crew generator, Monte Carlo, then rank. **Genetic:** implemented in `src/optimizer/genetic.rs`; use for large search spaces. Select via API request field `strategy: "genetic"` (or omit for exhaustive). Tiered simulation (scouting → confirmation) remains planned; placeholder in `src/optimizer/tiered.rs`.
 
 ### 6.1 Monte Carlo Simulation
 
@@ -549,15 +549,15 @@ Mitigations: random restarts, beam search (track top N candidates in parallel).
 
 ### 6.5 Genetic Algorithm
 
-For large search spaces (especially with multiple below-decks slots where exhaustive search is impractical):
+**Implemented.** For large search spaces (especially with multiple below-decks slots where exhaustive search is impractical):
 
-1. Generate random population of crews
-2. Score each via Monte Carlo
-3. Breed top performers (swap officers between high-scoring crews)
-4. Mutate a few randomly
-5. Iterate until convergence
+1. Build officer pools (same as crew generator) and initialize a random population of valid crews.
+2. Score each via Monte Carlo (configurable sims per evaluation).
+3. Tournament selection, crossover (distinct officers), mutation, elitism.
+4. Iterate for a fixed number of generations or until stagnation.
+5. Final Monte Carlo pass on top candidates with requested sim count; rank and return.
 
-Converges on good solutions much faster than exhaustive search, at the cost of potentially missing the global optimum.
+Select by sending `"strategy": "genetic"` in the optimize API request. Response `engine` will be `"genetic"`. Converges on good solutions much faster than exhaustive search, at the cost of potentially missing the global optimum.
 
 ### 6.6 Simulated Annealing
 
@@ -569,7 +569,7 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 ### 6.8 Recommended Approach
 
-**Planned:** Tiered simulation with synergy prioritization as the default, with genetic algorithm available for full below-decks optimization. Analytical pre-filtering to prune obviously bad combos before any simulation runs. **Current:** full exhaustive sweep with the requested sim count per crew.
+**Current:** Exhaustive (or sampled) sweep by default; use `strategy: "genetic"` for large rosters. Genetic algorithm is available for full below-decks optimization. **Planned:** Tiered simulation with synergy prioritization as the default; analytical pre-filtering to prune obviously bad combos before any simulation runs.
 
 ---
 
@@ -654,14 +654,14 @@ Each simulation is independent — the problem is embarrassingly parallel. KOBAY
 
 ### 8.2 Scaling Estimates
 
-For ~280 officers with 3 crew slots. **Current optimizer:** full exhaustive sweep (all crew combos with requested sim count per crew; no tiered pass). **Planned:** tiered (scouting → confirmation) and genetic algorithm for large spaces.
+For ~280 officers with 3 crew slots. **Current optimizer:** exhaustive/sampled sweep (default) or genetic (`strategy: "genetic"`); no tiered pass yet. **Planned:** tiered (scouting → confirmation).
 
 | Scenario | Combos | Sims | Total Sims | Time (16 cores) |
 |---|---|---|---|---|
 | Full sweep (current) | ~800K | user choice (e.g. 10K each) | e.g. 8B | ~3 min typical |
 | Phase 1 scouting (planned) | ~800K | 500 each | 400M | ~8 sec |
 | Phase 2 top 5% (planned) | ~40K | 10K each | 400M | ~8 sec |
-| With 5 below-decks | billions | — | — | genetic algo (planned) |
+| With 5 below-decks | billions | — | — | genetic (use `strategy: "genetic"`) |
 
 ### 8.3 PRNG Choice
 
