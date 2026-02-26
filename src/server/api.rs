@@ -5,7 +5,7 @@ use crate::data::import::{
 };
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::ship::{load_ship_index, DEFAULT_SHIPS_INDEX_PATH};
-use crate::optimizer::crew_generator::{CrewGenerator, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
+use crate::optimizer::crew_generator::{CandidateStrategy, CrewGenerator, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 use crate::optimizer::monte_carlo::{run_monte_carlo, SimulationResult};
 use crate::optimizer::{optimize_scenario, optimize_scenario_with_progress, OptimizationScenario};
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const DEFAULT_SIMS: u32 = 5000;
 const MAX_SIMS: u32 = 100_000;
+const MAX_CANDIDATES: u32 = 2_000_000;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct OptimizeRequest {
@@ -27,6 +28,8 @@ pub struct OptimizeRequest {
     pub hostile: String,
     pub sims: Option<u32>,
     pub seed: Option<u64>,
+    /// When None, all crew combinations are explored. When Some(n), generation stops after n candidates.
+    pub max_candidates: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -618,6 +621,7 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
         hostile: &request.hostile,
         simulation_count: sims as usize,
         seed,
+        max_candidates: request.max_candidates.map(|n| n as usize),
     };
     let start = Instant::now();
     let ranked_results = optimize_scenario(&scenario);
@@ -738,12 +742,14 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
     let ship = request.ship.clone();
     let hostile = request.hostile.clone();
     let job_id_clone = job_id.clone();
+    let max_candidates = request.max_candidates.map(|n| n as usize);
     std::thread::spawn(move || {
         let scenario = OptimizationScenario {
             ship: &ship,
             hostile: &hostile,
             simulation_count: sims as usize,
             seed,
+            max_candidates,
         };
         let start = Instant::now();
         let ranked_results = optimize_scenario_with_progress(&scenario, |crews_done, total_crews| {
@@ -841,11 +847,12 @@ pub fn optimize_status_payload(job_id: &str) -> Result<String, OptimizeStatusErr
     serde_json::to_string_pretty(&response).map_err(OptimizeStatusError::Serialize)
 }
 
-/// Parses query string for optimize estimate: ship, hostile, sims.
-fn parse_optimize_estimate_query(query: &str) -> (String, String, u32) {
+/// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates.
+fn parse_optimize_estimate_query(query: &str) -> (String, String, u32, Option<u32>) {
     let mut ship = String::new();
     let mut hostile = String::new();
     let mut sims = DEFAULT_SIMS;
+    let mut max_candidates: Option<u32> = None;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
             let key = key.trim();
@@ -854,16 +861,17 @@ fn parse_optimize_estimate_query(query: &str) -> (String, String, u32) {
                 "ship" => ship = value.to_string(),
                 "hostile" => hostile = value.to_string(),
                 "sims" => sims = value.parse().unwrap_or(DEFAULT_SIMS),
+                "max_candidates" => max_candidates = value.parse().ok(),
                 _ => {}
             }
         }
     }
-    (ship, hostile, sims)
+    (ship, hostile, sims, max_candidates)
 }
 
 pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadError> {
     let query = path.split('?').nth(1).unwrap_or("");
-    let (ship, hostile, sims) = parse_optimize_estimate_query(query);
+    let (ship, hostile, sims, max_candidates) = parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
         return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -875,9 +883,29 @@ pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadEr
             }],
         }));
     }
-    let generator = CrewGenerator::new();
-    let candidates = generator.generate_candidates(&ship, &hostile, 0);
-    let estimated_candidates = candidates.len();
+    let estimated_candidates = match max_candidates {
+        Some(cap) if cap <= MAX_CANDIDATES => {
+            let generator = CrewGenerator::with_strategy(CandidateStrategy {
+                max_candidates: Some(cap as usize),
+                ..CandidateStrategy::default()
+            });
+            generator.generate_candidates(&ship, &hostile, 0).len()
+        }
+        Some(_) => {
+            return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
+                status: "error",
+                message: "Validation failed",
+                errors: vec![ValidationIssue {
+                    field: "max_candidates",
+                    messages: vec![format!("must be at most {MAX_CANDIDATES}")],
+                }],
+            }));
+        }
+        None => {
+            let generator = CrewGenerator::new();
+            generator.count_candidates(&ship, &hostile, 0)
+        }
+    };
     let estimated_seconds = (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;
     let estimated_seconds = estimated_seconds.max(0.1).min(3600.0); // clamp to 0.1s–1h for display
     let payload = serde_json::json!({
@@ -910,6 +938,15 @@ fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Optimize
             field: "sims",
             messages: vec![format!("must be between 1 and {MAX_SIMS}")],
         });
+    }
+
+    if let Some(cap) = request.max_candidates {
+        if cap > MAX_CANDIDATES {
+            errors.push(ValidationIssue {
+                field: "max_candidates",
+                messages: vec![format!("must be at most {MAX_CANDIDATES}")],
+            });
+        }
     }
 
     if errors.is_empty() {

@@ -19,10 +19,15 @@ pub struct OptimizationScenario<'a> {
     pub hostile: &'a str,
     pub simulation_count: usize,
     pub seed: u64,
+    /// When None, all crew combinations are explored. When Some(n), generation stops after n candidates.
+    pub max_candidates: Option<usize>,
 }
 
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
-    let generator = CrewGenerator::new();
+    let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
+        max_candidates: scenario.max_candidates,
+        ..crate::optimizer::crew_generator::CandidateStrategy::default()
+    });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
     let simulation_results = run_monte_carlo_parallel(
         scenario.ship,
@@ -43,7 +48,10 @@ pub fn optimize_scenario_with_progress<F>(
 where
     F: FnMut(u32, u32),
 {
-    let generator = CrewGenerator::new();
+    let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
+        max_candidates: scenario.max_candidates,
+        ..crate::optimizer::crew_generator::CandidateStrategy::default()
+    });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
     let total = candidates.len();
     if total == 0 {
@@ -77,5 +85,6 @@ pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCre
         hostile,
         simulation_count: sim_count as usize,
         seed: 0,
+        max_candidates: Some(128),
     })
 }

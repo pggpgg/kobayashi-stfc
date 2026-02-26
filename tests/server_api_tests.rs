@@ -10,7 +10,7 @@ fn health_endpoint_returns_ok_json() {
 
 #[test]
 fn optimize_endpoint_returns_ranked_recommendations() {
-    let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":7}"#;
+    let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":7,"max_candidates":64}"#;
     let response = route_request("POST", "/api/optimize", body, None);
 
     assert_eq!(response.status_code, 200);
@@ -70,13 +70,13 @@ fn optimize_endpoint_changes_with_seed() {
     let response_a = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":7}"#,
+        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":7,"max_candidates":32}"#,
         None,
     );
     let response_b = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":8}"#,
+        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":8,"max_candidates":32}"#,
         None,
     );
 
@@ -87,7 +87,7 @@ fn optimize_endpoint_changes_with_seed() {
 
 #[test]
 fn optimize_endpoint_is_deterministic_for_fixed_seed() {
-    let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":77}"#;
+    let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":77,"max_candidates":64}"#;
 
     let response_a = route_request("POST", "/api/optimize", body, None);
     let response_b = route_request("POST", "/api/optimize", body, None);
@@ -195,6 +195,28 @@ fn optimize_endpoint_rejects_very_large_sims() {
             .as_array()
             .is_some_and(|messages| !messages.is_empty()),
         "sims error should contain at least one message"
+    );
+}
+
+#[test]
+fn optimize_endpoint_rejects_excessive_max_candidates() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"max_candidates":3000000}"#,
+        None,
+    );
+
+    assert_eq!(response.status_code, 400);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(
+        errors.iter().any(|e| e["field"] == "max_candidates"),
+        "max_candidates validation error should be present"
     );
 }
 

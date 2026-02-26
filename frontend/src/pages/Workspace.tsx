@@ -36,6 +36,7 @@ export default function Workspace() {
   const [showSavePreset, setShowSavePreset] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
+  const [maxCandidates, setMaxCandidates] = useState<number | null>(null);
   const [estimate, setEstimate] = useState<OptimizeEstimate | null>(null);
   const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<number | null>(null);
   const [optimizeProgress, setOptimizeProgress] = useState<number | null>(null);
@@ -67,7 +68,12 @@ export default function Workspace() {
       return;
     }
     let cancelled = false;
-    getOptimizeEstimate({ ship, hostile, sims: simsPerCrew })
+    getOptimizeEstimate({
+      ship,
+      hostile,
+      sims: simsPerCrew,
+      max_candidates: maxCandidates ?? undefined,
+    })
       .then((data) => {
         if (!cancelled) setEstimate(data);
       })
@@ -75,7 +81,7 @@ export default function Workspace() {
         if (!cancelled) setEstimate(null);
       });
     return () => { cancelled = true; };
-  }, [shipId, scenarioId, simsPerCrew]);
+  }, [shipId, scenarioId, simsPerCrew, maxCandidates]);
 
   useEffect(() => {
     const n = belowDeckSlotCount(shipLevel);
@@ -132,6 +138,7 @@ export default function Workspace() {
         ship: shipId || 'Saladin',
         hostile: scenarioId || 'Explorer_30',
         sims: simsPerCrew,
+        max_candidates: maxCandidates ?? undefined,
       });
       const poll = () => {
         getOptimizeStatus(job_id)
@@ -365,6 +372,8 @@ export default function Workspace() {
           loadingOptimize={loadingOptimize}
           optimizeCrewsDone={optimizeCrewsDone}
           optimizeTotalCrews={optimizeTotalCrews}
+          maxCandidates={maxCandidates}
+          onMaxCandidatesChange={setMaxCandidates}
         />
       </div>
     </div>
