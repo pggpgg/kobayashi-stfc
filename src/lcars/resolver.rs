@@ -12,8 +12,20 @@ use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOffic
 /// Options when resolving officer abilities (e.g. officer tier for scaling).
 #[derive(Debug, Clone, Default)]
 pub struct ResolveOptions {
-    /// Officer tier (1-based). Used for scaling base + per_rank.
+    /// Fallback officer tier (1-based) when per-officer tier is not set.
     pub tier: Option<u8>,
+    /// Per-officer tier (canonical_officer_id → tier). When set, each officer uses their tier for scaling (base + per_rank, chance_at_rank).
+    pub officer_tiers: Option<HashMap<String, u8>>,
+}
+
+impl ResolveOptions {
+    /// Tier to use for the given officer: per-officer tier if available, else fallback [ResolveOptions::tier].
+    pub fn tier_for(&self, officer_id: &str) -> Option<u8> {
+        self.officer_tiers
+            .as_ref()
+            .and_then(|m| m.get(officer_id).copied())
+            .or(self.tier)
+    }
 }
 
 /// Resolved set of buffs: static modifiers (applied once) and dynamic crew config (per-round/triggered).
@@ -122,11 +134,16 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
 /// Resolve a single LCARS effect into (TimingWindow, AbilityEffect) if supported.
 /// Unknown effect types or stats are skipped (graceful degradation); returns None.
 /// Static effects (passive + permanent stat_modify) return None so they are only in static_buffs.
-fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOptions) -> Option<(TimingWindow, AbilityEffect)> {
+fn resolve_effect(
+    effect: &LcarsEffect,
+    _ability_name: &str,
+    options: &ResolveOptions,
+    officer_id: &str,
+) -> Option<(TimingWindow, AbilityEffect)> {
     if is_static_effect(effect) {
         return None;
     }
-    let tier = options.tier;
+    let tier = options.tier_for(officer_id);
     let timing = trigger_to_timing(effect.trigger.as_deref())?;
 
     match effect.effect_type.as_str() {
@@ -242,7 +259,7 @@ fn resolve_effect(effect: &LcarsEffect, _ability_name: &str, options: &ResolveOp
 
 /// Resolve one officer ability block (captain, bridge, or below decks) into seat contexts.
 pub fn resolve_officer_ability(
-    _officer: &LcarsOfficer,
+    officer: &LcarsOfficer,
     ability: &LcarsAbility,
     seat: CrewSeat,
     class: AbilityClass,
@@ -250,7 +267,7 @@ pub fn resolve_officer_ability(
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
     for effect in &ability.effects {
-        if let Some((timing, effect_effect)) = resolve_effect(effect, &ability.name, options) {
+        if let Some((timing, effect_effect)) = resolve_effect(effect, &ability.name, options, &officer.id) {
             let condition = effect
                 .condition
                 .as_ref()
@@ -289,6 +306,7 @@ pub fn resolve_crew_to_buff_set(
     let mut proc_multiplier = 1.0_f64;
 
     let mut add_ability = |officer: &LcarsOfficer, ability: &LcarsAbility, seat: CrewSeat, class: AbilityClass| {
+        let officer_tier = options.tier_for(&officer.id);
         for effect in &ability.effects {
             if effect.effect_type != "stat_modify"
                 || effect.trigger.as_deref().map(str::trim) != Some("passive")
@@ -296,7 +314,7 @@ pub fn resolve_crew_to_buff_set(
             {
                 continue;
             }
-            let value = effect.value.or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(options.tier)));
+            let value = effect.value.or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(officer_tier)));
             if let (Some(stat), Some(v)) = (effect.stat.as_deref(), value) {
                 if effect.operator.as_deref() == Some("multiply") {
                     static_buffs
@@ -347,11 +365,12 @@ pub fn resolve_crew_to_buff_set(
                 .and_then(|o| o.below_decks_ability.as_ref().map(|a| (o, a)))
         }))
     {
+        let officer_tier = options.tier_for(&_officer.id);
         for effect in &ability.effects {
             if effect.effect_type == "extra_attack" {
                 let chance = effect
                     .chance
-                    .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(options.tier)))
+                    .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(officer_tier)))
                     .unwrap_or(0.0)
                     .clamp(0.0, 1.0);
                 let mult = effect.multiplier.unwrap_or(2.0).max(1.0);
@@ -380,7 +399,9 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 mod tests {
     use super::*;
     use crate::combat::AbilityEffect;
-    use crate::lcars::parser::{load_lcars_file, LcarsAbility, LcarsEffect, LcarsOfficer};
+    use crate::lcars::parser::{
+        load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
+    };
     use std::path::Path;
 
     fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
@@ -414,7 +435,10 @@ mod tests {
             bridge_ability: None,
             below_decks_ability: None,
         };
-        let options = ResolveOptions { tier: Some(5) };
+        let options = ResolveOptions {
+            tier: Some(5),
+            officer_tiers: None,
+        };
         let ability_iso = LcarsAbility {
             name: "iso".to_string(),
             effects: vec![lcars_effect_stat_modify("isolytic_damage", 0.15, "on_round_start")],
@@ -460,7 +484,10 @@ mod tests {
         }
         let file = load_lcars_file(path).unwrap();
         let officers = index_lcars_officers_by_id(file.officers);
-        let options = ResolveOptions { tier: Some(5) };
+        let options = ResolveOptions {
+            tier: Some(5),
+            officer_tiers: None,
+        };
         let buff_set = resolve_crew_to_buff_set(
             "khan",
             &["khan".to_string()],
@@ -480,6 +507,95 @@ mod tests {
         assert!(
             buff_set.static_buffs.contains_key("hull_hp"),
             "expected static hull_hp from below decks ability"
+        );
+    }
+
+    #[test]
+    fn resolve_options_tier_for_uses_per_officer_tier_then_fallback() {
+        let mut officer_tiers = HashMap::new();
+        officer_tiers.insert("officer_a".to_string(), 1u8);
+        officer_tiers.insert("officer_b".to_string(), 5u8);
+        let options = ResolveOptions {
+            tier: Some(3),
+            officer_tiers: Some(officer_tiers),
+        };
+        assert_eq!(options.tier_for("officer_a"), Some(1));
+        assert_eq!(options.tier_for("officer_b"), Some(5));
+        assert_eq!(options.tier_for("unknown"), Some(3));
+        let options_no_fallback = ResolveOptions {
+            tier: None,
+            officer_tiers: Some([("x".to_string(), 2u8)].into_iter().collect()),
+        };
+        assert_eq!(options_no_fallback.tier_for("x"), Some(2));
+        assert_eq!(options_no_fallback.tier_for("y"), None);
+    }
+
+    #[test]
+    fn per_officer_tier_affects_resolved_static_buffs() {
+        // Effect with scaling only (no fixed value): value_at_rank(1) = 0.1, value_at_rank(5) = 0.1 + 0.05*4 = 0.3
+        let scaling_effect = LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some("weapon_damage".to_string()),
+            target: None,
+            operator: Some("add".to_string()),
+            value: None,
+            trigger: Some("passive".to_string()),
+            duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+            scaling: Some(LcarsScaling {
+                base: Some(0.1),
+                per_rank: Some(0.05),
+                max_rank: Some(5),
+                base_chance: None,
+            }),
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let officer = LcarsOfficer {
+            id: "tiered_officer".to_string(),
+            name: "Tiered".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "scaling".to_string(),
+                effects: vec![scaling_effect],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+        };
+        let mut officers = HashMap::new();
+        officers.insert("tiered_officer".to_string(), officer.clone());
+        let options_tier1 = ResolveOptions {
+            tier: None,
+            officer_tiers: Some([("tiered_officer".to_string(), 1u8)].into_iter().collect()),
+        };
+        let options_tier5 = ResolveOptions {
+            tier: None,
+            officer_tiers: Some([("tiered_officer".to_string(), 5u8)].into_iter().collect()),
+        };
+        let buff_tier1 = resolve_crew_to_buff_set(
+            "tiered_officer",
+            &[],
+            &[],
+            &officers,
+            &options_tier1,
+        );
+        let buff_tier5 = resolve_crew_to_buff_set(
+            "tiered_officer",
+            &[],
+            &[],
+            &officers,
+            &options_tier5,
+        );
+        let v1 = buff_tier1.static_buffs.get("weapon_damage").copied().unwrap_or(0.0);
+        let v5 = buff_tier5.static_buffs.get("weapon_damage").copied().unwrap_or(0.0);
+        assert!(
+            (v5 - v1).abs() > 1e-6,
+            "per-officer tier should change resolved static_buffs: tier1={v1}, tier5={v5}"
         );
     }
 }
