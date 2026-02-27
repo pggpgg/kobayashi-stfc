@@ -24,6 +24,8 @@ struct OptimizeCliArgs {
     ship: String,
     hostile: String,
     sims: u32,
+    /// Optional cap on the number of candidate crews to evaluate.
+    max_candidates: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,12 +60,14 @@ fn parse_optimize_args(args: &[String]) -> Result<OptimizeCliArgs, String> {
             sims: args[2]
                 .parse::<u32>()
                 .map_err(|_| "sims must be a positive integer".to_string())?,
+            max_candidates: None,
         });
     }
 
     let mut ship = "saladin".to_string();
     let mut hostile = "explorer_30".to_string();
     let mut sims: u32 = 5_000;
+    let mut max_candidates: Option<u32> = None;
 
     let mut idx = 0;
     while idx < args.len() {
@@ -91,6 +95,17 @@ fn parse_optimize_args(args: &[String]) -> Result<OptimizeCliArgs, String> {
                     .map_err(|_| "--sims must be a positive integer".to_string())?;
                 idx += 2;
             }
+            "--max-candidates" => {
+                let value = args
+                    .get(idx + 1)
+                    .ok_or_else(|| "missing value for --max-candidates".to_string())?;
+                max_candidates = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| "--max-candidates must be a positive integer".to_string())?,
+                );
+                idx += 2;
+            }
             unknown => return Err(format!("unknown optimize argument: {unknown}")),
         }
     }
@@ -99,6 +114,7 @@ fn parse_optimize_args(args: &[String]) -> Result<OptimizeCliArgs, String> {
         ship,
         hostile,
         sims,
+        max_candidates,
     })
 }
 
@@ -201,12 +217,17 @@ fn parse_simulate_args(args: &[String]) -> Result<SimulateCliArgs, String> {
 
 fn optimize_command(args: &[String]) -> Result<(), String> {
     let parsed = parse_optimize_args(args)?;
-    let body = serde_json::json!({
+    let mut payload = serde_json::json!({
         "ship": parsed.ship,
         "hostile": parsed.hostile,
         "sims": parsed.sims,
-    })
-    .to_string();
+    });
+    if let Some(cap) = parsed.max_candidates {
+        if let serde_json::Value::Object(ref mut map) = payload {
+            map.insert("max_candidates".to_string(), serde_json::Value::from(cap));
+        }
+    }
+    let body = payload.to_string();
 
     let payload = server::api::optimize_payload(&body)
         .map_err(|err| format!("failed to build optimize response: {err}"))?;
@@ -472,7 +493,7 @@ simulate: kobayashi simulate <rounds> <seed>\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> --attacker-pierce <f64>\n\
                        --defender-id <id> --defender-mitigation <f64> --rounds <u32> --seed <u64> [--trace-events]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims>\n\
-  or kobayashi optimize --ship <id> --hostile <id> --sims <u32>"
+  or kobayashi optimize --ship <id> --hostile <id> --sims <u32> [--max-candidates <u32>]"
     );
 }
 

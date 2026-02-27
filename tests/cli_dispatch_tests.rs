@@ -44,12 +44,32 @@ fn optimize_command_dispatches_and_emits_deterministic_json() {
 
     let output_a = Command::new(bin())
         .current_dir(&crate_root)
-        .args(["optimize", "enterprise", "swarm", "20"])
+        .args([
+            "optimize",
+            "--ship",
+            "enterprise",
+            "--hostile",
+            "swarm",
+            "--sims",
+            "20",
+            "--max-candidates",
+            "200",
+        ])
         .output()
         .expect("optimize should run");
     let output_b = Command::new(bin())
         .current_dir(&crate_root)
-        .args(["optimize", "enterprise", "swarm", "20"])
+        .args([
+            "optimize",
+            "--ship",
+            "enterprise",
+            "--hostile",
+            "swarm",
+            "--sims",
+            "20",
+            "--max-candidates",
+            "200",
+        ])
         .output()
         .expect("optimize should run");
 
