@@ -473,7 +473,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Maps a human-readable building bonus label from the upstream dataset to an
+/// engine/LCARS stat key used by the simulator. This table should stay
+/// consistent with combat stat keys used in ship/hostile records and
+/// `syndicate_combat`.
 fn bonus_name_to_stat(name: &str) -> String {
+    let normalized = name.trim();
+    if normalized.is_empty() {
+        return String::new();
+    }
+
+    let key = normalized.to_lowercase();
+
+    // Station / defense platform combat bonuses.
+    if key.contains("defense platform damage") || key.contains("defense platform dmg") {
+        return "defense_platform_damage".to_string();
+    }
+    if key.contains("station hull health") || key.contains("station hull hp") {
+        return "hull_hp".to_string();
+    }
+    if key.contains("station shield health") || key.contains("station shield hp") {
+        return "shield_hp".to_string();
+    }
+
+    // Generic damage / crit / isolytic hooks, aligned with existing engine keys.
+    if key.contains("weapon damage") || key.contains("ship damage") || key.contains("damage output")
+    {
+        return "weapon_damage".to_string();
+    }
+    if key.contains("critical damage") || key.contains("crit damage") {
+        return "crit_damage".to_string();
+    }
+    if key.contains("isolytic damage") {
+        return "isolytic_damage".to_string();
+    }
+    if key.contains("isolytic mitigation") || key.contains("isolytic defense") {
+        return "isolytic_defense".to_string();
+    }
+
+    // Fallback: normalize to a snake_case-ish identifier so unknown labels
+    // still have deterministic keys.
     name.to_lowercase()
         .chars()
         .map(|c| if c.is_alphabetic() || c.is_numeric() { c } else { '_' })
@@ -493,20 +532,28 @@ fn raw_to_building_record(id: &str, raw: &RawBuilding) -> kobayashi::data::build
                 .bonuses
                 .iter()
                 .map(|(key, value)| {
-                    let stat = raw
+                    let (stat_label, percentage) = raw
                         .bonuses
                         .get(key)
-                        .map(|m| bonus_name_to_stat(&m.name))
-                        .unwrap_or_else(|| key.clone());
+                        .map(|m| (m.name.as_str(), m.percentage))
+                        .unwrap_or((key.as_str(), false));
+                    let stat = bonus_name_to_stat(stat_label);
+                    // Normalize percentage-style values to fractional bonuses where
+                    // possible so downstream consumers can rely on consistent units.
+                    let normalized_value = if percentage { *value / 100.0 } else { *value };
                     kobayashi::data::building::BonusEntry {
                         stat,
-                        value: *value,
+                        value: normalized_value,
                         operator: "add".to_string(),
+                        conditions: Vec::new(),
+                        notes: None,
                     }
                 })
                 .collect();
             kobayashi::data::building::BuildingLevel {
                 level: lvl.level,
+                ops_min: None,
+                ops_max: None,
                 bonuses,
             }
         })
@@ -514,6 +561,8 @@ fn raw_to_building_record(id: &str, raw: &RawBuilding) -> kobayashi::data::build
     kobayashi::data::building::BuildingRecord {
         id: id.to_string(),
         building_name: raw.building_name.clone(),
+        data_version: None,
+        source_note: None,
         levels,
     }
 }

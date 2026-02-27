@@ -1,0 +1,2143 @@
+{
+  "id": "building_78",
+  "building_name": "BUILDING 78",
+  "data_version": "stfcspace-2026-02-27",
+  "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
+  "levels": [
+    {
+      "level": 20,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.005,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 21,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.01,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 22,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.015,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 23,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.02,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 24,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.025,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 25,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.03,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 26,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.035,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 27,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 0.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.04,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 28,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.045,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 29,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 1.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.05,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 30,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 1.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.055,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.41,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 31,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 1.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.06,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.41,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 32,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 1.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 0.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.065,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.41,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 33,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 1.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.07,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.41,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 34,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 1.95,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 1.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.075,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.41,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 35,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 2.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 1.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.08,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.71,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 36,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 2.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 1.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.085,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.71,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 37,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 2.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 1.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.09,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.71,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 38,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 2.55,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 1.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.095,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.71,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 39,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 2.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 1.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 0.71,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 40,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.105,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 1.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 41,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 3.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.11,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 1.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 42,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 3.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 2.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.115,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 1.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 43,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 3.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 2.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 1.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 44,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 3.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 2.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.125,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 1.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 45,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.13,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 46,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 4.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 3.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.135,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 47,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 4.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 3.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 48,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 4.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 3.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.145,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 49,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 4.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 50,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 4.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.155,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 3.67,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 51,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 5.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 4.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.16,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 3.67,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 52,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 5.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 4.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.165,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 3.67,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 53,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 5.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 4.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.17,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 3.67,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 54,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 6.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.175,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 3.67,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 55,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 6.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 5.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.18,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 5.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 56,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 6.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 5.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.185,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 5.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 57,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 7.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 5.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.19,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 5.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 58,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 7.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 5.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.195,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 5.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 59,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 7.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 5.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 60,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 8.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 6.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.21,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.63,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 61,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 6.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.22,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.63,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 62,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 9.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 7.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.23,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.63,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 63,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 10,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 7.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.24,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.63,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 64,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 10.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 8.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.63,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 65,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 11,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 8.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.26,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.89,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 66,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 11.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 8.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.27,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.89,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 67,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 9.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.28,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.89,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 68,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 12.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 9.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.29,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.89,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 69,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 13,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 10.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 6.89,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 70,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 11,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.31,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 71,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 14.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 11.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.32,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 72,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 15.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.33,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 73,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 16.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 12.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.34,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 74,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 17,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 13,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 75,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 17.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 13.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.36,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.39,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 76,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 18.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.37,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.39,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 77,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 19.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 14.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.38,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.39,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 78,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 20,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.39,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.39,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 79,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 21,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 16,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 7.64,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    },
+    {
+      "level": 80,
+      "ops_min": null,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "buff_1124780421",
+          "value": 22,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65201"
+        },
+        {
+          "stat": "buff_660954013",
+          "value": 16.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65202"
+        },
+        {
+          "stat": "buff_1639441900",
+          "value": 0.41,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65203"
+        },
+        {
+          "stat": "buff_1656851848",
+          "value": 8.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=65204"
+        }
+      ]
+    }
+  ]
+}
