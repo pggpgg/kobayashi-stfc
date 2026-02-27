@@ -1,0 +1,2088 @@
+{
+  "building_id": 14,
+  "name": "Missing translation",
+  "source_url": "https://stfc.space/buildings/14",
+  "scraped_at": "2026-02-27T06:25:55.295Z",
+  "levels": [
+    {
+      "level": 1,
+      "power": 30,
+      "stats": [
+        {
+          "label": "power",
+          "value": 30,
+          "value_delta": 30,
+          "raw": "Power: 30 ( +30)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.01,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 1% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.03,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 3% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "power": 60,
+      "stats": [
+        {
+          "label": "power",
+          "value": 60,
+          "value_delta": 30,
+          "raw": "Power: 60 ( +30)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.02,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 2% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.06,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 6% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "power": 95,
+      "stats": [
+        {
+          "label": "power",
+          "value": 95,
+          "value_delta": 35,
+          "raw": "Power: 95 ( +35)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.03,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 3% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.09,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 9% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "power": 140,
+      "stats": [
+        {
+          "label": "power",
+          "value": 140,
+          "value_delta": 45,
+          "raw": "Power: 140 ( +45)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.04,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 4% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.12,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 12% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "power": 180,
+      "stats": [
+        {
+          "label": "power",
+          "value": 180,
+          "value_delta": 40,
+          "raw": "Power: 180 ( +40)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.05,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 5% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.15,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 15% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "power": 240,
+      "stats": [
+        {
+          "label": "power",
+          "value": 240,
+          "value_delta": 60,
+          "raw": "Power: 240 ( +60)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.06,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 6% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.18,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 18% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 7,
+      "power": 310,
+      "stats": [
+        {
+          "label": "power",
+          "value": 310,
+          "value_delta": 70,
+          "raw": "Power: 310 ( +70)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.07,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 7% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.21,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 21% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 8,
+      "power": 400,
+      "stats": [
+        {
+          "label": "power",
+          "value": 400,
+          "value_delta": 90,
+          "raw": "Power: 400 ( +90)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.08,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 8% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.24,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 24% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 9,
+      "power": 500,
+      "stats": [
+        {
+          "label": "power",
+          "value": 500,
+          "value_delta": 100,
+          "raw": "Power: 500 ( +100)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.09,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 9% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.27,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 27% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 10,
+      "power": 625,
+      "stats": [
+        {
+          "label": "power",
+          "value": 625,
+          "value_delta": 125,
+          "raw": "Power: 625 ( +125)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.1,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 10% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.3,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 30% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 11,
+      "power": 800,
+      "stats": [
+        {
+          "label": "power",
+          "value": 800,
+          "value_delta": 175,
+          "raw": "Power: 800 ( +175)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.11,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 11% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.33,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 33% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 12,
+      "power": 975,
+      "stats": [
+        {
+          "label": "power",
+          "value": 975,
+          "value_delta": 175,
+          "raw": "Power: 975 ( +175)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.12,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 12% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.36,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 36% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 13,
+      "power": 1,
+      "stats": [
+        {
+          "label": "power",
+          "value": 1,
+          "value_delta": 0,
+          "raw": "Power: 1 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.13,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 13% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.39,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 39% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 14,
+      "power": 1,
+      "stats": [
+        {
+          "label": "power",
+          "value": 1,
+          "value_delta": 0,
+          "raw": "Power: 1 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.14,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 14% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.42,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 42% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 15,
+      "power": 1,
+      "stats": [
+        {
+          "label": "power",
+          "value": 1,
+          "value_delta": 0,
+          "raw": "Power: 1 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.15,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 15% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.45,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 45% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 16,
+      "power": 2,
+      "stats": [
+        {
+          "label": "power",
+          "value": 2,
+          "value_delta": 0,
+          "raw": "Power: 2 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.16,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 16% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.48,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 48% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 17,
+      "power": 2,
+      "stats": [
+        {
+          "label": "power",
+          "value": 2,
+          "value_delta": 0,
+          "raw": "Power: 2 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.17,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 17% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.51,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 51% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 18,
+      "power": 2,
+      "stats": [
+        {
+          "label": "power",
+          "value": 2,
+          "value_delta": 0,
+          "raw": "Power: 2 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.18,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 18% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.54,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 54% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 19,
+      "power": 3,
+      "stats": [
+        {
+          "label": "power",
+          "value": 3,
+          "value_delta": 0,
+          "raw": "Power: 3 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.19,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 19% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.57,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 57% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 20,
+      "power": 4,
+      "stats": [
+        {
+          "label": "power",
+          "value": 4,
+          "value_delta": 0,
+          "raw": "Power: 4 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.2,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 20% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.6,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 60% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 21,
+      "power": 4,
+      "stats": [
+        {
+          "label": "power",
+          "value": 4,
+          "value_delta": 0,
+          "raw": "Power: 4 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.21,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 21% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.63,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 63% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 22,
+      "power": 5,
+      "stats": [
+        {
+          "label": "power",
+          "value": 5,
+          "value_delta": 0,
+          "raw": "Power: 5 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.22,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 22% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.66,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 66% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 23,
+      "power": 6,
+      "stats": [
+        {
+          "label": "power",
+          "value": 6,
+          "value_delta": 0,
+          "raw": "Power: 6 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.23,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 23% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.69,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 69% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 24,
+      "power": 7,
+      "stats": [
+        {
+          "label": "power",
+          "value": 7,
+          "value_delta": 0,
+          "raw": "Power: 7 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.24,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 24% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.72,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 72% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 25,
+      "power": 8,
+      "stats": [
+        {
+          "label": "power",
+          "value": 8,
+          "value_delta": 0,
+          "raw": "Power: 8 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.25,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 25% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.75,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 75% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 26,
+      "power": 9,
+      "stats": [
+        {
+          "label": "power",
+          "value": 9,
+          "value_delta": 0,
+          "raw": "Power: 9 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.26,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 26% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.78,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 78% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 27,
+      "power": 10,
+      "stats": [
+        {
+          "label": "power",
+          "value": 10,
+          "value_delta": 0,
+          "raw": "Power: 10 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.27,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 27% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.81,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 81% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 28,
+      "power": 11,
+      "stats": [
+        {
+          "label": "power",
+          "value": 11,
+          "value_delta": 0,
+          "raw": "Power: 11 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.28,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 28% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.84,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 84% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 29,
+      "power": 12,
+      "stats": [
+        {
+          "label": "power",
+          "value": 12,
+          "value_delta": 0,
+          "raw": "Power: 12 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.29,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 29% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.87,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 87% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 30,
+      "power": 14,
+      "stats": [
+        {
+          "label": "power",
+          "value": 14,
+          "value_delta": 0,
+          "raw": "Power: 14 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.37,
+          "value_delta": 8,
+          "is_percentage": true,
+          "raw": "Missing translation: 37% ( +8%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.9,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 90% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 31,
+      "power": 15,
+      "stats": [
+        {
+          "label": "power",
+          "value": 15,
+          "value_delta": 0,
+          "raw": "Power: 15 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.38,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 38% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.93,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 93% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 32,
+      "power": 17,
+      "stats": [
+        {
+          "label": "power",
+          "value": 17,
+          "value_delta": 0,
+          "raw": "Power: 17 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.39,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 39% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.96,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 96% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 33,
+      "power": 19,
+      "stats": [
+        {
+          "label": "power",
+          "value": 19,
+          "value_delta": 0,
+          "raw": "Power: 19 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.4,
+          "value_delta": 1,
+          "is_percentage": true,
+          "raw": "Missing translation: 40% ( +1%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.99,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 99% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 34,
+      "power": 21,
+      "stats": [
+        {
+          "label": "power",
+          "value": 21,
+          "value_delta": 0,
+          "raw": "Power: 21 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.42,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 42% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.02,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 102% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 35,
+      "power": 23,
+      "stats": [
+        {
+          "label": "power",
+          "value": 23,
+          "value_delta": 0,
+          "raw": "Power: 23 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.44,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 44% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.05,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 105% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 36,
+      "power": 25,
+      "stats": [
+        {
+          "label": "power",
+          "value": 25,
+          "value_delta": 0,
+          "raw": "Power: 25 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.46,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 46% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.08,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 108% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 37,
+      "power": 28,
+      "stats": [
+        {
+          "label": "power",
+          "value": 28,
+          "value_delta": 0,
+          "raw": "Power: 28 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.48,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 48% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.11,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 111% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 38,
+      "power": 30,
+      "stats": [
+        {
+          "label": "power",
+          "value": 30,
+          "value_delta": 0,
+          "raw": "Power: 30 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.5,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 50% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.14,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 114% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 39,
+      "power": 33,
+      "stats": [
+        {
+          "label": "power",
+          "value": 33,
+          "value_delta": 0,
+          "raw": "Power: 33 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.52,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 52% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.17,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 117% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 40,
+      "power": 36,
+      "stats": [
+        {
+          "label": "power",
+          "value": 36,
+          "value_delta": 0,
+          "raw": "Power: 36 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.54,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 54% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.2,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 120% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 41,
+      "power": 39,
+      "stats": [
+        {
+          "label": "power",
+          "value": 39,
+          "value_delta": 0,
+          "raw": "Power: 39 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.56,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 56% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.23,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 123% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 42,
+      "power": 42,
+      "stats": [
+        {
+          "label": "power",
+          "value": 42,
+          "value_delta": 0,
+          "raw": "Power: 42 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.58,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 58% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.26,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 126% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 43,
+      "power": 46,
+      "stats": [
+        {
+          "label": "power",
+          "value": 46,
+          "value_delta": 0,
+          "raw": "Power: 46 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.74,
+          "value_delta": 16,
+          "is_percentage": true,
+          "raw": "Missing translation: 74% ( +16%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.29,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 129% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 44,
+      "power": 49,
+      "stats": [
+        {
+          "label": "power",
+          "value": 49,
+          "value_delta": 0,
+          "raw": "Power: 49 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.76,
+          "value_delta": 2,
+          "is_percentage": true,
+          "raw": "Missing translation: 76% ( +2%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.32,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 132% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 45,
+      "power": 53,
+      "stats": [
+        {
+          "label": "power",
+          "value": 53,
+          "value_delta": 0,
+          "raw": "Power: 53 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.8,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 80% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.35,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 135% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 46,
+      "power": 57,
+      "stats": [
+        {
+          "label": "power",
+          "value": 57,
+          "value_delta": 0,
+          "raw": "Power: 57 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.84,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 84% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.38,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 138% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 47,
+      "power": 61,
+      "stats": [
+        {
+          "label": "power",
+          "value": 61,
+          "value_delta": 0,
+          "raw": "Power: 61 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.88,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 88% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.41,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 141% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 48,
+      "power": 66,
+      "stats": [
+        {
+          "label": "power",
+          "value": 66,
+          "value_delta": 0,
+          "raw": "Power: 66 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.92,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 92% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.44,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 144% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 49,
+      "power": 70,
+      "stats": [
+        {
+          "label": "power",
+          "value": 70,
+          "value_delta": 0,
+          "raw": "Power: 70 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 0.96,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 96% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.47,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 147% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 50,
+      "power": 75,
+      "stats": [
+        {
+          "label": "power",
+          "value": 75,
+          "value_delta": 0,
+          "raw": "Power: 75 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 100% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.5,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 150% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 51,
+      "power": 80,
+      "stats": [
+        {
+          "label": "power",
+          "value": 80,
+          "value_delta": 0,
+          "raw": "Power: 80 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.04,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 104% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.53,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 153% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 52,
+      "power": 86,
+      "stats": [
+        {
+          "label": "power",
+          "value": 86,
+          "value_delta": 0,
+          "raw": "Power: 86 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.08,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 108% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.56,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 156% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 53,
+      "power": 91,
+      "stats": [
+        {
+          "label": "power",
+          "value": 91,
+          "value_delta": 0,
+          "raw": "Power: 91 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.12,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 112% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.59,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 159% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 54,
+      "power": 97,
+      "stats": [
+        {
+          "label": "power",
+          "value": 97,
+          "value_delta": 0,
+          "raw": "Power: 97 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.16,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 116% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.62,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 162% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 55,
+      "power": 103,
+      "stats": [
+        {
+          "label": "power",
+          "value": 103,
+          "value_delta": 0,
+          "raw": "Power: 103 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.2,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 120% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.65,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 165% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 56,
+      "power": 109,
+      "stats": [
+        {
+          "label": "power",
+          "value": 109,
+          "value_delta": 0,
+          "raw": "Power: 109 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.24,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 124% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.68,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 168% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 57,
+      "power": 116,
+      "stats": [
+        {
+          "label": "power",
+          "value": 116,
+          "value_delta": 0,
+          "raw": "Power: 116 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.28,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 128% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.71,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 171% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 58,
+      "power": 123,
+      "stats": [
+        {
+          "label": "power",
+          "value": 123,
+          "value_delta": 0,
+          "raw": "Power: 123 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.32,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 132% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.74,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 174% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 59,
+      "power": 130,
+      "stats": [
+        {
+          "label": "power",
+          "value": 130,
+          "value_delta": 0,
+          "raw": "Power: 130 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.36,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 136% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.77,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 177% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 60,
+      "power": 138,
+      "stats": [
+        {
+          "label": "power",
+          "value": 138,
+          "value_delta": 0,
+          "raw": "Power: 138 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.4,
+          "value_delta": 4,
+          "is_percentage": true,
+          "raw": "Missing translation: 140% ( +4%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.8,
+          "value_delta": 3,
+          "is_percentage": true,
+          "raw": "Missing translation: 180% ( +3%)"
+        }
+      ]
+    },
+    {
+      "level": 61,
+      "power": 147,
+      "stats": [
+        {
+          "label": "power",
+          "value": 147,
+          "value_delta": 0,
+          "raw": "Power: 147 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.45,
+          "value_delta": 5,
+          "is_percentage": true,
+          "raw": "Missing translation: 145% ( +5%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.85,
+          "value_delta": 5,
+          "is_percentage": true,
+          "raw": "Missing translation: 185% ( +5%)"
+        }
+      ]
+    },
+    {
+      "level": 62,
+      "power": 157,
+      "stats": [
+        {
+          "label": "power",
+          "value": 157,
+          "value_delta": 0,
+          "raw": "Power: 157 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.5,
+          "value_delta": 5,
+          "is_percentage": true,
+          "raw": "Missing translation: 150% ( +5%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2.05,
+          "value_delta": 20,
+          "is_percentage": true,
+          "raw": "Missing translation: 205% ( +20%)"
+        }
+      ]
+    },
+    {
+      "level": 63,
+      "power": 167,
+      "stats": [
+        {
+          "label": "power",
+          "value": 167,
+          "value_delta": 0,
+          "raw": "Power: 167 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.6,
+          "value_delta": 10,
+          "is_percentage": true,
+          "raw": "Missing translation: 160% ( +10%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2.25,
+          "value_delta": 20,
+          "is_percentage": true,
+          "raw": "Missing translation: 225% ( +20%)"
+        }
+      ]
+    },
+    {
+      "level": 64,
+      "power": 177,
+      "stats": [
+        {
+          "label": "power",
+          "value": 177,
+          "value_delta": 0,
+          "raw": "Power: 177 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.7,
+          "value_delta": 10,
+          "is_percentage": true,
+          "raw": "Missing translation: 170% ( +10%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2.5,
+          "value_delta": 25,
+          "is_percentage": true,
+          "raw": "Missing translation: 250% ( +25%)"
+        }
+      ]
+    },
+    {
+      "level": 65,
+      "power": 189,
+      "stats": [
+        {
+          "label": "power",
+          "value": 189,
+          "value_delta": 0,
+          "raw": "Power: 189 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1.85,
+          "value_delta": 15,
+          "is_percentage": true,
+          "raw": "Missing translation: 185% ( +15%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2.75,
+          "value_delta": 25,
+          "is_percentage": true,
+          "raw": "Missing translation: 275% ( +25%)"
+        }
+      ]
+    },
+    {
+      "level": 66,
+      "power": 200,
+      "stats": [
+        {
+          "label": "power",
+          "value": 200,
+          "value_delta": 0,
+          "raw": "Power: 200 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2,
+          "value_delta": 15,
+          "is_percentage": true,
+          "raw": "Missing translation: 200% ( +15%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 3.1,
+          "value_delta": 35,
+          "is_percentage": true,
+          "raw": "Missing translation: 310% ( +35%)"
+        }
+      ]
+    },
+    {
+      "level": 67,
+      "power": 210,
+      "stats": [
+        {
+          "label": "power",
+          "value": 210,
+          "value_delta": 0,
+          "raw": "Power: 210 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2.2,
+          "value_delta": 20,
+          "is_percentage": true,
+          "raw": "Missing translation: 220% ( +20%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 3.45,
+          "value_delta": 35,
+          "is_percentage": true,
+          "raw": "Missing translation: 345% ( +35%)"
+        }
+      ]
+    },
+    {
+      "level": 68,
+      "power": 225,
+      "stats": [
+        {
+          "label": "power",
+          "value": 225,
+          "value_delta": 0,
+          "raw": "Power: 225 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2.4,
+          "value_delta": 20,
+          "is_percentage": true,
+          "raw": "Missing translation: 240% ( +20%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 3.85,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 385% ( +40%)"
+        }
+      ]
+    },
+    {
+      "level": 69,
+      "power": 240,
+      "stats": [
+        {
+          "label": "power",
+          "value": 240,
+          "value_delta": 0,
+          "raw": "Power: 240 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 2.65,
+          "value_delta": 25,
+          "is_percentage": true,
+          "raw": "Missing translation: 265% ( +25%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 4.35,
+          "value_delta": 50,
+          "is_percentage": true,
+          "raw": "Missing translation: 435% ( +50%)"
+        }
+      ]
+    },
+    {
+      "level": 70,
+      "power": 250,
+      "stats": [
+        {
+          "label": "power",
+          "value": 250,
+          "value_delta": 0,
+          "raw": "Power: 250 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 3,
+          "value_delta": 35,
+          "is_percentage": true,
+          "raw": "Missing translation: 300% ( +35%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 5,
+          "value_delta": 65,
+          "is_percentage": true,
+          "raw": "Missing translation: 500% ( +65%)"
+        }
+      ]
+    },
+    {
+      "level": 71,
+      "power": 270,
+      "stats": [
+        {
+          "label": "power",
+          "value": 270,
+          "value_delta": 0,
+          "raw": "Power: 270 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 3.4,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 340% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 5.7,
+          "value_delta": 70,
+          "is_percentage": true,
+          "raw": "Missing translation: 570% ( +70%)"
+        }
+      ]
+    },
+    {
+      "level": 72,
+      "power": 295,
+      "stats": [
+        {
+          "label": "power",
+          "value": 295,
+          "value_delta": 0,
+          "raw": "Power: 295 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 3.8,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 380% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 6.4,
+          "value_delta": 70,
+          "is_percentage": true,
+          "raw": "Missing translation: 640% ( +70%)"
+        }
+      ]
+    },
+    {
+      "level": 73,
+      "power": 315,
+      "stats": [
+        {
+          "label": "power",
+          "value": 315,
+          "value_delta": 0,
+          "raw": "Power: 315 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 4.2,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 420% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 7.1,
+          "value_delta": 70,
+          "is_percentage": true,
+          "raw": "Missing translation: 710% ( +70%)"
+        }
+      ]
+    },
+    {
+      "level": 74,
+      "power": 340,
+      "stats": [
+        {
+          "label": "power",
+          "value": 340,
+          "value_delta": 0,
+          "raw": "Power: 340 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 4.6,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 460% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 7.8,
+          "value_delta": 70,
+          "is_percentage": true,
+          "raw": "Missing translation: 780% ( +70%)"
+        }
+      ]
+    },
+    {
+      "level": 75,
+      "power": 370,
+      "stats": [
+        {
+          "label": "power",
+          "value": 370,
+          "value_delta": 0,
+          "raw": "Power: 370 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 5,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 500% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 8.5,
+          "value_delta": 70,
+          "is_percentage": true,
+          "raw": "Missing translation: 850% ( +70%)"
+        }
+      ]
+    },
+    {
+      "level": 76,
+      "power": 400,
+      "stats": [
+        {
+          "label": "power",
+          "value": 400,
+          "value_delta": 0,
+          "raw": "Power: 400 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 5.4,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 540% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 9.2,
+          "value_delta": 70,
+          "is_percentage": true,
+          "raw": "Missing translation: 920% ( +70%)"
+        }
+      ]
+    },
+    {
+      "level": 77,
+      "power": 430,
+      "stats": [
+        {
+          "label": "power",
+          "value": 430,
+          "value_delta": 0,
+          "raw": "Power: 430 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 5.8,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 580% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 9.9,
+          "value_delta": 70,
+          "is_percentage": true,
+          "raw": "Missing translation: 990% ( +70%)"
+        }
+      ]
+    },
+    {
+      "level": 78,
+      "power": 465,
+      "stats": [
+        {
+          "label": "power",
+          "value": 465,
+          "value_delta": 0,
+          "raw": "Power: 465 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 6.2,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 620% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1,
+          "value_delta": 0,
+          "is_percentage": false,
+          "raw": "Missing translation: 1 ()"
+        }
+      ]
+    },
+    {
+      "level": 79,
+      "power": 505,
+      "stats": [
+        {
+          "label": "power",
+          "value": 505,
+          "value_delta": 0,
+          "raw": "Power: 505 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 6.6,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 660% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1,
+          "value_delta": 0,
+          "is_percentage": false,
+          "raw": "Missing translation: 1 ()"
+        }
+      ]
+    },
+    {
+      "level": 80,
+      "power": 545,
+      "stats": [
+        {
+          "label": "power",
+          "value": 545,
+          "value_delta": 0,
+          "raw": "Power: 545 ()"
+        },
+        {
+          "label": "missing_translation",
+          "value": 7,
+          "value_delta": 40,
+          "is_percentage": true,
+          "raw": "Missing translation: 700% ( +40%)"
+        },
+        {
+          "label": "missing_translation",
+          "value": 1,
+          "value_delta": 0,
+          "is_percentage": false,
+          "raw": "Missing translation: 1 ()"
+        }
+      ]
+    }
+  ]
+}

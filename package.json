@@ -1,0 +1,1 @@
+{"name":"kobayashi-stfc","private":true,"type":"module","scripts":{"import:buildings:stfcspace":"node scripts/import_stfcspace_buildings.mjs"},"devDependencies":{}}

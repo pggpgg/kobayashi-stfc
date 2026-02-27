@@ -1,0 +1,430 @@
+{
+  "data_version": "stfcspace-2026-02-27",
+  "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
+  "buildings": [
+    {
+      "id": "ops_center",
+      "building_name": "OPERATIONS CENTER"
+    },
+    {
+      "id": "parsteel_generator_a",
+      "building_name": "Parsteel Generator A"
+    },
+    {
+      "id": "parsteel_generator_b",
+      "building_name": "Parsteel Generator B"
+    },
+    {
+      "id": "parsteel_generator_c",
+      "building_name": "Parsteel Generator C"
+    },
+    {
+      "id": "building_50",
+      "building_name": "BUILDING 50"
+    },
+    {
+      "id": "building_51",
+      "building_name": "BUILDING 51"
+    },
+    {
+      "id": "building_52",
+      "building_name": "BUILDING 52"
+    },
+    {
+      "id": "building_53",
+      "building_name": "BUILDING 53"
+    },
+    {
+      "id": "building_54",
+      "building_name": "BUILDING 54"
+    },
+    {
+      "id": "parsteel_warehouse",
+      "building_name": "Parsteel Warehouse"
+    },
+    {
+      "id": "building_55",
+      "building_name": "BUILDING 55"
+    },
+    {
+      "id": "tritanium_generator_a",
+      "building_name": "Tritanium Generator A"
+    },
+    {
+      "id": "tritanium_generator_b",
+      "building_name": "Tritanium Generator B"
+    },
+    {
+      "id": "tritanium_generator_c",
+      "building_name": "Tritanium Generator C"
+    },
+    {
+      "id": "building_56",
+      "building_name": "BUILDING 56"
+    },
+    {
+      "id": "building_57",
+      "building_name": "BUILDING 57"
+    },
+    {
+      "id": "building_58",
+      "building_name": "BUILDING 58"
+    },
+    {
+      "id": "building_59",
+      "building_name": "BUILDING 59"
+    },
+    {
+      "id": "building_60",
+      "building_name": "BUILDING 60"
+    },
+    {
+      "id": "tritanium_warehouse",
+      "building_name": "Tritanium Warehouse"
+    },
+    {
+      "id": "building_61",
+      "building_name": "BUILDING 61"
+    },
+    {
+      "id": "dilithium_generator_a",
+      "building_name": "Dilithium Generator A"
+    },
+    {
+      "id": "dilithium_generator_b",
+      "building_name": "Dilithium Generator B"
+    },
+    {
+      "id": "dilithium_generator_c",
+      "building_name": "Dilithium Generator C"
+    },
+    {
+      "id": "building_62",
+      "building_name": "BUILDING 62"
+    },
+    {
+      "id": "building_63",
+      "building_name": "BUILDING 63"
+    },
+    {
+      "id": "building_64",
+      "building_name": "BUILDING 64"
+    },
+    {
+      "id": "building_65",
+      "building_name": "BUILDING 65"
+    },
+    {
+      "id": "building_66",
+      "building_name": "BUILDING 66"
+    },
+    {
+      "id": "dilithium_warehouse",
+      "building_name": "Dilithium Warehouse"
+    },
+    {
+      "id": "building_67",
+      "building_name": "BUILDING 67"
+    },
+    {
+      "id": "shipyard",
+      "building_name": "Shipyard"
+    },
+    {
+      "id": "building_41",
+      "building_name": "BUILDING 41"
+    },
+    {
+      "id": "ship_hangar",
+      "building_name": "Ship Hangar"
+    },
+    {
+      "id": "drydock_a",
+      "building_name": "Drydock A"
+    },
+    {
+      "id": "drydock_b",
+      "building_name": "Drydock B"
+    },
+    {
+      "id": "drydock_c",
+      "building_name": "Drydock C"
+    },
+    {
+      "id": "drydock_d",
+      "building_name": "Drydock D"
+    },
+    {
+      "id": "building_21",
+      "building_name": "BUILDING 21"
+    },
+    {
+      "id": "building_22",
+      "building_name": "BUILDING 22"
+    },
+    {
+      "id": "building_44",
+      "building_name": "BUILDING 44"
+    },
+    {
+      "id": "building_45",
+      "building_name": "BUILDING 45"
+    },
+    {
+      "id": "building_24",
+      "building_name": "BUILDING 24"
+    },
+    {
+      "id": "building_25",
+      "building_name": "BUILDING 25"
+    },
+    {
+      "id": "building_26",
+      "building_name": "BUILDING 26"
+    },
+    {
+      "id": "building_27",
+      "building_name": "BUILDING 27"
+    },
+    {
+      "id": "building_43",
+      "building_name": "BUILDING 43"
+    },
+    {
+      "id": "building_29",
+      "building_name": "BUILDING 29"
+    },
+    {
+      "id": "engine_technology_lab",
+      "building_name": "Engine Technology Lab"
+    },
+    {
+      "id": "building_28",
+      "building_name": "BUILDING 28"
+    },
+    {
+      "id": "building_34",
+      "building_name": "BUILDING 34"
+    },
+    {
+      "id": "building_35",
+      "building_name": "BUILDING 35"
+    },
+    {
+      "id": "building_36",
+      "building_name": "BUILDING 36"
+    },
+    {
+      "id": "building_37",
+      "building_name": "BUILDING 37"
+    },
+    {
+      "id": "building_38",
+      "building_name": "BUILDING 38"
+    },
+    {
+      "id": "building_39",
+      "building_name": "BUILDING 39"
+    },
+    {
+      "id": "building_31",
+      "building_name": "BUILDING 31"
+    },
+    {
+      "id": "building_23",
+      "building_name": "BUILDING 23"
+    },
+    {
+      "id": "treasury",
+      "building_name": "Treasury"
+    },
+    {
+      "id": "building_33",
+      "building_name": "BUILDING 33"
+    },
+    {
+      "id": "building_40",
+      "building_name": "BUILDING 40"
+    },
+    {
+      "id": "building_69",
+      "building_name": "BUILDING 69"
+    },
+    {
+      "id": "building_70",
+      "building_name": "BUILDING 70"
+    },
+    {
+      "id": "building_71",
+      "building_name": "BUILDING 71"
+    },
+    {
+      "id": "building_72",
+      "building_name": "BUILDING 72"
+    },
+    {
+      "id": "building_73",
+      "building_name": "BUILDING 73"
+    },
+    {
+      "id": "building_75",
+      "building_name": "BUILDING 75"
+    },
+    {
+      "id": "building_77",
+      "building_name": "BUILDING 77"
+    },
+    {
+      "id": "building_78",
+      "building_name": "BUILDING 78"
+    },
+    {
+      "id": "building_79",
+      "building_name": "BUILDING 79"
+    },
+    {
+      "id": "building_80",
+      "building_name": "BUILDING 80"
+    },
+    {
+      "id": "building_81",
+      "building_name": "BUILDING 81"
+    },
+    {
+      "id": "building_82",
+      "building_name": "BUILDING 82"
+    },
+    {
+      "id": "building_83",
+      "building_name": "BUILDING 83"
+    },
+    {
+      "id": "building_84",
+      "building_name": "BUILDING 84"
+    },
+    {
+      "id": "building_85",
+      "building_name": "BUILDING 85"
+    },
+    {
+      "id": "building_86",
+      "building_name": "BUILDING 86"
+    },
+    {
+      "id": "building_1000",
+      "building_name": "BUILDING 1000"
+    },
+    {
+      "id": "building_1001",
+      "building_name": "BUILDING 1001"
+    },
+    {
+      "id": "building_1002",
+      "building_name": "BUILDING 1002"
+    },
+    {
+      "id": "building_1003",
+      "building_name": "BUILDING 1003"
+    },
+    {
+      "id": "building_1004",
+      "building_name": "BUILDING 1004"
+    },
+    {
+      "id": "building_1005",
+      "building_name": "BUILDING 1005"
+    },
+    {
+      "id": "building_1006",
+      "building_name": "BUILDING 1006"
+    },
+    {
+      "id": "building_1007",
+      "building_name": "BUILDING 1007"
+    },
+    {
+      "id": "building_1008",
+      "building_name": "BUILDING 1008"
+    },
+    {
+      "id": "building_1009",
+      "building_name": "BUILDING 1009"
+    },
+    {
+      "id": "building_1010",
+      "building_name": "BUILDING 1010"
+    },
+    {
+      "id": "building_1011",
+      "building_name": "BUILDING 1011"
+    },
+    {
+      "id": "building_1012",
+      "building_name": "BUILDING 1012"
+    },
+    {
+      "id": "building_1013",
+      "building_name": "BUILDING 1013"
+    },
+    {
+      "id": "building_1014",
+      "building_name": "BUILDING 1014"
+    },
+    {
+      "id": "building_1015",
+      "building_name": "BUILDING 1015"
+    },
+    {
+      "id": "building_1016",
+      "building_name": "BUILDING 1016"
+    },
+    {
+      "id": "building_1017",
+      "building_name": "BUILDING 1017"
+    },
+    {
+      "id": "building_1018",
+      "building_name": "BUILDING 1018"
+    },
+    {
+      "id": "building_1019",
+      "building_name": "BUILDING 1019"
+    },
+    {
+      "id": "building_1020",
+      "building_name": "BUILDING 1020"
+    },
+    {
+      "id": "building_1021",
+      "building_name": "BUILDING 1021"
+    },
+    {
+      "id": "building_1022",
+      "building_name": "BUILDING 1022"
+    },
+    {
+      "id": "building_1023",
+      "building_name": "BUILDING 1023"
+    },
+    {
+      "id": "building_1024",
+      "building_name": "BUILDING 1024"
+    },
+    {
+      "id": "building_1025",
+      "building_name": "BUILDING 1025"
+    },
+    {
+      "id": "building_1026",
+      "building_name": "BUILDING 1026"
+    },
+    {
+      "id": "building_1027",
+      "building_name": "BUILDING 1027"
+    },
+    {
+      "id": "building_1028",
+      "building_name": "BUILDING 1028"
+    }
+  ]
+}
