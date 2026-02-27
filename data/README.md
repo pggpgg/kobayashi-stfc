@@ -1,6 +1,7 @@
-# Combat data (ships, hostiles)
+# Combat data (ships, hostiles, buildings)
 
 Ship and hostile stats are loaded from `ships/index.json` and `hostiles/index.json` plus per-id JSON files in the same directories.
+Building bonuses are loaded from `buildings/index.json` plus per-building JSON files.
 
 ## Provenance
 
@@ -12,3 +13,4 @@ Ship and hostile stats are loaded from `ships/index.json` and `hostiles/index.js
 
 - **Ships:** See `src/data/ship.rs` (`ShipRecord`). Fields include attack, hull_health, shield_health, shield_mitigation, apex_shred, isolytic_damage, etc.
 - **Hostiles:** See `src/data/hostile.rs` (`HostileRecord`). Fields include armor, shield_deflection, dodge, hull_health, shield_health, shield_mitigation, apex_barrier, isolytic_defense, etc.
+- **Buildings:** See `src/data/building.rs` (`BuildingRecord`). Each building has `levels` with `bonuses` (`stat`, `value`, `operator`, optional `conditions`/`notes`). Index is `data/buildings/index.json` (`BuildingIndex`).

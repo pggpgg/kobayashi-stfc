@@ -543,3 +543,121 @@ fn is_non_combat_key(key: &str) -> bool {
         "mining_rate" | "repair_speed" | "warp_speed" | "cargo_capacity"
     ) || key.contains("loot")
 }
+
+/// Validate building index + per-building files for basic structure and provenance.
+/// `path` should be the directory containing `index.json` (typically `data/buildings`).
+pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String> {
+    let base = Path::new(path);
+    let index_path = base.join("index.json");
+    let raw = fs::read_to_string(&index_path)
+        .map_err(|err| format!("unable to read '{}': {err}", index_path.display()))?;
+    let payload: Value = serde_json::from_str(&raw)
+        .map_err(|err| format!("unable to parse json '{}': {err}", index_path.display()))?;
+
+    let mut report = ValidationReport::default();
+
+    let data_version = payload.get("data_version");
+    if data_version.is_none() {
+        report.push(
+            ValidationSeverity::Warning,
+            "buildings.index",
+            "missing optional 'data_version' (recommended for provenance)",
+        );
+    }
+
+    let Some(buildings) = payload
+        .get("buildings")
+        .and_then(Value::as_array)
+    else {
+        report.push(
+            ValidationSeverity::Error,
+            "buildings.index",
+            "missing 'buildings' array",
+        );
+        return Ok(report);
+    };
+
+    let mut seen_ids = HashSet::new();
+    for (idx, entry) in buildings.iter().enumerate() {
+        let ctx = format!("buildings.index.buildings[{idx}]");
+        let Some(obj) = entry.as_object() else {
+            report.push(
+                ValidationSeverity::Error,
+                ctx.clone(),
+                "entry is not an object",
+            );
+            continue;
+        };
+
+        let id = match obj.get("id").and_then(Value::as_str) {
+            Some(id) if !id.trim().is_empty() => {
+                if !seen_ids.insert(id.to_string()) {
+                    report.push(
+                        ValidationSeverity::Error,
+                        format!("{ctx}.id"),
+                        format!("duplicate id '{id}'"),
+                    );
+                }
+                id.to_string()
+            }
+            _ => {
+                report.push(
+                    ValidationSeverity::Error,
+                    format!("{ctx}.id"),
+                    "missing non-empty 'id'",
+                );
+                continue;
+            }
+        };
+
+        if let Some(name) = obj.get("building_name").and_then(Value::as_str) {
+            if name.trim().is_empty() {
+                report.push(
+                    ValidationSeverity::Error,
+                    format!("{ctx}.building_name"),
+                    "missing non-empty 'building_name'",
+                );
+            }
+        } else {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{ctx}.building_name"),
+                "missing non-empty 'building_name'",
+            );
+        }
+
+        let record_path = base.join(format!("{id}.json"));
+        if !record_path.is_file() {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{ctx}.id='{id}'"),
+                format!(
+                    "missing building record file '{}'",
+                    record_path.display()
+                ),
+            );
+            continue;
+        }
+
+        // Light-weight structural checks on the per-building file.
+        if let Ok(rec_raw) = fs::read_to_string(&record_path) {
+            if let Ok(rec_json) = serde_json::from_str::<Value>(&rec_raw) {
+                if rec_json.get("levels").and_then(Value::as_array).is_none() {
+                    report.push(
+                        ValidationSeverity::Error,
+                        format!("{}.file", ctx),
+                        "missing 'levels' array on building record",
+                    );
+                }
+            } else {
+                report.push(
+                    ValidationSeverity::Error,
+                    format!("{}.file", ctx),
+                    "unable to parse building record JSON",
+                );
+            }
+        }
+    }
+
+    Ok(report)
+}
