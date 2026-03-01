@@ -1,4 +1,5 @@
 pub mod building;
+pub mod data_registry;
 pub mod faction_reputation;
 pub mod forbidden_chaos;
 pub mod heuristics;

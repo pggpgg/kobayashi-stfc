@@ -7,6 +7,7 @@ use crate::combat::{
     AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
     ShipType, SimulationConfig, TimingWindow, TraceMode,
 };
+use crate::data::data_registry::DataRegistry;
 use crate::data::hostile::HostileRecord;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
@@ -84,6 +85,212 @@ fn use_lcars_officer_source() -> bool {
     std::env::var("KOBAYASHI_OFFICER_SOURCE")
         .map(|v| v.eq_ignore_ascii_case("lcars"))
         .unwrap_or(false)
+}
+
+/// Build SharedScenarioData from registry (officers, ship, hostile) and load profile/roster/LCARS at call time.
+fn build_shared_scenario_data_from_registry(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+) -> SharedScenarioData {
+    let officer_index = registry.officer_index().clone();
+
+    let mut profile = load_profile(DEFAULT_PROFILE_PATH);
+    if let Some(imported_ft) = import::load_imported_forbidden_tech(import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH) {
+        if let Some(catalog) = registry.forbidden_chaos_catalog() {
+            merge_forbidden_tech_bonuses_into_profile(&mut profile, &imported_ft, catalog);
+        }
+    }
+
+    let lcars_data = registry.lcars_officers().map(|officers| {
+        let officers_vec = officers.to_vec();
+        let by_id = index_lcars_officers_by_id(officers_vec);
+        let name_to_id: HashMap<String, String> = by_id
+            .values()
+            .map(|o| (normalize_lookup_key(&o.name), o.id.clone()))
+            .collect();
+        LcarsOfficerData {
+            by_id,
+            name_to_id,
+        }
+    });
+
+    let resolve_options = import::load_imported_roster(DEFAULT_IMPORT_OUTPUT_PATH)
+        .map(|entries| {
+            let officer_tiers: HashMap<String, u8> = entries
+                .into_iter()
+                .filter_map(|e| e.tier.map(|t| (e.canonical_officer_id, t)))
+                .collect();
+            ResolveOptions {
+                tier: None,
+                officer_tiers: if officer_tiers.is_empty() {
+                    None
+                } else {
+                    Some(officer_tiers)
+                },
+            }
+        })
+        .unwrap_or_default();
+
+    let ship_rec = registry.resolve_ship(ship);
+    let hostile_rec = registry.resolve_hostile(hostile);
+
+    let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
+        if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
+            let attacker_stats = ship_r.to_attacker_stats();
+            let defender_mitigation =
+                mitigation(hostile_r.to_defender_stats(), attacker_stats, hostile_r.ship_type());
+            let pierce = pierce_damage_through_bonus(
+                hostile_r.to_defender_stats(),
+                attacker_stats,
+                hostile_r.ship_type(),
+            );
+            let defender = Combatant {
+                id: hostile.to_string(),
+                attack: 0.0,
+                mitigation: defender_mitigation,
+                pierce: 0.0,
+                crit_chance: 0.0,
+                crit_multiplier: 1.0,
+                proc_chance: 0.0,
+                proc_multiplier: 1.0,
+                end_of_round_damage: 0.0,
+                hull_health: hostile_r.hull_health,
+                shield_health: hostile_r.shield_health,
+                shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
+                apex_barrier: hostile_r.apex_barrier,
+                apex_shred: 0.0,
+                isolytic_damage: 0.0,
+                isolytic_defense: hostile_r.isolytic_defense,
+                weapons: vec![],
+            };
+            let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+            (
+                Some(defender),
+                Some(rounds),
+                Some(hostile_r.hull_health),
+                Some(pierce),
+                Some(defender_mitigation),
+            )
+        } else {
+            (None, None, None, None, None)
+        };
+
+    SharedScenarioData {
+        ship: ship.to_string(),
+        hostile: hostile.to_string(),
+        officer_index,
+        profile,
+        lcars_data,
+        resolve_options,
+        ship_rec,
+        hostile_rec,
+        cached_defender,
+        cached_rounds,
+        cached_defender_hull,
+        cached_pierce,
+        cached_defender_mitigation,
+    }
+}
+
+/// Run Monte Carlo using pre-built SharedScenarioData (used by both legacy and registry paths).
+fn run_monte_carlo_with_shared(
+    shared: SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    parallel: bool,
+) -> Vec<SimulationResult> {
+    let run_one = |candidate: &CrewCandidate| {
+        let input = scenario_to_combat_input_from_shared(&shared, candidate, seed);
+        let mut wins = 0usize;
+        let mut stalls = 0usize;
+        let mut losses = 0usize;
+        let mut surviving_hull_sum = 0.0;
+
+        for iteration in 0..iterations {
+            let iteration_seed = input.base_seed.wrapping_add(iteration as u64);
+            let result = simulate_combat(
+                &input.attacker,
+                &input.defender,
+                SimulationConfig {
+                    rounds: input.rounds,
+                    seed: iteration_seed,
+                    trace_mode: TraceMode::Off,
+                },
+                &input.crew,
+            );
+            let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
+
+            if result.winner_by_round_limit {
+                stalls += 1;
+            } else if result.attacker_won {
+                wins += 1;
+            } else {
+                losses += 1;
+            }
+
+            if result.attacker_won {
+                let remaining = if result.winner_by_round_limit {
+                    (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
+                        .clamp(0.0, 1.0)
+                } else {
+                    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
+                };
+                surviving_hull_sum += remaining;
+            }
+        }
+
+        let n = iterations as f64;
+        let win_rate = if iterations == 0 { 0.0 } else { wins as f64 / n };
+        let stall_rate = if iterations == 0 { 0.0 } else { stalls as f64 / n };
+        let loss_rate = if iterations == 0 { 0.0 } else { losses as f64 / n };
+        let avg_hull_remaining = if iterations == 0 {
+            0.0
+        } else {
+            surviving_hull_sum / n
+        };
+
+        SimulationResult {
+            candidate: candidate.clone(),
+            win_rate,
+            stall_rate,
+            loss_rate,
+            avg_hull_remaining,
+        }
+    };
+
+    if parallel {
+        candidates.par_iter().map(run_one).collect()
+    } else {
+        candidates.iter().map(run_one).collect()
+    }
+}
+
+/// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
+pub fn run_monte_carlo_parallel_with_registry(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+) -> Vec<SimulationResult> {
+    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile);
+    run_monte_carlo_with_shared(shared, candidates, iterations, seed, true)
+}
+
+/// Like [run_monte_carlo] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
+pub fn run_monte_carlo_with_registry(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+) -> Vec<SimulationResult> {
+    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile);
+    run_monte_carlo_with_shared(shared, candidates, iterations, seed, false)
 }
 
 fn run_monte_carlo_with_parallelism(
@@ -201,70 +408,7 @@ fn run_monte_carlo_with_parallelism(
         cached_defender_mitigation,
     };
 
-    let run_one = |candidate: &CrewCandidate| {
-        let input = scenario_to_combat_input_from_shared(&shared, candidate, seed);
-        let mut wins = 0usize;
-        let mut stalls = 0usize;
-        let mut losses = 0usize;
-        let mut surviving_hull_sum = 0.0;
-
-        for iteration in 0..iterations {
-            let iteration_seed = input.base_seed.wrapping_add(iteration as u64);
-            let result = simulate_combat(
-                &input.attacker,
-                &input.defender,
-                SimulationConfig {
-                    rounds: input.rounds,
-                    seed: iteration_seed,
-                    trace_mode: TraceMode::Off,
-                },
-                &input.crew,
-            );
-            let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
-
-            if result.winner_by_round_limit {
-                stalls += 1;
-            } else if result.attacker_won {
-                wins += 1;
-            } else {
-                losses += 1;
-            }
-
-            if result.attacker_won {
-                let remaining = if result.winner_by_round_limit {
-                    (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
-                        .clamp(0.0, 1.0)
-                } else {
-                    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
-                };
-                surviving_hull_sum += remaining;
-            }
-        }
-
-        let n = iterations as f64;
-        let win_rate = if iterations == 0 { 0.0 } else { wins as f64 / n };
-        let stall_rate = if iterations == 0 { 0.0 } else { stalls as f64 / n };
-        let loss_rate = if iterations == 0 { 0.0 } else { losses as f64 / n };
-        let avg_hull_remaining = if iterations == 0 {
-            0.0
-        } else {
-            surviving_hull_sum / n
-        };
-
-        SimulationResult {
-            candidate: candidate.clone(),
-            win_rate,
-            stall_rate,
-            loss_rate,
-            avg_hull_remaining,
-        }
-    };
-
-    if parallel {
-        candidates.par_iter().map(run_one).collect()
-    } else {
-        candidates.iter().map(run_one).collect()
-    }
+    run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel)
 }
 
 #[derive(Debug, Clone)]
