@@ -11,7 +11,7 @@ import {
   type CrewState,
   type PinsState,
 } from '../lib/types';
-import { simulate, optimizeStart, getOptimizeStatus, savePreset, getOptimizeEstimate, formatApiError } from '../lib/api';
+import { simulate, optimizeStart, getOptimizeStatus, savePreset, getOptimizeEstimate, fetchHeuristics, formatApiError } from '../lib/api';
 import type { SimulateStats, OptimizeEstimate } from '../lib/api';
 import type { CrewRecommendation } from '../lib/api';
 import type { Preset } from '../lib/api';
@@ -38,6 +38,10 @@ export default function Workspace() {
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [maxCandidates, setMaxCandidates] = useState<number | null>(null);
   const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] = useState(false);
+  const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
+  const [selectedSeeds, setSelectedSeeds] = useState<string[]>([]);
+  const [heuristicsOnly, setHeuristicsOnly] = useState(false);
+  const [belowDecksStrategy, setBelowDecksStrategy] = useState<'ordered' | 'exploration'>('ordered');
   const [estimate, setEstimate] = useState<OptimizeEstimate | null>(null);
   const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<number | null>(null);
   const [optimizeProgress, setOptimizeProgress] = useState<number | null>(null);
@@ -84,6 +88,10 @@ export default function Workspace() {
       });
     return () => { cancelled = true; };
   }, [shipId, scenarioId, simsPerCrew, maxCandidates, prioritizeBelowDecksAbility]);
+
+  useEffect(() => {
+    fetchHeuristics().then(setAvailableSeeds).catch(() => setAvailableSeeds([]));
+  }, []);
 
   useEffect(() => {
     const n = belowDeckSlotCount(shipLevel);
@@ -142,6 +150,9 @@ export default function Workspace() {
         sims: simsPerCrew,
         max_candidates: maxCandidates ?? undefined,
         prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
+        heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
+        heuristics_only: heuristicsOnly || undefined,
+        below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
       });
       const poll = () => {
         getOptimizeStatus(job_id)
@@ -379,6 +390,13 @@ export default function Workspace() {
           onMaxCandidatesChange={setMaxCandidates}
           prioritizeBelowDecksAbility={prioritizeBelowDecksAbility}
           onPrioritizeBelowDecksAbilityChange={setPrioritizeBelowDecksAbility}
+          availableSeeds={availableSeeds}
+          selectedSeeds={selectedSeeds}
+          onSelectedSeedsChange={setSelectedSeeds}
+          heuristicsOnly={heuristicsOnly}
+          onHeuristicsOnlyChange={setHeuristicsOnly}
+          belowDecksStrategy={belowDecksStrategy}
+          onBelowDecksStrategyChange={setBelowDecksStrategy}
         />
       </div>
     </div>

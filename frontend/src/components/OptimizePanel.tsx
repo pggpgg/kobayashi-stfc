@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 interface OptimizePanelProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -9,7 +11,33 @@ interface OptimizePanelProps {
   onMaxCandidatesChange: (value: number | null) => void;
   prioritizeBelowDecksAbility: boolean;
   onPrioritizeBelowDecksAbilityChange: (value: boolean) => void;
+  availableSeeds: string[];
+  selectedSeeds: string[];
+  onSelectedSeedsChange: (seeds: string[]) => void;
+  heuristicsOnly: boolean;
+  onHeuristicsOnlyChange: (value: boolean) => void;
+  belowDecksStrategy: 'ordered' | 'exploration';
+  onBelowDecksStrategyChange: (value: 'ordered' | 'exploration') => void;
 }
+
+const selectStyle: CSSProperties = {
+  display: 'block',
+  marginTop: 4,
+  width: '100%',
+  padding: '0.4rem',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  borderRadius: 4,
+  color: 'var(--text)',
+};
+
+const checkboxLabelStyle: CSSProperties = {
+  fontSize: '0.85rem',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  cursor: 'pointer',
+};
 
 export default function OptimizePanel({
   collapsed,
@@ -21,6 +49,13 @@ export default function OptimizePanel({
   onMaxCandidatesChange,
   prioritizeBelowDecksAbility,
   onPrioritizeBelowDecksAbilityChange,
+  availableSeeds,
+  selectedSeeds,
+  onSelectedSeedsChange,
+  heuristicsOnly,
+  onHeuristicsOnlyChange,
+  belowDecksStrategy,
+  onBelowDecksStrategyChange,
 }: OptimizePanelProps) {
   if (collapsed) {
     return (
@@ -54,6 +89,14 @@ export default function OptimizePanel({
     );
   }
 
+  function toggleSeed(seed: string) {
+    if (selectedSeeds.includes(seed)) {
+      onSelectedSeedsChange(selectedSeeds.filter((s) => s !== seed));
+    } else {
+      onSelectedSeedsChange([...selectedSeeds, seed]);
+    }
+  }
+
   return (
     <aside
       style={{
@@ -68,7 +111,7 @@ export default function OptimizePanel({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontSize: '1rem' }}>OptimizePanel</h2>
+        <h2 style={{ margin: 0, fontSize: '1rem' }}>Strategy</h2>
         <button
           type="button"
           onClick={onToggleCollapsed}
@@ -83,43 +126,86 @@ export default function OptimizePanel({
           ←
         </button>
       </div>
+
+      {/* ── Heuristics seeds ─────────────────────────────────────── */}
+      {availableSeeds.length > 0 && (
+        <div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4 }}>
+            Heuristics seeds
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.3rem',
+              maxHeight: 120,
+              overflowY: 'auto',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              padding: '0.4rem',
+            }}
+          >
+            {availableSeeds.map((seed) => (
+              <label key={seed} style={checkboxLabelStyle}>
+                <input
+                  type="checkbox"
+                  checked={selectedSeeds.includes(seed)}
+                  onChange={() => toggleSeed(seed)}
+                  style={{ margin: 0 }}
+                />
+                <span style={{ fontSize: '0.8rem' }}>{seed}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Below-decks strategy (shown when seeds selected) ─────── */}
+      {selectedSeeds.length > 0 && (
+        <>
+          <label style={{ fontSize: '0.85rem' }}>
+            Below-decks strategy
+            <select
+              value={belowDecksStrategy}
+              onChange={(e) =>
+                onBelowDecksStrategyChange(e.target.value as 'ordered' | 'exploration')
+              }
+              style={selectStyle}
+            >
+              <option value="ordered">Ordered — take first N from seed list</option>
+              <option value="exploration">Exploration — try all combinations</option>
+            </select>
+          </label>
+
+          <label style={checkboxLabelStyle}>
+            <input
+              type="checkbox"
+              checked={heuristicsOnly}
+              onChange={(e) => onHeuristicsOnlyChange(e.target.checked)}
+              style={{ margin: 0 }}
+            />
+            <span>Heuristics only (skip broader search)</span>
+          </label>
+        </>
+      )}
+
+      {/* ── Optimizer strategy ───────────────────────────────────── */}
       <label style={{ fontSize: '0.85rem' }}>
-        Strategy
-        <select
-          style={{
-            display: 'block',
-            marginTop: 4,
-            width: '100%',
-            padding: '0.4rem',
-            background: 'var(--bg)',
-            border: '1px solid var(--border)',
-            borderRadius: 4,
-            color: 'var(--text)',
-          }}
-        >
-          <option>Tiered</option>
-          <option>Hill climb</option>
+        Optimizer strategy
+        <select style={selectStyle}>
+          <option>Exhaustive</option>
           <option>Genetic</option>
         </select>
       </label>
+
       <label style={{ fontSize: '0.85rem' }}>
         Primary metric
-        <select
-          style={{
-            display: 'block',
-            marginTop: 4,
-            width: '100%',
-            padding: '0.4rem',
-            background: 'var(--bg)',
-            border: '1px solid var(--border)',
-            borderRadius: 4,
-            color: 'var(--text)',
-          }}
-        >
+        <select style={selectStyle}>
           <option>Win rate</option>
           <option>Hull remaining</option>
         </select>
       </label>
+
       <label style={{ fontSize: '0.85rem' }}>
         Max crews (optional)
         <input
@@ -152,7 +238,8 @@ export default function OptimizePanel({
           }}
         />
       </label>
-      <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+
+      <label style={checkboxLabelStyle}>
         <input
           type="checkbox"
           checked={prioritizeBelowDecksAbility}
@@ -161,6 +248,7 @@ export default function OptimizePanel({
         />
         <span>Only below-decks officers with ability</span>
       </label>
+
       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
         {loadingOptimize &&
         optimizeCrewsDone != null &&

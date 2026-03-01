@@ -1,0 +1,25 @@
+# Kobayashi Heuristics Seed — Community-known crew combinations
+#
+# Format: label:Captain,Bridge1,Bridge2:BelowDeck1,BelowDeck2,...
+#
+#   - First officer listed is the Captain.
+#   - Next two are Bridge officers (interchangeable; both are tested).
+#   - Officers after the second ':' are Below-Decks candidates.
+#   - Below-Decks strategy (set per run in the UI):
+#       Ordered    — take the first N officers from this list to fill available slots
+#       Exploration — try all C(n, k) combinations of k officers from this list
+#   - Officer names are matched case-insensitively against the canonical database.
+#   - Lines starting with # are comments; blank lines are ignored.
+
+# ── Shield-pierce burst ──────────────────────────────────────────────────────
+Khan burst:Khan,Nero,Marcus:Harrison,Mudd,Charvanek,Kerla,Lorca
+Pierce stack:Kirk,Khan,Marcus:Harrison,Spock,Uhura
+
+# ── Survivability / tank ─────────────────────────────────────────────────────
+Leslie survival:Leslie,Moreau,Tom Paris:D'Vana Tendi,Azetbur,Spock,Nurse Chapel
+
+# ── Loot / post-combat ───────────────────────────────────────────────────────
+Loot crew:Ent-E Picard,Ent-E Data,Five of Eleven:The Doctor,Azetbur
+
+# ── Morale stacks ────────────────────────────────────────────────────────────
+Morale burst:Kirk,Spock,Uhura:McCoy,Scotty,Sulu

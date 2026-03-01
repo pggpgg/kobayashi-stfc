@@ -1,5 +1,8 @@
 /target
 
+# Node dependencies (run npm install in frontend/ after clone)
+node_modules/
+
 # Fetched upstream (scripts/fetch_stfc_data.ps1)
 data/upstream/
 
@@ -8,6 +11,9 @@ rosters/roster.imported.json
 
 # Downloaded spreadsheets (e.g. Syndicate Progression)
 data/import/*.xlsx
+
+# Local reference spreadsheets in repo root
+Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx
 
 # Env files (secrets)
 .env
