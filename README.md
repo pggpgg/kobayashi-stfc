@@ -222,7 +222,7 @@ kobayashi/
 
 ### Architecture (actual)
 
-The server is a **custom blocking TCP HTTP server** (no Axum, no Tokio): a single-threaded `TcpListener` accept loop in `src/server/mod.rs`. The API is **REST only**; there is no WebSocket support, so long-running optimize requests block other requests until they complete. The **frontend is not embedded** in the binary: the SPA is built with `npm run build` in `frontend/` and served from the filesystem (`frontend/dist` or `dist`) when the server is run from the project root. Run the server from the project root so it can find `frontend/dist` and `data/`.
+The server uses **Tokio + Axum 0.7**: an async multi-threaded runtime with an Axum router in `src/server/routes.rs`. CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking`, keeping the runtime responsive to concurrent requests. The API is **REST only**; there is no WebSocket support. The **frontend is not embedded** in the binary: the SPA is built with `npm run build` in `frontend/` and served from the filesystem (`frontend/dist`) when the server is run from the project root. Run the server from the project root so it can find `frontend/dist` and `data/`.
 
 The UI is served from the same origin as the API by default. For custom deployments (e.g. API behind a reverse proxy), set **`VITE_API_BASE`** at build time so API requests use that base URL: `VITE_API_BASE=/api npm run build` in `frontend/`.
 

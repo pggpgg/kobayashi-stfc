@@ -76,7 +76,7 @@ The library is at `src/lib.rs` and exposes these modules:
 - **`src/lcars/`** — LCARS YAML parser (`parser.rs`) and resolver (`resolver.rs`) that collapses officer definitions into a `BuffSet` (static buffs + per-round effects + triggered effects). Only files matching `*.lcars.yaml` are loaded from a directory.
 - **`src/optimizer/`** — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates; `genetic.rs` is the GA strategy (select via `strategy: "genetic"` in API); `tiered.rs` is a placeholder. `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
 - **`src/data/`** — Data loading/validation. Ships from `data/ships/index.json` + per-ship JSON; hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is canonical; `officers.lcars.yaml` is the LCARS source of truth. `loader.rs` resolves by id or "name_level" (e.g. `explorer_30`).
-- **`src/server/`** — Custom blocking TCP HTTP server (no Axum, no Tokio). Single-threaded `TcpListener` accept loop. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`.
+- **`src/server/`** — Async HTTP server built on Tokio + Axum 0.7. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers; CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present.
 - **`src/parallel/`** — Rayon thread pool integration; each thread owns its PRNG instance.
 - **`src/cli.rs`** — CLI dispatch (used by tests via `run_with_args`); `src/main.rs` is the binary entry point.
 
@@ -144,7 +144,7 @@ Community-known crew lists stored in `data/heuristics/*.txt`. Format: `label:Cap
 
 ## Key architectural decisions that were made before and that Claude can challenge
 
-- **No Tokio/Axum**: the server is a hand-rolled blocking TCP implementation. This means long-running `optimize` requests block all other requests until complete.
+- **Tokio + Axum server**: the server uses an async Tokio multi-thread runtime with Axum 0.7. CPU-bound handlers (optimize, simulate) call `tokio::task::spawn_blocking` so they don't stall other requests. The public `run_server()` entry point is synchronous and creates the runtime internally, keeping the CLI interface unchanged.
 - **Optimizer strategies**: exhaustive is the default; pass `strategy: "genetic"` for large search spaces. Tiered simulation (`tiered.rs`) is a placeholder — not yet wired in.
 - **LCARS as source of truth**: officer abilities are defined in YAML, not code. The engine resolves YAML → `BuffSet` before the fight loop; only dynamic effects (decay, accumulate, proc) are evaluated inside the loop.
 - **SplitMix64 PRNG**: deterministic per seed, one instance per Rayon thread. Same seed → same fight outcome.
