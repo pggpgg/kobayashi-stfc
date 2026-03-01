@@ -1,17 +1,54 @@
-use kobayashi::server::routes::route_request;
+use axum::body::Body;
+use axum::http::{Method, Request};
+use kobayashi::server::routes::build_router;
+use tower::ServiceExt;
 
-#[test]
-fn health_endpoint_returns_ok_json() {
-    let response = route_request("GET", "/api/health", "", None);
+struct TestResponse {
+    status_code: u16,
+    content_type: String,
+    body: String,
+}
+
+async fn route_request(method: &str, path: &str, body: &str, _headers: Option<()>) -> TestResponse {
+    let app = build_router();
+    let m = match method {
+        "POST" => Method::POST,
+        "PUT" => Method::PUT,
+        _ => Method::GET,
+    };
+    let req = Request::builder()
+        .method(m)
+        .uri(path)
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap();
+    let resp = app.oneshot(req).await.unwrap();
+    let status_code = resp.status().as_u16();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+    let body_bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let body = String::from_utf8_lossy(&body_bytes).into_owned();
+    TestResponse { status_code, content_type, body }
+}
+
+#[tokio::test]
+async fn health_endpoint_returns_ok_json() {
+    let response = route_request("GET", "/api/health", "", None).await;
     assert_eq!(response.status_code, 200);
     assert_eq!(response.content_type, "application/json");
     assert!(response.body.contains("\"status\": \"ok\""));
 }
 
-#[test]
-fn optimize_endpoint_returns_ranked_recommendations() {
+#[tokio::test]
+async fn optimize_endpoint_returns_ranked_recommendations() {
     let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":7,"max_candidates":64}"#;
-    let response = route_request("POST", "/api/optimize", body, None);
+    let response = route_request("POST", "/api/optimize", body, None).await;
 
     assert_eq!(response.status_code, 200);
 
@@ -65,32 +102,34 @@ fn optimize_endpoint_returns_ranked_recommendations() {
     );
 }
 
-#[test]
-fn optimize_endpoint_changes_with_seed() {
+#[tokio::test]
+async fn optimize_endpoint_changes_with_seed() {
     let response_a = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":7,"max_candidates":32}"#,
         None,
-    );
+    )
+    .await;
     let response_b = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":8,"max_candidates":32}"#,
         None,
-    );
+    )
+    .await;
 
     assert_eq!(response_a.status_code, 200);
     assert_eq!(response_b.status_code, 200);
     assert_ne!(response_a.body, response_b.body);
 }
 
-#[test]
-fn optimize_endpoint_is_deterministic_for_fixed_seed() {
+#[tokio::test]
+async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
     let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":77,"max_candidates":64}"#;
 
-    let response_a = route_request("POST", "/api/optimize", body, None);
-    let response_b = route_request("POST", "/api/optimize", body, None);
+    let response_a = route_request("POST", "/api/optimize", body, None).await;
+    let response_b = route_request("POST", "/api/optimize", body, None).await;
 
     assert_eq!(response_a.status_code, 200);
     assert_eq!(response_b.status_code, 200);
@@ -103,21 +142,22 @@ fn optimize_endpoint_is_deterministic_for_fixed_seed() {
     assert_eq!(payload_a["recommendations"], payload_b["recommendations"]);
 }
 
-#[test]
-fn optimize_endpoint_rejects_invalid_payload() {
-    let response = route_request("POST", "/api/optimize", "{bad json}", None);
+#[tokio::test]
+async fn optimize_endpoint_rejects_invalid_payload() {
+    let response = route_request("POST", "/api/optimize", "{bad json}", None).await;
     assert_eq!(response.status_code, 400);
     assert!(response.body.contains("Invalid request body"));
 }
 
-#[test]
-fn optimize_endpoint_rejects_empty_ship_and_hostile() {
+#[tokio::test]
+async fn optimize_endpoint_rejects_empty_ship_and_hostile() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"","hostile":"   ","sims":100}"#,
         None,
-    );
+    )
+    .await;
 
     assert_eq!(response.status_code, 400);
 
@@ -150,14 +190,15 @@ fn optimize_endpoint_rejects_empty_ship_and_hostile() {
     );
 }
 
-#[test]
-fn optimize_endpoint_rejects_zero_sims() {
+#[tokio::test]
+async fn optimize_endpoint_rejects_zero_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":0}"#,
         None,
-    );
+    )
+    .await;
 
     assert_eq!(response.status_code, 400);
 
@@ -169,14 +210,15 @@ fn optimize_endpoint_rejects_zero_sims() {
     assert!(errors.iter().any(|error| error["field"] == "sims"));
 }
 
-#[test]
-fn optimize_endpoint_rejects_very_large_sims() {
+#[tokio::test]
+async fn optimize_endpoint_rejects_very_large_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":5000000}"#,
         None,
-    );
+    )
+    .await;
 
     assert_eq!(response.status_code, 400);
 
@@ -198,14 +240,15 @@ fn optimize_endpoint_rejects_very_large_sims() {
     );
 }
 
-#[test]
-fn optimize_endpoint_rejects_excessive_max_candidates() {
+#[tokio::test]
+async fn optimize_endpoint_rejects_excessive_max_candidates() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"max_candidates":3000000}"#,
         None,
-    );
+    )
+    .await;
 
     assert_eq!(response.status_code, 400);
 
@@ -220,14 +263,15 @@ fn optimize_endpoint_rejects_excessive_max_candidates() {
     );
 }
 
-#[test]
-fn optimize_validation_error_has_expected_schema() {
+#[tokio::test]
+async fn optimize_validation_error_has_expected_schema() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"","hostile":"explorer_30","sims":0}"#,
         None,
-    );
+    )
+    .await;
 
     assert_eq!(response.status_code, 400);
 
