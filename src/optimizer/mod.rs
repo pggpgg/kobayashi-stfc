@@ -5,9 +5,12 @@ pub mod monte_carlo;
 pub mod ranking;
 pub mod tiered;
 
+use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewGenerator;
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
-use crate::optimizer::monte_carlo::{run_monte_carlo_parallel, SimulationResult};
+use crate::optimizer::monte_carlo::{
+    run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry, SimulationResult,
+};
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::parallel::batch_ranges;
 
@@ -62,6 +65,40 @@ pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewR
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive(scenario),
         OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| {}),
     }
+}
+
+/// Like [optimize_scenario] but uses [DataRegistry] for officers and ship/hostile (no reload).
+pub fn optimize_scenario_with_registry(
+    registry: &DataRegistry,
+    scenario: &OptimizationScenario<'_>,
+) -> Vec<RankedCrewResult> {
+    match scenario.strategy {
+        OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive_with_registry(registry, scenario),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| {}),
+    }
+}
+
+/// Exhaustive path using registry (no officer/ship/hostile reload).
+fn optimize_scenario_exhaustive_with_registry(
+    registry: &DataRegistry,
+    scenario: &OptimizationScenario<'_>,
+) -> Vec<RankedCrewResult> {
+    let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
+        max_candidates: scenario.max_candidates,
+        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        ..crate::optimizer::crew_generator::CandidateStrategy::default()
+    });
+    let candidates =
+        generator.generate_candidates_from_registry(registry, scenario.ship, scenario.hostile, scenario.seed);
+    let simulation_results = run_monte_carlo_parallel_with_registry(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        &candidates,
+        scenario.simulation_count.max(1),
+        scenario.seed,
+    );
+    rank_results(simulation_results)
 }
 
 /// Exhaustive/sampled path: generator → Monte Carlo → rank.
@@ -139,6 +176,74 @@ where
             for (start, end) in ranges {
                 let batch = &candidates[start..end];
                 let batch_results = run_monte_carlo_parallel(
+                    scenario.ship,
+                    scenario.hostile,
+                    batch,
+                    sim_count,
+                    scenario.seed,
+                );
+                all_results.extend(batch_results);
+                on_progress(end as u32, total as u32);
+            }
+
+            rank_results(all_results)
+        }
+        OptimizerStrategy::Genetic => {
+            let config = GeneticConfig {
+                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                ..GeneticConfig::default()
+            };
+            run_genetic_optimizer_ranked(
+                scenario.ship,
+                scenario.hostile,
+                &config,
+                scenario.seed,
+                scenario.simulation_count.max(1),
+                |gen, max_gen, _| on_progress(gen as u32, max_gen as u32),
+            )
+        }
+    }
+}
+
+/// Like [optimize_scenario_with_progress] but uses [DataRegistry] for exhaustive path (no reload).
+pub fn optimize_scenario_with_progress_with_registry<F>(
+    registry: &DataRegistry,
+    scenario: &OptimizationScenario<'_>,
+    mut on_progress: F,
+) -> Vec<RankedCrewResult>
+where
+    F: FnMut(u32, u32),
+{
+    match scenario.strategy {
+        OptimizerStrategy::Exhaustive => {
+            let generator = CrewGenerator::with_strategy(
+                crate::optimizer::crew_generator::CandidateStrategy {
+                    max_candidates: scenario.max_candidates,
+                    only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                    ..crate::optimizer::crew_generator::CandidateStrategy::default()
+                },
+            );
+            let candidates = generator.generate_candidates_from_registry(
+                registry,
+                scenario.ship,
+                scenario.hostile,
+                scenario.seed,
+            );
+            let total = candidates.len();
+            if total == 0 {
+                return Vec::new();
+            }
+            on_progress(0, total as u32);
+
+            let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
+            let ranges = batch_ranges(total, num_batches);
+            let mut all_results: Vec<SimulationResult> = Vec::with_capacity(total);
+            let sim_count = scenario.simulation_count.max(1);
+
+            for (start, end) in ranges {
+                let batch = &candidates[start..end];
+                let batch_results = run_monte_carlo_parallel_with_registry(
+                    registry,
                     scenario.ship,
                     scenario.hostile,
                     batch,

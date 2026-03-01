@@ -1,3 +1,4 @@
+use crate::data::data_registry::DataRegistry;
 use crate::data::import::{load_imported_roster_ids_unlocked_only, DEFAULT_IMPORT_OUTPUT_PATH};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 
@@ -20,6 +21,77 @@ fn has_below_decks_ability(officer: &Officer) -> bool {
         .abilities
         .iter()
         .any(|a| a.slot.eq_ignore_ascii_case("below_decks"))
+}
+
+/// Builds officer pools from registry (no officer reload). Still loads roster for filter.
+pub fn build_officer_pools_from_registry(
+    registry: &DataRegistry,
+    only_below_decks_with_ability: bool,
+) -> Option<OfficerPools> {
+    let officers: Vec<Officer> = registry
+        .officers()
+        .iter()
+        .filter(|o| !o.name.trim().is_empty())
+        .cloned()
+        .collect();
+
+    const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
+    let mut officers = officers;
+    if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH) {
+        if roster_ids.len() >= MIN_OFFICERS {
+            officers.retain(|officer| roster_ids.contains(&officer.id));
+        }
+    }
+
+    if officers.is_empty() {
+        return None;
+    }
+
+    let mut captains: Vec<String> = officers
+        .iter()
+        .filter(|officer| is_captain_eligible(officer))
+        .map(|o| o.name.clone())
+        .collect();
+    let mut bridge: Vec<String> = officers
+        .iter()
+        .filter(|officer| can_fill_position(officer, Position::Bridge))
+        .map(|o| o.name.clone())
+        .collect();
+    let mut below_decks: Vec<String> = officers
+        .iter()
+        .filter(|officer| can_fill_position(officer, Position::BelowDecks))
+        .map(|o| o.name.clone())
+        .collect();
+
+    if only_below_decks_with_ability {
+        below_decks = officers
+            .iter()
+            .filter(|officer| {
+                can_fill_position(officer, Position::BelowDecks)
+                    && has_below_decks_ability(officer)
+            })
+            .map(|o| o.name.clone())
+            .collect();
+    } else if below_decks.is_empty() {
+        below_decks = officers.iter().map(|o| o.name.clone()).collect();
+    }
+
+    if captains.is_empty() {
+        captains = officers.iter().map(|o| o.name.clone()).collect();
+    }
+    if bridge.is_empty() {
+        bridge = officers.iter().map(|o| o.name.clone()).collect();
+    }
+
+    if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < BELOW_DECKS_SLOTS {
+        return None;
+    }
+
+    Some(OfficerPools {
+        captains,
+        bridge,
+        below_decks,
+    })
 }
 
 /// Builds captain, bridge, and below-decks pools from loaded officers and roster filter.
@@ -148,7 +220,31 @@ impl CrewGenerator {
             Some(p) => p,
             None => return Vec::new(),
         };
+        self.generate_candidates_from_pools(&mut pools, ship, hostile, seed)
+    }
 
+    /// Like [generate_candidates] but uses registry for officers (no reload).
+    pub fn generate_candidates_from_registry(
+        &self,
+        registry: &DataRegistry,
+        ship: &str,
+        hostile: &str,
+        seed: u64,
+    ) -> Vec<CrewCandidate> {
+        let mut pools = match build_officer_pools_from_registry(registry, self.strategy.only_below_decks_with_ability) {
+            Some(p) => p,
+            None => return Vec::new(),
+        };
+        self.generate_candidates_from_pools(&mut pools, ship, hostile, seed)
+    }
+
+    fn generate_candidates_from_pools(
+        &self,
+        pools: &mut OfficerPools,
+        ship: &str,
+        hostile: &str,
+        seed: u64,
+    ) -> Vec<CrewCandidate> {
         if self.strategy.use_seeded_shuffle {
             let base_seed = mix_seed(seed, ship, hostile);
             deterministic_shuffle(&mut pools.captains, base_seed);
@@ -186,7 +282,31 @@ impl CrewGenerator {
             Some(p) => p,
             None => return 0,
         };
+        self.count_candidates_from_pools(&mut pools, ship, hostile, seed)
+    }
 
+    /// Like [count_candidates] but uses registry for officers (no reload).
+    pub fn count_candidates_from_registry(
+        &self,
+        registry: &DataRegistry,
+        ship: &str,
+        hostile: &str,
+        seed: u64,
+    ) -> usize {
+        let mut pools = match build_officer_pools_from_registry(registry, self.strategy.only_below_decks_with_ability) {
+            Some(p) => p,
+            None => return 0,
+        };
+        self.count_candidates_from_pools(&mut pools, ship, hostile, seed)
+    }
+
+    fn count_candidates_from_pools(
+        &self,
+        pools: &mut OfficerPools,
+        ship: &str,
+        hostile: &str,
+        seed: u64,
+    ) -> usize {
         if self.strategy.use_seeded_shuffle {
             let base_seed = mix_seed(seed, ship, hostile);
             deterministic_shuffle(&mut pools.captains, base_seed);

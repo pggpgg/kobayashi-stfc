@@ -74,7 +74,12 @@ pub fn list_heuristics_seeds(dir: &str) -> Vec<String> {
 
 /// Load and parse a named seed file from the heuristics directory.
 /// Returns parsed crews (not yet expanded into candidates).
-pub fn load_seed_file(seed_name: &str, dir: &str) -> Vec<ParsedHeuristicsCrew> {
+/// When `canonical_names_override` is Some, use it for name resolution instead of loading from disk.
+pub fn load_seed_file(
+    seed_name: &str,
+    dir: &str,
+    canonical_names_override: Option<&[String]>,
+) -> Vec<ParsedHeuristicsCrew> {
     let path = Path::new(dir).join(format!("{seed_name}.txt"));
     let content = match fs::read_to_string(&path) {
         Ok(c) => c,
@@ -85,9 +90,12 @@ pub fn load_seed_file(seed_name: &str, dir: &str) -> Vec<ParsedHeuristicsCrew> {
     };
 
     let aliases = load_name_aliases();
-    let canonical_names: Vec<String> = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
-        .map(|officers| officers.into_iter().map(|o| o.name).collect())
-        .unwrap_or_default();
+    let canonical_names: Vec<String> = match canonical_names_override {
+        Some(names) => names.to_vec(),
+        None => load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
+            .map(|officers| officers.into_iter().map(|o| o.name).collect())
+            .unwrap_or_default(),
+    };
 
     content
         .lines()

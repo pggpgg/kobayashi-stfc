@@ -1,21 +1,22 @@
+use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, list_heuristics_seeds, load_seed_file, BelowDecksStrategy,
     DEFAULT_HEURISTICS_DIR,
 };
-use crate::data::hostile::{load_hostile_index, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::import::{
     import_roster_csv, import_spocks_export, load_imported_roster_ids_unlocked_only,
     DEFAULT_IMPORT_OUTPUT_PATH,
 };
-use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
-use crate::data::ship::{load_ship_index, DEFAULT_SHIPS_INDEX_PATH};
 use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, BELOW_DECKS_SLOTS, BRIDGE_SLOTS,
 };
-use crate::optimizer::monte_carlo::{run_monte_carlo, run_monte_carlo_parallel, SimulationResult};
+use crate::optimizer::monte_carlo::{
+    run_monte_carlo_parallel_with_registry, run_monte_carlo_with_registry, SimulationResult,
+};
 use crate::optimizer::ranking::rank_results;
 use crate::optimizer::{
-    optimize_scenario, optimize_scenario_with_progress, OptimizationScenario, OptimizerStrategy,
+    optimize_scenario_with_progress_with_registry, optimize_scenario_with_registry,
+    OptimizationScenario, OptimizerStrategy,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -136,20 +137,20 @@ pub struct OfficerListItem {
     pub slot: Option<String>,
 }
 
-pub fn officers_payload(path: &str) -> Result<String, serde_json::Error> {
-    let officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH).unwrap_or_default();
+pub fn officers_payload(registry: &DataRegistry, path: &str) -> Result<String, serde_json::Error> {
+    let officers = registry.officers();
     let owned_ids = if parse_owned_only(path) {
         load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH)
     } else {
         None
     };
     let list: Vec<OfficerListItem> = officers
-        .into_iter()
+        .iter()
         .filter(|o| owned_ids.as_ref().map_or(true, |ids| ids.contains(&o.id)))
         .map(|o| OfficerListItem {
-            id: o.id,
-            name: o.name,
-            slot: o.slot,
+            id: o.id.clone(),
+            name: o.name.clone(),
+            slot: o.slot.clone(),
         })
         .collect();
     serde_json::to_string_pretty(&serde_json::json!({ "officers": list }))
@@ -162,16 +163,16 @@ pub struct ShipListItem {
     pub ship_class: String,
 }
 
-pub fn ships_payload() -> Result<String, serde_json::Error> {
-    let index = load_ship_index(DEFAULT_SHIPS_INDEX_PATH);
-    let list: Vec<ShipListItem> = index
+pub fn ships_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
+    let list: Vec<ShipListItem> = registry
+        .ship_index()
         .map(|idx| {
             idx.ships
-                .into_iter()
+                .iter()
                 .map(|e| ShipListItem {
-                    id: e.id,
-                    ship_name: e.ship_name,
-                    ship_class: e.ship_class,
+                    id: e.id.clone(),
+                    ship_name: e.ship_name.clone(),
+                    ship_class: e.ship_class.clone(),
                 })
                 .collect()
         })
@@ -187,17 +188,17 @@ pub struct HostileListItem {
     pub ship_class: String,
 }
 
-pub fn hostiles_payload() -> Result<String, serde_json::Error> {
-    let index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH);
-    let list: Vec<HostileListItem> = index
+pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
+    let list: Vec<HostileListItem> = registry
+        .hostile_index()
         .map(|idx| {
             idx.hostiles
-                .into_iter()
+                .iter()
                 .map(|e| HostileListItem {
-                    id: e.id,
-                    hostile_name: e.hostile_name,
+                    id: e.id.clone(),
+                    hostile_name: e.hostile_name.clone(),
                     level: e.level,
-                    ship_class: e.ship_class,
+                    ship_class: e.ship_class.clone(),
                 })
                 .collect()
         })
@@ -285,14 +286,16 @@ fn binomial_95_ci(wins: u32, n: u32) -> [f64; 2] {
     [lo, hi]
 }
 
-pub fn simulate_payload(body: &str) -> Result<String, SimulateError> {
+pub fn simulate_payload(registry: &DataRegistry, body: &str) -> Result<String, SimulateError> {
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
     let num_sims = req.num_sims.unwrap_or(5000).min(100_000).max(1);
     let seed = req.seed.unwrap_or(0);
 
-    let officers: Vec<(String, String)> = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
-        .map(|list| list.into_iter().map(|o| (o.id.clone(), o.name.clone())).collect())
-        .unwrap_or_default();
+    let officers: Vec<(String, String)> = registry
+        .officers()
+        .iter()
+        .map(|o| (o.id.clone(), o.name.clone()))
+        .collect();
 
     let captain = req
         .crew
@@ -337,7 +340,8 @@ pub fn simulate_payload(body: &str) -> Result<String, SimulateError> {
         below_decks: below_decks.clone(),
     };
     let candidates = vec![candidate];
-    let results = run_monte_carlo(
+    let results = run_monte_carlo_with_registry(
+        registry,
         &req.ship,
         &req.hostile,
         &candidates,
@@ -604,9 +608,9 @@ pub fn preset_post_payload(body: &str) -> Result<String, PresetError> {
     serde_json::to_string_pretty(&preset).map_err(PresetError::Serialize)
 }
 
-pub fn data_version_payload() -> Result<String, serde_json::Error> {
-    let hostile_index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH);
-    let ship_index = load_ship_index(DEFAULT_SHIPS_INDEX_PATH);
+pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
+    let hostile_index = registry.hostile_index();
+    let ship_index = registry.ship_index();
     let mechanics = vec![
         MechanicStatus { name: "Mitigation".to_string(), status: "implemented".to_string() },
         MechanicStatus { name: "Piercing".to_string(), status: "implemented".to_string() },
@@ -619,8 +623,8 @@ pub fn data_version_payload() -> Result<String, serde_json::Error> {
     ];
     let response = DataVersionResponse {
         officer_version: Some("canonical".to_string()),
-        hostile_version: hostile_index.and_then(|i| i.data_version),
-        ship_version: ship_index.and_then(|i| i.data_version),
+        hostile_version: hostile_index.and_then(|i| i.data_version.clone()),
+        ship_version: ship_index.and_then(|i| i.data_version.clone()),
         mechanics,
     };
     serde_json::to_string_pretty(&response)
@@ -639,14 +643,17 @@ fn parse_below_decks_strategy(s: Option<&String>) -> BelowDecksStrategy {
 }
 
 /// Load heuristics seeds and expand them into CrewCandidates.
+/// Uses registry for officer name resolution when provided (no disk reload).
 fn load_heuristics_candidates(
+    registry: &DataRegistry,
     seed_names: &[String],
     bd_strategy: BelowDecksStrategy,
 ) -> Vec<CrewCandidate> {
+    let canonical_names: Vec<String> = registry.officers().iter().map(|o| o.name.clone()).collect();
     seed_names
         .iter()
         .flat_map(|name| {
-            let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR);
+            let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
             let candidates = expand_crews(parsed, BELOW_DECKS_SLOTS, bd_strategy);
             candidates.into_iter().map(|c| CrewCandidate {
                 captain: c.captain,
@@ -667,7 +674,7 @@ fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
     }
 }
 
-pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
+pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, OptimizePayloadError> {
     let request: OptimizeRequest =
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
@@ -682,9 +689,16 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
 
     // Phase 1: heuristics crews (always run first when seeds are specified).
     let mut all_results: Vec<SimulationResult> = if !heuristics_seeds.is_empty() {
-        let h_candidates = load_heuristics_candidates(heuristics_seeds, bd_strategy);
+        let h_candidates = load_heuristics_candidates(registry, heuristics_seeds, bd_strategy);
         if !h_candidates.is_empty() {
-            run_monte_carlo_parallel(&request.ship, &request.hostile, &h_candidates, sims as usize, seed)
+            run_monte_carlo_parallel_with_registry(
+                registry,
+                &request.ship,
+                &request.hostile,
+                &h_candidates,
+                sims as usize,
+                seed,
+            )
         } else {
             Vec::new()
         }
@@ -703,7 +717,7 @@ pub fn optimize_payload(body: &str) -> Result<String, OptimizePayloadError> {
             strategy,
             only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
         };
-        all_results.extend(optimize_scenario(&scenario).into_iter().map(|r| SimulationResult {
+        all_results.extend(optimize_scenario_with_registry(registry, &scenario).into_iter().map(|r| SimulationResult {
             candidate: CrewCandidate {
                 captain: r.captain,
                 bridge: r.bridge,
@@ -817,7 +831,10 @@ fn next_job_id() -> String {
 }
 
 /// Start an optimize job in the background; returns job_id immediately.
-pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError> {
+pub fn optimize_start_payload(
+    registry: std::sync::Arc<DataRegistry>,
+    body: &str,
+) -> Result<String, OptimizePayloadError> {
     let request: OptimizeRequest =
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
@@ -841,6 +858,7 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
         );
     }
 
+    let registry = registry;
     let ship = request.ship.clone();
     let hostile = request.hostile.clone();
     let job_id_clone = job_id.clone();
@@ -853,10 +871,11 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
 
     std::thread::spawn(move || {
         let start = Instant::now();
+        let registry_ref = registry.as_ref();
 
         // Phase 1: heuristics
         let mut all_results: Vec<SimulationResult> = if !heuristics_seeds.is_empty() {
-            let h_candidates = load_heuristics_candidates(&heuristics_seeds, bd_strategy);
+            let h_candidates = load_heuristics_candidates(registry_ref, &heuristics_seeds, bd_strategy);
             if !h_candidates.is_empty() {
                 let h_total = h_candidates.len() as u32;
                 if let Ok(mut map) = optimize_jobs().lock() {
@@ -864,7 +883,14 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
                         state.total_crews = h_total;
                     }
                 }
-                let results = run_monte_carlo_parallel(&ship, &hostile, &h_candidates, sims as usize, seed);
+                let results = run_monte_carlo_parallel_with_registry(
+                    registry_ref,
+                    &ship,
+                    &hostile,
+                    &h_candidates,
+                    sims as usize,
+                    seed,
+                );
                 if let Ok(mut map) = optimize_jobs().lock() {
                     if let Some(state) = map.get_mut(&job_id_clone) {
                         state.crews_done = h_total;
@@ -890,22 +916,26 @@ pub fn optimize_start_payload(body: &str) -> Result<String, OptimizePayloadError
                 strategy,
                 only_below_decks_with_ability: prioritize_below_decks_ability,
             };
-            let normal_results = optimize_scenario_with_progress(&scenario, |crews_done, total_crews| {
-                let base_progress = if !heuristics_seeds.is_empty() { 10u8 } else { 0u8 };
-                let progress = if total_crews == 0 {
-                    base_progress
-                } else {
-                    let pct = (crews_done as f64 / total_crews as f64) * (100.0 - base_progress as f64);
-                    (base_progress as f64 + pct).round().min(100.0) as u8
-                };
-                if let Ok(mut map) = optimize_jobs().lock() {
-                    if let Some(state) = map.get_mut(&job_id_clone) {
-                        state.progress = progress;
-                        state.crews_done = crews_done;
-                        state.total_crews = total_crews;
+            let normal_results = optimize_scenario_with_progress_with_registry(
+                registry_ref,
+                &scenario,
+                |crews_done, total_crews| {
+                    let base_progress = if !heuristics_seeds.is_empty() { 10u8 } else { 0u8 };
+                    let progress = if total_crews == 0 {
+                        base_progress
+                    } else {
+                        let pct = (crews_done as f64 / total_crews as f64) * (100.0 - base_progress as f64);
+                        (base_progress as f64 + pct).round().min(100.0) as u8
+                    };
+                    if let Ok(mut map) = optimize_jobs().lock() {
+                        if let Some(state) = map.get_mut(&job_id_clone) {
+                            state.progress = progress;
+                            state.crews_done = crews_done;
+                            state.total_crews = total_crews;
+                        }
                     }
                 }
-            });
+            );
             all_results.extend(normal_results.into_iter().map(|r| SimulationResult {
                 candidate: CrewCandidate {
                     captain: r.captain,
@@ -1035,7 +1065,7 @@ fn parse_optimize_estimate_query(query: &str) -> (String, String, u32, Option<u3
     (ship, hostile, sims, max_candidates, prioritize_below_decks_ability)
 }
 
-pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadError> {
+pub fn optimize_estimate_payload(registry: &DataRegistry, path: &str) -> Result<String, OptimizePayloadError> {
     let query = path.split('?').nth(1).unwrap_or("");
     let (ship, hostile, sims, max_candidates, prioritize_below_decks_ability) =
         parse_optimize_estimate_query(query);
@@ -1057,7 +1087,7 @@ pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadEr
                 only_below_decks_with_ability: prioritize_below_decks_ability,
                 ..CandidateStrategy::default()
             });
-            generator.generate_candidates(&ship, &hostile, 0).len()
+            generator.generate_candidates_from_registry(registry, &ship, &hostile, 0).len()
         }
         Some(_) => {
             return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -1074,7 +1104,7 @@ pub fn optimize_estimate_payload(path: &str) -> Result<String, OptimizePayloadEr
                 only_below_decks_with_ability: prioritize_below_decks_ability,
                 ..CandidateStrategy::default()
             });
-            generator.count_candidates(&ship, &hostile, 0)
+            generator.count_candidates_from_registry(registry, &ship, &hostile, 0)
         }
     };
     let estimated_seconds = (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;

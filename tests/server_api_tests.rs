@@ -1,5 +1,6 @@
 use axum::body::Body;
 use axum::http::{Method, Request};
+use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::server::routes::build_router;
 use tower::ServiceExt;
 
@@ -10,7 +11,8 @@ struct TestResponse {
 }
 
 async fn route_request(method: &str, path: &str, body: &str, _headers: Option<()>) -> TestResponse {
-    let app = build_router();
+    let registry = DataRegistry::load().expect("data registry required for server tests");
+    let app = build_router(registry);
     let m = match method {
         "POST" => Method::POST,
         "PUT" => Method::PUT,

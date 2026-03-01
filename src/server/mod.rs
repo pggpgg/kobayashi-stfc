@@ -15,7 +15,14 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
         .parse()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
 
-    let app = routes::build_router();
+    let registry = crate::data::data_registry::DataRegistry::load().map_err(|e| {
+        std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to load data registry: {e}. Ensure data/officers/officers.canonical.json exists."),
+        )
+    })?;
+
+    let app = routes::build_router(registry);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     println!("kobayashi server listening on http://{bind_addr}");

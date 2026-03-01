@@ -8,16 +8,24 @@
 use axum::{
     Router,
     extract::OriginalUri,
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
     routing::{get, post, put},
 };
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 
+use crate::data::data_registry::DataRegistry;
 use crate::server::api;
 use crate::server::sync;
+
+/// Application state shared by all handlers.
+#[derive(Clone)]
+pub struct AppState {
+    pub registry: Arc<DataRegistry>,
+}
 
 // ---------------------------------------------------------------------------
 // Shared JSON response helpers
@@ -64,7 +72,9 @@ fn validation_json(payload: api::ValidationErrorResponse) -> JsonResponse {
 // Router construction
 // ---------------------------------------------------------------------------
 
-pub fn build_router() -> Router {
+pub fn build_router(registry: Arc<DataRegistry>) -> Router {
+    let state = AppState { registry };
+
     let api_routes = Router::new()
         // Health
         .route("/api/health", get(handle_health))
@@ -96,7 +106,8 @@ pub fn build_router() -> Router {
         .route("/api/optimize/status/:job_id", get(handle_optimize_status))
         // Sync ingress
         .route("/api/sync/status", get(handle_sync_status))
-        .route("/api/sync/ingress", post(handle_sync_ingress));
+        .route("/api/sync/ingress", post(handle_sync_ingress))
+        .with_state(state);
 
     // Wire the SPA or legacy console fallback depending on whether the dist
     // directory exists at startup time.
@@ -227,29 +238,31 @@ async fn handle_health() -> impl IntoResponse {
     }
 }
 
-async fn handle_officers(Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
-    // Reconstruct the query string path fragment that api::officers_payload expects.
+async fn handle_officers(
+    State(state): State<AppState>,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
     let owned_only = params.get("owned_only").map(String::as_str).unwrap_or("");
     let path = if owned_only == "1" || owned_only.eq_ignore_ascii_case("true") {
         "/api/officers?owned_only=1".to_string()
     } else {
         "/api/officers".to_string()
     };
-    match api::officers_payload(&path) {
+    match api::officers_payload(state.registry.as_ref(), &path) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 
-async fn handle_ships() -> impl IntoResponse {
-    match api::ships_payload() {
+async fn handle_ships(State(state): State<AppState>) -> impl IntoResponse {
+    match api::ships_payload(state.registry.as_ref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 
-async fn handle_hostiles() -> impl IntoResponse {
-    match api::hostiles_payload() {
+async fn handle_hostiles(State(state): State<AppState>) -> impl IntoResponse {
+    match api::hostiles_payload(state.registry.as_ref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
@@ -262,8 +275,8 @@ async fn handle_heuristics() -> impl IntoResponse {
     }
 }
 
-async fn handle_data_version() -> impl IntoResponse {
-    match api::data_version_payload() {
+async fn handle_data_version(State(state): State<AppState>) -> impl IntoResponse {
+    match api::data_version_payload(state.registry.as_ref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
@@ -315,8 +328,9 @@ async fn handle_officers_import(body: String) -> impl IntoResponse {
 }
 
 /// POST /api/simulate — CPU-bound, offloaded to blocking pool.
-async fn handle_simulate(body: String) -> impl IntoResponse {
-    let result = tokio::task::spawn_blocking(move || api::simulate_payload(&body)).await;
+async fn handle_simulate(State(state): State<AppState>, body: String) -> impl IntoResponse {
+    let registry = state.registry.clone();
+    let result = tokio::task::spawn_blocking(move || api::simulate_payload(registry.as_ref(), &body)).await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
         Ok(Err(api::SimulateError::Parse(e))) => {
@@ -335,8 +349,9 @@ async fn handle_simulate(body: String) -> impl IntoResponse {
 }
 
 /// POST /api/optimize — long-running synchronous optimization; runs on blocking pool.
-async fn handle_optimize(body: String) -> impl IntoResponse {
-    let result = tokio::task::spawn_blocking(move || api::optimize_payload(&body)).await;
+async fn handle_optimize(State(state): State<AppState>, body: String) -> impl IntoResponse {
+    let registry = state.registry.clone();
+    let result = tokio::task::spawn_blocking(move || api::optimize_payload(registry.as_ref(), &body)).await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
         Ok(Err(api::OptimizePayloadError::Parse(e))) => {
@@ -354,16 +369,16 @@ async fn handle_optimize(body: String) -> impl IntoResponse {
 
 /// GET /api/optimize/estimate?ship=...&hostile=...&sims=...
 async fn handle_optimize_estimate(
+    State(state): State<AppState>,
     Query(raw): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
-    // Reconstruct the query string that api::optimize_estimate_payload expects.
     let query: String = raw
         .iter()
         .map(|(k, v)| format!("{}={}", k, v))
         .collect::<Vec<_>>()
         .join("&");
     let path = format!("/api/optimize/estimate?{}", query);
-    match api::optimize_estimate_payload(&path) {
+    match api::optimize_estimate_payload(state.registry.as_ref(), &path) {
         Ok(payload) => ok_json(payload).into_response(),
         Err(api::OptimizePayloadError::Parse(e)) => {
             error_json(StatusCode::BAD_REQUEST, &format!("Invalid request: {e}")).into_response()
@@ -373,8 +388,8 @@ async fn handle_optimize_estimate(
 }
 
 /// POST /api/optimize/start — spawns a background std::thread, returns job_id immediately.
-async fn handle_optimize_start(body: String) -> impl IntoResponse {
-    match api::optimize_start_payload(&body) {
+async fn handle_optimize_start(State(state): State<AppState>, body: String) -> impl IntoResponse {
+    match api::optimize_start_payload(state.registry.clone(), &body) {
         Ok(payload) => ok_json(payload).into_response(),
         Err(api::OptimizePayloadError::Parse(e)) => {
             error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))

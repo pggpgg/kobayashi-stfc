@@ -229,7 +229,9 @@ fn optimize_command(args: &[String]) -> Result<(), String> {
     }
     let body = payload.to_string();
 
-    let payload = server::api::optimize_payload(&body)
+    let registry = kobayashi::data::data_registry::DataRegistry::load()
+        .map_err(|e| format!("Failed to load data registry: {e}"))?;
+    let payload = server::api::optimize_payload(registry.as_ref(), &body)
         .map_err(|err| format!("failed to build optimize response: {err}"))?;
     let response: serde_json::Value =
         serde_json::from_str(&payload).map_err(|err| format!("invalid optimize payload: {err}"))?;
