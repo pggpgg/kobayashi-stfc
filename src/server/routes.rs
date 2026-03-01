@@ -87,6 +87,8 @@ pub fn build_router() -> Router {
         .route("/api/simulate", post(handle_simulate))
         // Optimize synchronous (long-running, blocking pool)
         .route("/api/optimize", post(handle_optimize))
+        // Heuristics seed list
+        .route("/api/heuristics", get(handle_heuristics))
         // Optimize estimate (lightweight GET with query params)
         .route("/api/optimize/estimate", get(handle_optimize_estimate))
         // Optimize async job
@@ -248,6 +250,13 @@ async fn handle_ships() -> impl IntoResponse {
 
 async fn handle_hostiles() -> impl IntoResponse {
     match api::hostiles_payload() {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_heuristics() -> impl IntoResponse {
+    match api::heuristics_list_payload() {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
