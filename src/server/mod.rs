@@ -15,6 +15,14 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
         .parse()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
 
+    // Validate all data files before accepting any connections.
+    // This catches corrupt or missing records immediately rather than surfacing
+    // mid-simulation after the user has already waited minutes.
+    println!("kobayashi: validating data files…");
+    crate::data::validate::validate_all_startup_data().map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::InvalidData, e)
+    })?;
+
     let registry = crate::data::data_registry::DataRegistry::load().map_err(|e| {
         std::io::Error::new(
             std::io::ErrorKind::Other,
