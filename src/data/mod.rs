@@ -1,6 +1,7 @@
 pub mod building;
-pub mod forbidden_chaos;
 pub mod faction_reputation;
+pub mod forbidden_chaos;
+pub mod heuristics;
 pub mod hostile;
 pub mod import;
 pub mod loader;

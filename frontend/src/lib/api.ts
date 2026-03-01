@@ -242,6 +242,13 @@ export interface OptimizeStatusResponse {
   error?: string;
 }
 
+export async function fetchHeuristics(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/api/heuristics`);
+  await checkOk(res);
+  const data = await res.json();
+  return data.seeds ?? [];
+}
+
 export async function optimizeStart(params: {
   ship: string;
   hostile: string;
@@ -249,6 +256,9 @@ export async function optimizeStart(params: {
   seed?: number;
   max_candidates?: number | null;
   prioritize_below_decks_ability?: boolean;
+  heuristics_seeds?: string[];
+  heuristics_only?: boolean;
+  below_decks_strategy?: 'ordered' | 'exploration';
 }): Promise<OptimizeStartResponse> {
   const body: Record<string, unknown> = {
     ship: params.ship,
@@ -261,6 +271,15 @@ export async function optimizeStart(params: {
   }
   if (params.prioritize_below_decks_ability === true) {
     body.prioritize_below_decks_ability = true;
+  }
+  if (params.heuristics_seeds && params.heuristics_seeds.length > 0) {
+    body.heuristics_seeds = params.heuristics_seeds;
+  }
+  if (params.heuristics_only === true) {
+    body.heuristics_only = true;
+  }
+  if (params.below_decks_strategy && params.below_decks_strategy !== 'ordered') {
+    body.below_decks_strategy = params.below_decks_strategy;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',

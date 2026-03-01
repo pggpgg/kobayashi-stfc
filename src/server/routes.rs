@@ -76,6 +76,15 @@ pub fn route_request(
             },
             Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
         },
+        ("GET", "/api/heuristics") => match api::heuristics_list_payload() {
+            Ok(payload) => HttpResponse {
+                status_code: 200,
+                status_text: "OK",
+                content_type: "application/json",
+                body: payload,
+            },
+            Err(err) => error_response(500, "Internal Server Error", &err.to_string()),
+        },
         ("GET", "/api/data/version") => match api::data_version_payload() {
             Ok(payload) => HttpResponse {
                 status_code: 200,
