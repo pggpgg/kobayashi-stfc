@@ -12,6 +12,9 @@ rosters/roster.imported.json
 # Downloaded spreadsheets (e.g. Syndicate Progression)
 data/import/*.xlsx
 
+# Local reference spreadsheets in repo root
+Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx
+
 # Env files (secrets)
 .env
 .env.local
