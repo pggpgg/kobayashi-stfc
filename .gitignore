@@ -1,5 +1,8 @@
 /target
 
+# Node dependencies (run npm install in frontend/ after clone)
+node_modules/
+
 # Fetched upstream (scripts/fetch_stfc_data.ps1)
 data/upstream/
 
