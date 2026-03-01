@@ -5,6 +5,9 @@ use std::path::Path;
 
 use serde_json::{Map, Value};
 
+use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
+use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
+use crate::data::ship::{ShipIndex, ShipRecord, DEFAULT_SHIPS_INDEX_PATH};
 use crate::lcars;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -542,6 +545,243 @@ fn is_non_combat_key(key: &str) -> bool {
         key,
         "mining_rate" | "repair_speed" | "warp_speed" | "cargo_capacity"
     ) || key.contains("loot")
+}
+
+/// Validate ship index + all per-ship record files for basic structure and plausible stats.
+/// `path` should be the directory containing `index.json` (typically `data/ships`).
+pub fn validate_ships_dataset(path: &str) -> Result<ValidationReport, String> {
+    let base = Path::new(path);
+    let index_path = base.join("index.json");
+    let raw = fs::read_to_string(&index_path)
+        .map_err(|err| format!("unable to read '{}': {err}", index_path.display()))?;
+    let index: ShipIndex = serde_json::from_str(&raw)
+        .map_err(|err| format!("unable to parse '{}': {err}", index_path.display()))?;
+
+    let mut report = ValidationReport::default();
+    let mut seen_ids: HashSet<String> = HashSet::new();
+
+    for (idx, entry) in index.ships.iter().enumerate() {
+        let ctx = format!("ships[{idx}] id='{}'", entry.id);
+
+        if entry.id.trim().is_empty() {
+            report.push(ValidationSeverity::Error, ctx, "missing non-empty 'id'");
+            continue;
+        }
+        if !seen_ids.insert(entry.id.clone()) {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{ctx}.id"),
+                format!("duplicate id '{}'", entry.id),
+            );
+        }
+        if entry.ship_name.trim().is_empty() {
+            report.push(
+                ValidationSeverity::Error,
+                ctx.clone(),
+                "missing non-empty 'ship_name'",
+            );
+        }
+
+        let record_path = base.join(format!("{}.json", entry.id));
+        if !record_path.is_file() {
+            report.push(
+                ValidationSeverity::Error,
+                ctx.clone(),
+                format!("missing ship record file '{}'", record_path.display()),
+            );
+            continue;
+        }
+
+        match fs::read_to_string(&record_path)
+            .map_err(|e| e.to_string())
+            .and_then(|raw| serde_json::from_str::<ShipRecord>(&raw).map_err(|e| e.to_string()))
+        {
+            Ok(record) => {
+                if record.hull_health <= 0.0 {
+                    report.push(
+                        ValidationSeverity::Error,
+                        ctx.clone(),
+                        format!("hull_health is {} (must be > 0)", record.hull_health),
+                    );
+                }
+                if record.attack <= 0.0 {
+                    report.push(
+                        ValidationSeverity::Warning,
+                        ctx,
+                        format!("attack is {} (zero or negative)", record.attack),
+                    );
+                }
+            }
+            Err(e) => {
+                report.push(
+                    ValidationSeverity::Error,
+                    ctx,
+                    format!("failed to load ship record: {e}"),
+                );
+            }
+        }
+    }
+
+    Ok(report)
+}
+
+/// Validate hostile index + all per-hostile record files for basic structure and plausible stats.
+/// `path` should be the directory containing `index.json` (typically `data/hostiles`).
+///
+/// Individual missing/corrupt file counts are emitted as summary diagnostics rather than
+/// one diagnostic per file to avoid flooding the output for large hostile sets.
+pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String> {
+    let base = Path::new(path);
+    let index_path = base.join("index.json");
+    let raw = fs::read_to_string(&index_path)
+        .map_err(|err| format!("unable to read '{}': {err}", index_path.display()))?;
+    let index: HostileIndex = serde_json::from_str(&raw)
+        .map_err(|err| format!("unable to parse '{}': {err}", index_path.display()))?;
+
+    let mut report = ValidationReport::default();
+    let mut seen_ids: HashSet<String> = HashSet::new();
+    let mut missing_files: usize = 0;
+    let mut parse_errors: usize = 0;
+    let mut bad_stats: usize = 0;
+
+    for (idx, entry) in index.hostiles.iter().enumerate() {
+        let ctx = format!("hostiles[{idx}] id='{}'", entry.id);
+
+        if entry.id.trim().is_empty() {
+            report.push(ValidationSeverity::Error, ctx, "missing non-empty 'id'");
+            continue;
+        }
+        if !seen_ids.insert(entry.id.clone()) {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{ctx}.id"),
+                format!("duplicate id '{}'", entry.id),
+            );
+        }
+
+        let record_path = base.join(format!("{}.json", entry.id));
+        if !record_path.is_file() {
+            missing_files += 1;
+            continue;
+        }
+
+        match fs::read_to_string(&record_path)
+            .map_err(|e| e.to_string())
+            .and_then(|raw| serde_json::from_str::<HostileRecord>(&raw).map_err(|e| e.to_string()))
+        {
+            Ok(record) => {
+                if record.hull_health <= 0.0 {
+                    bad_stats += 1;
+                }
+            }
+            Err(_) => {
+                parse_errors += 1;
+            }
+        }
+    }
+
+    // Emit summary diagnostics to avoid thousands of individual lines.
+    if missing_files > 0 {
+        report.push(
+            ValidationSeverity::Error,
+            "hostiles.records",
+            format!(
+                "{missing_files} hostile record file(s) referenced in index but not found on disk"
+            ),
+        );
+    }
+    if parse_errors > 0 {
+        report.push(
+            ValidationSeverity::Error,
+            "hostiles.records",
+            format!("{parse_errors} hostile record file(s) failed to parse"),
+        );
+    }
+    if bad_stats > 0 {
+        report.push(
+            ValidationSeverity::Error,
+            "hostiles.records",
+            format!("{bad_stats} hostile record(s) have hull_health ≤ 0"),
+        );
+    }
+
+    Ok(report)
+}
+
+/// Run all startup data validations and print per-category results to stdout.
+///
+/// Returns `Ok(())` when there are no errors (warnings are printed but allowed).
+/// Returns `Err(message)` when any category has errors; the caller should treat
+/// this as a fatal startup failure.
+pub fn validate_all_startup_data() -> Result<(), String> {
+    let mut error_count: usize = 0;
+    let mut warning_count: usize = 0;
+
+    fn process_report(
+        label: &str,
+        result: Result<ValidationReport, String>,
+        errors: &mut usize,
+        warnings: &mut usize,
+    ) {
+        match result {
+            Err(e) => {
+                println!("    [error] {e}");
+                *errors += 1;
+            }
+            Ok(report) => {
+                for d in &report.diagnostics {
+                    match d.severity {
+                        ValidationSeverity::Error => {
+                            println!("    [error] {}: {}", d.context, d.message);
+                            *errors += 1;
+                        }
+                        ValidationSeverity::Warning => {
+                            println!("    [warn]  {}: {}", d.context, d.message);
+                            *warnings += 1;
+                        }
+                        ValidationSeverity::Info => {}
+                    }
+                }
+                if !report.has_errors() {
+                    let w = report
+                        .diagnostics
+                        .iter()
+                        .filter(|d| d.severity == ValidationSeverity::Warning)
+                        .count();
+                    if w == 0 {
+                        println!("  {label}: ok");
+                    } else {
+                        println!("  {label}: ok ({w} warning(s))");
+                    }
+                } else {
+                    println!("  {label}: ERRORS — see above");
+                }
+            }
+        }
+    }
+
+    // Officers are always required.
+    let r = validate_officer_dataset_canonical(DEFAULT_CANONICAL_OFFICERS_PATH);
+    process_report("officers", r, &mut error_count, &mut warning_count);
+
+    // Ships and hostiles are optional — only validate if the index file is present.
+    if Path::new(DEFAULT_SHIPS_INDEX_PATH).is_file() {
+        let r = validate_ships_dataset("data/ships");
+        process_report("ships", r, &mut error_count, &mut warning_count);
+    }
+
+    if Path::new(DEFAULT_HOSTILES_INDEX_PATH).is_file() {
+        let r = validate_hostiles_dataset("data/hostiles");
+        process_report("hostiles", r, &mut error_count, &mut warning_count);
+    }
+
+    if error_count == 0 {
+        Ok(())
+    } else {
+        Err(format!(
+            "{error_count} data validation error(s) — fix the above before starting the server"
+        ))
+    }
 }
 
 /// Validate building index + per-building files for basic structure and provenance.
