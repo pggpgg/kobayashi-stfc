@@ -54,6 +54,7 @@ harness = false
 path = "benches/monte_carlo_parallel_bench.rs"
 
 [dependencies]
+axum = { version = "0.7", features = ["macros"] }
 calamine = "0.24"
 chrono = { version = "0.4", default-features = false, features = ["std", "now"] }
 csv = "1"
@@ -61,6 +62,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
 rayon = "1.10"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5", features = ["fs"] }
 
 [dev-dependencies]
 criterion = "0.5"

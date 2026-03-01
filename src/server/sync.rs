@@ -1,8 +1,8 @@
 //! Sync ingress for STFC Community Mod: accepts type-specific JSON arrays and
 //! updates roster (and optionally other state) for quasi real-time optimizer use.
 
+use axum::http::StatusCode;
 use crate::data::import;
-use crate::server::routes::HttpResponse;
 use chrono::{TimeZone, Utc};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -31,7 +31,8 @@ static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_FT_MTX: Mutex<()> = Mutex::new(());
 
 /// Handles POST /api/sync/ingress: validates token, parses body, dispatches by type.
-pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
+/// Returns `(StatusCode, json_body_string)`.
+pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, String) {
     let body_len = body.len();
     let ts = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ");
     append_sync_log(&format!("{} POST /api/sync/ingress body_len={}", ts, body_len));
@@ -42,7 +43,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
         let provided = sync_token.unwrap_or("").trim();
         if provided != expected.as_str() {
             eprintln!("[sync] 401 Unauthorized (invalid or missing stfc-sync-token)");
-            return json_error_response(401, "Unauthorized", "Invalid or missing stfc-sync-token");
+            return json_error_response(StatusCode::UNAUTHORIZED, "Invalid or missing stfc-sync-token");
         }
     }
 
@@ -51,8 +52,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
         Err(e) => {
             eprintln!("[sync] 400 Bad Request: body is not a JSON array: {e}");
             return json_error_response(
-                400,
-                "Bad Request",
+                StatusCode::BAD_REQUEST,
                 &format!("Request body must be a JSON array: {e}"),
             );
         }
@@ -80,7 +80,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
                 Err(e) => {
                     eprintln!("[sync] 500 Internal Server Error (officer): {e}");
-                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
                 }
             }
         }
@@ -92,7 +92,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
                 Err(e) => {
                     eprintln!("[sync] 500 Internal Server Error (research): {e}");
-                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
                 }
             }
         }
@@ -104,7 +104,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
                 Err(e) => {
                     eprintln!("[sync] 500 Internal Server Error (buildings): {e}");
-                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
                 }
             }
         }
@@ -116,7 +116,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
                 Err(e) => {
                     eprintln!("[sync] 500 Internal Server Error (ships): {e}");
-                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
                 }
             }
         }
@@ -128,7 +128,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> HttpResponse {
                 }
                 Err(e) => {
                     eprintln!("[sync] 500 Internal Server Error (ft): {e}");
-                    return json_error_response(500, "Internal Server Error", &e.to_string());
+                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
                 }
             }
         }
@@ -500,32 +500,28 @@ fn apply_ft_sync(
     Ok(accepted)
 }
 
-fn ok_accepted_response(accepted: &[String]) -> HttpResponse {
+fn ok_accepted_response(accepted: &[String]) -> (StatusCode, String) {
     let body = serde_json::json!({
         "status": "ok",
         "accepted": accepted,
     });
-    let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| r#"{"status":"ok","accepted":[]}"#.to_string());
-    HttpResponse {
-        status_code: 200,
-        status_text: "OK",
-        content_type: "application/json",
-        body: body_str,
-    }
+    let body_str = serde_json::to_string_pretty(&body)
+        .unwrap_or_else(|_| r#"{"status":"ok","accepted":[]}"#.to_string());
+    (StatusCode::OK, body_str)
 }
 
-fn json_error_response(status_code: u16, status_text: &'static str, message: &str) -> HttpResponse {
+fn json_error_response(status_code: StatusCode, message: &str) -> (StatusCode, String) {
     let body = serde_json::json!({
         "status": "error",
         "message": message,
     });
-    let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| format!(r#"{{"status":"error","message":{}}}"#, serde_json::to_string(message).unwrap_or_default()));
-    HttpResponse {
-        status_code,
-        status_text,
-        content_type: "application/json",
-        body: body_str,
-    }
+    let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
+        format!(
+            r#"{{"status":"error","message":{}}}"#,
+            serde_json::to_string(message).unwrap_or_default()
+        )
+    });
+    (status_code, body_str)
 }
 
 fn last_modified_iso(path: &str) -> Option<String> {
@@ -544,7 +540,8 @@ fn last_modified_iso(path: &str) -> Option<String> {
 
 /// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
 /// Also includes research_path, buildings_path, ships_path, forbidden_tech_path and their last_modified_iso when present.
-pub fn sync_status_payload() -> HttpResponse {
+/// Returns `(StatusCode, json_body_string)`.
+pub fn sync_status_payload() -> (StatusCode, String) {
     let roster_path = import::DEFAULT_IMPORT_OUTPUT_PATH;
     let research_path = import::DEFAULT_RESEARCH_IMPORT_PATH;
     let buildings_path = import::DEFAULT_BUILDINGS_IMPORT_PATH;
@@ -566,53 +563,49 @@ pub fn sync_status_payload() -> HttpResponse {
     let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
         r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string()
     });
-    HttpResponse {
-        status_code: 200,
-        status_text: "OK",
-        content_type: "application/json",
-        body: body_str,
-    }
+    (StatusCode::OK, body_str)
 }
 
 #[cfg(test)]
 mod tests {
     use super::ingress_payload;
+    use axum::http::StatusCode;
     use crate::data::import;
 
     #[test]
     fn ingress_empty_array_returns_200_and_accepted() {
-        let r = ingress_payload("[]", None);
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("\"status\": \"ok\""));
-        assert!(r.body.contains("\"accepted\""));
+        let (status, body) = ingress_payload("[]", None);
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("\"status\": \"ok\""));
+        assert!(body.contains("\"accepted\""));
     }
 
     #[test]
     fn ingress_non_array_body_returns_400() {
-        let r = ingress_payload("{}", None);
-        assert_eq!(r.status_code, 400);
-        assert!(r.body.contains("array"));
+        let (status, body) = ingress_payload("{}", None);
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(body.contains("array"));
     }
 
     #[test]
     fn ingress_unknown_type_returns_200_and_accepts_type() {
-        let r = ingress_payload(r#"[{"type":"unknown","x":1}]"#, None);
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("unknown"));
+        let (status, body) = ingress_payload(r#"[{"type":"unknown","x":1}]"#, None);
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("unknown"));
     }
 
     #[test]
     fn ingress_research_type_returns_200() {
-        let r = ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, None);
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("research"));
+        let (status, body) = ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, None);
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("research"));
     }
 
     #[test]
     fn ingress_research_persists_to_file() {
-        let r = ingress_payload(r#"[{"type":"research","rid":919291,"level":3}]"#, None);
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("research(1)"));
+        let (status, body) = ingress_payload(r#"[{"type":"research","rid":919291,"level":3}]"#, None);
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("research(1)"));
         let entries = import::load_imported_research(import::DEFAULT_RESEARCH_IMPORT_PATH)
             .expect("research.imported.json should exist after sync");
         assert!(
@@ -624,9 +617,9 @@ mod tests {
 
     #[test]
     fn ingress_buildings_persist_to_file() {
-        let r = ingress_payload(r#"[{"type":"buildings","bid":919292,"level":5}]"#, None);
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("buildings(1)"));
+        let (status, body) = ingress_payload(r#"[{"type":"buildings","bid":919292,"level":5}]"#, None);
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("buildings(1)"));
         let entries = import::load_imported_buildings(import::DEFAULT_BUILDINGS_IMPORT_PATH)
             .expect("buildings.imported.json should exist after sync");
         assert!(
@@ -638,12 +631,12 @@ mod tests {
 
     #[test]
     fn ingress_ships_persist_to_file() {
-        let r = ingress_payload(
+        let (status, body) = ingress_payload(
             r#"[{"type":"ships","psid":919293,"tier":2,"level":10,"level_percentage":0.5,"hull_id":100,"components":[1,2,3]}]"#,
             None,
         );
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("ships(1)"));
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("ships(1)"));
         let entries = import::load_imported_ships(import::DEFAULT_SHIPS_IMPORT_PATH)
             .expect("ships.imported.json should exist after sync");
         assert!(
@@ -657,9 +650,9 @@ mod tests {
 
     #[test]
     fn ingress_module_type_persists_to_file() {
-        let r = ingress_payload(r#"[{"type":"module","bid":919294,"level":7}]"#, None);
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("buildings(1)"));
+        let (status, body) = ingress_payload(r#"[{"type":"module","bid":919294,"level":7}]"#, None);
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("buildings(1)"));
         let entries = import::load_imported_buildings(import::DEFAULT_BUILDINGS_IMPORT_PATH)
             .expect("buildings.imported.json should exist after sync");
         assert!(
@@ -671,12 +664,12 @@ mod tests {
 
     #[test]
     fn ingress_ship_type_persists_to_file() {
-        let r = ingress_payload(
+        let (status, body) = ingress_payload(
             r#"[{"type":"ship","psid":919295,"tier":3,"level":15,"level_percentage":0.0,"hull_id":200,"components":[]}]"#,
             None,
         );
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("ships(1)"));
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("ships(1)"));
         let entries = import::load_imported_ships(import::DEFAULT_SHIPS_IMPORT_PATH)
             .expect("ships.imported.json should exist after sync");
         assert!(
@@ -690,12 +683,12 @@ mod tests {
 
     #[test]
     fn ingress_ft_persists_to_file() {
-        let r = ingress_payload(
+        let (status, body) = ingress_payload(
             r#"[{"type":"ft","fid":919296,"tier":1,"level":5,"shard_count":10}]"#,
             None,
         );
-        assert_eq!(r.status_code, 200);
-        assert!(r.body.contains("ft(1)"));
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("ft(1)"));
         let entries = import::load_imported_forbidden_tech(import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH)
             .expect("forbidden_tech.imported.json should exist after sync");
         assert!(
