@@ -47,7 +47,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ## 2. Architecture
 
-**Actual stack:** Custom blocking TCP HTTP server (single-threaded `TcpListener` in `src/server/mod.rs`). No Axum, no Tokio. REST API only; WebSocket (e.g. for optimize progress) is planned but not implemented. Frontend is served from the filesystem (`frontend/dist`) when present, not embedded in the binary.
+**Actual stack:** Tokio + Axum 0.7 (`src/server/mod.rs` + `routes.rs`). Multi-threaded async runtime; CPU-bound work (optimize, simulate) offloaded via `tokio::task::spawn_blocking`. REST API only; WebSocket (e.g. for optimize progress) is not yet implemented. Frontend is served from the filesystem (`frontend/dist`) when present, not embedded in the binary.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -63,8 +63,8 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 │                  RUST BACKEND                       │
 │                                                     │
 │  ┌──────────────────┐  ┌───────────┐  ┌──────────┐ │
-│  │ Custom HTTP      │  │ Optimizer │  │  Combat  │ │
-│  │ Server (blocking)│──│  Layer    │──│  Engine  │ │
+│  │ Axum HTTP Server │  │ Optimizer │  │  Combat  │ │
+│  │ (Tokio async)    │──│  Layer    │──│  Engine  │ │
 │  └──────────────────┘  └───────────┘  └──────────┘ │
 │           │                    │             │      │
 │  ┌────────┴────────┐  ┌────────┴───┐  ┌─────┴────┐ │

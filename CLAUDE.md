@@ -77,6 +77,7 @@ The library is at `src/lib.rs` and exposes these modules:
 - **`src/optimizer/`** — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates; `genetic.rs` is the GA strategy (select via `strategy: "genetic"` in API); `tiered.rs` is a placeholder. `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
 - **`src/data/`** — Data loading/validation. Ships from `data/ships/index.json` + per-ship JSON; hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is canonical; `officers.lcars.yaml` is the LCARS source of truth. `loader.rs` resolves by id or "name_level" (e.g. `explorer_30`).
 - **`src/server/`** — Axum HTTP server with Tokio async runtime. Heavy operations (simulate, optimize) are offloaded via `spawn_blocking`. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
+- **`src/server/`** — Async HTTP server built on Tokio + Axum 0.7. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers; CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present.
 - **`src/parallel/`** — Rayon thread pool integration; each thread owns its PRNG instance.
 - **`src/cli.rs`** — CLI dispatch (used by tests via `run_with_args`); `src/main.rs` is the binary entry point.
 
@@ -151,6 +152,7 @@ Community-known crew lists stored in `data/heuristics/*.txt`. Format: `label:Cap
 
 - **Axum + Tokio**: the server uses Axum 0.7 with a multi-threaded Tokio runtime. CPU-heavy operations (simulate, optimize) are offloaded to a blocking thread pool via `spawn_blocking`. Single-user for now; concurrent optimize jobs are not queued yet (future: add job queue or semaphore).
 - **Data freshness**: ship and hostile data is sourced from community databases and may lag behind in-game updates. `data.stfc.space` provides raw game JSON (e.g. `/hostile/summary.json`, `/hostile/{id}.json`) and is a promising avenue for automated data refresh.
+- **Tokio + Axum server**: the server uses an async Tokio multi-thread runtime with Axum 0.7. CPU-bound handlers (optimize, simulate) call `tokio::task::spawn_blocking` so they don't stall other requests. The public `run_server()` entry point is synchronous and creates the runtime internally, keeping the CLI interface unchanged.
 - **Optimizer strategies**: exhaustive is the default; pass `strategy: "genetic"` for large search spaces. Tiered simulation (`tiered.rs`) is a placeholder — not yet wired in.
 - **LCARS as source of truth**: officer abilities are defined in YAML, not code. The engine resolves YAML → `BuffSet` before the fight loop; only dynamic effects (decay, accumulate, proc) are evaluated inside the loop.
 - **SplitMix64 PRNG**: deterministic per seed, one instance per Rayon thread. Same seed → same fight outcome.
