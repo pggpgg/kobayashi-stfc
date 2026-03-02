@@ -81,6 +81,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         // Officers
         .route("/api/officers", get(handle_officers))
         .route("/api/officers/import", post(handle_officers_import))
+        .route("/api/officers/:id/resolved", get(handle_officer_resolved))
         // Ships / hostiles
         .route("/api/ships", get(handle_ships))
         .route("/api/hostiles", get(handle_hostiles))
@@ -324,6 +325,19 @@ async fn handle_officers_import(body: String) -> impl IntoResponse {
     match api::officers_import_payload(&body) {
         Ok(response) => ok_json(response).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_officer_resolved(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    match api::officer_resolved_payload(state.registry.as_ref(), &id) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(api::OfficerResolveError::NotFound) => {
+            error_json(StatusCode::NOT_FOUND, "Officer not found").into_response()
+        }
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 

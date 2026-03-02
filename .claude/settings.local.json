@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo check 2>&1 | head -80)",
+      "Bash(~/.cargo/bin/cargo check 2>&1 | head -80)",
+      "Bash(which cargo || /usr/local/bin/cargo check 2>&1 | head -5 || source \"$HOME/.cargo/env\" && cargo check 2>&1 | head -80)",
+      "Bash(export PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\" && command -v cargo)",
+      "Bash(wc -l /Users/pgagnong/dev/kobayashi/kobayashi-stfc/src/**/*.rs)",
+      "Bash(find /Users/pgagnong/dev/kobayashi/kobayashi-stfc/src -name \"*.rs\" -exec wc -l {} +)",
+      "Bash(find /Users/pgagnong/dev/kobayashi/kobayashi-stfc/frontend/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec wc -l {} +)",
+      "Bash(find /Users/pgagnong/dev/kobayashi/kobayashi-stfc/tests -name \"*.rs\" -exec wc -l {} +)",
+      "Bash(cargo clippy --all-targets)",
+      "Bash(cargo build --tests)"
+    ]
+  }
+}

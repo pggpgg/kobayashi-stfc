@@ -6,7 +6,7 @@ pub mod ranking;
 pub mod tiered;
 
 use crate::data::data_registry::DataRegistry;
-use crate::optimizer::crew_generator::CrewGenerator;
+use crate::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry, SimulationResult,
@@ -44,6 +44,9 @@ pub struct OptimizationScenario<'a> {
     pub strategy: OptimizerStrategy,
     /// When true, below-decks pool only includes officers that have a below-decks ability.
     pub only_below_decks_with_ability: bool,
+    /// When non-empty, seeds the genetic algorithm's initial population with these crews.
+    /// Only used when strategy is Genetic; ignored for Exhaustive.
+    pub seed_population: Vec<CrewCandidate>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -56,6 +59,7 @@ impl Default for OptimizationScenario<'_> {
             max_candidates: Some(128),
             strategy: OptimizerStrategy::Exhaustive,
             only_below_decks_with_ability: false,
+            seed_population: Vec::new(),
         }
     }
 }
@@ -120,6 +124,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
 }
 
 /// Genetic path: GA with progress callback, then final MC on top candidates, then rank.
+/// When `scenario.seed_population` is non-empty, uses seeded config (larger pop, adaptive mutation).
 pub fn optimize_scenario_genetic<F>(
     scenario: &OptimizationScenario<'_>,
     on_progress: F,
@@ -127,9 +132,15 @@ pub fn optimize_scenario_genetic<F>(
 where
     F: FnMut(usize, usize, f32),
 {
-    let config = GeneticConfig {
-        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-        ..GeneticConfig::default()
+    let config = if scenario.seed_population.is_empty() {
+        GeneticConfig {
+            only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+            ..GeneticConfig::default()
+        }
+    } else {
+        let mut cfg = GeneticConfig::seeded(scenario.seed_population.clone());
+        cfg.only_below_decks_with_ability = scenario.only_below_decks_with_ability;
+        cfg
     };
     run_genetic_optimizer_ranked(
         scenario.ship,
@@ -189,18 +200,7 @@ where
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
-            let config = GeneticConfig {
-                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                ..GeneticConfig::default()
-            };
-            run_genetic_optimizer_ranked(
-                scenario.ship,
-                scenario.hostile,
-                &config,
-                scenario.seed,
-                scenario.simulation_count.max(1),
-                |gen, max_gen, _| on_progress(gen as u32, max_gen as u32),
-            )
+            optimize_scenario_genetic(scenario, |gen, max_gen, _| on_progress(gen as u32, max_gen as u32))
         }
     }
 }
@@ -257,18 +257,7 @@ where
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
-            let config = GeneticConfig {
-                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                ..GeneticConfig::default()
-            };
-            run_genetic_optimizer_ranked(
-                scenario.ship,
-                scenario.hostile,
-                &config,
-                scenario.seed,
-                scenario.simulation_count.max(1),
-                |gen, max_gen, _| on_progress(gen as u32, max_gen as u32),
-            )
+            optimize_scenario_genetic(scenario, |gen, max_gen, _| on_progress(gen as u32, max_gen as u32))
         }
     }
 }
@@ -282,6 +271,7 @@ pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCre
         max_candidates: Some(128),
         strategy: OptimizerStrategy::Exhaustive,
         only_below_decks_with_ability: false,
+        seed_population: Vec::new(),
     })
 }
 
@@ -299,6 +289,7 @@ mod tests {
             max_candidates: None,
             strategy: OptimizerStrategy::Genetic,
             only_below_decks_with_ability: false,
+            seed_population: Vec::new(),
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {

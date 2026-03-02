@@ -1,6 +1,17 @@
 //! Genetic algorithm optimizer for large crew search spaces.
 //! Evolves a population of crew combinations using Monte Carlo fitness, selection, crossover, and mutation.
+//!
+//! # Seeded Initialization
+//! When `GeneticConfig::seed_population` is non-empty, the initial population is seeded
+//! with those crew candidates, then filled with random crews to reach `population_size`.
+//! This enables warm-start optimization from community-known crews (heuristics seeds).
+//!
+//! # Adaptive Mutation
+//! When `adaptive_mutation` is true and the population is seeded, the mutation rate starts
+//! low (`mutation_rate_floor`) and increases on stagnation up to `mutation_rate_ceiling`,
+//! balancing gentle exploration around good seeds with escape from local optima.
 
+use crate::combat::rng::Rng;
 use crate::optimizer::crew_generator::{
     build_officer_pools, OfficerPools, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS,
 };
@@ -26,6 +37,20 @@ pub struct GeneticConfig {
     pub stagnation_limit: Option<usize>,
     /// When true, below-decks pool only includes officers that have a below-decks ability.
     pub only_below_decks_with_ability: bool,
+
+    /// Pre-built crew candidates to seed the initial population.
+    /// When non-empty, these replace random initialization; remaining slots filled randomly.
+    /// When empty, pure random init (current behavior).
+    pub seed_population: Vec<CrewCandidate>,
+
+    /// When true, mutation rate starts low and increases on stagnation.
+    pub adaptive_mutation: bool,
+
+    /// Starting mutation rate when adaptive + seeded. Defaults to 0.05.
+    pub mutation_rate_floor: f64,
+
+    /// Maximum mutation rate for adaptive schedule. Defaults to 0.40.
+    pub mutation_rate_ceiling: f64,
 }
 
 impl Default for GeneticConfig {
@@ -39,38 +64,52 @@ impl Default for GeneticConfig {
             elitism_count: 2,
             stagnation_limit: Some(10),
             only_below_decks_with_ability: false,
+            seed_population: Vec::new(),
+            adaptive_mutation: true,
+            mutation_rate_floor: 0.05,
+            mutation_rate_ceiling: 0.40,
         }
     }
 }
 
-/// Deterministic RNG for reproducible GA runs. Uses same LCG style as crew_generator.
-struct Rng {
-    state: u64,
+impl GeneticConfig {
+    /// Config tuned for seeded populations: larger pop, more generations, adaptive mutation.
+    /// Population size is 2× the seed count (min 80, max 200).
+    pub fn seeded(seed_population: Vec<CrewCandidate>) -> Self {
+        let pop_size = (seed_population.len() * 2).clamp(80, 200);
+        Self {
+            population_size: pop_size,
+            generations: 60,
+            sims_per_eval: 500,
+            stagnation_limit: Some(15),
+            seed_population,
+            adaptive_mutation: true,
+            mutation_rate_floor: 0.05,
+            mutation_rate_ceiling: 0.40,
+            ..Self::default()
+        }
+    }
 }
 
-impl Rng {
-    fn new(seed: u64) -> Self {
-        Self { state: seed }
-    }
-
-    fn next(&mut self) -> u64 {
-        self.state = self
-            .state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        self.state
-    }
-
+/// Extension trait providing additional RNG methods used by the genetic algorithm.
+trait RngExt {
     /// Returns a uniform index in [0, n) or 0 if n == 0.
+    fn index(&mut self, n: usize) -> usize;
+
+    /// Returns a uniform float in [0.0, 1.0).
+    fn next_f64(&mut self) -> f64;
+}
+
+impl RngExt for Rng {
     fn index(&mut self, n: usize) -> usize {
         if n == 0 {
             return 0;
         }
-        (self.next() as usize) % n
+        (self.next_u64() as usize) % n
     }
 
     fn next_f64(&mut self) -> f64 {
-        (self.next() as f64) / (u64::MAX as f64 + 1.0)
+        (self.next_u64() as f64) / (u64::MAX as f64 + 1.0)
     }
 }
 
@@ -119,14 +158,23 @@ fn random_crew(rng: &mut Rng, pools: &OfficerPools) -> Option<CrewCandidate> {
     })
 }
 
-/// Initialize population with random valid crews.
-fn init_population(
+/// Initialize population with optional seed candidates, filling remaining slots randomly.
+/// When `seed_candidates` is empty, this behaves identically to pure random initialization.
+fn init_population_seeded(
     pools: &OfficerPools,
     population_size: usize,
+    seed_candidates: &[CrewCandidate],
     seed: u64,
 ) -> Vec<CrewCandidate> {
-    let mut rng = Rng::new(seed);
     let mut pop = Vec::with_capacity(population_size);
+
+    // Inject seed candidates (up to population_size, preserving order = author priority).
+    for candidate in seed_candidates.iter().take(population_size) {
+        pop.push(candidate.clone());
+    }
+
+    // Fill remaining slots with random crews.
+    let mut rng = Rng::new(seed);
     let mut attempts = 0;
     const MAX_ATTEMPTS: usize = 50_000;
     while pop.len() < population_size && attempts < MAX_ATTEMPTS {
@@ -333,10 +381,23 @@ pub fn run_genetic_optimizer(
         None => return Vec::new(),
     };
 
-    let mut population = init_population(&pools, config.population_size, seed);
+    let mut population = init_population_seeded(
+        &pools,
+        config.population_size,
+        &config.seed_population,
+        seed,
+    );
     if population.is_empty() {
         return Vec::new();
     }
+
+    // Adaptive mutation: start low when seeded, ramp up on stagnation.
+    let is_seeded = !config.seed_population.is_empty();
+    let mut current_mutation_rate = if is_seeded && config.adaptive_mutation {
+        config.mutation_rate_floor
+    } else {
+        config.mutation_rate
+    };
 
     let mut best_fitness = -1.0f32;
     let mut best_individuals: Vec<CrewCandidate> = Vec::new();
@@ -367,6 +428,12 @@ pub fn run_genetic_optimizer(
             stagnation += 1;
         }
 
+        // Adaptive mutation: bump rate by 1.5× every 3 stagnant generations.
+        if config.adaptive_mutation && stagnation > 0 && stagnation.is_multiple_of(3) {
+            current_mutation_rate =
+                (current_mutation_rate * 1.5).min(config.mutation_rate_ceiling);
+        }
+
         on_progress(generation + 1, config.generations, best_fitness);
 
         if let Some(limit) = config.stagnation_limit {
@@ -388,7 +455,7 @@ pub fn run_genetic_optimizer(
             let pb = tournament_select(&population, &fitness, config.tournament_size, &mut rng);
             let mut child = crossover(&population[pa], &population[pb], &pools, &mut rng);
             repair_crew(&mut child, &pools, &mut rng);
-            mutate(&mut child, &pools, config.mutation_rate, &mut rng);
+            mutate(&mut child, &pools, current_mutation_rate, &mut rng);
             next_pop.push(child);
         }
         population = next_pop;
@@ -417,7 +484,8 @@ pub fn run_genetic_optimizer_ranked(
 
 #[cfg(test)]
 mod tests {
-    use super::{crossover, mutate, random_crew, repair_crew, GeneticConfig, Rng};
+    use super::{crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig};
+    use crate::combat::rng::Rng;
     use crate::optimizer::crew_generator::{CrewCandidate, OfficerPools};
 
     fn small_pools() -> OfficerPools {
@@ -446,6 +514,14 @@ mod tests {
         c.bridge.len() == 2 && c.below_decks.len() == 3
     }
 
+    fn make_crew(cap: &str, b: &[&str], bd: &[&str]) -> CrewCandidate {
+        CrewCandidate {
+            captain: cap.into(),
+            bridge: b.iter().map(|s| (*s).into()).collect(),
+            below_decks: bd.iter().map(|s| (*s).into()).collect(),
+        }
+    }
+
     #[test]
     fn random_crew_produces_valid_crew() {
         let pools = small_pools();
@@ -459,16 +535,8 @@ mod tests {
     #[test]
     fn crossover_produces_valid_crew() {
         let pools = small_pools();
-        let a = CrewCandidate {
-            captain: "CapA".into(),
-            bridge: vec!["B1".into(), "B2".into()],
-            below_decks: vec!["D1".into(), "D2".into(), "D3".into()],
-        };
-        let b = CrewCandidate {
-            captain: "CapB".into(),
-            bridge: vec!["B3".into(), "B4".into()],
-            below_decks: vec!["D4".into(), "D5".into(), "D1".into()],
-        };
+        let a = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
+        let b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
         let mut rng = Rng::new(99);
         for _ in 0..10 {
             let child = crossover(&a, &b, &pools, &mut rng);
@@ -479,11 +547,7 @@ mod tests {
     #[test]
     fn mutate_preserves_valid_crew() {
         let pools = small_pools();
-        let mut crew = CrewCandidate {
-            captain: "CapA".into(),
-            bridge: vec!["B1".into(), "B2".into()],
-            below_decks: vec!["D1".into(), "D2".into(), "D3".into()],
-        };
+        let mut crew = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
         let mut rng = Rng::new(77);
         for _ in 0..20 {
             mutate(&mut crew, &pools, 1.0, &mut rng);
@@ -501,6 +565,67 @@ mod tests {
         assert!(c.sims_per_eval >= 1);
         assert!(c.tournament_size >= 1);
         assert!(c.elitism_count >= 1);
+        assert!(c.seed_population.is_empty());
+        assert!(c.adaptive_mutation);
+        assert!(c.mutation_rate_floor < c.mutation_rate);
+        assert!(c.mutation_rate_ceiling > c.mutation_rate);
+    }
+
+    #[test]
+    fn seeded_config_scales_population() {
+        // 5 seeds → pop_size = max(10, 80) = 80
+        let seeds: Vec<CrewCandidate> = (0..5)
+            .map(|i| make_crew(&format!("Cap{i}"), &["B1", "B2"], &["D1", "D2", "D3"]))
+            .collect();
+        let cfg = GeneticConfig::seeded(seeds);
+        assert_eq!(cfg.population_size, 80);
+        assert_eq!(cfg.generations, 60);
+        assert_eq!(cfg.seed_population.len(), 5);
+
+        // 120 seeds → pop_size = min(240, 200) = 200
+        let many_seeds: Vec<CrewCandidate> = (0..120)
+            .map(|i| make_crew(&format!("Cap{i}"), &["B1", "B2"], &["D1", "D2", "D3"]))
+            .collect();
+        let cfg2 = GeneticConfig::seeded(many_seeds);
+        assert_eq!(cfg2.population_size, 200);
+    }
+
+    #[test]
+    fn init_population_seeded_uses_seeds() {
+        let pools = small_pools();
+        let seed_a = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
+        let seed_b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
+        let seeds = vec![seed_a.clone(), seed_b.clone()];
+
+        let pop = init_population_seeded(&pools, 6, &seeds, 42);
+        assert_eq!(pop.len(), 6, "population should be full");
+        // First two should be our seeds.
+        assert_eq!(pop[0].captain, seed_a.captain);
+        assert_eq!(pop[1].captain, seed_b.captain);
+        // All should be valid.
+        for crew in &pop {
+            assert!(valid_crew(crew), "crew should be valid: {:?}", crew);
+        }
+    }
+
+    #[test]
+    fn init_population_seeded_truncates_excess() {
+        let pools = small_pools();
+        let seeds: Vec<CrewCandidate> = (0..10)
+            .map(|i| make_crew(if i % 2 == 0 { "CapA" } else { "CapB" }, &["B1", "B2"], &["D1", "D2", "D3"]))
+            .collect();
+        let pop = init_population_seeded(&pools, 4, &seeds, 99);
+        assert_eq!(pop.len(), 4, "population should be capped at population_size");
+    }
+
+    #[test]
+    fn init_population_seeded_empty_is_random() {
+        let pools = small_pools();
+        let pop_seeded = init_population_seeded(&pools, 8, &[], 42);
+        assert_eq!(pop_seeded.len(), 8);
+        for crew in &pop_seeded {
+            assert!(valid_crew(crew));
+        }
     }
 
     #[test]

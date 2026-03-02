@@ -34,6 +34,9 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     println!("kobayashi server listening on http://{bind_addr}");
+    if std::env::var("KOBAYASHI_SYNC_TOKEN").is_err() {
+        println!("  WARNING: KOBAYASHI_SYNC_TOKEN is not set. The /api/sync/ingress endpoint is unprotected.");
+    }
     if static_files::static_files_available() {
         println!("  SPA: serving frontend from frontend/dist");
     } else {
