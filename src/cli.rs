@@ -15,6 +15,7 @@ pub enum Command {
     Optimize,
     Import,
     Validate,
+    Resolve,
 }
 
 pub fn parse_command(args: &[String]) -> Option<Command> {
@@ -24,6 +25,7 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
         Some("optimize") => Some(Command::Optimize),
         Some("import") => Some(Command::Import),
         Some("validate") => Some(Command::Validate),
+        Some("resolve") => Some(Command::Resolve),
         _ => None,
     }
 }
@@ -35,8 +37,9 @@ pub fn run_with_args(args: &[String]) -> i32 {
         Some(Command::Optimize) => handle_optimize(args),
         Some(Command::Import) => handle_import(args),
         Some(Command::Validate) => handle_validate(args),
+        Some(Command::Resolve) => handle_resolve(args),
         None => {
-            eprintln!("usage: kobayashi <serve|simulate|optimize|import|validate>");
+            eprintln!("usage: kobayashi <serve|simulate|optimize|import|validate|resolve>");
             2
         }
     }
@@ -281,4 +284,62 @@ fn parse_u64_arg(raw: Option<&String>, name: &str, default: u64) -> u64 {
             }
             default
         })
+}
+
+fn handle_resolve(args: &[String]) -> i32 {
+    let officer_id = args.get(2).map(|s| s.as_str()).unwrap_or("");
+    if officer_id.is_empty() {
+        eprintln!("Usage: kobayashi resolve <officer_id_or_name>");
+        return 2;
+    }
+
+    let lcars_officers = match crate::lcars::load_lcars_dir("data/officers") {
+        Ok(officers) => officers,
+        Err(err) => {
+            eprintln!("failed to load LCARS officers: {err}");
+            return 1;
+        }
+    };
+
+    let by_id = crate::lcars::index_lcars_officers_by_id(lcars_officers.clone());
+
+    // Try by id first, then by name (case-insensitive)
+    let officer = by_id.get(officer_id).cloned().or_else(|| {
+        let lower = officer_id.to_lowercase();
+        lcars_officers
+            .iter()
+            .find(|o| o.name.to_lowercase() == lower)
+            .cloned()
+    });
+
+    match officer {
+        Some(o) => {
+            let opts = crate::lcars::ResolveOptions::default();
+            let buff_set = crate::lcars::resolve_crew_to_buff_set(
+                &o.id,
+                &[o.id.clone()],
+                &[o.id.clone()],
+                &by_id,
+                &opts,
+            );
+            println!("Officer: {} ({})", o.name, o.id);
+            println!("Resolved BuffSet:");
+            println!("{:#?}", buff_set);
+            0
+        }
+        None => {
+            eprintln!("Officer '{}' not found in LCARS definitions", officer_id);
+            // List available officers
+            let mut names: Vec<&str> = lcars_officers.iter().map(|o| o.name.as_str()).collect();
+            names.sort();
+            eprintln!("Available officers ({}):", names.len());
+            for name in names.iter().take(20) {
+                eprintln!("  {}", name);
+            }
+            if names.len() > 20 {
+                eprintln!("  ... and {} more", names.len() - 20);
+            }
+            1
+        }
+    }
 }

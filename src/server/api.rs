@@ -73,6 +73,8 @@ pub struct OptimizeResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration_ms: Option<u64>,
     pub notes: Vec<&'static str>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -243,6 +245,8 @@ pub struct SimulateResponse {
     pub status: &'static str,
     pub stats: SimulateStats,
     pub seed: u64,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -374,6 +378,7 @@ pub fn simulate_payload(registry: &DataRegistry, body: &str) -> Result<String, S
             win_rate_95_ci: Some(ci),
         },
         seed,
+        warnings: Vec::new(),
     };
     serde_json::to_string_pretty(&response).map_err(SimulateError::Parse)
 }
@@ -475,6 +480,79 @@ impl From<crate::data::import::ImportError> for ImportError {
     fn from(e: crate::data::import::ImportError) -> Self {
         Self::Import(e)
     }
+}
+
+#[derive(Debug)]
+pub enum OfficerResolveError {
+    NotFound,
+    Io(std::io::Error),
+    Serialize(serde_json::Error),
+}
+
+impl fmt::Display for OfficerResolveError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NotFound => write!(f, "Officer not found"),
+            Self::Io(e) => write!(f, "{e}"),
+            Self::Serialize(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for OfficerResolveError {}
+
+pub fn officer_resolved_payload(registry: &DataRegistry, officer_id: &str) -> Result<String, OfficerResolveError> {
+    // Get LCARS officers from registry
+    let lcars_officers = registry
+        .lcars_officers()
+        .ok_or(OfficerResolveError::NotFound)?;
+
+    // Try to find the officer by id or name (case-insensitive)
+    let officer = lcars_officers
+        .iter()
+        .find(|o| o.id == officer_id)
+        .or_else(|| {
+            let lower = officer_id.to_lowercase();
+            lcars_officers
+                .iter()
+                .find(|o| o.name.to_lowercase() == lower)
+        })
+        .ok_or(OfficerResolveError::NotFound)?;
+
+    // Build the LCARS officer map
+    let by_id = crate::lcars::index_lcars_officers_by_id(lcars_officers.to_vec());
+
+    // Resolve the officer
+    let opts = crate::lcars::ResolveOptions::default();
+    let buff_set = crate::lcars::resolve_crew_to_buff_set(
+        &officer.id,
+        &[officer.id.clone()],
+        &[officer.id.clone()],
+        &by_id,
+        &opts,
+    );
+
+    // Create a response struct
+    #[derive(Serialize)]
+    struct ResolvedOfficer {
+        id: String,
+        name: String,
+        static_buffs: std::collections::HashMap<String, f64>,
+        crew_config: String,  // Debug format since CrewConfiguration doesn't impl Serialize
+        proc_chance: f64,
+        proc_multiplier: f64,
+    }
+
+    let response = ResolvedOfficer {
+        id: officer.id.clone(),
+        name: officer.name.clone(),
+        static_buffs: buff_set.static_buffs,
+        crew_config: format!("{:#?}", buff_set.crew),
+        proc_chance: buff_set.proc_chance,
+        proc_multiplier: buff_set.proc_multiplier,
+    };
+
+    serde_json::to_string_pretty(&response).map_err(OfficerResolveError::Serialize)
 }
 
 const PRESETS_DIR: &str = "data/presets";
@@ -687,21 +765,24 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
 
     let start = Instant::now();
 
-    // Phase 1: heuristics crews (always run first when seeds are specified).
-    let mut all_results: Vec<SimulationResult> = if !heuristics_seeds.is_empty() {
-        let h_candidates = load_heuristics_candidates(registry, heuristics_seeds, bd_strategy);
-        if !h_candidates.is_empty() {
-            run_monte_carlo_parallel_with_registry(
-                registry,
-                &request.ship,
-                &request.hostile,
-                &h_candidates,
-                sims as usize,
-                seed,
-            )
-        } else {
-            Vec::new()
-        }
+    // Load heuristics candidates (shared between all strategies).
+    let h_candidates = if !heuristics_seeds.is_empty() {
+        load_heuristics_candidates(registry, heuristics_seeds, bd_strategy)
+    } else {
+        Vec::new()
+    };
+    let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
+
+    // Phase 1: evaluate heuristics via MC — but NOT for genetic strategy (seeds go into GA instead).
+    let mut all_results: Vec<SimulationResult> = if !h_candidates.is_empty() && !is_seeded_genetic {
+        run_monte_carlo_parallel_with_registry(
+            registry,
+            &request.ship,
+            &request.hostile,
+            &h_candidates,
+            sims as usize,
+            seed,
+        )
     } else {
         Vec::new()
     };
@@ -716,6 +797,7 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
             max_candidates: request.max_candidates.map(|n| n as usize),
             strategy,
             only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
+            seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
         };
         all_results.extend(optimize_scenario_with_registry(registry, &scenario).into_iter().map(|r| SimulationResult {
             candidate: CrewCandidate {
@@ -735,6 +817,8 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
 
     let engine = if heuristics_only {
         "heuristics"
+    } else if is_seeded_genetic {
+        "seeded_genetic"
     } else {
         match strategy {
             OptimizerStrategy::Exhaustive => "optimizer_v1",
@@ -742,7 +826,10 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
         }
     };
     let mut notes = vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];
-    if !heuristics_seeds.is_empty() {
+    if is_seeded_genetic {
+        let note = "GA population seeded with heuristics crews.";
+        notes.insert(0, note);
+    } else if !heuristics_seeds.is_empty() {
         notes.insert(0, "Heuristics crews were evaluated first.");
     }
 
@@ -769,6 +856,7 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
             .collect(),
         duration_ms: Some(duration_ms),
         notes,
+        warnings: Vec::new(),
     };
 
     serde_json::to_string_pretty(&response).map_err(OptimizePayloadError::Parse)
@@ -873,34 +961,37 @@ pub fn optimize_start_payload(
         let start = Instant::now();
         let registry_ref = registry.as_ref();
 
-        // Phase 1: heuristics
-        let mut all_results: Vec<SimulationResult> = if !heuristics_seeds.is_empty() {
-            let h_candidates = load_heuristics_candidates(registry_ref, &heuristics_seeds, bd_strategy);
-            if !h_candidates.is_empty() {
-                let h_total = h_candidates.len() as u32;
-                if let Ok(mut map) = optimize_jobs().lock() {
-                    if let Some(state) = map.get_mut(&job_id_clone) {
-                        state.total_crews = h_total;
-                    }
+        // Load heuristics candidates (shared between all strategies).
+        let h_candidates = if !heuristics_seeds.is_empty() {
+            load_heuristics_candidates(registry_ref, &heuristics_seeds, bd_strategy)
+        } else {
+            Vec::new()
+        };
+        let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
+
+        // Phase 1: evaluate heuristics via MC — but NOT for genetic strategy (seeds go into GA).
+        let mut all_results: Vec<SimulationResult> = if !h_candidates.is_empty() && !is_seeded_genetic {
+            let h_total = h_candidates.len() as u32;
+            if let Ok(mut map) = optimize_jobs().lock() {
+                if let Some(state) = map.get_mut(&job_id_clone) {
+                    state.total_crews = h_total;
                 }
-                let results = run_monte_carlo_parallel_with_registry(
-                    registry_ref,
-                    &ship,
-                    &hostile,
-                    &h_candidates,
-                    sims as usize,
-                    seed,
-                );
-                if let Ok(mut map) = optimize_jobs().lock() {
-                    if let Some(state) = map.get_mut(&job_id_clone) {
-                        state.crews_done = h_total;
-                        state.progress = if heuristics_only { 100 } else { 10 };
-                    }
-                }
-                results
-            } else {
-                Vec::new()
             }
+            let results = run_monte_carlo_parallel_with_registry(
+                registry_ref,
+                &ship,
+                &hostile,
+                &h_candidates,
+                sims as usize,
+                seed,
+            );
+            if let Ok(mut map) = optimize_jobs().lock() {
+                if let Some(state) = map.get_mut(&job_id_clone) {
+                    state.crews_done = h_total;
+                    state.progress = if heuristics_only { 100 } else { 10 };
+                }
+            }
+            results
         } else {
             Vec::new()
         };
@@ -915,12 +1006,13 @@ pub fn optimize_start_payload(
                 max_candidates,
                 strategy,
                 only_below_decks_with_ability: prioritize_below_decks_ability,
+                seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
             };
             let normal_results = optimize_scenario_with_progress_with_registry(
                 registry_ref,
                 &scenario,
                 |crews_done, total_crews| {
-                    let base_progress = if !heuristics_seeds.is_empty() { 10u8 } else { 0u8 };
+                    let base_progress = if !heuristics_seeds.is_empty() && !is_seeded_genetic { 10u8 } else { 0u8 };
                     let progress = if total_crews == 0 {
                         base_progress
                     } else {
@@ -954,6 +1046,8 @@ pub fn optimize_start_payload(
 
         let engine = if heuristics_only {
             "heuristics"
+        } else if is_seeded_genetic {
+            "seeded_genetic"
         } else {
             match strategy {
                 OptimizerStrategy::Exhaustive => "optimizer_v1",
@@ -961,7 +1055,10 @@ pub fn optimize_start_payload(
             }
         };
         let mut notes = vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];
-        if !heuristics_seeds.is_empty() {
+        if is_seeded_genetic {
+            let note = "GA population seeded with heuristics crews.";
+            notes.insert(0, note);
+        } else if !heuristics_seeds.is_empty() {
             notes.insert(0, "Heuristics crews were evaluated first.");
         }
 
@@ -988,6 +1085,7 @@ pub fn optimize_start_payload(
                 .collect(),
             duration_ms: Some(duration_ms),
             notes,
+            warnings: Vec::new(),
         };
 
         if let Ok(mut map) = optimize_jobs().lock() {
