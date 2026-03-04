@@ -8,6 +8,7 @@ pub mod import;
 pub mod loader;
 pub mod officer;
 pub mod profile;
+pub mod profile_index;
 pub mod registry;
 pub mod ship;
 pub mod syndicate_combat;

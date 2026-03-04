@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import ProfileSwitcher from './ProfileSwitcher';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Workspace' },
@@ -45,9 +46,27 @@ export default function Shell({ children }: { children: ReactNode }) {
           })}
         </nav>
       </aside>
-      <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        {children}
-      </main>
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <header
+          style={{
+            height: 48,
+            padding: '0 1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--surface)',
+          }}
+        >
+          <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text)' }}>
+            Kobayashi
+          </span>
+          <ProfileSwitcher />
+        </header>
+        <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,8 @@
 
 use axum::http::StatusCode;
 use crate::data::import;
+use crate::data::profile_index::{load_profile_index, profile_id_by_sync_token, profile_path,
+    FORBIDDEN_TECH_IMPORTED, ROSTER_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED};
 use chrono::{TimeZone, Utc};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -30,7 +32,8 @@ static SYNC_BUILDINGS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_FT_MTX: Mutex<()> = Mutex::new(());
 
-/// Handles POST /api/sync/ingress: validates token, parses body, dispatches by type.
+/// Handles POST /api/sync/ingress: token-based routing. The stfc-sync-token header
+/// identifies the profile; sync data is written to that profile's paths.
 /// Returns `(StatusCode, json_body_string)`.
 pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, String) {
     let body_len = body.len();
@@ -38,14 +41,18 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
     append_sync_log(&format!("{} POST /api/sync/ingress body_len={}", ts, body_len));
     eprintln!("[sync] POST /api/sync/ingress received, body_len={}", body_len);
 
-    let expected_token = std::env::var("KOBAYASHI_SYNC_TOKEN").ok();
-    if let Some(ref expected) = expected_token {
-        let provided = sync_token.unwrap_or("").trim();
-        if provided != expected.as_str() {
-            eprintln!("[sync] 401 Unauthorized (invalid or missing stfc-sync-token)");
-            return json_error_response(StatusCode::UNAUTHORIZED, "Invalid or missing stfc-sync-token");
-        }
-    }
+    let index = load_profile_index();
+    let profile_id = profile_id_by_sync_token(&index, sync_token.unwrap_or(""));
+    let Some(ref pid) = profile_id else {
+        eprintln!("[sync] 401 Unauthorized (no profile for stfc-sync-token)");
+        return json_error_response(StatusCode::UNAUTHORIZED, "Invalid or missing stfc-sync-token");
+    };
+
+    let roster_path = profile_path(pid, ROSTER_IMPORTED).to_string_lossy().to_string();
+    let research_path = profile_path(pid, RESEARCH_IMPORTED).to_string_lossy().to_string();
+    let buildings_path = profile_path(pid, BUILDINGS_IMPORTED).to_string_lossy().to_string();
+    let ships_path = profile_path(pid, SHIPS_IMPORTED).to_string_lossy().to_string();
+    let ft_path = profile_path(pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
 
     let payload: Vec<serde_json::Value> = match serde_json::from_str(body) {
         Ok(arr) => arr,
@@ -73,7 +80,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
 
     let accepted = match type_lower.as_str() {
         "officer" => {
-            match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, import::DEFAULT_IMPORT_OUTPUT_PATH) {
+            match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, &roster_path) {
                 Ok(accepted_count) => {
                     eprintln!("[sync] 200 OK accepted officer({accepted_count})");
                     vec![format!("officer({accepted_count})")]
@@ -85,7 +92,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
             }
         }
         "research" => {
-            match apply_research_sync(&payload, import::DEFAULT_RESEARCH_IMPORT_PATH) {
+            match apply_research_sync(&payload, &research_path) {
                 Ok(accepted_count) => {
                     eprintln!("[sync] 200 OK accepted research({accepted_count})");
                     vec![format!("research({accepted_count})")]
@@ -97,7 +104,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
             }
         }
         "buildings" | "module" => {
-            match apply_buildings_sync(&payload, import::DEFAULT_BUILDINGS_IMPORT_PATH) {
+            match apply_buildings_sync(&payload, &buildings_path) {
                 Ok(accepted_count) => {
                     eprintln!("[sync] 200 OK accepted buildings({accepted_count})");
                     vec![format!("buildings({accepted_count})")]
@@ -109,7 +116,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
             }
         }
         "ships" | "ship" => {
-            match apply_ships_sync(&payload, import::DEFAULT_SHIPS_IMPORT_PATH) {
+            match apply_ships_sync(&payload, &ships_path) {
                 Ok(accepted_count) => {
                     eprintln!("[sync] 200 OK accepted ships({accepted_count})");
                     vec![format!("ships({accepted_count})")]
@@ -121,7 +128,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
             }
         }
         "ft" => {
-            match apply_ft_sync(&payload, import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH) {
+            match apply_ft_sync(&payload, &ft_path) {
                 Ok(accepted_count) => {
                     eprintln!("[sync] 200 OK accepted ft({accepted_count})");
                     vec![format!("ft({accepted_count})")]
@@ -571,10 +578,27 @@ mod tests {
     use super::ingress_payload;
     use axum::http::StatusCode;
     use crate::data::import;
+    use crate::data::profile_index::{create_profile, load_profile_index, profile_path,
+        RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED, FORBIDDEN_TECH_IMPORTED};
+    use std::sync::Mutex;
+    use uuid::Uuid;
+
+    /// Serialize sync tests to avoid races on shared profiles/index.json.
+    static SYNC_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    /// Create a unique test profile and return (sync_token, profile_id).
+    fn ensure_test_profile() -> (String, String) {
+        let mut index = load_profile_index();
+        let id = format!("sync_test_{}", Uuid::new_v4().as_simple());
+        let entry = create_profile(&mut index, Some(&id), "Sync Test").expect("create test profile");
+        (entry.sync_token, entry.id)
+    }
 
     #[test]
     fn ingress_empty_array_returns_200_and_accepted() {
-        let (status, body) = ingress_payload("[]", None);
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, _) = ensure_test_profile();
+        let (status, body) = ingress_payload("[]", Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("\"status\": \"ok\""));
         assert!(body.contains("\"accepted\""));
@@ -582,31 +606,40 @@ mod tests {
 
     #[test]
     fn ingress_non_array_body_returns_400() {
-        let (status, body) = ingress_payload("{}", None);
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, _) = ensure_test_profile();
+        let (status, body) = ingress_payload("{}", Some(&token));
         assert_eq!(status, StatusCode::BAD_REQUEST);
         assert!(body.contains("array"));
     }
 
     #[test]
     fn ingress_unknown_type_returns_200_and_accepts_type() {
-        let (status, body) = ingress_payload(r#"[{"type":"unknown","x":1}]"#, None);
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, _) = ensure_test_profile();
+        let (status, body) = ingress_payload(r#"[{"type":"unknown","x":1}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("unknown"));
     }
 
     #[test]
     fn ingress_research_type_returns_200() {
-        let (status, body) = ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, None);
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, _) = ensure_test_profile();
+        let (status, body) = ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("research"));
     }
 
     #[test]
     fn ingress_research_persists_to_file() {
-        let (status, body) = ingress_payload(r#"[{"type":"research","rid":919291,"level":3}]"#, None);
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id) = ensure_test_profile();
+        let (status, body) = ingress_payload(r#"[{"type":"research","rid":919291,"level":3}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("research(1)"));
-        let entries = import::load_imported_research(import::DEFAULT_RESEARCH_IMPORT_PATH)
+        let research_path = profile_path(&profile_id, RESEARCH_IMPORTED).to_string_lossy().to_string();
+        let entries = import::load_imported_research(&research_path)
             .expect("research.imported.json should exist after sync");
         assert!(
             entries.iter().any(|e| e.rid == 919291 && e.level == 3),
@@ -617,10 +650,13 @@ mod tests {
 
     #[test]
     fn ingress_buildings_persist_to_file() {
-        let (status, body) = ingress_payload(r#"[{"type":"buildings","bid":919292,"level":5}]"#, None);
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id) = ensure_test_profile();
+        let (status, body) = ingress_payload(r#"[{"type":"buildings","bid":919292,"level":5}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("buildings(1)"));
-        let entries = import::load_imported_buildings(import::DEFAULT_BUILDINGS_IMPORT_PATH)
+        let buildings_path = profile_path(&profile_id, BUILDINGS_IMPORTED).to_string_lossy().to_string();
+        let entries = import::load_imported_buildings(&buildings_path)
             .expect("buildings.imported.json should exist after sync");
         assert!(
             entries.iter().any(|e| e.bid == 919292 && e.level == 5),
@@ -631,13 +667,16 @@ mod tests {
 
     #[test]
     fn ingress_ships_persist_to_file() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id) = ensure_test_profile();
         let (status, body) = ingress_payload(
             r#"[{"type":"ships","psid":919293,"tier":2,"level":10,"level_percentage":0.5,"hull_id":100,"components":[1,2,3]}]"#,
-            None,
+            Some(&token),
         );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("ships(1)"));
-        let entries = import::load_imported_ships(import::DEFAULT_SHIPS_IMPORT_PATH)
+        let ships_path = profile_path(&profile_id, SHIPS_IMPORTED).to_string_lossy().to_string();
+        let entries = import::load_imported_ships(&ships_path)
             .expect("ships.imported.json should exist after sync");
         assert!(
             entries.iter().any(|e| {
@@ -650,10 +689,13 @@ mod tests {
 
     #[test]
     fn ingress_module_type_persists_to_file() {
-        let (status, body) = ingress_payload(r#"[{"type":"module","bid":919294,"level":7}]"#, None);
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id) = ensure_test_profile();
+        let (status, body) = ingress_payload(r#"[{"type":"module","bid":919294,"level":7}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("buildings(1)"));
-        let entries = import::load_imported_buildings(import::DEFAULT_BUILDINGS_IMPORT_PATH)
+        let buildings_path = profile_path(&profile_id, BUILDINGS_IMPORTED).to_string_lossy().to_string();
+        let entries = import::load_imported_buildings(&buildings_path)
             .expect("buildings.imported.json should exist after sync");
         assert!(
             entries.iter().any(|e| e.bid == 919294 && e.level == 7),
@@ -664,13 +706,16 @@ mod tests {
 
     #[test]
     fn ingress_ship_type_persists_to_file() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id) = ensure_test_profile();
         let (status, body) = ingress_payload(
             r#"[{"type":"ship","psid":919295,"tier":3,"level":15,"level_percentage":0.0,"hull_id":200,"components":[]}]"#,
-            None,
+            Some(&token),
         );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("ships(1)"));
-        let entries = import::load_imported_ships(import::DEFAULT_SHIPS_IMPORT_PATH)
+        let ships_path = profile_path(&profile_id, SHIPS_IMPORTED).to_string_lossy().to_string();
+        let entries = import::load_imported_ships(&ships_path)
             .expect("ships.imported.json should exist after sync");
         assert!(
             entries.iter().any(|e| {
@@ -683,13 +728,16 @@ mod tests {
 
     #[test]
     fn ingress_ft_persists_to_file() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id) = ensure_test_profile();
         let (status, body) = ingress_payload(
             r#"[{"type":"ft","fid":919296,"tier":1,"level":5,"shard_count":10}]"#,
-            None,
+            Some(&token),
         );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("ft(1)"));
-        let entries = import::load_imported_forbidden_tech(import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH)
+        let ft_path = profile_path(&profile_id, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+        let entries = import::load_imported_forbidden_tech(&ft_path)
             .expect("forbidden_tech.imported.json should exist after sync");
         assert!(
             entries.iter().any(|e| {

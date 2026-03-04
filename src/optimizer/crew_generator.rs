@@ -1,5 +1,6 @@
 use crate::data::data_registry::DataRegistry;
-use crate::data::import::{load_imported_roster_ids_unlocked_only, DEFAULT_IMPORT_OUTPUT_PATH};
+use crate::data::import::load_imported_roster_ids_unlocked_only;
+use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 
 /// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
@@ -27,6 +28,7 @@ fn has_below_decks_ability(officer: &Officer) -> bool {
 pub fn build_officer_pools_from_registry(
     registry: &DataRegistry,
     only_below_decks_with_ability: bool,
+    profile_id: Option<&str>,
 ) -> Option<OfficerPools> {
     let officers: Vec<Officer> = registry
         .officers()
@@ -37,7 +39,10 @@ pub fn build_officer_pools_from_registry(
 
     const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
     let mut officers = officers;
-    if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH) {
+    let roster_path = profile_path(&resolve_profile_id_for_api(profile_id), ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(&roster_path) {
         if roster_ids.len() >= MIN_OFFICERS {
             officers.retain(|officer| roster_ids.contains(&officer.id));
         }
@@ -109,7 +114,10 @@ pub fn build_officer_pools(only_below_decks_with_ability: bool) -> Option<Office
         .unwrap_or_default();
 
     const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
-    if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH) {
+    let roster_path = profile_path(&resolve_profile_id_for_api(None), ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(&roster_path) {
         if roster_ids.len() >= MIN_OFFICERS {
             officers.retain(|officer| roster_ids.contains(&officer.id));
         }
@@ -230,8 +238,13 @@ impl CrewGenerator {
         ship: &str,
         hostile: &str,
         seed: u64,
+        profile_id: Option<&str>,
     ) -> Vec<CrewCandidate> {
-        let mut pools = match build_officer_pools_from_registry(registry, self.strategy.only_below_decks_with_ability) {
+        let mut pools = match build_officer_pools_from_registry(
+            registry,
+            self.strategy.only_below_decks_with_ability,
+            profile_id,
+        ) {
             Some(p) => p,
             None => return Vec::new(),
         };
@@ -292,8 +305,13 @@ impl CrewGenerator {
         ship: &str,
         hostile: &str,
         seed: u64,
+        profile_id: Option<&str>,
     ) -> usize {
-        let mut pools = match build_officer_pools_from_registry(registry, self.strategy.only_below_decks_with_ability) {
+        let mut pools = match build_officer_pools_from_registry(
+            registry,
+            self.strategy.only_below_decks_with_ability,
+            profile_id,
+        ) {
             Some(p) => p,
             None => return 0,
         };

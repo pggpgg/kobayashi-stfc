@@ -20,12 +20,14 @@ import {
   type CrewRecommendation,
   type Preset,
 } from './api';
+import { useProfile } from '../contexts/ProfileContext';
 
 const POLL_INTERVAL_MS = 350;
 
 export function useWorkspace() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { activeProfileId } = useProfile();
 
   // Scenario state
   const [shipLevel, setShipLevel] = useState(50);
@@ -51,7 +53,7 @@ export function useWorkspace() {
 
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
-  const [maxCandidates, setMaxCandidates] = useState<number | null>(null);
+  const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
   const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] = useState(false);
 
   // Heuristics state
@@ -98,13 +100,16 @@ export function useWorkspace() {
       return;
     }
     let cancelled = false;
-    getOptimizeEstimate({
-      ship,
-      hostile,
-      sims: simsPerCrew,
-      max_candidates: maxCandidates ?? undefined,
-      prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
-    })
+    getOptimizeEstimate(
+      {
+        ship,
+        hostile,
+        sims: simsPerCrew,
+        max_candidates: maxCandidates ?? undefined,
+        prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
+      },
+      activeProfileId,
+    )
       .then((data) => {
         if (!cancelled) setEstimate(data);
       })
@@ -112,7 +117,7 @@ export function useWorkspace() {
         if (!cancelled) setEstimate(null);
       });
     return () => { cancelled = true; };
-  }, [shipId, scenarioId, simsPerCrew, maxCandidates, prioritizeBelowDecksAbility]);
+  }, [shipId, scenarioId, simsPerCrew, maxCandidates, prioritizeBelowDecksAbility, activeProfileId]);
 
   // Fetch available heuristic seeds
   useEffect(() => {
@@ -155,16 +160,19 @@ export function useWorkspace() {
     setError(null);
     setLoadingSim(true);
     try {
-      const res = await simulate({
-        ship: shipId || 'Saladin',
-        hostile: scenarioId || 'Explorer_30',
-        crew: {
-          captain: crew.captain,
-          bridge: crew.bridge,
-          below_deck: crew.belowDeck,
+      const res = await simulate(
+        {
+          ship: shipId || 'Saladin',
+          hostile: scenarioId || 'Explorer_30',
+          crew: {
+            captain: crew.captain,
+            bridge: crew.bridge,
+            below_deck: crew.belowDeck,
+          },
+          num_sims: 5000,
         },
-        num_sims: 5000,
-      });
+        activeProfileId,
+      );
       setSimResult(res.stats);
       setRecommendations([]);
     } catch (e) {
@@ -183,18 +191,21 @@ export function useWorkspace() {
     setOptimizeCrewsDone(0);
     setOptimizeTotalCrews(null);
     try {
-      const { job_id } = await optimizeStart({
-        ship: shipId || 'Saladin',
-        hostile: scenarioId || 'Explorer_30',
-        sims: simsPerCrew,
-        max_candidates: maxCandidates ?? undefined,
-        prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
-        heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
-        heuristics_only: heuristicsOnly || undefined,
-        below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
-      });
+      const { job_id } = await optimizeStart(
+        {
+          ship: shipId || 'Saladin',
+          hostile: scenarioId || 'Explorer_30',
+          sims: simsPerCrew,
+          max_candidates: maxCandidates ?? undefined,
+          prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
+          heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
+          heuristics_only: heuristicsOnly || undefined,
+          below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
+        },
+        activeProfileId,
+      );
       const poll = () => {
-        getOptimizeStatus(job_id)
+        getOptimizeStatus(job_id, activeProfileId)
           .then((status) => {
             if (status.progress != null) setOptimizeProgress(status.progress);
             if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
@@ -251,16 +262,19 @@ export function useWorkspace() {
     setError(null);
     setSavingPreset(true);
     try {
-      await savePreset({
-        name: savePresetName || 'Unnamed',
-        ship: shipId || 'Saladin',
-        scenario: scenarioId || 'Explorer_30',
-        crew: {
-          captain: crew.captain,
-          bridge: crew.bridge,
-          below_deck: crew.belowDeck,
+      await savePreset(
+        {
+          name: savePresetName || 'Unnamed',
+          ship: shipId || 'Saladin',
+          scenario: scenarioId || 'Explorer_30',
+          crew: {
+            captain: crew.captain,
+            bridge: crew.bridge,
+            below_deck: crew.belowDeck,
+          },
         },
-      });
+        activeProfileId,
+      );
       setShowSavePreset(false);
       setSavePresetName('');
     } catch (e) {

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPresets, fetchPreset, formatApiError } from '../lib/api';
 import type { PresetSummary } from '../lib/api';
+import { useProfile } from '../contexts/ProfileContext';
 
 export default function ResultsLibrary() {
+  const { activeProfileId } = useProfile();
   const [presets, setPresets] = useState<PresetSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,7 +13,7 @@ export default function ResultsLibrary() {
 
   useEffect(() => {
     let c = false;
-    fetchPresets()
+    fetchPresets(activeProfileId)
       .then((list) => {
         if (!c) setPresets(list);
       })
@@ -22,12 +24,12 @@ export default function ResultsLibrary() {
         if (!c) setLoading(false);
       });
     return () => { c = true; };
-  }, []);
+  }, [activeProfileId]);
 
   const handleLoad = async (id: string) => {
     setError(null);
     try {
-      const preset = await fetchPreset(id);
+      const preset = await fetchPreset(id, activeProfileId);
       navigate('/', { state: { preset } });
     } catch (e) {
       setError(formatApiError(e));

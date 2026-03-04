@@ -47,6 +47,8 @@ pub struct OptimizationScenario<'a> {
     /// When non-empty, seeds the genetic algorithm's initial population with these crews.
     /// Only used when strategy is Genetic; ignored for Exhaustive.
     pub seed_population: Vec<CrewCandidate>,
+    /// Profile id for roster/profile/forbidden-tech paths. None = use default profile.
+    pub profile_id: Option<&'a str>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -60,6 +62,7 @@ impl Default for OptimizationScenario<'_> {
             strategy: OptimizerStrategy::Exhaustive,
             only_below_decks_with_ability: false,
             seed_population: Vec::new(),
+            profile_id: None,
         }
     }
 }
@@ -92,8 +95,13 @@ fn optimize_scenario_exhaustive_with_registry(
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
-    let candidates =
-        generator.generate_candidates_from_registry(registry, scenario.ship, scenario.hostile, scenario.seed);
+    let candidates = generator.generate_candidates_from_registry(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        scenario.seed,
+        scenario.profile_id,
+    );
     let simulation_results = run_monte_carlo_parallel_with_registry(
         registry,
         scenario.ship,
@@ -101,6 +109,7 @@ fn optimize_scenario_exhaustive_with_registry(
         &candidates,
         scenario.simulation_count.max(1),
         scenario.seed,
+        scenario.profile_id,
     );
     rank_results(simulation_results)
 }
@@ -228,6 +237,7 @@ where
                 scenario.ship,
                 scenario.hostile,
                 scenario.seed,
+                scenario.profile_id,
             );
             let total = candidates.len();
             if total == 0 {
@@ -249,6 +259,7 @@ where
                     batch,
                     sim_count,
                     scenario.seed,
+                    scenario.profile_id,
                 );
                 all_results.extend(batch_results);
                 on_progress(end as u32, total as u32);
@@ -262,7 +273,12 @@ where
     }
 }
 
-pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCrewResult> {
+pub fn optimize_crew(
+    ship: &str,
+    hostile: &str,
+    sim_count: u32,
+    profile_id: Option<&str>,
+) -> Vec<RankedCrewResult> {
     optimize_scenario(&OptimizationScenario {
         ship,
         hostile,
@@ -272,6 +288,7 @@ pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCre
         strategy: OptimizerStrategy::Exhaustive,
         only_below_decks_with_ability: false,
         seed_population: Vec::new(),
+        profile_id,
     })
 }
 
@@ -290,6 +307,7 @@ mod tests {
             strategy: OptimizerStrategy::Genetic,
             only_below_decks_with_ability: false,
             seed_population: Vec::new(),
+            profile_id: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {

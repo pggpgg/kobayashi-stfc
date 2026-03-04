@@ -2,8 +2,9 @@ use std::env;
 use std::fmt::Write as _;
 
 use crate::combat::{simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode};
-use crate::data::import::{import_roster_csv, import_spocks_export};
-use crate::data::profile::{apply_profile_to_attacker, load_profile, DEFAULT_PROFILE_PATH};
+use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
+use crate::data::profile::{apply_profile_to_attacker, load_profile};
+use crate::data::profile_index::{migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON, ROSTER_IMPORTED};
 use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
 use crate::server;
@@ -31,6 +32,8 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
 }
 
 pub fn run_with_args(args: &[String]) -> i32 {
+    let _ = migrate_from_legacy_if_needed();
+
     match parse_command(args) {
         Some(Command::Serve) => handle_serve(),
         Some(Command::Simulate) => handle_simulate(args),
@@ -56,10 +59,25 @@ fn handle_serve() -> i32 {
     }
 }
 
+fn parse_profile_arg(args: &[String]) -> Option<String> {
+    let mut idx = 0;
+    while idx < args.len() {
+        if args[idx] == "--profile" {
+            return args.get(idx + 1).cloned();
+        }
+        idx += 1;
+    }
+    None
+}
+
 fn handle_simulate(args: &[String]) -> i32 {
     let rounds = parse_u32_arg(args.get(2), "rounds", 3);
     let seed = parse_u64_arg(args.get(3), "seed", 7);
     let as_table = args.iter().any(|arg| arg == "--table");
+
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
+    let profile_path_str = profile_path(&profile_id, PROFILE_JSON).to_string_lossy().to_string();
+    let player_profile = load_profile(&profile_path_str);
 
     let attacker = apply_profile_to_attacker(
         Combatant {
@@ -81,7 +99,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             isolytic_defense: 0.0,
             weapons: vec![],
         },
-        &load_profile(DEFAULT_PROFILE_PATH),
+        &player_profile,
     );
     let defender = Combatant {
         id: "hostile".to_string(),
@@ -140,8 +158,9 @@ fn handle_optimize(args: &[String]) -> i32 {
     let ship = args.get(2).map(String::as_str).unwrap_or("enterprise");
     let hostile = args.get(3).map(String::as_str).unwrap_or("swarm");
     let sims = parse_u32_arg(args.get(4), "sim_count", 250);
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
 
-    let ranked = optimize_crew(ship, hostile, sims);
+    let ranked = optimize_crew(ship, hostile, sims, Some(profile_id.as_str()));
     match serde_json::to_string_pretty(&ranked) {
         Ok(payload) => {
             println!("{payload}");
@@ -155,16 +174,27 @@ fn handle_optimize(args: &[String]) -> i32 {
 }
 
 fn handle_import(args: &[String]) -> i32 {
-    let Some(path) = args.get(2) else {
-        eprintln!("usage: kobayashi import <path>");
-        eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
-        return 2;
+    let raw = match args.get(2).filter(|s| !s.starts_with("--")) {
+        Some(p) => p.clone(),
+        None => {
+            eprintln!("usage: kobayashi import <path> [--profile <id>]");
+            eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
+            return 2;
+        }
+    };
+    let path = if raw.contains('/') || raw.contains('\\') {
+        raw
+    } else {
+        format!("rosters/{raw}")
     };
 
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
+    let output_path = profile_path(&profile_id, ROSTER_IMPORTED).to_string_lossy().to_string();
+
     let result = if path.ends_with(".txt") {
-        import_roster_csv(path)
+        import_roster_csv_to(&path, &output_path)
     } else if path.ends_with(".json") {
-        import_spocks_export(path)
+        import_spocks_export_to(&path, &output_path)
     } else {
         eprintln!("import expects a .txt file (roster) or .json file (Spocks export); got: {path}");
         return 2;

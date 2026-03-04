@@ -4,8 +4,11 @@ use crate::data::heuristics::{
     DEFAULT_HEURISTICS_DIR,
 };
 use crate::data::import::{
-    import_roster_csv, import_spocks_export, load_imported_roster_ids_unlocked_only,
-    DEFAULT_IMPORT_OUTPUT_PATH,
+    import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
+};
+use crate::data::profile_index::{
+    create_profile, delete_profile, effective_profile_id, load_profile_index,
+    profile_path, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED,
 };
 use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, BELOW_DECKS_SLOTS, BRIDGE_SLOTS,
@@ -22,7 +25,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
-use std::path::Path;
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
@@ -139,12 +141,22 @@ pub struct OfficerListItem {
     pub slot: Option<String>,
 }
 
-pub fn officers_payload(registry: &DataRegistry, path: &str) -> Result<String, serde_json::Error> {
+pub fn officers_payload(
+    registry: &DataRegistry,
+    path: &str,
+    profile_id: Option<&str>,
+) -> Result<String, serde_json::Error> {
     let officers = registry.officers();
-    let owned_ids = if parse_owned_only(path) {
-        load_imported_roster_ids_unlocked_only(DEFAULT_IMPORT_OUTPUT_PATH)
+    let roster_path = if parse_owned_only(path) {
+        let id = resolve_profile_id(profile_id);
+        profile_path(&id, ROSTER_IMPORTED).to_string_lossy().to_string()
     } else {
+        String::new()
+    };
+    let owned_ids = if roster_path.is_empty() {
         None
+    } else {
+        load_imported_roster_ids_unlocked_only(&roster_path)
     };
     let list: Vec<OfficerListItem> = officers
         .iter()
@@ -290,7 +302,11 @@ fn binomial_95_ci(wins: u32, n: u32) -> [f64; 2] {
     [lo, hi]
 }
 
-pub fn simulate_payload(registry: &DataRegistry, body: &str) -> Result<String, SimulateError> {
+pub fn simulate_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, SimulateError> {
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
     let num_sims = req.num_sims.unwrap_or(5000).min(100_000).max(1);
     let seed = req.seed.unwrap_or(0);
@@ -351,6 +367,7 @@ pub fn simulate_payload(registry: &DataRegistry, body: &str) -> Result<String, S
         &candidates,
         num_sims as usize,
         seed,
+        profile_id,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {
@@ -400,18 +417,26 @@ impl fmt::Display for SimulateError {
 
 impl std::error::Error for SimulateError {}
 
-const PROFILE_PATH: &str = "data/profile.json";
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerProfile {
     #[serde(default)]
     pub bonuses: std::collections::HashMap<String, f64>,
 }
 
-pub fn profile_get_payload() -> Result<String, serde_json::Error> {
-    let path = Path::new(PROFILE_PATH);
+/// Resolve profile id from optional param; falls back to index default.
+fn resolve_profile_id(profile_id: Option<&str>) -> String {
+    let index = load_profile_index();
+    profile_id
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+        .unwrap_or_else(|| effective_profile_id(&index))
+}
+
+pub fn profile_get_payload(profile_id: Option<&str>) -> Result<String, serde_json::Error> {
+    let id = resolve_profile_id(profile_id);
+    let path = profile_path(&id, PROFILE_JSON);
     let profile: PlayerProfile = if path.exists() {
-        let raw = fs::read_to_string(path).unwrap_or_else(|_| "{}".to_string());
+        let raw = fs::read_to_string(&path).unwrap_or_else(|_| "{}".to_string());
         serde_json::from_str(&raw).unwrap_or(PlayerProfile {
             bonuses: std::collections::HashMap::new(),
         })
@@ -423,13 +448,58 @@ pub fn profile_get_payload() -> Result<String, serde_json::Error> {
     serde_json::to_string_pretty(&profile)
 }
 
-pub fn profile_put_payload(body: &str) -> Result<String, serde_json::Error> {
+pub fn profile_put_payload(body: &str, profile_id: Option<&str>) -> Result<String, serde_json::Error> {
     let _: PlayerProfile = serde_json::from_str(body).map_err(|e| e)?;
-    if let Some(parent) = Path::new(PROFILE_PATH).parent() {
+    let id = resolve_profile_id(profile_id);
+    let path = profile_path(&id, PROFILE_JSON);
+    if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
-    fs::write(PROFILE_PATH, body).map_err(serde_json::Error::io)?;
+    fs::write(&path, body).map_err(serde_json::Error::io)?;
     serde_json::to_string_pretty(&serde_json::json!({ "status": "ok" }))
+}
+
+pub fn profiles_list_payload() -> Result<String, serde_json::Error> {
+    let index = load_profile_index();
+    serde_json::to_string_pretty(&serde_json::json!({
+        "profiles": index.profiles,
+        "default_id": index.default_id
+    }))
+}
+
+#[derive(Debug)]
+pub enum ProfileApiError {
+    Parse(serde_json::Error),
+    Create(String),
+}
+
+impl fmt::Display for ProfileApiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Parse(e) => write!(f, "{e}"),
+            Self::Create(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for ProfileApiError {}
+
+pub fn profiles_create_payload(body: &str) -> Result<String, ProfileApiError> {
+    #[derive(Deserialize)]
+    struct In {
+        id: Option<String>,
+        name: String,
+    }
+    let in_: In = serde_json::from_str(body).map_err(ProfileApiError::Parse)?;
+    let mut index = load_profile_index();
+    let entry = create_profile(&mut index, in_.id.as_deref(), &in_.name)
+        .map_err(ProfileApiError::Create)?;
+    serde_json::to_string_pretty(&entry).map_err(ProfileApiError::Parse)
+}
+
+pub fn profiles_delete_payload(id: &str) -> Result<(), String> {
+    let mut index = load_profile_index();
+    delete_profile(&mut index, id)
 }
 
 fn write_temp_import_file(body: &[u8], ext: &str) -> Result<std::path::PathBuf, std::io::Error> {
@@ -441,16 +511,18 @@ fn write_temp_import_file(body: &[u8], ext: &str) -> Result<std::path::PathBuf, 
     Ok(path)
 }
 
-pub fn officers_import_payload(body: &str) -> Result<String, ImportError> {
+pub fn officers_import_payload(body: &str, profile_id: Option<&str>) -> Result<String, ImportError> {
     let body = body.trim();
+    let id = resolve_profile_id(profile_id);
+    let output_path = profile_path(&id, ROSTER_IMPORTED).to_string_lossy().to_string();
     let report = if body.starts_with('{') || body.starts_with('[') {
         let p = write_temp_import_file(body.as_bytes(), "json").map_err(ImportError::Io)?;
-        let out = import_spocks_export(p.to_str().unwrap())?;
+        let out = import_spocks_export_to(p.to_str().unwrap(), &output_path)?;
         let _ = fs::remove_file(&p);
         out
     } else {
         let p = write_temp_import_file(body.as_bytes(), "txt").map_err(ImportError::Io)?;
-        let out = import_roster_csv(p.to_str().unwrap())?;
+        let out = import_roster_csv_to(p.to_str().unwrap(), &output_path)?;
         let _ = fs::remove_file(&p);
         out
     };
@@ -555,7 +627,9 @@ pub fn officer_resolved_payload(registry: &DataRegistry, officer_id: &str) -> Re
     serde_json::to_string_pretty(&response).map_err(OfficerResolveError::Serialize)
 }
 
-const PRESETS_DIR: &str = "data/presets";
+fn presets_dir_for_profile(profile_id: &str) -> std::path::PathBuf {
+    profile_path(profile_id, PRESETS_SUBDIR)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PresetCrew {
@@ -594,14 +668,16 @@ fn preset_id_from_name(name: &str) -> String {
     }
 }
 
-fn ensure_presets_dir() -> std::io::Result<()> {
-    fs::create_dir_all(PRESETS_DIR)
+fn ensure_presets_dir(profile_id: &str) -> std::io::Result<()> {
+    fs::create_dir_all(presets_dir_for_profile(profile_id))
 }
 
-pub fn presets_list_payload() -> Result<String, serde_json::Error> {
-    ensure_presets_dir().map_err(serde_json::Error::io)?;
+pub fn presets_list_payload(profile_id: Option<&str>) -> Result<String, serde_json::Error> {
+    let id = resolve_profile_id(profile_id);
+    ensure_presets_dir(&id).map_err(serde_json::Error::io)?;
+    let dir_path = presets_dir_for_profile(&id);
     let mut list = Vec::new();
-    let dir = fs::read_dir(PRESETS_DIR).map_err(serde_json::Error::io)?;
+    let dir = fs::read_dir(&dir_path).map_err(serde_json::Error::io)?;
     for entry in dir.flatten() {
         let path = entry.path();
         if path.extension().map_or(false, |e| e == "json") {
@@ -621,8 +697,9 @@ pub fn presets_list_payload() -> Result<String, serde_json::Error> {
     serde_json::to_string_pretty(&serde_json::json!({ "presets": list }))
 }
 
-pub fn preset_get_payload(id: &str) -> Result<String, PresetError> {
-    let path = Path::new(PRESETS_DIR).join(sanitize_preset_id(id));
+pub fn preset_get_payload(id: &str, profile_id: Option<&str>) -> Result<String, PresetError> {
+    let pid = resolve_profile_id(profile_id);
+    let path = presets_dir_for_profile(&pid).join(sanitize_preset_id(id));
     if !path.exists() {
         return Err(PresetError::NotFound);
     }
@@ -661,7 +738,7 @@ impl fmt::Display for PresetError {
 
 impl std::error::Error for PresetError {}
 
-pub fn preset_post_payload(body: &str) -> Result<String, PresetError> {
+pub fn preset_post_payload(body: &str, profile_id: Option<&str>) -> Result<String, PresetError> {
     #[derive(Debug, Deserialize)]
     struct In {
         name: Option<String>,
@@ -672,8 +749,9 @@ pub fn preset_post_payload(body: &str) -> Result<String, PresetError> {
     let in_: In = serde_json::from_str(body).map_err(PresetError::Serialize)?;
     let name = in_.name.unwrap_or_else(|| "Unnamed".to_string());
     let id = preset_id_from_name(&name);
-    let path = Path::new(PRESETS_DIR).join(sanitize_preset_id(&id));
-    ensure_presets_dir().map_err(PresetError::Io)?;
+    let pid = resolve_profile_id(profile_id);
+    let path = presets_dir_for_profile(&pid).join(sanitize_preset_id(&id));
+    ensure_presets_dir(&pid).map_err(PresetError::Io)?;
     let preset = Preset {
         id: id.clone(),
         name: name.clone(),
@@ -752,7 +830,11 @@ fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
     }
 }
 
-pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, OptimizePayloadError> {
+pub fn optimize_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, OptimizePayloadError> {
     let request: OptimizeRequest =
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
@@ -782,6 +864,7 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
             &h_candidates,
             sims as usize,
             seed,
+            profile_id,
         )
     } else {
         Vec::new()
@@ -798,6 +881,7 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
             strategy,
             only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
             seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
+            profile_id,
         };
         all_results.extend(optimize_scenario_with_registry(registry, &scenario).into_iter().map(|r| SimulationResult {
             candidate: CrewCandidate {
@@ -922,6 +1006,7 @@ fn next_job_id() -> String {
 pub fn optimize_start_payload(
     registry: std::sync::Arc<DataRegistry>,
     body: &str,
+    profile_id: Option<&str>,
 ) -> Result<String, OptimizePayloadError> {
     let request: OptimizeRequest =
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
@@ -956,6 +1041,7 @@ pub fn optimize_start_payload(
     let heuristics_only = request.heuristics_only.unwrap_or(false);
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.clone().unwrap_or_default();
+    let profile_id_owned = profile_id.map(String::from);
 
     std::thread::spawn(move || {
         let start = Instant::now();
@@ -984,6 +1070,7 @@ pub fn optimize_start_payload(
                 &h_candidates,
                 sims as usize,
                 seed,
+                profile_id_owned.as_deref(),
             );
             if let Ok(mut map) = optimize_jobs().lock() {
                 if let Some(state) = map.get_mut(&job_id_clone) {
@@ -1007,6 +1094,7 @@ pub fn optimize_start_payload(
                 strategy,
                 only_below_decks_with_ability: prioritize_below_decks_ability,
                 seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
+                profile_id: profile_id_owned.as_deref(),
             };
             let normal_results = optimize_scenario_with_progress_with_registry(
                 registry_ref,
@@ -1163,7 +1251,11 @@ fn parse_optimize_estimate_query(query: &str) -> (String, String, u32, Option<u3
     (ship, hostile, sims, max_candidates, prioritize_below_decks_ability)
 }
 
-pub fn optimize_estimate_payload(registry: &DataRegistry, path: &str) -> Result<String, OptimizePayloadError> {
+pub fn optimize_estimate_payload(
+    registry: &DataRegistry,
+    path: &str,
+    profile_id: Option<&str>,
+) -> Result<String, OptimizePayloadError> {
     let query = path.split('?').nth(1).unwrap_or("");
     let (ship, hostile, sims, max_candidates, prioritize_below_decks_ability) =
         parse_optimize_estimate_query(query);
@@ -1185,7 +1277,9 @@ pub fn optimize_estimate_payload(registry: &DataRegistry, path: &str) -> Result<
                 only_below_decks_with_ability: prioritize_below_decks_ability,
                 ..CandidateStrategy::default()
             });
-            generator.generate_candidates_from_registry(registry, &ship, &hostile, 0).len()
+            generator
+                .generate_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)
+                .len()
         }
         Some(_) => {
             return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -1202,7 +1296,7 @@ pub fn optimize_estimate_payload(registry: &DataRegistry, path: &str) -> Result<
                 only_below_decks_with_ability: prioritize_below_decks_ability,
                 ..CandidateStrategy::default()
             });
-            generator.count_candidates_from_registry(registry, &ship, &hostile, 0)
+            generator.count_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)
         }
     };
     let estimated_seconds = (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { importRoster, fetchProfile, updateProfile, formatApiError } from '../lib/api';
 import type { ImportReport, PlayerProfile } from '../lib/api';
+import { useProfile } from '../contexts/ProfileContext';
 
 type Tab = 'roster' | 'bonuses';
 
 export default function RosterProfile() {
+  const { activeProfileId, profiles } = useProfile();
   const [tab, setTab] = useState<Tab>('roster');
   const [paste, setPaste] = useState('');
   const [importResult, setImportResult] = useState<ImportReport | null>(null);
@@ -15,17 +17,17 @@ export default function RosterProfile() {
 
   useEffect(() => {
     let c = false;
-    fetchProfile().then((p) => {
+    fetchProfile(activeProfileId).then((p) => {
       if (!c) setProfile(p);
     }).catch(() => {});
     return () => { c = true; };
-  }, []);
+  }, [activeProfileId]);
 
   const handleImport = async () => {
     setImportError(null);
     setImportResult(null);
     try {
-      const report = await importRoster(paste);
+      const report = await importRoster(paste, activeProfileId);
       setImportResult(report);
     } catch (e) {
       setImportError(formatApiError(e));
@@ -35,7 +37,7 @@ export default function RosterProfile() {
   const handleSaveProfile = async () => {
     setProfileError(null);
     try {
-      await updateProfile(profile);
+      await updateProfile(profile, activeProfileId);
       setProfileDirty(false);
     } catch (e) {
       setProfileError(formatApiError(e));
@@ -50,9 +52,18 @@ export default function RosterProfile() {
     setProfileDirty(true);
   };
 
+  const activeProfile = profiles.find((p) => p.id === activeProfileId);
+
   return (
     <div>
-      <h1 style={{ marginBottom: '1rem' }}>Roster & Profile</h1>
+      <h1 style={{ marginBottom: '1rem' }}>
+        Roster & Profile
+        {activeProfile && (
+          <span style={{ marginLeft: 8, fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-muted)' }}>
+            ({activeProfile.name})
+          </span>
+        )}
+      </h1>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: '1rem' }}>
         <button
@@ -139,6 +150,50 @@ export default function RosterProfile() {
               )}
             </div>
           )}
+        </section>
+      )}
+
+      {activeProfile && (
+        <section
+          style={{
+            padding: '1rem',
+            marginBottom: '1rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+          }}
+        >
+          <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            Sync token (for stfc-mod): copy this to configure sync for this profile.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <code
+              style={{
+                padding: '0.35rem 0.5rem',
+                background: 'var(--bg)',
+                borderRadius: 4,
+                fontSize: '0.8rem',
+                fontFamily: 'monospace',
+              }}
+            >
+              {activeProfile.sync_token}
+            </code>
+            <button
+              type="button"
+              onClick={() => navigator.clipboard.writeText(activeProfile.sync_token)}
+              style={{
+                padding: '0.35rem 0.6rem',
+                background: 'var(--accent)',
+                border: 'none',
+                borderRadius: 4,
+                color: 'var(--bg)',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              Copy
+            </button>
+          </div>
         </section>
       )}
 

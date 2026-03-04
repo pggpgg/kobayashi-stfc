@@ -13,11 +13,12 @@ use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::ship::ShipRecord;
 use crate::data::forbidden_chaos;
-use crate::data::import::{self, DEFAULT_IMPORT_OUTPUT_PATH};
+use crate::data::import;
 use crate::data::profile::{
     apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
-    merge_forbidden_tech_bonuses_into_profile, PlayerProfile, DEFAULT_PROFILE_PATH,
+    merge_forbidden_tech_bonuses_into_profile, PlayerProfile,
 };
+use crate::data::profile_index::{self, profile_path, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, ROSTER_IMPORTED};
 use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
 
@@ -92,11 +93,17 @@ fn build_shared_scenario_data_from_registry(
     registry: &DataRegistry,
     ship: &str,
     hostile: &str,
+    profile_id: Option<&str>,
 ) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
 
-    let mut profile = load_profile(DEFAULT_PROFILE_PATH);
-    if let Some(imported_ft) = import::load_imported_forbidden_tech(import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH) {
+    let pid = profile_index::resolve_profile_id_for_api(profile_id);
+    let profile_path_str = profile_path(&pid, PROFILE_JSON).to_string_lossy().to_string();
+    let roster_path = profile_path(&pid, ROSTER_IMPORTED).to_string_lossy().to_string();
+    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+
+    let mut profile = load_profile(&profile_path_str);
+    if let Some(imported_ft) = import::load_imported_forbidden_tech(&ft_path) {
         if let Some(catalog) = registry.forbidden_chaos_catalog() {
             merge_forbidden_tech_bonuses_into_profile(&mut profile, &imported_ft, catalog);
         }
@@ -115,7 +122,7 @@ fn build_shared_scenario_data_from_registry(
         }
     });
 
-    let resolve_options = import::load_imported_roster(DEFAULT_IMPORT_OUTPUT_PATH)
+    let resolve_options = import::load_imported_roster(&roster_path)
         .map(|entries| {
             let officer_tiers: HashMap<String, u8> = entries
                 .into_iter()
@@ -275,8 +282,9 @@ pub fn run_monte_carlo_parallel_with_registry(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
+    profile_id: Option<&str>,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile);
+    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile, profile_id);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, true)
 }
 
@@ -288,8 +296,9 @@ pub fn run_monte_carlo_with_registry(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
+    profile_id: Option<&str>,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile);
+    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile, profile_id);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, false)
 }
 
@@ -305,9 +314,12 @@ fn run_monte_carlo_with_parallelism(
         .ok()
         .map(index_officers_by_name)
         .unwrap_or_default();
-    let mut profile = load_profile(DEFAULT_PROFILE_PATH);
+    let pid = profile_index::resolve_profile_id_for_api(None);
+    let profile_path_str = profile_path(&pid, PROFILE_JSON).to_string_lossy().to_string();
+    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+    let mut profile = load_profile(&profile_path_str);
     if let (Some(imported_ft), Some(catalog)) = (
-        import::load_imported_forbidden_tech(import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH),
+        import::load_imported_forbidden_tech(&ft_path),
         forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH),
     ) {
         merge_forbidden_tech_bonuses_into_profile(&mut profile, &imported_ft, &catalog);
@@ -331,7 +343,11 @@ fn run_monte_carlo_with_parallelism(
         None
     };
 
-    let resolve_options = import::load_imported_roster(DEFAULT_IMPORT_OUTPUT_PATH)
+    let roster_path = profile_path(
+        &profile_index::resolve_profile_id_for_api(None),
+        ROSTER_IMPORTED,
+    ).to_string_lossy().to_string();
+    let resolve_options = import::load_imported_roster(&roster_path)
         .map(|entries| {
             let officer_tiers: HashMap<String, u8> = entries
                 .into_iter()

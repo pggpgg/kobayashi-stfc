@@ -3,6 +3,7 @@ import type { OfficerListItem } from '../lib/api';
 import type { CrewState, PinsState } from '../lib/types';
 import { belowDeckSlotCount } from '../lib/types';
 import { fetchOfficers } from '../lib/api';
+import { useProfile } from '../contexts/ProfileContext';
 
 interface CrewBuilderProps {
   shipLevel: number;
@@ -19,6 +20,7 @@ export default function CrewBuilder({
   onCrewChange,
   onPinsChange,
 }: CrewBuilderProps) {
+  const { activeProfileId } = useProfile();
   const [officers, setOfficers] = useState<OfficerListItem[]>([]);
   const [ownedOnly, setOwnedOnly] = useState(false);
 
@@ -26,13 +28,13 @@ export default function CrewBuilder({
 
   useEffect(() => {
     let cancelled = false;
-    fetchOfficers(ownedOnly).then((list) => {
+    fetchOfficers(ownedOnly, activeProfileId).then((list) => {
       if (!cancelled) setOfficers(list);
     });
     return () => {
       cancelled = true;
     };
-  }, [ownedOnly]);
+  }, [ownedOnly, activeProfileId]);
 
   /** When placing an officer in one slot, clear them from all other slots so they only appear once. */
   const clearIdFromOtherSlots = (id: string | null): Partial<CrewState> => {
