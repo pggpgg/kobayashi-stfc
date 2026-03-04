@@ -170,10 +170,49 @@ export default function RosterProfile() {
               </button>
             </dd>
           </dl>
-          <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Use the sync token in stfc-mod to route sync data to this profile. Configure stfc-mod with
-            the kobayashi base URL and this profile&apos;s UUID.
+          <p style={{ marginTop: '1rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Add this to your <code>community_patch_settings.toml</code> to sync stfc-mod data to this profile:
           </p>
+          <div
+            style={{
+              position: 'relative',
+              background: 'var(--bg)',
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+              padding: '1rem',
+              fontFamily: 'monospace',
+              fontSize: '0.85rem',
+              overflow: 'auto',
+            }}
+          >
+            <pre style={{ margin: 0, paddingRight: 60, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+{`[sync.targets.kobayashi-${activeProfile.id}]
+url = "http://localhost:3000/api/sync/ingress"
+token = "${activeProfile.sync_token}"`}
+            </pre>
+            <button
+              type="button"
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  `[sync.targets.kobayashi-${activeProfile.id}]\nurl = "http://localhost:3000/api/sync/ingress"\ntoken = "${activeProfile.sync_token}"`,
+                )
+              }
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                padding: '0.35rem 0.6rem',
+                background: 'var(--accent)',
+                border: 'none',
+                borderRadius: 4,
+                color: 'var(--bg)',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              Copy
+            </button>
+          </div>
         </section>
       )}
 
