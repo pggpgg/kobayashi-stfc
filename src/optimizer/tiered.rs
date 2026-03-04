@@ -1,5 +1,5 @@
 //! Tiered simulation: two-pass strategy (cheap scouting pass → expensive confirmation).
-//! Described in DESIGN.md and README; not yet wired into the main optimization flow in `optimizer::mod`.
+//! Described in docs/DESIGN.md and README; not yet wired into the main optimization flow in `optimizer::mod`.
 //! The active path is `CrewGenerator` → `run_monte_carlo` → `rank_results`.
 
 /// Placeholder for tiered optimization. When implemented, will run a fast scouting pass

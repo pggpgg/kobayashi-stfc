@@ -1654,7 +1654,7 @@ cargo build --release
 
 ## Contributing
 
-Officer definitions live in `data/officers/*.lcars.yaml`. See the [LCARS spec](DESIGN.md#3-lcars-language-specification) for the schema. PRs welcome!
+Officer definitions live in `data/officers/*.lcars.yaml`. See the [LCARS spec](docs/DESIGN.md#3-lcars-language-specification) for the schema. PRs welcome!
 
 ## License
 

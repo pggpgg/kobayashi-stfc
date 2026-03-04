@@ -1,0 +1,11 @@
+{
+  "forbidden_tech": [
+    {
+      "fid": 919296,
+      "level": 5,
+      "shard_count": 10,
+      "tier": 1
+    }
+  ],
+  "source_path": "stfc-mod sync"
+}

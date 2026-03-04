@@ -1,0 +1,115 @@
+{
+  "profiles": [
+    {
+      "id": "test",
+      "name": "Test",
+      "sync_token": "2efca057-992b-4245-a7fb-370cf980fe09"
+    },
+    {
+      "id": "sync_test_c1c3e21833974242b5a51aea1a0e542f",
+      "name": "Sync Test",
+      "sync_token": "3888aaf5-426a-4c72-b53e-fe396f97e4ca"
+    },
+    {
+      "id": "sync_test_71f578430c924f9389aad68cbbb75457",
+      "name": "Sync Test",
+      "sync_token": "3408850d-0cd1-41c0-8932-deae21afb3b3"
+    },
+    {
+      "id": "sync_test_c4d128dc2dc447e0a6ace40b56589544",
+      "name": "Sync Test",
+      "sync_token": "64b56438-f0aa-4bb1-8aff-f056892175b9"
+    },
+    {
+      "id": "sync_test_f2e85bfc106d47e8a50b8fd18680644b",
+      "name": "Sync Test",
+      "sync_token": "f2384e58-4546-4f47-884b-2c5eb3c7f982"
+    },
+    {
+      "id": "sync_test_636d614efd024454910e4e285663c0dd",
+      "name": "Sync Test",
+      "sync_token": "fc0ac68c-616e-4aeb-9559-c517d4cd5d30"
+    },
+    {
+      "id": "sync_test_06c7a6feb1da445a8d80663a8ca486fa",
+      "name": "Sync Test",
+      "sync_token": "11b9f6e1-c759-402b-bc9f-59e20c289157"
+    },
+    {
+      "id": "sync_test_5225fefd17ac4519890865cf2e8b635f",
+      "name": "Sync Test",
+      "sync_token": "3bb8175d-1e08-4e66-8189-4df457b86438"
+    },
+    {
+      "id": "sync_test_1900fdceea0b48e0b2dba205e7395492",
+      "name": "Sync Test",
+      "sync_token": "9aa07da3-994e-4c94-bf2a-0d1ef8668f17"
+    },
+    {
+      "id": "sync_test_b9d34732370d437abfc218b09aba7ea5",
+      "name": "Sync Test",
+      "sync_token": "7a9d2c42-3fcd-458a-80a4-5dda6ef795fa"
+    },
+    {
+      "id": "sync_test_6ba6e048e2f8483f9db2929b46ca49bf",
+      "name": "Sync Test",
+      "sync_token": "27eab1e7-0aab-4581-81ad-6100069af68d"
+    },
+    {
+      "id": "sync_test_e0ffe5baeadd4d57991358dad2291fbf",
+      "name": "Sync Test",
+      "sync_token": "aa4c3bf9-d7cc-4eeb-abd2-76936a399e0a"
+    },
+    {
+      "id": "sync_test_d16a713637644df2800177f140e3b34b",
+      "name": "Sync Test",
+      "sync_token": "01a1c302-6ba8-43b1-ac98-93fb21c24edc"
+    },
+    {
+      "id": "sync_test_3b93e0fa20bf4b7fb757d5a4e50f48e9",
+      "name": "Sync Test",
+      "sync_token": "715b75d7-5bb6-472d-a47a-c48f2ca7efe6"
+    },
+    {
+      "id": "sync_test_c7c0a35a43434b05b1e5f74029e086c1",
+      "name": "Sync Test",
+      "sync_token": "58f4946c-1b62-41b5-a77c-816aa44f035e"
+    },
+    {
+      "id": "sync_test_5e46e49cb6fb4d2fb5b1501908456ddf",
+      "name": "Sync Test",
+      "sync_token": "3c35a14c-1469-459e-9b42-7232d56041ae"
+    },
+    {
+      "id": "sync_test_83c14c1140d7415a8e1e466a30f9819a",
+      "name": "Sync Test",
+      "sync_token": "73994ed7-ae22-4aec-bda0-323f8f0dae35"
+    },
+    {
+      "id": "sync_test_a879c5e041154d369dbd9b1ea464e2c9",
+      "name": "Sync Test",
+      "sync_token": "513a3ec5-f411-4443-a455-b40b4bf8bfc1"
+    },
+    {
+      "id": "sync_test_a7ee21c7c87841a9b11fa5048a4a5737",
+      "name": "Sync Test",
+      "sync_token": "1d0f662e-159c-4fdd-b56e-a4bcbd69d166"
+    },
+    {
+      "id": "sync_test_38c69a9bf9aa445bba197b69c44fba90",
+      "name": "Sync Test",
+      "sync_token": "463f14bf-d13a-45b6-be93-3669ae5f490f"
+    },
+    {
+      "id": "sync_test_2f5b2429fe034eb9b2603ecec84e7e87",
+      "name": "Sync Test",
+      "sync_token": "9e1a6277-b4a8-43f7-84ef-b1282812ad75"
+    },
+    {
+      "id": "sync_test_fd4b28456d4c4ea89e564f9241cee445",
+      "name": "Sync Test",
+      "sync_token": "9f95307c-049c-4692-9f1e-faefda282145"
+    }
+  ],
+  "default_id": "test"
+}

@@ -1,5 +1,5 @@
 //! Closed-form expected damage calculator for analytical pre-filtering.
-//! Described in DESIGN.md; not yet wired into the main optimization flow in `optimizer::mod`.
+//! Described in docs/DESIGN.md; not yet wired into the main optimization flow in `optimizer::mod`.
 //! When implemented, can prune obviously weak combos before any Monte Carlo runs.
 
 /// Placeholder for analytical expected damage. When implemented, will return a closed-form

@@ -122,4 +122,4 @@ When unset, the simulator uses the canonical JSON format (default).
 
 ## Full Schema
 
-See [DESIGN.md §3 LCARS Language Specification](../DESIGN.md#3-lcars-language-specification) for the complete schema, including conditions, scaling, and effect types.
+See [DESIGN.md §3 LCARS Language Specification](DESIGN.md#3-lcars-language-specification) for the complete schema, including conditions, scaling, and effect types.

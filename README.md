@@ -90,7 +90,7 @@ KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladi
 
 ### Data maintenance policy
 
-The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports). You can also sync your roster **quasi real-time** from the game using the [STFC Community Mod](https://github.com/netniV/stfc-mod); see [SYNC.md](SYNC.md) for setup.
+The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports). You can also sync your roster **quasi real-time** from the game using the [STFC Community Mod](https://github.com/netniV/stfc-mod); see [docs/SYNC.md](docs/SYNC.md) for setup.
 
 For canonical officer data provenance, `officers.canonical.json` uses neutral metadata labels: each officer `source.workbook` value is set to `manual_curation` rather than storing a specific workbook filename.
 
@@ -164,7 +164,7 @@ officers:
             max_rank: 5
 ```
 
-LCARS supports stat modifiers, extra attacks, tags, decay/accumulate effects, conditional triggers, and composable conditions. See [`DESIGN.md`](DESIGN.md#3-lcars-language-specification) for the full spec.
+LCARS supports stat modifiers, extra attacks, tags, decay/accumulate effects, conditional triggers, and composable conditions. See [docs/DESIGN.md](docs/DESIGN.md#3-lcars-language-specification) for the full spec.
 
 **Graceful degradation**: unknown effect types are logged and skipped — never crashed on. Officers can be defined before the engine fully supports all their mechanics.
 
@@ -198,6 +198,8 @@ player_profile:
 ---
 
 ## Project Structure
+
+Project documentation (design, roadmap, sync, performance, combat plans) lives in the [`docs/`](docs/) directory.
 
 ```
 kobayashi/
@@ -237,7 +239,7 @@ Officer definitions live in `data/officers/officers.lcars.yaml`. LCARS is the so
 To add or update officers:
 
 1. Edit `data/officers/officers.lcars.yaml`
-2. Follow the [LCARS schema](DESIGN.md#3-lcars-language-specification)
+2. Follow the [LCARS schema](docs/DESIGN.md#3-lcars-language-specification)
 3. Run `kobayashi validate data/officers` to validate LCARS files (or `kobayashi validate data/officers/officers.canonical.json` for canonical JSON)
 4. Submit a PR
 

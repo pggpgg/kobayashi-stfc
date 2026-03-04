@@ -2,7 +2,7 @@
 
 ## Mitigation model
 
-This module implements the first combat-engine task from `IMPLEMENTATION_PLAN_COMBAT_ENGINE.md`.
+This module implements the first combat-engine task from [IMPLEMENTATION_PLAN_COMBAT_ENGINE.md](../../docs/IMPLEMENTATION_PLAN_COMBAT_ENGINE.md).
 
 ### Formula
 

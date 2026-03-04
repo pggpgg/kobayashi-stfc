@@ -29,7 +29,7 @@ impl ResolveOptions {
 }
 
 /// Resolved set of buffs: static modifiers (applied once) and dynamic crew config (per-round/triggered).
-/// Per DESIGN.md: "LCARS definitions are collapsed into a BuffSet" before combat.
+/// Per docs/DESIGN.md: "LCARS definitions are collapsed into a BuffSet" before combat.
 #[derive(Debug, Clone, Default)]
 pub struct BuffSet {
     /// Stat modifiers applied once at combat start (e.g. passive permanent stat_modify).

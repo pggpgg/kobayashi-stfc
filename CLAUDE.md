@@ -127,7 +127,7 @@ GET  /api/presets/:id
 
 ### LCARS officer definition format
 
-Officer abilities are YAML with `type`, `stat`, `operator`, `value`, `trigger`, `duration`, `scaling`, optional `condition`, `decay`, and `accumulate` fields. See `DESIGN.md` for the full spec. Effect resolution order per round: passive → round_start → per-sub-round (attack/defense) → round_end → burning tick → cleanup.
+Officer abilities are YAML with `type`, `stat`, `operator`, `value`, `trigger`, `duration`, `scaling`, optional `condition`, `decay`, and `accumulate` fields. See `docs/DESIGN.md` for the full spec. Effect resolution order per round: passive → round_start → per-sub-round (attack/defense) → round_end → burning tick → cleanup.
 
 Unknown effect types are skipped with a warning (graceful degradation).
 

@@ -1,3 +1,17 @@
+# Scripts
+
+## Post-sync verification
+
+After pulling changes from another machine, run:
+
+```bash
+npm run verify
+```
+
+This runs `cargo test`, `cargo build --release`, `cargo clippy`, then `npm ci`, `npm run test`, and `npm run build` in `frontend/`. Mirrors CI. Requires `data/officers/officers.canonical.json` and (recommended) `data/ships/`, `data/hostiles/` indices.
+
+---
+
 # Data pipeline (STFCcommunity baseline)
 
 1. **Fetch upstream:** From repo root, run  
