@@ -578,26 +578,70 @@ mod tests {
     use super::ingress_payload;
     use axum::http::StatusCode;
     use crate::data::import;
-    use crate::data::profile_index::{create_profile, load_profile_index, profile_path,
+    use crate::data::profile_index::{create_profile, delete_profile, load_profile_index, profile_path,
         RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED, FORBIDDEN_TECH_IMPORTED};
     use std::sync::Mutex;
+    use std::sync::Once;
     use uuid::Uuid;
 
     /// Serialize sync tests to avoid races on shared profiles/index.json.
     static SYNC_TEST_LOCK: Mutex<()> = Mutex::new(());
 
-    /// Create a unique test profile and return (sync_token, profile_id).
-    fn ensure_test_profile() -> (String, String) {
+    /// Remove any leftover sync_test_* profiles from previous test runs (e.g. before drop guards existed).
+    /// Cleans both index entries and orphaned directories on disk.
+    static CLEANUP_ORPHANS: Once = Once::new();
+
+    fn cleanup_orphan_sync_test_profiles() {
+        CLEANUP_ORPHANS.call_once(|| {
+            let mut index = load_profile_index();
+            let ids: Vec<String> = index
+                .profiles
+                .iter()
+                .filter(|p| p.id.starts_with("sync_test_"))
+                .map(|p| p.id.clone())
+                .collect();
+            for id in &ids {
+                let _ = delete_profile(&mut index, id);
+            }
+            let profiles_dir = std::path::Path::new(crate::data::profile_index::PROFILES_DIR);
+            if let Ok(entries) = std::fs::read_dir(profiles_dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                            if name.starts_with("sync_test_") {
+                                let _ = std::fs::remove_dir_all(&path);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /// Guard that deletes the test profile on drop so we don't leave sync_test_* dirs in profiles/.
+    struct TestProfileGuard(String);
+
+    impl Drop for TestProfileGuard {
+        fn drop(&mut self) {
+            let mut index = load_profile_index();
+            let _ = delete_profile(&mut index, &self.0);
+        }
+    }
+
+    /// Create a unique test profile and return (sync_token, profile_id, cleanup_guard).
+    fn ensure_test_profile() -> (String, String, TestProfileGuard) {
+        cleanup_orphan_sync_test_profiles();
         let mut index = load_profile_index();
         let id = format!("sync_test_{}", Uuid::new_v4().as_simple());
         let entry = create_profile(&mut index, Some(&id), "Sync Test").expect("create test profile");
-        (entry.sync_token, entry.id)
+        (entry.sync_token, entry.id.clone(), TestProfileGuard(entry.id))
     }
 
     #[test]
     fn ingress_empty_array_returns_200_and_accepted() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, _) = ensure_test_profile();
+        let (token, _, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload("[]", Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("\"status\": \"ok\""));
@@ -607,7 +651,7 @@ mod tests {
     #[test]
     fn ingress_non_array_body_returns_400() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, _) = ensure_test_profile();
+        let (token, _, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload("{}", Some(&token));
         assert_eq!(status, StatusCode::BAD_REQUEST);
         assert!(body.contains("array"));
@@ -616,7 +660,7 @@ mod tests {
     #[test]
     fn ingress_unknown_type_returns_200_and_accepts_type() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, _) = ensure_test_profile();
+        let (token, _, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(r#"[{"type":"unknown","x":1}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("unknown"));
@@ -625,7 +669,7 @@ mod tests {
     #[test]
     fn ingress_research_type_returns_200() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, _) = ensure_test_profile();
+        let (token, _, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("research"));
@@ -634,7 +678,7 @@ mod tests {
     #[test]
     fn ingress_research_persists_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, profile_id) = ensure_test_profile();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(r#"[{"type":"research","rid":919291,"level":3}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("research(1)"));
@@ -651,7 +695,7 @@ mod tests {
     #[test]
     fn ingress_buildings_persist_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, profile_id) = ensure_test_profile();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(r#"[{"type":"buildings","bid":919292,"level":5}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("buildings(1)"));
@@ -668,7 +712,7 @@ mod tests {
     #[test]
     fn ingress_ships_persist_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, profile_id) = ensure_test_profile();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(
             r#"[{"type":"ships","psid":919293,"tier":2,"level":10,"level_percentage":0.5,"hull_id":100,"components":[1,2,3]}]"#,
             Some(&token),
@@ -690,7 +734,7 @@ mod tests {
     #[test]
     fn ingress_module_type_persists_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, profile_id) = ensure_test_profile();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(r#"[{"type":"module","bid":919294,"level":7}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("buildings(1)"));
@@ -707,7 +751,7 @@ mod tests {
     #[test]
     fn ingress_ship_type_persists_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, profile_id) = ensure_test_profile();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(
             r#"[{"type":"ship","psid":919295,"tier":3,"level":15,"level_percentage":0.0,"hull_id":200,"components":[]}]"#,
             Some(&token),
@@ -729,7 +773,7 @@ mod tests {
     #[test]
     fn ingress_ft_persists_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
-        let (token, profile_id) = ensure_test_profile();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
         let (status, body) = ingress_payload(
             r#"[{"type":"ft","fid":919296,"tier":1,"level":5,"shard_count":10}]"#,
             Some(&token),
