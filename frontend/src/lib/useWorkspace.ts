@@ -11,6 +11,8 @@ import {
   simulate,
   optimizeStart,
   getOptimizeStatus,
+  getOptimizeStreamUrl,
+  cancelOptimizeJob,
   savePreset,
   getOptimizeEstimate,
   fetchHeuristics,
@@ -18,6 +20,7 @@ import {
   type SimulateStats,
   type OptimizeEstimate,
   type CrewRecommendation,
+  type OptimizeStatusResponse,
   type Preset,
 } from './api';
 import { useProfile } from '../contexts/ProfileContext';
@@ -71,8 +74,10 @@ export function useWorkspace() {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Polling ref
+  // Polling ref, SSE ref, and current job id (for cancel + cleanup on unmount)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const currentOptimizeJobIdRef = useRef<string | null>(null);
 
   // Load preset from location state
   useEffect(() => {
@@ -90,6 +95,20 @@ export function useWorkspace() {
       navigate('.', { replace: true, state: {} });
     }
   }, [location.state, navigate]);
+
+  // Close SSE and polling on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch optimize estimate when parameters change
   useEffect(() => {
@@ -182,6 +201,25 @@ export function useWorkspace() {
     }
   };
 
+  const applyOptimizeDone = (status: OptimizeStatusResponse) => {
+    currentOptimizeJobIdRef.current = null;
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (status.status === 'done' && status.result) {
+      setRecommendations(status.result.recommendations ?? []);
+      setSimResult(null);
+      if (status.result.duration_ms != null) setLastOptimizeDurationMs(status.result.duration_ms);
+    } else if (status.status === 'error') {
+      setError(status.error ?? 'Optimization failed');
+    }
+    setLoadingOptimize(false);
+    setOptimizeProgress(null);
+    setOptimizeCrewsDone(null);
+    setOptimizeTotalCrews(null);
+  };
+
   // Handle running optimization
   const handleRunOptimize = async () => {
     setError(null);
@@ -204,37 +242,19 @@ export function useWorkspace() {
         },
         activeProfileId,
       );
+      currentOptimizeJobIdRef.current = job_id;
       const poll = () => {
         getOptimizeStatus(job_id, activeProfileId)
           .then((status) => {
             if (status.progress != null) setOptimizeProgress(status.progress);
             if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
             if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
-            if (status.status === 'done' && status.result) {
-              if (pollIntervalRef.current) {
-                clearInterval(pollIntervalRef.current);
-                pollIntervalRef.current = null;
-              }
-              setRecommendations(status.result.recommendations ?? []);
-              setSimResult(null);
-              if (status.result.duration_ms != null) setLastOptimizeDurationMs(status.result.duration_ms);
-              setLoadingOptimize(false);
-              setOptimizeProgress(null);
-              setOptimizeCrewsDone(null);
-              setOptimizeTotalCrews(null);
-            } else if (status.status === 'error') {
-              if (pollIntervalRef.current) {
-                clearInterval(pollIntervalRef.current);
-                pollIntervalRef.current = null;
-              }
-              setError(status.error ?? 'Optimization failed');
-              setLoadingOptimize(false);
-              setOptimizeProgress(null);
-              setOptimizeCrewsDone(null);
-              setOptimizeTotalCrews(null);
+            if (status.status === 'done' || status.status === 'error') {
+              applyOptimizeDone(status);
             }
           })
           .catch((e) => {
+            currentOptimizeJobIdRef.current = null;
             if (pollIntervalRef.current) {
               clearInterval(pollIntervalRef.current);
               pollIntervalRef.current = null;
@@ -246,8 +266,36 @@ export function useWorkspace() {
             setOptimizeTotalCrews(null);
           });
       };
-      poll();
-      pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+
+      if (typeof EventSource !== 'undefined') {
+        const streamUrl = getOptimizeStreamUrl(job_id);
+        const eventSource = new EventSource(streamUrl);
+        eventSourceRef.current = eventSource;
+        eventSource.onmessage = (event) => {
+          try {
+            const status = JSON.parse(event.data) as OptimizeStatusResponse;
+            if (status.progress != null) setOptimizeProgress(status.progress);
+            if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
+            if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
+            if (status.status === 'done' || status.status === 'error') {
+              eventSource.close();
+              eventSourceRef.current = null;
+              applyOptimizeDone(status);
+            }
+          } catch {
+            // ignore parse errors; keep stream open
+          }
+        };
+        eventSource.onerror = () => {
+          eventSource.close();
+          eventSourceRef.current = null;
+          poll();
+          pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+        };
+      } else {
+        poll();
+        pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+      }
     } catch (e) {
       setError(formatApiError(e));
       setLoadingOptimize(false);
@@ -255,6 +303,26 @@ export function useWorkspace() {
       setOptimizeCrewsDone(null);
       setOptimizeTotalCrews(null);
     }
+  };
+
+  const handleCancelOptimize = () => {
+    const jobId = currentOptimizeJobIdRef.current;
+    currentOptimizeJobIdRef.current = null;
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (jobId) {
+      cancelOptimizeJob(jobId).catch(() => {});
+    }
+    setLoadingOptimize(false);
+    setOptimizeProgress(null);
+    setOptimizeCrewsDone(null);
+    setOptimizeTotalCrews(null);
   };
 
   // Handle saving a preset
@@ -305,6 +373,7 @@ export function useWorkspace() {
     recommendations,
     loadingOptimize,
     handleRunOptimize,
+    handleCancelOptimize,
     optimizeProgress,
     optimizeCrewsDone,
     optimizeTotalCrews,
