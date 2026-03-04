@@ -4,6 +4,7 @@ import type { CrewState, PinsState } from '../lib/types';
 import { belowDeckSlotCount } from '../lib/types';
 import { fetchOfficers } from '../lib/api';
 import { useProfile } from '../contexts/ProfileContext';
+import { useWorkspaceMode } from '../contexts/WorkspaceModeContext';
 
 interface CrewBuilderProps {
   shipLevel: number;
@@ -21,8 +22,8 @@ export default function CrewBuilder({
   onPinsChange,
 }: CrewBuilderProps) {
   const { activeProfileId } = useProfile();
+  const { ownedOnly } = useWorkspaceMode();
   const [officers, setOfficers] = useState<OfficerListItem[]>([]);
-  const [ownedOnly, setOwnedOnly] = useState(false);
 
   const belowN = belowDeckSlotCount(shipLevel);
 
@@ -120,14 +121,6 @@ export default function CrewBuilder({
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
         <h2 style={{ margin: 0, fontSize: '1rem' }}>BRIDGE</h2>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.85rem' }}>
-          <input
-            type="checkbox"
-            checked={ownedOnly}
-            onChange={(e) => setOwnedOnly(e.target.checked)}
-          />
-          Owned only
-        </label>
       </div>
 
       {/* Top row: Bridge 1 | Captain (center) | Bridge 2 */}

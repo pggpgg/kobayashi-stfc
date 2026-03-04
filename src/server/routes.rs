@@ -271,8 +271,22 @@ async fn handle_officers(
     }
 }
 
-async fn handle_ships(State(state): State<AppState>) -> impl IntoResponse {
-    match api::ships_payload(state.registry.as_ref()) {
+async fn handle_ships(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let owned_only = params
+        .get("owned_only")
+        .map(|s| s.as_str())
+        .map(|s| s == "1" || s.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::ships_payload(
+        state.registry.as_ref(),
+        owned_only,
+        profile_id.as_deref(),
+    ) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }

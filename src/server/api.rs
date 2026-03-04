@@ -8,8 +8,9 @@ use crate::data::import::{
 };
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index,
-    profile_path, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED,
+    profile_path, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
+use crate::data::import::load_imported_ships;
 use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, BELOW_DECKS_SLOTS, BRIDGE_SLOTS,
 };
@@ -177,20 +178,87 @@ pub struct ShipListItem {
     pub ship_class: String,
 }
 
-pub fn ships_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
-    let list: Vec<ShipListItem> = registry
-        .ship_index()
-        .map(|idx| {
-            idx.ships
-                .iter()
-                .map(|e| ShipListItem {
-                    id: e.id.clone(),
-                    ship_name: e.ship_name.clone(),
-                    ship_class: e.ship_class.clone(),
-                })
-                .collect()
+const HULL_ID_REGISTRY_PATH: &str = "data/ships/hull_id_registry.json";
+
+/// Load hull_id -> ship_id mapping. Returns empty map if file missing or invalid.
+fn load_hull_id_registry() -> HashMap<i64, String> {
+    let raw = match fs::read_to_string(HULL_ID_REGISTRY_PATH) {
+        Ok(s) => s,
+        _ => return HashMap::new(),
+    };
+    let parsed: serde_json::Value = match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        _ => return HashMap::new(),
+    };
+    let obj = match parsed.get("hull_id_to_ship_id").and_then(|v| v.as_object()) {
+        Some(o) => o,
+        None => return HashMap::new(),
+    };
+    let mut out = HashMap::new();
+    for (k, v) in obj {
+        if let (Ok(hid), Some(sid)) = (k.parse::<i64>(), v.as_str()) {
+            out.insert(hid, sid.to_string());
+        }
+    }
+    out
+}
+
+pub fn ships_payload(
+    registry: &DataRegistry,
+    owned_only: bool,
+    profile_id: Option<&str>,
+) -> Result<String, serde_json::Error> {
+    let idx = match registry.ship_index() {
+        Some(i) => i,
+        None => {
+            return serde_json::to_string_pretty(&serde_json::json!({ "ships": [] }));
+        }
+    };
+
+    let owned_ship_ids: Option<std::collections::HashSet<String>> = if owned_only {
+        let pid = resolve_profile_id(profile_id);
+        let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
+        let imported = load_imported_ships(&ships_path);
+        let hull_registry = load_hull_id_registry();
+
+        if hull_registry.is_empty() {
+            // Graceful degradation: no mapping -> return all ships
+            None
+        } else if let Some(ships) = imported {
+            let mut ids = std::collections::HashSet::new();
+            for entry in &ships {
+                if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                    ids.insert(sid.clone());
+                }
+            }
+            if ids.is_empty() {
+                // No owned ships mapped -> return all (graceful degradation)
+                None
+            } else {
+                Some(ids)
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let list: Vec<ShipListItem> = idx
+        .ships
+        .iter()
+        .filter(|e| {
+            owned_ship_ids
+                .as_ref()
+                .map_or(true, |ids| ids.contains(&e.id))
         })
-        .unwrap_or_default();
+        .map(|e| ShipListItem {
+            id: e.id.clone(),
+            ship_name: e.ship_name.clone(),
+            ship_class: e.ship_class.clone(),
+        })
+        .collect();
+
     serde_json::to_string_pretty(&serde_json::json!({ "ships": list }))
 }
 

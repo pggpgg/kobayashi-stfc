@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { fetchShips, fetchHostiles } from '../lib/api';
 import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api';
 import type { CrewState } from '../lib/types';
+import { useProfile } from '../contexts/ProfileContext';
+import { useWorkspaceMode } from '../contexts/WorkspaceModeContext';
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 
@@ -47,17 +49,21 @@ export default function WorkspaceHeader({
   optimizeCrewsDone,
   optimizeTotalCrews,
 }: WorkspaceHeaderProps) {
+  const { activeProfileId } = useProfile();
+  const { ownedOnly } = useWorkspaceMode();
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
 
   useEffect(() => {
     let c = false;
-    fetchShips().then((list) => {
-      if (!c) setShips(list);
-      if (list.length && !shipId) onShipIdChange(list[0]?.id ?? '');
+    fetchShips(ownedOnly, activeProfileId).then((list) => {
+      if (!c) {
+        setShips(list);
+        if (list.length && !shipId) onShipIdChange(list[0]?.id ?? '');
+      }
     });
     return () => { c = true; };
-  }, []);
+  }, [ownedOnly, activeProfileId]);
   useEffect(() => {
     let c = false;
     fetchHostiles().then((list) => {
