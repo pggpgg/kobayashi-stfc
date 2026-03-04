@@ -1,0 +1,279 @@
+officers:
+- id: mirror-data-e13d66
+  name: Mirror Data
+  faction: Liquid Trellium-D
+  rarity: rare
+  group: MIRROR UNIVERSE
+  captain_ability:
+    name: Mirror Data (Captain)
+    effects:
+    - type: stat_modify
+      stat: apex_barrier
+      target: self
+      operator: add
+      value: 7500.0
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 7500.0
+        per_rank: 5625.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Mirror Data (Bridge)
+    effects:
+    - type: tag
+      stat: null
+      target: enemy
+      operator: null
+      value: 1.0
+      trigger: on_round_start
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: add_state:addstate
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: mirror-ezri-2f6326
+  name: Mirror Ezri
+  faction: Liquid Trellium-D
+  rarity: rare
+  group: MIRROR UNIVERSE
+  captain_ability:
+    name: Mirror Ezri (Captain)
+    effects:
+    - type: stat_modify
+      stat: apex_barrier
+      target: self
+      operator: add
+      value: 7500.0
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 7500.0
+        per_rank: 5625.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Mirror Ezri (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: multiply
+      value: 5.5
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 4.5
+        per_rank: 7.625
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: mirror-kira-bc42ce
+  name: Mirror Kira
+  faction: Liquid Trellium-D
+  rarity: epic
+  group: MIRROR UNIVERSE
+  captain_ability:
+    name: Mirror Kira (Captain)
+    effects:
+    - type: stat_modify
+      stat: apex_barrier
+      target: self
+      operator: add
+      value: 1500.0
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 1500.0
+        per_rank: 0.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Mirror Kira (Bridge)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.15
+      trigger: on_round_start
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: shotsperattack:unmapped
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: mirror-picard-7c1a17
+  name: Mirror Picard
+  faction: Liquid Trellium-D
+  rarity: epic
+  group: MIRROR UNIVERSE
+  captain_ability:
+    name: Mirror Picard (Captain)
+    effects:
+    - type: stat_modify
+      stat: isolytic_cascade_damage
+      target: self
+      operator: add
+      value: 0.5
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.5
+        per_rank: 0.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Mirror Picard (Bridge)
+    effects:
+    - type: stat_modify
+      stat: apex_barrier
+      target: self
+      operator: add
+      value: 10000.0
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 10000.0
+        per_rank: 5000.0
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: mirror-troi-d237df
+  name: Mirror Troi
+  faction: Liquid Trellium-D
+  rarity: rare
+  group: MIRROR UNIVERSE
+  captain_ability:
+    name: Mirror Troi (Captain)
+    effects:
+    - type: stat_modify
+      stat: apex_barrier
+      target: self
+      operator: add
+      value: 7500.0
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 7500.0
+        per_rank: 5625.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Mirror Troi (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: multiply
+      value: 5.5
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 4.5
+        per_rank: 7.625
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: mirror-uhura-0a7168
+  name: Mirror Uhura
+  faction: Liquid Trellium-D
+  rarity: epic
+  group: MIRROR UNIVERSE
+  captain_ability: null
+  bridge_ability:
+    name: Mirror Uhura (Bridge)
+    effects:
+    - type: stat_modify
+      stat: apex_barrier
+      target: self
+      operator: add
+      value: 0.4
+      trigger: passive
+      duration: permanent
+      scaling:
+        base: 0.4
+        per_rank: 0.15
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+    - type: stat_modify
+      stat: apex_barrier
+      target: self
+      operator: add
+      value: 700.0
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 700.0
+        per_rank: 325.0
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null

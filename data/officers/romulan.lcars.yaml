@@ -1,0 +1,893 @@
+officers:
+- id: arix-b3d602
+  name: Arix
+  faction: Romulan
+  rarity: uncommon
+  group: NERO'S CREW
+  captain_ability:
+    name: Arix (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: enemy
+      operator: null
+      value: 1.0
+      trigger: on_hit
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: add_state:addstate
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Arix (Bridge)
+    effects:
+    - type: stat_modify
+      stat: armor
+      target: self
+      operator: add
+      value: 0.15
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.15
+        per_rank: 0.0875
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: b-etor-8fc426
+  name: B'Etor
+  faction: Romulan
+  rarity: rare
+  group: PRIDE OF ROMULUS
+  captain_ability:
+    name: B'Etor (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.2
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: skillcloakingduration:non_combat
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: B'Etor (Bridge)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.1
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: combatscavenger:non_combat
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: charvanek-0f1b5c
+  name: Charvanek
+  faction: Romulan
+  rarity: epic
+  group: ROMULAN PATRIOTS
+  captain_ability:
+    name: Charvanek (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: enemy
+      operator: null
+      value: 1.0
+      trigger: on_round_start
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: add_state:addstate
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Charvanek (Bridge)
+    effects:
+    - type: stat_modify
+      stat: shield_pierce
+      target: self
+      operator: add
+      value: 1.0
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 1.0
+        per_rank: 3.75
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: d-jaoki-baa18f
+  name: D'Jaoki
+  faction: Romulan
+  rarity: uncommon
+  group: ROMULAN PATRIOTS
+  captain_ability:
+    name: D'Jaoki (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.1
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: officerstathealth:unmapped
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: D'Jaoki (Bridge)
+    effects:
+    - type: stat_modify
+      stat: armor
+      target: self
+      operator: add
+      value: 0.2
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.2
+        per_rank: 1.2
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: decius-8fce68
+  name: Decius
+  faction: Romulan
+  rarity: rare
+  group: ROMULAN PATRIOTS
+  captain_ability:
+    name: Decius (Captain)
+    effects:
+    - type: stat_modify
+      stat: shield_pierce
+      target: self
+      operator: add
+      value: 0.1
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.1
+        per_rank: 0.09999999999999999
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Decius (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: multiply
+      value: 1.06
+      trigger: passive
+      duration: permanent
+      scaling:
+        base: 0.06
+        per_rank: 0.010000000000000002
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: domitia-2e4a05
+  name: Domitia
+  faction: Romulan
+  rarity: common
+  group: SURVEYORS & MINERS
+  captain_ability:
+    name: Domitia (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.4
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: miningrate:non_combat
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Domitia (Bridge)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.25
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: warpspeed:unmapped
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: helvia-70a338
+  name: Helvia
+  faction: Romulan
+  rarity: common
+  group: SURVEYORS & MINERS
+  captain_ability:
+    name: Helvia (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.4
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: miningrate:non_combat
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Helvia (Bridge)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.25
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: warpspeed:unmapped
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: javaid-fdff59
+  name: Javaid
+  faction: Romulan
+  rarity: uncommon
+  group: NERO'S CREW
+  captain_ability:
+    name: Javaid (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.2
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: shieldpiercing:unmapped
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Javaid (Bridge)
+    effects:
+    - type: stat_modify
+      stat: armor
+      target: self
+      operator: add
+      value: 0.15
+      trigger: passive
+      duration: permanent
+      scaling:
+        base: 0.15
+        per_rank: 0.0625
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: kumak-c5b0db
+  name: Kumak
+  faction: Romulan
+  rarity: rare
+  group: NERO'S CREW
+  captain_ability:
+    name: Kumak (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.05
+      trigger: on_round_start
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: officerstatall:unmapped
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Kumak (Bridge)
+    effects:
+    - type: stat_modify
+      stat: armor
+      target: self
+      operator: add
+      value: 0.4
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.4
+        per_rank: 0.15
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: l-nar-ae14f4
+  name: L'Nar
+  faction: Romulan
+  rarity: uncommon
+  group: ROMULAN PATRIOTS
+  captain_ability:
+    name: L'Nar (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.2
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: officerstathealth:unmapped
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: L'Nar (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: add
+      value: 0.25
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.25
+        per_rank: 1.1875
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: livis-43235e
+  name: Livis
+  faction: Romulan
+  rarity: rare
+  group: NERO'S CREW
+  captain_ability:
+    name: Livis (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.1
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: repairtime:unmapped
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Livis (Bridge)
+    effects:
+    - type: stat_modify
+      stat: hull_hp
+      target: self
+      operator: multiply
+      value: 1.2
+      trigger: passive
+      duration: permanent
+      scaling:
+        base: 0.2
+        per_rank: 0.09999999999999999
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: lursa-57a544
+  name: Lursa
+  faction: Romulan
+  rarity: uncommon
+  group: PRIDE OF ROMULUS
+  captain_ability:
+    name: Lursa (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.3
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: skillcloakingcooldown:unmapped
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Lursa (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: enemy
+      operator: add
+      value: 0.25
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.25
+        per_rank: 0.11249999999999999
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: mirek-953093
+  name: Mirek
+  faction: Romulan
+  rarity: rare
+  group: ROMULAN PATRIOTS
+  captain_ability:
+    name: Mirek (Captain)
+    effects:
+    - type: tag
+      stat: null
+      target: enemy
+      operator: null
+      value: 1.0
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: add_state:addstate
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Mirek (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: add
+      value: 0.25
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.25
+        per_rank: 1.1875
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: nero-1aeca9
+  name: Nero
+  faction: Romulan
+  rarity: epic
+  group: NERO'S CREW
+  captain_ability:
+    name: Nero (Captain)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: multiply
+      value: 1.4
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.4
+        per_rank: -0.1
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Nero (Bridge)
+    effects:
+    - type: tag
+      stat: null
+      target: enemy
+      operator: null
+      value: 0.25
+      trigger: on_hit
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: add_state:addstate
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: sela-bd6e1b
+  name: Sela
+  faction: Romulan
+  rarity: epic
+  group: PRIDE OF ROMULUS
+  captain_ability:
+    name: Sela (Captain)
+    effects:
+    - type: stat_modify
+      stat: crit_damage
+      target: self
+      operator: add
+      value: 0.5
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.5
+        per_rank: -0.175
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Sela (Bridge)
+    effects:
+    - type: stat_modify
+      stat: crit_chance
+      target: enemy
+      operator: add
+      value: 0.02
+      trigger: on_hit
+      duration: permanent
+      scaling:
+        base: 0.02
+        per_rank: 0.009999999999999998
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: severus-93daaf
+  name: Severus
+  faction: Romulan
+  rarity: uncommon
+  group: ROMULAN PATRIOTS
+  captain_ability:
+    name: Severus (Captain)
+    effects:
+    - type: stat_modify
+      stat: hull_hp_repair
+      target: enemy
+      operator: add
+      value: 0.1
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.1
+        per_rank: -0.025
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Severus (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: multiply
+      value: 1.2
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.2
+        per_rank: 0.09999999999999999
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: tal-c3e4eb
+  name: Tal
+  faction: Romulan
+  rarity: rare
+  group: ROMULAN PATRIOTS
+  captain_ability:
+    name: Tal (Captain)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: multiply
+      value: 1.2
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.2
+        per_rank: 0.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Tal (Bridge)
+    effects:
+    - type: stat_modify
+      stat: hull_hp_repair
+      target: enemy
+      operator: add
+      value: 0.05
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.05
+        per_rank: 0.0125
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: tomalak-0ff09c
+  name: Tomalak
+  faction: Romulan
+  rarity: rare
+  group: PRIDE OF ROMULUS
+  captain_ability:
+    name: Tomalak (Captain)
+    effects:
+    - type: stat_modify
+      stat: shield_pierce
+      target: self
+      operator: add
+      value: 1.0
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 1.0
+        per_rank: -0.25
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Tomalak (Bridge)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: add
+      value: 0.25
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.25
+        per_rank: 1.1875
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: vella-7ab77e
+  name: Vella
+  faction: Romulan
+  rarity: uncommon
+  group: NERO'S CREW
+  captain_ability:
+    name: Vella (Captain)
+    effects:
+    - type: stat_modify
+      stat: weapon_damage
+      target: self
+      operator: multiply
+      value: 1.1
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: 0.1
+        per_rank: 0.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Vella (Bridge)
+    effects:
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: 0.05
+      trigger: passive
+      duration: permanent
+      scaling: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: officerstathealth:unmapped
+      accumulate: null
+      decay: null
+  below_decks_ability: null
+- id: vemet-00a218
+  name: Vemet
+  faction: Romulan
+  rarity: rare
+  group: NERO'S CREW
+  captain_ability:
+    name: Vemet (Captain)
+    effects:
+    - type: stat_modify
+      stat: hull_hp_repair
+      target: self
+      operator: add
+      value: 0.05
+      trigger: on_shield_break
+      duration: permanent
+      scaling:
+        base: 0.05
+        per_rank: 0.0
+        max_rank: 3
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  bridge_ability:
+    name: Vemet (Bridge)
+    effects:
+    - type: stat_modify
+      stat: shield_regen
+      target: enemy
+      operator: add
+      value: 0.25
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: 0.25
+        per_rank: 1.8125
+        max_rank: 5
+        base_chance: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability: null
