@@ -4,6 +4,11 @@
       "id": "demo",
       "name": "Demo",
       "sync_token": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+    },
+    {
+      "id": "higgsbozo",
+      "name": "HiggsBozo",
+      "sync_token": "e1acf169-d1b7-410d-8706-daf166f71c21"
     }
   ],
   "default_id": "demo"
