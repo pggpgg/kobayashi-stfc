@@ -3,8 +3,9 @@
 # Node dependencies (run npm install in frontend/ after clone)
 node_modules/
 
-# Fetched upstream (scripts/fetch_stfc_data.ps1)
-data/upstream/
+# Fetched upstream (scripts/fetch_stfc_data.ps1) — ignore generated subdirs, not the whole folder
+data/upstream/stfccommunity-data/
+**/.DS_Store
 
 # User-specific import/sync output (generated in rosters/)
 rosters/roster.imported.json
