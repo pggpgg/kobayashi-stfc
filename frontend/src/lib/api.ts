@@ -364,6 +364,19 @@ export async function getOptimizeStatus(
   return res.json();
 }
 
+/** URL for SSE stream of optimize job progress (GET). Use with EventSource for live updates. */
+export function getOptimizeStreamUrl(jobId: string): string {
+  return `${API_BASE}/api/optimize/jobs/${encodeURIComponent(jobId)}/stream`;
+}
+
+/** Request cancellation of a running optimize job. */
+export async function cancelOptimizeJob(jobId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/optimize/jobs/${encodeURIComponent(jobId)}/cancel`, {
+    method: 'POST',
+  });
+  await checkOk(res);
+}
+
 export interface ImportReport {
   source_path: string;
   output_path: string;

@@ -27,8 +27,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::fmt;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, OnceLock};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const DEFAULT_SIMS: u32 = 5000;
@@ -1055,9 +1055,14 @@ pub struct OptimizeStatusResponse {
 
 static OPTIMIZE_JOB_COUNTER: OnceLock<AtomicU64> = OnceLock::new();
 static OPTIMIZE_JOBS: OnceLock<Mutex<HashMap<String, OptimizeJobState>>> = OnceLock::new();
+static OPTIMIZE_CANCEL_FLAGS: OnceLock<Mutex<HashMap<String, Arc<AtomicBool>>>> = OnceLock::new();
 
 fn optimize_jobs() -> &'static Mutex<HashMap<String, OptimizeJobState>> {
     OPTIMIZE_JOBS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn optimize_cancel_flags() -> &'static Mutex<HashMap<String, Arc<AtomicBool>>> {
+    OPTIMIZE_CANCEL_FLAGS.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 fn next_job_id() -> String {
@@ -1083,9 +1088,9 @@ pub fn optimize_start_payload(
     let seed = request.seed.unwrap_or(0);
 
     let job_id = next_job_id();
-    let jobs = optimize_jobs();
+    let cancel_flag = Arc::new(AtomicBool::new(false));
     {
-        let mut map = jobs.lock().unwrap();
+        let mut map = optimize_jobs().lock().unwrap();
         map.insert(
             job_id.clone(),
             OptimizeJobState {
@@ -1097,6 +1102,7 @@ pub fn optimize_start_payload(
                 error: None,
             },
         );
+        optimize_cancel_flags().lock().unwrap().insert(job_id.clone(), cancel_flag.clone());
     }
 
     let registry = registry;
@@ -1110,6 +1116,7 @@ pub fn optimize_start_payload(
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.clone().unwrap_or_default();
     let profile_id_owned = profile_id.map(String::from);
+    let cancel_flag = cancel_flag.clone();
 
     std::thread::spawn(move || {
         let start = Instant::now();
@@ -1168,6 +1175,9 @@ pub fn optimize_start_payload(
                 registry_ref,
                 &scenario,
                 |crews_done, total_crews| {
+                    if cancel_flag.load(Ordering::Relaxed) {
+                        return false;
+                    }
                     let base_progress = if !heuristics_seeds.is_empty() && !is_seeded_genetic { 10u8 } else { 0u8 };
                     let progress = if total_crews == 0 {
                         base_progress
@@ -1182,8 +1192,19 @@ pub fn optimize_start_payload(
                             state.total_crews = total_crews;
                         }
                     }
+                    true
                 }
             );
+            if cancel_flag.load(Ordering::Relaxed) {
+                if let Ok(mut map) = optimize_jobs().lock() {
+                    if let Some(state) = map.get_mut(&job_id_clone) {
+                        state.status = OptimizeJobStatus::Error;
+                        state.error = Some("Cancelled".to_string());
+                    }
+                }
+                optimize_cancel_flags().lock().unwrap().remove(&job_id_clone);
+                return;
+            }
             all_results.extend(normal_results.into_iter().map(|r| SimulationResult {
                 candidate: CrewCandidate {
                     captain: r.captain,
@@ -1251,6 +1272,7 @@ pub fn optimize_start_payload(
                 state.result = Some(response);
             }
         }
+        optimize_cancel_flags().lock().unwrap().remove(&job_id_clone);
     });
 
     let start_response = OptimizeStartResponse { job_id };
@@ -1273,6 +1295,30 @@ impl fmt::Display for OptimizeStatusError {
 }
 
 impl std::error::Error for OptimizeStatusError {}
+
+/// Request cancellation of a running optimize job. Idempotent if already done/cancelled.
+pub fn optimize_cancel_payload(job_id: &str) -> Result<String, OptimizeStatusError> {
+    let jobs = optimize_jobs();
+    let mut map = jobs.lock().unwrap();
+    let state = map.get_mut(job_id).ok_or(OptimizeStatusError::NotFound)?;
+    match &state.status {
+        OptimizeJobStatus::Running => {}
+        OptimizeJobStatus::Done | OptimizeJobStatus::Error => {
+            let body = serde_json::json!({ "status": "ok", "message": "Job already finished" });
+            return serde_json::to_string_pretty(&body).map_err(OptimizeStatusError::Serialize);
+        }
+    }
+    state.status = OptimizeJobStatus::Error;
+    state.error = Some("Cancelled".to_string());
+    drop(map);
+    if let Ok(flags) = optimize_cancel_flags().lock() {
+        if let Some(flag) = flags.get(job_id) {
+            flag.store(true, Ordering::Relaxed);
+        }
+    }
+    let body = serde_json::json!({ "status": "ok", "message": "Cancelled" });
+    serde_json::to_string_pretty(&body).map_err(OptimizeStatusError::Serialize)
+}
 
 /// Return current status (and result when done) for an optimize job.
 pub fn optimize_status_payload(job_id: &str) -> Result<String, OptimizeStatusError> {

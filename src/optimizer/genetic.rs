@@ -368,13 +368,13 @@ fn mutate(crew: &mut CrewCandidate, pools: &OfficerPools, rate: f64, rng: &mut R
 }
 
 /// Run genetic optimization. Returns top individuals for final ranking.
-/// Progress callback: (generation, max_generations, best_fitness).
+/// Progress callback: (generation, max_generations, best_fitness); returns false to abort.
 pub fn run_genetic_optimizer(
     ship: &str,
     hostile: &str,
     config: &GeneticConfig,
     seed: u64,
-    mut on_progress: impl FnMut(usize, usize, f32),
+    mut on_progress: impl FnMut(usize, usize, f32) -> bool,
 ) -> Vec<CrewCandidate> {
     let pools = match build_officer_pools(config.only_below_decks_with_ability) {
         Some(p) => p,
@@ -434,7 +434,9 @@ pub fn run_genetic_optimizer(
                 (current_mutation_rate * 1.5).min(config.mutation_rate_ceiling);
         }
 
-        on_progress(generation + 1, config.generations, best_fitness);
+        if !on_progress(generation + 1, config.generations, best_fitness) {
+            break;
+        }
 
         if let Some(limit) = config.stagnation_limit {
             if stagnation >= limit {
@@ -466,13 +468,14 @@ pub fn run_genetic_optimizer(
 
 /// Run genetic optimization and return ranked results (same shape as optimize_scenario).
 /// Runs a final Monte Carlo pass on top candidates with requested sim count, then ranks.
+/// Progress callback returns false to abort.
 pub fn run_genetic_optimizer_ranked(
     ship: &str,
     hostile: &str,
     config: &GeneticConfig,
     seed: u64,
     final_sims: usize,
-    mut on_progress: impl FnMut(usize, usize, f32),
+    mut on_progress: impl FnMut(usize, usize, f32) -> bool,
 ) -> Vec<RankedCrewResult> {
     let top = run_genetic_optimizer(ship, hostile, config, seed, &mut on_progress);
     if top.is_empty() {
@@ -641,14 +644,14 @@ mod tests {
             "swarm",
             &config,
             12345,
-            |_, _, _| {},
+            |_, _, _| true,
         );
         let b = super::run_genetic_optimizer(
             "enterprise",
             "swarm",
             &config,
             12345,
-            |_, _, _| {},
+            |_, _, _| true,
         );
         if a.is_empty() && b.is_empty() {
             return;
@@ -684,6 +687,7 @@ mod integration_tests {
             |gen, max_gen, _| {
                 progress_calls += 1;
                 assert!(gen <= max_gen);
+                true
             },
         );
         if results.is_empty() {

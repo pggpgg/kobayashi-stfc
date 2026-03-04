@@ -70,7 +70,7 @@ impl Default for OptimizationScenario<'_> {
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
     match scenario.strategy {
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive(scenario),
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| {}),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true),
     }
 }
 
@@ -81,7 +81,7 @@ pub fn optimize_scenario_with_registry(
 ) -> Vec<RankedCrewResult> {
     match scenario.strategy {
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive_with_registry(registry, scenario),
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| {}),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true),
     }
 }
 
@@ -134,12 +134,13 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
 
 /// Genetic path: GA with progress callback, then final MC on top candidates, then rank.
 /// When `scenario.seed_population` is non-empty, uses seeded config (larger pop, adaptive mutation).
+/// Progress callback returns true to continue, false to abort.
 pub fn optimize_scenario_genetic<F>(
     scenario: &OptimizationScenario<'_>,
     on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
-    F: FnMut(usize, usize, f32),
+    F: FnMut(usize, usize, f32) -> bool,
 {
     let config = if scenario.seed_population.is_empty() {
         GeneticConfig {
@@ -209,19 +210,23 @@ where
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
-            optimize_scenario_genetic(scenario, |gen, max_gen, _| on_progress(gen as u32, max_gen as u32))
+            optimize_scenario_genetic(scenario, |gen, max_gen, _| {
+                on_progress(gen as u32, max_gen as u32);
+                true
+            })
         }
     }
 }
 
 /// Like [optimize_scenario_with_progress] but uses [DataRegistry] for exhaustive path (no reload).
+/// Progress callback returns true to continue, false to abort (e.g. user cancelled).
 pub fn optimize_scenario_with_progress_with_registry<F>(
     registry: &DataRegistry,
     scenario: &OptimizationScenario<'_>,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
-    F: FnMut(u32, u32),
+    F: FnMut(u32, u32) -> bool,
 {
     match scenario.strategy {
         OptimizerStrategy::Exhaustive => {
@@ -243,7 +248,9 @@ where
             if total == 0 {
                 return Vec::new();
             }
-            on_progress(0, total as u32);
+            if !on_progress(0, total as u32) {
+                return Vec::new();
+            }
 
             let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
             let ranges = batch_ranges(total, num_batches);
@@ -262,13 +269,18 @@ where
                     scenario.profile_id,
                 );
                 all_results.extend(batch_results);
-                on_progress(end as u32, total as u32);
+                if !on_progress(end as u32, total as u32) {
+                    break;
+                }
             }
 
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
-            optimize_scenario_genetic(scenario, |gen, max_gen, _| on_progress(gen as u32, max_gen as u32))
+            optimize_scenario_genetic(scenario, |gen, max_gen, _| {
+                on_progress(gen as u32, max_gen as u32);
+                true
+            })
         }
     }
 }

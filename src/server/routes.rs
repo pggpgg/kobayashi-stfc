@@ -10,12 +10,16 @@ use axum::{
     extract::OriginalUri,
     extract::{Path, Query, State},
     http::{HeaderMap, HeaderValue, StatusCode, header},
+    response::sse::{Event, Sse},
     response::{IntoResponse, Response},
     routing::{delete, get, post, put},
 };
 use std::collections::HashMap;
+use std::convert::Infallible;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
+use tokio_stream::wrappers::ReceiverStream;
 
 use crate::data::data_registry::DataRegistry;
 use crate::server::api;
@@ -119,6 +123,8 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         // Optimize async job
         .route("/api/optimize/start", post(handle_optimize_start))
         .route("/api/optimize/status/:job_id", get(handle_optimize_status))
+        .route("/api/optimize/jobs/:job_id/stream", get(handle_optimize_job_stream))
+        .route("/api/optimize/jobs/:job_id/cancel", post(handle_optimize_job_cancel))
         // Sync ingress
         .route("/api/sync/status", get(handle_sync_status))
         .route("/api/sync/ingress", post(handle_sync_ingress))
@@ -519,6 +525,67 @@ async fn handle_optimize_start(
 /// GET /api/optimize/status/:job_id
 async fn handle_optimize_status(Path(job_id): Path<String>) -> impl IntoResponse {
     match api::optimize_status_payload(&job_id) {
+        Ok(payload) => ok_json(payload).into_response(),
+        Err(api::OptimizeStatusError::NotFound) => {
+            error_json(StatusCode::NOT_FOUND, "Job not found").into_response()
+        }
+        Err(api::OptimizeStatusError::Serialize(e)) => {
+            error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response()
+        }
+    }
+}
+
+/// GET /api/optimize/jobs/:job_id/stream — SSE stream of optimize job progress until done or error.
+async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResponse {
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(16);
+    tokio::spawn(async move {
+        let job_id = job_id.clone();
+        loop {
+            let result = tokio::task::spawn_blocking({
+                let job_id = job_id.clone();
+                move || api::optimize_status_payload(&job_id)
+            })
+            .await;
+            let payload_result: Result<String, api::OptimizeStatusError> = match result {
+                Ok(Ok(payload)) => Ok(payload),
+                Ok(Err(api::OptimizeStatusError::NotFound)) => {
+                    let event = Event::default()
+                        .data(r#"{"status":"error","error":"Job not found"}"#);
+                    let _ = tx.send(Ok(event)).await;
+                    break;
+                }
+                Ok(Err(api::OptimizeStatusError::Serialize(_))) => {
+                    let event = Event::default()
+                        .data(r#"{"status":"error","error":"Serialization error"}"#);
+                    let _ = tx.send(Ok(event)).await;
+                    break;
+                }
+                Err(_) => break,
+            };
+            if let Ok(payload) = payload_result {
+                let event = Event::default().data(payload.clone());
+                if tx.send(Ok(event)).await.is_err() {
+                    break;
+                }
+                let done = serde_json::from_str::<serde_json::Value>(&payload)
+                    .ok()
+                    .and_then(|v| v.get("status").and_then(|s| s.as_str()).map(|s| s.to_string()))
+                    .map(|s| s == "done" || s == "error")
+                    .unwrap_or(false);
+                if done {
+                    break;
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(300)).await;
+        }
+    });
+    let stream = ReceiverStream::new(rx);
+    Sse::new(stream)
+}
+
+/// POST /api/optimize/jobs/:job_id/cancel — request cancellation of a running optimize job.
+async fn handle_optimize_job_cancel(Path(job_id): Path<String>) -> impl IntoResponse {
+    match api::optimize_cancel_payload(&job_id) {
         Ok(payload) => ok_json(payload).into_response(),
         Err(api::OptimizeStatusError::NotFound) => {
             error_json(StatusCode::NOT_FOUND, "Job not found").into_response()
