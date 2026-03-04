@@ -19,7 +19,7 @@ A high-performance Monte Carlo combat simulator and crew optimizer for [Star Tre
 
 ![KOBAYASHI Web Interface](docs/web-ui-screenshot.png)
 
-The web interface lets you configure ship, hostile, and crew, run simulations or optimizations, and view results — all from your browser at `http://localhost:3000`.
+The web interface has four pages: **Workspace** (ship, scenario, crew builder, Run Sim, Run Optimize), **Results Library** (saved optimization results), **Roster & Profile** (roster import, profile management), and **Data & Mechanics** (data exploration). Toggle Roster vs Sandbox mode to limit officers to your owned roster or use the full catalog. Run simulations or optimizations, save presets, and view results — all from your browser at `http://localhost:3000`.
 
 ---
 
@@ -34,7 +34,7 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 ### Key Features
 
 - **Monte Carlo combat simulation** — models crits, proc chances, shield mitigation, armor, ability timing, and more
-- **Smart crew optimization** — full exhaustive sweep today; tiered simulation (scouting → confirmation) and genetic algorithm for large search spaces planned
+- **Smart crew optimization** — exhaustive sweep and genetic algorithm for large search spaces; tiered simulation (scouting → confirmation) planned
 - **LCARS officer definitions** — every officer ability is described in a declarative YAML-based language, no code changes needed to add new officers
 - **Player profile support** — account for your research, buildings, reputation, and other non-officer bonuses
 - **Synergy discovery** — manually tag known synergies, and let KOBAYASHI discover new ones from simulation data
@@ -48,10 +48,12 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 ### Build from source
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/kobayashi.git
+git clone <your-repo-url>
 cd kobayashi
 cargo build --release
 ```
+
+On Windows, use `target\release\kobayashi.exe` instead of `./target/release/kobayashi`.
 
 ### Run
 
@@ -66,18 +68,20 @@ cargo build --release
   --hostile explorer_30 \
   --sims 5000
 
-./target/release/kobayashi simulate \
-  --ship saladin \
-  --hostile explorer_30 \
-  --captain khan \
-  --bridge nero \
-  --below tlaan \
-  --sims 10000
+# Low-level combat sim (rounds, seed) — for ship/hostile/crew sims, use the Web UI
+./target/release/kobayashi simulate 5 99 [--trace-events]
+# Or with explicit attacker/defender stats:
+./target/release/kobayashi simulate --attacker-attack 120 --attacker-pierce 0.15 \
+  --defender-mitigation 0.35 --rounds 5 --seed 99
 ```
 
 ### Other commands
 
 ```bash
+# Import roster from .txt (name,tier,level) or Spocks .json export
+./target/release/kobayashi import <path> [--profile <id>]
+# Bare filename resolves to rosters/<filename>
+
 # Validate LCARS officer definitions (emits error/warning/info per mechanic)
 ./target/release/kobayashi validate data/officers
 
@@ -114,7 +118,7 @@ KOBAYASHI's core is a fast, deterministic combat simulator written in Rust. Each
 
 ### The Optimizer
 
-Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. A **tiered approach** (scouting pass → confirmation on top candidates) and **genetic algorithm** for large search spaces are planned but not yet wired in.
+Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. For large search spaces, use `strategy: "genetic"` in the API to run the genetic optimizer instead. A **tiered approach** (scouting pass → confirmation on top candidates) is planned but not yet wired in.
 
 *Planned tiered strategy (when implemented):*
 
@@ -269,12 +273,12 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [x] CLI interface
 - [x] LCARS ability resolver (YAML → BuffSet)
 - [ ] Tiered optimization with synergy prioritization (planned)
-- [ ] Crew generator (exhaustive + filtered)
+- [x] Crew generator (exhaustive + filtered)
 - [x] Parallel batch execution
 - [x] Web UI on localhost (MVP)
-- [ ] User-owned roster import workflow (e.g., Spocks.club export)
+- [x] User-owned roster import workflow (CLI + Web UI, Spocks.club export)
 - [ ] Synergy learning from simulation results (planned)
-- [ ] Genetic algorithm optimizer (planned)
+- [x] Genetic algorithm optimizer (implemented)
 - [ ] Chain grinding simulation (multi-fight with carry-over) (planned)
 - [ ] Armada mode (multi-ship combat) (planned)
 - [ ] Sensitivity analysis ("what if I promote this officer?") (planned)
