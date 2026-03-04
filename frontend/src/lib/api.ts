@@ -138,8 +138,14 @@ export async function fetchOfficers(
   return data.officers ?? [];
 }
 
-export async function fetchShips(): Promise<ShipListItem[]> {
-  const res = await fetch(`${API_BASE}/api/ships`);
+export async function fetchShips(
+  ownedOnly = false,
+  profileId?: string | null,
+): Promise<ShipListItem[]> {
+  const url = ownedOnly
+    ? `${API_BASE}/api/ships?owned_only=1`
+    : `${API_BASE}/api/ships`;
+  const res = await fetch(url, { headers: profileHeaders(profileId) });
   await checkOk(res);
   const data = await res.json();
   return data.ships ?? [];
