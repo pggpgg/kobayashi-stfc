@@ -1,0 +1,4 @@
+{
+  "_comment": "Maps STFC game hull_id (from stfc-mod sync) to kobayashi ship id. Add entries as mappings are discovered. When empty or no match, Roster mode falls back to all ships.",
+  "hull_id_to_ship_id": {}
+}
