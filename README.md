@@ -48,8 +48,8 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 ### Build from source
 
 ```bash
-git clone <your-repo-url>
-cd kobayashi
+git clone https://github.com/pggpgg/kobayashi-stfc
+cd kobayashi-stfc
 cargo build --release
 ```
 
