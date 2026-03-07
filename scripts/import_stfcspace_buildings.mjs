@@ -2,11 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import url from "node:url";
 
-// Simple, API-based importer for stfc.space building buffs.
-// - Fetches https://data.stfc.space/building/summary.json
+// Simple importer for stfc.space building buffs.
+// - By default: fetches https://data.stfc.space/building/summary.json
+// - With --from-upstream (or USE_UPSTREAM_BUILDINGS=1): reads
+//   data/upstream/data-stfc-space/summary-building.json
 // - Uses a small, explicit mapping from building ids + buff ids to engine stat
-//   keys
-// - Writes normalized BuildingRecord JSON files under data/buildings/
+//   keys; writes normalized BuildingRecord JSON files under data/buildings/
 //
 // This is intentionally conservative: it only emits bonuses we explicitly map
 // and currently focuses on Operations Center as a proof-of-concept. Extend the
@@ -15,8 +16,60 @@ import url from "node:url";
 const REPO_ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 const OUT_DIR = path.join(REPO_ROOT, "data", "buildings");
 const IMPORT_LOG_DIR = path.join(REPO_ROOT, "data", "import_logs");
+const UPSTREAM_SUMMARY_PATH = path.join(
+  REPO_ROOT,
+  "data",
+  "upstream",
+  "data-stfc-space",
+  "summary-building.json",
+);
+const UPSTREAM_TRANSLATIONS_STARBASE_PATH = path.join(
+  REPO_ROOT,
+  "data",
+  "upstream",
+  "data-stfc-space",
+  "translations-starbase_modules.json",
+);
 
 const BASE_URL = "https://data.stfc.space";
+
+const STARBASE_MODULE_NAME_KEY = "starbase_module_name";
+
+/** Slug for filename: lowercase, non-alnum to underscore, trim. */
+function slugify(text) {
+  if (!text || typeof text !== "string") return "";
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "") || "building";
+}
+
+/**
+ * Load building id → display name from translations-starbase_modules.json
+ * (key === "starbase_module_name"). Returns Map<number, string> or empty Map if file missing.
+ */
+async function loadBuildingNameTranslations() {
+  const map = new Map();
+  try {
+    const raw = await fs.readFile(UPSTREAM_TRANSLATIONS_STARBASE_PATH, "utf8");
+    const entries = JSON.parse(raw);
+    if (!Array.isArray(entries)) return map;
+    for (const e of entries) {
+      if (e.key !== STARBASE_MODULE_NAME_KEY || e.id == null) continue;
+      const text = (e.text && String(e.text).trim()) || "";
+      if (text) map.set(Number(e.id), text);
+    }
+  } catch (_) {
+    // missing or invalid: leave map empty
+  }
+  return map;
+}
+
+// When true, read summary from local upstream instead of fetching from API.
+const FROM_UPSTREAM =
+  process.argv.includes("--from-upstream") ||
+  process.env.USE_UPSTREAM_BUILDINGS === "1";
 
 // Data-version string recorded into BuildingRecord / BuildingIndex.
 const DATA_VERSION =
@@ -121,24 +174,18 @@ function resolveBuffMapping(buff) {
 }
 
 function buildLevelsFromSummaryEntry(entry) {
-  const unlockLevel = entry.unlock_level ?? 1;
   const buffs = Array.isArray(entry.buffs) ? entry.buffs : [];
 
-  if (unlockLevel > ABS_MAX_LEVEL) {
-    return [];
-  }
-
-  // Determine max level either from explicit field or the longest buff track,
-  // but never exceed ABS_MAX_LEVEL.
+  // Determine max level from explicit field or longest buff track (values are 1-based: values[0] = level 1).
+  // Don't use unlock_level here — it's when the building becomes buildable (ops level), not the building's level range.
   let maxLevel =
     typeof entry.max_level === "number" && entry.max_level > 0
       ? entry.max_level
       : 0;
   for (const buff of buffs) {
     if (!Array.isArray(buff.values)) continue;
-    const candidate = unlockLevel - 1 + buff.values.length;
-    if (candidate > maxLevel) {
-      maxLevel = candidate;
+    if (buff.values.length > maxLevel) {
+      maxLevel = buff.values.length;
     }
   }
 
@@ -149,14 +196,16 @@ function buildLevelsFromSummaryEntry(entry) {
   maxLevel = Math.min(maxLevel, ABS_MAX_LEVEL);
 
   const levels = [];
-  for (let level = unlockLevel; level <= maxLevel; level += 1) {
+  // values[] in the summary is indexed by building level (1-based): values[0] = level 1, values[1] = level 2, ...
+  // unlock_level is when the building becomes buildable (ops level), not the building's first level.
+  for (let level = 1; level <= maxLevel; level += 1) {
     const bonuses = [];
 
     for (const buff of buffs) {
       const mapping = resolveBuffMapping(buff);
       const values = Array.isArray(buff.values) ? buff.values : [];
 
-      const idx = level - unlockLevel;
+      const idx = level - 1; // 0-based index: level 1 -> values[0]
       if (idx < 0 || idx >= values.length) continue;
 
       const raw = values[idx];
@@ -171,10 +220,6 @@ function buildLevelsFromSummaryEntry(entry) {
         conditions: mapping.conditions ?? [],
         notes: mapping.notes ?? null,
       });
-    }
-
-    if (bonuses.length === 0) {
-      continue;
     }
 
     levels.push({
@@ -192,17 +237,48 @@ async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true });
 }
 
+async function loadSummary() {
+  if (FROM_UPSTREAM) {
+    try {
+      const raw = await fs.readFile(UPSTREAM_SUMMARY_PATH, "utf8");
+      const summary = JSON.parse(raw);
+      if (!Array.isArray(summary)) {
+        throw new Error("Unexpected summary-building.json format: expected an array");
+      }
+      return summary;
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        throw new Error(
+          "Upstream file not found. Run fetch or copy summary-building.json to data/upstream/data-stfc-space/.",
+        );
+      }
+      throw err;
+    }
+  }
+  return fetchJson("building/summary.json");
+}
+
 async function main() {
-  console.log("Fetching building summary from data.stfc.space …");
-  const summary = await fetchJson("building/summary.json");
+  if (FROM_UPSTREAM) {
+    console.log("Reading building summary from data/upstream/data-stfc-space/summary-building.json …");
+  } else {
+    console.log("Fetching building summary from data.stfc.space …");
+  }
+  const summary = await loadSummary();
   if (!Array.isArray(summary)) {
-    throw new Error("Unexpected summary.json format: expected an array");
+    throw new Error("Unexpected summary format: expected an array");
+  }
+
+  const nameByBid = await loadBuildingNameTranslations();
+  if (nameByBid.size > 0) {
+    console.log(`Loaded ${nameByBid.size} building names from translations-starbase_modules.json`);
   }
 
   await ensureDir(OUT_DIR);
   await ensureDir(IMPORT_LOG_DIR);
 
   const records = [];
+  const fileStems = [];
   const unmappedBuildings = [];
   const unmappedBuffs = new Set();
 
@@ -218,6 +294,11 @@ async function main() {
       unmappedBuildings.push(buildingId);
     }
 
+    const translatedName = nameByBid.get(buildingId);
+    const displayName = translatedName ?? meta.building_name;
+    const nameSlug = translatedName ? slugify(translatedName) : meta.id;
+    const fileStem = `${buildingId}_${nameSlug}`;
+
     const levels = buildLevelsFromSummaryEntry(entry);
     // Track any buff ids we don't have a first-class mapping for yet.
     const buffs = Array.isArray(entry.buffs) ? entry.buffs : [];
@@ -232,18 +313,19 @@ async function main() {
     }
     const record = {
       id: meta.id,
-      building_name: meta.building_name,
+      building_name: displayName,
       data_version: DATA_VERSION,
       source_note: SOURCE_NOTE,
       levels,
     };
 
     records.push(record);
+    fileStems.push(fileStem);
 
-    const outPath = path.join(OUT_DIR, `${meta.id}.json`);
+    const outPath = path.join(OUT_DIR, `${fileStem}.json`);
     await fs.writeFile(outPath, JSON.stringify(record, null, 2), "utf8");
     console.log(
-      `Wrote ${outPath} (levels with combat bonuses: ${levels.length})`,
+      `Wrote ${outPath} (${levels.length} level entries)`,
     );
   }
 
@@ -256,11 +338,24 @@ async function main() {
   const index = {
     data_version: DATA_VERSION,
     source_note: SOURCE_NOTE,
-    buildings: records.map((r) => ({
+    buildings: records.map((r, i) => ({
       id: r.id,
       building_name: r.building_name,
+      file: fileStems[i],
     })),
   };
+
+  const validFileStems = new Set(fileStems);
+  validFileStems.add("index");
+  const dirEntries = await fs.readdir(OUT_DIR, { withFileTypes: true });
+  for (const dirent of dirEntries) {
+    if (!dirent.isFile() || !dirent.name.endsWith(".json")) continue;
+    const stem = dirent.name.slice(0, -5);
+    if (validFileStems.has(stem)) continue;
+    const removePath = path.join(OUT_DIR, dirent.name);
+    await fs.unlink(removePath);
+    console.log(`Removed obsolete ${dirent.name}`);
+  }
 
   const indexPath = path.join(OUT_DIR, "index.json");
   await fs.writeFile(indexPath, JSON.stringify(index, null, 2), "utf8");
@@ -268,9 +363,11 @@ async function main() {
 
   // Lightweight import log for debugging / future expansion.
   const log = {
-    source: "stfc.space",
+    source: FROM_UPSTREAM ? "stfc.space (from upstream)" : "stfc.space",
     data_version: DATA_VERSION,
-    summary_url: `${BASE_URL}/building/summary.json`,
+    ...(FROM_UPSTREAM
+      ? { summary_path: "data/upstream/data-stfc-space/summary-building.json" }
+      : { summary_url: `${BASE_URL}/building/summary.json` }),
     emitted_buildings: records.length,
     emitted_ids: records.map((r) => r.id),
     unmapped_building_ids: Array.from(new Set(unmappedBuildings)).sort(

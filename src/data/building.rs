@@ -67,6 +67,9 @@ pub struct BuildingIndex {
 pub struct BuildingIndexEntry {
     pub id: String,
     pub building_name: String,
+    /// Optional filename stem (without .json) when using bid_name scheme, e.g. "0_ops_center".
+    #[serde(default)]
+    pub file: Option<String>,
 }
 
 pub const DEFAULT_BUILDINGS_INDEX_PATH: &str = "data/buildings/index.json";
@@ -76,8 +79,20 @@ pub fn load_building_index(path: &str) -> Option<BuildingIndex> {
     serde_json::from_str(&data).ok()
 }
 
+/// Load a building record by id. Tries `{id}.json` first, then (if index has a
+/// `file` field for this id) `{file}.json`, so both legacy and bid_name naming work.
 pub fn load_building_record(data_dir: &Path, id: &str) -> Option<BuildingRecord> {
     let path = data_dir.join(format!("{}.json", id));
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(rec) = serde_json::from_str(&data) {
+            return Some(rec);
+        }
+    }
+    let index_path = data_dir.join("index.json");
+    let index: BuildingIndex = serde_json::from_str(&fs::read_to_string(index_path).ok()?).ok()?;
+    let entry = index.buildings.iter().find(|e| e.id == id)?;
+    let file_stem = entry.file.as_deref().unwrap_or(id);
+    let path = data_dir.join(format!("{}.json", file_stem));
     let data = fs::read_to_string(path).ok()?;
     serde_json::from_str(&data).ok()
 }

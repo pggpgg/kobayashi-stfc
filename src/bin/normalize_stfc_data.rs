@@ -338,6 +338,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 building_index_entries.push(kobayashi::data::building::BuildingIndexEntry {
                     id: rec.id.clone(),
                     building_name: rec.building_name.clone(),
+                    file: None,
                 });
                 let out_path = out_buildings.join(format!("{}.json", rec.id));
                 fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;
