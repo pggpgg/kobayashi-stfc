@@ -218,6 +218,33 @@ fn resolve_effect(
                     let add = if op == "multiply" { value - 1.0 } else { value };
                     Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
                 }
+                "shots" | "weapon_shots" | "shots_per_weapon" => {
+                    // +X% shots for Y rounds (round half-even applied in engine). Only at round start or combat begin.
+                    if matches!(timing, TimingWindow::RoundStart | TimingWindow::CombatBegin) {
+                        let bonus_pct = if op == "multiply" { value - 1.0 } else { value };
+                        let duration_rounds = effect
+                            .duration
+                            .as_ref()
+                            .and_then(|d| {
+                                if let crate::lcars::parser::LcarsDuration::Rounds { rounds } = d {
+                                    Some(*rounds)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap_or(1);
+                        Some((
+                            timing,
+                            AbilityEffect::ShotsBonus {
+                                chance: 1.0,
+                                bonus_pct,
+                                duration_rounds,
+                            },
+                        ))
+                    } else {
+                        None
+                    }
+                }
                 _ => None,
             }
         }

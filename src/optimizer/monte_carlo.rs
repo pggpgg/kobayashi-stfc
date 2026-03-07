@@ -3,9 +3,10 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, pierce_damage_through_bonus, simulate_combat, Ability, AbilityClass, AbilityEffect,
-    AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
-    ShipType, SimulationConfig, TimingWindow, TraceMode,
+    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, simulate_combat, Ability,
+    AbilityClass, AbilityEffect, AttackerStats, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, DefenderStats, MITIGATION_CEILING, MITIGATION_FLOOR, ShipType, SimulationConfig,
+    TimingWindow, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::hostile::HostileRecord;
@@ -145,8 +146,14 @@ fn build_shared_scenario_data_from_registry(
     let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
         if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
             let attacker_stats = ship_r.to_attacker_stats();
-            let defender_mitigation =
-                mitigation(hostile_r.to_defender_stats(), attacker_stats, hostile_r.ship_type());
+            let defender_mitigation = mitigation_for_hostile(
+                hostile_r.to_defender_stats(),
+                attacker_stats,
+                hostile_r.ship_type(),
+                hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
+                hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+                hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+            );
             let pierce = pierce_damage_through_bonus(
                 hostile_r.to_defender_stats(),
                 attacker_stats,
@@ -370,8 +377,14 @@ fn run_monte_carlo_with_parallelism(
     let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
         if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
             let attacker_stats = ship_r.to_attacker_stats();
-            let defender_mitigation =
-                mitigation(hostile_r.to_defender_stats(), attacker_stats, hostile_r.ship_type());
+            let defender_mitigation = mitigation_for_hostile(
+                hostile_r.to_defender_stats(),
+                attacker_stats,
+                hostile_r.ship_type(),
+                hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
+                hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+                hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+            );
             let pierce = pierce_damage_through_bonus(
                 hostile_r.to_defender_stats(),
                 attacker_stats,
@@ -645,8 +658,14 @@ fn scenario_to_combat_input(
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let mut attacker_stats = ship_rec.to_attacker_stats();
         attacker_stats.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
-        let defender_mitigation =
-            mitigation(hostile_rec.to_defender_stats(), attacker_stats, hostile_rec.ship_type());
+        let defender_mitigation = mitigation_for_hostile(
+            hostile_rec.to_defender_stats(),
+            attacker_stats,
+            hostile_rec.ship_type(),
+            hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+            hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+            hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+        );
         let pierce = pierce_damage_through_bonus(
             hostile_rec.to_defender_stats(),
             attacker_stats,
@@ -793,10 +812,13 @@ fn synthetic_attacker_stats(ship_hash: u64) -> AttackerStats {
 
 fn computed_defender_mitigation(ship: &str, hostile: &str) -> f64 {
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
-        return mitigation(
+        return mitigation_for_hostile(
             hostile_rec.to_defender_stats(),
             ship_rec.to_attacker_stats(),
             hostile_rec.ship_type(),
+            hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+            hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+            hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
         );
     }
     let attacker = synthetic_attacker_stats(hash_identifier(ship));
