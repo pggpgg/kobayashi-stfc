@@ -129,14 +129,17 @@ mod tests {
                 BuildingIndexEntry {
                     id: "ops_center".to_string(),
                     building_name: "OPERATIONS CENTER".to_string(),
+                    file: None,
                 },
                 BuildingIndexEntry {
                     id: "parsteel_generator_a".to_string(),
                     building_name: "Parsteel Generator A".to_string(),
+                    file: None,
                 },
                 BuildingIndexEntry {
                     id: "building_50".to_string(),
                     building_name: "BUILDING 50".to_string(),
+                    file: None,
                 },
             ],
         }

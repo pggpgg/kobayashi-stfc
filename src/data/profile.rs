@@ -225,6 +225,7 @@ mod tests {
             buildings: vec![BuildingIndexEntry {
                 id: "test_weapon_building".to_string(),
                 building_name: "Test".to_string(),
+                file: None,
             }],
         };
         let data_dir = std::env::temp_dir().join("kobayashi_profile_building_test");

@@ -15,16 +15,9 @@ const COMBAT_KEYS: &[&str] = &[
     "shield_mitigation",
 ];
 
-/// Try loading a building record; use alternate filename for known prefixed files.
+/// Load a building record by id (uses index file field when present for bid_name naming).
 fn load_building_record_any(data_dir: &Path, id: &str) -> Option<kobayashi::data::building::BuildingRecord> {
-    kobayashi::data::building::load_building_record(data_dir, id).or_else(|| {
-        let alt = match id {
-            "ops_center" => "00_ops_center",
-            "parsteel_generator_a" => "01_parsteel_generator_a",
-            _ => return None,
-        };
-        kobayashi::data::building::load_building_record(data_dir, alt)
-    })
+    kobayashi::data::building::load_building_record(data_dir, id)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
