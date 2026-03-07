@@ -43,7 +43,7 @@ pub struct OptimizeRequest {
     pub seed: Option<u64>,
     /// When None, all crew combinations are explored. When Some(n), generation stops after n candidates.
     pub max_candidates: Option<u32>,
-    /// Optimizer strategy: "exhaustive" (default) or "genetic".
+    /// Optimizer strategy: "exhaustive" (default), "genetic", or "tiered".
     pub strategy: Option<String>,
     /// When true, below-decks pool only includes officers that have a below-decks ability.
     pub prioritize_below_decks_ability: Option<bool>,
@@ -894,6 +894,7 @@ const ESTIMATE_SEC_PER_CANDIDATE_SIM: f64 = 4e-9;
 fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
     match s.as_deref() {
         Some(v) if v.trim().eq_ignore_ascii_case("genetic") => OptimizerStrategy::Genetic,
+        Some(v) if v.trim().eq_ignore_ascii_case("tiered") => OptimizerStrategy::Tiered,
         _ => OptimizerStrategy::Exhaustive,
     }
 }
@@ -950,6 +951,8 @@ pub fn optimize_payload(
             only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
             seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
             profile_id,
+            tiered_scout_sims: None,
+            tiered_top_k: None,
         };
         all_results.extend(optimize_scenario_with_registry(registry, &scenario).into_iter().map(|r| SimulationResult {
             candidate: CrewCandidate {
@@ -975,6 +978,7 @@ pub fn optimize_payload(
         match strategy {
             OptimizerStrategy::Exhaustive => "optimizer_v1",
             OptimizerStrategy::Genetic => "genetic",
+            OptimizerStrategy::Tiered => "tiered",
         }
     };
     let mut notes = vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];
@@ -1170,6 +1174,8 @@ pub fn optimize_start_payload(
                 only_below_decks_with_ability: prioritize_below_decks_ability,
                 seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
                 profile_id: profile_id_owned.as_deref(),
+                tiered_scout_sims: None,
+                tiered_top_k: None,
             };
             let normal_results = optimize_scenario_with_progress_with_registry(
                 registry_ref,
@@ -1229,6 +1235,7 @@ pub fn optimize_start_payload(
             match strategy {
                 OptimizerStrategy::Exhaustive => "optimizer_v1",
                 OptimizerStrategy::Genetic => "genetic",
+                OptimizerStrategy::Tiered => "tiered",
             }
         };
         let mut notes = vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];

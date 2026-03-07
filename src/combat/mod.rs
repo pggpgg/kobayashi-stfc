@@ -13,10 +13,11 @@ pub use abilities::{
 };
 pub use engine::{
     apply_morale_primary_piercing, component_mitigation, isolytic_damage, mitigation,
-    mitigation_with_morale, pierce_damage_through_bonus, serialize_events_json, simulate_combat,
+    mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,     pierce_damage_through_bonus, round_half_even, serialize_events_json, simulate_combat,
     AttackerStats, CombatEvent, Combatant, DefenderStats, EventSource, ShipType, SimulationConfig,
-    SimulationResult, TraceCollector, TraceMode, WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON,
-    EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS, MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP,
+    SimulationResult, TraceCollector, TraceMode, WeaponStats,
+    BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
+    MITIGATION_CEILING, MITIGATION_FLOOR, MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP,
     SURVEY_COEFFICIENTS,
 };
 pub use export_csv::{

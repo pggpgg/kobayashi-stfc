@@ -308,6 +308,8 @@ export async function fetchHeuristics(): Promise<string[]> {
   return data.seeds ?? [];
 }
 
+export type OptimizerStrategyType = 'exhaustive' | 'genetic' | 'tiered';
+
 export async function optimizeStart(
   params: {
     ship: string;
@@ -315,6 +317,7 @@ export async function optimizeStart(
     sims?: number;
     seed?: number;
     max_candidates?: number | null;
+    strategy?: OptimizerStrategyType;
     prioritize_below_decks_ability?: boolean;
     heuristics_seeds?: string[];
     heuristics_only?: boolean;
@@ -330,6 +333,9 @@ export async function optimizeStart(
   };
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;
+  }
+  if (params.strategy && params.strategy !== 'exhaustive') {
+    body.strategy = params.strategy;
   }
   if (params.prioritize_below_decks_ability === true) {
     body.prioritize_below_decks_ability = true;

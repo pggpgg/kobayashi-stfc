@@ -79,6 +79,13 @@ pub enum AbilityEffect {
         growth_per_round: f64,
         ceiling: f64,
     },
+    /// Increase shots per weapon for a duration. Formula: n_w(r) = RoundHalfEven(n_w0 * (1 + B_shots)); this effect adds to B_shots when it triggers.
+    /// chance: 1.0 = deterministic (e.g. "at start of each round, +X% shots for Y rounds").
+    ShotsBonus {
+        chance: f64,
+        bonus_pct: f64,
+        duration_rounds: u32,
+    },
 }
 
 /// Combat context for condition evaluation at runtime.

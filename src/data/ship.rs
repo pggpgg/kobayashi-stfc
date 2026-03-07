@@ -8,10 +8,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::combat::{AttackerStats, ShipType, WeaponStats};
 
-/// Per-weapon attack for multi-weapon / sub-round support. When present on ShipRecord, used to build Combatant.weapons.
+/// Per-weapon attack (and optional base shots) for sub-round resolution. When present on ShipRecord, used to build Combatant.weapons.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeaponRecord {
     pub attack: f64,
+    /// Base shots per weapon per round. When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
+    #[serde(default)]
+    pub shots: Option<u32>,
 }
 
 #[derive(Debug, Clone)]
@@ -88,10 +91,16 @@ impl ShipRecord {
             .as_ref()
             .map(|w| {
                 w.iter()
-                    .map(|r| WeaponStats { attack: r.attack })
+                    .map(|r| WeaponStats {
+                        attack: r.attack,
+                        shots: r.shots,
+                    })
                     .collect()
             })
-            .unwrap_or_else(|| vec![WeaponStats { attack: self.attack }])
+            .unwrap_or_else(|| vec![WeaponStats {
+                attack: self.attack,
+                shots: None,
+            }])
     }
 }
 

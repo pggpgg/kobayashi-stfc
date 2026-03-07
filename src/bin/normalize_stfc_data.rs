@@ -248,6 +248,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     shield_mitigation: None,
                     apex_barrier: 0.0,
                     isolytic_defense: 0.0,
+                    mitigation_floor: None,
+                    mitigation_ceiling: None,
+                    mystery_mitigation_factor: None,
                 };
                 hostile_index_entries.push(kobayashi::data::hostile::HostileIndexEntry {
                     id: rec.id.clone(),
@@ -617,7 +620,10 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
         Some(
             weapon_attacks
                 .into_iter()
-                .map(|a| kobayashi::data::ship::WeaponRecord { attack: a })
+                .map(|a| kobayashi::data::ship::WeaponRecord {
+                    attack: a,
+                    shots: None,
+                })
                 .collect(),
         )
     };
