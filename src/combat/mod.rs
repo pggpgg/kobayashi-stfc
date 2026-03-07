@@ -1,7 +1,12 @@
 pub mod abilities;
 pub mod buffs;
+pub mod damage;
+pub mod effect_accumulator;
 pub mod engine;
+pub mod events;
 pub mod export_csv;
+pub mod mitigation;
+pub mod types;
 pub mod log_ingest;
 pub mod rng;
 pub mod stacking;

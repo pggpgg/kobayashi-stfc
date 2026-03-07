@@ -1,8 +1,18 @@
-use crate::data::data_registry::DataRegistry;
-use crate::data::heuristics::{
-    expand_crews, list_heuristics_seeds, load_seed_file, BelowDecksStrategy,
-    DEFAULT_HEURISTICS_DIR,
+mod execution;
+mod requests;
+
+pub use execution::{
+    cancel_job, get_job_status, run_optimize, start_optimize_job, CrewRecommendation,
+    OptimizeJobState, OptimizeResponse, OptimizeStartResponse, OptimizeStatusError,
+    OptimizeStatusResponse, ScenarioSummary,
 };
+pub use requests::{
+    validate_request, OptimizePayloadError, OptimizeRequest, ValidationErrorResponse,
+    ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
+};
+
+use crate::data::data_registry::DataRegistry;
+use crate::data::heuristics::{list_heuristics_seeds, DEFAULT_HEURISTICS_DIR};
 use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
 };
@@ -15,108 +25,14 @@ use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, BELOW_DECKS_SLOTS, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel_with_registry, run_monte_carlo_with_registry, SimulationResult,
-};
-use crate::optimizer::ranking::rank_results;
-use crate::optimizer::{
-    optimize_scenario_with_progress_with_registry, optimize_scenario_with_registry,
-    OptimizationScenario, OptimizerStrategy,
+    run_monte_carlo_with_registry, SimulationResult,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::fmt;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
-
-const DEFAULT_SIMS: u32 = 5000;
-const MAX_SIMS: u32 = 100_000;
-const MAX_CANDIDATES: u32 = 2_000_000;
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct OptimizeRequest {
-    pub ship: String,
-    pub hostile: String,
-    pub sims: Option<u32>,
-    pub seed: Option<u64>,
-    /// When None, all crew combinations are explored. When Some(n), generation stops after n candidates.
-    pub max_candidates: Option<u32>,
-    /// Optimizer strategy: "exhaustive" (default), "genetic", or "tiered".
-    pub strategy: Option<String>,
-    /// When true, below-decks pool only includes officers that have a below-decks ability.
-    pub prioritize_below_decks_ability: Option<bool>,
-    /// Names of heuristics seed files to run first (stems only, e.g. ["heuristics-seed"]).
-    pub heuristics_seeds: Option<Vec<String>>,
-    /// When true, only heuristics crews are simulated; normal optimization is skipped.
-    pub heuristics_only: Option<bool>,
-    /// How to assign below-decks when a seed lists more officers than the ship has slots.
-    /// "ordered" (default) or "exploration".
-    pub below_decks_strategy: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct CrewRecommendation {
-    pub captain: String,
-    pub bridge: Vec<String>,
-    pub below_decks: Vec<String>,
-    pub win_rate: f64,
-    pub stall_rate: f64,
-    pub loss_rate: f64,
-    pub avg_hull_remaining: f64,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct OptimizeResponse {
-    pub status: &'static str,
-    pub engine: &'static str,
-    pub scenario: ScenarioSummary,
-    pub recommendations: Vec<CrewRecommendation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub duration_ms: Option<u64>,
-    pub notes: Vec<&'static str>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub warnings: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ScenarioSummary {
-    pub ship: String,
-    pub hostile: String,
-    pub sims: u32,
-    pub seed: u64,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ValidationIssue {
-    pub field: &'static str,
-    pub messages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ValidationErrorResponse {
-    pub status: &'static str,
-    pub message: &'static str,
-    pub errors: Vec<ValidationIssue>,
-}
-
-#[derive(Debug)]
-pub enum OptimizePayloadError {
-    Parse(serde_json::Error),
-    Validation(ValidationErrorResponse),
-}
-
-impl fmt::Display for OptimizePayloadError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Parse(err) => write!(f, "{err}"),
-            Self::Validation(_) => write!(f, "invalid optimize request"),
-        }
-    }
-}
-
-impl std::error::Error for OptimizePayloadError {}
+use std::sync::Arc;
 
 pub fn health_payload() -> Result<String, serde_json::Error> {
     serde_json::to_string_pretty(&serde_json::json!({
@@ -859,45 +775,8 @@ pub fn heuristics_list_payload() -> Result<String, serde_json::Error> {
     serde_json::to_string_pretty(&serde_json::json!({ "seeds": seeds }))
 }
 
-fn parse_below_decks_strategy(s: Option<&String>) -> BelowDecksStrategy {
-    match s.as_deref() {
-        Some(v) if v.trim().eq_ignore_ascii_case("exploration") => BelowDecksStrategy::Exploration,
-        _ => BelowDecksStrategy::Ordered,
-    }
-}
-
-/// Load heuristics seeds and expand them into CrewCandidates.
-/// Uses registry for officer name resolution when provided (no disk reload).
-fn load_heuristics_candidates(
-    registry: &DataRegistry,
-    seed_names: &[String],
-    bd_strategy: BelowDecksStrategy,
-) -> Vec<CrewCandidate> {
-    let canonical_names: Vec<String> = registry.officers().iter().map(|o| o.name.clone()).collect();
-    seed_names
-        .iter()
-        .flat_map(|name| {
-            let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
-            let candidates = expand_crews(parsed, BELOW_DECKS_SLOTS, bd_strategy);
-            candidates.into_iter().map(|c| CrewCandidate {
-                captain: c.captain,
-                bridge: c.bridge,
-                below_decks: c.below_decks,
-            })
-        })
-        .collect()
-}
-
 /// Rough seconds per (candidate × sim) on a typical multi-core machine; used for time estimates.
 const ESTIMATE_SEC_PER_CANDIDATE_SIM: f64 = 4e-9;
-
-fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
-    match s.as_deref() {
-        Some(v) if v.trim().eq_ignore_ascii_case("genetic") => OptimizerStrategy::Genetic,
-        Some(v) if v.trim().eq_ignore_ascii_case("tiered") => OptimizerStrategy::Tiered,
-        _ => OptimizerStrategy::Exhaustive,
-    }
-}
 
 pub fn optimize_payload(
     registry: &DataRegistry,
@@ -908,180 +787,12 @@ pub fn optimize_payload(
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
-    let seed = request.seed.unwrap_or(0);
-    let strategy = parse_strategy(request.strategy.as_ref());
-    let heuristics_only = request.heuristics_only.unwrap_or(false);
-    let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
-    let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
-
-    let start = Instant::now();
-
-    // Load heuristics candidates (shared between all strategies).
-    let h_candidates = if !heuristics_seeds.is_empty() {
-        load_heuristics_candidates(registry, heuristics_seeds, bd_strategy)
-    } else {
-        Vec::new()
-    };
-    let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
-
-    // Phase 1: evaluate heuristics via MC — but NOT for genetic strategy (seeds go into GA instead).
-    let mut all_results: Vec<SimulationResult> = if !h_candidates.is_empty() && !is_seeded_genetic {
-        run_monte_carlo_parallel_with_registry(
-            registry,
-            &request.ship,
-            &request.hostile,
-            &h_candidates,
-            sims as usize,
-            seed,
-            profile_id,
-        )
-    } else {
-        Vec::new()
-    };
-
-    // Phase 2: normal optimization (skipped when heuristics_only is set).
-    if !heuristics_only {
-        let scenario = OptimizationScenario {
-            ship: &request.ship,
-            hostile: &request.hostile,
-            simulation_count: sims as usize,
-            seed,
-            max_candidates: request.max_candidates.map(|n| n as usize),
-            strategy,
-            only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
-            seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
-            profile_id,
-            tiered_scout_sims: None,
-            tiered_top_k: None,
-        };
-        all_results.extend(optimize_scenario_with_registry(registry, &scenario).into_iter().map(|r| SimulationResult {
-            candidate: CrewCandidate {
-                captain: r.captain,
-                bridge: r.bridge,
-                below_decks: r.below_decks,
-            },
-            win_rate: r.win_rate,
-            stall_rate: r.stall_rate,
-            loss_rate: r.loss_rate,
-            avg_hull_remaining: r.avg_hull_remaining,
-        }));
-    }
-
-    let duration_ms = start.elapsed().as_millis() as u64;
-    let ranked_results = rank_results(all_results);
-
-    let engine = if heuristics_only {
-        "heuristics"
-    } else if is_seeded_genetic {
-        "seeded_genetic"
-    } else {
-        match strategy {
-            OptimizerStrategy::Exhaustive => "optimizer_v1",
-            OptimizerStrategy::Genetic => "genetic",
-            OptimizerStrategy::Tiered => "tiered",
-        }
-    };
-    let mut notes = vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];
-    if is_seeded_genetic {
-        let note = "GA population seeded with heuristics crews.";
-        notes.insert(0, note);
-    } else if !heuristics_seeds.is_empty() {
-        notes.insert(0, "Heuristics crews were evaluated first.");
-    }
-
-    let response = OptimizeResponse {
-        status: "ok",
-        engine,
-        scenario: ScenarioSummary {
-            ship: request.ship,
-            hostile: request.hostile,
-            sims,
-            seed,
-        },
-        recommendations: ranked_results
-            .into_iter()
-            .map(|result| CrewRecommendation {
-                captain: result.captain,
-                bridge: result.bridge.clone(),
-                below_decks: result.below_decks.clone(),
-                win_rate: result.win_rate,
-                stall_rate: result.stall_rate,
-                loss_rate: result.loss_rate,
-                avg_hull_remaining: result.avg_hull_remaining,
-            })
-            .collect(),
-        duration_ms: Some(duration_ms),
-        notes,
-        warnings: Vec::new(),
-    };
-
+    let response = execution::run_optimize(registry, &request, profile_id)?;
     serde_json::to_string_pretty(&response).map_err(OptimizePayloadError::Parse)
 }
 
-// --- Optimize job store (for progress polling) ---
-
-#[derive(Debug, Clone)]
-pub enum OptimizeJobStatus {
-    Running,
-    Done,
-    Error,
-}
-
-#[derive(Debug, Clone)]
-pub struct OptimizeJobState {
-    pub status: OptimizeJobStatus,
-    pub progress: u8,
-    pub crews_done: u32,
-    pub total_crews: u32,
-    pub result: Option<OptimizeResponse>,
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct OptimizeStartResponse {
-    pub job_id: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct OptimizeStatusResponse {
-    pub status: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub progress: Option<u8>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub crews_done: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub total_crews: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub result: Option<OptimizeResponse>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
-static OPTIMIZE_JOB_COUNTER: OnceLock<AtomicU64> = OnceLock::new();
-static OPTIMIZE_JOBS: OnceLock<Mutex<HashMap<String, OptimizeJobState>>> = OnceLock::new();
-static OPTIMIZE_CANCEL_FLAGS: OnceLock<Mutex<HashMap<String, Arc<AtomicBool>>>> = OnceLock::new();
-
-fn optimize_jobs() -> &'static Mutex<HashMap<String, OptimizeJobState>> {
-    OPTIMIZE_JOBS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn optimize_cancel_flags() -> &'static Mutex<HashMap<String, Arc<AtomicBool>>> {
-    OPTIMIZE_CANCEL_FLAGS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn next_job_id() -> String {
-    let counter = OPTIMIZE_JOB_COUNTER.get_or_init(|| AtomicU64::new(0));
-    let n = counter.fetch_add(1, Ordering::Relaxed);
-    let ms = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis();
-    format!("opt_{}_{}", ms, n)
-}
-
-/// Start an optimize job in the background; returns job_id immediately.
 pub fn optimize_start_payload(
-    registry: std::sync::Arc<DataRegistry>,
+    registry: Arc<DataRegistry>,
     body: &str,
     profile_id: Option<&str>,
 ) -> Result<String, OptimizePayloadError> {
@@ -1089,287 +800,27 @@ pub fn optimize_start_payload(
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
-    let seed = request.seed.unwrap_or(0);
-
-    let job_id = next_job_id();
-    let cancel_flag = Arc::new(AtomicBool::new(false));
-    {
-        let mut map = optimize_jobs().lock().unwrap();
-        map.insert(
-            job_id.clone(),
-            OptimizeJobState {
-                status: OptimizeJobStatus::Running,
-                progress: 0,
-                crews_done: 0,
-                total_crews: 0,
-                result: None,
-                error: None,
-            },
-        );
-        optimize_cancel_flags().lock().unwrap().insert(job_id.clone(), cancel_flag.clone());
-    }
-
-    let registry = registry;
-    let ship = request.ship.clone();
-    let hostile = request.hostile.clone();
-    let job_id_clone = job_id.clone();
-    let max_candidates = request.max_candidates.map(|n| n as usize);
-    let strategy = parse_strategy(request.strategy.as_ref());
-    let prioritize_below_decks_ability = request.prioritize_below_decks_ability.unwrap_or(false);
-    let heuristics_only = request.heuristics_only.unwrap_or(false);
-    let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
-    let heuristics_seeds = request.heuristics_seeds.clone().unwrap_or_default();
-    let profile_id_owned = profile_id.map(String::from);
-    let cancel_flag = cancel_flag.clone();
-
-    std::thread::spawn(move || {
-        let start = Instant::now();
-        let registry_ref = registry.as_ref();
-
-        // Load heuristics candidates (shared between all strategies).
-        let h_candidates = if !heuristics_seeds.is_empty() {
-            load_heuristics_candidates(registry_ref, &heuristics_seeds, bd_strategy)
-        } else {
-            Vec::new()
-        };
-        let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
-
-        // Phase 1: evaluate heuristics via MC — but NOT for genetic strategy (seeds go into GA).
-        let mut all_results: Vec<SimulationResult> = if !h_candidates.is_empty() && !is_seeded_genetic {
-            let h_total = h_candidates.len() as u32;
-            if let Ok(mut map) = optimize_jobs().lock() {
-                if let Some(state) = map.get_mut(&job_id_clone) {
-                    state.total_crews = h_total;
-                }
-            }
-            let results = run_monte_carlo_parallel_with_registry(
-                registry_ref,
-                &ship,
-                &hostile,
-                &h_candidates,
-                sims as usize,
-                seed,
-                profile_id_owned.as_deref(),
-            );
-            if let Ok(mut map) = optimize_jobs().lock() {
-                if let Some(state) = map.get_mut(&job_id_clone) {
-                    state.crews_done = h_total;
-                    state.progress = if heuristics_only { 100 } else { 10 };
-                }
-            }
-            results
-        } else {
-            Vec::new()
-        };
-
-        // Phase 2: normal optimization
-        if !heuristics_only {
-            let scenario = OptimizationScenario {
-                ship: &ship,
-                hostile: &hostile,
-                simulation_count: sims as usize,
-                seed,
-                max_candidates,
-                strategy,
-                only_below_decks_with_ability: prioritize_below_decks_ability,
-                seed_population: if is_seeded_genetic { h_candidates.clone() } else { Vec::new() },
-                profile_id: profile_id_owned.as_deref(),
-                tiered_scout_sims: None,
-                tiered_top_k: None,
-            };
-            let normal_results = optimize_scenario_with_progress_with_registry(
-                registry_ref,
-                &scenario,
-                |crews_done, total_crews| {
-                    if cancel_flag.load(Ordering::Relaxed) {
-                        return false;
-                    }
-                    let base_progress = if !heuristics_seeds.is_empty() && !is_seeded_genetic { 10u8 } else { 0u8 };
-                    let progress = if total_crews == 0 {
-                        base_progress
-                    } else {
-                        let pct = (crews_done as f64 / total_crews as f64) * (100.0 - base_progress as f64);
-                        (base_progress as f64 + pct).round().min(100.0) as u8
-                    };
-                    if let Ok(mut map) = optimize_jobs().lock() {
-                        if let Some(state) = map.get_mut(&job_id_clone) {
-                            state.progress = progress;
-                            state.crews_done = crews_done;
-                            state.total_crews = total_crews;
-                        }
-                    }
-                    true
-                }
-            );
-            if cancel_flag.load(Ordering::Relaxed) {
-                if let Ok(mut map) = optimize_jobs().lock() {
-                    if let Some(state) = map.get_mut(&job_id_clone) {
-                        state.status = OptimizeJobStatus::Error;
-                        state.error = Some("Cancelled".to_string());
-                    }
-                }
-                optimize_cancel_flags().lock().unwrap().remove(&job_id_clone);
-                return;
-            }
-            all_results.extend(normal_results.into_iter().map(|r| SimulationResult {
-                candidate: CrewCandidate {
-                    captain: r.captain,
-                    bridge: r.bridge,
-                    below_decks: r.below_decks,
-                },
-                win_rate: r.win_rate,
-                stall_rate: r.stall_rate,
-                loss_rate: r.loss_rate,
-                avg_hull_remaining: r.avg_hull_remaining,
-            }));
-        }
-
-        let duration_ms = start.elapsed().as_millis() as u64;
-        let ranked_results = rank_results(all_results);
-
-        let engine = if heuristics_only {
-            "heuristics"
-        } else if is_seeded_genetic {
-            "seeded_genetic"
-        } else {
-            match strategy {
-                OptimizerStrategy::Exhaustive => "optimizer_v1",
-                OptimizerStrategy::Genetic => "genetic",
-                OptimizerStrategy::Tiered => "tiered",
-            }
-        };
-        let mut notes = vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];
-        if is_seeded_genetic {
-            let note = "GA population seeded with heuristics crews.";
-            notes.insert(0, note);
-        } else if !heuristics_seeds.is_empty() {
-            notes.insert(0, "Heuristics crews were evaluated first.");
-        }
-
-        let response = OptimizeResponse {
-            status: "ok",
-            engine,
-            scenario: ScenarioSummary {
-                ship: ship.clone(),
-                hostile: hostile.clone(),
-                sims,
-                seed,
-            },
-            recommendations: ranked_results
-                .into_iter()
-                .map(|result| CrewRecommendation {
-                    captain: result.captain,
-                    bridge: result.bridge.clone(),
-                    below_decks: result.below_decks.clone(),
-                    win_rate: result.win_rate,
-                    stall_rate: result.stall_rate,
-                    loss_rate: result.loss_rate,
-                    avg_hull_remaining: result.avg_hull_remaining,
-                })
-                .collect(),
-            duration_ms: Some(duration_ms),
-            notes,
-            warnings: Vec::new(),
-        };
-
-        if let Ok(mut map) = optimize_jobs().lock() {
-            if let Some(state) = map.get_mut(&job_id_clone) {
-                state.status = OptimizeJobStatus::Done;
-                state.progress = 100;
-                state.result = Some(response);
-            }
-        }
-        optimize_cancel_flags().lock().unwrap().remove(&job_id_clone);
-    });
-
-    let start_response = OptimizeStartResponse { job_id };
+    let start_response = execution::start_optimize_job(registry, request, profile_id)?;
     serde_json::to_string_pretty(&start_response).map_err(OptimizePayloadError::Parse)
 }
 
-#[derive(Debug)]
-pub enum OptimizeStatusError {
-    NotFound,
-    Serialize(serde_json::Error),
-}
-
-impl fmt::Display for OptimizeStatusError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::NotFound => write!(f, "Job not found"),
-            Self::Serialize(e) => write!(f, "{e}"),
-        }
-    }
-}
-
-impl std::error::Error for OptimizeStatusError {}
-
 /// Request cancellation of a running optimize job. Idempotent if already done/cancelled.
 pub fn optimize_cancel_payload(job_id: &str) -> Result<String, OptimizeStatusError> {
-    let jobs = optimize_jobs();
-    let mut map = jobs.lock().unwrap();
-    let state = map.get_mut(job_id).ok_or(OptimizeStatusError::NotFound)?;
-    match &state.status {
-        OptimizeJobStatus::Running => {}
-        OptimizeJobStatus::Done | OptimizeJobStatus::Error => {
+    if let Ok(status) = execution::get_job_status(job_id) {
+        if status.status == "done" || status.status == "error" {
             let body = serde_json::json!({ "status": "ok", "message": "Job already finished" });
             return serde_json::to_string_pretty(&body).map_err(OptimizeStatusError::Serialize);
         }
     }
-    state.status = OptimizeJobStatus::Error;
-    state.error = Some("Cancelled".to_string());
-    drop(map);
-    if let Ok(flags) = optimize_cancel_flags().lock() {
-        if let Some(flag) = flags.get(job_id) {
-            flag.store(true, Ordering::Relaxed);
-        }
-    }
+    execution::cancel_job(job_id)?;
     let body = serde_json::json!({ "status": "ok", "message": "Cancelled" });
     serde_json::to_string_pretty(&body).map_err(OptimizeStatusError::Serialize)
 }
 
 /// Return current status (and result when done) for an optimize job.
 pub fn optimize_status_payload(job_id: &str) -> Result<String, OptimizeStatusError> {
-    let jobs = optimize_jobs();
-    let map = jobs.lock().unwrap();
-    let state = map.get(job_id).ok_or(OptimizeStatusError::NotFound)?;
-    let status_str = match &state.status {
-        OptimizeJobStatus::Running => "running",
-        OptimizeJobStatus::Done => "done",
-        OptimizeJobStatus::Error => "error",
-    };
-    let response = OptimizeStatusResponse {
-        status: status_str.to_string(),
-        progress: Some(state.progress),
-        crews_done: Some(state.crews_done),
-        total_crews: Some(state.total_crews),
-        result: state.result.clone(),
-        error: state.error.clone(),
-    };
+    let response = execution::get_job_status(job_id)?;
     serde_json::to_string_pretty(&response).map_err(OptimizeStatusError::Serialize)
-}
-
-/// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates, optional prioritize_below_decks_ability.
-fn parse_optimize_estimate_query(query: &str) -> (String, String, u32, Option<u32>, bool) {
-    let mut ship = String::new();
-    let mut hostile = String::new();
-    let mut sims = DEFAULT_SIMS;
-    let mut max_candidates: Option<u32> = None;
-    let mut prioritize_below_decks_ability = false;
-    for pair in query.split('&') {
-        if let Some((key, value)) = pair.split_once('=') {
-            let key = key.trim();
-            let value = value.trim();
-            match key {
-                "ship" => ship = value.to_string(),
-                "hostile" => hostile = value.to_string(),
-                "sims" => sims = value.parse().unwrap_or(DEFAULT_SIMS),
-                "max_candidates" => max_candidates = value.parse().ok(),
-                "prioritize_below_decks_ability" => prioritize_below_decks_ability = value.eq_ignore_ascii_case("true") || value == "1",
-                _ => {}
-            }
-        }
-    }
-    (ship, hostile, sims, max_candidates, prioritize_below_decks_ability)
 }
 
 pub fn optimize_estimate_payload(
@@ -1379,7 +830,7 @@ pub fn optimize_estimate_payload(
 ) -> Result<String, OptimizePayloadError> {
     let query = path.split('?').nth(1).unwrap_or("");
     let (ship, hostile, sims, max_candidates, prioritize_below_decks_ability) =
-        parse_optimize_estimate_query(query);
+        requests::parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
         return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -1428,48 +879,4 @@ pub fn optimize_estimate_payload(
         "estimated_seconds": (estimated_seconds * 10.0).round() / 10.0,
     });
     serde_json::to_string_pretty(&payload).map_err(OptimizePayloadError::Parse)
-}
-
-fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), OptimizePayloadError> {
-    let mut errors: Vec<ValidationIssue> = Vec::new();
-
-    if request.ship.trim().is_empty() {
-        errors.push(ValidationIssue {
-            field: "ship",
-            messages: vec!["must not be empty".to_string()],
-        });
-    }
-
-    if request.hostile.trim().is_empty() {
-        errors.push(ValidationIssue {
-            field: "hostile",
-            messages: vec!["must not be empty".to_string()],
-        });
-    }
-
-    if !(1..=MAX_SIMS).contains(&sims) {
-        errors.push(ValidationIssue {
-            field: "sims",
-            messages: vec![format!("must be between 1 and {MAX_SIMS}")],
-        });
-    }
-
-    if let Some(cap) = request.max_candidates {
-        if cap > MAX_CANDIDATES {
-            errors.push(ValidationIssue {
-                field: "max_candidates",
-                messages: vec![format!("must be at most {MAX_CANDIDATES}")],
-            });
-        }
-    }
-
-    if errors.is_empty() {
-        return Ok(());
-    }
-
-    Err(OptimizePayloadError::Validation(ValidationErrorResponse {
-        status: "error",
-        message: "Validation failed",
-        errors,
-    }))
 }
