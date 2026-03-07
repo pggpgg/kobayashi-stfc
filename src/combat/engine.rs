@@ -1744,7 +1744,6 @@ impl EffectAccumulator {
                     let value = (initial + r * growth_per_round).min(ceiling);
                     self.pre_attack_modifier_sum += value - 1.0;
                 }
-                AbilityEffect::ShotsBonus { .. } => {}
             },
         }
     }
