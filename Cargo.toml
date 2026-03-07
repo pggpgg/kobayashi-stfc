@@ -24,6 +24,10 @@ name = "syndicate_bonuses"
 path = "src/bin/syndicate_bonuses.rs"
 
 [[bin]]
+name = "building_combat_bonuses"
+path = "src/bin/building_combat_bonuses.rs"
+
+[[bin]]
 name = "validate_data"
 path = "src/bin/validate_data.rs"
 
