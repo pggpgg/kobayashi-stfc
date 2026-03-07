@@ -1,430 +1,536 @@
 {
-  "data_version": "stfcspace-2026-02-27",
+  "data_version": "stfcspace-2026-03-07",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "buildings": [
     {
       "id": "ops_center",
-      "building_name": "OPERATIONS CENTER"
+      "building_name": "Operations",
+      "file": "0_operations"
     },
     {
       "id": "parsteel_generator_a",
-      "building_name": "Parsteel Generator A"
+      "building_name": "Parsteel Generator A",
+      "file": "1_parsteel_generator_a"
     },
     {
       "id": "parsteel_generator_b",
-      "building_name": "Parsteel Generator B"
+      "building_name": "Parsteel Generator B",
+      "file": "2_parsteel_generator_b"
     },
     {
       "id": "parsteel_generator_c",
-      "building_name": "Parsteel Generator C"
+      "building_name": "Parsteel Generator C",
+      "file": "3_parsteel_generator_c"
     },
     {
       "id": "building_50",
-      "building_name": "BUILDING 50"
+      "building_name": "Parsteel Generator D",
+      "file": "50_parsteel_generator_d"
     },
     {
       "id": "building_51",
-      "building_name": "BUILDING 51"
+      "building_name": "Parsteel Generator E",
+      "file": "51_parsteel_generator_e"
     },
     {
       "id": "building_52",
-      "building_name": "BUILDING 52"
+      "building_name": "Parsteel Generator F",
+      "file": "52_parsteel_generator_f"
     },
     {
       "id": "building_53",
-      "building_name": "BUILDING 53"
+      "building_name": "Parsteel Generator G",
+      "file": "53_parsteel_generator_g"
     },
     {
       "id": "building_54",
-      "building_name": "BUILDING 54"
+      "building_name": "Parsteel Generator H",
+      "file": "54_parsteel_generator_h"
     },
     {
       "id": "parsteel_warehouse",
-      "building_name": "Parsteel Warehouse"
+      "building_name": "Parsteel Warehouse",
+      "file": "4_parsteel_warehouse"
     },
     {
       "id": "building_55",
-      "building_name": "BUILDING 55"
+      "building_name": "Parsteel Vault",
+      "file": "55_parsteel_vault"
     },
     {
       "id": "tritanium_generator_a",
-      "building_name": "Tritanium Generator A"
+      "building_name": "Tritanium Generator A",
+      "file": "5_tritanium_generator_a"
     },
     {
       "id": "tritanium_generator_b",
-      "building_name": "Tritanium Generator B"
+      "building_name": "Tritanium Generator B",
+      "file": "6_tritanium_generator_b"
     },
     {
       "id": "tritanium_generator_c",
-      "building_name": "Tritanium Generator C"
+      "building_name": "Tritanium Generator C",
+      "file": "7_tritanium_generator_c"
     },
     {
       "id": "building_56",
-      "building_name": "BUILDING 56"
+      "building_name": "Tritanium Generator D",
+      "file": "56_tritanium_generator_d"
     },
     {
       "id": "building_57",
-      "building_name": "BUILDING 57"
+      "building_name": "Tritanium Generator E",
+      "file": "57_tritanium_generator_e"
     },
     {
       "id": "building_58",
-      "building_name": "BUILDING 58"
+      "building_name": "Tritanium Generator F",
+      "file": "58_tritanium_generator_f"
     },
     {
       "id": "building_59",
-      "building_name": "BUILDING 59"
+      "building_name": "Tritanium Generator G",
+      "file": "59_tritanium_generator_g"
     },
     {
       "id": "building_60",
-      "building_name": "BUILDING 60"
+      "building_name": "Tritanium Generator H",
+      "file": "60_tritanium_generator_h"
     },
     {
       "id": "tritanium_warehouse",
-      "building_name": "Tritanium Warehouse"
+      "building_name": "Tritanium Warehouse",
+      "file": "8_tritanium_warehouse"
     },
     {
       "id": "building_61",
-      "building_name": "BUILDING 61"
+      "building_name": "Tritanium Vault",
+      "file": "61_tritanium_vault"
     },
     {
       "id": "dilithium_generator_a",
-      "building_name": "Dilithium Generator A"
+      "building_name": "Dilithium Generator A",
+      "file": "9_dilithium_generator_a"
     },
     {
       "id": "dilithium_generator_b",
-      "building_name": "Dilithium Generator B"
+      "building_name": "Dilithium Generator B",
+      "file": "10_dilithium_generator_b"
     },
     {
       "id": "dilithium_generator_c",
-      "building_name": "Dilithium Generator C"
+      "building_name": "Dilithium Generator C",
+      "file": "11_dilithium_generator_c"
     },
     {
       "id": "building_62",
-      "building_name": "BUILDING 62"
+      "building_name": "Dilithium Generator D",
+      "file": "62_dilithium_generator_d"
     },
     {
       "id": "building_63",
-      "building_name": "BUILDING 63"
+      "building_name": "Dilithium Generator E",
+      "file": "63_dilithium_generator_e"
     },
     {
       "id": "building_64",
-      "building_name": "BUILDING 64"
+      "building_name": "Dilithium Generator F",
+      "file": "64_dilithium_generator_f"
     },
     {
       "id": "building_65",
-      "building_name": "BUILDING 65"
+      "building_name": "Dilithium Generator G",
+      "file": "65_dilithium_generator_g"
     },
     {
       "id": "building_66",
-      "building_name": "BUILDING 66"
+      "building_name": "Dilithium Generator H",
+      "file": "66_dilithium_generator_h"
     },
     {
       "id": "dilithium_warehouse",
-      "building_name": "Dilithium Warehouse"
+      "building_name": "Dilithium Warehouse",
+      "file": "12_dilithium_warehouse"
     },
     {
       "id": "building_67",
-      "building_name": "BUILDING 67"
+      "building_name": "Dilithium Vault",
+      "file": "67_dilithium_vault"
     },
     {
       "id": "shipyard",
-      "building_name": "Shipyard"
+      "building_name": "Shipyard",
+      "file": "15_shipyard"
     },
     {
       "id": "building_41",
-      "building_name": "BUILDING 41"
+      "building_name": "Scrapyard",
+      "file": "41_scrapyard"
     },
     {
       "id": "ship_hangar",
-      "building_name": "Ship Hangar"
+      "building_name": "Ship Hangar",
+      "file": "16_ship_hangar"
     },
     {
       "id": "drydock_a",
-      "building_name": "Drydock A"
+      "building_name": "Drydock A",
+      "file": "17_drydock_a"
     },
     {
       "id": "drydock_b",
-      "building_name": "Drydock B"
+      "building_name": "Drydock B",
+      "file": "18_drydock_b"
     },
     {
       "id": "drydock_c",
-      "building_name": "Drydock C"
+      "building_name": "Drydock C",
+      "file": "19_drydock_c"
     },
     {
       "id": "drydock_d",
-      "building_name": "Drydock D"
+      "building_name": "Drydock D",
+      "file": "20_drydock_d"
     },
     {
       "id": "building_21",
-      "building_name": "BUILDING 21"
+      "building_name": "Drydock E",
+      "file": "21_drydock_e"
     },
     {
       "id": "building_22",
-      "building_name": "BUILDING 22"
+      "building_name": "Drydock F",
+      "file": "22_drydock_f"
     },
     {
       "id": "building_44",
-      "building_name": "BUILDING 44"
+      "building_name": "Drydock G",
+      "file": "44_drydock_g"
     },
     {
       "id": "building_45",
-      "building_name": "BUILDING 45"
+      "building_name": "Drydock H",
+      "file": "45_drydock_h"
     },
     {
       "id": "building_24",
-      "building_name": "BUILDING 24"
+      "building_name": "Academy",
+      "file": "24_academy"
     },
     {
       "id": "building_25",
-      "building_name": "BUILDING 25"
+      "building_name": "R&D Department",
+      "file": "25_r_d_department"
     },
     {
       "id": "building_26",
-      "building_name": "BUILDING 26"
+      "building_name": "Astronautics Studio",
+      "file": "26_astronautics_studio"
     },
     {
       "id": "building_27",
-      "building_name": "BUILDING 27"
+      "building_name": "Armory",
+      "file": "27_armory"
     },
     {
       "id": "building_43",
-      "building_name": "BUILDING 43"
+      "building_name": "Foundry",
+      "file": "43_foundry"
     },
     {
       "id": "building_29",
-      "building_name": "BUILDING 29"
+      "building_name": "Science Lab",
+      "file": "29_science_lab"
     },
     {
       "id": "engine_technology_lab",
-      "building_name": "Engine Technology Lab"
+      "building_name": "Engine Technology Lab",
+      "file": "14_engine_technology_lab"
     },
     {
       "id": "building_28",
-      "building_name": "BUILDING 28"
+      "building_name": "Defense Technologies",
+      "file": "28_defense_technologies"
     },
     {
       "id": "building_34",
-      "building_name": "BUILDING 34"
+      "building_name": "Defense Platform A",
+      "file": "34_defense_platform_a"
     },
     {
       "id": "building_35",
-      "building_name": "BUILDING 35"
+      "building_name": "Defense Platform B",
+      "file": "35_defense_platform_b"
     },
     {
       "id": "building_36",
-      "building_name": "BUILDING 36"
+      "building_name": "Defense Platform C",
+      "file": "36_defense_platform_c"
     },
     {
       "id": "building_37",
-      "building_name": "BUILDING 37"
+      "building_name": "Defense Platform D",
+      "file": "37_defense_platform_d"
     },
     {
       "id": "building_38",
-      "building_name": "BUILDING 38"
+      "building_name": "Defense Platform E",
+      "file": "38_defense_platform_e"
     },
     {
       "id": "building_39",
-      "building_name": "BUILDING 39"
+      "building_name": "Defense Platform F",
+      "file": "39_defense_platform_f"
     },
     {
       "id": "building_31",
-      "building_name": "BUILDING 31"
+      "building_name": "Refinery",
+      "file": "31_refinery"
     },
     {
       "id": "building_23",
-      "building_name": "BUILDING 23"
+      "building_name": "Armada Control Center",
+      "file": "23_armada_control_center"
     },
     {
       "id": "treasury",
-      "building_name": "Treasury"
+      "building_name": "Treasury",
+      "file": "13_treasury"
     },
     {
       "id": "building_33",
-      "building_name": "BUILDING 33"
+      "building_name": "Shuttle Bay",
+      "file": "33_shuttle_bay"
     },
     {
       "id": "building_40",
-      "building_name": "BUILDING 40"
+      "building_name": "Exocomp Factory",
+      "file": "40_exocomp_factory"
     },
     {
       "id": "building_69",
-      "building_name": "BUILDING 69"
+      "building_name": "Holodeck",
+      "file": "69_holodeck"
     },
     {
       "id": "building_70",
-      "building_name": "BUILDING 70"
+      "building_name": "Subspace Relay",
+      "file": "70_subspace_relay"
     },
     {
       "id": "building_71",
-      "building_name": "BUILDING 71"
+      "building_name": "Command Center",
+      "file": "71_command_center"
     },
     {
       "id": "building_72",
-      "building_name": "BUILDING 72"
+      "building_name": "Mess Hall",
+      "file": "72_mess_hall"
     },
     {
       "id": "building_73",
-      "building_name": "BUILDING 73"
+      "building_name": "Artifact Gallery",
+      "file": "73_artifact_gallery"
     },
     {
       "id": "building_75",
-      "building_name": "BUILDING 75"
+      "building_name": "Court of Q",
+      "file": "75_court_of_q"
     },
     {
       "id": "building_77",
-      "building_name": "BUILDING 77"
+      "building_name": "The Facade",
+      "file": "77_the_facade"
     },
     {
       "id": "building_78",
-      "building_name": "BUILDING 78"
+      "building_name": "The War Room",
+      "file": "78_the_war_room"
     },
     {
       "id": "building_79",
-      "building_name": "BUILDING 79"
+      "building_name": "District 56",
+      "file": "79_district_56"
     },
     {
       "id": "building_80",
-      "building_name": "BUILDING 80"
+      "building_name": "The Nova Squadron",
+      "file": "80_the_nova_squadron"
     },
     {
       "id": "building_81",
-      "building_name": "BUILDING 81"
+      "building_name": "INDEPENDENT ARCHIVES",
+      "file": "81_independent_archives"
     },
     {
       "id": "building_82",
-      "building_name": "BUILDING 82"
+      "building_name": "DTI Headquarters",
+      "file": "82_dti_headquarters"
     },
     {
       "id": "building_83",
-      "building_name": "BUILDING 83"
+      "building_name": "Transogen Forge",
+      "file": "83_transogen_forge"
     },
     {
       "id": "building_84",
-      "building_name": "BUILDING 84"
+      "building_name": "Recon Locus",
+      "file": "84_recon_locus"
     },
     {
       "id": "building_85",
-      "building_name": "BUILDING 85"
+      "building_name": "Outpost Control Center",
+      "file": "85_outpost_control_center"
     },
     {
       "id": "building_86",
-      "building_name": "BUILDING 86"
+      "building_name": "Signal Observatory",
+      "file": "86_signal_observatory"
     },
     {
       "id": "building_1000",
-      "building_name": "BUILDING 1000"
+      "building_name": "Assembly Chambers",
+      "file": "1000_assembly_chambers"
     },
     {
       "id": "building_1001",
-      "building_name": "BUILDING 1001"
+      "building_name": "Collisonal Plasma Harvester A",
+      "file": "1001_collisonal_plasma_harvester_a"
     },
     {
       "id": "building_1002",
-      "building_name": "BUILDING 1002"
+      "building_name": "Collisonal Plasma Harvester B",
+      "file": "1002_collisonal_plasma_harvester_b"
     },
     {
       "id": "building_1003",
-      "building_name": "BUILDING 1003"
+      "building_name": "Collisonal Plasma Harvester C",
+      "file": "1003_collisonal_plasma_harvester_c"
     },
     {
       "id": "building_1004",
-      "building_name": "BUILDING 1004"
+      "building_name": "Collisional Plasma Vault A",
+      "file": "1004_collisional_plasma_vault_a"
     },
     {
       "id": "building_1005",
-      "building_name": "BUILDING 1005"
+      "building_name": "Collisional Plasma Vault B",
+      "file": "1005_collisional_plasma_vault_b"
     },
     {
       "id": "building_1006",
-      "building_name": "BUILDING 1006"
+      "building_name": "Magnetic Plasma Harvester A",
+      "file": "1006_magnetic_plasma_harvester_a"
     },
     {
       "id": "building_1007",
-      "building_name": "BUILDING 1007"
+      "building_name": "Magnetic Plasma Harvester B",
+      "file": "1007_magnetic_plasma_harvester_b"
     },
     {
       "id": "building_1008",
-      "building_name": "BUILDING 1008"
+      "building_name": "Magnetic Plasma Harvester C",
+      "file": "1008_magnetic_plasma_harvester_c"
     },
     {
       "id": "building_1009",
-      "building_name": "BUILDING 1009"
+      "building_name": "Magnetic Plasma Vault A",
+      "file": "1009_magnetic_plasma_vault_a"
     },
     {
       "id": "building_1010",
-      "building_name": "BUILDING 1010"
+      "building_name": "Magnetic Plasma Vault B",
+      "file": "1010_magnetic_plasma_vault_b"
     },
     {
       "id": "building_1011",
-      "building_name": "BUILDING 1011"
+      "building_name": "Active Plasma Harvester A",
+      "file": "1011_active_plasma_harvester_a"
     },
     {
       "id": "building_1012",
-      "building_name": "BUILDING 1012"
+      "building_name": "Active Plasma Harvester B",
+      "file": "1012_active_plasma_harvester_b"
     },
     {
       "id": "building_1013",
-      "building_name": "BUILDING 1013"
+      "building_name": "Active Plasma Harvester C",
+      "file": "1013_active_plasma_harvester_c"
     },
     {
       "id": "building_1014",
-      "building_name": "BUILDING 1014"
+      "building_name": "Active Plasma Vault A",
+      "file": "1014_active_plasma_vault_a"
     },
     {
       "id": "building_1015",
-      "building_name": "BUILDING 1015"
+      "building_name": "Active Plasma Vault B",
+      "file": "1015_active_plasma_vault_b"
     },
     {
       "id": "building_1016",
-      "building_name": "BUILDING 1016"
+      "building_name": "Plasma Processor",
+      "file": "1016_plasma_processor"
     },
     {
       "id": "building_1017",
-      "building_name": "BUILDING 1017"
+      "building_name": "Diplomatic Relations",
+      "file": "1017_diplomatic_relations"
     },
     {
       "id": "building_1018",
-      "building_name": "BUILDING 1018"
+      "building_name": "Tactical Deck",
+      "file": "1018_tactical_deck"
     },
     {
       "id": "building_1019",
-      "building_name": "BUILDING 1019"
+      "building_name": "Salvage Yard",
+      "file": "1019_salvage_yard"
     },
     {
       "id": "building_1020",
-      "building_name": "BUILDING 1020"
+      "building_name": "Command Control",
+      "file": "1020_command_control"
     },
     {
       "id": "building_1021",
-      "building_name": "BUILDING 1021"
+      "building_name": "Shield Modulator",
+      "file": "1021_shield_modulator"
     },
     {
       "id": "building_1022",
-      "building_name": "BUILDING 1022"
+      "building_name": "EPS Distributor A",
+      "file": "1022_eps_distributor_a"
     },
     {
       "id": "building_1023",
-      "building_name": "BUILDING 1023"
+      "building_name": "EPS Distributor B",
+      "file": "1023_eps_distributor_b"
     },
     {
       "id": "building_1024",
-      "building_name": "BUILDING 1024"
+      "building_name": "EPS Distributor C",
+      "file": "1024_eps_distributor_c"
     },
     {
       "id": "building_1025",
-      "building_name": "BUILDING 1025"
+      "building_name": "Exographic Targeting Array A",
+      "file": "1025_exographic_targeting_array_a"
     },
     {
       "id": "building_1026",
-      "building_name": "BUILDING 1026"
+      "building_name": "Exographic Targeting Array B",
+      "file": "1026_exographic_targeting_array_b"
     },
     {
       "id": "building_1027",
-      "building_name": "BUILDING 1027"
+      "building_name": "Exographic Targeting Array C",
+      "file": "1027_exographic_targeting_array_c"
     },
     {
       "id": "building_1028",
-      "building_name": "BUILDING 1028"
+      "building_name": "Tachyon Detector",
+      "file": "1028_tachyon_detector"
     }
   ]
 }
