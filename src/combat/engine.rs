@@ -21,8 +21,29 @@ pub struct FightResult {
 }
 
 pub const EPSILON: f64 = 1e-9;
+
+/// Bankers rounding (round half to even). Used for shots per weapon: n_w(r) = round_half_even(n_w0 * (1 + B_shots)).
+#[inline]
+pub fn round_half_even(x: f64) -> u32 {
+    let fl = x.floor();
+    let frac = x - fl;
+    let fl_u = fl as u32;
+    if frac < 0.5 {
+        fl_u
+    } else if frac > 0.5 {
+        fl_u + 1
+    } else {
+        // tie: round to nearest even
+        if fl_u % 2 == 0 {
+            fl_u
+        } else {
+            fl_u + 1
+        }
+    }
+}
 pub const MAX_COMBAT_ROUNDS: u32 = 100;
 pub const MORALE_PRIMARY_PIERCING_BONUS: f64 = 0.10;
+/// When target has Hull Breach, critical damage is multiplied by this factor (per game rules).
 pub const HULL_BREACH_CRIT_BONUS: f64 = 1.5;
 pub const BURNING_HULL_DAMAGE_PER_ROUND: f64 = 0.01;
 pub const ASSIMILATED_EFFECTIVENESS_MULTIPLIER: f64 = 0.75;
@@ -123,6 +144,9 @@ pub struct SimulationResult {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WeaponStats {
     pub attack: f64,
+    /// Base shots per weapon per round (n_w,0). When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
+    #[serde(default)]
+    pub shots: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -152,7 +176,7 @@ pub struct Combatant {
     /// Attacker: isolytic damage bonus (decimal, e.g. 0.15 = 15% of regular damage as isolytic). Used in isolytic_damage().
     #[serde(default)]
     pub isolytic_damage: f64,
-    /// Defender: flat reduction to isolytic damage taken (or mitigation-style; applied after isolytic_damage()).
+    /// Defender: multiplicative isolytic mitigation. Isolytic taken = Isolytic Damage / (1 + isolytic_defense). Applied after isolytic_damage().
     #[serde(default)]
     pub isolytic_defense: f64,
     /// Per-weapon attack values for sub-round resolution. If empty, one weapon with scalar `attack` is used (backward compat).
@@ -168,6 +192,21 @@ impl Combatant {
     /// Number of weapons (sub-rounds per round). Empty weapons list is treated as one weapon using scalar `attack`.
     pub fn weapon_count(&self) -> usize {
         self.weapons.len().max(1)
+    }
+
+    /// Base shots per weapon per round (n_w,0). Default 1 when not set.
+    pub fn weapon_base_shots(&self, weapon_index: usize) -> u32 {
+        if self.weapons.is_empty() {
+            if weapon_index == 0 {
+                1
+            } else {
+                0
+            }
+        } else if let Some(w) = self.weapons.get(weapon_index) {
+            w.shots.unwrap_or(1)
+        } else {
+            0
+        }
     }
 
     /// Attack value for weapon at index. Returns None if index >= weapon_count (caller should not fire).
@@ -253,17 +292,53 @@ pub fn pierce_damage_through_bonus(
     (PIERCE_CAP * (1.0 - mit)).clamp(0.0, PIERCE_CAP)
 }
 
+/// Default mitigation floor for hostile fights (game clamp). Some hostiles may override.
+pub const MITIGATION_FLOOR: f64 = 0.16;
+/// Default mitigation ceiling for hostile fights (game clamp). Some hostiles may override.
+pub const MITIGATION_CEILING: f64 = 0.72;
+
 /// Compute total mitigation using weighted multiplicative composition.
+/// No hostile-specific clamp; use [`mitigation_for_hostile`] when the defender is a hostile.
 pub fn mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: ShipType) -> f64 {
+    mitigation_with_mystery(defender, attacker, ship_type, 0.0).clamp(0.0, 1.0)
+}
+
+/// Raw mitigation with optional "mystery" factor X. Formula:
+/// `1 - (1 - X) * (1 - cA*fA) * (1 - cS*fS) * (1 - cD*fD)`.
+/// When X = 0 this matches the classic formula. Game developers use X rarely for some hostiles.
+pub fn mitigation_with_mystery(
+    defender: DefenderStats,
+    attacker: AttackerStats,
+    ship_type: ShipType,
+    mystery_mitigation_factor: f64,
+) -> f64 {
     let (c_armor, c_shield, c_dodge) = ship_type.coefficients();
 
     let f_armor = component_mitigation(defender.armor, attacker.armor_piercing);
     let f_shield = component_mitigation(defender.shield_deflection, attacker.shield_piercing);
     let f_dodge = component_mitigation(defender.dodge, attacker.accuracy);
 
-    let total =
-        1.0 - (1.0 - c_armor * f_armor) * (1.0 - c_shield * f_shield) * (1.0 - c_dodge * f_dodge);
-    total.clamp(0.0, 1.0)
+    let one_minus_x = (1.0 - mystery_mitigation_factor).max(0.0);
+    let total = 1.0
+        - one_minus_x
+            * (1.0 - c_armor * f_armor)
+            * (1.0 - c_shield * f_shield)
+            * (1.0 - c_dodge * f_dodge);
+    total
+}
+
+/// Mitigation for hostile defenders: applies mystery factor X then clamps to [floor, ceiling].
+/// Use default [`MITIGATION_FLOOR`] and [`MITIGATION_CEILING`] (16% / 72%) for most hostiles.
+pub fn mitigation_for_hostile(
+    defender: DefenderStats,
+    attacker: AttackerStats,
+    ship_type: ShipType,
+    mystery_mitigation_factor: f64,
+    floor: f64,
+    ceiling: f64,
+) -> f64 {
+    let raw = mitigation_with_mystery(defender, attacker, ship_type, mystery_mitigation_factor);
+    raw.clamp(floor, ceiling)
 }
 
 pub fn mitigation_with_morale(
@@ -357,6 +432,8 @@ pub fn simulate_combat(
     let mut hull_breach_rounds_remaining = 0_u32;
     let mut burning_rounds_remaining = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
+    // Active shots bonuses: (bonus_pct, expires_round). B_shots(r) = sum of bonus where expires_round >= r.
+    let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
     let combat_begin_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_ctx = CombatContext {
         round_index: 0,
@@ -555,7 +632,43 @@ pub fn simulate_combat(
                     ]),
                 });
             }
+
+            if let AbilityEffect::ShotsBonus {
+                chance,
+                bonus_pct,
+                duration_rounds,
+            } = effective_effect
+            {
+                let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = shots_roll < chance.clamp(0.0, 1.0);
+                if triggered {
+                    let duration = duration_rounds.max(1);
+                    shots_bonus_entries.push((bonus_pct, round_index + duration));
+                }
+                trace.record_if(|| CombatEvent {
+                    event_type: "shots_bonus_trigger".to_string(),
+                    round_index,
+                    phase: "round_start".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    weapon_index: None,
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
         }
+
+        // Prune expired shots bonuses and compute B_shots(r) for this round.
+        shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
+        let b_shots: f64 = shots_bonus_entries.iter().map(|(b, _)| b).sum();
 
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
         let round_end_filtered = filter_effects_by_condition(&round_end_effects, &combat_ctx);
@@ -664,7 +777,12 @@ pub fn simulate_combat(
                 / (1.0 + effective_apex_shred).max(EPSILON);
             let apex_damage_factor = 10000.0 / (10000.0 + effective_barrier);
 
+            let base_shots = attacker.weapon_base_shots(weapon_index);
+            let effective_shots = round_half_even(base_shots as f64 * (1.0 + b_shots));
+            let shield_before_weapon = defender_shield_remaining;
+
             let weapon_index_u = weapon_index as u32;
+            for _ in 0..effective_shots {
             if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
             let effective_attack = attacker_weapon_attack * phase_effects.pre_attack_multiplier();
 
@@ -737,7 +855,7 @@ pub fn simulate_combat(
         let crit_multiplier = if is_crit {
             let base_crit_multiplier = attacker.crit_multiplier;
             if hull_breach_active {
-                base_crit_multiplier * (1.0 + HULL_BREACH_CRIT_BONUS)
+                base_crit_multiplier * HULL_BREACH_CRIT_BONUS
             } else {
                 base_crit_multiplier
             }
@@ -896,20 +1014,22 @@ pub fn simulate_combat(
         phase_effects.set_pre_attack_damage_base(pre_attack_damage);
         let pre_attack_damage = phase_effects.composed_pre_attack_damage();
         let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
-        let damage_after_apex = damage * apex_damage_factor;
 
-        // Isolytic: extra damage from attacker isolytic_damage bonus, reduced by defender isolytic_defense.
+        // Isolytic: from pre-apex standard damage; report formula: isolytic taken = Isolytic Damage / (1 + I_def).
         // Officer/ability effects add via EffectAccumulator (composed_isolytic_damage_bonus, composed_isolytic_defense_bonus, composed_isolytic_cascade_damage_bonus).
         let effective_isolytic_damage = (attacker.isolytic_damage + phase_effects.composed_isolytic_damage_bonus()).max(0.0);
         let effective_isolytic_defense = (defender.isolytic_defense + phase_effects.composed_isolytic_defense_bonus()).max(0.0);
         let effective_isolytic_cascade = phase_effects.composed_isolytic_cascade_damage_bonus().max(0.0);
         let isolytic_component = isolytic_damage(
-            damage_after_apex,
+            damage,
             effective_isolytic_damage,
             effective_isolytic_cascade,
         );
-        let isolytic_net = (isolytic_component - effective_isolytic_defense).max(0.0);
-        let damage_after_apex = damage_after_apex + isolytic_net;
+        let isolytic_taken = isolytic_component / (1.0 + effective_isolytic_defense);
+
+        // Apex barrier: apply once to combined pool (standard_net + isolytic_taken). Report formula: final = (Standard net + Isolytic taken) * 10000/(10000 + Actual Apex Barrier).
+        let damage_before_apex = damage + isolytic_taken;
+        let damage_after_apex = damage_before_apex * apex_damage_factor;
 
         // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
         // https://stfc-toolbox.vercel.app/game-mechanics — "Shield mitigation": shp_damage_taken = S * total_unmitigated_damage, hhp_damage_taken = (1-S) * total_unmitigated_damage. Base S ≈ 0.8 (80% to shields). When shields are depleted, all damage goes to hull.
@@ -929,34 +1049,6 @@ pub fn simulate_combat(
         defender_shield_remaining = (defender_shield_remaining - actual_shield_damage).max(0.0);
         total_hull_damage += hull_damage_this_round;
         total_shield_damage += actual_shield_damage;
-
-        let shield_broke_this_round = actual_shield_damage > 0.0 && defender_shield_remaining <= 0.0;
-        if shield_broke_this_round {
-            let shield_break_filtered =
-                filter_effects_by_condition(&shield_break_effects, &combat_ctx);
-            phase_effects_round.add_effects(
-                TimingWindow::ShieldBreak,
-                &shield_break_filtered,
-                weapon_base,
-                attack_phase_assimilated,
-                round_index,
-            );
-        }
-
-        let defender_hull_pct = 1.0
-            - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-        if !hull_breach_threshold_fired && defender_hull_pct < 0.5 {
-            hull_breach_threshold_fired = true;
-            let hull_breach_filtered =
-                filter_effects_by_condition(&hull_breach_effects, &combat_ctx);
-            phase_effects_round.add_effects(
-                TimingWindow::HullBreach,
-                &hull_breach_filtered,
-                weapon_base,
-                attack_phase_assimilated,
-                round_index,
-            );
-        }
 
         trace.record_if(|| CombatEvent {
             event_type: "damage_application".to_string(),
@@ -983,7 +1075,7 @@ pub fn simulate_combat(
                 ),
                 (
                     "shield_broke".to_string(),
-                    Value::Bool(shield_broke_this_round),
+                    Value::Bool(shield_before_weapon > 0.0 && defender_shield_remaining <= 0.0),
                 ),
                 (
                     "assimilated_active".to_string(),
@@ -992,6 +1084,35 @@ pub fn simulate_combat(
             ]),
         });
             }
+            }
+
+            let shield_broke_this_round = shield_before_weapon > 0.0 && defender_shield_remaining <= 0.0;
+        if shield_broke_this_round {
+            let shield_break_filtered =
+                filter_effects_by_condition(&shield_break_effects, &combat_ctx);
+            phase_effects_round.add_effects(
+                TimingWindow::ShieldBreak,
+                &shield_break_filtered,
+                weapon_base,
+                attack_phase_assimilated,
+                round_index,
+            );
+        }
+
+        let defender_hull_pct = 1.0
+            - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+        if !hull_breach_threshold_fired && defender_hull_pct < 0.5 {
+            hull_breach_threshold_fired = true;
+            let hull_breach_filtered =
+                filter_effects_by_condition(&hull_breach_effects, &combat_ctx);
+            phase_effects_round.add_effects(
+                TimingWindow::HullBreach,
+                &hull_breach_filtered,
+                weapon_base,
+                attack_phase_assimilated,
+                round_index,
+            );
+        }
 
             if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {
         // Defender counter-attack: defender deals damage to attacker (ship runs out of HHP ends fight).
@@ -1050,7 +1171,7 @@ pub fn simulate_combat(
         let round_end_apex_barrier = (defender.apex_barrier + phase_effects_round.composed_apex_barrier_bonus()).max(0.0);
         let round_end_apex_factor = 10000.0 / (10000.0 + round_end_apex_barrier / (1.0 + round_end_apex_shred).max(EPSILON));
         let bonus_damage = phase_effects_round.compose_round_end_damage(attacker.end_of_round_damage);
-        // Burning: 1% of total (max) hull per round, not remaining (per STFC).
+        // Burning: 1% of max hull per round (official: Δ HHP_burn = 0.01 × HHP_max), no scaling.
         let burning_damage = if burning_rounds_remaining > 0 {
             defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
         } else {
@@ -1060,12 +1181,12 @@ pub fn simulate_combat(
         total_hull_damage += (bonus_damage + burning_damage) * round_end_apex_factor;
         total_attacker_hull_damage += defender.end_of_round_damage;
 
-        // Regen: shield and hull restoration at round end (from officer/data regen effects).
+        // Regen: shield and hull restoration at round end from attacker's crew (officer/data regen effects apply to the ship with the crew).
         let shield_regen = phase_effects_round.composed_shield_regen();
         let hull_regen = phase_effects_round.composed_hull_regen();
-        defender_shield_remaining = (defender_shield_remaining + shield_regen)
-            .min(defender.shield_health.max(0.0));
-        total_hull_damage = (total_hull_damage - hull_regen).max(0.0);
+        attacker_shield_remaining = (attacker_shield_remaining + shield_regen)
+            .min(attacker.shield_health.max(0.0));
+        total_attacker_hull_damage = (total_attacker_hull_damage - hull_regen).max(0.0);
 
         if burning_rounds_remaining > 0 {
             burning_rounds_remaining -= 1;
@@ -1373,6 +1494,7 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
@@ -1426,6 +1548,7 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
@@ -1478,6 +1601,7 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
@@ -1500,7 +1624,8 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
-                | AbilityEffect::AccumulatingAttackMultiplier { .. } => {}
+                | AbilityEffect::AccumulatingAttackMultiplier { .. }
+                | AbilityEffect::ShotsBonus { .. } => {}
             },
             TimingWindow::RoundEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -1514,6 +1639,7 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldRegen, v));
                 }
@@ -1574,6 +1700,7 @@ impl EffectAccumulator {
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(v) => {
                     self.stacks.add(StackContribution::flat(EffectStatKey::ShieldRegen, v));
                 }
@@ -1617,6 +1744,7 @@ impl EffectAccumulator {
                     let value = (initial + r * growth_per_round).min(ceiling);
                     self.pre_attack_modifier_sum += value - 1.0;
                 }
+                AbilityEffect::ShotsBonus { .. } => {}
             },
         }
     }
@@ -1758,6 +1886,15 @@ fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffec
             initial: 1.0 + (initial - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             growth_per_round,
             ceiling,
+        },
+        AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } => AbilityEffect::ShotsBonus {
+            chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            bonus_pct: bonus_pct * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
         },
     }
 }

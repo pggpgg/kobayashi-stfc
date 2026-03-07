@@ -1,15 +1,28 @@
 use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
-    mitigation, mitigation_with_morale, pierce_damage_through_bonus, serialize_events_json,
-    simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, CombatEvent, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, ShipType,
-    SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode,
-    WeaponStats, EPSILON, PIERCE_CAP,
+    mitigation, mitigation_with_morale, pierce_damage_through_bonus, round_half_even,
+    serialize_events_json, simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats,
+    CombatEvent, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource,
+    ShipType, SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector,
+    TraceMode, WeaponStats, EPSILON, PIERCE_CAP,
 };
 use serde_json::{Map, Value};
 
 fn approx_eq(a: f64, b: f64, tol: f64) {
     assert!((a - b).abs() <= tol, "expected {b}, got {a}");
+}
+
+#[test]
+fn round_half_even_bankers_rounding() {
+    // Ties round to nearest even: 2.5 -> 2, 3.5 -> 4
+    assert_eq!(round_half_even(1.0), 1);
+    assert_eq!(round_half_even(1.4), 1);
+    assert_eq!(round_half_even(1.5), 2);
+    assert_eq!(round_half_even(2.5), 2);
+    assert_eq!(round_half_even(3.5), 4);
+    assert_eq!(round_half_even(4.5), 4);
+    assert_eq!(round_half_even(0.0), 0);
+    assert_eq!(round_half_even(2.0), 2);
 }
 
 #[test]
@@ -1015,7 +1028,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         &crew,
     );
 
-    approx_eq(result.total_damage, 500.0, 1e-12);
+    // With hull breach: crit_mult = base_crit_mult * 1.5 = 2.0 * 1.5 = 3.0 (per game rules).
+    approx_eq(result.total_damage, 300.0, 1e-12);
 
     let crit_event = result
         .events
@@ -1027,7 +1041,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         crit_event.values["multiplier"]
             .as_f64()
             .expect("multiplier as f64"),
-        5.0,
+        3.0,
         1e-12,
     );
 }
@@ -2509,7 +2523,10 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
-        weapons: vec![WeaponStats { attack: 50.0 }, WeaponStats { attack: 100.0 }],
+        weapons: vec![
+            WeaponStats { attack: 50.0, shots: None },
+            WeaponStats { attack: 100.0, shots: None },
+        ],
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2571,8 +2588,8 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![
-            WeaponStats { attack: 500.0 },
-            WeaponStats { attack: 200.0 },
+            WeaponStats { attack: 500.0, shots: None },
+            WeaponStats { attack: 200.0, shots: None },
         ],
     };
     let defender = Combatant {
@@ -2619,5 +2636,82 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
     assert!(
         shield_after_0 >= 0.0 && shield_after_1 <= 0.0,
         "weapon 0 may break shields; weapon 1 damage should see defender_shield_remaining == 0"
+    );
+}
+
+#[test]
+fn shots_bonus_increases_damage() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats { attack: 80.0, shots: None }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.3,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 3,
+        seed: 42,
+        trace_mode: TraceMode::Off,
+    };
+    let no_bonus = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+
+    let crew_with_shots_bonus = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "ShotsCaptain".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::ShotsBonus {
+                        chance: 1.0,
+                        bonus_pct: 0.5,
+                        duration_rounds: 3,
+                    },
+                    condition: None,
+                },
+                boosted: false,
+            },
+        ],
+    };
+    let with_bonus = simulate_combat(&attacker, &defender, config, &crew_with_shots_bonus);
+
+    assert!(
+        with_bonus.total_damage > no_bonus.total_damage,
+        "ShotsBonus +50% for 3 rounds should increase total damage (more shots): no_bonus={}, with_bonus={}",
+        no_bonus.total_damage,
+        with_bonus.total_damage
     );
 }

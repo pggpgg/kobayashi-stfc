@@ -6,10 +6,8 @@ Planned features and priorities for Kobayashi.
 
 ## Sync (STFC Community Mod)
 
-- **Reception of additional sync types**  
-  Extend sync ingress to accept and persist more payload types from the [STFC Community Mod](https://github.com/netniV/stfc-mod). Currently only officer, research, buildings, and ships are persisted; the mod also sends others that are accepted (200) but not stored.
+- **Persisted today:** officer, research, buildings, ships, and **forbidden tech (`type: "ft"`)** — see [SYNC.md](SYNC.md). FT is written to `rosters/forbidden_tech.imported.json` and merged into the player profile for the optimizer (bonuses from `data/forbidden_chaos_tech.json`).
 
-  - **Tech (forbidden tech)** — main priority. Persist `type: "ft"` (mod payload) into a roster or data file so player forbidden-tech state can drive the optimizer or bonus layer.
-  - Other candidates (lower priority): traits, slots, buffs, resources, missions, battlelogs, inventory, jobs — as product needs and data shapes are clarified.
+- **Optional next sync work** — the mod also sends payload types that are accepted (200) but not stored. Candidates for future persistence (as product needs and data shapes are clarified): traits, slots, buffs, resources, missions, battlelogs, inventory, jobs.
 
 See [SYNC.md](SYNC.md) for the current sync protocol and payload reference.

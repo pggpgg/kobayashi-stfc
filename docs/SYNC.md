@@ -51,6 +51,17 @@ Use the same value for `token` as for `KOBAYASHI_SYNC_TOKEN` if you set the env 
 
 Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1.10:3000/api/sync/ingress`).
 
+## Sync implementation status
+
+| Payload type | Persisted | File / usage |
+|--------------|-----------|--------------|
+| officer | Yes | `rosters/roster.imported.json` — roster for “Owned only” and optimizer |
+| research | Yes | `rosters/research.imported.json` |
+| buildings / module | Yes | `rosters/buildings.imported.json` |
+| ships / ship | Yes | `rosters/ships.imported.json` |
+| ft (forbidden tech) | Yes | `rosters/forbidden_tech.imported.json` — bonuses merged into optimizer profile |
+| resources, missions, battlelogs, traits, slots, buffs, inventory, jobs | No (accepted, 200) | — |
+
 ## What gets synced
 
 - **Officers**: Each sync payload with `type: "officer"` is merged into `rosters/roster.imported.json`. Game officer IDs (`oid`) are mapped to Kobayashi’s canonical officer IDs via `data/officers/id_registry.json`. The optimizer then uses this roster to restrict crew candidates to officers you own.

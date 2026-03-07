@@ -59,6 +59,11 @@ export function useWorkspace() {
   const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
   const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] = useState(false);
 
+  // Optimizer strategy
+  const [optimizerStrategy, setOptimizerStrategy] = useState<
+    import('./api').OptimizerStrategyType
+  >('exhaustive');
+
   // Heuristics state
   const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
   const [selectedSeeds, setSelectedSeeds] = useState<string[]>([]);
@@ -235,6 +240,7 @@ export function useWorkspace() {
           hostile: scenarioId || 'Explorer_30',
           sims: simsPerCrew,
           max_candidates: maxCandidates ?? undefined,
+          strategy: optimizerStrategy,
           prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
           heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
           heuristics_only: heuristicsOnly || undefined,
@@ -394,6 +400,8 @@ export function useWorkspace() {
     setHeuristicsOnly,
     belowDecksStrategy,
     setBelowDecksStrategy,
+    optimizerStrategy,
+    setOptimizerStrategy,
     // Presets
     showSavePreset,
     setShowSavePreset,

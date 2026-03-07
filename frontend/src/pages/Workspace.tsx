@@ -166,6 +166,8 @@ export default function Workspace() {
           onHeuristicsOnlyChange={ws.setHeuristicsOnly}
           belowDecksStrategy={ws.belowDecksStrategy}
           onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
+          optimizerStrategy={ws.optimizerStrategy}
+          onOptimizerStrategyChange={ws.setOptimizerStrategy}
         />
       </div>
     </div>
