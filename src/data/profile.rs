@@ -1,6 +1,7 @@
 //! Player profile: effective_bonuses applied as pre-combat modifier layer (DESIGN §5).
 //! Keys match engine/LCARS stats: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce, etc.
 //! Bonuses from synced forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
+//! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
 
 use std::collections::HashMap;
 use std::fs;
@@ -9,8 +10,9 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use crate::combat::Combatant;
+use crate::data::building::{self, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
-use crate::data::import::ForbiddenTechEntry;
+use crate::data::import::{BuildingEntry, ForbiddenTechEntry};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlayerProfile {
@@ -43,6 +45,73 @@ pub fn merge_forbidden_tech_bonuses_into_profile(
             profile.bonuses
                 .insert(bonus.stat.clone(), current + bonus.value);
         }
+    }
+}
+
+/// Combat stat keys that [apply_profile_to_attacker] uses; only these are merged from building bonuses.
+const PROFILE_COMBAT_KEYS: &[&str] = &[
+    "weapon_damage",
+    "hull_hp",
+    "shield_hp",
+    "crit_chance",
+    "crit_damage",
+    "pierce",
+    "shield_mitigation",
+];
+
+/// Merges combat stat bonuses from player's synced buildings into `profile.bonuses`.
+/// Resolves bid → building id via `bid_to_id`, loads building records, computes cumulative
+/// bonuses, and adds only combat keys (weapon_damage, hull_hp, etc.). armor_pierce and
+/// shield_pierce are folded into pierce.
+pub fn merge_building_bonuses_into_profile(
+    profile: &mut PlayerProfile,
+    imported_buildings: &[BuildingEntry],
+    bid_to_id: &HashMap<i64, String>,
+    _building_index: &BuildingIndex,
+    data_dir: &Path,
+) {
+    if imported_buildings.is_empty() || bid_to_id.is_empty() {
+        return;
+    }
+
+    let mut levels_by_id: HashMap<String, u32> = HashMap::new();
+    for entry in imported_buildings {
+        let Some(id) = bid_to_id.get(&entry.bid) else {
+            continue;
+        };
+        let level = if entry.level >= 0 {
+            entry.level.min(i64::from(u32::MAX)) as u32
+        } else {
+            0
+        };
+        levels_by_id.insert(id.clone(), level);
+    }
+    if levels_by_id.is_empty() {
+        return;
+    }
+
+    let mut records: Vec<building::BuildingRecord> = Vec::new();
+    for id in levels_by_id.keys() {
+        if let Some(rec) = building::load_building_record(data_dir, id) {
+            records.push(rec);
+        }
+    }
+    if records.is_empty() {
+        return;
+    }
+
+    let bonuses = building::cumulative_building_bonuses(&records, &levels_by_id);
+
+    for (stat, value) in bonuses {
+        let key = if stat == "armor_pierce" || stat == "shield_pierce" {
+            "pierce"
+        } else if PROFILE_COMBAT_KEYS.contains(&stat.as_str()) {
+            stat.as_str()
+        } else {
+            continue;
+        };
+        let current = profile.bonuses.get(key).copied().unwrap_or(0.0);
+        profile.bonuses.insert(key.to_string(), current + value);
     }
 }
 
@@ -139,8 +208,55 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::combat::Combatant;
+    use crate::data::building::{BuildingIndex, BuildingIndexEntry};
+    use crate::data::import::BuildingEntry;
 
     use super::*;
+
+    #[test]
+    fn merge_building_bonuses_into_profile_adds_only_combat_keys() {
+        let mut profile = PlayerProfile::default();
+        let imported_buildings = vec![BuildingEntry { bid: 1, level: 1 }];
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(1i64, "test_weapon_building".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "test_weapon_building".to_string(),
+                building_name: "Test".to_string(),
+            }],
+        };
+        let data_dir = std::env::temp_dir().join("kobayashi_profile_building_test");
+        let _ = std::fs::create_dir_all(&data_dir);
+        let building_json = r#"{
+            "id": "test_weapon_building",
+            "building_name": "Test",
+            "levels": [{
+                "level": 1,
+                "bonuses": [
+                    {"stat": "weapon_damage", "value": 0.05, "operator": "add"},
+                    {"stat": "buff_123", "value": 1.0, "operator": "add"}
+                ]
+            }]
+        }"#;
+        std::fs::write(
+            data_dir.join("test_weapon_building.json"),
+            building_json,
+        )
+        .unwrap();
+
+        merge_building_bonuses_into_profile(
+            &mut profile,
+            &imported_buildings,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+        );
+
+        assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
+        assert!(profile.bonuses.get("buff_123").is_none());
+    }
 
     fn combatant_with(isolytic_damage: f64, isolytic_defense: f64, shield_mitigation: f64) -> Combatant {
         Combatant {
