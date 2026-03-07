@@ -101,6 +101,12 @@ fn accumulate_bonus(
     out.insert(key, new_value);
 }
 
+/// Maximum level defined in this building record (highest level in `levels`).
+/// Returns 0 if levels is empty.
+pub fn max_level(record: &BuildingRecord) -> u32 {
+    record.levels.iter().map(|l| l.level).max().unwrap_or(0)
+}
+
 /// Returns cumulative bonuses from a single building up to and including the
 /// specified level. Levels outside the record are ignored.
 pub fn cumulative_building_level_bonuses(

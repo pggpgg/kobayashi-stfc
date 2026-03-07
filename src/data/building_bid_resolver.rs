@@ -56,8 +56,12 @@ pub fn build_bid_to_building_id_from_json(
 
     let mut out: HashMap<i64, String> = HashMap::new();
     for entry in entries {
-        let bid = entry.id?;
-        let key = entry.key.as_deref()?;
+        let Some(bid) = entry.id else {
+            continue;
+        };
+        let Some(key) = entry.key.as_deref() else {
+            continue;
+        };
         if key != STARBASE_MODULE_NAME_KEY {
             continue;
         }
@@ -166,9 +170,6 @@ mod tests {
             {"id": null, "key": "starbase_module_name", "text": "Ignore"},
             {"id": 1, "key": "other_key", "text": "Parsteel Generator A"}
         ]"##;
-        let parsed: Vec<TranslationEntry> =
-            serde_json::from_str(translations).expect("translations JSON should parse");
-        assert_eq!(parsed.len(), 2);
         let index = minimal_index();
         let map = build_bid_to_building_id_from_json(translations, &index)
             .expect("build_bid_to_building_id_from_json should succeed with valid JSON");
