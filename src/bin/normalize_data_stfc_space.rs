@@ -227,7 +227,7 @@ fn extract_tier_combat(
         Some(
             weapon_attacks
                 .into_iter()
-                .map(|a| WeaponRecord { attack: a })
+                .map(|a| WeaponRecord { attack: a, shots: None })
                 .collect(),
         )
     };
