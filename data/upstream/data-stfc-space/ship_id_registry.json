@@ -1,0 +1,678 @@
+{
+  "data_version": "data-stfc-space",
+  "source_note": "Generated from summary-ship.json + translations-ships.json by scripts/build_ship_registry.py",
+  "ships": [
+    {
+      "numeric_id": 2441576367,
+      "id": "b_rel",
+      "ship_name": "B'REL",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 673187302,
+      "id": "centurion",
+      "ship_name": "CENTURION",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1150511104,
+      "id": "corvus",
+      "ship_name": "CORVUS",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 2289346504,
+      "id": "enterprise_nx_01",
+      "ship_name": "ENTERPRISE NX-01",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 3376611577,
+      "id": "hijacked_uss_mayflower",
+      "ship_name": "HIJACKED U.S.S. MAYFLOWER",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1786116873,
+      "id": "i_k_s_ak_voh",
+      "ship_name": "I.K.S. AK'VOH",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1628890938,
+      "id": "iss_jellyfish",
+      "ship_name": "I.S.S. JELLYFISH",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 2919480363,
+      "id": "jellyfish",
+      "ship_name": "JELLYFISH",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 3665388873,
+      "id": "korinar",
+      "ship_name": "KORINAR",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1800726742,
+      "id": "kos_karii",
+      "ship_name": "KOS'KARII",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1839370465,
+      "id": "minerva",
+      "ship_name": "MINERVA",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 3759537032,
+      "id": "nsea_protector",
+      "ship_name": "NSEA PROTECTOR",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 780323863,
+      "id": "praefortis",
+      "ship_name": "PRAEFORTIS",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 701705952,
+      "id": "quv_sompek",
+      "ship_name": "QUV'SOMPEK",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 987222969,
+      "id": "realta",
+      "ship_name": "REALTA",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1842444641,
+      "id": "turas",
+      "ship_name": "TURAS",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 2797581949,
+      "id": "uss_cerritos",
+      "ship_name": "U.S.S. CERRITOS",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1307832955,
+      "id": "uss_discovery",
+      "ship_name": "U.S.S. DISCOVERY",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 2483093372,
+      "id": "uss_enterprise",
+      "ship_name": "U.S.S. ENTERPRISE",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 2918054910,
+      "id": "uss_enterprise_m414",
+      "ship_name": "U.S.S. ENTERPRISE M414",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 3990933991,
+      "id": "uss_enterprise_a",
+      "ship_name": "U.S.S. ENTERPRISE-A",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 448699234,
+      "id": "uss_enterprise_d",
+      "ship_name": "U.S.S. ENTERPRISE-D",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 4132047263,
+      "id": "uss_enterprise_e",
+      "ship_name": "U.S.S. ENTERPRISE-E",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 644714972,
+      "id": "uss_franklin",
+      "ship_name": "U.S.S. FRANKLIN",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 2016654425,
+      "id": "uss_franklin_a",
+      "ship_name": "U.S.S. FRANKLIN-A",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1220133742,
+      "id": "uss_mayflower",
+      "ship_name": "U.S.S. MAYFLOWER",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 442815157,
+      "id": "uss_relativity",
+      "ship_name": "U.S.S. RELATIVITY",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1328894295,
+      "id": "uss_reliant",
+      "ship_name": "U.S.S. RELIANT",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 2802730028,
+      "id": "uss_titan_a",
+      "ship_name": "U.S.S. TITAN-A",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1738424547,
+      "id": "uss_voyager",
+      "ship_name": "U.S.S. VOYAGER",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 3033866568,
+      "id": "vahklas",
+      "ship_name": "VAHKLAS",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1027217748,
+      "id": "valdore",
+      "ship_name": "VALDORE",
+      "ship_class": "battleship"
+    },
+    {
+      "numeric_id": 1492898704,
+      "id": "amalgam",
+      "ship_name": "AMALGAM",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1439253182,
+      "id": "aphelion",
+      "ship_name": "APHELION",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 3694387091,
+      "id": "b_chor",
+      "ship_name": "B'CHOR",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1087128295,
+      "id": "botany_bay",
+      "ship_name": "BOTANY BAY",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 3261907549,
+      "id": "d_vor_feesha",
+      "ship_name": "D'VOR FEESHA",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 546190599,
+      "id": "divitae",
+      "ship_name": "DIVITAE",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 2968519195,
+      "id": "ecs_fortunate",
+      "ship_name": "ECS FORTUNATE",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 3046584086,
+      "id": "ecs_horizon",
+      "ship_name": "ECS HORIZON",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 3014221215,
+      "id": "envoy",
+      "ship_name": "ENVOY",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1784814733,
+      "id": "ferengi_d_vor",
+      "ship_name": "FERENGI D'VOR",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 3541570803,
+      "id": "grishnar",
+      "ship_name": "GRISHNAR",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 2869476908,
+      "id": "k_vort",
+      "ship_name": "K'VORT",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1878809713,
+      "id": "meridian",
+      "ship_name": "MERIDIAN",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 732090900,
+      "id": "mow_ga",
+      "ship_name": "MOW'GA",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1029262994,
+      "id": "north_star",
+      "ship_name": "NORTH STAR",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1982797639,
+      "id": "nova",
+      "ship_name": "NOVA",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 2468986074,
+      "id": "selkie",
+      "ship_name": "SELKIE",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 697653604,
+      "id": "serene_squall",
+      "ship_name": "SERENE SQUALL",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 108924704,
+      "id": "uss_antares",
+      "ship_name": "U.S.S. ANTARES",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 3057038289,
+      "id": "uss_beatty",
+      "ship_name": "U.S.S. BEATTY",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 87414807,
+      "id": "uss_hydra",
+      "ship_name": "U.S.S. HYDRA",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1577508895,
+      "id": "uss_newgrange",
+      "ship_name": "U.S.S. NEWGRANGE",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1535317053,
+      "id": "valkis",
+      "ship_name": "VALKIS",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 2623051508,
+      "id": "vorta_vor",
+      "ship_name": "VORTA VOR",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 1428543762,
+      "id": "vrax",
+      "ship_name": "VRAX",
+      "ship_class": "explorer"
+    },
+    {
+      "numeric_id": 910099595,
+      "id": "admonition",
+      "ship_name": "ADMONITION",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 3459465041,
+      "id": "augur",
+      "ship_name": "AUGUR",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1823660918,
+      "id": "borg_cube",
+      "ship_name": "BORG CUBE",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 2004925834,
+      "id": "bortas",
+      "ship_name": "BORTAS",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1247530723,
+      "id": "d_deridex",
+      "ship_name": "D'DERIDEX",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 2836931919,
+      "id": "hijacked_legionary",
+      "ship_name": "HIJACKED LEGIONARY",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 529128151,
+      "id": "i_k_s_boreth",
+      "ship_name": "I.K.S. BORETH",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1244824002,
+      "id": "k_t_inga",
+      "ship_name": "K'T'INGA",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 3005922948,
+      "id": "kumari",
+      "ship_name": "KUMARI",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 3554487827,
+      "id": "legionary",
+      "ship_name": "LEGIONARY",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1851148569,
+      "id": "mantis",
+      "ship_name": "MANTIS",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 49906243,
+      "id": "monaveen",
+      "ship_name": "MONAVEEN",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 3602514688,
+      "id": "negh_var",
+      "ship_name": "NEGH'VAR",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 34867572,
+      "id": "orion_corvette",
+      "ship_name": "ORION CORVETTE",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 593579233,
+      "id": "sarcophagus",
+      "ship_name": "SARCOPHAGUS",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 407462527,
+      "id": "scimitar",
+      "ship_name": "SCIMITAR",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 293385368,
+      "id": "stella",
+      "ship_name": "STELLA",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 354762123,
+      "id": "talla",
+      "ship_name": "TALLA",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1465044910,
+      "id": "the_vindicator",
+      "ship_name": "THE VINDICATOR",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1109770210,
+      "id": "tribune",
+      "ship_name": "TRIBUNE",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 47269853,
+      "id": "uss_crozier",
+      "ship_name": "U.S.S. CROZIER",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 363599628,
+      "id": "uss_excelsior",
+      "ship_name": "U.S.S. EXCELSIOR",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1463338054,
+      "id": "uss_intrepid",
+      "ship_name": "U.S.S. INTREPID",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 2057434885,
+      "id": "uss_newton",
+      "ship_name": "U.S.S. NEWTON",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 1088834151,
+      "id": "uss_stargazer",
+      "ship_name": "U.S.S. STARGAZER",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 2084947256,
+      "id": "uss_titan",
+      "ship_name": "U.S.S. TITAN",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 3426564736,
+      "id": "vor_cha",
+      "ship_name": "VOR'CHA",
+      "ship_class": "interceptor"
+    },
+    {
+      "numeric_id": 2704762692,
+      "id": "d3_class",
+      "ship_name": "D3 CLASS",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 957865248,
+      "id": "d4_class",
+      "ship_name": "D4 CLASS",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 2165876444,
+      "id": "gladius",
+      "ship_name": "GLADIUS",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 1273528452,
+      "id": "gorn_eviscerator",
+      "ship_name": "GORN EVISCERATOR",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 1773930736,
+      "id": "gs_31",
+      "ship_name": "GS-31",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 3432906971,
+      "id": "hegh_ta",
+      "ship_name": "HEGH'TA",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 1960089851,
+      "id": "hijacked_d3_class",
+      "ship_name": "HIJACKED D3 CLASS",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 1911723988,
+      "id": "i_k_s_gre_thor",
+      "ship_name": "I.K.S. GRE'THOR",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 393740394,
+      "id": "kehra",
+      "ship_name": "KEHRA",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 394860549,
+      "id": "krencha",
+      "ship_name": "KRENCHA",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 1279606467,
+      "id": "phindra",
+      "ship_name": "PHINDRA",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 2254702328,
+      "id": "pilum",
+      "ship_name": "PILUM",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 2195955652,
+      "id": "rotarran",
+      "ship_name": "ROTARRAN",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 1379978713,
+      "id": "sanctus",
+      "ship_name": "SANCTUS",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 3006451338,
+      "id": "separatist_d3_class",
+      "ship_name": "SEPARATIST D3 CLASS",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 2758694626,
+      "id": "snakehead",
+      "ship_name": "SNAKEHEAD",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 4203458856,
+      "id": "ss_revenant",
+      "ship_name": "SS REVENANT",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 2474117534,
+      "id": "uss_akira",
+      "ship_name": "U.S.S. AKIRA",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 754460943,
+      "id": "uss_dauntless",
+      "ship_name": "U.S.S. DAUNTLESS",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 957303751,
+      "id": "uss_defiant",
+      "ship_name": "U.S.S. DEFIANT",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 711428193,
+      "id": "uss_kelvin",
+      "ship_name": "U.S.S. KELVIN",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 311330874,
+      "id": "uss_northcutt",
+      "ship_name": "U.S.S. NORTHCUTT",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 3056258007,
+      "id": "uss_saladin",
+      "ship_name": "U.S.S. SALADIN",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 2066570441,
+      "id": "uss_socrates",
+      "ship_name": "U.S.S. SOCRATES",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 782228494,
+      "id": "uss_vengeance",
+      "ship_name": "U.S.S. VENGEANCE",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 3682502332,
+      "id": "velox",
+      "ship_name": "VELOX",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 2529591723,
+      "id": "vi_dar",
+      "ship_name": "VI'DAR",
+      "ship_class": "survey"
+    },
+    {
+      "numeric_id": 3803001941,
+      "id": "vi_dar_talios",
+      "ship_name": "VI'DAR TALIOS",
+      "ship_class": "survey"
+    }
+  ]
+}

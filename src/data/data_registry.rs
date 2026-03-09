@@ -9,9 +9,11 @@ use crate::data::forbidden_chaos::{
     load_forbidden_chaos, ForbiddenChaosList, DEFAULT_FORBIDDEN_CHAOS_PATH,
 };
 use crate::data::hostile::{load_hostile_index, HostileRecord, HostileIndex, DEFAULT_HOSTILES_INDEX_PATH};
-use crate::data::loader::{resolve_hostile_with_index, resolve_ship_with_index};
+use crate::data::loader::{resolve_hostile_with_index, resolve_ship_with_tier_level};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
-use crate::data::ship::{load_ship_index, ShipIndex, ShipRecord, DEFAULT_SHIPS_INDEX_PATH};
+use crate::data::ship::{
+    load_extended_ship_index, ExtendedShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
+};
 use crate::lcars::{load_lcars_dir, LcarsOfficer};
 
 /// Normalize officer name for lookup: alphanumeric lowercase only (matches monte_carlo lookup).
@@ -50,7 +52,7 @@ impl OfficerCache {
 #[derive(Debug)]
 pub struct DataRegistry {
     pub officers: OfficerCache,
-    pub ship_index: Option<ShipIndex>,
+    pub ship_index: Option<ExtendedShipIndex>,
     pub hostile_index: Option<HostileIndex>,
     /// LCARS officers when KOBAYASHI_OFFICER_SOURCE=lcars; used by monte_carlo to resolve abilities.
     pub lcars_officers: Option<Vec<LcarsOfficer>>,
@@ -67,7 +69,10 @@ impl DataRegistry {
         let officers = load_canonical_officers(Path::new(DEFAULT_CANONICAL_OFFICERS_PATH))?;
         let officers = OfficerCache::from_officers(officers);
 
-        let ship_index = load_ship_index(DEFAULT_SHIPS_INDEX_PATH);
+        let ship_index = Path::new(DEFAULT_SHIPS_EXTENDED_DIR)
+            .is_dir()
+            .then(|| load_extended_ship_index(Path::new(DEFAULT_SHIPS_EXTENDED_DIR)))
+            .flatten();
         let hostile_index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH);
 
         let lcars_officers = if Self::use_lcars_officer_source() {
@@ -113,8 +118,8 @@ impl DataRegistry {
         &self.officers.by_name
     }
 
-    /// Ship index for listing and resolution (resolve still may need per-record load unless cached).
-    pub fn ship_index(&self) -> Option<&ShipIndex> {
+    /// Ship index for listing and resolution (from data/ships_extended).
+    pub fn ship_index(&self) -> Option<&ExtendedShipIndex> {
         self.ship_index.as_ref()
     }
 
@@ -123,11 +128,19 @@ impl DataRegistry {
         self.hostile_index.as_ref()
     }
 
-    /// Resolve ship by id or name using cached index. Per-record file still read from disk.
+    /// Resolve ship by id or name. Uses data/ships_extended with tier=1, level=1 when not specified.
     pub fn resolve_ship(&self, name_or_id: &str) -> Option<ShipRecord> {
-        let index = self.ship_index.as_ref()?;
-        let data_dir = Path::new(DEFAULT_SHIPS_INDEX_PATH).parent()?;
-        resolve_ship_with_index(index, data_dir, name_or_id)
+        resolve_ship_with_tier_level(name_or_id, None, None)
+    }
+
+    /// Resolve ship with optional tier and level (1-based). Uses data/ships_extended only.
+    pub fn resolve_ship_with_tier_level(
+        &self,
+        name_or_id: &str,
+        tier: Option<u32>,
+        level: Option<u32>,
+    ) -> Option<ShipRecord> {
+        resolve_ship_with_tier_level(name_or_id, tier, level)
     }
 
     /// Resolve hostile by id or name/level using cached index. Per-record file still read from disk.

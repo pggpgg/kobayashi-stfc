@@ -88,10 +88,13 @@ fn use_lcars_officer_source() -> bool {
 }
 
 /// Build SharedScenarioData from registry (officers, ship, hostile) and load profile/roster/LCARS at call time.
+/// When ship_tier or ship_level is set, uses data/ships_extended if present.
 fn build_shared_scenario_data_from_registry(
     registry: &DataRegistry,
     ship: &str,
     hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
 ) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
 
@@ -132,7 +135,7 @@ fn build_shared_scenario_data_from_registry(
         })
         .unwrap_or_default();
 
-    let ship_rec = registry.resolve_ship(ship);
+    let ship_rec = registry.resolve_ship_with_tier_level(ship, ship_tier, ship_level);
     let hostile_rec = registry.resolve_hostile(hostile);
 
     let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
@@ -268,15 +271,18 @@ fn run_monte_carlo_with_shared(
 }
 
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
+/// When ship_tier or ship_level is set, uses data/ships_extended if present.
 pub fn run_monte_carlo_parallel_with_registry(
     registry: &DataRegistry,
     ship: &str,
     hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile);
+    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile, ship_tier, ship_level);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, true)
 }
 
@@ -285,11 +291,13 @@ pub fn run_monte_carlo_with_registry(
     registry: &DataRegistry,
     ship: &str,
     hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile);
+    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile, ship_tier, ship_level);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, false)
 }
 

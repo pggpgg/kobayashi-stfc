@@ -8,6 +8,10 @@ name = "normalize_stfc_data"
 path = "src/bin/normalize_stfc_data.rs"
 
 [[bin]]
+name = "normalize_data_stfc_space"
+path = "src/bin/normalize_data_stfc_space.rs"
+
+[[bin]]
 name = "import_forbidden_chaos"
 path = "src/bin/import_forbidden_chaos.rs"
 

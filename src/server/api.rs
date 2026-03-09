@@ -36,6 +36,10 @@ const MAX_CANDIDATES: u32 = 2_000_000;
 pub struct OptimizeRequest {
     pub ship: String,
     pub hostile: String,
+    /// Ship tier (1-based). When set, uses data/ships_extended if present for accurate stats.
+    pub ship_tier: Option<u32>,
+    /// Ship level (1-based). When set with tier, applies level bonuses from extended data.
+    pub ship_level: Option<u32>,
     pub sims: Option<u32>,
     pub seed: Option<u64>,
     /// When None, all crew combinations are explored. When Some(n), generation stops after n candidates.
@@ -226,6 +230,10 @@ pub struct DataVersionResponse {
 pub struct SimulateRequest {
     pub ship: String,
     pub hostile: String,
+    /// Ship tier (1-based). When set, uses data/ships_extended if present.
+    pub ship_tier: Option<u32>,
+    /// Ship level (1-based). When set with tier, applies level bonuses from extended data.
+    pub ship_level: Option<u32>,
     pub crew: SimulateCrew,
     pub num_sims: Option<u32>,
     pub seed: Option<u64>,
@@ -348,6 +356,8 @@ pub fn simulate_payload(registry: &DataRegistry, body: &str) -> Result<String, S
         registry,
         &req.ship,
         &req.hostile,
+        req.ship_tier,
+        req.ship_level,
         &candidates,
         num_sims as usize,
         seed,
@@ -779,6 +789,8 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
             registry,
             &request.ship,
             &request.hostile,
+            request.ship_tier,
+            request.ship_level,
             &h_candidates,
             sims as usize,
             seed,
@@ -792,6 +804,8 @@ pub fn optimize_payload(registry: &DataRegistry, body: &str) -> Result<String, O
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: &request.hostile,
+            ship_tier: request.ship_tier,
+            ship_level: request.ship_level,
             simulation_count: sims as usize,
             seed,
             max_candidates: request.max_candidates.map(|n| n as usize),
@@ -949,6 +963,8 @@ pub fn optimize_start_payload(
     let registry = registry;
     let ship = request.ship.clone();
     let hostile = request.hostile.clone();
+    let ship_tier = request.ship_tier;
+    let ship_level = request.ship_level;
     let job_id_clone = job_id.clone();
     let max_candidates = request.max_candidates.map(|n| n as usize);
     let strategy = parse_strategy(request.strategy.as_ref());
@@ -981,6 +997,8 @@ pub fn optimize_start_payload(
                 registry_ref,
                 &ship,
                 &hostile,
+                ship_tier,
+                ship_level,
                 &h_candidates,
                 sims as usize,
                 seed,
@@ -1001,6 +1019,8 @@ pub fn optimize_start_payload(
             let scenario = OptimizationScenario {
                 ship: &ship,
                 hostile: &hostile,
+                ship_tier,
+                ship_level,
                 simulation_count: sims as usize,
                 seed,
                 max_candidates,

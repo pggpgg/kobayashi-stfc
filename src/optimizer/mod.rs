@@ -36,6 +36,10 @@ impl Default for OptimizerStrategy {
 pub struct OptimizationScenario<'a> {
     pub ship: &'a str,
     pub hostile: &'a str,
+    /// Ship tier (1-based). When set, uses data/ships_extended if present for accurate stats.
+    pub ship_tier: Option<u32>,
+    /// Ship level (1-based). When set with tier, applies level bonuses from extended data.
+    pub ship_level: Option<u32>,
     pub simulation_count: usize,
     pub seed: u64,
     /// When None, all crew combinations are explored. When Some(n), generation stops after n candidates.
@@ -54,6 +58,8 @@ impl Default for OptimizationScenario<'_> {
         Self {
             ship: "",
             hostile: "",
+            ship_tier: None,
+            ship_level: None,
             simulation_count: 5000,
             seed: 0,
             max_candidates: Some(128),
@@ -98,6 +104,8 @@ fn optimize_scenario_exhaustive_with_registry(
         registry,
         scenario.ship,
         scenario.hostile,
+        scenario.ship_tier,
+        scenario.ship_level,
         &candidates,
         scenario.simulation_count.max(1),
         scenario.seed,
@@ -246,6 +254,8 @@ where
                     registry,
                     scenario.ship,
                     scenario.hostile,
+                    scenario.ship_tier,
+                    scenario.ship_level,
                     batch,
                     sim_count,
                     scenario.seed,
@@ -266,6 +276,8 @@ pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCre
     optimize_scenario(&OptimizationScenario {
         ship,
         hostile,
+        ship_tier: None,
+        ship_level: None,
         simulation_count: sim_count as usize,
         seed: 0,
         max_candidates: Some(128),
@@ -284,6 +296,8 @@ mod tests {
         let scenario = OptimizationScenario {
             ship: "enterprise",
             hostile: "swarm",
+            ship_tier: None,
+            ship_level: None,
             simulation_count: 100,
             seed: 42,
             max_candidates: None,
