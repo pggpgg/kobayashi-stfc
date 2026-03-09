@@ -59,30 +59,38 @@ fn use_lcars_officer_source() -> bool {
 }
 
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
+/// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
 pub fn run_monte_carlo_parallel_with_registry(
     registry: &DataRegistry,
     ship: &str,
     hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile, profile_id);
+    let shared =
+        build_shared_scenario_data_from_registry(registry, ship, hostile, ship_tier, ship_level, profile_id);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, true)
 }
 
 /// Like [run_monte_carlo] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
+/// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
 pub fn run_monte_carlo_with_registry(
     registry: &DataRegistry,
     ship: &str,
     hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_from_registry(registry, ship, hostile, profile_id);
+    let shared =
+        build_shared_scenario_data_from_registry(registry, ship, hostile, ship_tier, ship_level, profile_id);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, false)
 }
 

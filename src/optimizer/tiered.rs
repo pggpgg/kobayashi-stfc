@@ -56,6 +56,8 @@ where
             registry,
             ship,
             hostile,
+            None,
+            None,
             batch,
             scout_sims,
             seed,
@@ -85,6 +87,8 @@ where
         registry,
         ship,
         hostile,
+        None,
+        None,
         &top_crews,
         full_sims,
         seed.wrapping_add(1), // distinct seed for confirmation phase

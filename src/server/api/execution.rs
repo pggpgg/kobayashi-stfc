@@ -105,6 +105,8 @@ pub fn run_optimize(
             registry,
             &request.ship,
             &request.hostile,
+            request.ship_tier,
+            request.ship_level,
             &h_candidates,
             sims as usize,
             seed,
@@ -118,6 +120,8 @@ pub fn run_optimize(
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: &request.hostile,
+            ship_tier: request.ship_tier,
+            ship_level: request.ship_level,
             simulation_count: sims as usize,
             seed,
             max_candidates: request.max_candidates.map(|n| n as usize),
@@ -305,6 +309,8 @@ pub fn start_optimize_job(
 
     let ship = request.ship.clone();
     let hostile = request.hostile.clone();
+    let ship_tier = request.ship_tier;
+    let ship_level = request.ship_level;
     let job_id_clone = job_id.clone();
     let max_candidates = request.max_candidates.map(|n| n as usize);
     let strategy = parse_strategy(request.strategy.as_ref());
@@ -338,6 +344,8 @@ pub fn start_optimize_job(
                     registry_ref,
                     &ship,
                     &hostile,
+                    ship_tier,
+                    ship_level,
                     &h_candidates,
                     sims as usize,
                     seed,
@@ -358,6 +366,8 @@ pub fn start_optimize_job(
             let scenario = OptimizationScenario {
                 ship: &ship,
                 hostile: &hostile,
+                ship_tier,
+                ship_level,
                 simulation_count: sims as usize,
                 seed,
                 max_candidates,

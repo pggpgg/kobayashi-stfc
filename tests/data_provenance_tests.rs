@@ -4,16 +4,18 @@
 use std::path::Path;
 
 use kobayashi::data::hostile::{load_hostile_index, DEFAULT_HOSTILES_INDEX_PATH};
-use kobayashi::data::ship::{load_ship_index, load_ship_record, DEFAULT_SHIPS_INDEX_PATH};
+use kobayashi::data::ship::{
+    load_extended_ship_index, load_extended_ship_record, DEFAULT_SHIPS_EXTENDED_DIR,
+};
 
 #[test]
 fn ship_index_loads_and_has_provenance_fields() {
-    let path = Path::new(DEFAULT_SHIPS_INDEX_PATH);
-    if !path.exists() {
-        eprintln!("Skipping: {} not found", path.display());
+    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    if !ext_dir.is_dir() {
+        eprintln!("Skipping: {} not found", ext_dir.display());
         return;
     }
-    let index = match load_ship_index(DEFAULT_SHIPS_INDEX_PATH) {
+    let index = match load_extended_ship_index(ext_dir) {
         Some(i) => i,
         None => return,
     };
@@ -40,13 +42,17 @@ fn hostile_index_loads_and_has_provenance_fields() {
 
 #[test]
 fn resolve_one_ship_and_validate_stats_bounds() {
-    let index = match load_ship_index(DEFAULT_SHIPS_INDEX_PATH) {
+    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    let index = match load_extended_ship_index(ext_dir) {
         Some(i) => i,
         None => return,
     };
-    let data_dir = Path::new(DEFAULT_SHIPS_INDEX_PATH).parent().unwrap();
     let entry = index.ships.first().unwrap();
-    let rec = match load_ship_record(data_dir, &entry.id) {
+    let extended = match load_extended_ship_record(ext_dir, &entry.id) {
+        Some(r) => r,
+        None => return,
+    };
+    let rec = match extended.to_ship_record(Some(1), Some(1)) {
         Some(r) => r,
         None => return,
     };

@@ -7,7 +7,10 @@ use serde_json::{Map, Value};
 
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
-use crate::data::ship::{ShipIndex, ShipRecord, DEFAULT_SHIPS_INDEX_PATH};
+use crate::data::ship::{
+    ExtendedShipIndex, ExtendedShipRecord, ShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
+    DEFAULT_SHIPS_INDEX_PATH,
+};
 use crate::lcars;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -625,6 +628,91 @@ pub fn validate_ships_dataset(path: &str) -> Result<ValidationReport, String> {
     Ok(report)
 }
 
+/// Validate extended ship index + per-ship extended records (data/ships_extended).
+pub fn validate_ships_extended_dataset(path: &str) -> Result<ValidationReport, String> {
+    let base = Path::new(path);
+    let index_path = base.join("index.json");
+    let raw = fs::read_to_string(&index_path)
+        .map_err(|err| format!("unable to read '{}': {err}", index_path.display()))?;
+    let index: ExtendedShipIndex = serde_json::from_str(&raw)
+        .map_err(|err| format!("unable to parse '{}': {err}", index_path.display()))?;
+
+    let mut report = ValidationReport::default();
+    let mut seen_ids: HashSet<String> = HashSet::new();
+
+    for (idx, entry) in index.ships.iter().enumerate() {
+        let ctx = format!("ships[{idx}] id='{}'", entry.id);
+
+        if entry.id.trim().is_empty() {
+            report.push(ValidationSeverity::Error, ctx, "missing non-empty 'id'");
+            continue;
+        }
+        if !seen_ids.insert(entry.id.clone()) {
+            report.push(
+                ValidationSeverity::Error,
+                format!("{ctx}.id"),
+                format!("duplicate id '{}'", entry.id),
+            );
+        }
+        if entry.ship_name.trim().is_empty() {
+            report.push(
+                ValidationSeverity::Error,
+                ctx.clone(),
+                "missing non-empty 'ship_name'",
+            );
+        }
+
+        let record_path = base.join(format!("{}.json", entry.id));
+        if !record_path.is_file() {
+            report.push(
+                ValidationSeverity::Error,
+                ctx.clone(),
+                format!("missing ship record file '{}'", record_path.display()),
+            );
+            continue;
+        }
+
+        match fs::read_to_string(&record_path)
+            .map_err(|e| e.to_string())
+            .and_then(|raw| serde_json::from_str::<ExtendedShipRecord>(&raw).map_err(|e| e.to_string()))
+        {
+            Ok(extended) => {
+                if let Some(rec) = extended.to_ship_record(Some(1), Some(1)) {
+                    if rec.hull_health <= 0.0 {
+                        report.push(
+                            ValidationSeverity::Error,
+                            ctx.clone(),
+                            format!("tier 1 level 1 hull_health is {} (must be > 0)", rec.hull_health),
+                        );
+                    }
+                    if rec.attack <= 0.0 {
+                        report.push(
+                            ValidationSeverity::Warning,
+                            ctx,
+                            format!("tier 1 level 1 attack is {} (zero or negative)", rec.attack),
+                        );
+                    }
+                } else {
+                    report.push(
+                        ValidationSeverity::Error,
+                        ctx,
+                        "failed to resolve tier 1 level 1 ShipRecord".to_string(),
+                    );
+                }
+            }
+            Err(e) => {
+                report.push(
+                    ValidationSeverity::Error,
+                    ctx,
+                    format!("failed to load extended ship record: {e}"),
+                );
+            }
+        }
+    }
+
+    Ok(report)
+}
+
 /// Validate hostile index + all per-hostile record files for basic structure and plausible stats.
 /// `path` should be the directory containing `index.json` (typically `data/hostiles`).
 ///
@@ -764,8 +852,12 @@ pub fn validate_all_startup_data() -> Result<(), String> {
     let r = validate_officer_dataset_canonical(DEFAULT_CANONICAL_OFFICERS_PATH);
     process_report("officers", r, &mut error_count, &mut warning_count);
 
-    // Ships and hostiles are optional — only validate if the index file is present.
-    if Path::new(DEFAULT_SHIPS_INDEX_PATH).is_file() {
+    // Ships: validate data/ships_extended (extended schema) if present; else legacy data/ships.
+    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    if ext_dir.join("index.json").is_file() {
+        let r = validate_ships_extended_dataset(DEFAULT_SHIPS_EXTENDED_DIR);
+        process_report("ships_extended", r, &mut error_count, &mut warning_count);
+    } else if Path::new(DEFAULT_SHIPS_INDEX_PATH).is_file() {
         let r = validate_ships_dataset("data/ships");
         process_report("ships", r, &mut error_count, &mut warning_count);
     }

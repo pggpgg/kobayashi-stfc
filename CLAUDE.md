@@ -66,6 +66,16 @@ cargo run --bin import_forbidden_chaos
 cargo run --bin import_syndicate_reputation
 ```
 
+### Ship data (data-stfc.space)
+
+```bash
+# 1. Build ship_id_registry from summary-ship + translations (run when upstream ships change)
+python3 scripts/build_ship_registry.py
+
+# 2. Normalize all ships to extended format (tiers + levels)
+cargo run --bin normalize_data_stfc_space
+```
+
 ## Architecture
 
 ### Backend (Rust)
@@ -75,7 +85,7 @@ The library is at `src/lib.rs` and exposes these modules:
 - **`src/combat/`** — Core fight loop (`engine.rs`). This is the hot path: zero allocations, no dynamic dispatch, SplitMix64 PRNG. `abilities.rs` evaluates effects per round; `buffs.rs` implements stacking rules; `stacking.rs` handles the base→flat→pct→multiply→cap resolution order.
 - **`src/lcars/`** — LCARS YAML parser (`parser.rs`) and resolver (`resolver.rs`) that collapses officer definitions into a `BuffSet` (static buffs + per-round effects + triggered effects). Only files matching `*.lcars.yaml` are loaded from a directory.
 - **`src/optimizer/`** — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates; `genetic.rs` is the GA strategy (select via `strategy: "genetic"` in API); `tiered.rs` is a placeholder. `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
-- **`src/data/`** — Data loading/validation. Ships from `data/ships/index.json` + per-ship JSON; hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is canonical; `officers.lcars.yaml` is the LCARS source of truth. `loader.rs` resolves by id or "name_level" (e.g. `explorer_30`).
+- **`src/data/`** — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is canonical; `officers.lcars.yaml` is the LCARS source of truth. `loader.rs` resolves by id or "name_level" (e.g. `explorer_30`).
 - **`src/server/`** — Axum HTTP server with Tokio async runtime. Heavy operations (simulate, optimize) are offloaded via `spawn_blocking`. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
 - **`src/server/`** — Async HTTP server built on Tokio + Axum 0.7. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers; CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present.
 - **`src/parallel/`** — Rayon thread pool integration; each thread owns its PRNG instance.
@@ -92,7 +102,7 @@ data/
 │   ├── officers.canonical.json    # Canonical officer catalog (regenerated from LCARS)
 │   ├── id_registry.json           # Officer id → canonical id mapping
 │   └── name_aliases.json          # Name normalization aliases
-├── ships/index.json + per-ship JSON
+├── ships_extended/                # Extended schema: index.json + <id>.json (tiers, levels)
 ├── hostiles/index.json + per-hostile JSON
 ├── buildings/index.json + per-building JSON
 ├── registry.json                  # Top-level data registry

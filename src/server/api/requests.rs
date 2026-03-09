@@ -14,6 +14,10 @@ pub const MAX_CANDIDATES: u32 = 2_000_000;
 pub struct OptimizeRequest {
     pub ship: String,
     pub hostile: String,
+    /// Ship tier (1-based). When set, uses data/ships_extended for accurate stats.
+    pub ship_tier: Option<u32>,
+    /// Ship level (1-based). When set with tier, applies level bonuses from extended data.
+    pub ship_level: Option<u32>,
     pub sims: Option<u32>,
     pub seed: Option<u64>,
     pub max_candidates: Option<u32>,

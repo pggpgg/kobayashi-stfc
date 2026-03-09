@@ -469,6 +469,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     registry: &crate::data::data_registry::DataRegistry,
     ship: &str,
     hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
     profile_id: Option<&str>,
 ) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
@@ -540,7 +542,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         })
         .unwrap_or_default();
 
-    let ship_rec = registry.resolve_ship(ship);
+    let ship_rec = registry.resolve_ship_with_tier_level(ship, ship_tier, ship_level);
     let hostile_rec = registry.resolve_hostile(hostile);
 
     let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
