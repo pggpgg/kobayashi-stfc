@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchShips, fetchHostiles } from '../lib/api';
+import { fetchShips, fetchHostiles, getShipTiersLevels } from '../lib/api';
 import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api';
 import type { CrewState } from '../lib/types';
 import { useProfile } from '../contexts/ProfileContext';
@@ -7,11 +7,21 @@ import { useWorkspaceMode } from '../contexts/WorkspaceModeContext';
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 
+const selectStyle = {
+  padding: '0.4rem 0.6rem',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  borderRadius: 6,
+  color: 'var(--text)',
+} as const;
+
 interface WorkspaceHeaderProps {
   shipId: string;
   scenarioId: string;
   onShipIdChange: (id: string) => void;
   onScenarioIdChange: (id: string) => void;
+  shipTier: number;
+  onShipTierChange: (tier: number) => void;
   shipLevel: number;
   onShipLevelChange: (level: number) => void;
   crew: CrewState;
@@ -35,6 +45,8 @@ export default function WorkspaceHeader({
   scenarioId,
   onShipIdChange,
   onScenarioIdChange,
+  shipTier,
+  onShipTierChange,
   shipLevel,
   onShipLevelChange,
   simsPerCrew,
@@ -55,17 +67,64 @@ export default function WorkspaceHeader({
   const { ownedOnly } = useWorkspaceMode();
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
+  const [tiers, setTiers] = useState<number[]>([1]);
+  const [levels, setLevels] = useState<number[]>([1, 10, 20, 30, 40, 50, 60]);
 
   useEffect(() => {
     let c = false;
     fetchShips(ownedOnly, activeProfileId).then((list) => {
       if (!c) {
         setShips(list);
-        if (list.length && !shipId) onShipIdChange(list[0]?.id ?? '');
+        if (list.length && !shipId) {
+          const first = list[0];
+          if (first) {
+            onShipIdChange(first.id);
+            if (ownedOnly && first.tier != null && first.level != null) {
+              onShipTierChange(first.tier);
+              onShipLevelChange(first.level);
+            }
+          }
+        }
       }
     });
     return () => { c = true; };
   }, [ownedOnly, activeProfileId]);
+
+  // When ship changes: in roster mode pre-fill tier/level from roster
+  const handleShipChange = (id: string) => {
+    onShipIdChange(id);
+    const ship = ships.find((s) => s.id === id);
+    if (ownedOnly && ship && ship.tier != null && ship.level != null) {
+      onShipTierChange(ship.tier);
+      onShipLevelChange(ship.level);
+    }
+  };
+
+  useEffect(() => {
+    if (!shipId) {
+      setTiers([1]);
+      setLevels([1, 10, 20, 30, 40, 50, 60]);
+      return;
+    }
+    let c = false;
+    getShipTiersLevels(shipId).then((data) => {
+      if (!c) {
+        const t = data.tiers?.length ? data.tiers : [1];
+        const l = data.levels?.length ? data.levels : [1, 10, 20, 30, 40, 50, 60];
+        setTiers(t);
+        setLevels(l);
+        if (!t.includes(shipTier)) onShipTierChange(t[0] ?? 1);
+        if (!l.includes(shipLevel)) onShipLevelChange(l[0] ?? 1);
+      }
+    }).catch(() => {
+      if (!c) {
+        setTiers([1]);
+        setLevels([1, 10, 20, 30, 40, 50, 60]);
+      }
+    });
+    return () => { c = true; };
+  }, [shipId]);
+
   useEffect(() => {
     let c = false;
     fetchHostiles().then((list) => {
@@ -90,14 +149,8 @@ export default function WorkspaceHeader({
       <select
         aria-label="Ship"
         value={shipId}
-        onChange={(e) => onShipIdChange(e.target.value)}
-        style={{
-          padding: '0.4rem 0.6rem',
-          background: 'var(--bg)',
-          border: '1px solid var(--border)',
-          borderRadius: 6,
-          color: 'var(--text)',
-        }}
+        onChange={(e) => handleShipChange(e.target.value)}
+        style={selectStyle}
       >
         {ships.length === 0 && <option>Loading…</option>}
         {ships.map((s) => (
@@ -107,18 +160,24 @@ export default function WorkspaceHeader({
         ))}
       </select>
       <select
+        aria-label="Ship tier"
+        value={shipTier}
+        onChange={(e) => onShipTierChange(Number(e.target.value))}
+        style={selectStyle}
+      >
+        {tiers.map((t) => (
+          <option key={t} value={t}>
+            T{t}
+          </option>
+        ))}
+      </select>
+      <select
         aria-label="Ship level"
         value={shipLevel}
         onChange={(e) => onShipLevelChange(Number(e.target.value))}
-        style={{
-          padding: '0.4rem 0.6rem',
-          background: 'var(--bg)',
-          border: '1px solid var(--border)',
-          borderRadius: 6,
-          color: 'var(--text)',
-        }}
+        style={selectStyle}
       >
-        {[1, 10, 20, 30, 40, 50, 60].map((l) => (
+        {levels.map((l) => (
           <option key={l} value={l}>
             Lvl {l}
           </option>
@@ -128,13 +187,7 @@ export default function WorkspaceHeader({
         aria-label="Scenario"
         value={scenarioId}
         onChange={(e) => onScenarioIdChange(e.target.value)}
-        style={{
-          padding: '0.4rem 0.6rem',
-          background: 'var(--bg)',
-          border: '1px solid var(--border)',
-          borderRadius: 6,
-          color: 'var(--text)',
-        }}
+        style={selectStyle}
       >
         {hostiles.length === 0 && <option>Loading…</option>}
         {hostiles.map((h) => (

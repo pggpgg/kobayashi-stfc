@@ -98,6 +98,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/officers/:id/resolved", get(handle_officer_resolved))
         // Ships / hostiles
         .route("/api/ships", get(handle_ships))
+        .route("/api/ships/:id/tiers-levels", get(handle_ship_tiers_levels))
         .route("/api/hostiles", get(handle_hostiles))
         // Data version
         .route("/api/data/version", get(handle_data_version))
@@ -293,6 +294,13 @@ async fn handle_ships(
         owned_only,
         profile_id.as_deref(),
     ) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_ship_tiers_levels(Path(id): Path<String>) -> impl IntoResponse {
+    match api::ship_tiers_levels_payload(&id) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }

@@ -14,6 +14,8 @@ export default function Workspace() {
         scenarioId={ws.scenarioId}
         onShipIdChange={ws.setShipId}
         onScenarioIdChange={ws.setScenarioId}
+        shipTier={ws.shipTier}
+        onShipTierChange={ws.setShipTier}
         shipLevel={ws.shipLevel}
         onShipLevelChange={ws.setShipLevel}
         crew={ws.crew}

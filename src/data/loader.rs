@@ -89,3 +89,23 @@ pub fn resolve_ship_with_tier_level(
     let extended = load_extended_ship_record(extended_dir, id)?;
     extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))
 }
+
+/// Return available tier and level numbers for a ship (by id or name). From data/ships_extended.
+/// Returns (tiers, levels); if no extended data, returns None.
+pub fn ship_tiers_levels(name_or_id: &str) -> Option<(Vec<u32>, Vec<u32>)> {
+    let normalized = normalize_lookup(name_or_id);
+    let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    if !extended_dir.is_dir() {
+        return None;
+    }
+    let ext_index = load_extended_ship_index(extended_dir)?;
+    let id = ext_index
+        .ships
+        .iter()
+        .find(|e| normalize_lookup(&e.id) == normalized || normalize_lookup(&e.ship_name) == normalized)
+        .map(|e| e.id.as_str())?;
+    let extended = load_extended_ship_record(extended_dir, id)?;
+    let tiers: Vec<u32> = extended.tiers.iter().map(|t| t.tier).collect();
+    let levels: Vec<u32> = extended.levels.iter().map(|l| l.level).collect();
+    Some((tiers, levels))
+}

@@ -33,6 +33,7 @@ export function useWorkspace() {
   const { activeProfileId } = useProfile();
 
   // Scenario state
+  const [shipTier, setShipTier] = useState(1);
   const [shipLevel, setShipLevel] = useState(50);
   const [shipId, setShipId] = useState('');
   const [scenarioId, setScenarioId] = useState('');
@@ -194,6 +195,8 @@ export function useWorkspace() {
             below_deck: crew.belowDeck,
           },
           num_sims: 5000,
+          ship_tier: shipTier,
+          ship_level: shipLevel,
         },
         activeProfileId,
       );
@@ -245,6 +248,8 @@ export function useWorkspace() {
           heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
           heuristics_only: heuristicsOnly || undefined,
           below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
+          ship_tier: shipTier,
+          ship_level: shipLevel,
         },
         activeProfileId,
       );
@@ -364,6 +369,8 @@ export function useWorkspace() {
     setShipId,
     scenarioId,
     setScenarioId,
+    shipTier,
+    setShipTier,
     shipLevel,
     setShipLevel,
     // Crew
