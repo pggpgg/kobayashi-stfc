@@ -251,9 +251,10 @@ struct SpocksOfficerRef {
 /// Raw record before name resolution: (raw_name, rank, tier, level).
 type RawRosterRecord = (String, Option<u8>, Option<u8>, Option<u16>);
 
-fn resolve_and_write_roster(
-    path: &str,
+fn resolve_and_write_roster_to(
+    source_path: &str,
     raw_records: &[RawRosterRecord],
+    output_path: &str,
 ) -> Result<ImportReport, ImportError> {
     let alias_map = load_alias_map(DEFAULT_ALIAS_MAP_PATH)?;
     let canonical_by_name = load_canonical_index(DEFAULT_CANONICAL_OFFICERS_PATH)?;
@@ -351,23 +352,23 @@ fn resolve_and_write_roster(
 
     let roster_len = roster.len();
     let output_payload = serde_json::json!({
-        "source_path": path,
+        "source_path": source_path,
         "officers": roster,
     });
 
-    if let Some(parent) = Path::new(DEFAULT_IMPORT_OUTPUT_PATH).parent() {
+    if let Some(parent) = Path::new(output_path).parent() {
         fs::create_dir_all(parent).map_err(ImportError::Write)?;
     }
     let serialized = serde_json::to_string_pretty(&output_payload).map_err(ImportError::Parse)?;
-    fs::write(DEFAULT_IMPORT_OUTPUT_PATH, serialized).map_err(ImportError::Write)?;
+    fs::write(output_path, serialized).map_err(ImportError::Write)?;
 
     let unresolved_count = unresolved.len();
     let conflict_count = conflicts.len();
     let critical_failures = unresolved_count + conflict_count;
 
     Ok(ImportReport {
-        source_path: path.to_string(),
-        output_path: DEFAULT_IMPORT_OUTPUT_PATH.to_string(),
+        source_path: source_path.to_string(),
+        output_path: output_path.to_string(),
         total_records: raw_records.len(),
         matched_records,
         unmatched_records: unresolved_count.saturating_sub(ambiguous_records),
@@ -383,7 +384,12 @@ fn resolve_and_write_roster(
 }
 
 pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
-    let raw = fs::read_to_string(path).map_err(ImportError::Read)?;
+    import_spocks_export_to(path, DEFAULT_IMPORT_OUTPUT_PATH)
+}
+
+/// Like [import_spocks_export] but writes to the given output path.
+pub fn import_spocks_export_to(source_path: &str, output_path: &str) -> Result<ImportReport, ImportError> {
+    let raw = fs::read_to_string(source_path).map_err(ImportError::Read)?;
     let export: SpocksExport = serde_json::from_str(&raw).map_err(ImportError::Parse)?;
     let records = flatten_export(export);
 
@@ -402,14 +408,24 @@ pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
         })
         .collect();
 
-    resolve_and_write_roster(path, &raw_records)
+    resolve_and_write_roster_to(source_path, &raw_records, output_path)
 }
 
 /// Imports a roster from a comma-separated .txt file (name,tier,level per line).
 /// Uses the csv crate so names containing a comma can be quoted (e.g. `"Kirk, James",3,45`).
 /// Skips optional header "name,tier,level". Applies failsafe defaults: name only -> max tier+level; name+tier only -> max level for that tier.
 pub fn import_roster_csv(path: &str) -> Result<ImportReport, ImportError> {
-    let content = fs::read_to_string(path).map_err(ImportError::Read)?;
+    import_roster_csv_to(path, DEFAULT_IMPORT_OUTPUT_PATH)
+}
+
+/// Like [import_roster_csv] but writes to the given output path.
+pub fn import_roster_csv_to(source_path: &str, output_path: &str) -> Result<ImportReport, ImportError> {
+    let content = fs::read_to_string(source_path).map_err(ImportError::Read)?;
+    let raw_records = parse_roster_csv_content(&content)?;
+    resolve_and_write_roster_to(source_path, &raw_records, output_path)
+}
+
+fn parse_roster_csv_content(content: &str) -> Result<Vec<RawRosterRecord>, ImportError> {
     let mut raw_records: Vec<RawRosterRecord> = Vec::new();
     let mut skip_next_if_header = true;
 
@@ -458,7 +474,7 @@ pub fn import_roster_csv(path: &str) -> Result<ImportReport, ImportError> {
         raw_records.push((name.to_string(), None, tier, level));
     }
 
-    resolve_and_write_roster(path, &raw_records)
+    Ok(raw_records)
 }
 
 fn flatten_export(export: SpocksExport) -> Vec<SpocksOfficerRecord> {

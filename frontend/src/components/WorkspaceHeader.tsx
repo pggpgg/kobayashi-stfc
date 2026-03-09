@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { fetchShips, fetchHostiles } from '../lib/api';
 import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api';
 import type { CrewState } from '../lib/types';
+import { useProfile } from '../contexts/ProfileContext';
+import { useWorkspaceMode } from '../contexts/WorkspaceModeContext';
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 
@@ -19,6 +21,7 @@ interface WorkspaceHeaderProps {
   lastOptimizeDurationMs: number | null;
   onRunSim: () => void;
   onRunOptimize: () => void;
+  onCancelOptimize: () => void;
   onSavePreset: () => void;
   loadingSim: boolean;
   loadingOptimize: boolean;
@@ -40,6 +43,7 @@ export default function WorkspaceHeader({
   lastOptimizeDurationMs,
   onRunSim,
   onRunOptimize,
+  onCancelOptimize,
   onSavePreset,
   loadingSim,
   loadingOptimize,
@@ -47,17 +51,21 @@ export default function WorkspaceHeader({
   optimizeCrewsDone,
   optimizeTotalCrews,
 }: WorkspaceHeaderProps) {
+  const { activeProfileId } = useProfile();
+  const { ownedOnly } = useWorkspaceMode();
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
 
   useEffect(() => {
     let c = false;
-    fetchShips().then((list) => {
-      if (!c) setShips(list);
-      if (list.length && !shipId) onShipIdChange(list[0]?.id ?? '');
+    fetchShips(ownedOnly, activeProfileId).then((list) => {
+      if (!c) {
+        setShips(list);
+        if (list.length && !shipId) onShipIdChange(list[0]?.id ?? '');
+      }
     });
     return () => { c = true; };
-  }, []);
+  }, [ownedOnly, activeProfileId]);
   useEffect(() => {
     let c = false;
     fetchHostiles().then((list) => {
@@ -202,32 +210,50 @@ export default function WorkspaceHeader({
           Completed in {(lastOptimizeDurationMs / 1000).toFixed(1)} s
         </span>
       )}
-      {loadingOptimize && optimizeProgress != null && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
-          <div
+      {loadingOptimize && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {optimizeProgress != null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
+              <div
+                style={{
+                  flex: 1,
+                  height: 6,
+                  background: 'var(--border)',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${optimizeProgress}%`,
+                    height: '100%',
+                    background: 'var(--accent)',
+                    borderRadius: 3,
+                    transition: 'width 0.2s ease',
+                  }}
+                />
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                {optimizeTotalCrews != null && optimizeCrewsDone != null && optimizeTotalCrews > 0
+                  ? `${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
+                  : `${optimizeProgress}%`}
+              </span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={onCancelOptimize}
             style={{
-              flex: 1,
-              height: 6,
-              background: 'var(--border)',
-              borderRadius: 3,
-              overflow: 'hidden',
+              padding: '0.35rem 0.75rem',
+              fontSize: '0.85rem',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+              color: 'var(--text)',
             }}
           >
-            <div
-              style={{
-                width: `${optimizeProgress}%`,
-                height: '100%',
-                background: 'var(--accent)',
-                borderRadius: 3,
-                transition: 'width 0.2s ease',
-              }}
-            />
-          </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-            {optimizeTotalCrews != null && optimizeCrewsDone != null && optimizeTotalCrews > 0
-              ? `${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
-              : `${optimizeProgress}%`}
-          </span>
+            Cancel
+          </button>
         </div>
       )}
       <div style={{ flex: 1, minWidth: 8 }} />

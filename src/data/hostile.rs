@@ -34,6 +34,15 @@ pub struct HostileRecord {
     /// Isolytic defense: flat reduction to isolytic damage taken.
     #[serde(default)]
     pub isolytic_defense: f64,
+    /// Mitigation floor (e.g. 0.16). When absent, engine uses [`crate::combat::MITIGATION_FLOOR`].
+    #[serde(default)]
+    pub mitigation_floor: Option<f64>,
+    /// Mitigation ceiling (e.g. 0.72). When absent, engine uses [`crate::combat::MITIGATION_CEILING`].
+    #[serde(default)]
+    pub mitigation_ceiling: Option<f64>,
+    /// "Mystery" mitigation factor X: formula becomes 1 - (1-X)*(1-A)*(1-S)*(1-D). Used rarely by game for some hostiles.
+    #[serde(default)]
+    pub mystery_mitigation_factor: Option<f64>,
 }
 
 /// Index of all hostiles for name/level resolution. Includes data_version.

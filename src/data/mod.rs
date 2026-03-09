@@ -1,4 +1,5 @@
 pub mod building;
+pub mod building_bid_resolver;
 pub mod data_registry;
 pub mod faction_reputation;
 pub mod forbidden_chaos;
@@ -8,6 +9,7 @@ pub mod import;
 pub mod loader;
 pub mod officer;
 pub mod profile;
+pub mod profile_index;
 pub mod registry;
 pub mod ship;
 pub mod syndicate_combat;

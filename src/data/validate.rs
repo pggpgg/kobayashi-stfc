@@ -958,7 +958,12 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
             );
         }
 
-        let record_path = base.join(format!("{id}.json"));
+        let file_stem = obj
+            .get("file")
+            .and_then(Value::as_str)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(id.as_str());
+        let record_path = base.join(format!("{file_stem}.json"));
         if !record_path.is_file() {
             report.push(
                 ValidationSeverity::Error,

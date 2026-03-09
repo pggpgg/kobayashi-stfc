@@ -27,6 +27,8 @@ const baseProps = {
   onHeuristicsOnlyChange: vi.fn(),
   belowDecksStrategy: 'ordered' as const,
   onBelowDecksStrategyChange: vi.fn(),
+  optimizerStrategy: 'exhaustive' as const,
+  onOptimizerStrategyChange: vi.fn(),
 };
 
 describe('OptimizePanel', () => {

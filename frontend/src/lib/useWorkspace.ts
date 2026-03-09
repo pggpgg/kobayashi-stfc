@@ -11,6 +11,8 @@ import {
   simulate,
   optimizeStart,
   getOptimizeStatus,
+  getOptimizeStreamUrl,
+  cancelOptimizeJob,
   savePreset,
   getOptimizeEstimate,
   fetchHeuristics,
@@ -18,14 +20,17 @@ import {
   type SimulateStats,
   type OptimizeEstimate,
   type CrewRecommendation,
+  type OptimizeStatusResponse,
   type Preset,
 } from './api';
+import { useProfile } from '../contexts/ProfileContext';
 
 const POLL_INTERVAL_MS = 350;
 
 export function useWorkspace() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { activeProfileId } = useProfile();
 
   // Scenario state
   const [shipLevel, setShipLevel] = useState(50);
@@ -51,8 +56,13 @@ export function useWorkspace() {
 
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
-  const [maxCandidates, setMaxCandidates] = useState<number | null>(null);
+  const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
   const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] = useState(false);
+
+  // Optimizer strategy
+  const [optimizerStrategy, setOptimizerStrategy] = useState<
+    import('./api').OptimizerStrategyType
+  >('exhaustive');
 
   // Heuristics state
   const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
@@ -69,8 +79,10 @@ export function useWorkspace() {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Polling ref
+  // Polling ref, SSE ref, and current job id (for cancel + cleanup on unmount)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const currentOptimizeJobIdRef = useRef<string | null>(null);
 
   // Load preset from location state
   useEffect(() => {
@@ -89,6 +101,20 @@ export function useWorkspace() {
     }
   }, [location.state, navigate]);
 
+  // Close SSE and polling on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   // Fetch optimize estimate when parameters change
   useEffect(() => {
     const ship = shipId || 'Saladin';
@@ -98,13 +124,16 @@ export function useWorkspace() {
       return;
     }
     let cancelled = false;
-    getOptimizeEstimate({
-      ship,
-      hostile,
-      sims: simsPerCrew,
-      max_candidates: maxCandidates ?? undefined,
-      prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
-    })
+    getOptimizeEstimate(
+      {
+        ship,
+        hostile,
+        sims: simsPerCrew,
+        max_candidates: maxCandidates ?? undefined,
+        prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
+      },
+      activeProfileId,
+    )
       .then((data) => {
         if (!cancelled) setEstimate(data);
       })
@@ -112,7 +141,7 @@ export function useWorkspace() {
         if (!cancelled) setEstimate(null);
       });
     return () => { cancelled = true; };
-  }, [shipId, scenarioId, simsPerCrew, maxCandidates, prioritizeBelowDecksAbility]);
+  }, [shipId, scenarioId, simsPerCrew, maxCandidates, prioritizeBelowDecksAbility, activeProfileId]);
 
   // Fetch available heuristic seeds
   useEffect(() => {
@@ -155,16 +184,19 @@ export function useWorkspace() {
     setError(null);
     setLoadingSim(true);
     try {
-      const res = await simulate({
-        ship: shipId || 'Saladin',
-        hostile: scenarioId || 'Explorer_30',
-        crew: {
-          captain: crew.captain,
-          bridge: crew.bridge,
-          below_deck: crew.belowDeck,
+      const res = await simulate(
+        {
+          ship: shipId || 'Saladin',
+          hostile: scenarioId || 'Explorer_30',
+          crew: {
+            captain: crew.captain,
+            bridge: crew.bridge,
+            below_deck: crew.belowDeck,
+          },
+          num_sims: 5000,
         },
-        num_sims: 5000,
-      });
+        activeProfileId,
+      );
       setSimResult(res.stats);
       setRecommendations([]);
     } catch (e) {
@@ -172,6 +204,25 @@ export function useWorkspace() {
     } finally {
       setLoadingSim(false);
     }
+  };
+
+  const applyOptimizeDone = (status: OptimizeStatusResponse) => {
+    currentOptimizeJobIdRef.current = null;
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (status.status === 'done' && status.result) {
+      setRecommendations(status.result.recommendations ?? []);
+      setSimResult(null);
+      if (status.result.duration_ms != null) setLastOptimizeDurationMs(status.result.duration_ms);
+    } else if (status.status === 'error') {
+      setError(status.error ?? 'Optimization failed');
+    }
+    setLoadingOptimize(false);
+    setOptimizeProgress(null);
+    setOptimizeCrewsDone(null);
+    setOptimizeTotalCrews(null);
   };
 
   // Handle running optimization
@@ -183,47 +234,33 @@ export function useWorkspace() {
     setOptimizeCrewsDone(0);
     setOptimizeTotalCrews(null);
     try {
-      const { job_id } = await optimizeStart({
-        ship: shipId || 'Saladin',
-        hostile: scenarioId || 'Explorer_30',
-        sims: simsPerCrew,
-        max_candidates: maxCandidates ?? undefined,
-        prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
-        heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
-        heuristics_only: heuristicsOnly || undefined,
-        below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
-      });
+      const { job_id } = await optimizeStart(
+        {
+          ship: shipId || 'Saladin',
+          hostile: scenarioId || 'Explorer_30',
+          sims: simsPerCrew,
+          max_candidates: maxCandidates ?? undefined,
+          strategy: optimizerStrategy,
+          prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
+          heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
+          heuristics_only: heuristicsOnly || undefined,
+          below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
+        },
+        activeProfileId,
+      );
+      currentOptimizeJobIdRef.current = job_id;
       const poll = () => {
-        getOptimizeStatus(job_id)
+        getOptimizeStatus(job_id, activeProfileId)
           .then((status) => {
             if (status.progress != null) setOptimizeProgress(status.progress);
             if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
             if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
-            if (status.status === 'done' && status.result) {
-              if (pollIntervalRef.current) {
-                clearInterval(pollIntervalRef.current);
-                pollIntervalRef.current = null;
-              }
-              setRecommendations(status.result.recommendations ?? []);
-              setSimResult(null);
-              if (status.result.duration_ms != null) setLastOptimizeDurationMs(status.result.duration_ms);
-              setLoadingOptimize(false);
-              setOptimizeProgress(null);
-              setOptimizeCrewsDone(null);
-              setOptimizeTotalCrews(null);
-            } else if (status.status === 'error') {
-              if (pollIntervalRef.current) {
-                clearInterval(pollIntervalRef.current);
-                pollIntervalRef.current = null;
-              }
-              setError(status.error ?? 'Optimization failed');
-              setLoadingOptimize(false);
-              setOptimizeProgress(null);
-              setOptimizeCrewsDone(null);
-              setOptimizeTotalCrews(null);
+            if (status.status === 'done' || status.status === 'error') {
+              applyOptimizeDone(status);
             }
           })
           .catch((e) => {
+            currentOptimizeJobIdRef.current = null;
             if (pollIntervalRef.current) {
               clearInterval(pollIntervalRef.current);
               pollIntervalRef.current = null;
@@ -235,8 +272,36 @@ export function useWorkspace() {
             setOptimizeTotalCrews(null);
           });
       };
-      poll();
-      pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+
+      if (typeof EventSource !== 'undefined') {
+        const streamUrl = getOptimizeStreamUrl(job_id);
+        const eventSource = new EventSource(streamUrl);
+        eventSourceRef.current = eventSource;
+        eventSource.onmessage = (event) => {
+          try {
+            const status = JSON.parse(event.data) as OptimizeStatusResponse;
+            if (status.progress != null) setOptimizeProgress(status.progress);
+            if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
+            if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
+            if (status.status === 'done' || status.status === 'error') {
+              eventSource.close();
+              eventSourceRef.current = null;
+              applyOptimizeDone(status);
+            }
+          } catch {
+            // ignore parse errors; keep stream open
+          }
+        };
+        eventSource.onerror = () => {
+          eventSource.close();
+          eventSourceRef.current = null;
+          poll();
+          pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+        };
+      } else {
+        poll();
+        pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+      }
     } catch (e) {
       setError(formatApiError(e));
       setLoadingOptimize(false);
@@ -246,21 +311,44 @@ export function useWorkspace() {
     }
   };
 
+  const handleCancelOptimize = () => {
+    const jobId = currentOptimizeJobIdRef.current;
+    currentOptimizeJobIdRef.current = null;
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (jobId) {
+      cancelOptimizeJob(jobId).catch(() => {});
+    }
+    setLoadingOptimize(false);
+    setOptimizeProgress(null);
+    setOptimizeCrewsDone(null);
+    setOptimizeTotalCrews(null);
+  };
+
   // Handle saving a preset
   const handleSavePreset = async () => {
     setError(null);
     setSavingPreset(true);
     try {
-      await savePreset({
-        name: savePresetName || 'Unnamed',
-        ship: shipId || 'Saladin',
-        scenario: scenarioId || 'Explorer_30',
-        crew: {
-          captain: crew.captain,
-          bridge: crew.bridge,
-          below_deck: crew.belowDeck,
+      await savePreset(
+        {
+          name: savePresetName || 'Unnamed',
+          ship: shipId || 'Saladin',
+          scenario: scenarioId || 'Explorer_30',
+          crew: {
+            captain: crew.captain,
+            bridge: crew.bridge,
+            below_deck: crew.belowDeck,
+          },
         },
-      });
+        activeProfileId,
+      );
       setShowSavePreset(false);
       setSavePresetName('');
     } catch (e) {
@@ -291,6 +379,7 @@ export function useWorkspace() {
     recommendations,
     loadingOptimize,
     handleRunOptimize,
+    handleCancelOptimize,
     optimizeProgress,
     optimizeCrewsDone,
     optimizeTotalCrews,
@@ -311,6 +400,8 @@ export function useWorkspace() {
     setHeuristicsOnly,
     belowDecksStrategy,
     setBelowDecksStrategy,
+    optimizerStrategy,
+    setOptimizerStrategy,
     // Presets
     showSavePreset,
     setShowSavePreset,

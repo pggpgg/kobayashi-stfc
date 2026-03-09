@@ -19,7 +19,7 @@ A high-performance Monte Carlo combat simulator and crew optimizer for [Star Tre
 
 ![KOBAYASHI Web Interface](docs/web-ui-screenshot.png)
 
-The web interface lets you configure ship, hostile, and crew, run simulations or optimizations, and view results — all from your browser at `http://localhost:3000`.
+The web interface has four pages: **Workspace** (ship, scenario, crew builder, Run Sim, Run Optimize), **Results Library** (saved optimization results), **Roster & Profile** (roster import, profile management), and **Data & Mechanics** (data exploration). Toggle Roster vs Sandbox mode to limit officers to your owned roster or use the full catalog. Run simulations or optimizations, save presets, and view results — all from your browser at `http://localhost:3000`.
 
 ---
 
@@ -34,7 +34,7 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 ### Key Features
 
 - **Monte Carlo combat simulation** — models crits, proc chances, shield mitigation, armor, ability timing, and more
-- **Smart crew optimization** — full exhaustive sweep today; tiered simulation (scouting → confirmation) and genetic algorithm for large search spaces planned
+- **Smart crew optimization** — exhaustive sweep and genetic algorithm for large search spaces; tiered simulation (scouting → confirmation) planned
 - **LCARS officer definitions** — every officer ability is described in a declarative YAML-based language, no code changes needed to add new officers
 - **Player profile support** — account for your research, buildings, reputation, and other non-officer bonuses
 - **Synergy discovery** — manually tag known synergies, and let KOBAYASHI discover new ones from simulation data
@@ -48,10 +48,12 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 ### Build from source
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/kobayashi.git
-cd kobayashi
+git clone https://github.com/pggpgg/kobayashi-stfc
+cd kobayashi-stfc
 cargo build --release
 ```
+
+On Windows, use `target\release\kobayashi.exe` instead of `./target/release/kobayashi`.
 
 ### Run
 
@@ -66,18 +68,20 @@ cargo build --release
   --hostile explorer_30 \
   --sims 5000
 
-./target/release/kobayashi simulate \
-  --ship saladin \
-  --hostile explorer_30 \
-  --captain khan \
-  --bridge nero \
-  --below tlaan \
-  --sims 10000
+# Low-level combat sim (rounds, seed) — for ship/hostile/crew sims, use the Web UI
+./target/release/kobayashi simulate 5 99 [--trace-events]
+# Or with explicit attacker/defender stats:
+./target/release/kobayashi simulate --attacker-attack 120 --attacker-pierce 0.15 \
+  --defender-mitigation 0.35 --rounds 5 --seed 99
 ```
 
 ### Other commands
 
 ```bash
+# Import roster from .txt (name,tier,level) or Spocks .json export
+./target/release/kobayashi import <path> [--profile <id>]
+# Bare filename resolves to rosters/<filename>
+
 # Validate LCARS officer definitions (emits error/warning/info per mechanic)
 ./target/release/kobayashi validate data/officers
 
@@ -90,7 +94,7 @@ KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladi
 
 ### Data maintenance policy
 
-The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports). You can also sync your roster **quasi real-time** from the game using the [STFC Community Mod](https://github.com/netniV/stfc-mod); see [SYNC.md](SYNC.md) for setup.
+The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports). You can also sync your roster **quasi real-time** from the game using the [STFC Community Mod](https://github.com/netniV/stfc-mod); see [docs/SYNC.md](docs/SYNC.md) for setup.
 
 For canonical officer data provenance, `officers.canonical.json` uses neutral metadata labels: each officer `source.workbook` value is set to `manual_curation` rather than storing a specific workbook filename.
 
@@ -114,7 +118,7 @@ KOBAYASHI's core is a fast, deterministic combat simulator written in Rust. Each
 
 ### The Optimizer
 
-Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. A **tiered approach** (scouting pass → confirmation on top candidates) and **genetic algorithm** for large search spaces are planned but not yet wired in.
+Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. For large search spaces, use `strategy: "genetic"` in the API to run the genetic optimizer instead. A **tiered approach** (scouting pass → confirmation on top candidates) is planned but not yet wired in.
 
 *Planned tiered strategy (when implemented):*
 
@@ -164,7 +168,7 @@ officers:
             max_rank: 5
 ```
 
-LCARS supports stat modifiers, extra attacks, tags, decay/accumulate effects, conditional triggers, and composable conditions. See [`DESIGN.md`](DESIGN.md#3-lcars-language-specification) for the full spec.
+LCARS supports stat modifiers, extra attacks, tags, decay/accumulate effects, conditional triggers, and composable conditions. See [docs/DESIGN.md](docs/DESIGN.md#3-lcars-language-specification) for the full spec.
 
 **Graceful degradation**: unknown effect types are logged and skipped — never crashed on. Officers can be defined before the engine fully supports all their mechanics.
 
@@ -198,6 +202,8 @@ player_profile:
 ---
 
 ## Project Structure
+
+Project documentation (design, roadmap, sync, performance, combat plans) lives in the [`docs/`](docs/) directory.
 
 ```
 kobayashi/
@@ -237,7 +243,7 @@ Officer definitions live in `data/officers/officers.lcars.yaml`. LCARS is the so
 To add or update officers:
 
 1. Edit `data/officers/officers.lcars.yaml`
-2. Follow the [LCARS schema](DESIGN.md#3-lcars-language-specification)
+2. Follow the [LCARS schema](docs/DESIGN.md#3-lcars-language-specification)
 3. Run `kobayashi validate data/officers` to validate LCARS files (or `kobayashi validate data/officers/officers.canonical.json` for canonical JSON)
 4. Submit a PR
 
@@ -267,12 +273,12 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [x] CLI interface
 - [x] LCARS ability resolver (YAML → BuffSet)
 - [ ] Tiered optimization with synergy prioritization (planned)
-- [ ] Crew generator (exhaustive + filtered)
+- [x] Crew generator (exhaustive + filtered)
 - [x] Parallel batch execution
 - [x] Web UI on localhost (MVP)
-- [ ] User-owned roster import workflow (e.g., Spocks.club export)
+- [x] User-owned roster import workflow (CLI + Web UI, Spocks.club export)
 - [ ] Synergy learning from simulation results (planned)
-- [ ] Genetic algorithm optimizer (planned)
+- [x] Genetic algorithm optimizer (implemented)
 - [ ] Chain grinding simulation (multi-fight with carry-over) (planned)
 - [ ] Armada mode (multi-ship combat) (planned)
 - [ ] Sensitivity analysis ("what if I promote this officer?") (planned)

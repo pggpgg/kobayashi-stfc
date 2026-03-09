@@ -10,12 +10,16 @@ use axum::{
     extract::OriginalUri,
     extract::{Path, Query, State},
     http::{HeaderMap, HeaderValue, StatusCode, header},
+    response::sse::{Event, Sse},
     response::{IntoResponse, Response},
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
 };
 use std::collections::HashMap;
+use std::convert::Infallible;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
+use tokio_stream::wrappers::ReceiverStream;
 
 use crate::data::data_registry::DataRegistry;
 use crate::server::api;
@@ -59,6 +63,16 @@ fn error_json(status: StatusCode, message: &str) -> JsonResponse {
     JsonResponse { status, body }
 }
 
+/// Extract profile id from X-Profile-Id header or ?profile= query.
+fn profile_id_from_request(headers: &HeaderMap, query: &HashMap<String, String>) -> Option<String> {
+    headers
+        .get("x-profile-id")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .or_else(|| query.get("profile").cloned().filter(|s| !s.is_empty()))
+}
+
 fn validation_json(payload: api::ValidationErrorResponse) -> JsonResponse {
     let fallback =
         "{\n  \"status\": \"error\",\n  \"message\": \"Validation failed\"\n}".to_string();
@@ -90,6 +104,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         // Profile
         .route("/api/profile", get(handle_profile_get))
         .route("/api/profile", put(handle_profile_put))
+        // Profiles (multi-account)
+        .route("/api/profiles", get(handle_profiles_list))
+        .route("/api/profiles", post(handle_profiles_create))
+        .route("/api/profiles/:id", delete(handle_profiles_delete))
         // Presets
         .route("/api/presets", get(handle_presets_list))
         .route("/api/presets", post(handle_preset_post))
@@ -105,6 +123,8 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         // Optimize async job
         .route("/api/optimize/start", post(handle_optimize_start))
         .route("/api/optimize/status/:job_id", get(handle_optimize_status))
+        .route("/api/optimize/jobs/:job_id/stream", get(handle_optimize_job_stream))
+        .route("/api/optimize/jobs/:job_id/cancel", post(handle_optimize_job_cancel))
         // Sync ingress
         .route("/api/sync/status", get(handle_sync_status))
         .route("/api/sync/ingress", post(handle_sync_ingress))
@@ -241,6 +261,7 @@ async fn handle_health() -> impl IntoResponse {
 
 async fn handle_officers(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let owned_only = params.get("owned_only").map(String::as_str).unwrap_or("");
@@ -249,14 +270,29 @@ async fn handle_officers(
     } else {
         "/api/officers".to_string()
     };
-    match api::officers_payload(state.registry.as_ref(), &path) {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::officers_payload(state.registry.as_ref(), &path, profile_id.as_deref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 
-async fn handle_ships(State(state): State<AppState>) -> impl IntoResponse {
-    match api::ships_payload(state.registry.as_ref()) {
+async fn handle_ships(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let owned_only = params
+        .get("owned_only")
+        .map(|s| s.as_str())
+        .map(|s| s == "1" || s.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::ships_payload(
+        state.registry.as_ref(),
+        owned_only,
+        profile_id.as_deref(),
+    ) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
@@ -283,29 +319,68 @@ async fn handle_data_version(State(state): State<AppState>) -> impl IntoResponse
     }
 }
 
-async fn handle_profile_get() -> impl IntoResponse {
-    match api::profile_get_payload() {
+async fn handle_profile_get(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::profile_get_payload(profile_id.as_deref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 
-async fn handle_profile_put(body: String) -> impl IntoResponse {
-    match api::profile_put_payload(&body) {
+async fn handle_profile_put(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::profile_put_payload(&body, profile_id.as_deref()) {
         Ok(response) => ok_json(response).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
     }
 }
 
-async fn handle_presets_list() -> impl IntoResponse {
-    match api::presets_list_payload() {
+async fn handle_profiles_list() -> impl IntoResponse {
+    match api::profiles_list_payload() {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 
-async fn handle_preset_get(Path(id): Path<String>) -> impl IntoResponse {
-    match api::preset_get_payload(&id) {
+async fn handle_profiles_create(body: String) -> impl IntoResponse {
+    match api::profiles_create_payload(&body) {
+        Ok(resp) => ok_json(resp).into_response(),
+        Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_profiles_delete(Path(id): Path<String>) -> impl IntoResponse {
+    match api::profiles_delete_payload(&id) {
+        Ok(()) => ok_json(serde_json::json!({ "status": "ok" }).to_string()).into_response(),
+        Err(e) => error_json(StatusCode::BAD_REQUEST, &e).into_response(),
+    }
+}
+
+async fn handle_presets_list(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::presets_list_payload(profile_id.as_deref()) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_preset_get(
+    Path(id): Path<String>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::preset_get_payload(&id, profile_id.as_deref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(api::PresetError::NotFound) => {
             error_json(StatusCode::NOT_FOUND, "Preset not found").into_response()
@@ -314,15 +389,25 @@ async fn handle_preset_get(Path(id): Path<String>) -> impl IntoResponse {
     }
 }
 
-async fn handle_preset_post(body: String) -> impl IntoResponse {
-    match api::preset_post_payload(&body) {
+async fn handle_preset_post(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::preset_post_payload(&body, profile_id.as_deref()) {
         Ok(response) => ok_json(response).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
     }
 }
 
-async fn handle_officers_import(body: String) -> impl IntoResponse {
-    match api::officers_import_payload(&body) {
+async fn handle_officers_import(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::officers_import_payload(&body, profile_id.as_deref()) {
         Ok(response) => ok_json(response).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
     }
@@ -342,9 +427,17 @@ async fn handle_officer_resolved(
 }
 
 /// POST /api/simulate — CPU-bound, offloaded to blocking pool.
-async fn handle_simulate(State(state): State<AppState>, body: String) -> impl IntoResponse {
+async fn handle_simulate(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
-    let result = tokio::task::spawn_blocking(move || api::simulate_payload(registry.as_ref(), &body)).await;
+    let result = tokio::task::spawn_blocking(move || {
+        api::simulate_payload(registry.as_ref(), &body, profile_id.as_deref())
+    }).await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
         Ok(Err(api::SimulateError::Parse(e))) => {
@@ -363,9 +456,17 @@ async fn handle_simulate(State(state): State<AppState>, body: String) -> impl In
 }
 
 /// POST /api/optimize — long-running synchronous optimization; runs on blocking pool.
-async fn handle_optimize(State(state): State<AppState>, body: String) -> impl IntoResponse {
+async fn handle_optimize(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
-    let result = tokio::task::spawn_blocking(move || api::optimize_payload(registry.as_ref(), &body)).await;
+    let result = tokio::task::spawn_blocking(move || {
+        api::optimize_payload(registry.as_ref(), &body, profile_id.as_deref())
+    }).await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
         Ok(Err(api::OptimizePayloadError::Parse(e))) => {
@@ -384,15 +485,17 @@ async fn handle_optimize(State(state): State<AppState>, body: String) -> impl In
 /// GET /api/optimize/estimate?ship=...&hostile=...&sims=...
 async fn handle_optimize_estimate(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Query(raw): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &raw);
     let query: String = raw
         .iter()
         .map(|(k, v)| format!("{}={}", k, v))
         .collect::<Vec<_>>()
         .join("&");
     let path = format!("/api/optimize/estimate?{}", query);
-    match api::optimize_estimate_payload(state.registry.as_ref(), &path) {
+    match api::optimize_estimate_payload(state.registry.as_ref(), &path, profile_id.as_deref()) {
         Ok(payload) => ok_json(payload).into_response(),
         Err(api::OptimizePayloadError::Parse(e)) => {
             error_json(StatusCode::BAD_REQUEST, &format!("Invalid request: {e}")).into_response()
@@ -402,8 +505,14 @@ async fn handle_optimize_estimate(
 }
 
 /// POST /api/optimize/start — spawns a background std::thread, returns job_id immediately.
-async fn handle_optimize_start(State(state): State<AppState>, body: String) -> impl IntoResponse {
-    match api::optimize_start_payload(state.registry.clone(), &body) {
+async fn handle_optimize_start(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::optimize_start_payload(state.registry.clone(), &body, profile_id.as_deref()) {
         Ok(payload) => ok_json(payload).into_response(),
         Err(api::OptimizePayloadError::Parse(e)) => {
             error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))
@@ -416,6 +525,67 @@ async fn handle_optimize_start(State(state): State<AppState>, body: String) -> i
 /// GET /api/optimize/status/:job_id
 async fn handle_optimize_status(Path(job_id): Path<String>) -> impl IntoResponse {
     match api::optimize_status_payload(&job_id) {
+        Ok(payload) => ok_json(payload).into_response(),
+        Err(api::OptimizeStatusError::NotFound) => {
+            error_json(StatusCode::NOT_FOUND, "Job not found").into_response()
+        }
+        Err(api::OptimizeStatusError::Serialize(e)) => {
+            error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response()
+        }
+    }
+}
+
+/// GET /api/optimize/jobs/:job_id/stream — SSE stream of optimize job progress until done or error.
+async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResponse {
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(16);
+    tokio::spawn(async move {
+        let job_id = job_id.clone();
+        loop {
+            let result = tokio::task::spawn_blocking({
+                let job_id = job_id.clone();
+                move || api::optimize_status_payload(&job_id)
+            })
+            .await;
+            let payload_result: Result<String, api::OptimizeStatusError> = match result {
+                Ok(Ok(payload)) => Ok(payload),
+                Ok(Err(api::OptimizeStatusError::NotFound)) => {
+                    let event = Event::default()
+                        .data(r#"{"status":"error","error":"Job not found"}"#);
+                    let _ = tx.send(Ok(event)).await;
+                    break;
+                }
+                Ok(Err(api::OptimizeStatusError::Serialize(_))) => {
+                    let event = Event::default()
+                        .data(r#"{"status":"error","error":"Serialization error"}"#);
+                    let _ = tx.send(Ok(event)).await;
+                    break;
+                }
+                Err(_) => break,
+            };
+            if let Ok(payload) = payload_result {
+                let event = Event::default().data(payload.clone());
+                if tx.send(Ok(event)).await.is_err() {
+                    break;
+                }
+                let done = serde_json::from_str::<serde_json::Value>(&payload)
+                    .ok()
+                    .and_then(|v| v.get("status").and_then(|s| s.as_str()).map(|s| s.to_string()))
+                    .map(|s| s == "done" || s == "error")
+                    .unwrap_or(false);
+                if done {
+                    break;
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(300)).await;
+        }
+    });
+    let stream = ReceiverStream::new(rx);
+    Sse::new(stream)
+}
+
+/// POST /api/optimize/jobs/:job_id/cancel — request cancellation of a running optimize job.
+async fn handle_optimize_job_cancel(Path(job_id): Path<String>) -> impl IntoResponse {
+    match api::optimize_cancel_payload(&job_id) {
         Ok(payload) => ok_json(payload).into_response(),
         Err(api::OptimizeStatusError::NotFound) => {
             error_json(StatusCode::NOT_FOUND, "Job not found").into_response()

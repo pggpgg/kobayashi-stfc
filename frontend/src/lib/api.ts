@@ -56,6 +56,46 @@ async function checkOk(res: Response): Promise<void> {
   throw await parseApiError(res, text);
 }
 
+/** Build headers with X-Profile-Id when profileId is provided. */
+function profileHeaders(profileId?: string | null): Record<string, string> {
+  if (!profileId) return {};
+  return { 'X-Profile-Id': profileId };
+}
+
+export interface ProfileEntry {
+  id: string;
+  name: string;
+  sync_token: string;
+}
+
+export interface ProfilesResponse {
+  profiles: ProfileEntry[];
+  default_id?: string;
+}
+
+export async function fetchProfiles(): Promise<ProfilesResponse> {
+  const res = await fetch(`${API_BASE}/api/profiles`);
+  await checkOk(res);
+  return res.json();
+}
+
+export async function createProfile(params: { id?: string; name: string }): Promise<ProfileEntry> {
+  const res = await fetch(`${API_BASE}/api/profiles`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  await checkOk(res);
+  return res.json();
+}
+
+export async function deleteProfile(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/profiles/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  await checkOk(res);
+}
+
 export interface OfficerListItem {
   id: string;
   name: string;
@@ -87,16 +127,25 @@ export interface DataVersionResponse {
   mechanics: MechanicStatus[];
 }
 
-export async function fetchOfficers(ownedOnly = false): Promise<OfficerListItem[]> {
+export async function fetchOfficers(
+  ownedOnly = false,
+  profileId?: string | null,
+): Promise<OfficerListItem[]> {
   const url = ownedOnly ? `${API_BASE}/api/officers?owned_only=1` : `${API_BASE}/api/officers`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: profileHeaders(profileId) });
   await checkOk(res);
   const data = await res.json();
   return data.officers ?? [];
 }
 
-export async function fetchShips(): Promise<ShipListItem[]> {
-  const res = await fetch(`${API_BASE}/api/ships`);
+export async function fetchShips(
+  ownedOnly = false,
+  profileId?: string | null,
+): Promise<ShipListItem[]> {
+  const url = ownedOnly
+    ? `${API_BASE}/api/ships?owned_only=1`
+    : `${API_BASE}/api/ships`;
+  const res = await fetch(url, { headers: profileHeaders(profileId) });
   await checkOk(res);
   const data = await res.json();
   return data.ships ?? [];
@@ -136,15 +185,18 @@ export interface SimulateResponse {
   seed: number;
 }
 
-export async function simulate(params: {
-  ship: string;
-  hostile: string;
-  crew: SimulateCrew;
-  num_sims?: number;
-}): Promise<SimulateResponse> {
+export async function simulate(
+  params: {
+    ship: string;
+    hostile: string;
+    crew: SimulateCrew;
+    num_sims?: number;
+  },
+  profileId?: string | null,
+): Promise<SimulateResponse> {
   const res = await fetch(`${API_BASE}/api/simulate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
     body: JSON.stringify({
       ship: params.ship,
       hostile: params.hostile,
@@ -179,13 +231,16 @@ export interface OptimizeEstimate {
   estimated_seconds: number;
 }
 
-export async function getOptimizeEstimate(params: {
-  ship: string;
-  hostile: string;
-  sims?: number;
-  max_candidates?: number | null;
-  prioritize_below_decks_ability?: boolean;
-}): Promise<OptimizeEstimate> {
+export async function getOptimizeEstimate(
+  params: {
+    ship: string;
+    hostile: string;
+    sims?: number;
+    max_candidates?: number | null;
+    prioritize_below_decks_ability?: boolean;
+  },
+  profileId?: string | null,
+): Promise<OptimizeEstimate> {
   const sims = params.sims ?? 5000;
   const search = new URLSearchParams({
     ship: params.ship,
@@ -198,19 +253,23 @@ export async function getOptimizeEstimate(params: {
   if (params.prioritize_below_decks_ability === true) {
     search.set('prioritize_below_decks_ability', 'true');
   }
+  if (profileId) search.set('profile', profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
   const res = await fetch(url);
   await checkOk(res);
   return res.json();
 }
 
-export async function optimize(params: {
-  ship: string;
-  hostile: string;
-  sims?: number;
-  seed?: number;
-  max_candidates?: number | null;
-}): Promise<OptimizeResponse> {
+export async function optimize(
+  params: {
+    ship: string;
+    hostile: string;
+    sims?: number;
+    seed?: number;
+    max_candidates?: number | null;
+  },
+  profileId?: string | null,
+): Promise<OptimizeResponse> {
   const body: Record<string, unknown> = {
     ship: params.ship,
     hostile: params.hostile,
@@ -222,7 +281,7 @@ export async function optimize(params: {
   }
   const res = await fetch(`${API_BASE}/api/optimize`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
     body: JSON.stringify(body),
   });
   await checkOk(res);
@@ -249,17 +308,23 @@ export async function fetchHeuristics(): Promise<string[]> {
   return data.seeds ?? [];
 }
 
-export async function optimizeStart(params: {
-  ship: string;
-  hostile: string;
-  sims?: number;
-  seed?: number;
-  max_candidates?: number | null;
-  prioritize_below_decks_ability?: boolean;
-  heuristics_seeds?: string[];
-  heuristics_only?: boolean;
-  below_decks_strategy?: 'ordered' | 'exploration';
-}): Promise<OptimizeStartResponse> {
+export type OptimizerStrategyType = 'exhaustive' | 'genetic' | 'tiered';
+
+export async function optimizeStart(
+  params: {
+    ship: string;
+    hostile: string;
+    sims?: number;
+    seed?: number;
+    max_candidates?: number | null;
+    strategy?: OptimizerStrategyType;
+    prioritize_below_decks_ability?: boolean;
+    heuristics_seeds?: string[];
+    heuristics_only?: boolean;
+    below_decks_strategy?: 'ordered' | 'exploration';
+  },
+  profileId?: string | null,
+): Promise<OptimizeStartResponse> {
   const body: Record<string, unknown> = {
     ship: params.ship,
     hostile: params.hostile,
@@ -268,6 +333,9 @@ export async function optimizeStart(params: {
   };
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;
+  }
+  if (params.strategy && params.strategy !== 'exhaustive') {
+    body.strategy = params.strategy;
   }
   if (params.prioritize_below_decks_ability === true) {
     body.prioritize_below_decks_ability = true;
@@ -283,17 +351,36 @@ export async function optimizeStart(params: {
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
     body: JSON.stringify(body),
   });
   await checkOk(res);
   return res.json();
 }
 
-export async function getOptimizeStatus(jobId: string): Promise<OptimizeStatusResponse> {
-  const res = await fetch(`${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`);
+export async function getOptimizeStatus(
+  jobId: string,
+  profileId?: string | null,
+): Promise<OptimizeStatusResponse> {
+  const url = profileId
+    ? `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}?profile=${encodeURIComponent(profileId)}`
+    : `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`;
+  const res = await fetch(url);
   await checkOk(res);
   return res.json();
+}
+
+/** URL for SSE stream of optimize job progress (GET). Use with EventSource for live updates. */
+export function getOptimizeStreamUrl(jobId: string): string {
+  return `${API_BASE}/api/optimize/jobs/${encodeURIComponent(jobId)}/stream`;
+}
+
+/** Request cancellation of a running optimize job. */
+export async function cancelOptimizeJob(jobId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/optimize/jobs/${encodeURIComponent(jobId)}/cancel`, {
+    method: 'POST',
+  });
+  await checkOk(res);
 }
 
 export interface ImportReport {
@@ -306,10 +393,13 @@ export interface ImportReport {
   unresolved?: { record_index: number; input_name: string; reason: string }[];
 }
 
-export async function importRoster(body: string): Promise<ImportReport> {
+export async function importRoster(
+  body: string,
+  profileId?: string | null,
+): Promise<ImportReport> {
   const res = await fetch(`${API_BASE}/api/officers/import`, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
+    headers: { 'Content-Type': 'text/plain', ...profileHeaders(profileId) },
     body: body.trim(),
   });
   await checkOk(res);
@@ -320,16 +410,22 @@ export interface PlayerProfile {
   bonuses: Record<string, number>;
 }
 
-export async function fetchProfile(): Promise<PlayerProfile> {
-  const res = await fetch(`${API_BASE}/api/profile`);
+export async function fetchProfile(profileId?: string | null): Promise<PlayerProfile> {
+  const url = profileId
+    ? `${API_BASE}/api/profile?profile=${encodeURIComponent(profileId)}`
+    : `${API_BASE}/api/profile`;
+  const res = await fetch(url);
   await checkOk(res);
   return res.json();
 }
 
-export async function updateProfile(profile: PlayerProfile): Promise<void> {
+export async function updateProfile(
+  profile: PlayerProfile,
+  profileId?: string | null,
+): Promise<void> {
   const res = await fetch(`${API_BASE}/api/profile`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
     body: JSON.stringify(profile),
   });
   await checkOk(res);
@@ -356,28 +452,40 @@ export interface PresetSummary {
   scenario: string;
 }
 
-export async function fetchPresets(): Promise<PresetSummary[]> {
-  const res = await fetch(`${API_BASE}/api/presets`);
+export async function fetchPresets(profileId?: string | null): Promise<PresetSummary[]> {
+  const url = profileId
+    ? `${API_BASE}/api/presets?profile=${encodeURIComponent(profileId)}`
+    : `${API_BASE}/api/presets`;
+  const res = await fetch(url);
   await checkOk(res);
   const data = await res.json();
   return data.presets ?? [];
 }
 
-export async function fetchPreset(id: string): Promise<Preset> {
-  const res = await fetch(`${API_BASE}/api/presets/${encodeURIComponent(id)}`);
+export async function fetchPreset(
+  id: string,
+  profileId?: string | null,
+): Promise<Preset> {
+  const url = profileId
+    ? `${API_BASE}/api/presets/${encodeURIComponent(id)}?profile=${encodeURIComponent(profileId)}`
+    : `${API_BASE}/api/presets/${encodeURIComponent(id)}`;
+  const res = await fetch(url);
   await checkOk(res);
   return res.json();
 }
 
-export async function savePreset(preset: {
-  name?: string;
-  ship: string;
-  scenario: string;
-  crew: PresetCrew;
-}): Promise<Preset> {
+export async function savePreset(
+  preset: {
+    name?: string;
+    ship: string;
+    scenario: string;
+    crew: PresetCrew;
+  },
+  profileId?: string | null,
+): Promise<Preset> {
   const res = await fetch(`${API_BASE}/api/presets`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
     body: JSON.stringify({
       name: preset.name ?? 'Unnamed',
       ship: preset.ship,

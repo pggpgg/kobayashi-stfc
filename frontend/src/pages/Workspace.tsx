@@ -23,6 +23,7 @@ export default function Workspace() {
         lastOptimizeDurationMs={ws.lastOptimizeDurationMs}
         onRunSim={ws.handleRunSim}
         onRunOptimize={ws.handleRunOptimize}
+        onCancelOptimize={ws.handleCancelOptimize}
         onSavePreset={() => ws.setShowSavePreset(true)}
         loadingSim={ws.loadingSim}
         loadingOptimize={ws.loadingOptimize}
@@ -165,6 +166,8 @@ export default function Workspace() {
           onHeuristicsOnlyChange={ws.setHeuristicsOnly}
           belowDecksStrategy={ws.belowDecksStrategy}
           onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
+          optimizerStrategy={ws.optimizerStrategy}
+          onOptimizerStrategyChange={ws.setOptimizerStrategy}
         />
       </div>
     </div>

@@ -18,6 +18,8 @@ interface OptimizePanelProps {
   onHeuristicsOnlyChange: (value: boolean) => void;
   belowDecksStrategy: 'ordered' | 'exploration';
   onBelowDecksStrategyChange: (value: 'ordered' | 'exploration') => void;
+  optimizerStrategy: import('../lib/api').OptimizerStrategyType;
+  onOptimizerStrategyChange: (value: import('../lib/api').OptimizerStrategyType) => void;
 }
 
 const selectStyle: CSSProperties = {
@@ -56,6 +58,8 @@ export default function OptimizePanel({
   onHeuristicsOnlyChange,
   belowDecksStrategy,
   onBelowDecksStrategyChange,
+  optimizerStrategy,
+  onOptimizerStrategyChange,
 }: OptimizePanelProps) {
   if (collapsed) {
     return (
@@ -192,9 +196,16 @@ export default function OptimizePanel({
       {/* ── Optimizer strategy ───────────────────────────────────── */}
       <label style={{ fontSize: '0.85rem' }}>
         Optimizer strategy
-        <select style={selectStyle}>
-          <option>Exhaustive</option>
-          <option>Genetic</option>
+        <select
+          value={optimizerStrategy}
+          onChange={(e) =>
+            onOptimizerStrategyChange(e.target.value as import('../lib/api').OptimizerStrategyType)
+          }
+          style={selectStyle}
+        >
+          <option value="exhaustive">Exhaustive</option>
+          <option value="genetic">Genetic</option>
+          <option value="tiered">Tiered (scout → confirm)</option>
         </select>
       </label>
 

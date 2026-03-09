@@ -28,6 +28,10 @@ name = "syndicate_bonuses"
 path = "src/bin/syndicate_bonuses.rs"
 
 [[bin]]
+name = "building_combat_bonuses"
+path = "src/bin/building_combat_bonuses.rs"
+
+[[bin]]
 name = "validate_data"
 path = "src/bin/validate_data.rs"
 
@@ -64,10 +68,13 @@ chrono = { version = "0.4", default-features = false, features = ["std", "now"] 
 csv = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
 serde_yaml = "0.9"
 rayon = "1.10"
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.5", features = ["fs"] }
+futures-util = "0.3"
+tokio-stream = "0.1"
 
 [dev-dependencies]
 criterion = "0.5"

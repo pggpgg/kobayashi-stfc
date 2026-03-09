@@ -11,15 +11,7 @@
 #   - Officer names are matched case-insensitively against the canonical database.
 #   - Lines starting with # are comments; blank lines are ignored.
 
-# ── Shield-pierce burst ──────────────────────────────────────────────────────
-Khan burst:Khan,Nero,Marcus:Harrison,Mudd,Charvanek,Kerla,Lorca
-Pierce stack:Kirk,Khan,Marcus:Harrison,Spock,Uhura
-
-# ── Survivability / tank ─────────────────────────────────────────────────────
-Leslie survival:Leslie,Moreau,Tom Paris:D'Vana Tendi,Azetbur,Spock,Nurse Chapel
-
-# ── Loot / post-combat ───────────────────────────────────────────────────────
-Loot crew:Ent-E Picard,Ent-E Data,Five of Eleven:The Doctor,Azetbur
-
-# ── Morale stacks ────────────────────────────────────────────────────────────
-Morale burst:Kirk,Spock,Uhura:McCoy,Scotty,Sulu
+# ── Isolytic damage ──────────────────────────────────────────────────────
+Full isolytic:Ent-E Picard, Ent-E Data,Kathryn Janeway
+Isolytic and loot:Kathryn Janeway,Ent-E Data,Five Of Eleven
+Isolytic Pike boost:Pike,Ent-E Data,Kathryn Janeway

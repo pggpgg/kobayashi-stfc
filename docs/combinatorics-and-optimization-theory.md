@@ -91,7 +91,7 @@ This is the **baseline** combination space. Any constraint (e.g. role eligibilit
 
 ### 5. Time to exhaust all combinations (benchmark-based estimate)
 
-If we **simulate one combat per crew combination** to evaluate it, the total number of simulations equals **C_total**. Using the benchmark throughput from the project's `PERFORMANCE.md` (run after the sim efficiency plan):
+If we **simulate one combat per crew combination** to evaluate it, the total number of simulations equals **C_total**. Using the benchmark throughput from the project's [PERFORMANCE.md](PERFORMANCE.md) (run after the sim efficiency plan):
 
 | Benchmark | Throughput | Source |
 |-----------|------------|--------|

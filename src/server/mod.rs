@@ -23,6 +23,10 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
         std::io::Error::new(std::io::ErrorKind::InvalidData, e)
     })?;
 
+    crate::data::profile_index::migrate_from_legacy_if_needed().map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::Other, format!("Profile migration failed: {e}"))
+    })?;
+
     let registry = crate::data::data_registry::DataRegistry::load().map_err(|e| {
         std::io::Error::new(
             std::io::ErrorKind::Other,
@@ -34,9 +38,7 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     println!("kobayashi server listening on http://{bind_addr}");
-    if std::env::var("KOBAYASHI_SYNC_TOKEN").is_err() {
-        println!("  WARNING: KOBAYASHI_SYNC_TOKEN is not set. The /api/sync/ingress endpoint is unprotected.");
-    }
+    println!("  Sync: token-based routing (each profile has its own sync token).");
     if static_files::static_files_available() {
         println!("  SPA: serving frontend from frontend/dist");
     } else {

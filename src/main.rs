@@ -4,8 +4,9 @@ use std::process;
 use kobayashi::combat::{
     simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
 };
-use kobayashi::data::import::{import_roster_csv, import_spocks_export};
-use kobayashi::data::profile::{apply_profile_to_attacker, load_profile, DEFAULT_PROFILE_PATH};
+use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
+use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
+use kobayashi::data::profile_index::{migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON, ROSTER_IMPORTED};
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
 
@@ -50,6 +51,17 @@ fn parse_command() -> Option<Command> {
         Some("generate-lcars") => Some(Command::GenerateLcars),
         _ => None,
     }
+}
+
+fn parse_profile_arg(args: &[String]) -> Option<String> {
+    let mut idx = 0;
+    while idx < args.len() {
+        if args[idx] == "--profile" {
+            return args.get(idx + 1).cloned();
+        }
+        idx += 1;
+    }
+    None
 }
 
 fn parse_optimize_args(args: &[String]) -> Result<OptimizeCliArgs, String> {
@@ -104,6 +116,9 @@ fn parse_optimize_args(args: &[String]) -> Result<OptimizeCliArgs, String> {
                         .parse::<u32>()
                         .map_err(|_| "--max-candidates must be a positive integer".to_string())?,
                 );
+                idx += 2;
+            }
+            "--profile" => {
                 idx += 2;
             }
             unknown => return Err(format!("unknown optimize argument: {unknown}")),
@@ -208,6 +223,9 @@ fn parse_simulate_args(args: &[String]) -> Result<SimulateCliArgs, String> {
                 parsed.trace_events = true;
                 idx += 1;
             }
+            "--profile" => {
+                idx += 2;
+            }
             unknown => return Err(format!("unknown simulate argument: {unknown}")),
         }
     }
@@ -217,6 +235,8 @@ fn parse_simulate_args(args: &[String]) -> Result<SimulateCliArgs, String> {
 
 fn optimize_command(args: &[String]) -> Result<(), String> {
     let parsed = parse_optimize_args(args)?;
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
+
     let mut payload = serde_json::json!({
         "ship": parsed.ship,
         "hostile": parsed.hostile,
@@ -231,7 +251,7 @@ fn optimize_command(args: &[String]) -> Result<(), String> {
 
     let registry = kobayashi::data::data_registry::DataRegistry::load()
         .map_err(|e| format!("Failed to load data registry: {e}"))?;
-    let payload = server::api::optimize_payload(registry.as_ref(), &body)
+    let payload = server::api::optimize_payload(registry.as_ref(), &body, Some(profile_id.as_str()))
         .map_err(|err| format!("failed to build optimize response: {err}"))?;
     let response: serde_json::Value =
         serde_json::from_str(&payload).map_err(|err| format!("invalid optimize payload: {err}"))?;
@@ -246,6 +266,10 @@ fn optimize_command(args: &[String]) -> Result<(), String> {
 
 fn simulate_command(args: &[String]) -> Result<(), String> {
     let parsed = parse_simulate_args(args)?;
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
+    let profile_path_str = profile_path(&profile_id, PROFILE_JSON).to_string_lossy().to_string();
+    let player_profile = load_profile(&profile_path_str);
+
     let attacker = apply_profile_to_attacker(
         Combatant {
             id: parsed.attacker_id,
@@ -266,7 +290,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
             isolytic_defense: 0.0,
             weapons: vec![],
         },
-        &load_profile(DEFAULT_PROFILE_PATH),
+        &player_profile,
     );
     let defender = Combatant {
         id: parsed.defender_id,
@@ -310,22 +334,27 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
 const ROSTERS_DIR: &str = "rosters";
 
 fn handle_import(args: &[String]) -> i32 {
-    if args.len() != 1 {
-        eprintln!("usage: kobayashi import <path>");
-        eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
-        eprintln!("  roster files are usually in the '{ROSTERS_DIR}/' folder; a bare filename (e.g. my_roster.txt) is looked up there");
-        return 2;
-    }
-    let raw = &args[0];
+    let raw = match args.first() {
+        Some(s) if !s.starts_with("--") => s.clone(),
+        _ => {
+            eprintln!("usage: kobayashi import <path> [--profile <id>]");
+            eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
+            eprintln!("  roster files are usually in the '{ROSTERS_DIR}/' folder; a bare filename (e.g. my_roster.txt) is looked up there");
+            return 2;
+        }
+    };
     let path = if raw.contains('/') || raw.contains('\\') {
         raw.clone()
     } else {
         format!("{ROSTERS_DIR}/{raw}")
     };
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
+    let output_path = profile_path(&profile_id, ROSTER_IMPORTED).to_string_lossy().to_string();
+
     let result = if path.ends_with(".txt") {
-        import_roster_csv(&path)
+        import_roster_csv_to(&path, &output_path)
     } else if path.ends_with(".json") {
-        import_spocks_export(&path)
+        import_spocks_export_to(&path, &output_path)
     } else {
         eprintln!("import expects a .txt file (roster) or .json file (Spocks export); got: {path}");
         return 2;
@@ -491,15 +520,17 @@ fn run_generate_lcars_bin(bin: &std::path::Path, args: &[String]) -> i32 {
 fn print_usage() {
     eprintln!(
         "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars> [args]\n\
-simulate: kobayashi simulate <rounds> <seed>\n\
-  or kobayashi simulate --attacker-id <id> --attacker-attack <f64> --attacker-pierce <f64>\n\
-                       --defender-id <id> --defender-mitigation <f64> --rounds <u32> --seed <u64> [--trace-events]\n\
-optimize: kobayashi optimize <ship> <hostile> <sims>\n\
-  or kobayashi optimize --ship <id> --hostile <id> --sims <u32> [--max-candidates <u32>]"
+simulate: kobayashi simulate <rounds> <seed> [--profile <id>]\n\
+  or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--profile <id>]\n\
+optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
+  or kobayashi optimize --ship <id> --hostile <id> --sims <u32> [--max-candidates <u32>] [--profile <id>]\n\
+import: kobayashi import <path> [--profile <id>]"
     );
 }
 
 fn main() {
+    let _ = migrate_from_legacy_if_needed();
+
     let command_args: Vec<String> = env::args().skip(2).collect();
     let mut exit_code = 0;
 

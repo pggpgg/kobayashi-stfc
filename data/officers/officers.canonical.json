@@ -376,7 +376,7 @@
             " TargetHasHullBreach"
           ],
           "description": "On round start, if on an Interceptor and enemy player has Hull Breach, Andy Billups increases your Isolytic Cascade damage by X for 1 round. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -2284,7 +2284,7 @@
             " TargetStateAny"
           ],
           "description": "On round start, if the enemy player has any state, Carol Freeman increases your Isolytic Cascade damage by X for 1 round. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses. -- States: Morale, Burning, Hull Breach, Assimilated",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -3465,7 +3465,7 @@
             " TargetNotASB"
           ],
           "description": "Gwen DeMarco increases Isolytic Cascade damage against Armadas and Invading Entities by X (X at rank X) -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -3493,7 +3493,7 @@
             " TargetStateAny"
           ],
           "description": "Gwen DeMarco Increases Isolytic Cascade Damage in PvP when the enemy player has any state by  X (X at rank X) -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -4129,7 +4129,7 @@
             " TargetNotArmada"
           ],
           "description": "Increases Isolytic Cascade Damage by X versus non-Armada Hostiles -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -4198,7 +4198,7 @@
             " TargetNotArmada"
           ],
           "description": "Increases Isolytic Cascade Damage by X for 3 rounds each time you hit a non-Armada Hostile (once per weapon). -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -4456,7 +4456,7 @@
             " SelfDefending"
           ],
           "description": "Ezri Dax increases Isolytic Cascade Damage by X when attacked by a Player while on a Survey Ship.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "captain",
           "target": "SelfShip",
@@ -4482,7 +4482,7 @@
             " TargetStateAny"
           ],
           "description": "Ezri Dax increases Isolytic Cascade Damage by X (X at rank X) for 2 rounds on round start against players, if the opponent has any state.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -6305,7 +6305,7 @@
             " SelfStateNone"
           ],
           "description": "On round start against players, if on a ship with no State applied Icheb increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds (Cumulative). -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -6426,7 +6426,7 @@
             " TargetHasHullBreach"
           ],
           "description": "Against players with Hull Breach, Infiltrator Tuvok increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds each time you score a hit (Once per weapon)(Cumulative). -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -6570,7 +6570,7 @@
             " EnemyPlayer"
           ],
           "description": "On round start, if on an Explorer with Morale, Jack Ransom increases your Isolytic Cascade damage by X for 1 round against players. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -7359,7 +7359,7 @@
             "EnemyHostile"
           ],
           "description": "At the start of combat, Kathryn Janeway increases your Isolytic Cascade damage by X against non-Player hostiles and Armadas.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -9211,7 +9211,7 @@
             " EnemyPlayer"
           ],
           "description": "On round start, if placed on a ship with Morale against players, Mariachi Q increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -9983,7 +9983,7 @@
             "EnemyPlayer"
           ],
           "description": "On round start against players, Mirror Picard increases your Isolytic Cascade damage by X for 2 rounds. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "captain",
           "target": "SelfShip",
@@ -10211,7 +10211,7 @@
             " TargetHasBurning"
           ],
           "description": "On round start against players afflicted by Burning, Miss Q increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -13844,7 +13844,7 @@
             "EnemyPlayer"
           ],
           "description": "Increases your ship's Isolytic Cascade by X versus players. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -13965,7 +13965,7 @@
             " TargetHasBurning"
           ],
           "description": "On round start, if on a Battleship and enemy player has Burning, Shaxs increases your Isolytic Cascade damage by X for 1 round. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -14632,7 +14632,7 @@
             " TargetNotArmada"
           ],
           "description": "At the start of combat, SNW Chapel increases Isolytic Cascade damage by X (X at rank X) vs non-Armada Hostiles. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -14754,7 +14754,7 @@
             " TargetNotArmada"
           ],
           "description": "SNW Pelia reduces Isolytic Damage received from non-Armada hostiles by X (X at rank X)",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticDefense",
           "operation": "Sub",
           "slot": "officer",
           "target": "EnemyShip",
@@ -14970,7 +14970,7 @@
             "EnemyHullFaction"
           ],
           "description": "SNW Montgomery Scott increases Isolytic Cascade Damage by X (X at rank X) versus Suliban Hostiles.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -16912,7 +16912,7 @@
             "CombatBattleType"
           ],
           "description": "TMP Nyota Uhura increases your ship's Isolytic Cascade Damage by X (X at rank X) when fighting non-Armada Hostiles, Outposts, or Retaliation Hostiles.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -18951,7 +18951,7 @@
             "SelfAtWaveDefenseChallenge"
           ],
           "description": "On combat start, WOK Saavik increases Isolytic Cascade damage by X (X at rank X) when in Wave Defense.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -18980,7 +18980,7 @@
             " TargetStateAny"
           ],
           "description": "On round start, against non-Armada hostiles, WOK Saavik increases your Isolytic Cascade damage by X (X at rank X) for 1 round, if the enemy has any state.",
-          "modifier": "IsolyticDamage",
+          "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
@@ -19575,6 +19575,71 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "1.143746577E9"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "0",
+          "attributes": "",
+          "chance_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0],
+          "conditions": ["TargetIsArmada"],
+          "description": "Let's Rock'n'Roll! Increases Isolytic Cascade Damage by X against Group Armadas.",
+          "modifier": "IsolyticCascadeDamage",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [0.7, 1.0, 1.4, 1.9, 2.5]
+        },
+        {
+          "ability_id": "0",
+          "attributes": "",
+          "chance_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0],
+          "conditions": ["TargetIsArmada"],
+          "description": "Visionary... or Something. On round start, repair X of hull damage taken in the previous round of combat against all Armadas.",
+          "modifier": "HullHPRepair",
+          "operation": "MultiplyAdd",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "RoundStart",
+          "value_by_rank": [0.05, 0.07, 0.12, 0.2, 0.3]
+        }
+      ],
+      "faction": "Federation",
+      "group": "UNKNOWN",
+      "id": "zefram-cochrane-f8a1c2",
+      "name": "Zefram Cochrane",
+      "rarity": "unknown",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "7.66153048E8"
+    },
+    {
+      "abilities": [],
+      "faction": "Federation",
+      "group": "UNKNOWN",
+      "id": "fcm-data-3b9e4d",
+      "name": "FCM Data",
+      "rarity": "unknown",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "3.638382364E9"
     }
   ],
   "schema_version": 1,

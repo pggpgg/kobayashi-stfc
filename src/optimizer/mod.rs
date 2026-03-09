@@ -6,24 +6,29 @@ pub mod ranking;
 pub mod tiered;
 
 use crate::data::data_registry::DataRegistry;
-use crate::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
+use crate::optimizer::crew_generator::{CandidateStrategy, CrewCandidate, CrewGenerator};
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
+use crate::optimizer::tiered::{
+    run_tiered_with_registry_with_progress, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
+};
 use crate::parallel::batch_ranges;
 
 /// Number of progress-reporting batches for optimize-with-progress (UI jobs).
 const OPTIMIZE_PROGRESS_BATCH_COUNT: usize = 40;
 
-/// Optimizer strategy: exhaustive/sampled (candidate generation) or genetic.
+/// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, or tiered (scout → confirm).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptimizerStrategy {
     /// Current path: CrewGenerator then Monte Carlo then rank.
     Exhaustive,
     /// Genetic algorithm for large search spaces.
     Genetic,
+    /// Two-pass: cheap scouting sims then full MC on top K.
+    Tiered,
 }
 
 impl Default for OptimizerStrategy {
@@ -51,6 +56,12 @@ pub struct OptimizationScenario<'a> {
     /// When non-empty, seeds the genetic algorithm's initial population with these crews.
     /// Only used when strategy is Genetic; ignored for Exhaustive.
     pub seed_population: Vec<CrewCandidate>,
+    /// Profile id for roster/profile/forbidden-tech paths. None = use default profile.
+    pub profile_id: Option<&'a str>,
+    /// Tiered only: sims per crew in scouting pass. None = use default (500).
+    pub tiered_scout_sims: Option<usize>,
+    /// Tiered only: number of top crews to run full confirmation. None = use default (20).
+    pub tiered_top_k: Option<usize>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -66,6 +77,9 @@ impl Default for OptimizationScenario<'_> {
             strategy: OptimizerStrategy::Exhaustive,
             only_below_decks_with_ability: false,
             seed_population: Vec::new(),
+            profile_id: None,
+            tiered_scout_sims: None,
+            tiered_top_k: None,
         }
     }
 }
@@ -73,8 +87,42 @@ impl Default for OptimizationScenario<'_> {
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
     match scenario.strategy {
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive(scenario),
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| {}),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true),
+        OptimizerStrategy::Tiered => optimize_scenario_exhaustive(scenario), // Tiered requires registry; fallback when none
     }
+}
+
+/// Tiered path with registry: generate candidates, then scouting → top K → full MC.
+fn optimize_scenario_tiered_with_registry(
+    registry: &DataRegistry,
+    scenario: &OptimizationScenario<'_>,
+) -> Vec<RankedCrewResult> {
+    let generator = CrewGenerator::with_strategy(CandidateStrategy {
+        max_candidates: scenario.max_candidates,
+        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        ..CandidateStrategy::default()
+    });
+    let candidates = generator.generate_candidates_from_registry(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        scenario.seed,
+        scenario.profile_id,
+    );
+    let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
+    let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
+    run_tiered_with_registry_with_progress(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        candidates,
+        scout_sims,
+        scenario.simulation_count.max(1),
+        top_k,
+        scenario.seed,
+        scenario.profile_id,
+        |_, _| true,
+    )
 }
 
 /// Like [optimize_scenario] but uses [DataRegistry] for officers and ship/hostile (no reload).
@@ -84,7 +132,8 @@ pub fn optimize_scenario_with_registry(
 ) -> Vec<RankedCrewResult> {
     match scenario.strategy {
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive_with_registry(registry, scenario),
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| {}),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true),
+        OptimizerStrategy::Tiered => optimize_scenario_tiered_with_registry(registry, scenario),
     }
 }
 
@@ -98,8 +147,13 @@ fn optimize_scenario_exhaustive_with_registry(
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
-    let candidates =
-        generator.generate_candidates_from_registry(registry, scenario.ship, scenario.hostile, scenario.seed);
+    let candidates = generator.generate_candidates_from_registry(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        scenario.seed,
+        scenario.profile_id,
+    );
     let simulation_results = run_monte_carlo_parallel_with_registry(
         registry,
         scenario.ship,
@@ -109,6 +163,7 @@ fn optimize_scenario_exhaustive_with_registry(
         &candidates,
         scenario.simulation_count.max(1),
         scenario.seed,
+        scenario.profile_id,
     );
     rank_results(simulation_results)
 }
@@ -133,12 +188,13 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
 
 /// Genetic path: GA with progress callback, then final MC on top candidates, then rank.
 /// When `scenario.seed_population` is non-empty, uses seeded config (larger pop, adaptive mutation).
+/// Progress callback returns true to continue, false to abort.
 pub fn optimize_scenario_genetic<F>(
     scenario: &OptimizationScenario<'_>,
     on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
-    F: FnMut(usize, usize, f32),
+    F: FnMut(usize, usize, f32) -> bool,
 {
     let config = if scenario.seed_population.is_empty() {
         GeneticConfig {
@@ -161,7 +217,7 @@ where
 }
 
 /// Like [optimize_scenario] but runs in batches and invokes `on_progress(done, total)`.
-/// For exhaustive: done/total = crews. For genetic: done/total = generations.
+/// For exhaustive: done/total = crews. For genetic: done/total = generations. Tiered requires registry.
 pub fn optimize_scenario_with_progress<F>(
     scenario: &OptimizationScenario<'_>,
     mut on_progress: F,
@@ -170,6 +226,23 @@ where
     F: FnMut(u32, u32),
 {
     match scenario.strategy {
+        OptimizerStrategy::Tiered => {
+            // No registry; fall back to exhaustive with progress
+            let scenario_ex = OptimizationScenario {
+                ship: scenario.ship,
+                hostile: scenario.hostile,
+                simulation_count: scenario.simulation_count,
+                seed: scenario.seed,
+                max_candidates: scenario.max_candidates,
+                strategy: OptimizerStrategy::Exhaustive,
+                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                seed_population: scenario.seed_population.clone(),
+                profile_id: scenario.profile_id,
+                tiered_scout_sims: scenario.tiered_scout_sims,
+                tiered_top_k: scenario.tiered_top_k,
+            };
+            optimize_scenario_with_progress(&scenario_ex, on_progress)
+        }
         OptimizerStrategy::Exhaustive => {
             let generator = CrewGenerator::with_strategy(
                 crate::optimizer::crew_generator::CandidateStrategy {
@@ -208,21 +281,53 @@ where
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
-            optimize_scenario_genetic(scenario, |gen, max_gen, _| on_progress(gen as u32, max_gen as u32))
+            optimize_scenario_genetic(scenario, |gen, max_gen, _| {
+                on_progress(gen as u32, max_gen as u32);
+                true
+            })
         }
     }
 }
 
 /// Like [optimize_scenario_with_progress] but uses [DataRegistry] for exhaustive path (no reload).
+/// Progress callback returns true to continue, false to abort (e.g. user cancelled).
 pub fn optimize_scenario_with_progress_with_registry<F>(
     registry: &DataRegistry,
     scenario: &OptimizationScenario<'_>,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
-    F: FnMut(u32, u32),
+    F: FnMut(u32, u32) -> bool,
 {
     match scenario.strategy {
+        OptimizerStrategy::Tiered => {
+            let generator = CrewGenerator::with_strategy(CandidateStrategy {
+                max_candidates: scenario.max_candidates,
+                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                ..CandidateStrategy::default()
+            });
+            let candidates = generator.generate_candidates_from_registry(
+                registry,
+                scenario.ship,
+                scenario.hostile,
+                scenario.seed,
+                scenario.profile_id,
+            );
+            let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
+            let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
+            run_tiered_with_registry_with_progress(
+                registry,
+                scenario.ship,
+                scenario.hostile,
+                candidates,
+                scout_sims,
+                scenario.simulation_count.max(1),
+                top_k,
+                scenario.seed,
+                scenario.profile_id,
+                &mut on_progress,
+            )
+        }
         OptimizerStrategy::Exhaustive => {
             let generator = CrewGenerator::with_strategy(
                 crate::optimizer::crew_generator::CandidateStrategy {
@@ -236,12 +341,15 @@ where
                 scenario.ship,
                 scenario.hostile,
                 scenario.seed,
+                scenario.profile_id,
             );
             let total = candidates.len();
             if total == 0 {
                 return Vec::new();
             }
-            on_progress(0, total as u32);
+            if !on_progress(0, total as u32) {
+                return Vec::new();
+            }
 
             let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
             let ranges = batch_ranges(total, num_batches);
@@ -259,20 +367,31 @@ where
                     batch,
                     sim_count,
                     scenario.seed,
+                    scenario.profile_id,
                 );
                 all_results.extend(batch_results);
-                on_progress(end as u32, total as u32);
+                if !on_progress(end as u32, total as u32) {
+                    break;
+                }
             }
 
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
-            optimize_scenario_genetic(scenario, |gen, max_gen, _| on_progress(gen as u32, max_gen as u32))
+            optimize_scenario_genetic(scenario, |gen, max_gen, _| {
+                on_progress(gen as u32, max_gen as u32);
+                true
+            })
         }
     }
 }
 
-pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCrewResult> {
+pub fn optimize_crew(
+    ship: &str,
+    hostile: &str,
+    sim_count: u32,
+    profile_id: Option<&str>,
+) -> Vec<RankedCrewResult> {
     optimize_scenario(&OptimizationScenario {
         ship,
         hostile,
@@ -284,6 +403,9 @@ pub fn optimize_crew(ship: &str, hostile: &str, sim_count: u32) -> Vec<RankedCre
         strategy: OptimizerStrategy::Exhaustive,
         only_below_decks_with_ability: false,
         seed_population: Vec::new(),
+        profile_id,
+        tiered_scout_sims: None,
+        tiered_top_k: None,
     })
 }
 
@@ -304,6 +426,9 @@ mod tests {
             strategy: OptimizerStrategy::Genetic,
             only_below_decks_with_ability: false,
             seed_population: Vec::new(),
+            profile_id: None,
+            tiered_scout_sims: None,
+            tiered_top_k: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {

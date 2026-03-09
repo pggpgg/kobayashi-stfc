@@ -3,7 +3,8 @@
 Assumptions:
 - Defense and piercing stats are treated as non-negative inputs.
 - Non-positive piercing is clamped to ``EPSILON`` so the ratio remains finite and deterministic.
-- Final mitigation is clamped to ``[0.0, 1.0]``.
+- For general use, final mitigation is clamped to ``[0.0, 1.0]``.
+- For hostile defenders, use ``mitigation_for_hostile`` with default floor 0.16 and ceiling 0.72.
 """
 
 from __future__ import annotations
@@ -12,6 +13,10 @@ from dataclasses import dataclass
 from enum import Enum
 
 EPSILON = 1e-9
+
+# Default hostile clamp (game developers use 16% floor, 72% ceiling for most hostiles).
+MITIGATION_FLOOR = 0.16
+MITIGATION_CEILING = 0.72
 
 
 class ShipType(str, Enum):
@@ -57,16 +62,46 @@ def isolytic_mitigation(isolytic_defense: float) -> float:
     return 1.0 / (1.0 + safe_defense)
 
 
-def mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: ShipType) -> float:
-    """Compute total mitigation using weighted multiplicative composition."""
+def mitigation_with_mystery(
+    defender: DefenderStats,
+    attacker: AttackerStats,
+    ship_type: ShipType,
+    mystery_mitigation_factor: float = 0.0,
+) -> float:
+    """Raw mitigation with optional mystery factor X.
+
+    Formula: 1 - (1 - X) * (1 - cA*fA) * (1 - cS*fS) * (1 - cD*fD).
+    When X = 0 this matches the classic formula. Game developers use X rarely for some hostiles.
+    No clamp applied.
+    """
     c_armor, c_shield, c_dodge = SHIP_TYPE_COEFFICIENTS[ship_type]
 
     f_armor = component_mitigation(defender.armor, attacker.armor_piercing)
     f_shield = component_mitigation(defender.shield_deflection, attacker.shield_piercing)
     f_dodge = component_mitigation(defender.dodge, attacker.accuracy)
 
-    total = 1.0 - (1.0 - c_armor * f_armor) * (1.0 - c_shield * f_shield) * (1.0 - c_dodge * f_dodge)
+    one_minus_x = max(0.0, 1.0 - mystery_mitigation_factor)
+    total = 1.0 - one_minus_x * (1.0 - c_armor * f_armor) * (1.0 - c_shield * f_shield) * (1.0 - c_dodge * f_dodge)
+    return total
+
+
+def mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: ShipType) -> float:
+    """Compute total mitigation using weighted multiplicative composition. Clamped to [0, 1]."""
+    total = mitigation_with_mystery(defender, attacker, ship_type, 0.0)
     return max(0.0, min(1.0, total))
+
+
+def mitigation_for_hostile(
+    defender: DefenderStats,
+    attacker: AttackerStats,
+    ship_type: ShipType,
+    mystery_mitigation_factor: float = 0.0,
+    floor: float = MITIGATION_FLOOR,
+    ceiling: float = MITIGATION_CEILING,
+) -> float:
+    """Mitigation for hostile defenders: applies mystery factor then clamps to [floor, ceiling]."""
+    total = mitigation_with_mystery(defender, attacker, ship_type, mystery_mitigation_factor)
+    return max(floor, min(ceiling, total))
 
 
 def apex_barrier_damage_factor(apex_barrier: float, apex_shred: float) -> float:
