@@ -11,6 +11,7 @@ pub use requests::{
     ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
 };
 
+use crate::data::loader::ship_tiers_levels;
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{list_heuristics_seeds, DEFAULT_HEURISTICS_DIR};
 use crate::data::import::{
@@ -92,6 +93,12 @@ pub struct ShipListItem {
     pub id: String,
     pub ship_name: String,
     pub ship_class: String,
+    /// From roster when owned_only: tier of first roster entry for this ship.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tier: Option<u32>,
+    /// From roster when owned_only: level of first roster entry for this ship.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub level: Option<u32>,
 }
 
 const HULL_ID_REGISTRY_PATH: &str = "data/ships/hull_id_registry.json";
@@ -131,15 +138,28 @@ pub fn ships_payload(
         }
     };
 
-    let owned_ship_ids: Option<std::collections::HashSet<String>> = if owned_only {
+    let (owned_ship_ids, roster_tier_level): (
+        Option<std::collections::HashSet<String>>,
+        std::collections::HashMap<String, (u32, u32)>,
+    ) = if owned_only {
         let pid = resolve_profile_id(profile_id);
         let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
         let imported = load_imported_ships(&ships_path);
         let hull_registry = load_hull_id_registry();
 
+        let mut roster_tier_level = std::collections::HashMap::new();
+        if let Some(ships) = &imported {
+            for entry in ships {
+                if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                    roster_tier_level
+                        .entry(sid.clone())
+                        .or_insert_with(|| (entry.tier as u32, entry.level as u32));
+                }
+            }
+        }
+
         if hull_registry.is_empty() {
-            // Graceful degradation: no mapping -> return all ships
-            None
+            (None, roster_tier_level)
         } else if let Some(ships) = imported {
             let mut ids = std::collections::HashSet::new();
             for entry in &ships {
@@ -148,16 +168,15 @@ pub fn ships_payload(
                 }
             }
             if ids.is_empty() {
-                // No owned ships mapped -> return all (graceful degradation)
-                None
+                (None, roster_tier_level)
             } else {
-                Some(ids)
+                (Some(ids), roster_tier_level)
             }
         } else {
-            None
+            (None, roster_tier_level)
         }
     } else {
-        None
+        (None, std::collections::HashMap::new())
     };
 
     let list: Vec<ShipListItem> = idx
@@ -168,14 +187,39 @@ pub fn ships_payload(
                 .as_ref()
                 .map_or(true, |ids| ids.contains(&e.id))
         })
-        .map(|e| ShipListItem {
-            id: e.id.clone(),
-            ship_name: e.ship_name.clone(),
-            ship_class: e.ship_class.clone(),
+        .map(|e| {
+            let (tier, level) = roster_tier_level.get(&e.id).copied();
+            ShipListItem {
+                id: e.id.clone(),
+                ship_name: e.ship_name.clone(),
+                ship_class: e.ship_class.clone(),
+                tier,
+                level,
+            }
         })
         .collect();
 
     serde_json::to_string_pretty(&serde_json::json!({ "ships": list }))
+}
+
+/// Default tier/level options when extended ship data is missing (e.g. no data/ships_extended).
+const DEFAULT_TIERS: &[u32] = &[1];
+const DEFAULT_LEVELS: &[u32] = &[1, 10, 20, 30, 40, 50, 60];
+
+pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Error> {
+    let (mut tiers, mut levels) = ship_tiers_levels(ship_id).unwrap_or_else(|| {
+        (
+            DEFAULT_TIERS.to_vec(),
+            DEFAULT_LEVELS.to_vec(),
+        )
+    });
+    if tiers.is_empty() {
+        tiers = DEFAULT_TIERS.to_vec();
+    }
+    if levels.is_empty() {
+        levels = DEFAULT_LEVELS.to_vec();
+    }
+    serde_json::to_string_pretty(&serde_json::json!({ "tiers": tiers, "levels": levels }))
 }
 
 #[derive(Debug, Clone, Serialize)]

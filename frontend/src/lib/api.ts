@@ -106,6 +106,21 @@ export interface ShipListItem {
   id: string;
   ship_name: string;
   ship_class: string;
+  /** From roster when owned_only: tier of first roster entry for this ship. */
+  tier?: number;
+  /** From roster when owned_only: level of first roster entry for this ship. */
+  level?: number;
+}
+
+export interface ShipTiersLevels {
+  tiers: number[];
+  levels: number[];
+}
+
+export async function getShipTiersLevels(shipId: string): Promise<ShipTiersLevels> {
+  const res = await fetch(`${API_BASE}/api/ships/${encodeURIComponent(shipId)}/tiers-levels`);
+  await checkOk(res);
+  return res.json();
 }
 
 export interface HostileListItem {
@@ -191,18 +206,27 @@ export async function simulate(
     hostile: string;
     crew: SimulateCrew;
     num_sims?: number;
+    ship_tier?: number | null;
+    ship_level?: number | null;
   },
   profileId?: string | null,
 ): Promise<SimulateResponse> {
+  const body: Record<string, unknown> = {
+    ship: params.ship,
+    hostile: params.hostile,
+    crew: params.crew,
+    num_sims: params.num_sims ?? 5000,
+  };
+  if (params.ship_tier != null && params.ship_tier > 0) {
+    body.ship_tier = params.ship_tier;
+  }
+  if (params.ship_level != null && params.ship_level > 0) {
+    body.ship_level = params.ship_level;
+  }
   const res = await fetch(`${API_BASE}/api/simulate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
-    body: JSON.stringify({
-      ship: params.ship,
-      hostile: params.hostile,
-      crew: params.crew,
-      num_sims: params.num_sims ?? 5000,
-    }),
+    body: JSON.stringify(body),
   });
   await checkOk(res);
   return res.json();
@@ -322,6 +346,8 @@ export async function optimizeStart(
     heuristics_seeds?: string[];
     heuristics_only?: boolean;
     below_decks_strategy?: 'ordered' | 'exploration';
+    ship_tier?: number | null;
+    ship_level?: number | null;
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -348,6 +374,12 @@ export async function optimizeStart(
   }
   if (params.below_decks_strategy && params.below_decks_strategy !== 'ordered') {
     body.below_decks_strategy = params.below_decks_strategy;
+  }
+  if (params.ship_tier != null && params.ship_tier > 0) {
+    body.ship_tier = params.ship_tier;
+  }
+  if (params.ship_level != null && params.ship_level > 0) {
+    body.ship_level = params.ship_level;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',
