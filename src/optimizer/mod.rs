@@ -231,6 +231,8 @@ where
             let scenario_ex = OptimizationScenario {
                 ship: scenario.ship,
                 hostile: scenario.hostile,
+                ship_tier: scenario.ship_tier,
+                ship_level: scenario.ship_level,
                 simulation_count: scenario.simulation_count,
                 seed: scenario.seed,
                 max_candidates: scenario.max_candidates,

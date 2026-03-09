@@ -429,7 +429,7 @@ pub fn run_genetic_optimizer(
         }
 
         // Adaptive mutation: bump rate by 1.5× every 3 stagnant generations.
-        if config.adaptive_mutation && stagnation > 0 && stagnation.is_multiple_of(3) {
+        if config.adaptive_mutation && stagnation > 0 && stagnation % 3 == 0 {
             current_mutation_rate =
                 (current_mutation_rate * 1.5).min(config.mutation_rate_ceiling);
         }
