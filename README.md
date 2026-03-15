@@ -279,6 +279,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [x] User-owned roster import workflow (CLI + Web UI, Spocks.club export)
 - [ ] Synergy learning from simulation results (planned)
 - [x] Genetic algorithm optimizer (implemented)
+- [ ] Addition of FCM Data officer to the simulator (planned)
 - [ ] Chain grinding simulation (multi-fight with carry-over) (planned)
 - [ ] Armada mode (multi-ship combat) (planned)
 - [ ] Sensitivity analysis ("what if I promote this officer?") (planned)
