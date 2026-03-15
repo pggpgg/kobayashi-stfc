@@ -75,7 +75,24 @@ pub fn build_bid_to_building_id_from_json(
             out.insert(bid, id);
         }
     }
+
+    // Strategy for new buildings: include any index entry whose id is building_{bid}.
+    // Sync may send a bid not in translations (e.g. new game building); if we have that
+    // building file in the index (from import or manual add), resolve bid so merge can load it.
+    for entry in &building_index.buildings {
+        if let Some(bid) = parse_building_id_as_bid(&entry.id) {
+            out.entry(bid).or_insert_with(|| entry.id.clone());
+        }
+    }
+
     Some(out)
+}
+
+/// If id is "building_<number>", returns Some(bid); otherwise None.
+fn parse_building_id_as_bid(id: &str) -> Option<i64> {
+    let prefix = "building_";
+    id.starts_with(prefix)
+        .then(|| id[prefix.len()..].parse::<i64>().ok())?
 }
 
 fn normalize_name(s: &str) -> String {
@@ -169,6 +186,7 @@ mod tests {
     #[test]
     fn skip_non_starbase_module_name_and_null_id() {
         // Only entries with key "starbase_module_name" and numeric id are used; null id and other_key are skipped.
+        // Index pass still adds building_50 (id "building_50" in index).
         let translations = r##"[
             {"id": null, "key": "starbase_module_name", "text": "Ignore"},
             {"id": 1, "key": "other_key", "text": "Parsteel Generator A"}
@@ -176,6 +194,19 @@ mod tests {
         let index = minimal_index();
         let map = build_bid_to_building_id_from_json(translations, &index)
             .expect("build_bid_to_building_id_from_json should succeed with valid JSON");
-        assert!(map.is_empty());
+        assert!(!map.contains_key(&0));
+        assert!(!map.contains_key(&1));
+        assert_eq!(map.get(&50), Some(&"building_50".to_string()));
+    }
+
+    #[test]
+    fn index_building_n_resolved_without_translation() {
+        // New-buildings strategy: index entries with id building_{bid} are included even without translations.
+        let translations = r##"[]"##;
+        let index = minimal_index();
+        let map = build_bid_to_building_id_from_json(translations, &index).unwrap();
+        assert_eq!(map.get(&50), Some(&"building_50".to_string()));
+        assert!(map.get(&0).is_none());
+        assert!(map.get(&1).is_none());
     }
 }

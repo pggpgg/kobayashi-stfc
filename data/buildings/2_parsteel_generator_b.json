@@ -1,12 +1,12 @@
 {
   "id": "parsteel_generator_b",
   "building_name": "Parsteel Generator B",
-  "data_version": "stfcspace-2026-03-07",
+  "data_version": "stfcspace-2026-03-14",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
       "level": 1,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -48,7 +48,7 @@
     },
     {
       "level": 2,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -90,7 +90,7 @@
     },
     {
       "level": 3,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -132,7 +132,7 @@
     },
     {
       "level": 4,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -174,7 +174,7 @@
     },
     {
       "level": 5,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -216,7 +216,7 @@
     },
     {
       "level": 6,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -258,7 +258,7 @@
     },
     {
       "level": 7,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -300,7 +300,7 @@
     },
     {
       "level": 8,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -342,7 +342,7 @@
     },
     {
       "level": 9,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -384,7 +384,7 @@
     },
     {
       "level": 10,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -426,7 +426,7 @@
     },
     {
       "level": 11,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -468,7 +468,7 @@
     },
     {
       "level": 12,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -510,7 +510,7 @@
     },
     {
       "level": 13,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -552,7 +552,7 @@
     },
     {
       "level": 14,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -594,7 +594,7 @@
     },
     {
       "level": 15,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -636,7 +636,7 @@
     },
     {
       "level": 16,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -678,7 +678,7 @@
     },
     {
       "level": 17,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -720,7 +720,7 @@
     },
     {
       "level": 18,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -762,7 +762,7 @@
     },
     {
       "level": 19,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -804,7 +804,7 @@
     },
     {
       "level": 20,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -846,7 +846,7 @@
     },
     {
       "level": 21,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -888,7 +888,7 @@
     },
     {
       "level": 22,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -930,7 +930,7 @@
     },
     {
       "level": 23,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -972,7 +972,7 @@
     },
     {
       "level": 24,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1014,7 +1014,7 @@
     },
     {
       "level": 25,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1056,7 +1056,7 @@
     },
     {
       "level": 26,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1098,7 +1098,7 @@
     },
     {
       "level": 27,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1140,7 +1140,7 @@
     },
     {
       "level": 28,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1182,7 +1182,7 @@
     },
     {
       "level": 29,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1224,7 +1224,7 @@
     },
     {
       "level": 30,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1266,7 +1266,7 @@
     },
     {
       "level": 31,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1308,7 +1308,7 @@
     },
     {
       "level": 32,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1350,7 +1350,7 @@
     },
     {
       "level": 33,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1392,7 +1392,7 @@
     },
     {
       "level": 34,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1434,7 +1434,7 @@
     },
     {
       "level": 35,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1476,7 +1476,7 @@
     },
     {
       "level": 36,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1518,7 +1518,7 @@
     },
     {
       "level": 37,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1560,7 +1560,7 @@
     },
     {
       "level": 38,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1602,7 +1602,7 @@
     },
     {
       "level": 39,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1644,7 +1644,7 @@
     },
     {
       "level": 40,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1686,7 +1686,7 @@
     },
     {
       "level": 41,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1728,7 +1728,7 @@
     },
     {
       "level": 42,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1770,7 +1770,7 @@
     },
     {
       "level": 43,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1812,7 +1812,7 @@
     },
     {
       "level": 44,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1854,7 +1854,7 @@
     },
     {
       "level": 45,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1896,7 +1896,7 @@
     },
     {
       "level": 46,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1938,7 +1938,7 @@
     },
     {
       "level": 47,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -1980,7 +1980,7 @@
     },
     {
       "level": 48,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2022,7 +2022,7 @@
     },
     {
       "level": 49,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2064,7 +2064,7 @@
     },
     {
       "level": 50,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2106,7 +2106,7 @@
     },
     {
       "level": 51,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2148,7 +2148,7 @@
     },
     {
       "level": 52,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2190,7 +2190,7 @@
     },
     {
       "level": 53,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2232,7 +2232,7 @@
     },
     {
       "level": 54,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2274,7 +2274,7 @@
     },
     {
       "level": 55,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2316,7 +2316,7 @@
     },
     {
       "level": 56,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2358,7 +2358,7 @@
     },
     {
       "level": 57,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2400,7 +2400,7 @@
     },
     {
       "level": 58,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2442,7 +2442,7 @@
     },
     {
       "level": 59,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2484,7 +2484,7 @@
     },
     {
       "level": 60,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2526,7 +2526,7 @@
     },
     {
       "level": 61,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2568,7 +2568,7 @@
     },
     {
       "level": 62,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2610,7 +2610,7 @@
     },
     {
       "level": 63,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2652,7 +2652,7 @@
     },
     {
       "level": 64,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2694,7 +2694,7 @@
     },
     {
       "level": 65,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2736,7 +2736,7 @@
     },
     {
       "level": 66,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2778,7 +2778,7 @@
     },
     {
       "level": 67,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2820,7 +2820,7 @@
     },
     {
       "level": 68,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2862,7 +2862,7 @@
     },
     {
       "level": 69,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2904,7 +2904,7 @@
     },
     {
       "level": 70,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2946,7 +2946,7 @@
     },
     {
       "level": 71,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -2988,7 +2988,7 @@
     },
     {
       "level": 72,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3030,7 +3030,7 @@
     },
     {
       "level": 73,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3072,7 +3072,7 @@
     },
     {
       "level": 74,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3114,7 +3114,7 @@
     },
     {
       "level": 75,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3156,7 +3156,7 @@
     },
     {
       "level": 76,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3198,7 +3198,7 @@
     },
     {
       "level": 77,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3240,7 +3240,7 @@
     },
     {
       "level": 78,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3282,7 +3282,7 @@
     },
     {
       "level": 79,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {
@@ -3324,7 +3324,7 @@
     },
     {
       "level": 80,
-      "ops_min": null,
+      "ops_min": 2,
       "ops_max": null,
       "bonuses": [
         {

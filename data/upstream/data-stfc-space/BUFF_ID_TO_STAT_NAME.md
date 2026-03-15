@@ -10,3 +10,5 @@
    For building/starbase buffs, entries with the same `id` can have different `key` values; use the one that holds the name (e.g. `starbase_module_buff_name`) or description (e.g. `starbase_module_buff_description`). The `text` field is the human-readable stat name or description.
 
 **Fallback:** If you only have the numeric buff id (e.g. `3154267878`) and no processed file with `loca_id`, search `summary-building.json` for `"id": <buff_id>` to see which building and level list it; the game uses separate loca tables per context, so you may need to correlate with that building’s loca ids from another source.
+
+**Direct mapping (Kobayashi import):** To normalize combat buffs at import time, add entries to `data/buildings/buff_id_to_stat.json` with format `{ "<buff_id>": "<stat_name>" }`. Stat names must be engine keys: `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`. The import script merges this file into common combat buff normalization so those bonuses are emitted with the stat name instead of `buff_<id>`.

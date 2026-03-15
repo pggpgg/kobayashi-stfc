@@ -550,6 +550,30 @@ fn is_non_combat_key(key: &str) -> bool {
     ) || key.contains("loot")
 }
 
+fn normalize_building_condition(raw: &str) -> String {
+    raw.trim()
+        .to_ascii_lowercase()
+        .replace('-', "_")
+        .replace(' ', "_")
+}
+
+fn is_known_building_condition(raw: &str) -> bool {
+    matches!(
+        normalize_building_condition(raw).as_str(),
+        "ship_combat"
+            | "ship_combat_only"
+            | "ships_only"
+            | "space_combat_only"
+            | "station_defense"
+            | "station_defense_only"
+            | "starbase_defense"
+            | "defense_platform"
+            | "defense_platform_only"
+            | "platform_only"
+            | "base_defense"
+    )
+}
+
 /// Validate ship index + all per-ship record files for basic structure and plausible stats.
 /// `path` should be the directory containing `index.json` (typically `data/ships`).
 pub fn validate_ships_dataset(path: &str) -> Result<ValidationReport, String> {
@@ -674,15 +698,19 @@ pub fn validate_ships_extended_dataset(path: &str) -> Result<ValidationReport, S
 
         match fs::read_to_string(&record_path)
             .map_err(|e| e.to_string())
-            .and_then(|raw| serde_json::from_str::<ExtendedShipRecord>(&raw).map_err(|e| e.to_string()))
-        {
+            .and_then(|raw| {
+                serde_json::from_str::<ExtendedShipRecord>(&raw).map_err(|e| e.to_string())
+            }) {
             Ok(extended) => {
                 if let Some(rec) = extended.to_ship_record(Some(1), Some(1)) {
                     if rec.hull_health <= 0.0 {
                         report.push(
                             ValidationSeverity::Error,
                             ctx.clone(),
-                            format!("tier 1 level 1 hull_health is {} (must be > 0)", rec.hull_health),
+                            format!(
+                                "tier 1 level 1 hull_health is {} (must be > 0)",
+                                rec.hull_health
+                            ),
                         );
                     }
                     if rec.attack <= 0.0 {
@@ -897,10 +925,7 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
         );
     }
 
-    let Some(buildings) = payload
-        .get("buildings")
-        .and_then(Value::as_array)
-    else {
+    let Some(buildings) = payload.get("buildings").and_then(Value::as_array) else {
         report.push(
             ValidationSeverity::Error,
             "buildings.index",
@@ -968,23 +993,98 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
             report.push(
                 ValidationSeverity::Error,
                 format!("{ctx}.id='{id}'"),
-                format!(
-                    "missing building record file '{}'",
-                    record_path.display()
-                ),
+                format!("missing building record file '{}'", record_path.display()),
             );
             continue;
         }
 
-        // Light-weight structural checks on the per-building file.
+        // Structural and semantic checks on the per-building file.
         if let Ok(rec_raw) = fs::read_to_string(&record_path) {
             if let Ok(rec_json) = serde_json::from_str::<Value>(&rec_raw) {
-                if rec_json.get("levels").and_then(Value::as_array).is_none() {
+                let Some(levels) = rec_json.get("levels").and_then(Value::as_array) else {
                     report.push(
                         ValidationSeverity::Error,
                         format!("{}.file", ctx),
                         "missing 'levels' array on building record",
                     );
+                    continue;
+                };
+
+                for (level_index, level) in levels.iter().enumerate() {
+                    let level_ctx = format!("{}.file.levels[{level_index}]", ctx);
+                    let Some(level_obj) = level.as_object() else {
+                        report.push(
+                            ValidationSeverity::Error,
+                            level_ctx,
+                            "level entry is not an object",
+                        );
+                        continue;
+                    };
+
+                    let ops_min = level_obj
+                        .get("ops_min")
+                        .and_then(Value::as_u64)
+                        .map(|v| v as u32);
+                    let ops_max = level_obj
+                        .get("ops_max")
+                        .and_then(Value::as_u64)
+                        .map(|v| v as u32);
+                    if let (Some(min), Some(max)) = (ops_min, ops_max) {
+                        if min > max {
+                            report.push(
+                                ValidationSeverity::Error,
+                                level_ctx.clone(),
+                                format!("ops_min {min} is greater than ops_max {max}"),
+                            );
+                        }
+                    }
+
+                    let Some(bonuses) = level_obj.get("bonuses").and_then(Value::as_array) else {
+                        report.push(
+                            ValidationSeverity::Error,
+                            level_ctx,
+                            "missing 'bonuses' array",
+                        );
+                        continue;
+                    };
+
+                    for (bonus_index, bonus) in bonuses.iter().enumerate() {
+                        let bonus_ctx = format!("{}.bonuses[{bonus_index}]", level_ctx);
+                        let Some(bonus_obj) = bonus.as_object() else {
+                            report.push(
+                                ValidationSeverity::Error,
+                                bonus_ctx,
+                                "bonus entry is not an object",
+                            );
+                            continue;
+                        };
+
+                        if let Some(stat) = bonus_obj.get("stat").and_then(Value::as_str) {
+                            if stat.starts_with("buff_") {
+                                report.push(
+                                    ValidationSeverity::Warning,
+                                    format!("{}.stat", bonus_ctx),
+                                    format!("opaque building buff '{stat}' is ignored by most combat/profile paths until mapped"),
+                                );
+                            }
+                        }
+
+                        if let Some(conditions) =
+                            bonus_obj.get("conditions").and_then(Value::as_array)
+                        {
+                            for (condition_index, condition) in conditions.iter().enumerate() {
+                                if let Some(condition) = condition.as_str() {
+                                    if !is_known_building_condition(condition) {
+                                        report.push(
+                                            ValidationSeverity::Warning,
+                                            format!("{}.conditions[{condition_index}]", bonus_ctx),
+                                            format!("unknown building condition '{condition}'"),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 report.push(

@@ -1,8 +1,9 @@
 {
   "source": "community_spreadsheet",
-  "last_updated": "2026-02-22",
+  "last_updated": "2026-03-15",
   "items": [
     {
+      "fid": null,
       "name": "Weapon Damage Sample",
       "tech_type": "forbidden",
       "tier": null,
@@ -15,6 +16,7 @@
       ]
     },
     {
+      "fid": null,
       "name": "Ablative Armor",
       "tech_type": "forbidden",
       "tier": 1,

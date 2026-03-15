@@ -8,6 +8,9 @@ use std::sync::Arc;
 use crate::data::forbidden_chaos::{
     load_forbidden_chaos, ForbiddenChaosList, DEFAULT_FORBIDDEN_CHAOS_PATH,
 };
+use crate::data::research::{
+    load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
+};
 use crate::data::hostile::{load_hostile_index, HostileRecord, HostileIndex, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::loader::{resolve_hostile_with_index, resolve_ship_with_tier_level};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
@@ -58,6 +61,8 @@ pub struct DataRegistry {
     pub lcars_officers: Option<Vec<LcarsOfficer>>,
     /// Forbidden/chaos tech catalog for merging into profile with imported player tech.
     pub forbidden_chaos_catalog: Option<ForbiddenChaosList>,
+    /// Research catalog for merging into profile with synced research levels.
+    pub research_catalog: Option<ResearchCatalog>,
 }
 
 impl DataRegistry {
@@ -82,6 +87,7 @@ impl DataRegistry {
         };
 
         let forbidden_chaos_catalog = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH);
+        let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
 
         Ok(Arc::new(DataRegistry {
             officers,
@@ -89,6 +95,7 @@ impl DataRegistry {
             hostile_index,
             lcars_officers,
             forbidden_chaos_catalog,
+            research_catalog,
         }))
     }
 
@@ -106,6 +113,11 @@ impl DataRegistry {
     /// Forbidden/chaos tech catalog for merging with imported player tech into profile.
     pub fn forbidden_chaos_catalog(&self) -> Option<&ForbiddenChaosList> {
         self.forbidden_chaos_catalog.as_ref()
+    }
+
+    /// Research catalog for merging with synced research levels into profile.
+    pub fn research_catalog(&self) -> Option<&ResearchCatalog> {
+        self.research_catalog.as_ref()
     }
 
     /// Officer list for API listing and crew generator pool building.

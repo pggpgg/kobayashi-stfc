@@ -16,6 +16,8 @@ import url from "node:url";
 const REPO_ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 const OUT_DIR = path.join(REPO_ROOT, "data", "buildings");
 const IMPORT_LOG_DIR = path.join(REPO_ROOT, "data", "import_logs");
+/** Optional JSON file: { "<buff_id>": "stat_name", ... }. Merged into common combat buff normalization at run time. */
+const BUFF_ID_TO_STAT_PATH = path.join(REPO_ROOT, "data", "buildings", "buff_id_to_stat.json");
 const UPSTREAM_SUMMARY_PATH = path.join(
   REPO_ROOT,
   "data",
@@ -139,6 +141,17 @@ const BUFF_MAPPING = {
   },
 };
 
+// Buff id → engine stat name for common combat buffs not in BUFF_MAPPING.
+// At import time, bonuses that would be emitted as "buff_<id>" are normalized to
+// this stat when the id is listed here, so the profile/combat layer can apply them.
+// Extend from translations (BUFF_ID_TO_STAT_NAME.md) or community data.
+// Optional file data/buildings/buff_id_to_stat.json is merged in at run time (keys as string numbers).
+const COMMON_COMBAT_BUFF_NORMALIZATION_BASE = {
+  // Add ids that map to: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage,
+  // pierce, shield_mitigation, armor, dodge, damage_reduction.
+};
+let commonCombatBuffNormalization = { ...COMMON_COMBAT_BUFF_NORMALIZATION_BASE };
+
 async function fetchJson(relativePath) {
   const url = `${BASE_URL}/${relativePath.replace(/^\/+/, "")}`;
   const res = await fetch(url);
@@ -159,6 +172,16 @@ const ABS_MAX_LEVEL = 80;
 function resolveBuffMapping(buff) {
   const known = BUFF_MAPPING[buff.id];
   if (known) return known;
+
+  const normalizedStat = commonCombatBuffNormalization[buff.id];
+  if (normalizedStat) {
+    return {
+      stat: normalizedStat,
+      operator: "add",
+      conditions: [],
+      notes: `normalized from buff_${buff.id} (common combat) at import`,
+    };
+  }
 
   // Fallback: treat as an opaque buff keyed by id. This preserves numeric
   // values now and allows us to refine the mapping later once we have labels.
@@ -195,9 +218,14 @@ function buildLevelsFromSummaryEntry(entry) {
 
   maxLevel = Math.min(maxLevel, ABS_MAX_LEVEL);
 
+  // unlock_level: ops level when this building becomes buildable; use as ops_min so level rows apply only when player ops >= unlock_level.
+  const opsMin =
+    typeof entry.unlock_level === "number" && entry.unlock_level >= 0
+      ? entry.unlock_level
+      : null;
+
   const levels = [];
   // values[] in the summary is indexed by building level (1-based): values[0] = level 1, values[1] = level 2, ...
-  // unlock_level is when the building becomes buildable (ops level), not the building's first level.
   for (let level = 1; level <= maxLevel; level += 1) {
     const bonuses = [];
 
@@ -224,7 +252,7 @@ function buildLevelsFromSummaryEntry(entry) {
 
     levels.push({
       level,
-      ops_min: null,
+      ops_min: opsMin,
       ops_max: null,
       bonuses,
     });
@@ -259,6 +287,20 @@ async function loadSummary() {
 }
 
 async function main() {
+  try {
+    const raw = await fs.readFile(BUFF_ID_TO_STAT_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      Object.assign(commonCombatBuffNormalization, parsed);
+      const n = Object.keys(parsed).length;
+      if (n > 0) {
+        console.log(`Loaded ${n} buff id → stat mappings from buff_id_to_stat.json`);
+      }
+    }
+  } catch (_) {
+    // missing or invalid: use COMMON_COMBAT_BUFF_NORMALIZATION_BASE only
+  }
+
   if (FROM_UPSTREAM) {
     console.log("Reading building summary from data/upstream/data-stfc-space/summary-building.json …");
   } else {
@@ -300,13 +342,14 @@ async function main() {
     const fileStem = `${buildingId}_${nameSlug}`;
 
     const levels = buildLevelsFromSummaryEntry(entry);
-    // Track any buff ids we don't have a first-class mapping for yet.
+    // Track any buff ids we don't have a first-class or combat-normalized mapping for yet.
     const buffs = Array.isArray(entry.buffs) ? entry.buffs : [];
     for (const buff of buffs) {
       if (
         buff &&
         typeof buff.id === "number" &&
-        !Object.prototype.hasOwnProperty.call(BUFF_MAPPING, buff.id)
+        !Object.prototype.hasOwnProperty.call(BUFF_MAPPING, buff.id) &&
+        !Object.prototype.hasOwnProperty.call(commonCombatBuffNormalization, buff.id)
       ) {
         unmappedBuffs.add(buff.id);
       }

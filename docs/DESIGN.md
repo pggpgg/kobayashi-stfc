@@ -470,9 +470,11 @@ player_profile:
 
 The engine applies these as a pre-combat modifier layer. This gets ~90% accuracy for ~10% of the implementation effort.
 
-### 5.4 Advanced Mode (Future)
+### 5.4 Advanced Mode (research, buildings, forbidden tech)
 
-Itemized sources, each resolved independently respecting add vs. multiply and any caps or diminishing returns:
+Research is implemented via a **research catalog** and merge into the profile. Synced research levels (`profiles/{id}/research.imported.json`, by `rid` and `level`) are looked up in `data/research_catalog.json`. For each research project, bonuses for levels 1..=level are summed (cumulative); only combat stats (weapon_damage, hull_hp, shield_hp, etc.) are merged into `profile.bonuses`. Merge order: forbidden tech → buildings → research. See `data/README.md` for catalog schema and import pipeline.
+
+Itemized sources (conceptual; research/building/forbidden-tech are implemented as above):
 
 ```yaml
 sources:

@@ -102,6 +102,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/hostiles", get(handle_hostiles))
         // Data version
         .route("/api/data/version", get(handle_data_version))
+        .route("/api/forbidden-tech", get(handle_forbidden_tech))
         // Profile
         .route("/api/profile", get(handle_profile_get))
         .route("/api/profile", put(handle_profile_put))
@@ -322,6 +323,13 @@ async fn handle_heuristics() -> impl IntoResponse {
 
 async fn handle_data_version(State(state): State<AppState>) -> impl IntoResponse {
     match api::data_version_payload(state.registry.as_ref()) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_forbidden_tech(State(state): State<AppState>) -> impl IntoResponse {
+    match api::forbidden_tech_catalog_payload(state.registry.as_ref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
