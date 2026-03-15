@@ -9,7 +9,9 @@ use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, ROSTER_IMPORTED};
 use crate::data::{forbidden_chaos, import};
-use crate::data::profile::{load_profile, merge_forbidden_tech_bonuses_into_profile};
+use crate::data::profile::{
+    load_profile, merge_tech_fids_into_profile, resolve_effective_tech_fids,
+};
 use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir};
 use crate::optimizer::crew_generator::CrewCandidate;
 
@@ -110,31 +112,14 @@ fn run_monte_carlo_with_parallelism(
     let profile_path_str = profile_path(&pid, PROFILE_JSON).to_string_lossy().to_string();
     let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
     let mut profile = load_profile(&profile_path_str);
-    let ft_entries: Vec<import::ForbiddenTechEntry> = if profile
-        .forbidden_tech_override
-        .as_ref()
-        .map_or(false, |v| !v.is_empty())
+    let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
+    if let Some(catalog) =
+        forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH)
     {
-        profile
-            .forbidden_tech_override
-            .as_ref()
-            .unwrap()
-            .iter()
-            .map(|&fid| import::ForbiddenTechEntry {
-                fid,
-                tier: 1,
-                level: 1,
-                shard_count: 0,
-            })
-            .collect()
-    } else {
-        import::load_imported_forbidden_tech(&ft_path).unwrap_or_default()
-    };
-    if let (Some(catalog), true) = (
-        forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH),
-        !ft_entries.is_empty(),
-    ) {
-        merge_forbidden_tech_bonuses_into_profile(&mut profile, &ft_entries, &catalog);
+        let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, &catalog);
+        if !effective_fids.is_empty() {
+            merge_tech_fids_into_profile(&mut profile, &effective_fids, &catalog);
+        }
     }
 
     let lcars_data = if use_lcars_officer_source() {

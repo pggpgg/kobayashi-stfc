@@ -467,6 +467,8 @@ export interface PlayerProfile {
   bonuses: Record<string, number>;
   /** When undefined/null: use synced forbidden_tech.imported.json. When []: no FT. When number[]: use these fids. */
   forbidden_tech_override?: number[] | null;
+  /** When undefined/null: use synced chaos tech from forbidden_tech.imported.json. When []: none. When number[]: use these fids. */
+  chaos_tech_override?: number[] | null;
 }
 
 export async function fetchProfile(profileId?: string | null): Promise<PlayerProfile> {
