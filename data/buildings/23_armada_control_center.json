@@ -1,7 +1,7 @@
 {
   "id": "building_23",
   "building_name": "Armada Control Center",
-  "data_version": "stfcspace-2026-03-07",
+  "data_version": "stfcspace-2026-03-14",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {

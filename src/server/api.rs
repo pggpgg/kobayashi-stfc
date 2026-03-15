@@ -188,7 +188,11 @@ pub fn ships_payload(
                 .map_or(true, |ids| ids.contains(&e.id))
         })
         .map(|e| {
-            let (tier, level) = roster_tier_level.get(&e.id).copied();
+            let (tier, level) = roster_tier_level
+                .get(&e.id)
+                .copied()
+                .map(|(t, l)| (Some(t), Some(l)))
+                .unwrap_or((None, None));
             ShipListItem {
                 id: e.id.clone(),
                 ship_name: e.ship_name.clone(),
@@ -823,6 +827,15 @@ pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_jso
 pub fn heuristics_list_payload() -> Result<String, serde_json::Error> {
     let seeds = list_heuristics_seeds(DEFAULT_HEURISTICS_DIR);
     serde_json::to_string_pretty(&serde_json::json!({ "seeds": seeds }))
+}
+
+/// GET /api/forbidden-tech: returns the forbidden/chaos tech catalog for UI dropdown.
+pub fn forbidden_tech_catalog_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
+    let body = match registry.forbidden_chaos_catalog() {
+        Some(c) => serde_json::to_string_pretty(&serde_json::json!({ "items": c.items }))?,
+        None => serde_json::to_string_pretty(&serde_json::json!({ "items": [] }))?,
+    };
+    Ok(body)
 }
 
 /// Rough seconds per (candidate × sim) on a typical multi-core machine; used for time estimates.

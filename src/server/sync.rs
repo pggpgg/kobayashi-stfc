@@ -3,7 +3,7 @@
 
 use axum::http::StatusCode;
 use crate::data::import;
-use crate::data::profile_index::{load_profile_index, profile_id_by_sync_token, profile_path,
+use crate::data::profile_index::{effective_profile_id, load_profile_index, profile_id_by_sync_token, profile_path,
     FORBIDDEN_TECH_IMPORTED, ROSTER_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED};
 use chrono::{TimeZone, Utc};
 use serde::Deserialize;
@@ -546,26 +546,29 @@ fn last_modified_iso(path: &str) -> Option<String> {
 }
 
 /// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
+/// Uses the default profile's paths so the response matches where the optimizer reads (profile_path(profile_id, ...)).
 /// Also includes research_path, buildings_path, ships_path, forbidden_tech_path and their last_modified_iso when present.
 /// Returns `(StatusCode, json_body_string)`.
 pub fn sync_status_payload() -> (StatusCode, String) {
-    let roster_path = import::DEFAULT_IMPORT_OUTPUT_PATH;
-    let research_path = import::DEFAULT_RESEARCH_IMPORT_PATH;
-    let buildings_path = import::DEFAULT_BUILDINGS_IMPORT_PATH;
-    let ships_path = import::DEFAULT_SHIPS_IMPORT_PATH;
-    let forbidden_tech_path = import::DEFAULT_FORBIDDEN_TECH_IMPORT_PATH;
+    let index = load_profile_index();
+    let pid = effective_profile_id(&index);
+    let roster_path = profile_path(&pid, ROSTER_IMPORTED).to_string_lossy().to_string();
+    let research_path = profile_path(&pid, RESEARCH_IMPORTED).to_string_lossy().to_string();
+    let buildings_path = profile_path(&pid, BUILDINGS_IMPORTED).to_string_lossy().to_string();
+    let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
+    let forbidden_tech_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
 
     let body = serde_json::json!({
         "roster_path": roster_path,
-        "last_modified_iso": last_modified_iso(roster_path),
+        "last_modified_iso": last_modified_iso(&roster_path),
         "research_path": research_path,
-        "research_last_modified_iso": last_modified_iso(research_path),
+        "research_last_modified_iso": last_modified_iso(&research_path),
         "buildings_path": buildings_path,
-        "buildings_last_modified_iso": last_modified_iso(buildings_path),
+        "buildings_last_modified_iso": last_modified_iso(&buildings_path),
         "ships_path": ships_path,
-        "ships_last_modified_iso": last_modified_iso(ships_path),
+        "ships_last_modified_iso": last_modified_iso(&ships_path),
         "forbidden_tech_path": forbidden_tech_path,
-        "forbidden_tech_last_modified_iso": last_modified_iso(forbidden_tech_path),
+        "forbidden_tech_last_modified_iso": last_modified_iso(&forbidden_tech_path),
     });
     let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
         r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string()

@@ -1,7 +1,7 @@
 //! Import forbidden/chaos tech from CSV (e.g. from community spreadsheet).
 //! Reads data/import/forbidden_chaos_tech.csv, writes data/forbidden_chaos_tech.json.
-//! CSV columns: name, tech_type, tier, stat, value, operator (header row required).
-//! Multiple rows with the same name are merged into one record with multiple bonuses.
+//! CSV columns: name, tech_type, tier, fid, stat, value, operator (header row required).
+//! fid is optional (game ID for sync match); leave empty if unknown. Multiple rows with the same name are merged into one record.
 
 use std::collections::HashMap;
 use std::fs;
@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let csv_content = fs::read_to_string(&input_path).map_err(|e| {
         format!(
-            "Read {}: {}. Create data/import/ and add forbidden_chaos_tech.csv (columns: name, tech_type, tier, stat, value, operator)",
+            "Read {}: {}. Create data/import/ and add forbidden_chaos_tech.csv (columns: name, tech_type, tier, fid, stat, value, operator)",
             input_path.display(),
             e
         )
@@ -44,13 +44,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
         let record = by_name.entry(name.clone()).or_insert_with(|| {
             kobayashi::data::forbidden_chaos::ForbiddenChaosRecord {
-                fid: None,
+                fid: row.fid,
                 name: name.clone(),
                 tech_type: row.tech_type.trim().to_string(),
                 tier: row.tier.and_then(|t| if t > 0 { Some(t) } else { None }),
                 bonuses: Vec::new(),
             }
         });
+        if record.fid.is_none() && row.fid.is_some() {
+            record.fid = row.fid;
+        }
         record.bonuses.push(bonus);
     }
 
@@ -73,6 +76,7 @@ struct CsvRow {
     name: String,
     tech_type: String,
     tier: Option<u32>,
+    fid: Option<i64>,
     stat: String,
     value: f64,
     operator: String,
@@ -81,21 +85,36 @@ struct CsvRow {
 impl CsvRow {
     fn from_record(record: &csv::StringRecord) -> Result<Self, Box<dyn std::error::Error>> {
         if record.len() < 5 {
-            return Err("CSV row needs at least 5 columns: name, tech_type, tier, stat, value, operator".into());
+            return Err("CSV row needs at least 5 columns: name, tech_type, tier, [fid], stat, value, operator".into());
         }
         let name = record.get(0).unwrap_or("").to_string();
         let tech_type = record.get(1).unwrap_or("").to_string();
         let tier = record.get(2).and_then(|s| s.trim().parse::<u32>().ok());
-        let stat = record.get(3).unwrap_or("").to_string();
-        let value = record.get(4).unwrap_or("0").trim().parse().unwrap_or(0.0);
-        let operator = record.get(5).unwrap_or("add").to_string();
+        if record.len() >= 7 {
+            let fid_col = record.get(3).unwrap_or("").trim();
+            let fid = if fid_col.is_empty() {
+                None
+            } else {
+                fid_col.parse::<i64>().ok()
+            };
+            return Ok(CsvRow {
+                name,
+                tech_type,
+                tier,
+                fid,
+                stat: record.get(4).unwrap_or("").to_string(),
+                value: record.get(5).unwrap_or("0").trim().parse().unwrap_or(0.0),
+                operator: record.get(6).unwrap_or("add").to_string(),
+            });
+        }
         Ok(CsvRow {
             name,
             tech_type,
             tier,
-            stat,
-            value,
-            operator,
+            fid: None,
+            stat: record.get(3).unwrap_or("").to_string(),
+            value: record.get(4).unwrap_or("0").trim().parse().unwrap_or(0.0),
+            operator: record.get(5).unwrap_or("add").to_string(),
         })
     }
 }

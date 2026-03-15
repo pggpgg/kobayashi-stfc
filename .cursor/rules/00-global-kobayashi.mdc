@@ -1,0 +1,24 @@
+---
+description: Global rules for Kobayashi STFC simulator and optimizer
+alwaysApply: true
+---
+You are working on Kobayashi, a Star Trek Fleet Command fight simulator and optimizer.
+
+Primary goals:
+- Improve simulator correctness, explainability, and maintainability.
+- Prefer generalizable combat logic over narrow fixes that only match one imported fight.
+- Treat combat behavior as a mechanistic simulation problem, not a black-box fitting problem.
+
+General expectations:
+- Surface uncertainty clearly when game behavior is unknown.
+- Prefer the smallest safe change that preserves extensibility.
+- Do not silently invent game constants, formulas, or hidden mechanics.
+- When a mechanic is uncertain, isolate the assumption and label it explicitly.
+- Keep code readable, typed, and easy to test.
+
+For any meaningful simulator change, explain:
+1. what was wrong,
+2. what mechanic is being modeled,
+3. what code was changed,
+4. what tests or benchmark slices should improve,
+5. what uncertainty remains.

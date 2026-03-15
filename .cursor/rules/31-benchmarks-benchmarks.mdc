@@ -1,0 +1,14 @@
+---
+description: Benchmark discipline and anti-overfitting rules for benchmark assets
+globs: benchmarks/**/*
+alwaysApply: false
+---
+Benchmark files exist to measure generalization, not to be memorized.
+
+Rules:
+- Do not optimize directly for one imported fight.
+- Prefer changes that improve multiple benchmark families and mechanic tags.
+- Preserve the integrity of holdout or promotion datasets.
+- If a change only helps one ship, officer trio, or hostile family, treat it as suspicious.
+- Keep benchmark metadata separate from combat resolution logic.
+- Do not encode expected outcomes back into simulator formulas.

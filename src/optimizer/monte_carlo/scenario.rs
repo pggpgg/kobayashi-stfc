@@ -3,28 +3,33 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, Combatant, CrewConfiguration,
-    CrewSeatContext, DefenderStats, AttackerStats, MITIGATION_CEILING, MITIGATION_FLOOR, ShipType,
+    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, AttackerStats, Combatant,
+    CrewConfiguration, CrewSeatContext, DefenderStats, ShipType, MITIGATION_CEILING,
+    MITIGATION_FLOOR,
 };
-use crate::data::hostile::HostileRecord;
-use crate::data::loader::{resolve_hostile, resolve_ship};
-use crate::data::officer::Officer;
-use crate::data::building::{self, DEFAULT_BUILDINGS_INDEX_PATH};
+use crate::data::building::{
+    self, BuildingBonusContext, BuildingMode, DEFAULT_BUILDINGS_INDEX_PATH,
+};
 use crate::data::building_bid_resolver::{
     load_bid_to_building_id, DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
 };
+use crate::data::hostile::HostileRecord;
+use crate::data::import;
+use crate::data::loader::{resolve_hostile, resolve_ship};
+use crate::data::officer::Officer;
 use crate::data::profile::{
     apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
-    merge_building_bonuses_into_profile, merge_forbidden_tech_bonuses_into_profile, PlayerProfile,
+    merge_building_bonuses_into_profile, merge_forbidden_tech_bonuses_into_profile,
+    merge_research_bonuses_into_profile, PlayerProfile,
 };
 use crate::data::profile_index::{
-    self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, ROSTER_IMPORTED,
+    self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, RESEARCH_IMPORTED,
+    ROSTER_IMPORTED,
 };
 use crate::data::ship::ShipRecord;
-use crate::data::import;
-use std::path::Path;
 use crate::lcars::{index_lcars_officers_by_id, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::CrewCandidate;
+use std::path::Path;
 
 use super::crew_resolution::{
     build_crew_seats, hash_identifier, normalize_lookup_key, split_name_and_tier,
@@ -80,8 +85,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         seed,
     );
 
-    let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
-        build_crew_and_buffs(candidate, &shared.officer_index, shared.lcars_data.as_ref(), &shared.resolve_options);
+    let (crew_seats, static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
+        candidate,
+        &shared.officer_index,
+        shared.lcars_data.as_ref(),
+        &shared.resolve_options,
+    );
 
     if let (Some(ref ship_rec), Some(ref defender), Some(rounds), Some(defender_hull)) = (
         &shared.ship_rec,
@@ -191,16 +200,13 @@ fn build_crew_and_buffs(
     officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
-) -> (
-    Vec<CrewSeatContext>,
-    HashMap<String, f64>,
-    f64,
-    f64,
-) {
+) -> (Vec<CrewSeatContext>, HashMap<String, f64>, f64, f64) {
     if let Some(lcars) = lcars_data {
         let captain_id = lcars
             .name_to_id
-            .get(&normalize_lookup_key(&split_name_and_tier(&candidate.captain).0))
+            .get(&normalize_lookup_key(
+                &split_name_and_tier(&candidate.captain).0,
+            ))
             .cloned();
         let bridge_ids: Vec<String> = candidate
             .bridge
@@ -265,10 +271,21 @@ pub(crate) fn scenario_to_combat_input(
     profile: &PlayerProfile,
     lcars_data: Option<&LcarsOfficerData>,
 ) -> CombatSimulationInput {
-    let base_seed = stable_seed(ship, hostile, &candidate.captain, &candidate.bridge, &candidate.below_decks, seed);
+    let base_seed = stable_seed(
+        ship,
+        hostile,
+        &candidate.captain,
+        &candidate.bridge,
+        &candidate.below_decks,
+        seed,
+    );
 
-    let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
-        build_crew_and_buffs(candidate, officers_by_name, lcars_data, &ResolveOptions::default());
+    let (crew_seats, static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
+        candidate,
+        officers_by_name,
+        lcars_data,
+        &ResolveOptions::default(),
+    );
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let mut attacker_stats = ship_rec.to_attacker_stats();
@@ -334,7 +351,9 @@ pub(crate) fn scenario_to_combat_input(
                 isolytic_defense: hostile_rec.isolytic_defense,
                 weapons: vec![],
             },
-            crew: CrewConfiguration { seats: crew_seats.clone() },
+            crew: CrewConfiguration {
+                seats: crew_seats.clone(),
+            },
             rounds,
             defender_hull,
             base_seed,
@@ -476,27 +495,62 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     let officer_index = registry.officer_index().clone();
 
     let pid = profile_index::resolve_profile_id_for_api(profile_id);
-    let profile_path_str = profile_path(&pid, PROFILE_JSON).to_string_lossy().to_string();
-    let roster_path = profile_path(&pid, ROSTER_IMPORTED).to_string_lossy().to_string();
-    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+    let profile_path_str = profile_path(&pid, PROFILE_JSON)
+        .to_string_lossy()
+        .to_string();
+    let roster_path = profile_path(&pid, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED)
+        .to_string_lossy()
+        .to_string();
 
     let mut profile = load_profile(&profile_path_str);
-    if let Some(imported_ft) = import::load_imported_forbidden_tech(&ft_path) {
+    let ft_entries: Vec<import::ForbiddenTechEntry> = if profile
+        .forbidden_tech_override
+        .as_ref()
+        .map_or(false, |v| !v.is_empty())
+    {
+        profile
+            .forbidden_tech_override
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|&fid| import::ForbiddenTechEntry {
+                fid,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            })
+            .collect()
+    } else {
+        import::load_imported_forbidden_tech(&ft_path).unwrap_or_default()
+    };
+    if !ft_entries.is_empty() {
         if let Some(catalog) = registry.forbidden_chaos_catalog() {
-            merge_forbidden_tech_bonuses_into_profile(&mut profile, &imported_ft, catalog);
+            merge_forbidden_tech_bonuses_into_profile(&mut profile, &ft_entries, catalog);
         }
     }
 
     if let Some(imported_buildings) = import::load_imported_buildings(
-        &profile_path(&pid, BUILDINGS_IMPORTED).to_string_lossy().to_string(),
+        &profile_path(&pid, BUILDINGS_IMPORTED)
+            .to_string_lossy()
+            .to_string(),
     ) {
         if !imported_buildings.is_empty() {
-            if let Some(building_index) = building::load_building_index(DEFAULT_BUILDINGS_INDEX_PATH)
+            if let Some(building_index) =
+                building::load_building_index(DEFAULT_BUILDINGS_INDEX_PATH)
             {
                 if let Some(bid_to_id) = load_bid_to_building_id(
                     DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
                     &building_index,
                 ) {
+                    let building_context = BuildingBonusContext {
+                        ops_level: profile.ops_level.or_else(|| {
+                            infer_ops_level(&imported_buildings, &bid_to_id)
+                        }),
+                        mode: BuildingMode::ShipCombat,
+                    };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
                         .unwrap_or_else(|| Path::new("data/buildings"));
@@ -506,9 +560,18 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                         &bid_to_id,
                         &building_index,
                         data_dir,
+                        &building_context,
                     );
                 }
             }
+        }
+    }
+
+    if let Some(imported_research) = import::load_imported_research(
+        &profile_path(&pid, RESEARCH_IMPORTED).to_string_lossy().to_string(),
+    ) {
+        if let Some(catalog) = registry.research_catalog() {
+            merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
         }
     }
 
@@ -519,10 +582,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             .values()
             .map(|o| (normalize_lookup_key(&o.name), o.id.clone()))
             .collect();
-        LcarsOfficerData {
-            by_id,
-            name_to_id,
-        }
+        LcarsOfficerData { by_id, name_to_id }
     });
 
     let resolve_options = import::load_imported_roster(&roster_path)
@@ -545,52 +605,57 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     let ship_rec = registry.resolve_ship_with_tier_level(ship, ship_tier, ship_level);
     let hostile_rec = registry.resolve_hostile(hostile);
 
-    let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
-        if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
-            let attacker_stats = ship_r.to_attacker_stats();
-            let defender_mitigation = mitigation_for_hostile(
-                hostile_r.to_defender_stats(),
-                attacker_stats,
-                hostile_r.ship_type(),
-                hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
-                hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
-                hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
-            );
-            let pierce = pierce_damage_through_bonus(
-                hostile_r.to_defender_stats(),
-                attacker_stats,
-                hostile_r.ship_type(),
-            );
-            let defender = Combatant {
-                id: hostile.to_string(),
-                attack: 0.0,
-                mitigation: defender_mitigation,
-                pierce: 0.0,
-                crit_chance: 0.0,
-                crit_multiplier: 1.0,
-                proc_chance: 0.0,
-                proc_multiplier: 1.0,
-                end_of_round_damage: 0.0,
-                hull_health: hostile_r.hull_health,
-                shield_health: hostile_r.shield_health,
-                shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
-                apex_barrier: hostile_r.apex_barrier,
-                apex_shred: 0.0,
-                isolytic_damage: 0.0,
-                isolytic_defense: hostile_r.isolytic_defense,
-                weapons: vec![],
-            };
-            let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
-            (
-                Some(defender),
-                Some(rounds),
-                Some(hostile_r.hull_health),
-                Some(pierce),
-                Some(defender_mitigation),
-            )
-        } else {
-            (None, None, None, None, None)
+    let (
+        cached_defender,
+        cached_rounds,
+        cached_defender_hull,
+        cached_pierce,
+        cached_defender_mitigation,
+    ) = if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
+        let attacker_stats = ship_r.to_attacker_stats();
+        let defender_mitigation = mitigation_for_hostile(
+            hostile_r.to_defender_stats(),
+            attacker_stats,
+            hostile_r.ship_type(),
+            hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
+            hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+            hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+        );
+        let pierce = pierce_damage_through_bonus(
+            hostile_r.to_defender_stats(),
+            attacker_stats,
+            hostile_r.ship_type(),
+        );
+        let defender = Combatant {
+            id: hostile.to_string(),
+            attack: 0.0,
+            mitigation: defender_mitigation,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: hostile_r.hull_health,
+            shield_health: hostile_r.shield_health,
+            shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
+            apex_barrier: hostile_r.apex_barrier,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: hostile_r.isolytic_defense,
+            weapons: vec![],
         };
+        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+        (
+            Some(defender),
+            Some(rounds),
+            Some(hostile_r.hull_health),
+            Some(pierce),
+            Some(defender_mitigation),
+        )
+    } else {
+        (None, None, None, None, None)
+    };
 
     SharedScenarioData {
         ship: ship.to_string(),
@@ -609,10 +674,27 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     }
 }
 
+fn infer_ops_level(
+    imported_buildings: &[import::BuildingEntry],
+    bid_to_id: &HashMap<i64, String>,
+) -> Option<u32> {
+    imported_buildings.iter().find_map(|entry| {
+        let id = bid_to_id.get(&entry.bid)?;
+        if id != "ops_center" {
+            return None;
+        }
+        if entry.level < 0 {
+            return Some(0);
+        }
+        Some(entry.level.min(i64::from(u32::MAX)) as u32)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::combat::AttackerStats;
+    use crate::data::import::BuildingEntry;
     use crate::optimizer::crew_generator::CrewCandidate;
 
     #[test]
@@ -675,13 +757,47 @@ mod tests {
         let candidate = CrewCandidate {
             captain: "Kirk".to_string(),
             bridge: vec!["Spock".to_string(), "Spock".to_string()],
-            below_decks: vec!["Scotty".to_string(), "Scotty".to_string(), "Scotty".to_string()],
+            below_decks: vec![
+                "Scotty".to_string(),
+                "Scotty".to_string(),
+                "Scotty".to_string(),
+            ],
         };
         let officers = HashMap::new();
         let profile = PlayerProfile::default();
 
-        let one = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile, None);
-        let two = scenario_to_combat_input("Franklin", "Hostile Miner", &candidate, 7, &officers, &profile, None);
+        let one = scenario_to_combat_input(
+            "Franklin",
+            "Hostile Miner",
+            &candidate,
+            7,
+            &officers,
+            &profile,
+            None,
+        );
+        let two = scenario_to_combat_input(
+            "Franklin",
+            "Hostile Miner",
+            &candidate,
+            7,
+            &officers,
+            &profile,
+            None,
+        );
         assert_eq!(one.defender.mitigation, two.defender.mitigation);
+    }
+
+    #[test]
+    fn infer_ops_level_uses_ops_center_building() {
+        let imported_buildings = vec![
+            BuildingEntry { bid: 1, level: 20 },
+            BuildingEntry { bid: 99, level: 35 },
+        ];
+        let bid_to_id = HashMap::from([
+            (1_i64, "ship_hangar".to_string()),
+            (99_i64, "ops_center".to_string()),
+        ]);
+
+        assert_eq!(infer_ops_level(&imported_buildings, &bid_to_id), Some(35));
     }
 }

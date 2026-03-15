@@ -1,0 +1,21 @@
+---
+description: Benchmark discipline and anti-overfitting rules for tests and evaluation
+globs: tests/**/*
+alwaysApply: false
+---
+Kobayashi must generalize across many fight types.
+
+Rules:
+- Never treat one imported fight log as sufficient proof of correctness.
+- Any simulator accuracy improvement should be evaluated against benchmark cases, not a single fight.
+- Favor changes that improve multiple benchmark families.
+- Treat single-case gains as suspicious until validated more broadly.
+- Do not bake benchmark-specific constants or one-off logic into the simulator.
+- Preserve train, validation, and holdout separation if those datasets exist.
+
+When proposing or validating a fix, include:
+- the mismatch observed,
+- the mechanic hypothesis,
+- the expected affected fight families,
+- the overfitting risk,
+- the tests or benchmark slices that should change.

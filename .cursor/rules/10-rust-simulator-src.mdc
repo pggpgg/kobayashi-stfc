@@ -1,0 +1,21 @@
+---
+description: Rust source rules for combat simulation architecture and implementation
+globs: src/**/*.rs
+alwaysApply: false
+---
+Combat and optimizer code must remain maintainable and explicit.
+
+Architecture rules:
+- Keep combat simulation logic separate from optimization logic.
+- Keep parsing and importing separate from combat resolution.
+- Keep benchmark evaluation and reporting separate from simulator internals.
+- Keep UI concerns out of core simulation and optimizer modules.
+- Prefer small, testable functions over large monolithic resolvers.
+- Prefer enums and typed structs over stringly-typed branching.
+
+Implementation rules:
+- Be explicit about order of operations.
+- Be explicit about trigger timing and sequencing.
+- Minimize hidden mutable state.
+- Avoid broad refactors unless required for the task.
+- Prefer readable names such as base_attack_power, additive_attack_bonus, and multiplicative_attack_bonus.

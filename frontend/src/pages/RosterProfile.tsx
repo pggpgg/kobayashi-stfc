@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
-import { importRoster, fetchProfile, updateProfile, formatApiError } from '../lib/api';
-import type { ImportReport, PlayerProfile } from '../lib/api';
+import {
+  importRoster,
+  fetchProfile,
+  updateProfile,
+  fetchForbiddenTech,
+  formatApiError,
+} from '../lib/api';
+import type {
+  ImportReport,
+  PlayerProfile,
+  ForbiddenTechCatalogItem,
+} from '../lib/api';
 import { useProfile } from '../contexts/ProfileContext';
 
 type Tab = 'profile' | 'roster' | 'bonuses';
@@ -14,6 +24,9 @@ export default function RosterProfile() {
   const [profile, setProfile] = useState<PlayerProfile>({ bonuses: {} });
   const [profileDirty, setProfileDirty] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [forbiddenTechCatalog, setForbiddenTechCatalog] = useState<
+    ForbiddenTechCatalogItem[]
+  >([]);
 
   useEffect(() => {
     let c = false;
@@ -22,6 +35,14 @@ export default function RosterProfile() {
     }).catch(() => {});
     return () => { c = true; };
   }, [activeProfileId]);
+
+  useEffect(() => {
+    let c = false;
+    fetchForbiddenTech().then((items) => {
+      if (!c) setForbiddenTechCatalog(items);
+    }).catch(() => {});
+    return () => { c = true; };
+  }, []);
 
   const handleImport = async () => {
     setImportError(null);
@@ -50,6 +71,35 @@ export default function RosterProfile() {
       bonuses: { ...p.bonuses, [key]: value },
     }));
     setProfileDirty(true);
+  };
+
+  type ForbiddenTechMode = 'synced' | 'none' | 'custom';
+  const forbiddenTechMode: ForbiddenTechMode =
+    profile.forbidden_tech_override === undefined ||
+    profile.forbidden_tech_override === null
+      ? 'synced'
+      : profile.forbidden_tech_override.length === 0
+        ? 'none'
+        : 'custom';
+  const setForbiddenTechMode = (mode: ForbiddenTechMode) => {
+    setProfile((p) => ({
+      ...p,
+      forbidden_tech_override:
+        mode === 'synced' ? undefined : mode === 'none' ? [] : p.forbidden_tech_override ?? [],
+    }));
+    setProfileDirty(true);
+  };
+  const setForbiddenTechOverride = (fids: number[]) => {
+    setProfile((p) => ({ ...p, forbidden_tech_override: fids }));
+    setProfileDirty(true);
+  };
+  const toggleForbiddenTechFid = (fid: number) => {
+    const current = profile.forbidden_tech_override ?? [];
+    if (current.includes(fid)) {
+      setForbiddenTechOverride(current.filter((id) => id !== fid));
+    } else {
+      setForbiddenTechOverride([...current, fid]);
+    }
   };
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
@@ -213,6 +263,105 @@ token = "${activeProfile.sync_token}"`}
               Copy
             </button>
           </div>
+
+          <h3 style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600 }}>
+            Forbidden tech
+          </h3>
+          <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Choose which forbidden/chaos tech bonuses apply for simulate and optimize.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 400 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 120 }}>Source</span>
+              <select
+                value={forbiddenTechMode}
+                onChange={(e) =>
+                  setForbiddenTechMode(e.target.value as ForbiddenTechMode)
+                }
+                style={{
+                  padding: '0.4rem 0.6rem',
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6,
+                  color: 'var(--text)',
+                  flex: 1,
+                }}
+              >
+                <option value="synced">Use synced</option>
+                <option value="none">None</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            {forbiddenTechMode === 'custom' && (
+              <div style={{ marginTop: 4 }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Select tech to apply (items with game ID only):
+                </span>
+                <div
+                  style={{
+                    marginTop: 6,
+                    maxHeight: 200,
+                    overflowY: 'auto',
+                    padding: 8,
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                  }}
+                >
+                  {forbiddenTechCatalog
+                    .filter((item) => item.fid != null)
+                    .map((item) => (
+                      <label
+                        key={item.fid ?? item.name}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(profile.forbidden_tech_override ?? []).includes(
+                            item.fid!,
+                          )}
+                          onChange={() => toggleForbiddenTechFid(item.fid!)}
+                        />
+                        {item.name}
+                        {item.tech_type ? ` (${item.tech_type})` : ''}
+                      </label>
+                    ))}
+                  {forbiddenTechCatalog.filter((i) => i.fid != null).length === 0 && (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      No catalog items with game ID. Add fid in data/import/forbidden_chaos_tech.csv and re-run import.
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveProfile}
+            disabled={!profileDirty}
+            style={{
+              marginTop: 16,
+              padding: '0.5rem 1rem',
+              background: profileDirty ? 'var(--accent)' : 'var(--border)',
+              border: 'none',
+              borderRadius: 6,
+              color: 'var(--bg)',
+            }}
+          >
+            Save profile
+          </button>
+          {profileError && (
+            <div style={{ marginTop: 8, color: 'var(--error)' }}>{profileError}</div>
+          )}
         </section>
       )}
 

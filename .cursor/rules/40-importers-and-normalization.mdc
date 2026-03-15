@@ -1,0 +1,11 @@
+---
+description: Rules for parsing, importers, and normalization
+globs: src/**/*.rs
+alwaysApply: false
+---
+When working on import and normalization code:
+- Keep parser behavior separate from combat math.
+- Distinguish clearly between observed log values, inferred values, and assumed values.
+- Avoid changing simulator behavior accidentally when editing parsing code.
+- Record missing or ambiguous fight state explicitly instead of hiding it.
+- Prefer canonical normalized representations before feeding data into simulation.

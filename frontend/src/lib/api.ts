@@ -438,8 +438,35 @@ export async function importRoster(
   return res.json();
 }
 
+export interface ForbiddenTechBonusEntry {
+  stat: string;
+  value: number;
+  operator?: string;
+}
+
+export interface ForbiddenTechCatalogItem {
+  fid?: number | null;
+  name: string;
+  tech_type?: string;
+  tier?: number | null;
+  bonuses: ForbiddenTechBonusEntry[];
+}
+
+export interface ForbiddenTechCatalogResponse {
+  items: ForbiddenTechCatalogItem[];
+}
+
+export async function fetchForbiddenTech(): Promise<ForbiddenTechCatalogItem[]> {
+  const res = await fetch(`${API_BASE}/api/forbidden-tech`);
+  await checkOk(res);
+  const data: ForbiddenTechCatalogResponse = await res.json();
+  return data.items ?? [];
+}
+
 export interface PlayerProfile {
   bonuses: Record<string, number>;
+  /** When undefined/null: use synced forbidden_tech.imported.json. When []: no FT. When number[]: use these fids. */
+  forbidden_tech_override?: number[] | null;
 }
 
 export async function fetchProfile(profileId?: string | null): Promise<PlayerProfile> {

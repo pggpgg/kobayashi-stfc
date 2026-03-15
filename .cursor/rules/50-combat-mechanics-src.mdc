@@ -1,0 +1,14 @@
+---
+description: Combat mechanic rules for simulator code
+globs: src/**/*.rs
+alwaysApply: false
+---
+Combat changes must be mechanic-driven.
+
+Rules:
+- Preserve the distinction between base stats, additive bonuses, multiplicative bonuses, caps, and final values.
+- Never silently merge additive and multiplicative effects.
+- Be explicit about combat phases such as round start, on attack, on hit, on crit, round end, death ordering, and proc sequencing.
+- Do not replace a general formula with a narrow exception unless the real mechanic is known to be exceptional.
+- When changing combat math, state which mechanic the change is intended to model.
+- Where possible, keep deterministic calculation boundaries around RNG explicit.

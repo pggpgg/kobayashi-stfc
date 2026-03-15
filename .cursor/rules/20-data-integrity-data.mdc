@@ -1,0 +1,13 @@
+---
+description: Data integrity rules for STFC constants and structured game data
+globs: data/**/*
+alwaysApply: false
+---
+The data folder is a source of truth for game constants and structured game data.
+
+Rules:
+- Always reference the data/ folder for game constants, ship stats, officer data, and combat parameters.
+- Do not silently invent missing constants.
+- Keep source values distinct from derived values.
+- Preserve the distinction between raw imported data, normalized values, and final derived simulator values.
+- If a constant is missing or uncertain, document the gap instead of guessing.

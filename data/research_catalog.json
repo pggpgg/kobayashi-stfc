@@ -1,0 +1,18 @@
+{
+  "source": "kobayashi_stub",
+  "last_updated": null,
+  "items": [
+    {
+      "rid": 1,
+      "name": "Stub Combat (testing)",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            { "stat": "weapon_damage", "value": 0.05, "operator": "add" }
+          ]
+        }
+      ]
+    }
+  ]
+}

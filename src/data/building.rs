@@ -9,6 +9,28 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BuildingMode {
+    Unknown,
+    ShipCombat,
+    StationDefense,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BuildingBonusContext {
+    pub ops_level: Option<u32>,
+    pub mode: BuildingMode,
+}
+
+impl Default for BuildingBonusContext {
+    fn default() -> Self {
+        Self {
+            ops_level: None,
+            mode: BuildingMode::Unknown,
+        }
+    }
+}
+
 /// Normalized building record (KOBAYASHI schema). One per building.
 /// Stats are stored as fractional bonuses where applicable (e.g. 0.35 = +35%).
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,12 +119,7 @@ pub fn load_building_record(data_dir: &Path, id: &str) -> Option<BuildingRecord>
     serde_json::from_str(&data).ok()
 }
 
-fn accumulate_bonus(
-    out: &mut HashMap<String, f64>,
-    stat: &str,
-    operator: &str,
-    value: f64,
-) {
+fn accumulate_bonus(out: &mut HashMap<String, f64>, stat: &str, operator: &str, value: f64) {
     let key = stat.to_string();
     let current = out.get(&key).copied().unwrap_or(0.0);
     let is_multiply = operator.eq_ignore_ascii_case("multiply")
@@ -114,6 +131,60 @@ fn accumulate_bonus(
         current + value
     };
     out.insert(key, new_value);
+}
+
+fn normalize_condition(condition: &str) -> String {
+    condition
+        .trim()
+        .to_ascii_lowercase()
+        .replace('-', "_")
+        .replace(' ', "_")
+}
+
+fn level_matches_context(level: &BuildingLevel, context: &BuildingBonusContext) -> bool {
+    let Some(ops_level) = context.ops_level else {
+        return true;
+    };
+
+    if let Some(min) = level.ops_min {
+        if ops_level < min {
+            return false;
+        }
+    }
+    if let Some(max) = level.ops_max {
+        if ops_level > max {
+            return false;
+        }
+    }
+    true
+}
+
+fn condition_matches_mode(condition: &str, mode: BuildingMode) -> bool {
+    let normalized = normalize_condition(condition);
+    match mode {
+        BuildingMode::Unknown => true,
+        BuildingMode::ShipCombat => !matches!(
+            normalized.as_str(),
+            "station_defense"
+                | "station_defense_only"
+                | "starbase_defense"
+                | "defense_platform"
+                | "defense_platform_only"
+                | "platform_only"
+                | "base_defense"
+        ),
+        BuildingMode::StationDefense => !matches!(
+            normalized.as_str(),
+            "ship_combat_only" | "ship_combat" | "ships_only" | "space_combat_only"
+        ),
+    }
+}
+
+fn bonus_matches_context(bonus: &BonusEntry, context: &BuildingBonusContext) -> bool {
+    bonus
+        .conditions
+        .iter()
+        .all(|condition| condition_matches_mode(condition, context.mode))
 }
 
 /// Maximum level defined in this building record (highest level in `levels`).
@@ -128,10 +199,25 @@ pub fn cumulative_building_level_bonuses(
     record: &BuildingRecord,
     level: u32,
 ) -> HashMap<String, f64> {
+    cumulative_building_level_bonuses_with_context(record, level, &BuildingBonusContext::default())
+}
+
+pub fn cumulative_building_level_bonuses_with_context(
+    record: &BuildingRecord,
+    level: u32,
+    context: &BuildingBonusContext,
+) -> HashMap<String, f64> {
     let mut out: HashMap<String, f64> = HashMap::new();
 
-    for lvl in record.levels.iter().filter(|l| l.level <= level) {
+    for lvl in record
+        .levels
+        .iter()
+        .filter(|l| l.level <= level && level_matches_context(l, context))
+    {
         for bonus in &lvl.bonuses {
+            if !bonus_matches_context(bonus, context) {
+                continue;
+            }
             let op = if bonus.operator.is_empty() {
                 "add"
             } else {
@@ -150,6 +236,18 @@ pub fn cumulative_building_bonuses(
     records: &[BuildingRecord],
     levels_by_id: &HashMap<String, u32>,
 ) -> HashMap<String, f64> {
+    cumulative_building_bonuses_with_context(
+        records,
+        levels_by_id,
+        &BuildingBonusContext::default(),
+    )
+}
+
+pub fn cumulative_building_bonuses_with_context(
+    records: &[BuildingRecord],
+    levels_by_id: &HashMap<String, u32>,
+    context: &BuildingBonusContext,
+) -> HashMap<String, f64> {
     let mut out: HashMap<String, f64> = HashMap::new();
     let index: HashMap<&str, &BuildingRecord> =
         records.iter().map(|r| (r.id.as_str(), r)).collect();
@@ -158,8 +256,15 @@ pub fn cumulative_building_bonuses(
         let Some(rec) = index.get(id.as_str()) else {
             continue;
         };
-        for lvl in rec.levels.iter().filter(|l| l.level <= *level) {
+        for lvl in rec
+            .levels
+            .iter()
+            .filter(|l| l.level <= *level && level_matches_context(l, context))
+        {
             for bonus in &lvl.bonuses {
+                if !bonus_matches_context(bonus, context) {
+                    continue;
+                }
                 let op = if bonus.operator.is_empty() {
                     "add"
                 } else {
@@ -171,4 +276,135 @@ pub fn cumulative_building_bonuses(
     }
 
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_record() -> BuildingRecord {
+        BuildingRecord {
+            id: "ops_center".to_string(),
+            building_name: "Operations Center".to_string(),
+            data_version: None,
+            source_note: None,
+            levels: vec![
+                BuildingLevel {
+                    level: 1,
+                    ops_min: None,
+                    ops_max: None,
+                    bonuses: vec![BonusEntry {
+                        stat: "weapon_damage".to_string(),
+                        value: 0.05,
+                        operator: "add".to_string(),
+                        conditions: vec![],
+                        notes: None,
+                    }],
+                },
+                BuildingLevel {
+                    level: 2,
+                    ops_min: Some(20),
+                    ops_max: Some(30),
+                    bonuses: vec![BonusEntry {
+                        stat: "shield_hp".to_string(),
+                        value: 0.10,
+                        operator: "add".to_string(),
+                        conditions: vec![],
+                        notes: None,
+                    }],
+                },
+                BuildingLevel {
+                    level: 3,
+                    ops_min: None,
+                    ops_max: None,
+                    bonuses: vec![
+                        BonusEntry {
+                            stat: "crit_chance".to_string(),
+                            value: 0.02,
+                            operator: "add".to_string(),
+                            conditions: vec!["ship_combat".to_string()],
+                            notes: None,
+                        },
+                        BonusEntry {
+                            stat: "crit_damage".to_string(),
+                            value: 0.10,
+                            operator: "add".to_string(),
+                            conditions: vec!["defense_platform_only".to_string()],
+                            notes: None,
+                        },
+                        BonusEntry {
+                            stat: "hull_hp".to_string(),
+                            value: 0.10,
+                            operator: "multiply".to_string(),
+                            conditions: vec![],
+                            notes: None,
+                        },
+                        BonusEntry {
+                            stat: "hull_hp".to_string(),
+                            value: 0.20,
+                            operator: "multiply".to_string(),
+                            conditions: vec![],
+                            notes: None,
+                        },
+                    ],
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn ops_range_is_respected_when_context_has_ops_level() {
+        let record = test_record();
+        let out = cumulative_building_level_bonuses_with_context(
+            &record,
+            3,
+            &BuildingBonusContext {
+                ops_level: Some(10),
+                mode: BuildingMode::ShipCombat,
+            },
+        );
+        assert_eq!(out.get("weapon_damage"), Some(&0.05));
+        assert!(out.get("shield_hp").is_none());
+    }
+
+    #[test]
+    fn ship_combat_filters_station_only_conditions() {
+        let record = test_record();
+        let out = cumulative_building_level_bonuses_with_context(
+            &record,
+            3,
+            &BuildingBonusContext {
+                ops_level: Some(25),
+                mode: BuildingMode::ShipCombat,
+            },
+        );
+        assert_eq!(out.get("shield_hp"), Some(&0.10));
+        assert_eq!(out.get("crit_chance"), Some(&0.02));
+        assert!(out.get("crit_damage").is_none());
+    }
+
+    #[test]
+    fn unknown_mode_keeps_conditional_bonuses_for_compatibility() {
+        let record = test_record();
+        let out = cumulative_building_level_bonuses(&record, 3);
+        assert_eq!(out.get("crit_damage"), Some(&0.10));
+    }
+
+    #[test]
+    fn multiply_bonuses_stack_multiplicatively() {
+        let record = test_record();
+        let out = cumulative_building_level_bonuses_with_context(
+            &record,
+            3,
+            &BuildingBonusContext {
+                ops_level: Some(25),
+                mode: BuildingMode::ShipCombat,
+            },
+        );
+        let hull = out.get("hull_hp").copied().unwrap_or_default();
+        assert!(
+            (hull - 0.32).abs() < 1e-9,
+            "expected multiplicative stacking, got {hull}"
+        );
+    }
 }

@@ -53,6 +53,8 @@ Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1
 
 ## Sync implementation status
 
+Sync is profile-scoped: the `stfc-sync-token` header identifies the profile, and data is written to that profile’s directory (`profiles/{profile_id}/...`). The optimizer reads from the default profile path. `GET /api/sync/status` returns those same paths. Run the server from the project root so `profiles/` and `data/` resolve.
+
 | Payload type | Persisted | File / usage |
 |--------------|-----------|--------------|
 | officer | Yes | `rosters/roster.imported.json` — roster for “Owned only” and optimizer |
@@ -65,8 +67,8 @@ Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1
 ## What gets synced
 
 - **Officers**: Each sync payload with `type: "officer"` is merged into `rosters/roster.imported.json`. Game officer IDs (`oid`) are mapped to Kobayashi’s canonical officer IDs via `data/officers/id_registry.json`. The optimizer then uses this roster to restrict crew candidates to officers you own.
-- **Research**: Payloads with `type: "research"` are merged into `rosters/research.imported.json` (by `rid`). Load with `load_imported_research` (path `rosters/research.imported.json`).
-- **Buildings**: Payloads with `type: "buildings"` or `type: "module"` (the mod sends `"module"`) are merged into `rosters/buildings.imported.json` (by `bid`). Load with `load_imported_buildings` (path `rosters/buildings.imported.json`).
+- **Research**: Payloads with `type: "research"` are merged into `profiles/{id}/research.imported.json` (by `rid`). Load with `load_imported_research`. When a research catalog is present (`data/research_catalog.json`), the optimizer merges research bonuses into the player profile for combat (see `data/README.md` § Research).
+- **Buildings**: Payloads with `type: "buildings"` or `type: "module"` (the mod sends `"module"`) are merged into `profiles/{id}/buildings.imported.json` (by `bid`). The optimizer loads this from the default profile path and merges building bonuses into the player profile (see `data/README.md` § Buildings).
 - **Ships**: Payloads with `type: "ships"` or `type: "ship"` (the mod sends `"ship"`) are merged into `rosters/ships.imported.json` (by `psid`). Load with `load_imported_ships` (path `rosters/ships.imported.json`). In **Roster mode**, the ship dropdown is restricted to ships you own; game `hull_id` from sync is mapped to Kobayashi ship id via `data/ships/hull_id_registry.json`. When new ships are added to the game or to the Kobayashi catalog, regenerate the registry with `node scripts/build_hull_id_registry.mjs` (from the project root).
 - **Forbidden tech (ft)**: Payloads with `type: "ft"` are merged into `rosters/forbidden_tech.imported.json` (by `fid`). Load with `load_imported_forbidden_tech` (path `rosters/forbidden_tech.imported.json`). Player forbidden-tech state is used to compute bonuses (from `data/forbidden_chaos_tech.json` by `fid`) and merge them into the player profile used by the Monte Carlo optimizer.
 - **Other types** (resources, missions, battlelogs, traits, tech, slots, buffs, inventory, jobs): The server accepts the payloads and returns 200 but does not persist them.
@@ -87,7 +89,7 @@ To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the 
 - **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; 401 if token is required and missing/invalid; 400 if body is not a JSON array.
 
 - **Endpoint**: `GET /api/sync/status`
-- **Response**: 200 with JSON `{ "roster_path": "rosters/roster.imported.json", "last_modified_iso": "<ISO8601 or null if file missing>", "research_path", "research_last_modified_iso", "buildings_path", "buildings_last_modified_iso", "ships_path", "ships_last_modified_iso", "forbidden_tech_path", "forbidden_tech_last_modified_iso" }` so you can see when each imported file was last updated by sync.
+- **Response**: 200 with JSON paths for the default profile (same paths the optimizer uses): `roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, each with `*_last_modified_iso` (ISO8601 or null if file missing).
 
 ## Sync payload reference
 
@@ -96,7 +98,7 @@ The request body is a JSON array; the first element’s `type` field determines 
 | Type | Keys per item | Notes |
 |------|----------------|--------|
 | **officer** | `type`, `oid` (game id), `rank`, `level`, optional `shard_count` | Merged into `rosters/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`. |
-| **research** | `type`, `rid` (int64), `level` (int32) | One object per research project level. Persisted to `rosters/research.imported.json`. |
+| **research** | `type`, `rid` (int64), `level` (int32) | One object per research project level. Persisted to `profiles/{id}/research.imported.json`. Used for combat when `data/research_catalog.json` is present. |
 | **buildings** / **module** | `type`, `bid` (int64), `level` (int32) | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `rosters/buildings.imported.json`. |
 | **ships** / **ship** | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `rosters/ships.imported.json`. |
 | **ft** | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64) | Forbidden/chaos tech. Persisted to `rosters/forbidden_tech.imported.json`. Bonuses from `data/forbidden_chaos_tech.json` (by `fid`) are merged into the player profile for the optimizer. |
