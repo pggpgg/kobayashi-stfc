@@ -4,6 +4,12 @@ Planned features and priorities for Kobayashi.
 
 ---
 
+## Officers
+
+- **Addition of FCM Data officer to the simulator** — Add the FCM Data officer to the LCARS officer database and ensure its abilities are correctly modeled in combat simulation.
+
+---
+
 ## Ship Abilities
 
 - **Ship ability implementation** — Implement ship abilities from the data.stfc.space `ability` array (e.g. "when hit, increase armor piercing / shield piercing / accuracy"). These are distinct from officer abilities and affect combat when the ship takes damage or performs actions. Requires extending the combat engine to evaluate ship-specific effects per round.
