@@ -28,6 +28,10 @@ pub struct PlayerProfile {
     /// to merge forbidden-tech bonuses. Enables UI to choose "Custom" tech set per profile.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub forbidden_tech_override: Option<Vec<i64>>,
+    /// When set and non-empty, these fids are used instead of synced chaos tech from
+    /// forbidden_tech.imported.json. Enables UI to choose "Custom" chaos tech set per profile.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chaos_tech_override: Option<Vec<i64>>,
 }
 
 pub const DEFAULT_PROFILE_PATH: &str = "data/profile.json";
@@ -55,13 +59,78 @@ pub fn merge_forbidden_tech_bonuses_into_profile(
     imported_ft: &[ForbiddenTechEntry],
     catalog: &ForbiddenChaosList,
 ) {
+    let fids: Vec<i64> = imported_ft.iter().map(|e| e.fid).collect();
+    merge_tech_fids_into_profile(profile, &fids, catalog);
+}
+
+/// Resolves effective tech fids from profile overrides or imported entries, split by tech_type.
+/// Forbidden: use forbidden_tech_override if set, else imported entries matching tech_type "forbidden".
+/// Chaos: use chaos_tech_override if set, else imported entries matching tech_type "chaos".
+/// Items with empty tech_type are treated as forbidden for backward compatibility.
+pub fn resolve_effective_tech_fids(
+    profile: &PlayerProfile,
+    imported_ft: &[ForbiddenTechEntry],
+    catalog: &ForbiddenChaosList,
+) -> Vec<i64> {
     let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
         .items
         .iter()
         .filter_map(|r| r.fid.map(|id| (id, r)))
         .collect();
-    for entry in imported_ft {
-        let Some(record) = by_fid.get(&entry.fid) else {
+
+    let is_forbidden = |r: &&crate::data::forbidden_chaos::ForbiddenChaosRecord| {
+        r.tech_type.is_empty() || r.tech_type.eq_ignore_ascii_case("forbidden")
+    };
+    let is_chaos = |r: &&crate::data::forbidden_chaos::ForbiddenChaosRecord| {
+        r.tech_type.eq_ignore_ascii_case("chaos")
+    };
+
+    let forbidden_fids: Vec<i64> = if profile
+        .forbidden_tech_override
+        .as_ref()
+        .map_or(false, |v| !v.is_empty())
+    {
+        profile.forbidden_tech_override.as_ref().unwrap().clone()
+    } else {
+        imported_ft
+            .iter()
+            .filter(|e| by_fid.get(&e.fid).map_or(false, is_forbidden))
+            .map(|e| e.fid)
+            .collect()
+    };
+
+    let chaos_fids: Vec<i64> = if profile
+        .chaos_tech_override
+        .as_ref()
+        .map_or(false, |v| !v.is_empty())
+    {
+        profile.chaos_tech_override.as_ref().unwrap().clone()
+    } else {
+        imported_ft
+            .iter()
+            .filter(|e| by_fid.get(&e.fid).map_or(false, is_chaos))
+            .map(|e| e.fid)
+            .collect()
+    };
+
+    let mut out = forbidden_fids;
+    out.extend(chaos_fids);
+    out
+}
+
+/// Merges bonuses from tech catalog into profile for the given fids.
+pub fn merge_tech_fids_into_profile(
+    profile: &mut PlayerProfile,
+    fids: &[i64],
+    catalog: &ForbiddenChaosList,
+) {
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    for &fid in fids {
+        let Some(record) = by_fid.get(&fid) else {
             continue;
         };
         for bonus in &record.bonuses {

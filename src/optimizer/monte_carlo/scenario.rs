@@ -19,8 +19,8 @@ use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::Officer;
 use crate::data::profile::{
     apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
-    merge_building_bonuses_into_profile, merge_forbidden_tech_bonuses_into_profile,
-    merge_research_bonuses_into_profile, PlayerProfile,
+    merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
+    merge_tech_fids_into_profile, resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, RESEARCH_IMPORTED,
@@ -506,29 +506,11 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .to_string();
 
     let mut profile = load_profile(&profile_path_str);
-    let ft_entries: Vec<import::ForbiddenTechEntry> = if profile
-        .forbidden_tech_override
-        .as_ref()
-        .map_or(false, |v| !v.is_empty())
-    {
-        profile
-            .forbidden_tech_override
-            .as_ref()
-            .unwrap()
-            .iter()
-            .map(|&fid| import::ForbiddenTechEntry {
-                fid,
-                tier: 1,
-                level: 1,
-                shard_count: 0,
-            })
-            .collect()
-    } else {
-        import::load_imported_forbidden_tech(&ft_path).unwrap_or_default()
-    };
-    if !ft_entries.is_empty() {
-        if let Some(catalog) = registry.forbidden_chaos_catalog() {
-            merge_forbidden_tech_bonuses_into_profile(&mut profile, &ft_entries, catalog);
+    let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
+    if let Some(catalog) = registry.forbidden_chaos_catalog() {
+        let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, catalog);
+        if !effective_fids.is_empty() {
+            merge_tech_fids_into_profile(&mut profile, &effective_fids, catalog);
         }
     }
 
