@@ -1,0 +1,621 @@
+{
+  "id": "korinar",
+  "ship_name": "KORINAR",
+  "ship_class": "battleship",
+  "tiers": [
+    {
+      "tier": 1,
+      "armor_piercing": 7782.0,
+      "shield_piercing": 5986.0,
+      "accuracy": 59862.0,
+      "attack": 273664.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 399310.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 51679.0,
+          "shots": 3
+        },
+        {
+          "attack": 16150.0,
+          "shots": 2
+        },
+        {
+          "attack": 43163.5,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 2,
+      "armor_piercing": 8288.0,
+      "shield_piercing": 6375.0,
+      "accuracy": 63753.0,
+      "attack": 291452.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 417435.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 55038.5,
+          "shots": 3
+        },
+        {
+          "attack": 17199.5,
+          "shots": 2
+        },
+        {
+          "attack": 45969.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 3,
+      "armor_piercing": 8910.0,
+      "shield_piercing": 6853.0,
+      "accuracy": 68534.0,
+      "attack": 313312.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 439771.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 59166.5,
+          "shots": 3
+        },
+        {
+          "attack": 18489.5,
+          "shots": 2
+        },
+        {
+          "attack": 49417.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 4,
+      "armor_piercing": 9667.0,
+      "shield_piercing": 7436.0,
+      "accuracy": 74359.0,
+      "attack": 339942.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 467293.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 64195.5,
+          "shots": 3
+        },
+        {
+          "attack": 20061.0,
+          "shots": 2
+        },
+        {
+          "attack": 53617.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 5,
+      "armor_piercing": 10585.0,
+      "shield_piercing": 8142.0,
+      "accuracy": 81423.0,
+      "attack": 372237.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 501429.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 70294.0,
+          "shots": 3
+        },
+        {
+          "attack": 21967.0,
+          "shots": 2
+        },
+        {
+          "attack": 58710.5,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 6,
+      "armor_piercing": 11696.0,
+      "shield_piercing": 8997.0,
+      "accuracy": 89972.0,
+      "attack": 411322.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 544180.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 77675.0,
+          "shots": 3
+        },
+        {
+          "attack": 24273.5,
+          "shots": 2
+        },
+        {
+          "attack": 64875.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 7,
+      "armor_piercing": 12983.0,
+      "shield_piercing": 9987.0,
+      "accuracy": 99869.0,
+      "attack": 456567.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 595141.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 86219.5,
+          "shots": 3
+        },
+        {
+          "attack": 26943.5,
+          "shots": 2
+        },
+        {
+          "attack": 72011.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 8,
+      "armor_piercing": 14346.0,
+      "shield_piercing": 11036.0,
+      "accuracy": 110355.0,
+      "attack": 504506.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 649827.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 95272.5,
+          "shots": 3
+        },
+        {
+          "attack": 29772.5,
+          "shots": 2
+        },
+        {
+          "attack": 79572.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 9,
+      "armor_piercing": 15637.0,
+      "shield_piercing": 12029.0,
+      "accuracy": 120287.0,
+      "attack": 549911.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 701174.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 103847.0,
+          "shots": 3
+        },
+        {
+          "attack": 32452.0,
+          "shots": 2
+        },
+        {
+          "attack": 86733.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 10,
+      "armor_piercing": 16810.0,
+      "shield_piercing": 12931.0,
+      "accuracy": 129309.0,
+      "attack": 591156.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 747420.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 111636.0,
+          "shots": 3
+        },
+        {
+          "attack": 34886.0,
+          "shots": 2
+        },
+        {
+          "attack": 93238.0,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 11,
+      "armor_piercing": 17819.0,
+      "shield_piercing": 13707.0,
+      "accuracy": 137068.0,
+      "attack": 626625.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 786651.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 118334.0,
+          "shots": 3
+        },
+        {
+          "attack": 36979.0,
+          "shots": 2
+        },
+        {
+          "attack": 98832.5,
+          "shots": 2
+        }
+      ]
+    },
+    {
+      "tier": 12,
+      "armor_piercing": 18799.0,
+      "shield_piercing": 14461.0,
+      "accuracy": 144607.0,
+      "attack": 661090.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 392476.0,
+      "shield_health": 826261.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 124842.5,
+          "shots": 3
+        },
+        {
+          "attack": 39013.0,
+          "shots": 2
+        },
+        {
+          "attack": 104268.5,
+          "shots": 2
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "level": 1,
+      "shield": 0.0,
+      "health": 0.0
+    },
+    {
+      "level": 2,
+      "shield": 1059.456,
+      "health": 6338.976000000001
+    },
+    {
+      "level": 3,
+      "shield": 2251.344,
+      "health": 13470.324
+    },
+    {
+      "level": 4,
+      "shield": 3443.232,
+      "health": 20601.672
+    },
+    {
+      "level": 5,
+      "shield": 4635.120000000001,
+      "health": 27733.020000000004
+    },
+    {
+      "level": 6,
+      "shield": 5959.44,
+      "health": 35656.74
+    },
+    {
+      "level": 7,
+      "shield": 7283.76,
+      "health": 43580.46
+    },
+    {
+      "level": 8,
+      "shield": 8740.512,
+      "health": 52296.552
+    },
+    {
+      "level": 9,
+      "shield": 10197.264,
+      "health": 61012.644
+    },
+    {
+      "level": 10,
+      "shield": 11786.448,
+      "health": 70521.108
+    },
+    {
+      "level": 11,
+      "shield": 13375.632,
+      "health": 80029.572
+    },
+    {
+      "level": 12,
+      "shield": 15097.248,
+      "health": 90330.408
+    },
+    {
+      "level": 13,
+      "shield": 16818.864,
+      "health": 100631.244
+    },
+    {
+      "level": 14,
+      "shield": 18540.480000000003,
+      "health": 110932.08000000002
+    },
+    {
+      "level": 15,
+      "shield": 20394.528,
+      "health": 122025.288
+    },
+    {
+      "level": 16,
+      "shield": 22381.008,
+      "health": 133910.86800000002
+    },
+    {
+      "level": 17,
+      "shield": 24367.488,
+      "health": 145796.448
+    },
+    {
+      "level": 18,
+      "shield": 26486.4,
+      "health": 158474.40000000002
+    },
+    {
+      "level": 19,
+      "shield": 28605.312,
+      "health": 171152.35199999998
+    },
+    {
+      "level": 20,
+      "shield": 30724.224,
+      "health": 183830.304
+    },
+    {
+      "level": 21,
+      "shield": 32975.568,
+      "health": 197300.628
+    },
+    {
+      "level": 22,
+      "shield": 35359.344000000005,
+      "health": 211563.324
+    },
+    {
+      "level": 23,
+      "shield": 37743.119999999995,
+      "health": 225826.02
+    },
+    {
+      "level": 24,
+      "shield": 40126.896,
+      "health": 240088.716
+    },
+    {
+      "level": 25,
+      "shield": 42643.104,
+      "health": 255143.784
+    },
+    {
+      "level": 26,
+      "shield": 45159.312000000005,
+      "health": 270198.852
+    },
+    {
+      "level": 27,
+      "shield": 47807.952,
+      "health": 286046.292
+    },
+    {
+      "level": 28,
+      "shield": 50456.592,
+      "health": 301893.732
+    },
+    {
+      "level": 29,
+      "shield": 53105.232,
+      "health": 317741.172
+    },
+    {
+      "level": 30,
+      "shield": 55753.872,
+      "health": 333588.61199999996
+    },
+    {
+      "level": 31,
+      "shield": 58534.944,
+      "health": 350228.424
+    },
+    {
+      "level": 32,
+      "shield": 61316.016,
+      "health": 366868.236
+    },
+    {
+      "level": 33,
+      "shield": 64097.088,
+      "health": 383508.048
+    },
+    {
+      "level": 34,
+      "shield": 67010.592,
+      "health": 400940.232
+    },
+    {
+      "level": 35,
+      "shield": 69791.664,
+      "health": 417580.044
+    },
+    {
+      "level": 36,
+      "shield": 72705.168,
+      "health": 435012.22800000006
+    },
+    {
+      "level": 37,
+      "shield": 75486.23999999999,
+      "health": 451652.04
+    },
+    {
+      "level": 38,
+      "shield": 78399.74399999999,
+      "health": 469084.224
+    },
+    {
+      "level": 39,
+      "shield": 81180.81599999999,
+      "health": 485724.036
+    },
+    {
+      "level": 40,
+      "shield": 84094.32,
+      "health": 503156.22
+    },
+    {
+      "level": 41,
+      "shield": 86875.392,
+      "health": 519796.032
+    },
+    {
+      "level": 42,
+      "shield": 89656.464,
+      "health": 536435.844
+    },
+    {
+      "level": 43,
+      "shield": 92437.536,
+      "health": 553075.656
+    },
+    {
+      "level": 44,
+      "shield": 95218.608,
+      "health": 569715.468
+    },
+    {
+      "level": 45,
+      "shield": 97867.248,
+      "health": 585562.9079999999
+    },
+    {
+      "level": 46,
+      "shield": 100648.32,
+      "health": 602202.72
+    },
+    {
+      "level": 47,
+      "shield": 103296.96,
+      "health": 618050.16
+    },
+    {
+      "level": 48,
+      "shield": 105813.168,
+      "health": 633105.228
+    },
+    {
+      "level": 49,
+      "shield": 108329.376,
+      "health": 648160.296
+    },
+    {
+      "level": 50,
+      "shield": 110845.584,
+      "health": 663215.364
+    },
+    {
+      "level": 51,
+      "shield": 113229.36,
+      "health": 677478.0599999999
+    },
+    {
+      "level": 52,
+      "shield": 115613.136,
+      "health": 691740.756
+    },
+    {
+      "level": 53,
+      "shield": 117996.912,
+      "health": 706003.452
+    },
+    {
+      "level": 54,
+      "shield": 120248.256,
+      "health": 719473.7760000001
+    },
+    {
+      "level": 55,
+      "shield": 122499.6,
+      "health": 732944.1000000001
+    },
+    {
+      "level": 56,
+      "shield": 124618.512,
+      "health": 745622.0519999999
+    },
+    {
+      "level": 57,
+      "shield": 126604.992,
+      "health": 757507.632
+    },
+    {
+      "level": 58,
+      "shield": 128591.472,
+      "health": 769393.2119999999
+    },
+    {
+      "level": 59,
+      "shield": 130577.952,
+      "health": 781278.792
+    },
+    {
+      "level": 60,
+      "shield": 132432.0,
+      "health": 792372.0
+    }
+  ]
+}
