@@ -1,9 +1,9 @@
 {
   "ships": {
-    "source": "stfccommunity",
-    "data_version": "stfccommunity-main",
+    "source": "data-stfc-space",
+    "data_version": "data-stfc-space",
     "last_updated": "2026-02-22",
-    "path": "ships/index.json"
+    "path": "ships_extended/index.json"
   },
   "hostiles": {
     "source": "stfccommunity",

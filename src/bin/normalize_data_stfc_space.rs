@@ -140,6 +140,9 @@ fn raw_to_extended(
     })
 }
 
+/// Order value used when component has no order or order is -1 (sort after valid weapons).
+const WEAPON_ORDER_LAST: i64 = 999;
+
 fn extract_tier_combat(
     components: &[Value],
 ) -> Result<
@@ -157,16 +160,12 @@ fn extract_tier_combat(
     ),
     Box<dyn std::error::Error>,
 > {
-    let mut armor_piercing_sum = 0.0;
-    let mut shield_piercing_sum = 0.0;
-    let mut accuracy_sum = 0.0;
-    let mut attack_total = 0.0;
-    let mut crit_chance = 0.1;
-    let mut crit_damage = 1.5;
     let mut hull_health = 0.0;
     let mut shield_health = 0.0;
     let mut shield_mitigation = 0.8;
-    let mut weapon_attacks: Vec<f64> = Vec::new();
+
+    // Collect weapon components with their order for deterministic sorting (primary first).
+    let mut weapon_components: Vec<(i64, &Value)> = Vec::new();
 
     for comp in components {
         let data = match comp.get("data") {
@@ -176,25 +175,12 @@ fn extract_tier_combat(
         let tag = data.get("tag").and_then(Value::as_str).unwrap_or("");
         match tag {
             "Weapon" => {
-                let penetration = data.get("penetration").and_then(Value::as_f64).unwrap_or(0.0);
-                let modulation = data.get("modulation").and_then(Value::as_f64).unwrap_or(0.0);
-                let accuracy = data.get("accuracy").and_then(Value::as_f64).unwrap_or(0.0);
-                let min_d = data.get("minimum_damage").and_then(Value::as_f64).unwrap_or(0.0);
-                let max_d = data.get("maximum_damage").and_then(Value::as_f64).unwrap_or(0.0);
-                let shots = data.get("shots").and_then(Value::as_u64).unwrap_or(1) as f64;
-                armor_piercing_sum += penetration;
-                shield_piercing_sum += modulation;
-                accuracy_sum += accuracy;
-                let avg_damage = (min_d + max_d) * 0.5;
-                let per_weapon_attack = avg_damage * shots;
-                attack_total += per_weapon_attack;
-                weapon_attacks.push(per_weapon_attack);
-                if let Some(c) = data.get("crit_chance").and_then(Value::as_f64) {
-                    crit_chance = c;
-                }
-                if let Some(c) = data.get("crit_modifier").and_then(Value::as_f64) {
-                    crit_damage = c;
-                }
+                let order = comp
+                    .get("order")
+                    .and_then(Value::as_i64)
+                    .filter(|&o| o >= 0)
+                    .unwrap_or(WEAPON_ORDER_LAST);
+                weapon_components.push((order, data));
             }
             "Shield" => {
                 shield_health = data.get("hp").and_then(Value::as_f64).unwrap_or(0.0);
@@ -209,7 +195,52 @@ fn extract_tier_combat(
         }
     }
 
-    let weapon_count = weapon_attacks.len().max(1);
+    // Sort by order so primary weapon (order 1) is first; same order fires in same sequence.
+    weapon_components.sort_by_key(|(order, _)| *order);
+
+    let mut armor_piercing_sum = 0.0;
+    let mut shield_piercing_sum = 0.0;
+    let mut accuracy_sum = 0.0;
+    let mut attack_total = 0.0;
+    let mut crit_chance = 0.1;
+    let mut crit_damage = 1.5;
+    let mut weapons_out: Vec<WeaponRecord> = Vec::new();
+    let mut first_weapon = true;
+
+    for (_, data) in weapon_components {
+        let penetration = data.get("penetration").and_then(Value::as_f64).unwrap_or(0.0);
+        let modulation = data.get("modulation").and_then(Value::as_f64).unwrap_or(0.0);
+        let accuracy = data.get("accuracy").and_then(Value::as_f64).unwrap_or(0.0);
+        let min_d = data.get("minimum_damage").and_then(Value::as_f64).unwrap_or(0.0);
+        let max_d = data.get("maximum_damage").and_then(Value::as_f64).unwrap_or(0.0);
+        let shots_u = data.get("shots").and_then(Value::as_u64).unwrap_or(1);
+        let shots = shots_u.max(1) as u32;
+
+        armor_piercing_sum += penetration;
+        shield_piercing_sum += modulation;
+        accuracy_sum += accuracy;
+
+        let avg_damage = (min_d + max_d) * 0.5;
+        attack_total += avg_damage * (shots as f64);
+
+        // Crit from primary weapon only (first by order).
+        if first_weapon {
+            first_weapon = false;
+            if let Some(c) = data.get("crit_chance").and_then(Value::as_f64) {
+                crit_chance = c;
+            }
+            if let Some(c) = data.get("crit_modifier").and_then(Value::as_f64) {
+                crit_damage = c;
+            }
+        }
+
+        weapons_out.push(WeaponRecord {
+            attack: avg_damage,
+            shots: Some(shots),
+        });
+    }
+
+    let weapon_count = weapons_out.len().max(1);
     let armor_piercing = armor_piercing_sum / weapon_count as f64;
     let shield_piercing = shield_piercing_sum / weapon_count as f64;
     let accuracy = accuracy_sum / weapon_count as f64;
@@ -221,15 +252,10 @@ fn extract_tier_combat(
         hull_health = shield_health * 2.0;
     }
 
-    let weapons = if weapon_attacks.is_empty() {
+    let weapons = if weapons_out.is_empty() {
         None
     } else {
-        Some(
-            weapon_attacks
-                .into_iter()
-                .map(|a| WeaponRecord { attack: a, shots: None })
-                .collect(),
-        )
+        Some(weapons_out)
     };
 
     Ok((

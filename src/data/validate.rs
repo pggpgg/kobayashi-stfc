@@ -9,7 +9,6 @@ use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_P
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
 use crate::data::ship::{
     ExtendedShipIndex, ExtendedShipRecord, ShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
-    DEFAULT_SHIPS_INDEX_PATH,
 };
 use crate::lcars;
 
@@ -880,14 +879,11 @@ pub fn validate_all_startup_data() -> Result<(), String> {
     let r = validate_officer_dataset_canonical(DEFAULT_CANONICAL_OFFICERS_PATH);
     process_report("officers", r, &mut error_count, &mut warning_count);
 
-    // Ships: validate data/ships_extended (extended schema) if present; else legacy data/ships.
+    // Ships: validate data/ships_extended only (legacy data/ships removed).
     let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
     if ext_dir.join("index.json").is_file() {
         let r = validate_ships_extended_dataset(DEFAULT_SHIPS_EXTENDED_DIR);
         process_report("ships_extended", r, &mut error_count, &mut warning_count);
-    } else if Path::new(DEFAULT_SHIPS_INDEX_PATH).is_file() {
-        let r = validate_ships_dataset("data/ships");
-        process_report("ships", r, &mut error_count, &mut warning_count);
     }
 
     if Path::new(DEFAULT_HOSTILES_INDEX_PATH).is_file() {

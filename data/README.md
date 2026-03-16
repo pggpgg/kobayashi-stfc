@@ -1,7 +1,8 @@
 # Combat data (ships, hostiles, buildings)
 
-Ship and hostile stats are loaded from `ships/index.json` and `hostiles/index.json` plus per-id JSON files in the same directories.
-Building bonuses are loaded from `buildings/index.json` plus per-building JSON files.
+- **Ships:** Ship list and combat resolution use **`ships_extended/`** only: `ships_extended/index.json` plus per-ship `ships_extended/<id>.json` (tier + level stats). Built from upstream data via `scripts/build_ship_registry.py` and `cargo run --bin normalize_data_stfc_space`. Game hull_id (from sync) → Kobayashi ship id for Roster mode is in **`hull_id_registry.json`** at the data root; regenerate with `node scripts/build_hull_id_registry.mjs`.
+- **Hostiles:** Loaded from `hostiles/index.json` plus per-id JSON files in the same directory.
+- **Buildings:** Loaded from `buildings/index.json` plus per-building JSON files.
 
 ## Provenance
 
@@ -11,7 +12,7 @@ Building bonuses are loaded from `buildings/index.json` plus per-building JSON f
 
 ## Schema
 
-- **Ships:** See `src/data/ship.rs` (`ShipRecord`). Fields include attack, hull_health, shield_health, shield_mitigation, apex_shred, isolytic_damage, etc.
+- **Ships:** See `src/data/ship.rs` (`ExtendedShipRecord`, `ShipRecord`). Extended files in `ships_extended/<id>.json` have `tiers[]` (per-tier combat stats) and `levels[]` (shield/health bonuses); resolved at request time to `ShipRecord` for a given tier/level. Fields include attack, hull_health, shield_health, shield_mitigation, apex_shred, isolytic_damage, etc.
 - **Hostiles:** See `src/data/hostile.rs` (`HostileRecord`). Fields include armor, shield_deflection, dodge, hull_health, shield_health, shield_mitigation, apex_barrier, isolytic_defense, etc.
 - **Buildings:** See `src/data/building.rs` (`BuildingRecord`). Each building has `levels` with `bonuses` (`stat`, `value`, `operator`, optional `conditions`/`notes`). Index is `data/buildings/index.json` (`BuildingIndex`).
 

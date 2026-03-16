@@ -1,6 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SimulateStats } from '../lib/api';
 import type { CrewRecommendation } from '../lib/api';
+
+const PER_PAGE_OPTIONS = [50, 100, 200, 500] as const;
+const DEFAULT_PER_PAGE = 50;
+
+/** Normalize captain/bridge/below_decks for display: API may return string[]; join with ", ". */
+function formatCrewCell(value: string | string[] | null | undefined): string {
+  if (value == null) return '';
+  if (Array.isArray(value)) return value.filter(Boolean).join(', ');
+  return String(value);
+}
 
 interface SimResultsProps {
   simResult: SimulateStats | null;
@@ -22,8 +32,21 @@ export default function SimResults({
   optimizeTotalCrews,
 }: SimResultsProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const hasSim = simResult != null;
   const hasRecs = recommendations.length > 0;
+
+  const total = recommendations.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * perPage;
+  const pageRecs = recommendations.slice(start, start + perPage);
+
+  // Reset to page 1 when recommendations change (e.g. new optimize run) or when current page is out of range
+  useEffect(() => {
+    if (page > totalPages && totalPages >= 1) setPage(1);
+  }, [totalPages, total]);
 
   const toggleSelect = (i: number) => {
     setSelected((prev) => {
@@ -116,6 +139,86 @@ export default function SimResults({
           <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Select 2–5 rows to compare.
           </p>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              flexWrap: 'wrap',
+              marginBottom: '0.5rem',
+              fontSize: '0.85rem',
+            }}
+          >
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+              Results per page
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  setPerPage(n);
+                  setPage((p) => Math.min(p, Math.max(1, Math.ceil(total / n))));
+                }}
+                style={{
+                  padding: '0.25rem 0.5rem',
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 4,
+                  color: 'var(--text)',
+                }}
+                aria-label="Results per page"
+              >
+                {PER_PAGE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span style={{ color: 'var(--text-muted)' }}>
+              Showing {start + 1}–{Math.min(start + perPage, total)} of {total}
+            </span>
+            {totalPages > 1 && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  aria-label="Previous page"
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 4,
+                    color: 'var(--text)',
+                    cursor: safePage <= 1 ? 'not-allowed' : 'pointer',
+                    opacity: safePage <= 1 ? 0.6 : 1,
+                  }}
+                >
+                  Prev
+                </button>
+                <span style={{ color: 'var(--text-muted)', minWidth: 80, textAlign: 'center' }}>
+                  Page {safePage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                  aria-label="Next page"
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 4,
+                    color: 'var(--text)',
+                    cursor: safePage >= totalPages ? 'not-allowed' : 'pointer',
+                    opacity: safePage >= totalPages ? 0.6 : 1,
+                  }}
+                >
+                  Next
+                </button>
+              </span>
+            )}
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -131,40 +234,43 @@ export default function SimResults({
               </tr>
             </thead>
             <tbody>
-              {recommendations.map((r, i) => (
-                <tr
-                  key={i}
-                  style={{
-                    borderBottom: '1px solid var(--border)',
-                    background: selected.has(i) ? 'rgba(232,149,46,0.1)' : undefined,
-                  }}
-                >
-                  <td style={{ padding: '0.4rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(i)}
-                      onChange={() => toggleSelect(i)}
-                      aria-label={`Select row ${i + 1}`}
-                    />
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>{i + 1}</td>
-                  <td style={{ padding: '0.4rem' }}>{r.captain}</td>
-                  <td style={{ padding: '0.4rem' }}>{r.bridge}</td>
-                  <td style={{ padding: '0.4rem' }}>{r.below_decks}</td>
-                  <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                    {(r.win_rate * 100).toFixed(2)}
-                  </td>
-                  <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                    {(r.stall_rate * 100).toFixed(2)}
-                  </td>
-                  <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                    {(r.loss_rate * 100).toFixed(2)}
-                  </td>
-                  <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                    {(r.avg_hull_remaining * 100).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
+              {pageRecs.map((r, i) => {
+                const globalIndex = start + i;
+                return (
+                  <tr
+                    key={globalIndex}
+                    style={{
+                      borderBottom: '1px solid var(--border)',
+                      background: selected.has(globalIndex) ? 'rgba(232,149,46,0.1)' : undefined,
+                    }}
+                  >
+                    <td style={{ padding: '0.4rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(globalIndex)}
+                        onChange={() => toggleSelect(globalIndex)}
+                        aria-label={`Select row ${globalIndex + 1}`}
+                      />
+                    </td>
+                    <td style={{ padding: '0.4rem' }}>{globalIndex + 1}</td>
+                    <td style={{ padding: '0.4rem' }}>{formatCrewCell(r.captain)}</td>
+                    <td style={{ padding: '0.4rem' }}>{formatCrewCell(r.bridge)}</td>
+                    <td style={{ padding: '0.4rem' }}>{formatCrewCell(r.below_decks)}</td>
+                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
+                      {(r.win_rate * 100).toFixed(2)}
+                    </td>
+                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
+                      {(r.stall_rate * 100).toFixed(2)}
+                    </td>
+                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
+                      {(r.loss_rate * 100).toFixed(2)}
+                    </td>
+                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
+                      {(r.avg_hull_remaining * 100).toFixed(2)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
@@ -189,7 +295,7 @@ export default function SimResults({
                   const deltaHull = prev != null ? (r.avg_hull_remaining - prev.avg_hull_remaining) * 100 : 0;
                   return (
                     <div key={idx} style={{ fontSize: '0.85rem' }}>
-                      <span style={{ fontWeight: 600 }}>#{idx + 1}</span> {r.captain} / {r.bridge} / {r.below_decks}
+                      <span style={{ fontWeight: 600 }}>#{idx + 1}</span> {formatCrewCell(r.captain)} / {formatCrewCell(r.bridge)} / {formatCrewCell(r.below_decks)}
                       {prev != null && (
                         <span style={{ marginLeft: 8, color: 'var(--text-muted)' }}>
                           Δ Win {deltaWin >= 0 ? '+' : ''}{deltaWin.toFixed(2)}%, Δ Stall {deltaStall >= 0 ? '+' : ''}{deltaStall.toFixed(2)}%, Δ Loss {deltaLoss >= 0 ? '+' : ''}{deltaLoss.toFixed(2)}%, Δ Hull {deltaHull >= 0 ? '+' : ''}{deltaHull.toFixed(2)}%
