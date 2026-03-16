@@ -101,7 +101,7 @@ pub struct ShipListItem {
     pub level: Option<u32>,
 }
 
-const HULL_ID_REGISTRY_PATH: &str = "data/ships/hull_id_registry.json";
+const HULL_ID_REGISTRY_PATH: &str = "data/hull_id_registry.json";
 
 /// Load hull_id -> ship_id mapping. Returns empty map if file missing or invalid.
 fn load_hull_id_registry() -> HashMap<i64, String> {

@@ -1,0 +1,197 @@
+{
+  "id": "orion_corvette",
+  "ship_name": "ORION CORVETTE",
+  "ship_class": "interceptor",
+  "tiers": [
+    {
+      "tier": 1,
+      "armor_piercing": 2.0,
+      "shield_piercing": 30.0,
+      "accuracy": 3.0,
+      "attack": 87.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 100.0,
+      "shield_health": 120.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 43.5,
+          "shots": 1
+        },
+        {
+          "attack": 43.5,
+          "shots": 1
+        }
+      ]
+    },
+    {
+      "tier": 2,
+      "armor_piercing": 3.0,
+      "shield_piercing": 42.0,
+      "accuracy": 4.0,
+      "attack": 121.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 140.0,
+      "shield_health": 120.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 60.5,
+          "shots": 1
+        },
+        {
+          "attack": 60.5,
+          "shots": 1
+        }
+      ]
+    },
+    {
+      "tier": 3,
+      "armor_piercing": 4.0,
+      "shield_piercing": 59.0,
+      "accuracy": 6.0,
+      "attack": 169.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 200.0,
+      "shield_health": 120.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 84.5,
+          "shots": 1
+        },
+        {
+          "attack": 84.5,
+          "shots": 1
+        }
+      ]
+    },
+    {
+      "tier": 4,
+      "armor_piercing": 5.0,
+      "shield_piercing": 82.0,
+      "accuracy": 8.0,
+      "attack": 237.0,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 270.0,
+      "shield_health": 120.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 118.5,
+          "shots": 1
+        },
+        {
+          "attack": 118.5,
+          "shots": 1
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "level": 1,
+      "shield": 3.451,
+      "health": 1.326
+    },
+    {
+      "level": 2,
+      "shield": 9.947,
+      "health": 3.822
+    },
+    {
+      "level": 3,
+      "shield": 18.067,
+      "health": 6.941999999999999
+    },
+    {
+      "level": 4,
+      "shield": 28.014000000000003,
+      "health": 10.764
+    },
+    {
+      "level": 5,
+      "shield": 38.976,
+      "health": 14.976
+    },
+    {
+      "level": 6,
+      "shield": 51.359,
+      "health": 19.734
+    },
+    {
+      "level": 7,
+      "shield": 64.757,
+      "health": 24.882
+    },
+    {
+      "level": 8,
+      "shield": 78.967,
+      "health": 30.342
+    },
+    {
+      "level": 9,
+      "shield": 94.395,
+      "health": 36.27
+    },
+    {
+      "level": 10,
+      "shield": 110.432,
+      "health": 42.432
+    },
+    {
+      "level": 11,
+      "shield": 127.484,
+      "health": 48.984
+    },
+    {
+      "level": 12,
+      "shield": 145.34799999999998,
+      "health": 55.848
+    },
+    {
+      "level": 13,
+      "shield": 163.821,
+      "health": 62.946000000000005
+    },
+    {
+      "level": 14,
+      "shield": 183.106,
+      "health": 70.35600000000001
+    },
+    {
+      "level": 15,
+      "shield": 203.0,
+      "health": 78.0
+    },
+    {
+      "level": 16,
+      "shield": 223.706,
+      "health": 85.956
+    },
+    {
+      "level": 17,
+      "shield": 245.021,
+      "health": 94.146
+    },
+    {
+      "level": 18,
+      "shield": 266.945,
+      "health": 102.57
+    },
+    {
+      "level": 19,
+      "shield": 289.478,
+      "health": 111.228
+    },
+    {
+      "level": 20,
+      "shield": 312.62,
+      "health": 120.12
+    }
+  ]
+}

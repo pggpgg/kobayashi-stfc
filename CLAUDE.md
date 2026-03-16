@@ -166,4 +166,4 @@ Community-known crew lists stored in `data/heuristics/*.txt`. Format: `label:Cap
 - **Optimizer strategies**: exhaustive is the default; pass `strategy: "genetic"` for large search spaces. Tiered simulation (`tiered.rs`) is a placeholder — not yet wired in.
 - **LCARS as source of truth**: officer abilities are defined in YAML, not code. The engine resolves YAML → `BuffSet` before the fight loop; only dynamic effects (decay, accumulate, proc) are evaluated inside the loop.
 - **SplitMix64 PRNG**: deterministic per seed, one instance per Rayon thread. Same seed → same fight outcome.
-- **Data provenance**: `ships/index.json` and `hostiles/index.json` carry `data_version` and `source_note` fields documenting the upstream source.
+- **Data provenance**: `ships_extended/index.json` and `hostiles/index.json` carry `data_version` and `source_note` fields documenting the upstream source.

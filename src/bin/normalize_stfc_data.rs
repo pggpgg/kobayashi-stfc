@@ -1,18 +1,18 @@
-//! Normalize STFCcommunity raw JSON into KOBAYASHI hostiles/ships schema.
-//! Reads data/upstream/stfccommunity-data/ (hostiles/*.json and ships/*.json),
-//! writes data/hostiles/ and data/ships/ with index.json and data_version/source_note.
-//! Run after scripts/fetch_stfc_data.ps1.
+//! Normalize STFCcommunity raw JSON into KOBAYASHI hostiles (and optionally buildings/factions).
+//! Reads data/upstream/stfccommunity-data/ (hostiles/*.json, etc.).
+//! Writes data/hostiles/ with index.json. Ship output is no longer written (use data/ships_extended
+//! from normalize_data_stfc_space + build_ship_registry.py instead). Run after scripts/fetch_stfc_data.ps1.
 
 use std::fs;
 
 use serde::Deserialize;
 
 const UPSTREAM_HOSTILES_SUFFIX: &str = "data/upstream/stfccommunity-data";
+#[allow(dead_code)]
 const UPSTREAM_SHIPS_SUFFIX: &str = "data/upstream/stfccommunity-data/ships";
 const UPSTREAM_BUILDINGS_SUFFIX: &str = "data/upstream/stfccommunity-data/buildings";
 const UPSTREAM_FACTION_REP_SUFFIX: &str = "data/upstream/stfccommunity-data/faction_reputation";
 const OUT_HOSTILES_SUFFIX: &str = "data/hostiles";
-const OUT_SHIPS_SUFFIX: &str = "data/ships";
 const OUT_BUILDINGS_SUFFIX: &str = "data/buildings";
 const OUT_FACTION_REP_SUFFIX: &str = "data/faction_reputation";
 const SOURCE_NOTE: &str = "STFCcommunity baseline (outdated ~3y)";
@@ -66,6 +66,7 @@ struct RawHostile {
 
 // ----- Raw STFCcommunity ship (partial: first tier, components) -----
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct RawWeaponsInfo {
     #[serde(default)]
     accuracy: f64,
@@ -129,6 +130,7 @@ struct RawTier {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct RawShip {
     #[serde(default)]
     ship_name: String,
@@ -189,11 +191,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data_version = std::env::var("STFC_DATA_VERSION").unwrap_or_else(|_| "stfccommunity-main".to_string());
 
     let hostiles_dir = repo_data_path(UPSTREAM_HOSTILES_SUFFIX);
-    let ships_dir = repo_data_path(UPSTREAM_SHIPS_SUFFIX);
     let buildings_dir = repo_data_path(UPSTREAM_BUILDINGS_SUFFIX);
     let faction_rep_dir = repo_data_path(UPSTREAM_FACTION_REP_SUFFIX);
     let out_hostiles = repo_data_path(OUT_HOSTILES_SUFFIX);
-    let out_ships = repo_data_path(OUT_SHIPS_SUFFIX);
     let out_buildings = repo_data_path(OUT_BUILDINGS_SUFFIX);
     let out_faction_rep = repo_data_path(OUT_FACTION_REP_SUFFIX);
 
@@ -205,17 +205,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         eprintln!("Run the fetch script first: powershell -ExecutionPolicy Bypass -File scripts/fetch_stfc_data.ps1");
         std::process::exit(1);
     }
-    if !ships_dir.is_dir() {
-        eprintln!(
-            "error: upstream ships directory not found: {}",
-            ships_dir.display()
-        );
-        eprintln!("Run the fetch script first: powershell -ExecutionPolicy Bypass -File scripts/fetch_stfc_data.ps1");
-        std::process::exit(1);
-    }
-
     fs::create_dir_all(&out_hostiles)?;
-    fs::create_dir_all(&out_ships)?;
 
     // ----- Hostiles -----
     let mut hostile_index_entries: Vec<kobayashi::data::hostile::HostileIndexEntry> = Vec::new();
@@ -278,46 +268,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::to_string_pretty(&hostile_index)?,
     )?;
 
-    // ----- Ships -----
-    let mut ship_index_entries: Vec<kobayashi::data::ship::ShipIndexEntry> = Vec::new();
-    {
-        for entry in fs::read_dir(&ships_dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.extension().map_or(false, |e| e == "json") {
-                let id = path.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
-                let content = fs::read_to_string(&path)?;
-                let raw: RawShip = serde_json::from_str(&content).unwrap_or_else(|_| RawShip {
-                    ship_name: id.clone(),
-                    ship_class: String::new(),
-                    tiers: Vec::new(),
-                });
-                if let Some(rec) = raw_to_ship_record(&id, &raw) {
-                    ship_index_entries.push(kobayashi::data::ship::ShipIndexEntry {
-                        id: rec.id.clone(),
-                        ship_name: rec.ship_name.clone(),
-                        ship_class: rec.ship_class.clone(),
-                    });
-                    let out_path = out_ships.join(format!("{}.json", rec.id));
-                    fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;
-                }
-            }
-        }
-    }
-
-    if ship_index_entries.is_empty() {
-        eprintln!("warning: no ship JSON files found in {}", ships_dir.display());
-    }
-
-    let ship_index = kobayashi::data::ship::ShipIndex {
-        data_version: Some(data_version.clone()),
-        source_note: Some(SOURCE_NOTE.to_string()),
-        ships: ship_index_entries,
-    };
-    fs::write(
-        out_ships.join("index.json"),
-        serde_json::to_string_pretty(&ship_index)?,
-    )?;
+    // Ships: no longer written here; use data/ships_extended from normalize_data_stfc_space.
 
     // ----- Buildings (optional: upstream may not have been fetched) -----
     let mut building_index_entries: Vec<kobayashi::data::building::BuildingIndexEntry> = Vec::new();
@@ -408,15 +359,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             path: "hostiles/index.json".to_string(),
         },
     );
-    registry.insert(
-        "ships".to_string(),
-        kobayashi::data::registry::DataSetEntry {
-            source: "stfccommunity".to_string(),
-            data_version: ship_index.data_version.clone(),
-            last_updated: Some(last_updated.clone()),
-            path: "ships/index.json".to_string(),
-        },
-    );
     if !building_index_entries.is_empty() {
         registry.insert(
             "buildings".to_string(),
@@ -455,20 +397,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .ok_or("Failed to re-load a hostile record")?;
         }
     }
-    if !ship_index.ships.is_empty() {
-        let ship_index_path = out_ships.join("index.json");
-        let re_ship_index =
-            kobayashi::data::ship::load_ship_index(ship_index_path.to_str().unwrap()).ok_or("Failed to re-load ship index")?;
-        if let Some(first) = re_ship_index.ships.first() {
-            kobayashi::data::ship::load_ship_record(&out_ships, &first.id)
-                .ok_or("Failed to re-load a ship record")?;
-        }
-    }
-
     println!(
-        "Normalized {} hostiles, {} ships, {} buildings, {} factions. data_version={:?} source_note={:?}",
+        "Normalized {} hostiles, {} buildings, {} factions. (Ships use data/ships_extended.) data_version={:?} source_note={:?}",
         hostile_index.hostiles.len(),
-        ship_index.ships.len(),
         building_index_entries.len(),
         faction_list.len(),
         hostile_index.data_version,
@@ -571,6 +502,7 @@ fn raw_to_building_record(id: &str, raw: &RawBuilding) -> kobayashi::data::build
     }
 }
 
+#[allow(dead_code)]
 fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::ShipRecord> {
     let tier = raw.tiers.first()?;
     let mut armor_piercing = 0.0f64;

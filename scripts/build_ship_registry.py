@@ -8,8 +8,9 @@ import re
 import sys
 from pathlib import Path
 
-# hull_type from data.stfc.space: 0=Survey, 1=Explorer, 2=Battleship, 3=Interceptor
-HULL_TO_CLASS = {0: "survey", 1: "explorer", 2: "battleship", 3: "interceptor"}
+# hull_type from data.stfc.space (aligned with STFC_SPACE_DATA_STRATEGY.md hostile mapping)
+# 0=battleship, 1=survey, 2=interceptor, 3=explorer, 4/5=survey variant
+HULL_TO_CLASS = {0: "battleship", 1: "survey", 2: "interceptor", 3: "explorer", 4: "survey", 5: "survey"}
 
 
 def name_to_canonical_id(text: str) -> str:
@@ -72,6 +73,31 @@ def main() -> int:
 
     entries = []
     seen_canonical: set[str] = set()
+    numeric_ids_in_registry: set[int] = set()
+
+    def add_entry(numeric_id: int, loca_id: int | None, hull_type: int) -> None:
+        nonlocal entries, seen_canonical, numeric_ids_in_registry
+        if numeric_id in numeric_ids_in_registry:
+            return
+        ship_name = loca_to_name.get(loca_id or 0) if loca_id is not None else None
+        if not ship_name:
+            ship_name = f"Ship_{numeric_id}"
+        ship_class = HULL_TO_CLASS.get(int(hull_type), "battleship")
+        canonical_id = name_to_canonical_id(ship_name)
+        base_id = canonical_id
+        suffix = 0
+        while canonical_id in seen_canonical:
+            suffix += 1
+            canonical_id = f"{base_id}_{suffix}"
+        seen_canonical.add(canonical_id)
+        numeric_ids_in_registry.add(numeric_id)
+        entries.append({
+            "numeric_id": numeric_id,
+            "id": canonical_id,
+            "ship_name": ship_name.upper(),
+            "ship_class": ship_class,
+        })
+
     for s in summary:
         if not isinstance(s, dict):
             continue
@@ -84,25 +110,24 @@ def main() -> int:
         loca_id = int(loca_id)
         ship_name = loca_to_name.get(loca_id)
         if not ship_name:
-            # Skip if we have no translation (e.g. loca_id 0)
             if numeric_id not in ship_file_ids:
                 continue
             ship_name = f"Ship_{numeric_id}"
-        ship_class = HULL_TO_CLASS.get(int(hull_type), "battleship")
-        canonical_id = name_to_canonical_id(ship_name)
-        # Deduplicate canonical ids (e.g. faction variants)
-        base_id = canonical_id
-        suffix = 0
-        while canonical_id in seen_canonical:
-            suffix += 1
-            canonical_id = f"{base_id}_{suffix}"
-        seen_canonical.add(canonical_id)
-        entries.append({
-            "numeric_id": numeric_id,
-            "id": canonical_id,
-            "ship_name": ship_name.upper(),
-            "ship_class": ship_class,
-        })
+        add_entry(numeric_id, loca_id, int(hull_type))
+
+    # Add registry entries for ship files not in summary (so normalizer can process all 188)
+    for p in sorted(ships_dir.glob("*.json"), key=lambda x: x.stem):
+        try:
+            numeric_id = int(p.stem)
+        except ValueError:
+            continue
+        if numeric_id in numeric_ids_in_registry:
+            continue
+        with open(p) as f:
+            raw = json.load(f)
+        loca_id = raw.get("loca_id")
+        hull_type = raw.get("hull_type", 0)
+        add_entry(numeric_id, int(loca_id) if loca_id is not None else None, int(hull_type))
 
     entries.sort(key=lambda e: (e["ship_class"], e["ship_name"]))
     registry = {

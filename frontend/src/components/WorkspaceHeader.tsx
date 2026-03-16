@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchShips, fetchHostiles, getShipTiersLevels } from '../lib/api';
+import { fetchShips, fetchHostiles, getShipTiersLevels, formatApiError } from '../lib/api';
 import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api';
 import type { CrewState } from '../lib/types';
 import { useProfile } from '../contexts/ProfileContext';
@@ -66,27 +66,39 @@ export default function WorkspaceHeader({
   const { activeProfileId } = useProfile();
   const { ownedOnly } = useWorkspaceMode();
   const [ships, setShips] = useState<ShipListItem[]>([]);
+  const [shipsLoadState, setShipsLoadState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [shipsError, setShipsError] = useState<string | null>(null);
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
   const [tiers, setTiers] = useState<number[]>([1]);
   const [levels, setLevels] = useState<number[]>([1, 10, 20, 30, 40, 50, 60]);
 
   useEffect(() => {
     let c = false;
-    fetchShips(ownedOnly, activeProfileId).then((list) => {
-      if (!c) {
-        setShips(list);
-        if (list.length && !shipId) {
-          const first = list[0];
-          if (first) {
-            onShipIdChange(first.id);
-            if (ownedOnly && first.tier != null && first.level != null) {
-              onShipTierChange(first.tier);
-              onShipLevelChange(first.level);
+    setShipsLoadState('loading');
+    setShipsError(null);
+    fetchShips(ownedOnly, activeProfileId)
+      .then((list) => {
+        if (!c) {
+          setShips(list);
+          setShipsLoadState('done');
+          if (list.length && !shipId) {
+            const first = list[0];
+            if (first) {
+              onShipIdChange(first.id);
+              if (ownedOnly && first.tier != null && first.level != null) {
+                onShipTierChange(first.tier);
+                onShipLevelChange(first.level);
+              }
             }
           }
         }
-      }
-    });
+      })
+      .catch((err) => {
+        if (!c) {
+          setShipsError(formatApiError(err));
+          setShipsLoadState('error');
+        }
+      });
     return () => { c = true; };
   }, [ownedOnly, activeProfileId]);
 
@@ -148,11 +160,18 @@ export default function WorkspaceHeader({
     >
       <select
         aria-label="Ship"
-        value={shipId}
+        value={ships.length > 0 ? shipId : ''}
         onChange={(e) => handleShipChange(e.target.value)}
         style={selectStyle}
+        disabled={shipsLoadState === 'loading'}
       >
-        {ships.length === 0 && <option>Loading…</option>}
+        {shipsLoadState === 'loading' && <option>Loading…</option>}
+        {shipsLoadState === 'done' && ships.length === 0 && (
+          <option value="">{ownedOnly ? 'No ships in roster' : 'No ships available'}</option>
+        )}
+        {shipsLoadState === 'error' && shipsError && (
+          <option value="">{shipsError}</option>
+        )}
         {ships.map((s) => (
           <option key={s.id} value={s.id}>
             {s.ship_name}

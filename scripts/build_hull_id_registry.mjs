@@ -10,10 +10,11 @@
  *   data/upstream/data-stfc-space/summary-ship.json   (id = hull_id, loca_id)
  *   data/upstream/data-stfc-space/translations-ships.json (key "ship_name", id = loca_id -> text)
  *   data/upstream/data-stfc-space/translations-blueprints.json (fallback: blueprint_description, id = loca_id -> first segment)
- *   data/ships/index.json   (Kobayashi ship_name -> id)
+ *   data/ships_extended/index.json   (preferred) or data/ships/index.json (legacy fallback if present)
+ *     Kobayashi ship list: ships[].id, ships[].ship_name for name -> id
  *
  * Writes:
- *   data/ships/hull_id_registry.json
+ *   data/hull_id_registry.json
  *
  * Run from repo root.
  */
@@ -27,8 +28,9 @@ const SUMMARY_PATH = path.join(REPO_ROOT, "data/upstream/data-stfc-space/summary
 const TRANSLATIONS_SHIPS_PATH = path.join(REPO_ROOT, "data/upstream/data-stfc-space/translations-ships.json");
 const TRANSLATIONS_BLUEPRINTS_PATH = path.join(REPO_ROOT, "data/upstream/data-stfc-space/translations-blueprints.json");
 const TRANSLATIONS_SHIP_BUFFS_PATH = path.join(REPO_ROOT, "data/upstream/data-stfc-space/translations-ship_buffs.json");
-const INDEX_PATH = path.join(REPO_ROOT, "data/ships/index.json");
-const REGISTRY_PATH = path.join(REPO_ROOT, "data/ships/hull_id_registry.json");
+const EXTENDED_INDEX_PATH = path.join(REPO_ROOT, "data/ships_extended/index.json");
+const LEGACY_INDEX_PATH = path.join(REPO_ROOT, "data/ships/index.json");
+const REGISTRY_PATH = path.join(REPO_ROOT, "data/hull_id_registry.json");
 
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
@@ -78,8 +80,22 @@ async function main() {
   try {
     translationsShipBuffs = JSON.parse(await fs.readFile(TRANSLATIONS_SHIP_BUFFS_PATH, "utf8"));
   } catch {}
-  const index = JSON.parse(await fs.readFile(INDEX_PATH, "utf8"));
-  const ships = index.ships || [];
+  let ships = [];
+  try {
+    const extended = JSON.parse(await fs.readFile(EXTENDED_INDEX_PATH, "utf8"));
+    if (extended.ships && extended.ships.length > 0) {
+      ships = extended.ships;
+    }
+  } catch {}
+  if (ships.length === 0) {
+    try {
+      const legacy = JSON.parse(await fs.readFile(LEGACY_INDEX_PATH, "utf8"));
+      ships = legacy.ships || [];
+    } catch (e) {
+      console.error("No ship index found: tried", EXTENDED_INDEX_PATH, "and", LEGACY_INDEX_PATH);
+      throw e;
+    }
+  }
 
   // loca_id -> ship name (from translations-ships key "ship_name")
   const nameById = new Map();

@@ -68,6 +68,24 @@ describe('SimResults', () => {
     expect(screen.getByText(/0\.870/)).toBeTruthy();
   });
 
+  it('renders recommendation rows with array bridge/below_decks (API shape) as comma-separated', () => {
+    const recs: CrewRecommendation[] = [
+      {
+        captain: 'Janeway',
+        bridge: ['Ent-E Data', 'Tuvok'],
+        below_decks: ['Seven', 'Neelix', 'Chakotay'],
+        win_rate: 0.88,
+        stall_rate: 0.06,
+        loss_rate: 0.06,
+        avg_hull_remaining: 0.5,
+      },
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    expect(screen.getByText('Janeway')).toBeTruthy();
+    expect(screen.getByText('Ent-E Data, Tuvok')).toBeTruthy();
+    expect(screen.getByText('Seven, Neelix, Chakotay')).toBeTruthy();
+  });
+
   it('renders recommendation rows', () => {
     const recs: CrewRecommendation[] = [
       {

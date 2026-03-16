@@ -234,8 +234,10 @@ export async function simulate(
 
 export interface CrewRecommendation {
   captain: string;
-  bridge: string;
-  below_decks: string;
+  /** API returns string[]; we accept string for backward compatibility. */
+  bridge: string | string[];
+  /** API returns string[]; we accept string for backward compatibility. */
+  below_decks: string | string[];
   win_rate: number;
   stall_rate: number;
   loss_rate: number;

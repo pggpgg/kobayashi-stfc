@@ -1,0 +1,181 @@
+{
+  "id": "ecs_fortunate",
+  "ship_name": "ECS FORTUNATE",
+  "ship_class": "explorer",
+  "tiers": [
+    {
+      "tier": 1,
+      "armor_piercing": 16.0,
+      "shield_piercing": 16.0,
+      "accuracy": 16.0,
+      "attack": 76.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 220.0,
+      "shield_health": 110.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 76.5,
+          "shots": 1
+        }
+      ]
+    },
+    {
+      "tier": 2,
+      "armor_piercing": 16.0,
+      "shield_piercing": 16.0,
+      "accuracy": 16.0,
+      "attack": 76.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 220.0,
+      "shield_health": 250.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 76.5,
+          "shots": 1
+        }
+      ]
+    },
+    {
+      "tier": 3,
+      "armor_piercing": 16.0,
+      "shield_piercing": 16.0,
+      "accuracy": 16.0,
+      "attack": 76.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 220.0,
+      "shield_health": 520.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 76.5,
+          "shots": 1
+        }
+      ]
+    },
+    {
+      "tier": 4,
+      "armor_piercing": 16.0,
+      "shield_piercing": 16.0,
+      "accuracy": 16.0,
+      "attack": 76.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 220.0,
+      "shield_health": 910.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 76.5,
+          "shots": 1
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "level": 1,
+      "shield": 3.434,
+      "health": 6.324000000000001
+    },
+    {
+      "level": 2,
+      "shield": 9.898,
+      "health": 18.228
+    },
+    {
+      "level": 3,
+      "shield": 17.977999999999998,
+      "health": 33.108
+    },
+    {
+      "level": 4,
+      "shield": 27.876,
+      "health": 51.336000000000006
+    },
+    {
+      "level": 5,
+      "shield": 38.784,
+      "health": 71.424
+    },
+    {
+      "level": 6,
+      "shield": 51.106,
+      "health": 94.116
+    },
+    {
+      "level": 7,
+      "shield": 64.438,
+      "health": 118.668
+    },
+    {
+      "level": 8,
+      "shield": 78.578,
+      "health": 144.708
+    },
+    {
+      "level": 9,
+      "shield": 93.93,
+      "health": 172.98000000000002
+    },
+    {
+      "level": 10,
+      "shield": 109.888,
+      "health": 202.368
+    },
+    {
+      "level": 11,
+      "shield": 126.856,
+      "health": 233.616
+    },
+    {
+      "level": 12,
+      "shield": 144.632,
+      "health": 266.352
+    },
+    {
+      "level": 13,
+      "shield": 163.014,
+      "health": 300.204
+    },
+    {
+      "level": 14,
+      "shield": 182.204,
+      "health": 335.544
+    },
+    {
+      "level": 15,
+      "shield": 202.0,
+      "health": 372.0
+    },
+    {
+      "level": 16,
+      "shield": 222.604,
+      "health": 409.944
+    },
+    {
+      "level": 17,
+      "shield": 243.814,
+      "health": 449.004
+    },
+    {
+      "level": 18,
+      "shield": 265.63,
+      "health": 489.18
+    },
+    {
+      "level": 19,
+      "shield": 288.05199999999996,
+      "health": 530.472
+    },
+    {
+      "level": 20,
+      "shield": 311.08,
+      "health": 572.88
+    }
+  ]
+}
