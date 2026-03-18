@@ -106,6 +106,7 @@ const TRIGGER_ENUM: &[&str] = &[
 
 const OPERATOR_ENUM: &[&str] = &[
     "Add",
+    "Multiply",
     "MultiplyAdd",
     "MultiplyBaseAdd",
     "MultiplyBaseSub",
@@ -113,6 +114,8 @@ const OPERATOR_ENUM: &[&str] = &[
     "Set",
     "Sub",
     "add",
+    "multiply",
+    "mul",
     "mul_add",
     "mul_sub",
     "set",
@@ -505,6 +508,8 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
             | "on_critical"
             | "extra_attack"
             | "shots_per_attack"
+            | "shots_per_weapon"
+            | "weapon_shots"
             | "ship_dodge"
             | "accuracy"
             | "all_defenses"

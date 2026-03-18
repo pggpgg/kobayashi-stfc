@@ -693,6 +693,14 @@ pub fn simulate_combat(
         if shield_broke_this_round {
             let shield_break_filtered =
                 filter_effects_by_condition(&shield_break_effects, &combat_ctx);
+            record_ability_activations(
+                &mut trace,
+                round_index,
+                "shield_break",
+                attacker,
+                &shield_break_filtered,
+                attack_phase_assimilated,
+            );
             phase_effects_round.add_effects(
                 TimingWindow::ShieldBreak,
                 &shield_break_filtered,
@@ -708,6 +716,14 @@ pub fn simulate_combat(
             hull_breach_threshold_fired = true;
             let hull_breach_filtered =
                 filter_effects_by_condition(&hull_breach_effects, &combat_ctx);
+            record_ability_activations(
+                &mut trace,
+                round_index,
+                "hull_breach",
+                attacker,
+                &hull_breach_filtered,
+                attack_phase_assimilated,
+            );
             phase_effects_round.add_effects(
                 TimingWindow::HullBreach,
                 &hull_breach_filtered,
@@ -750,6 +766,14 @@ pub fn simulate_combat(
         if att_hull_damage_this_round > 0.0 {
             let receive_damage_filtered =
                 filter_effects_by_condition(&receive_damage_effects, &combat_ctx);
+            record_ability_activations(
+                &mut trace,
+                round_index,
+                "receive_damage",
+                attacker,
+                &receive_damage_filtered,
+                assimilated_rounds_remaining > 0,
+            );
             phase_effects_round.add_effects(
                 TimingWindow::ReceiveDamage,
                 &receive_damage_filtered,
@@ -830,10 +854,31 @@ pub fn simulate_combat(
         let defender_hull_now = (defender.hull_health - total_hull_damage).max(0.0);
         let mut attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
         if defender_hull_now <= 0.0 {
-            let on_kill_regen = sum_on_kill_hull_regen(
-                &kill_effects,
+            let kill_ctx = CombatContext {
+                round_index,
+                defender_hull_pct: 0.0,
+                defender_shield_pct: if defender.shield_health > 0.0 {
+                    defender_shield_remaining / defender.shield_health
+                } else {
+                    0.0
+                },
+                attacker_hull_pct: 1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+                attacker_shield_pct: if attacker.shield_health > 0.0 {
+                    attacker_shield_remaining / attacker.shield_health
+                } else {
+                    1.0
+                },
+            };
+            let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
+            record_ability_activations(
+                &mut trace,
+                round_index,
+                "kill",
+                attacker,
+                &kill_filtered,
                 assimilated_rounds_remaining > 0,
             );
+            let on_kill_regen = sum_on_kill_hull_regen(&kill_filtered, assimilated_rounds_remaining > 0);
             total_attacker_hull_damage =
                 (total_attacker_hull_damage - on_kill_regen * attacker.hull_health.max(0.0)).max(0.0);
             attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
@@ -843,12 +888,28 @@ pub fn simulate_combat(
         }
     }
 
+    let combat_end_ctx = CombatContext {
+        round_index: rounds_completed,
+        defender_hull_pct: 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+        defender_shield_pct: if defender.shield_health > 0.0 {
+            defender_shield_remaining / defender.shield_health
+        } else {
+            1.0
+        },
+        attacker_hull_pct: 1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+        attacker_shield_pct: if attacker.shield_health > 0.0 {
+            attacker_shield_remaining / attacker.shield_health
+        } else {
+            1.0
+        },
+    };
+    let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(
         &mut trace,
         rounds_completed,
         "combat_end",
         attacker,
-        &combat_end_effects,
+        &combat_end_filtered,
         false,
     );
 

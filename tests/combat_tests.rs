@@ -2715,3 +2715,273 @@ fn shots_bonus_increases_damage() {
         with_bonus.total_damage
     );
 }
+
+#[test]
+fn shield_break_and_receive_damage_windows_emit_activations() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 400.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 200.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 50.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 2000.0,
+        shield_health: 100.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "shield_break_ping".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::ShieldBreak,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: None,
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "on_receive_damage_ping".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::ReceiveDamage,
+                    boostable: true,
+                    effect: AbilityEffect::PierceBonus(0.1),
+                    condition: None,
+                },
+                boosted: false,
+            },
+        ],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 13,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+
+    assert!(result.events.iter().any(|e| {
+        e.event_type == "ability_activation"
+            && e.phase == "shield_break"
+            && e.source.ship_ability_id.as_deref() == Some("shield_break_ping")
+    }));
+    assert!(result.events.iter().any(|e| {
+        e.event_type == "ability_activation"
+            && e.phase == "receive_damage"
+            && e.source.ship_ability_id.as_deref() == Some("on_receive_damage_ping")
+    }));
+}
+
+#[test]
+fn kill_window_emits_activation_and_applies_hull_regen() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 1000.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 120.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 200.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew_with_regen = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "kill_heal".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::Kill,
+                boostable: true,
+                effect: AbilityEffect::OnKillHullRegen(0.25),
+                condition: None,
+            },
+            boosted: false,
+        }],
+    };
+
+    let with_regen = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 7,
+            trace_mode: TraceMode::Events,
+        },
+        &crew_with_regen,
+    );
+    let without_regen = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 7,
+            trace_mode: TraceMode::Events,
+        },
+        &CrewConfiguration::default(),
+    );
+
+    assert!(with_regen.events.iter().any(|e| {
+        e.event_type == "ability_activation"
+            && e.phase == "kill"
+            && e.source.ship_ability_id.as_deref() == Some("kill_heal")
+    }));
+    assert!(
+        with_regen.attacker_hull_remaining > without_regen.attacker_hull_remaining,
+        "on_kill hull regen should improve attacker hull remaining"
+    );
+}
+
+#[test]
+fn combat_end_window_respects_condition_filtering() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "combat_end_true".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::CombatEnd,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: Some(kobayashi::combat::AbilityCondition::RoundRange { min: 1, max: 10 }),
+                },
+                boosted: false,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "combat_end_false".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::CombatEnd,
+                    boostable: true,
+                    effect: AbilityEffect::AttackMultiplier(0.1),
+                    condition: Some(kobayashi::combat::AbilityCondition::RoundRange { min: 999, max: 1000 }),
+                },
+                boosted: false,
+            },
+        ],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 17,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+    let combat_end_activations: Vec<_> = result
+        .events
+        .iter()
+        .filter(|e| e.event_type == "ability_activation" && e.phase == "combat_end")
+        .collect();
+    assert_eq!(combat_end_activations.len(), 1);
+    assert_eq!(
+        combat_end_activations[0].source.ship_ability_id.as_deref(),
+        Some("combat_end_true")
+    );
+}
