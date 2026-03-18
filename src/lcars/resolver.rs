@@ -101,20 +101,46 @@ fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCon
     })
 }
 
+fn normalize_trigger(trigger: &str) -> String {
+    trigger.trim().to_ascii_lowercase().replace('-', "_")
+}
+
+fn normalize_operator(op: Option<&str>) -> String {
+    op.unwrap_or("add")
+        .trim()
+        .to_ascii_lowercase()
+        .replace('-', "_")
+}
+
+fn duration_rounds_or_default(effect: &LcarsEffect, fallback: u32) -> u32 {
+    effect
+        .duration
+        .as_ref()
+        .and_then(|d| match d {
+            crate::lcars::parser::LcarsDuration::Rounds { rounds } => Some(*rounds),
+            crate::lcars::parser::LcarsDuration::Stacks { stacks } => Some(*stacks),
+            crate::lcars::parser::LcarsDuration::Permanent(_) => None,
+        })
+        .unwrap_or(fallback)
+        .max(1)
+}
+
 /// Map LCARS trigger string to engine timing window. Unknown triggers return None (effect skipped).
 fn trigger_to_timing(trigger: Option<&str>) -> Option<TimingWindow> {
-    match trigger.map(str::trim) {
+    match trigger.map(normalize_trigger).as_deref() {
         Some("passive") => Some(TimingWindow::CombatBegin),
-        Some("on_combat_start") => Some(TimingWindow::CombatBegin),
-        Some("on_round_start") => Some(TimingWindow::RoundStart),
-        Some("on_attack") => Some(TimingWindow::AttackPhase),
-        Some("on_hit") | Some("on_critical") => Some(TimingWindow::AttackPhase),
-        Some("on_defense") => Some(TimingWindow::DefensePhase),
-        Some("on_round_end") => Some(TimingWindow::RoundEnd),
-        Some("on_shield_break") => Some(TimingWindow::ShieldBreak),
-        Some("on_kill") => Some(TimingWindow::Kill),
-        Some("on_hull_breach") => Some(TimingWindow::HullBreach),
-        Some("on_receive_damage") => Some(TimingWindow::ReceiveDamage),
+        Some("combatstart") | Some("on_combat_start") => Some(TimingWindow::CombatBegin),
+        Some("roundstart") | Some("on_round_start") => Some(TimingWindow::RoundStart),
+        Some("criticalshotfired") | Some("enemytakeshit") | Some("on_attack")
+        | Some("on_hit") | Some("on_critical") => Some(TimingWindow::AttackPhase),
+        Some("hittaken") | Some("on_defense") => Some(TimingWindow::DefensePhase),
+        Some("roundend") | Some("on_round_end") => Some(TimingWindow::RoundEnd),
+        Some("shieldsdepleted") | Some("targetshieldsdepleted") | Some("on_shield_break") => {
+            Some(TimingWindow::ShieldBreak)
+        }
+        Some("battlewon") | Some("on_kill") => Some(TimingWindow::Kill),
+        Some("hulldamagetaken") | Some("on_hull_breach") => Some(TimingWindow::HullBreach),
+        Some("shielddamagetaken") | Some("on_receive_damage") => Some(TimingWindow::ReceiveDamage),
         Some("on_combat_end") => Some(TimingWindow::CombatEnd),
         _ => None,
     }
@@ -150,7 +176,7 @@ fn resolve_effect(
         "stat_modify" => {
             let value = effect.value.or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(tier)))?;
             let stat = effect.stat.as_deref().unwrap_or("");
-            let op = effect.operator.as_deref().unwrap_or("add");
+            let op = normalize_operator(effect.operator.as_deref());
 
             // Map stat + operator to engine effect. Multiplicative damage -> AttackMultiplier; pierce -> PierceBonus.
             match stat {
@@ -180,12 +206,25 @@ fn resolve_effect(
                             },
                         ))
                     } else {
-                        let mult = if op == "multiply" { value } else { 1.0 + value };
+                        let mult = match op.as_str() {
+                            // Best effort: map common canonical forms to additive/multiplicative behavior.
+                            "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                            | "multiplybaseadd" => value,
+                            "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
+                            | "multiplybasesub" => 1.0 - value,
+                            "set" => value,
+                            _ => 1.0 + value,
+                        };
                         Some((timing, AbilityEffect::AttackMultiplier(mult)))
                     }
                 }
                 "shield_pierce" | "armor_pierce" => {
-                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    let add = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
+                        "sub" | "mul_sub" | "multiplysub" => -value,
+                        "set" => value,
+                        _ => value,
+                    };
                     Some((timing, AbilityEffect::PierceBonus(add)))
                 }
                 "crit_chance" | "crit_damage" => {
@@ -203,36 +242,47 @@ fn resolve_effect(
                     }
                 }
                 "isolytic_damage" => {
-                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    let add = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
+                        "sub" | "mul_sub" | "multiplysub" => -value,
+                        _ => value,
+                    };
                     Some((timing, AbilityEffect::IsolyticDamageBonus(add)))
                 }
                 "isolytic_defense" => {
-                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    let add = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
+                        "sub" | "mul_sub" | "multiplysub" => -value,
+                        _ => value,
+                    };
                     Some((timing, AbilityEffect::IsolyticDefenseBonus(add)))
                 }
                 "isolytic_cascade" | "isolytic_cascade_damage" => {
-                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    let add = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
+                        "sub" | "mul_sub" | "multiplysub" => -value,
+                        _ => value,
+                    };
                     Some((timing, AbilityEffect::IsolyticCascadeDamageBonus(add)))
                 }
                 "shield_mitigation" => {
-                    let add = if op == "multiply" { value - 1.0 } else { value };
+                    let add = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
+                        "sub" | "mul_sub" | "multiplysub" => -value,
+                        _ => value,
+                    };
                     Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
                 }
-                "shots" | "weapon_shots" | "shots_per_weapon" => {
+                "shots" | "weapon_shots" | "shots_per_weapon" | "shots_per_attack" => {
                     // +X% shots for Y rounds (round half-even applied in engine). Only at round start or combat begin.
                     if matches!(timing, TimingWindow::RoundStart | TimingWindow::CombatBegin) {
-                        let bonus_pct = if op == "multiply" { value - 1.0 } else { value };
-                        let duration_rounds = effect
-                            .duration
-                            .as_ref()
-                            .and_then(|d| {
-                                if let crate::lcars::parser::LcarsDuration::Rounds { rounds } = d {
-                                    Some(*rounds)
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap_or(1);
+                        let bonus_pct = match op.as_str() {
+                            "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
+                            "sub" | "mul_sub" | "multiplysub" => -value,
+                            "set" => value,
+                            _ => value,
+                        };
+                        let duration_rounds = duration_rounds_or_default(effect, 1);
                         Some((
                             timing,
                             AbilityEffect::ShotsBonus {
@@ -259,24 +309,27 @@ fn resolve_effect(
         }
         "assimilated" => {
             let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            let duration_rounds = duration_rounds_or_default(effect, 1);
             Some((timing, AbilityEffect::Assimilated {
                 chance,
-                duration_rounds: 1,
+                duration_rounds,
             }))
         }
         "hull_breach" => {
             let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            let duration_rounds = duration_rounds_or_default(effect, 1);
             Some((timing, AbilityEffect::HullBreach {
                 chance,
-                duration_rounds: 1,
+                duration_rounds,
                 requires_critical: false,
             }))
         }
         "burning" => {
             let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            let duration_rounds = duration_rounds_or_default(effect, 1);
             Some((timing, AbilityEffect::Burning {
                 chance,
-                duration_rounds: 1,
+                duration_rounds,
             }))
         }
         "tag" => None, // Non-combat; skip.
@@ -624,5 +677,153 @@ mod tests {
             (v5 - v1).abs() > 1e-6,
             "per-officer tier should change resolved static_buffs: tier1={v1}, tier5={v5}"
         );
+    }
+
+    #[test]
+    fn resolve_effect_supports_trigger_aliases_and_duration_rounds() {
+        let officer = LcarsOfficer {
+            id: "trigger_officer".to_string(),
+            name: "Trigger Officer".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+        };
+        let ability = LcarsAbility {
+            name: "aliases".to_string(),
+            effects: vec![
+                LcarsEffect {
+                    effect_type: "hull_breach".to_string(),
+                    stat: None,
+                    target: None,
+                    operator: None,
+                    value: None,
+                    trigger: Some("CriticalShotFired".to_string()),
+                    duration: Some(LcarsDuration::Rounds { rounds: 3 }),
+                    scaling: None,
+                    condition: None,
+                    chance: Some(1.0),
+                    multiplier: None,
+                    tag: None,
+                    accumulate: None,
+                    decay: None,
+                },
+                LcarsEffect {
+                    effect_type: "assimilated".to_string(),
+                    stat: None,
+                    target: None,
+                    operator: None,
+                    value: None,
+                    trigger: Some("RoundStart".to_string()),
+                    duration: Some(LcarsDuration::Stacks { stacks: 2 }),
+                    scaling: None,
+                    condition: None,
+                    chance: Some(1.0),
+                    multiplier: None,
+                    tag: None,
+                    accumulate: None,
+                    decay: None,
+                },
+            ],
+        };
+
+        let contexts = resolve_officer_ability(
+            &officer,
+            &ability,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &ResolveOptions::default(),
+        );
+        assert_eq!(contexts.len(), 2);
+        assert_eq!(contexts[0].ability.timing, TimingWindow::AttackPhase);
+        assert!(matches!(
+            contexts[0].ability.effect,
+            AbilityEffect::HullBreach {
+                duration_rounds: 3,
+                ..
+            }
+        ));
+        assert_eq!(contexts[1].ability.timing, TimingWindow::RoundStart);
+        assert!(matches!(
+            contexts[1].ability.effect,
+            AbilityEffect::Assimilated {
+                duration_rounds: 2,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn resolve_effect_supports_operator_and_shots_aliases() {
+        let officer = LcarsOfficer {
+            id: "op_officer".to_string(),
+            name: "Operator Officer".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+        };
+        let ability = LcarsAbility {
+            name: "ops".to_string(),
+            effects: vec![
+                LcarsEffect {
+                    effect_type: "stat_modify".to_string(),
+                    stat: Some("weapon_damage".to_string()),
+                    target: None,
+                    operator: Some("sub".to_string()),
+                    value: Some(0.2),
+                    trigger: Some("on_round_start".to_string()),
+                    duration: None,
+                    scaling: None,
+                    condition: None,
+                    chance: None,
+                    multiplier: None,
+                    tag: None,
+                    accumulate: None,
+                    decay: None,
+                },
+                LcarsEffect {
+                    effect_type: "stat_modify".to_string(),
+                    stat: Some("shots_per_attack".to_string()),
+                    target: None,
+                    operator: Some("add".to_string()),
+                    value: Some(0.5),
+                    trigger: Some("on_round_start".to_string()),
+                    duration: Some(LcarsDuration::Rounds { rounds: 2 }),
+                    scaling: None,
+                    condition: None,
+                    chance: None,
+                    multiplier: None,
+                    tag: None,
+                    accumulate: None,
+                    decay: None,
+                },
+            ],
+        };
+
+        let contexts = resolve_officer_ability(
+            &officer,
+            &ability,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &ResolveOptions::default(),
+        );
+        assert_eq!(contexts.len(), 2);
+        assert!(matches!(
+            contexts[0].ability.effect,
+            AbilityEffect::AttackMultiplier(v) if (v - 0.8).abs() < 1e-12
+        ));
+        assert!(matches!(
+            contexts[1].ability.effect,
+            AbilityEffect::ShotsBonus {
+                bonus_pct,
+                duration_rounds: 2,
+                ..
+            } if (bonus_pct - 0.5).abs() < 1e-12
+        ));
     }
 }

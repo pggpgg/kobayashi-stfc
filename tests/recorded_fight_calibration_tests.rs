@@ -5,8 +5,9 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    export_to_combat_input, parse_fight_export, simulate_combat, Combatant, CrewConfiguration,
-    ShipType, SimulationConfig, TraceMode,
+    export_to_combat_input, parse_fight_export, simulate_combat, Ability, AbilityClass,
+    AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, ShipType,
+    SimulationConfig, TimingWindow, TraceMode,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -147,5 +148,79 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
     assert!(
         (result.defender_shield_remaining - export.defender_shield_remaining).abs() <= hull_tol,
         "defender_shield_remaining"
+    );
+}
+
+#[test]
+fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
+    let attacker = Combatant {
+        id: "cal_attacker".to_string(),
+        attack: 650.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1200.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "cal_defender".to_string(),
+        attack: 200.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 400.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let with_kill_regen = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "cal_kill_regen".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::Kill,
+                boostable: true,
+                effect: AbilityEffect::OnKillHullRegen(0.2),
+                condition: None,
+            },
+            boosted: false,
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 2,
+        seed: 21,
+        trace_mode: TraceMode::Off,
+    };
+    let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let with_regen = simulate_combat(&attacker, &defender, config, &with_kill_regen);
+
+    assert!(with_regen.attacker_won, "attacker should still win this calibration slice");
+    assert!(
+        with_regen.attacker_hull_remaining > baseline.attacker_hull_remaining,
+        "on_kill regen should improve attacker survivability"
+    );
+    assert!(
+        with_regen.attacker_hull_remaining >= 0.0
+            && with_regen.attacker_hull_remaining <= attacker.hull_health,
+        "attacker hull remains within physical bounds"
     );
 }
