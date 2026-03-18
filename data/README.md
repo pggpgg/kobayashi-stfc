@@ -32,6 +32,14 @@ Buildings are fully modeled for ship combat; optional and backlog items (station
 - **Where the optimizer reads research state:** `profiles/{profile_id}/research.imported.json` (synced by the mod; each entry is `rid` + `level`). When building the scenario, the loader calls `merge_research_bonuses_into_profile` so research bonuses are applied to combat. If the catalog is missing or a rid is not in the catalog, that research is skipped (no crash).
 - **Refresh from upstream:** Run `node scripts/import_stfcspace_research.mjs [--from-upstream] [--limit N] [--rid 123,456]`. The script reads `data/upstream/data-stfc-space/summary-research.json`, fetches per-research detail from data.stfc.space for each node, maps buff ids to engine stats (via `RESEARCH_BUFF_MAPPING` in the script or `data/buildings/buff_id_to_stat.json`), and writes `data/research_catalog.json`. Add buff id to stat mappings to get combat-relevant research; with no mappings the script leaves the existing catalog unchanged.
 
+## Upstream data-stfc-space mapping layer
+
+- **Purpose:** JSON under `data/upstream/data-stfc-space/mapping/` documents upstream data.stfc.space artifacts: every root-level `summary-*.json`, `translations-*.json`, `ship_id_registry.json`, and the two markdown guides—**except** bulk per-id caches (`ships/*.json`, `hostiles/*.json`), which are described only by glob/pattern.
+- **Canonical inventory:** `mapping/upstream_catalog.json` lists each of those files with a short semantic description, primary ids, related translation tables, and Kobayashi touchpoints where applicable.
+- **Index:** `mapping/index.json` points at domain mapping files: `upstream_catalog`, `ships`, `hostiles`, `buildings`, `research`, `officers`, `translations`.
+- **Per-domain mappings:** `ships.json`, `hostiles.json`, `buildings.json`, `research.json`, `officers.json`, `translations.json` add entity shapes, field notes, and normalization targets.
+- **Validation:** `node scripts/validate_stfcspace_mapping.mjs` checks mapping files, that catalog paths exist on disk, that bulk globs have at least one file, and that **every** `summary-*.json` / `translations-*.json` at the upstream root appears in `upstream_catalog.json` (so new upstream drops fail CI until documented). When you add upstream files, extend `upstream_catalog.json` and run the validator.
+
 ## Forbidden tech: catalog and partial status
 
 - **Catalog:** `data/forbidden_chaos_tech.json` (source: `data/import/forbidden_chaos_tech.csv`). Import with `cargo run --bin import_forbidden_chaos`. CSV columns: name, tech_type, tier, fid, stat, value, operator. `fid` is optional (game ID for matching synced FT).

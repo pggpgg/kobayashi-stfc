@@ -1,0 +1,318 @@
+{
+  "version": 1,
+  "domain": "ships",
+  "description": "Mapping for upstream ship data from data.stfc.space: summary-ship.json, ships/{id}.json, translations-ships.json, and ship_id_registry.json.",
+  "files": [
+    {
+      "path": "summary-ship.json",
+      "role": "summary_list"
+    },
+    {
+      "glob": "ships/*.json",
+      "role": "detail_per_ship"
+    },
+    {
+      "path": "translations-ships.json",
+      "role": "translations"
+    },
+    {
+      "path": "ship_id_registry.json",
+      "role": "registry"
+    }
+  ],
+  "entity_types": [
+    {
+      "name": "ship_summary",
+      "source": {
+        "file": "summary-ship.json",
+        "selector": "root[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Ship hull id as used by data.stfc.space and ship detail files."
+      },
+      "loca": {
+        "field": "loca_id",
+        "translations_file": "translations-ships.json",
+        "name_key": "ship_name"
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Hull id; primary key for this upstream ship."
+        },
+        "loca_id": {
+          "type": "int",
+          "description": "Localization id that resolves to the ship name via translations-ships.json."
+        },
+        "rarity": {
+          "type": "string",
+          "description": "Upstream rarity label (Common, Uncommon, Rare, Epic, etc.)."
+        },
+        "grade": {
+          "type": "int",
+          "description": "Upstream ship grade / tier group (1–5); not directly used in combat."
+        },
+        "max_tier": {
+          "type": "int",
+          "description": "Maximum ship tier supported by upstream data."
+        },
+        "max_level": {
+          "type": "int",
+          "description": "Maximum ship level for this hull in upstream data."
+        },
+        "hull_type": {
+          "type": "int",
+          "description": "Numeric hull type used by normalize_stfcspace_ships.mjs to derive ship_class (battleship, interceptor, explorer, survey, etc.)."
+        }
+      }
+    },
+    {
+      "name": "ship_detail",
+      "source": {
+        "file": "ships/{id}.json",
+        "selector": "root"
+      },
+      "id": {
+        "field": "id",
+        "description": "Same hull id as in ship_summary.id."
+      },
+      "loca": {
+        "field": "loca_id",
+        "translations_file": null
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Hull id shared with summary-ship.json."
+        },
+        "max_tier": {
+          "type": "int",
+          "description": "Max tier for this hull according to detail file."
+        },
+        "rarity": {
+          "type": "string",
+          "description": "Copy of rarity; may duplicate summary-ship.json."
+        },
+        "grade": {
+          "type": "int",
+          "description": "Copy of grade; may duplicate summary-ship.json."
+        },
+        "tiers": {
+          "type": "array",
+          "description": "Per-tier component layout and buffs for this ship. Each tier entry contains components and tier-specific buffs.",
+          "items_type": "ship_tier"
+        },
+        "levels": {
+          "type": "array",
+          "description": "Per-level upstream shield and health scaling for this hull.",
+          "items_type": "ship_level"
+        },
+        "ability": {
+          "type": "array",
+          "description": "Upstream hull ability/buff data (id, value_is_percentage, values[]). Not currently used directly by the simulator."
+        }
+      }
+    },
+    {
+      "name": "ship_tier",
+      "source": {
+        "file": "ships/{id}.json",
+        "selector": "tiers[]"
+      },
+      "id": {
+        "field": "tier",
+        "description": "Tier index (1-based) within this hull."
+      },
+      "fields": {
+        "tier": {
+          "type": "int",
+          "description": "Ship tier number for this component layout."
+        },
+        "buffs": {
+          "type": "object",
+          "description": "Tier-level buffs such as cargo/protected; not all fields are mapped into combat.",
+          "fields": {
+            "cargo": {
+              "type": "int",
+              "description": "Cargo capacity bonus at this tier (upstream units)."
+            },
+            "protected": {
+              "type": "int",
+              "description": "Protected cargo at this tier (upstream units)."
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "description": "Components (warp, impulse, shield, armor, cargo, weapons, etc.) installed at this tier.",
+          "items_type": "ship_component"
+        }
+      }
+    },
+    {
+      "name": "ship_component",
+      "source": {
+        "file": "ships/{id}.json",
+        "selector": "tiers[].components[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Component id within upstream data; not globally unique across ships."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Component id as used by data.stfc.space."
+        },
+        "loca_id": {
+          "type": "int",
+          "description": "Localization id for this component name; resolved via translations-ships.json.",
+          "loca": {
+            "translations_file": "translations-ships.json"
+          }
+        },
+        "data": {
+          "type": "object",
+          "description": "Component stats; structure depends on tag.",
+          "fields": {
+            "tag": {
+              "type": "string",
+              "description": "Logical component type (Warp, Impulse, Armor, Shield, Cargo, Weapon, Sensor, Deflector, Special, etc.)."
+            },
+            "accuracy": {
+              "type": "float",
+              "description": "Weapon accuracy used by normalize_stfcspace_ships.mjs when tag indicates a weapon.",
+              "engine_stat": "accuracy"
+            },
+            "penetration": {
+              "type": "float",
+              "description": "Weapon penetration; contributes to armor_piercing in normalization.",
+              "engine_stat": "armor_piercing"
+            },
+            "modulation": {
+              "type": "float",
+              "description": "Weapon modulation; contributes to shield_piercing in normalization.",
+              "engine_stat": "shield_piercing"
+            },
+            "minimum_damage": {
+              "type": "float",
+              "description": "Minimum weapon damage per shot used to derive average attack.",
+              "engine_stat": "attack"
+            },
+            "maximum_damage": {
+              "type": "float",
+              "description": "Maximum weapon damage per shot used to derive average attack.",
+              "engine_stat": "attack"
+            },
+            "crit_chance": {
+              "type": "float",
+              "description": "Critical hit chance for this weapon (0–1).",
+              "engine_stat": "crit_chance"
+            },
+            "crit_modifier": {
+              "type": "float",
+              "description": "Critical damage multiplier (e.g. 1.5 = +50% damage).",
+              "engine_stat": "crit_damage"
+            },
+            "hp": {
+              "type": "float",
+              "description": "Component hit points, used as shield_health or hull_health depending on tag.",
+              "engine_stat": "shield_hp_or_hull_hp"
+            },
+            "mitigation": {
+              "type": "float",
+              "description": "Shield mitigation/absorption factor for shield components.",
+              "engine_stat": "shield_mitigation"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "ship_level",
+      "source": {
+        "file": "ships/{id}.json",
+        "selector": "levels[]"
+      },
+      "id": {
+        "field": "level",
+        "description": "Ship level within this hull."
+      },
+      "fields": {
+        "level": {
+          "type": "int",
+          "description": "Ship level (1..max_level)."
+        },
+        "shield": {
+          "type": "float",
+          "description": "Upstream scaling factor for shield health at this level; used when normalizing into extended ship stats.",
+          "engine_stat": "shield_hp"
+        },
+        "health": {
+          "type": "float",
+          "description": "Upstream scaling factor for hull health at this level; used when normalizing into extended ship stats.",
+          "engine_stat": "hull_hp"
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "from": {
+        "entity": "ship_summary",
+        "field": "id"
+      },
+      "to": {
+        "entity": "ship_detail",
+        "field": "id"
+      },
+      "description": "summary-ship.json id matches ships/{id}.json id for each hull."
+    },
+    {
+      "from": {
+        "entity": "ship_summary",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-ships.json",
+        "field": "id"
+      },
+      "description": "ship_summary.loca_id resolves to translation entry with key=ship_name for the ship's display name."
+    },
+    {
+      "from": {
+        "entity": "ship_detail",
+        "field": "id"
+      },
+      "to": {
+        "entity": "ship_registry_entry",
+        "file": "ship_id_registry.json",
+        "field": "hull_id"
+      },
+      "description": "ship_id_registry.json maps upstream hull_id to Kobayashi ship id/slug used in ships_extended."
+    }
+  ],
+  "normalization_targets": [
+    {
+      "entity": "ship_summary",
+      "target_file": "data/ships/index.json",
+      "key_field": "id",
+      "description": "normalize_stfcspace_ships.mjs uses summary-ship.json to seed the canonical ship index."
+    },
+    {
+      "entity": "ship_detail",
+      "target_file": "data/ships/<slug>.json",
+      "key_field": "id",
+      "description": "normalize_stfcspace_ships.mjs derives ShipRecord attack/defense stats from a chosen tier's components and stats."
+    },
+    {
+      "entity": "ship_detail",
+      "target_file": "data/ships_extended/<id>.json",
+      "key_field": "id",
+      "description": "src/bin/normalize_data_stfc_space.rs and related tooling normalize ship detail and level data into ships_extended tier/level schema."
+    }
+  ]
+}
+

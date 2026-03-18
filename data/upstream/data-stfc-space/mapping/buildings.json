@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "domain": "buildings",
+  "description": "Mapping for upstream building/starbase data from data.stfc.space: summary-building.json and translations-starbase_modules.json.",
+  "files": [
+    {
+      "path": "summary-building.json",
+      "role": "summary_list"
+    },
+    {
+      "path": "translations-starbase_modules.json",
+      "role": "translations"
+    }
+  ],
+  "entity_types": [
+    {
+      "name": "building_summary",
+      "source": {
+        "file": "summary-building.json",
+        "selector": "root[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Upstream building id (bid) used by sync and scripts/import_stfcspace_buildings.mjs."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Building id / bid as used in game and upstream summary."
+        },
+        "max_level": {
+          "type": "int",
+          "description": "Maximum level for this building according to upstream data."
+        },
+        "unlock_level": {
+          "type": "int",
+          "description": "Operations level where this building becomes available; mapped to ops_min when normalizing bonuses.",
+          "unit": "ops_level"
+        },
+        "buffs": {
+          "type": "array",
+          "description": "Per-building buffs, each with id, values[], and value_is_percentage.",
+          "items_type": "building_buff"
+        }
+      }
+    },
+    {
+      "name": "building_buff",
+      "source": {
+        "file": "summary-building.json",
+        "selector": "root[].buffs[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Buff id used across buildings, research, and other upstream entities."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Numeric buff identifier; used to map to engine stats or left as opaque buff_<id>."
+        },
+        "loca_id": {
+          "type": "int",
+          "description": "Localization id for this buff (if present); used to recover human-readable stat name from translations-starbase_modules.json or related tables."
+        },
+        "value_is_percentage": {
+          "type": "bool",
+          "description": "If true, values[].value is fractional (0.05 = +5%); if false, values are flat."
+        },
+        "values": {
+          "type": "array",
+          "description": "Per-level cumulative buff values. values[i] describes total bonus at building level (i+1). Incremental level N bonus is cumulative[N] - cumulative[N-1] with cumulative[0] = 0.",
+          "unit": "absolute_or_fractional",
+          "items_type": "building_buff_value"
+        }
+      }
+    },
+    {
+      "name": "building_buff_value",
+      "source": {
+        "file": "summary-building.json",
+        "selector": "root[].buffs[].values[]"
+      },
+      "id": {
+        "field": "value",
+        "description": "Stat value at this building level."
+      },
+      "fields": {
+        "value": {
+          "type": "float",
+          "description": "Cumulative stat value at this level; exact meaning depends on stat mapping.",
+          "unit": "absolute_or_fractional"
+        },
+        "chance": {
+          "type": "float",
+          "description": "Buff application chance (normally 1 for deterministic building bonuses).",
+          "unit": "0_to_1"
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "from": {
+        "entity": "building_summary",
+        "field": "id"
+      },
+      "to": {
+        "entity": "building_record",
+        "file": "data/buildings/index.json",
+        "field": "building_id_or_bid"
+      },
+      "description": "import_stfcspace_buildings.mjs maps upstream building id/bid to Kobayashi building id using BUILDING_META and translations-starbase_modules.json."
+    },
+    {
+      "from": {
+        "entity": "building_buff",
+        "field": "id"
+      },
+      "to": {
+        "entity": "engine_stat_mapping",
+        "file": "data/buildings/buff_id_to_stat.json",
+        "field": "buff_id"
+      },
+      "description": "buff_id_to_stat.json optionally maps buff ids to engine stat names (weapon_damage, hull_hp, shield_hp, etc.) for combat-relevant bonuses."
+    },
+    {
+      "from": {
+        "entity": "building_buff",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-starbase_modules.json",
+        "field": "id"
+      },
+      "description": "BUFF_ID_TO_STAT_NAME.md describes how buff loca_id can be resolved to human-readable stat labels via translations-starbase_modules.json and related translation tables."
+    }
+  ],
+  "normalization_targets": [
+    {
+      "entity": "building_summary",
+      "target_file": "data/buildings/<bid_slug>.json",
+      "key_field": "id",
+      "description": "scripts/import_stfcspace_buildings.mjs converts cumulative buff series into per-level bonuses for each building, writing normalized BuildingRecord JSON files."
+    },
+    {
+      "entity": "building_buff",
+      "target_file": "data/buildings/buff_id_to_stat.json",
+      "key_field": "id",
+      "description": "buff_id_to_stat.json acts as an import-time normalization overlay mapping building buff ids to engine stat keys for combat."
+    },
+    {
+      "entity": "building_summary",
+      "target_file": "data/buildings/index.json",
+      "key_field": "id",
+      "description": "Building index aggregates normalized buildings and records data_version/source_note for provenance."
+    }
+  ],
+  "notes": [
+    "See data/upstream/data-stfc-space/BUILDING_LEVEL_BONUSES.md for detailed explanation of cumulative vs incremental building bonuses.",
+    "See data/upstream/data-stfc-space/BUFF_ID_TO_STAT_NAME.md for guidelines on resolving buff ids and loca_ids to human-readable stat names and engine stats."
+  ]
+}
+

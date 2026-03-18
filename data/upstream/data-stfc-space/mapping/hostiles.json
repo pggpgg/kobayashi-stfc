@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "domain": "hostiles",
+  "description": "Upstream hostile data: summary-hostile.json lists every hostile id; hostiles/{id}.json holds full detail. Individual hostile files are not documented one-by-one (bulk).",
+  "files": [
+    {
+      "path": "summary-hostile.json",
+      "role": "summary_list"
+    },
+    {
+      "glob": "hostiles/*.json",
+      "role": "detail_per_hostile",
+      "allow_empty": false
+    }
+  ],
+  "entity_types": [
+    {
+      "name": "hostile_summary",
+      "source": {
+        "file": "summary-hostile.json",
+        "selector": "root[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Hostile id; matches hostiles/{id}.json and hostile API."
+      },
+      "fields": {
+        "id": { "type": "int", "description": "Primary key for this hostile spawn definition." },
+        "faction": { "type": "object", "description": "Faction id and loca_id for hostile faction." },
+        "level": { "type": "int", "description": "Suggested or base level for this hostile." },
+        "ship_type": { "type": "int", "description": "Ship type enum (game-specific)." },
+        "is_scout": { "type": "bool", "description": "Scout flag." },
+        "is_outpost": { "type": "bool", "description": "Outpost / station-style hostile." },
+        "loca_id": { "type": "int", "description": "Localization for hostile display name." },
+        "hull_type": { "type": "int", "description": "Hull class id." },
+        "rarity": { "type": "int", "description": "Rarity code." },
+        "count": { "type": "int", "description": "Spawn count or fleet size hint." },
+        "strength": { "type": "int", "description": "Upstream strength metric (not necessarily Kobayashi combat power)." },
+        "systems": { "type": "array", "description": "System ids where this hostile can appear." },
+        "warp": { "type": "int", "description": "Base warp distance." },
+        "warp_with_superhighway": { "type": "int", "description": "Warp with superhighway modifier." },
+        "resources": { "type": "mixed", "description": "Resource drop or cost hints (structure varies)." }
+      }
+    },
+    {
+      "name": "hostile_detail",
+      "source": {
+        "file": "hostiles/{id}.json",
+        "selector": "root"
+      },
+      "id": {
+        "field": "id",
+        "description": "Same as summary-hostile id."
+      },
+      "fields": {
+        "id": { "type": "int", "description": "Hostile id." },
+        "loca_id": { "type": "int", "description": "Name localization." },
+        "faction": { "type": "object", "description": "Faction id/loca." },
+        "level": { "type": "int", "description": "Level." },
+        "ship_type": { "type": "int", "description": "Ship type." },
+        "hull_type": { "type": "int", "description": "Hull type." },
+        "rarity": { "type": "int", "description": "Rarity." },
+        "strength": { "type": "int", "description": "Strength value." },
+        "systems": { "type": "array", "description": "Spawn systems." },
+        "xp_amount": { "type": "int", "description": "XP reward." },
+        "warp": { "type": "int", "description": "Warp cost." },
+        "components": {
+          "type": "array",
+          "description": "Ship-like components (warp, shield, weapons, armor) with data.tag and combat stats; analogous to ship detail components.",
+          "items_type": "hostile_component"
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "from": { "entity": "hostile_summary", "field": "id" },
+      "to": { "entity": "hostile_detail", "file": "hostiles/{id}.json", "field": "id" },
+      "description": "One detail JSON per summary row id."
+    }
+  ],
+  "normalization_targets": [
+    {
+      "entity": "hostile_detail",
+      "target_file": "data/hostiles/<id>.json",
+      "key_field": "id",
+      "description": "Kobayashi hostiles are normalized separately; upstream hostile JSON informs stats when refreshed from community/stfc.space pipelines."
+    }
+  ],
+  "notes": [
+    "Do not enumerate hostiles/*.json individually; schema is uniform per id.",
+    "Combat normalization for Kobayashi uses data/hostiles/, not raw upstream files, unless an import path is run."
+  ]
+}

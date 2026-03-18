@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "domains": [
+    {
+      "domain": "upstream_catalog",
+      "description": "Exhaustive list of every non-bulk JSON, registry, and markdown file under data-stfc-space (bulk: ships/*.json, hostiles/*.json only as patterns).",
+      "mapping_file": "upstream_catalog.json"
+    },
+    {
+      "domain": "ships",
+      "description": "Upstream ship summary, per-ship detail (bulk), translations, ship_id_registry.",
+      "mapping_file": "ships.json"
+    },
+    {
+      "domain": "hostiles",
+      "description": "Upstream hostile summary and per-hostile detail (bulk).",
+      "mapping_file": "hostiles.json"
+    },
+    {
+      "domain": "buildings",
+      "description": "Upstream starbase/building summary and starbase module translations.",
+      "mapping_file": "buildings.json"
+    },
+    {
+      "domain": "research",
+      "description": "Upstream research summary and per-node buffs.",
+      "mapping_file": "research.json"
+    },
+    {
+      "domain": "officers",
+      "description": "Upstream officer summary and officer translation tables.",
+      "mapping_file": "officers.json"
+    },
+    {
+      "domain": "translations",
+      "description": "Shared {id,key,text} translation entry shape and cross-domain loca resolution.",
+      "mapping_file": "translations.json"
+    }
+  ]
+}
