@@ -1,0 +1,259 @@
+{
+  "version": 1,
+  "domain": "upstream_catalog",
+  "description": "Catalog of every documented upstream artifact under data/upstream/data-stfc-space. Per-file JSON is listed except bulk directories (ships/*.json, hostiles/*.json), which are described by pattern only.",
+  "files": [],
+  "bulk_patterns_not_individually_documented": [
+    {
+      "glob": "ships/*.json",
+      "count_order": "hundreds",
+      "semantics": "Per-hull ship detail from data.stfc.space (tiers, components, levels, refits, scrap). Same schema for every id; see mapping/ships.json.",
+      "api_shape": "GET /ship/{id}.json"
+    },
+    {
+      "glob": "hostiles/*.json",
+      "count_order": "thousands",
+      "semantics": "Per-hostile combat/detail JSON (components, stats, systems, warp). Same schema per hostile id; see mapping/hostiles.json.",
+      "api_shape": "GET /hostile/{id}.json"
+    }
+  ],
+  "directories": [
+    {
+      "path": "ships/",
+      "role": "cached_ship_details",
+      "note": "Bulk; not enumerated file-by-file."
+    },
+    {
+      "path": "hostiles/",
+      "role": "cached_hostile_details",
+      "note": "Bulk; not enumerated file-by-file."
+    },
+    {
+      "path": "mapping/",
+      "role": "kobayashi_semantic_layer",
+      "note": "This folder; JSON mapping for AI and tooling."
+    }
+  ],
+  "markdown_docs": [
+    {
+      "path": "BUFF_ID_TO_STAT_NAME.md",
+      "description": "How to resolve buff_<id> and loca_id to human-readable stats and Kobayashi engine stat keys."
+    },
+    {
+      "path": "BUILDING_LEVEL_BONUSES.md",
+      "description": "Cumulative vs incremental building buff values in summary-building.json (esp. building 70)."
+    }
+  ],
+  "registry_files": [
+    {
+      "path": "ship_id_registry.json",
+      "root": "object",
+      "fields": {
+        "data_version": "string",
+        "source_note": "string",
+        "ships": "array of { numeric_id, id, ship_name, ship_class }"
+      },
+      "description": "Hull numeric_id to Kobayashi ship slug/id and display name; built by scripts/build_ship_registry.py from summary-ship + translations-ships.",
+      "kobayashi": "data/ships_extended, hull_id_registry.json, Roster resolution"
+    }
+  ],
+  "summaries": [
+    {
+      "path": "summary-building.json",
+      "root": "array",
+      "entry_count_order": "~70+",
+      "primary_id": "id",
+      "description": "Starbase buildings: max_level, unlock_level, buffs[] with per-level cumulative values. Used by import_stfcspace_buildings.mjs.",
+      "key_fields": ["id", "max_level", "unlock_level", "buffs"],
+      "translations": ["translations-starbase_modules.json"],
+      "domain_mapping": "mapping/buildings.json"
+    },
+    {
+      "path": "summary-consumable.json",
+      "root": "array",
+      "entry_count_order": "~2500",
+      "primary_id": "id",
+      "description": "Consumable items: rarity, grade, slot, buff reference, duration, category, art_id, loca_id.",
+      "key_fields": ["id", "buff", "duration_seconds", "category", "loca_id"],
+      "translations": ["translations-consumables.json"]
+    },
+    {
+      "path": "summary-forbidden_tech.json",
+      "root": "array",
+      "entry_count_order": "~60+",
+      "primary_id": "id",
+      "description": "Forbidden tech entries: type, subtype, tech_type, tier_max, rarity, buffs[] (template buff ids for FT progression).",
+      "key_fields": ["id", "type", "subtype", "tier_max", "buffs", "loca_id"],
+      "translations": ["translations-forbidden_tech.json"],
+      "kobayashi": "Related to data/forbidden_chaos_tech.json / import flow; not 1:1."
+    },
+    {
+      "path": "summary-hazards.json",
+      "root": "array",
+      "entry_count_order": "small",
+      "primary_id": "id",
+      "description": "Space hazard types: id_str, name, effect, type (TYPE_A–F).",
+      "key_fields": ["id", "id_str", "name", "effect", "type"]
+    },
+    {
+      "path": "summary-hostile.json",
+      "root": "array",
+      "entry_count_order": "~4800",
+      "primary_id": "id",
+      "description": "Hostile index row per spawnable hostile: faction, level, ship_type, loca_id, hull_type, rarity, count, strength, systems[], warp, resources. Detail in hostiles/{id}.json.",
+      "key_fields": ["id", "faction", "level", "systems", "strength", "loca_id"],
+      "domain_mapping": "mapping/hostiles.json"
+    },
+    {
+      "path": "summary-mission.json",
+      "root": "array",
+      "entry_count_order": "~4100",
+      "primary_id": "id",
+      "description": "Missions: faction, recommended_level (field name typo recommeded_level in upstream), rewards, pickup_systems, warp distances to mission and completion.",
+      "key_fields": ["id", "faction", "recommeded_level", "pickup_systems", "warp", "total_rewards"]
+    },
+    {
+      "path": "summary-officer.json",
+      "root": "array",
+      "entry_count_order": "large",
+      "primary_id": "id",
+      "description": "Officer catalog rows (ids, loca, faction, abilities). Kobayashi abilities: LCARS.",
+      "domain_mapping": "mapping/officers.json"
+    },
+    {
+      "path": "summary-research.json",
+      "root": "array",
+      "entry_count_order": "~2300",
+      "primary_id": "id",
+      "description": "Research nodes: unlock_level, tree, row/column, buffs summary; per-level values from research/{id}.json API.",
+      "key_fields": ["id", "loca_id", "max_level", "research_tree", "buffs"],
+      "domain_mapping": "mapping/research.json"
+    },
+    {
+      "path": "summary-ressource.json",
+      "root": "array",
+      "entry_count_order": "~2500",
+      "primary_id": "id",
+      "description": "Game resources/materials: grade, rarity, resource_id, art_id, loca_id, sorting_index.",
+      "key_fields": ["id", "resource_id", "loca_id", "grade", "rarity"],
+      "translations": ["translations-materials.json"]
+    },
+    {
+      "path": "summary-ship.json",
+      "root": "array",
+      "entry_count_order": "~112",
+      "primary_id": "id",
+      "description": "Playable hull index: hull_type, max_tier, max_level, build costs, faction, loca_id. Detail in ships/{id}.json.",
+      "domain_mapping": "mapping/ships.json"
+    },
+    {
+      "path": "summary-system.json",
+      "root": "array",
+      "entry_count_order": "~2400",
+      "primary_id": "id",
+      "description": "Star systems / map nodes: coords, faction, level, mines, planets, hostiles[], hazards, wave_defense flags, warp estimates.",
+      "key_fields": ["id", "coords_x", "coords_y", "faction", "hostiles", "hazards", "is_wave_defense", "mine_resources"],
+      "translations": ["translations-systems.json"]
+    },
+    {
+      "path": "summary-wave_defense.json",
+      "root": "array",
+      "entry_count_order": "small",
+      "primary_id": "id",
+      "description": "Wave defense instances: id_str, required_level, total_waves.",
+      "key_fields": ["id", "id_str", "required_level", "total_waves"]
+    }
+  ],
+  "translations": [
+    {
+      "path": "translations-blueprints.json",
+      "root": "array",
+      "entry_shape": "{ id, key, text }",
+      "description": "Blueprint-related UI strings; keys tie to blueprint assets. Used with ship/blueprint loca flows (e.g. build_hull_id_registry fallback)."
+    },
+    {
+      "path": "translations-consumables.json",
+      "description": "Names and descriptions for consumables (summary-consumable loca_id)."
+    },
+    {
+      "path": "translations-event_titles.json",
+      "description": "Event title strings for limited-time events."
+    },
+    {
+      "path": "translations-factions.json",
+      "description": "Faction display names and related copy (faction loca_ids across summaries)."
+    },
+    {
+      "path": "translations-forbidden_tech.json",
+      "description": "Forbidden tech names and buff copy (summary-forbidden_tech loca_ids)."
+    },
+    {
+      "path": "translations-hud.json",
+      "description": "Heads-up display and general UI strings."
+    },
+    {
+      "path": "translations-loyalty.json",
+      "description": "Loyalty / reputation related text."
+    },
+    {
+      "path": "translations-materials.json",
+      "description": "Resource and material display names (summary-ressource loca_id)."
+    },
+    {
+      "path": "translations-mission_titles.json",
+      "description": "Mission titles and mission-related copy (missions use loca across game data)."
+    },
+    {
+      "path": "translations-navigation.json",
+      "description": "Navigation and map UI strings."
+    },
+    {
+      "path": "translations-officer_buffs.json",
+      "description": "Officer ability/buff names and descriptions."
+    },
+    {
+      "path": "translations-officer_flavor_text.json",
+      "description": "Officer biography and flavor text."
+    },
+    {
+      "path": "translations-officer_names.json",
+      "description": "Officer display names (primary name table for officers)."
+    },
+    {
+      "path": "translations-officers.json",
+      "description": "Additional officer-related strings (roles, UI)."
+    },
+    {
+      "path": "translations-player_avatars.json",
+      "description": "Player avatar and portrait related strings."
+    },
+    {
+      "path": "translations-research.json",
+      "description": "Research node names and descriptions (summary-research / detail loca_id)."
+    },
+    {
+      "path": "translations-ship_buffs.json",
+      "description": "Ship-wide buff labels (hull abilities, refits, ship buff loca)."
+    },
+    {
+      "path": "translations-ship_components.json",
+      "description": "Component names for ship tiers (warp, shield, weapon loca_ids)."
+    },
+    {
+      "path": "translations-ships.json",
+      "description": "Ship hull names (key ship_name); primary name table for summary-ship."
+    },
+    {
+      "path": "translations-starbase_modules.json",
+      "description": "Starbase module and building names (starbase_module_name); building bid resolution."
+    },
+    {
+      "path": "translations-systems.json",
+      "description": "System/sector names on the galaxy map."
+    },
+    {
+      "path": "translations-traits.json",
+      "description": "Trait labels (officer/ship traits where applicable)."
+    }
+  ]
+}

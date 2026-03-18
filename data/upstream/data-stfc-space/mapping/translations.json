@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "domain": "translations",
+  "description": "Shared mapping for data-stfc-space translation files (translations-*.json) and loca_id resolution.",
+  "files": [
+    {
+      "path": "translations-blueprints.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-consumables.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-event_titles.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-factions.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-forbidden_tech.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-hud.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-loyalty.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-materials.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-mission_titles.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-navigation.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-officer_buffs.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-officer_flavor_text.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-officer_names.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-officers.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-player_avatars.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-research.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-ship_buffs.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-ship_components.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-ships.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-starbase_modules.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-systems.json",
+      "role": "translations"
+    },
+    {
+      "path": "translations-traits.json",
+      "role": "translations"
+    }
+  ],
+  "entity_types": [
+    {
+      "name": "translation_entry",
+      "source": {
+        "file": "translations-*.json",
+        "selector": "root[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Localization id shared across upstream entities."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Localization id; links upstream loca_id fields to human-readable text."
+        },
+        "key": {
+          "type": "string",
+          "description": "Translation key describing the role of this text (e.g. ship_name, starbase_module_name, officer_name, buff_description)."
+        },
+        "text": {
+          "type": "string",
+          "description": "Localized text value (English or other language as encoded in the upstream file)."
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "from": {
+        "entity": "ship_summary",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-ships.json",
+        "field": "id"
+      },
+      "description": "Ship names resolved via translations-ships.json entries with key=ship_name."
+    },
+    {
+      "from": {
+        "entity": "building_buff",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-starbase_modules.json",
+        "field": "id"
+      },
+      "description": "Building buff names/descriptions resolved via starbase module translation entries; see BUFF_ID_TO_STAT_NAME.md."
+    },
+    {
+      "from": {
+        "entity": "officer_summary",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-officer_names.json",
+        "field": "id"
+      },
+      "description": "Officer names resolved via translations-officer_names.json entries with appropriate key (e.g. officer_name)."
+    },
+    {
+      "from": {
+        "entity": "officer_buff",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-officer_buffs.json",
+        "field": "id"
+      },
+      "description": "Officer buff names/descriptions resolved via translations-officer_buffs.json entries."
+    }
+  ],
+  "normalization_targets": [],
+  "notes": [
+    "All translations-*.json files share the same basic structure: an array of { id, key, text } entries.",
+    "Key patterns identify which translation file is authoritative for a given domain (e.g. ship_name for ships, starbase_module_name for buildings, officer_name for officers).",
+    "Per-file semantic descriptions: see mapping/upstream_catalog.json translations[]."
+  ]
+}
+

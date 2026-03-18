@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "domain": "officers",
+  "description": "Mapping for upstream officer data from data.stfc.space: summary-officer.json and related translation tables.",
+  "files": [
+    {
+      "path": "summary-officer.json",
+      "role": "summary_list"
+    },
+    {
+      "path": "translations-officers.json",
+      "role": "translations_core"
+    },
+    {
+      "path": "translations-officer_names.json",
+      "role": "translations_names"
+    },
+    {
+      "path": "translations-officer_buffs.json",
+      "role": "translations_buffs"
+    },
+    {
+      "path": "translations-officer_flavor_text.json",
+      "role": "translations_flavor"
+    }
+  ],
+  "entity_types": [
+    {
+      "name": "officer_summary",
+      "source": {
+        "file": "summary-officer.json",
+        "selector": "root[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Officer id used by data.stfc.space."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Upstream officer id."
+        },
+        "loca_id": {
+          "type": "int",
+          "description": "Localization id for this officer; resolved via translations-officers.json or translations-officer_names.json."
+        },
+        "rarity": {
+          "type": "string",
+          "description": "Upstream officer rarity (Common, Uncommon, Rare, Epic, etc.)."
+        },
+        "grade": {
+          "type": "int",
+          "description": "Officer grade; not directly used by the simulator."
+        },
+        "faction": {
+          "type": "object",
+          "description": "Officer faction information; may include id and loca_id.",
+          "fields": {
+            "id": {
+              "type": "int",
+              "description": "Upstream faction id."
+            },
+            "loca_id": {
+              "type": "int",
+              "description": "Localization id for faction name."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "officer_buff",
+      "source": {
+        "file": "summary-officer.json",
+        "selector": "root[].buffs[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Buff id used by data.stfc.space for officer abilities."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Officer buff id."
+        },
+        "loca_id": {
+          "type": "int",
+          "description": "Localization id for this buff; resolved via translations-officer_buffs.json when present."
+        },
+        "value_is_percentage": {
+          "type": "bool",
+          "description": "If true, values[].value is percentage-like; if false, values may be flat."
+        },
+        "values": {
+          "type": "array",
+          "description": "Per-level buff values for this officer ability.",
+          "items_type": "officer_buff_value"
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "from": {
+        "entity": "officer_summary",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-officer_names.json",
+        "field": "id"
+      },
+      "description": "Officer name and flavor text are resolved via translations-officer_names.json / translations-officers.json using loca_id."
+    },
+    {
+      "from": {
+        "entity": "officer_buff",
+        "field": "loca_id"
+      },
+      "to": {
+        "entity": "translation_entry",
+        "file": "translations-officer_buffs.json",
+        "field": "id"
+      },
+      "description": "Officer buff names/descriptions are resolved via translations-officer_buffs.json using loca_id and key patterns."
+    },
+    {
+      "from": {
+        "entity": "officer_summary",
+        "field": "id"
+      },
+      "to": {
+        "entity": "canonical_officer",
+        "file": "data/officers/officers.canonical.json",
+        "field": "source_upstream_ids.officer_id"
+      },
+      "description": "Kobayashi officers are defined in LCARS/canonical JSON; upstream officer ids may be recorded as provenance but LCARS remains the source of truth for abilities."
+    }
+  ],
+  "normalization_targets": [
+    {
+      "entity": "officer_summary",
+      "target_file": "data/officers/officers.canonical.json",
+      "key_field": "id",
+      "description": "Officer ids and names from upstream can be used as hints when maintaining the canonical officer catalog but are not authoritative for ability mechanics."
+    }
+  ],
+  "notes": [
+    "Officer ability mechanics in Kobayashi are driven by LCARS YAML and officers.canonical.json, not by upstream officer buff stats.",
+    "Use upstream officer data primarily for cross-referencing ids, names, and rarity/faction metadata."
+  ]
+}
+

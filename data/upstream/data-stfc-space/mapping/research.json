@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "domain": "research",
+  "description": "Mapping for upstream research data from data.stfc.space: summary-research.json and per-node research/{id}.json buffs.",
+  "files": [
+    {
+      "path": "summary-research.json",
+      "role": "summary_list"
+    },
+    {
+      "path": "translations-research.json",
+      "role": "translations"
+    }
+  ],
+  "entity_types": [
+    {
+      "name": "research_summary",
+      "source": {
+        "file": "summary-research.json",
+        "selector": "root[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Research id (rid) used to fetch per-node details."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Research id as used by data.stfc.space and research/{id}.json.",
+          "unit": "rid"
+        }
+      }
+    },
+    {
+      "name": "research_detail",
+      "source": {
+        "file": "research/{id}.json",
+        "selector": "root"
+      },
+      "id": {
+        "field": "id",
+        "description": "Research id; must match summary id."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Research id (rid) matching summary-research.json."
+        },
+        "max_level": {
+          "type": "int",
+          "description": "Maximum research level according to detail response."
+        },
+        "buffs": {
+          "type": "array",
+          "description": "Per-research buffs, each with id, value_is_percentage, values[].",
+          "items_type": "research_buff"
+        }
+      }
+    },
+    {
+      "name": "research_buff",
+      "source": {
+        "file": "research/{id}.json",
+        "selector": "root.buffs[]"
+      },
+      "id": {
+        "field": "id",
+        "description": "Buff id shared with buildings and other upstream data."
+      },
+      "fields": {
+        "id": {
+          "type": "int",
+          "description": "Numeric buff identifier."
+        },
+        "value_is_percentage": {
+          "type": "bool",
+          "description": "If true, values[].value is percentage-like and must be normalized to a fraction before use."
+        },
+        "values": {
+          "type": "array",
+          "description": "Per-level buff values, usually cumulative; index i corresponds to level i+1.",
+          "unit": "absolute_or_fractional",
+          "items_type": "research_buff_value"
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "from": {
+        "entity": "research_summary",
+        "field": "id"
+      },
+      "to": {
+        "entity": "research_detail",
+        "field": "id"
+      },
+      "description": "summary-research.json id matches research/{id}.json id for each node."
+    },
+    {
+      "from": {
+        "entity": "research_buff",
+        "field": "id"
+      },
+      "to": {
+        "entity": "engine_stat_mapping",
+        "file": "data/buildings/buff_id_to_stat.json",
+        "field": "buff_id"
+      },
+      "description": "import_stfcspace_research.mjs reuses buff_id_to_stat.json and RESEARCH_BUFF_MAPPING to map research buff ids to engine stats."
+    }
+  ],
+  "normalization_targets": [
+    {
+      "entity": "research_detail",
+      "target_file": "data/research_catalog.json",
+      "key_field": "id",
+      "description": "scripts/import_stfcspace_research.mjs converts mapped research buffs into KOBAYASHI research_catalog items with levels[].bonuses[]."
+    }
+  ],
+  "notes": [
+    "Buff semantics for many research buffs are still uncertain; RESEARCH_BUFF_MAPPING in scripts/import_stfcspace_research.mjs is intentionally sparse.",
+    "When adding new research buff mappings, prefer reusing buff->stat mappings from data/buildings/buff_id_to_stat.json where ids overlap."
+  ]
+}
+
