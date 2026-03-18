@@ -577,5 +577,6 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         weapons,
+        abilities: None,
     })
 }

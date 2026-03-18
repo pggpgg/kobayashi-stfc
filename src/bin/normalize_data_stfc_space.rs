@@ -7,15 +7,25 @@ use std::path::Path;
 
 use serde_json::Value;
 
+#[derive(Debug)]
+struct AbilityCatalogEntry {
+    timing: String,
+    effect_type: String,
+    value_is_percentage: bool,
+}
+
 use kobayashi::data::ship::{
-    ExtendedShipRecord, LevelBonus, ShipIdRegistry, ShipIdRegistryEntry, TierStats, WeaponRecord,
-    DEFAULT_SHIP_ID_REGISTRY_PATH,
+    ExtendedShipRecord, LevelBonus, ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats,
+    WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
+
+const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo_root = Path::new(".");
     let upstream_ships = repo_root.join("data/upstream/data-stfc-space/ships");
     let registry_path = repo_root.join(DEFAULT_SHIP_ID_REGISTRY_PATH);
+    let catalog_path = repo_root.join(SHIP_ABILITY_CATALOG_PATH);
     let out_dir = repo_root.join("data/ships_extended");
 
     if !upstream_ships.is_dir() {
@@ -28,6 +38,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .map_err(|e| format!("read ship_id_registry: {}", e))?;
         serde_json::from_str(&data).map_err(|e| format!("parse ship_id_registry: {}", e))?
     };
+
+    let ability_catalog: Option<std::collections::HashMap<String, AbilityCatalogEntry>> =
+        fs::read_to_string(&catalog_path)
+            .ok()
+            .and_then(|s| {
+                let root: Value = serde_json::from_str(&s).ok()?;
+                let entries = root.get("entries")?.as_object()?;
+                let mut map = std::collections::HashMap::new();
+                for (k, v) in entries {
+                    let timing = v.get("timing")?.as_str()?.to_string();
+                    let effect_type = v.get("effect_type")?.as_str()?.to_string();
+                    let value_is_percentage = v.get("value_is_percentage").and_then(Value::as_bool).unwrap_or(false);
+                    map.insert(k.clone(), AbilityCatalogEntry { timing, effect_type, value_is_percentage });
+                }
+                Some(map)
+            });
 
     let id_by_numeric: std::collections::HashMap<u64, &ShipIdRegistryEntry> =
         registry.ships.iter().map(|e| (e.numeric_id, e)).collect();
@@ -57,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let content = fs::read_to_string(&path)?;
         let raw: Value = serde_json::from_str(&content)?;
-        let extended = raw_to_extended(&raw, &reg.id, &reg.ship_name, &reg.ship_class)?;
+        let extended = raw_to_extended(&raw, &reg.id, &reg.ship_name, &reg.ship_class, ability_catalog.as_ref())?;
         index_entries.push(kobayashi::data::ship::ExtendedShipIndexEntry {
             id: extended.id.clone(),
             ship_name: extended.ship_name.clone(),
@@ -88,6 +114,7 @@ fn raw_to_extended(
     canonical_id: &str,
     ship_name: &str,
     ship_class: &str,
+    ability_catalog: Option<&std::collections::HashMap<String, AbilityCatalogEntry>>,
 ) -> Result<ExtendedShipRecord, Box<dyn std::error::Error>> {
     let tiers_arr = raw
         .get("tiers")
@@ -131,12 +158,37 @@ fn raw_to_extended(
         levels.push(LevelBonus { level, shield, health });
     }
 
+    let abilities = ability_catalog.and_then(|catalog| {
+        let arr = raw.get("ability")?.as_array()?;
+        let mut out = Vec::new();
+        for ab in arr {
+            let id_num = ab.get("id")?.as_u64()?;
+            let id_str = id_num.to_string();
+            let entry = catalog.get(&id_str)?;
+            let value_is_percentage = ab.get("value_is_percentage").and_then(Value::as_bool).unwrap_or(entry.value_is_percentage);
+            let raw_value = ab.get("values")?.as_array()?.first().and_then(|v| v.get("value").and_then(Value::as_f64)).unwrap_or(0.0);
+            let value = if value_is_percentage { raw_value * 0.01 } else { raw_value };
+            out.push(ShipAbility {
+                id: id_str,
+                timing: entry.timing.clone(),
+                effect_type: entry.effect_type.clone(),
+                value,
+            });
+        }
+        if out.is_empty() {
+            None
+        } else {
+            Some(out)
+        }
+    });
+
     Ok(ExtendedShipRecord {
         id: canonical_id.to_string(),
         ship_name: ship_name.to_string(),
         ship_class: ship_class.to_string(),
         tiers,
         levels,
+        abilities,
     })
 }
 

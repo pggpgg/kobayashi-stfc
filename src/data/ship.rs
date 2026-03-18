@@ -17,6 +17,19 @@ pub struct WeaponRecord {
     pub shots: Option<u32>,
 }
 
+/// Normalized ship hull ability (from data.stfc.space ability array). Trigger and effect are resolved when building crew.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShipAbility {
+    /// Unique id for this ability (e.g. upstream numeric id as string, or semantic id like "pierce_on_hit").
+    pub id: String,
+    /// Timing window: "combat_begin", "round_start", "attack_phase", "defense_phase", "round_end", "receive_damage", "shield_break", "kill", "hull_breach", "combat_end".
+    pub timing: String,
+    /// Effect type: "pierce_bonus", "attack_multiplier", "accuracy_bonus", etc. Value is in [value].
+    pub effect_type: String,
+    /// Effect magnitude (e.g. 0.1 for +10% pierce). Interpretation depends on effect_type.
+    pub value: f64,
+}
+
 #[derive(Debug, Clone)]
 pub struct Ship {
     pub id: String,
@@ -53,6 +66,9 @@ pub struct ShipRecord {
     /// Per-weapon attack values. When present, used to build Combatant.weapons for sub-round resolution.
     #[serde(default)]
     pub weapons: Option<Vec<WeaponRecord>>,
+    /// Ship hull abilities (e.g. when hit, increase armor piercing). Evaluated per round in the combat engine.
+    #[serde(default)]
+    pub abilities: Option<Vec<ShipAbility>>,
 }
 
 /// Per-tier combat stats (from data-stfc.space or extended normalizer). Used to resolve ShipRecord for a given tier/level.
@@ -89,6 +105,9 @@ pub struct ExtendedShipRecord {
     pub ship_class: String,
     pub tiers: Vec<TierStats>,
     pub levels: Vec<LevelBonus>,
+    /// Ship hull abilities from data.stfc.space ability array. Applied to all tiers.
+    #[serde(default)]
+    pub abilities: Option<Vec<ShipAbility>>,
 }
 
 impl ExtendedShipRecord {
@@ -126,6 +145,7 @@ impl ExtendedShipRecord {
             apex_shred: 0.0,
             isolytic_damage: 0.0,
             weapons: t.weapons.clone(),
+            abilities: self.abilities.clone(),
         })
     }
 }

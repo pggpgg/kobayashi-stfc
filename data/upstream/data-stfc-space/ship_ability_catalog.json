@@ -1,0 +1,4 @@
+{
+  "description": "Maps upstream ship ability id (from ships/*.json ability[].id) to Kobayashi timing and effect_type. value_is_percentage: when true, raw value from upstream is scaled by 0.01. Add entries as ability mechanics are documented.",
+  "entries": {}
+}
