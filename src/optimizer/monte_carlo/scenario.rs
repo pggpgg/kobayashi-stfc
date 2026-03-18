@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, AttackerStats, Combatant,
-    CrewConfiguration, CrewSeatContext, DefenderStats, ShipType, MITIGATION_CEILING,
-    MITIGATION_FLOOR,
+    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, Ability, AbilityClass,
+    AbilityEffect, AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
+    DefenderStats, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
 };
 use crate::data::building::{
     self, BuildingBonusContext, BuildingMode, DEFAULT_BUILDINGS_INDEX_PATH,
@@ -26,7 +26,7 @@ use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, RESEARCH_IMPORTED,
     ROSTER_IMPORTED,
 };
-use crate::data::ship::ShipRecord;
+use crate::data::ship::{ShipAbility, ShipRecord};
 use crate::lcars::{index_lcars_officers_by_id, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::CrewCandidate;
 use std::path::Path;
@@ -34,6 +34,47 @@ use std::path::Path;
 use super::crew_resolution::{
     build_crew_seats, hash_identifier, normalize_lookup_key, split_name_and_tier,
 };
+
+/// Convert ship hull abilities to crew seat contexts so the combat engine evaluates them per round.
+/// Unknown timing or effect_type are skipped (no-op). Supports timing: combat_begin, round_start,
+/// attack_phase, defense_phase, round_end, receive_damage, shield_break, kill, hull_breach, combat_end;
+/// effect_type: pierce_bonus, attack_multiplier.
+fn ship_abilities_to_seat_contexts(abilities: &[ShipAbility]) -> Vec<CrewSeatContext> {
+    let mut out = Vec::with_capacity(abilities.len());
+    for a in abilities {
+        let timing = match a.timing.to_lowercase().replace('-', "_").as_str() {
+            "combat_begin" => TimingWindow::CombatBegin,
+            "round_start" => TimingWindow::RoundStart,
+            "attack_phase" => TimingWindow::AttackPhase,
+            "defense_phase" => TimingWindow::DefensePhase,
+            "round_end" => TimingWindow::RoundEnd,
+            "receive_damage" => TimingWindow::ReceiveDamage,
+            "shield_break" => TimingWindow::ShieldBreak,
+            "kill" => TimingWindow::Kill,
+            "hull_breach" => TimingWindow::HullBreach,
+            "combat_end" => TimingWindow::CombatEnd,
+            _ => continue,
+        };
+        let effect = match a.effect_type.to_lowercase().as_str() {
+            "pierce_bonus" => AbilityEffect::PierceBonus(a.value),
+            "attack_multiplier" => AbilityEffect::AttackMultiplier(a.value),
+            _ => continue,
+        };
+        out.push(CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: a.id.clone(),
+                class: AbilityClass::ShipAbility,
+                timing,
+                boostable: false,
+                effect,
+                condition: None,
+            },
+            boosted: false,
+        });
+    }
+    out
+}
 
 #[derive(Debug, Clone)]
 pub(crate) struct LcarsOfficerData {
@@ -123,12 +164,14 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
         }
+        let mut seats = crew_seats.clone();
+        seats.extend(ship_abilities_to_seat_contexts(
+            ship_rec.abilities.as_deref().unwrap_or(&[]),
+        ));
         return CombatSimulationInput {
             attacker,
             defender: defender.clone(),
-            crew: CrewConfiguration {
-                seats: crew_seats.clone(),
-            },
+            crew: CrewConfiguration { seats },
             rounds,
             defender_hull,
             base_seed,

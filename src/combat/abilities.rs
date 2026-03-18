@@ -3,6 +3,8 @@ pub enum AbilityClass {
     CaptainManeuver,
     BridgeAbility,
     BelowDeck,
+    /// Ship hull ability (e.g. when hit, increase armor/shield piercing). Evaluated per round like officer abilities.
+    ShipAbility,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,6 +31,8 @@ pub enum CrewSeat {
     Captain,
     Bridge,
     BelowDeck,
+    /// Virtual seat for ship hull abilities (from data.stfc.space ability array). Not officer-driven.
+    Ship,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -174,6 +178,7 @@ impl AbilityClass {
             Self::CaptainManeuver => CrewSeat::Captain,
             Self::BridgeAbility => CrewSeat::Bridge,
             Self::BelowDeck => CrewSeat::BelowDeck,
+            Self::ShipAbility => CrewSeat::Ship,
         }
     }
 }
