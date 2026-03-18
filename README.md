@@ -17,9 +17,9 @@ A high-performance Monte Carlo combat simulator and crew optimizer for [Star Tre
 
 ## Web UI Overview
 
-![KOBAYASHI Web Interface](docs/web-ui-screenshot.png)
+![KOBAYASHI Workspace and Roster Interface](docs/web-ui-screenshot.png)
 
-The web interface has four pages: **Workspace** (ship, scenario, crew builder, Run Sim, Run Optimize), **Results Library** (saved optimization results), **Roster & Profile** (roster import, profile management), and **Data & Mechanics** (data exploration). Toggle Roster vs Sandbox mode to limit officers to your owned roster or use the full catalog. Run simulations or optimizations, save presets, and view results — all from your browser at `http://localhost:3000`.
+The web interface has four pages: **Workspace** (ship, scenario, crew builder, Run Sim, Run Optimize), **Results Library** (saved optimization results), **Roster & Profile** (roster import, profile management), and **Data & Mechanics** (data exploration). The screenshot above focuses on the Workspace and Roster experience. Toggle Roster vs Sandbox mode to limit officers to your owned roster or use the full catalog. Run simulations or optimizations, save presets, and view results — all from your browser at `http://localhost:3000`.
 
 ---
 
