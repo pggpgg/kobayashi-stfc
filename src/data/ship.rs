@@ -24,7 +24,7 @@ pub struct ShipAbility {
     pub id: String,
     /// Timing window: "combat_begin", "round_start", "attack_phase", "defense_phase", "round_end", "receive_damage", "shield_break", "kill", "hull_breach", "combat_end".
     pub timing: String,
-    /// Effect type: "pierce_bonus", "attack_multiplier", "accuracy_bonus", etc. Value is in [value].
+    /// Effect type: see `ship_ability_resolve` and `data/upstream/data-stfc-space/ship_ability_catalog.json`.
     pub effect_type: String,
     /// Effect magnitude (e.g. 0.1 for +10% pierce). Interpretation depends on effect_type.
     pub value: f64,
