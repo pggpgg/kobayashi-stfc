@@ -32,6 +32,7 @@ cargo clippy --all-targets
 
 # CLI usage
 ./target/release/kobayashi simulate <rounds> <seed>
+./target/release/kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]
 ./target/release/kobayashi optimize --ship <id> --hostile <id> --sims <n> [--max-candidates <n>]
 ./target/release/kobayashi import <path.txt|path.json>
 ./target/release/kobayashi validate [data/officers/officers.canonical.json]

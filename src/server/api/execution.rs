@@ -135,6 +135,7 @@ pub fn run_optimize(
             profile_id,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            allow_duplicate_officers: request.allow_duplicate_officers.unwrap_or(false),
         };
         all_results.extend(
             optimize_scenario_with_registry(registry, &scenario)
@@ -318,6 +319,7 @@ pub fn start_optimize_job(
     let heuristics_only = request.heuristics_only.unwrap_or(false);
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.clone().unwrap_or_default();
+    let allow_duplicate_officers = request.allow_duplicate_officers.unwrap_or(false);
     let profile_id_owned = profile_id.map(String::from);
     let cancel_flag_clone = cancel_flag.clone();
 
@@ -381,6 +383,7 @@ pub fn start_optimize_job(
                 profile_id: profile_id_owned.as_deref(),
                 tiered_scout_sims: None,
                 tiered_top_k: None,
+                allow_duplicate_officers,
             };
             let normal_results = optimize_scenario_with_progress_with_registry(
                 registry_ref,

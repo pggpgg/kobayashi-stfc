@@ -11,6 +11,8 @@ interface OptimizePanelProps {
   onMaxCandidatesChange: (value: number | null) => void;
   prioritizeBelowDecksAbility: boolean;
   onPrioritizeBelowDecksAbilityChange: (value: boolean) => void;
+  allowDuplicateOfficers: boolean;
+  onAllowDuplicateOfficersChange: (value: boolean) => void;
   availableSeeds: string[];
   selectedSeeds: string[];
   onSelectedSeedsChange: (seeds: string[]) => void;
@@ -51,6 +53,8 @@ export default function OptimizePanel({
   onMaxCandidatesChange,
   prioritizeBelowDecksAbility,
   onPrioritizeBelowDecksAbilityChange,
+  allowDuplicateOfficers,
+  onAllowDuplicateOfficersChange,
   availableSeeds,
   selectedSeeds,
   onSelectedSeedsChange,
@@ -258,6 +262,16 @@ export default function OptimizePanel({
           style={{ margin: 0 }}
         />
         <span>Only below-decks officers with ability</span>
+      </label>
+
+      <label style={checkboxLabelStyle}>
+        <input
+          type="checkbox"
+          checked={allowDuplicateOfficers}
+          onChange={(e) => onAllowDuplicateOfficersChange(e.target.checked)}
+          style={{ margin: 0 }}
+        />
+        <span>Allow duplicate officers (non-canonical)</span>
       </label>
 
       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>

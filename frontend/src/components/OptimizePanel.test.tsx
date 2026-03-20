@@ -20,6 +20,8 @@ const baseProps = {
   onMaxCandidatesChange: vi.fn(),
   prioritizeBelowDecksAbility: false,
   onPrioritizeBelowDecksAbilityChange: vi.fn(),
+  allowDuplicateOfficers: false,
+  onAllowDuplicateOfficersChange: vi.fn(),
   availableSeeds: [] as string[],
   selectedSeeds: [] as string[],
   onSelectedSeedsChange: vi.fn(),

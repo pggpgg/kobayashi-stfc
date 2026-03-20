@@ -1,7 +1,12 @@
 use std::env;
 use std::fmt::Write as _;
 
-use crate::combat::{simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode};
+use crate::combat::{
+    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat, Combatant,
+    CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING,
+    MITIGATION_FLOOR,
+};
+use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
 use crate::data::profile::{apply_profile_to_attacker, load_profile};
 use crate::data::profile_index::{migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON, ROSTER_IMPORTED};
@@ -17,6 +22,7 @@ pub enum Command {
     Import,
     Validate,
     Resolve,
+    MitigationSensitivity,
 }
 
 pub fn parse_command(args: &[String]) -> Option<Command> {
@@ -27,6 +33,7 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
         Some("import") => Some(Command::Import),
         Some("validate") => Some(Command::Validate),
         Some("resolve") => Some(Command::Resolve),
+        Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
         _ => None,
     }
 }
@@ -41,11 +48,71 @@ pub fn run_with_args(args: &[String]) -> i32 {
         Some(Command::Import) => handle_import(args),
         Some(Command::Validate) => handle_validate(args),
         Some(Command::Resolve) => handle_resolve(args),
+        Some(Command::MitigationSensitivity) => handle_mitigation_sensitivity(args),
         None => {
-            eprintln!("usage: kobayashi <serve|simulate|optimize|import|validate|resolve>");
+            eprintln!(
+                "usage: kobayashi <serve|simulate|optimize|import|validate|resolve|mitigation-sensitivity>"
+            );
             2
         }
     }
+}
+
+fn handle_mitigation_sensitivity(args: &[String]) -> i32 {
+    let ship = match args.get(2).map(String::as_str).filter(|s| !s.is_empty()) {
+        Some(s) => s,
+        None => {
+            eprintln!("usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]");
+            return 2;
+        }
+    };
+    let hostile = match args.get(3).map(String::as_str).filter(|s| !s.is_empty()) {
+        Some(s) => s,
+        None => {
+            eprintln!("usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]");
+            return 2;
+        }
+    };
+    let mut delta_pct = 0.1_f64;
+    let mut i = 4;
+    while i < args.len() {
+        if args[i] == "--delta-pct" {
+            let Some(v) = args.get(i + 1) else {
+                eprintln!("--delta-pct requires a value");
+                return 2;
+            };
+            let Ok(p) = v.parse::<f64>() else {
+                eprintln!("delta-pct must be a number");
+                return 2;
+            };
+            delta_pct = p;
+            i += 2;
+        } else {
+            i += 1;
+        }
+    }
+    let Some(ship_rec) = resolve_ship(ship) else {
+        eprintln!("unknown ship '{ship}'");
+        return 1;
+    };
+    let Some(hostile_rec) = resolve_hostile(hostile) else {
+        eprintln!("unknown hostile '{hostile}'");
+        return 1;
+    };
+    let attacker = ship_rec.to_attacker_stats();
+    let defender = hostile_rec.to_defender_stats();
+    let baseline = HostileMitigationBaseline {
+        defender,
+        attacker,
+        ship_type: hostile_rec.ship_type(),
+        mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+        mitigation_floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+        mitigation_ceiling: hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+        defense_mitigation_bonus: 0.0,
+    };
+    let rows = default_percent_sensitivity_rows(&baseline, delta_pct);
+    print!("{}", format_sensitivity_tsv(&rows));
+    0
 }
 
 fn handle_serve() -> i32 {

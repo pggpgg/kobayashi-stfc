@@ -892,8 +892,14 @@ pub fn optimize_estimate_payload(
     profile_id: Option<&str>,
 ) -> Result<String, OptimizePayloadError> {
     let query = path.split('?').nth(1).unwrap_or("");
-    let (ship, hostile, sims, max_candidates, prioritize_below_decks_ability) =
-        requests::parse_optimize_estimate_query(query);
+    let (
+        ship,
+        hostile,
+        sims,
+        max_candidates,
+        prioritize_below_decks_ability,
+        allow_duplicate_officers,
+    ) = requests::parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
         return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -910,6 +916,7 @@ pub fn optimize_estimate_payload(
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 max_candidates: Some(cap as usize),
                 only_below_decks_with_ability: prioritize_below_decks_ability,
+                allow_duplicate_officers,
                 ..CandidateStrategy::default()
             });
             generator
@@ -929,6 +936,7 @@ pub fn optimize_estimate_payload(
         None => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 only_below_decks_with_ability: prioritize_below_decks_ability,
+                allow_duplicate_officers,
                 ..CandidateStrategy::default()
             });
             generator.count_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)

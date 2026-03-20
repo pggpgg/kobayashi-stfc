@@ -2,6 +2,8 @@
 
 This document describes the format used for raw STFC combat logs that can be ingested and compared to simulator output.
 
+For how to read mitigation and pierce fields in a trace, see [COMBAT_TRACE.md](COMBAT_TRACE.md).
+
 ## Purpose
 
 - **Replay/parity**: Compare simulator trace and `SimulationResult` to real or exported combat.
