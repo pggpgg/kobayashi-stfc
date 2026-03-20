@@ -20,7 +20,8 @@ use crate::data::officer::Officer;
 use crate::data::profile::{
     apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
     merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    merge_tech_fids_into_profile, resolve_effective_tech_fids, PlayerProfile,
+    forbidden_tech_level_tier_scaling_enabled_from_env, merge_tech_fids_into_profile_with_level_tier,
+    resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, RESEARCH_IMPORTED,
@@ -553,7 +554,15 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     if let Some(catalog) = registry.forbidden_chaos_catalog() {
         let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, catalog);
         if !effective_fids.is_empty() {
-            merge_tech_fids_into_profile(&mut profile, &effective_fids, catalog);
+            let scale_by_level_tier =
+                forbidden_tech_level_tier_scaling_enabled_from_env();
+            merge_tech_fids_into_profile_with_level_tier(
+                &mut profile,
+                &effective_fids,
+                &ft_entries,
+                catalog,
+                scale_by_level_tier,
+            );
         }
     }
 

@@ -1,22 +1,9 @@
 {
   "source": "community_spreadsheet",
-  "last_updated": "2026-03-15",
+  "last_updated": "2026-03-20",
   "items": [
     {
-      "fid": null,
-      "name": "Weapon Damage Sample",
-      "tech_type": "forbidden",
-      "tier": null,
-      "bonuses": [
-        {
-          "stat": "weapon_damage",
-          "value": 0.1,
-          "operator": "add"
-        }
-      ]
-    },
-    {
-      "fid": null,
+      "fid": 482782456,
       "name": "Ablative Armor",
       "tech_type": "forbidden",
       "tier": 1,
@@ -29,6 +16,19 @@
         {
           "stat": "shield_hp",
           "value": 0.05,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": null,
+      "name": "Weapon Damage Sample",
+      "tech_type": "forbidden",
+      "tier": null,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.1,
           "operator": "add"
         }
       ]

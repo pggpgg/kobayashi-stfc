@@ -16,6 +16,7 @@
       "event_type": "damage_application",
       "round_index": 1,
       "phase": "damage",
+      "weapon_index": 0,
       "values": {
         "damage_after_apex": 200.0,
         "shield_damage": 160.0,
@@ -39,6 +40,7 @@
       "event_type": "damage_application",
       "round_index": 2,
       "phase": "damage",
+      "weapon_index": 0,
       "values": {
         "damage_after_apex": 340.5,
         "shield_damage": 0.0,

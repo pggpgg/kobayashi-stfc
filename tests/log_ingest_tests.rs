@@ -26,6 +26,11 @@ fn parse_sample_combat_log_fixture() {
     assert!(log.attacker_won);
     assert!((log.defender_hull_remaining - 0.0).abs() < 1e-9);
     assert!((log.defender_shield_remaining - 0.0).abs() < 1e-9);
+    // Round-level events omit `weapon_index`.
+    assert_eq!(log.events[0].weapon_index, None);
+    // Damage events can include sub-round weapon index.
+    assert_eq!(log.events[1].weapon_index, Some(0));
+    assert_eq!(log.events[4].weapon_index, Some(0));
 }
 
 #[test]
@@ -62,6 +67,12 @@ fn ingested_events_convert_to_combat_events() {
     assert_eq!(combat_events.len(), log.events.len());
     assert_eq!(combat_events[0].event_type, "round_start");
     assert_eq!(combat_events[1].event_type, "damage_application");
+    // `weapon_index` is optional in the raw log format and should default to `None`
+    // for round-level events.
+    assert_eq!(combat_events[0].weapon_index, None);
+    // For multi-weapon parity, damage events include sub-round weapon index.
+    assert_eq!(combat_events[1].weapon_index, Some(0));
+    assert_eq!(combat_events[4].weapon_index, Some(0));
 }
 
 #[test]

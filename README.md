@@ -34,7 +34,7 @@ It runs locally on your machine, uses all your CPU cores, and gives you answers 
 ### Key Features
 
 - **Monte Carlo combat simulation** — models crits, proc chances, shield mitigation, armor, ability timing, and more
-- **Smart crew optimization** — exhaustive sweep and genetic algorithm for large search spaces; tiered simulation (scouting → confirmation) planned
+- **Smart crew optimization** — exhaustive sweep and genetic algorithm for large search spaces; tiered simulation (scouting → confirmation) supported via `strategy: "tiered"`
 - **LCARS officer definitions** — every officer ability is described in a declarative YAML-based language, no code changes needed to add new officers
 - **Player profile support** — account for your research, buildings, reputation, and other non-officer bonuses
 - **Synergy discovery** — manually tag known synergies, and let KOBAYASHI discover new ones from simulation data
@@ -118,15 +118,15 @@ KOBAYASHI's core is a fast, deterministic combat simulator written in Rust. Each
 
 ### The Optimizer
 
-Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. For large search spaces, use `strategy: "genetic"` in the API to run the genetic optimizer instead. A **tiered approach** (scouting pass → confirmation on top candidates) is planned but not yet wired in.
+Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. For large search spaces, use `strategy: "genetic"` in the API to run the genetic optimizer instead. You can also select a **tiered approach** (scouting pass → confirmation on top candidates) via `strategy: "tiered"` (requires the optimizer's registry/candidate context).
 
-*Planned tiered strategy (when implemented):*
+*Tiered strategy (implemented via two-pass scouting → confirmation):*
 
 | Phase | Sims per crew | What it does |
 |---|---|---|
 | **Scouting** | 100–500 | Tests all synergy combos + a sample of others. Keeps top 5%. |
 | **Confirmation** | 5,000–50,000 | Full statistical analysis on surviving crews. Final ranking. |
-| **Deep Dive** | 100,000+ | Optional. Per-round damage distributions, sensitivity analysis. |
+| **Deep Dive (planned)** | 100,000+ | Optional. Per-round damage distributions, sensitivity analysis. |
 
 Synergy-tagged crews are tested first, so even if you cancel early, you likely have the best results already.
 
@@ -135,8 +135,8 @@ Synergy-tagged crews are tested first, so even if you cancel early, you likely h
 | Scenario | Time |
 |---|---|
 | Full exhaustive sweep (current) | ~3 minutes |
-| Phase 1 scouting only (planned) | ~8 seconds |
-| Phase 1 + Phase 2 (planned) | ~16 seconds |
+| Phase 1 scouting only (tiered strategy) | ~8 seconds |
+| Phase 1 + Phase 2 (tiered strategy) | ~16 seconds |
 
 ### LCARS — The Officer Description Language
 
@@ -272,7 +272,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [x] Monte Carlo simulation runner
 - [x] CLI interface
 - [x] LCARS ability resolver (YAML → BuffSet)
-- [ ] Tiered optimization with synergy prioritization (planned)
+- [x] Tiered optimization (scouting → confirmation)
 - [x] Crew generator (exhaustive + filtered)
 - [x] Parallel batch execution
 - [x] Web UI on localhost (MVP)

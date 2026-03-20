@@ -24,11 +24,13 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 
 ## Remaining work
 
-### Phase 3 — Raw combat log ingestion (not started)
+### Phase 3 — Raw combat log ingestion (partial)
 
 **5. Raw combat log ingestion**
 
 **Goal:** Parse raw STFC combat logs into an internal event model so simulator output can be compared to real combat (replay/parity checks).
+
+**Status:** `src/combat/log_ingest.rs` already provides a JSON parser and conversion helpers for trace/parity comparisons, with fixture tests in `tests/log_ingest_tests.rs`. The remaining gap for granular sub-round parity is `weapon_index` threading (conversion currently sets `weapon_index: None`).
 
 **Plan:**
 1. Define the expected raw-log format (e.g. paste from game UI or toolbox export) and document it in this repo (e.g. `docs/combat_log_format.md` or a fixture example).
@@ -39,11 +41,12 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 4. Add tests: parse at least one fixture log and assert on event count, round count, and key numeric fields.
 
 **Definition of done**
-- Parser exists and is tested against one or more fixture logs.
+- Parser exists and is tested against fixture logs for core fields.
 - Documented format (or sample) so new logs can be added for parity checks in Phase 3 DoD (replay/parity between parsed logs and engine output).
+- `weapon_index` is parsed and threaded through ingested → engine events when present in the raw log format.
 
 **Future / TODO**
-- **Sub-round events:** Add `weapon_index` to `IngestedEvent`, parse it from JSON, and pass it through in `ingested_events_to_combat_events`. Format already documents optional `weapon_index`; parser currently ignores it. Needed for per-weapon parity when logs include sub-round granularity.
+- **Sub-round events:** Add `weapon_index` to `IngestedEvent`, parse it from JSON, and pass it through in `ingested_events_to_combat_events`. Needed for per-weapon parity when logs include sub-round granularity.
 
 ---
 
@@ -84,6 +87,6 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 
 ## Suggested next execution slice
 
-1. **Phase 3.5 — Raw combat log ingestion:** Define log format (or adopt an existing one), implement parser, add fixture and tests. This unblocks replay/parity work.
+1. **Phase 3.5 — `weapon_index` gap:** Extend log ingestion so sub-round/per-weapon logs can round-trip into engine events for parity checks.
 2. **Phase 4.8 — Explainability (sensitivity + trace):** Add mitigation sensitivity table and document “why” from existing trace. Low risk, high value for tuning and debugging.
 3. **Phase 4.7 — Compatibility toggles:** Add duplicate-officer mode and document combat-local state/rollback once real logs or community reports clarify the exact quirk.

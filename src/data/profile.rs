@@ -144,11 +144,131 @@ pub fn merge_tech_fids_into_profile(
     }
 }
 
+/// Enable level/tier scaling for forbidden tech via environment.
+///
+/// This is intentionally opt-in because the exact in-game scaling is uncertain.
+/// The current implementation assumes:
+/// - Catalog `bonuses` represent max-level bonus values for the tech's `tier`.
+/// - Player's synced `level` scales linearly within that tier.
+///
+/// Env var: `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` (also accepts `true/yes`).
+pub fn forbidden_tech_level_tier_scaling_enabled_from_env() -> bool {
+    let v = std::env::var("KOBAYASHI_FT_LEVEL_TIER_SCALING").ok();
+    let Some(v) = v else { return false };
+    let v = v.trim().to_ascii_lowercase();
+    matches!(v.as_str(), "1" | "true" | "yes" | "y" | "on")
+}
+
+fn max_forbidden_tech_level_for_tier(tier: u32) -> u32 {
+    // Common STFC tier structure: tier 1 -> level 10, tier 2 -> 20, etc.
+    // We use tier*10 as a pragmatic placeholder until we confirm a different formula.
+    tier.saturating_mul(10)
+}
+
+fn scale_forbidden_tech_bonus_value_linear_by_level_tier(
+    base_value: f64,
+    record_tier: Option<u32>,
+    imported_tier: i64,
+    imported_level: i64,
+) -> f64 {
+    if imported_level <= 0 || imported_tier <= 0 {
+        return 0.0;
+    }
+
+    let imported_tier_u32 = match u32::try_from(imported_tier) {
+        Ok(v) => v,
+        Err(_) => return 0.0,
+    };
+
+    let tier = record_tier.unwrap_or(imported_tier_u32);
+
+    // Safety: when catalog tier is explicitly set and disagrees with the synced tech tier,
+    // don't attempt to cross-scale; keep the catalog's value unchanged.
+    if let Some(record_tier) = record_tier {
+        if record_tier != imported_tier_u32 {
+            return base_value;
+        }
+    }
+
+    let max_level = max_forbidden_tech_level_for_tier(tier);
+    if max_level == 0 {
+        return 0.0;
+    }
+
+    let factor = (imported_level as f64) / (max_level as f64);
+    let factor = factor.clamp(0.0, 1.0);
+    base_value * factor
+}
+
+/// Merge the selected forbidden/chaos tech catalog records into `profile.bonuses`.
+///
+/// Compared to [`merge_tech_fids_into_profile`], this variant can optionally scale bonuses
+/// by the player's synced `tier` and `level`.
+pub fn merge_tech_fids_into_profile_with_level_tier(
+    profile: &mut PlayerProfile,
+    fids: &[i64],
+    imported_ft: &[crate::data::import::ForbiddenTechEntry],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+) {
+    if fids.is_empty() || catalog.items.is_empty() {
+        return;
+    }
+
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+
+    // We need imported tier/level to scale bonuses when enabled.
+    let imported_by_fid: HashMap<i64, &crate::data::import::ForbiddenTechEntry> = imported_ft
+        .iter()
+        .map(|e| (e.fid, e))
+        .collect();
+
+    for &fid in fids {
+        let Some(record) = by_fid.get(&fid) else {
+            continue;
+        };
+        let imported = match imported_by_fid.get(&fid) {
+            Some(v) => *v,
+            None => continue,
+        };
+
+        for bonus in &record.bonuses {
+            let op = if bonus.operator.is_empty() {
+                "add"
+            } else {
+                bonus.operator.as_str()
+            };
+
+            let value = if scale_by_level_tier {
+                scale_forbidden_tech_bonus_value_linear_by_level_tier(
+                    bonus.value,
+                    record.tier,
+                    imported.tier,
+                    imported.level,
+                )
+            } else {
+                bonus.value
+            };
+
+            if value == 0.0 {
+                continue;
+            }
+            accumulate_forbidden_tech_bonus(&mut profile.bonuses, &bonus.stat, op, value);
+        }
+    }
+}
+
 fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
     match stat {
         "weapon_damage" => Some("weapon_damage"),
         "hull_hp" => Some("hull_hp"),
         "shield_hp" => Some("shield_hp"),
+        "isolytic_damage" => Some("isolytic_damage"),
+        "isolytic_defense" => Some("isolytic_defense"),
         "crit_chance" => Some("crit_chance"),
         "crit_damage" => Some("crit_damage"),
         "pierce" | "armor_pierce" | "shield_pierce" => Some("pierce"),
@@ -336,6 +456,8 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
     let weapon = 1.0 + get_bonus(profile, "weapon_damage");
     let hull_hp = 1.0 + get_bonus(profile, "hull_hp");
     let shield_hp = 1.0 + get_bonus(profile, "shield_hp");
+    let isolytic_damage_add = get_bonus(profile, "isolytic_damage");
+    let isolytic_defense_add = get_bonus(profile, "isolytic_defense");
     let crit_chance_add = get_bonus(profile, "crit_chance");
     let crit_damage_mult = 1.0 + get_bonus(profile, "crit_damage");
     let pierce_add = get_bonus(profile, "pierce");
@@ -355,6 +477,8 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
         shield_mitigation: (attacker.shield_mitigation + shield_mit_add)
             .max(0.0)
             .min(1.0),
+        isolytic_damage: (attacker.isolytic_damage + isolytic_damage_add).max(0.0),
+        isolytic_defense: (attacker.isolytic_defense + isolytic_defense_add).max(0.0),
         ..attacker
     }
 }
@@ -368,6 +492,8 @@ mod tests {
         BuildingBonusContext, BuildingIndex, BuildingIndexEntry, BuildingMode,
     };
     use crate::data::import::BuildingEntry;
+    use crate::data::import::ForbiddenTechEntry;
+    use crate::data::forbidden_chaos::{BonusEntry, ForbiddenChaosList, ForbiddenChaosRecord};
 
     use super::*;
 
@@ -600,5 +726,119 @@ mod tests {
 
         let out = apply_profile_to_attacker(attacker, &profile);
         assert!((out.mitigation - 0.19).abs() < 1e-9);
+    }
+
+    #[test]
+    fn merge_forbidden_tech_fids_scales_additive_by_level_tier_when_enabled() {
+        let mut profile = PlayerProfile::default();
+
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "Ablative Armor".to_string(),
+                tech_type: "forbidden".to_string(),
+                tier: Some(1),
+                bonuses: vec![BonusEntry {
+                    stat: "weapon_damage".to_string(),
+                    value: 0.1,
+                    operator: "add".to_string(),
+                }],
+            }],
+        };
+
+        let imported = vec![ForbiddenTechEntry {
+            fid: 1,
+            tier: 1,
+            level: 5, // tier 1 max level assumed 10 => 0.5 factor
+            shard_count: 0,
+        }];
+
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &[1],
+            &imported,
+            &catalog,
+            true,
+        );
+
+        assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
+    }
+
+    #[test]
+    fn merge_forbidden_tech_fids_does_not_scale_when_disabled() {
+        let mut profile = PlayerProfile::default();
+
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "Ablative Armor".to_string(),
+                tech_type: "forbidden".to_string(),
+                tier: Some(1),
+                bonuses: vec![BonusEntry {
+                    stat: "weapon_damage".to_string(),
+                    value: 0.1,
+                    operator: "add".to_string(),
+                }],
+            }],
+        };
+
+        let imported = vec![ForbiddenTechEntry {
+            fid: 1,
+            tier: 1,
+            level: 5,
+            shard_count: 0,
+        }];
+
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &[1],
+            &imported,
+            &catalog,
+            false,
+        );
+
+        assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.1));
+    }
+
+    #[test]
+    fn merge_forbidden_tech_fids_does_not_cross_scale_catalog_tier() {
+        let mut profile = PlayerProfile::default();
+
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "Ablative Armor".to_string(),
+                tech_type: "forbidden".to_string(),
+                tier: Some(1),
+                bonuses: vec![BonusEntry {
+                    stat: "weapon_damage".to_string(),
+                    value: 0.1,
+                    operator: "add".to_string(),
+                }],
+            }],
+        };
+
+        let imported = vec![ForbiddenTechEntry {
+            fid: 1,
+            tier: 2, // disagrees with catalog.tier => no scaling
+            level: 5,
+            shard_count: 0,
+        }];
+
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &[1],
+            &imported,
+            &catalog,
+            true,
+        );
+
+        assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.1));
     }
 }

@@ -6,10 +6,11 @@
  * - Writes data/research_catalog.json (KOBAYASHI schema: rid, levels[].bonuses).
  *
  * Usage:
- *   node scripts/import_stfcspace_research.mjs [--from-upstream] [--limit N] [--rid 123,456]
+ *   node scripts/import_stfcspace_research.mjs [--from-upstream] [--limit N] [--rid 123,456] [--dump-unmapped]
  *   --from-upstream  use data/upstream/data-stfc-space/summary-research.json instead of fetch
  *   --limit N        process at most N research nodes (default: 50 for subset)
  *   --rid 123,456    only process these rids (comma-separated)
+ *   --dump-unmapped  print unmapped research buff ids (with counts) to stdout
  */
 
 import fs from "node:fs/promises";
@@ -30,6 +31,7 @@ const BASE_URL = "https://data.stfc.space";
 
 const FROM_UPSTREAM =
   process.argv.includes("--from-upstream") || process.env.USE_UPSTREAM_RESEARCH === "1";
+const DUMP_UNMAPPED = process.argv.includes("--dump-unmapped");
 
 function getArg(name, def) {
   const i = process.argv.indexOf(name);
@@ -73,17 +75,60 @@ function resolveBuffStat(buffId) {
   return null;
 }
 
+function addUnmapped(unmappedByBuffId, rid, buff) {
+  const buffId = buff && typeof buff.id === "number" ? buff.id : null;
+  if (buffId == null) return;
+  const key = String(buffId);
+  const existing = unmappedByBuffId.get(key) ?? {
+    buff_id: buffId,
+    count: 0,
+    example_rids: [],
+    value_is_percentage: null,
+    loca_id: null,
+  };
+  existing.count += 1;
+  if (existing.example_rids.length < 5 && typeof rid === "number") {
+    if (!existing.example_rids.includes(rid)) existing.example_rids.push(rid);
+  }
+  if (existing.value_is_percentage == null && typeof buff?.value_is_percentage === "boolean") {
+    existing.value_is_percentage = buff.value_is_percentage;
+  }
+  if (existing.loca_id == null && typeof buff?.loca_id === "number") {
+    existing.loca_id = buff.loca_id;
+  }
+  unmappedByBuffId.set(key, existing);
+}
+
 /**
  * Build KOBAYASHI levels from detail API response.
  * detail.buffs[].values[i] = { value, chance } for level i+1.
  * value_is_percentage true → use value as fraction (0.05 = +5%). value_is_percentage false → treat as flat or skip.
  */
-function buildLevelsFromDetail(detail) {
+function buildLevelsFromDetail(detail, opts) {
   if (!detail || !Array.isArray(detail.buffs)) return [];
-  const maxLevel = Math.min(
-    Number(detail.max_level) || 0,
-    ...detail.buffs.map((b) => (Array.isArray(b.values) ? b.values.length : 0))
+
+  if (opts?.unmappedByBuffId) {
+    for (const buff of detail.buffs) {
+      const mapping = resolveBuffStat(buff.id);
+      if (!mapping) {
+        addUnmapped(opts.unmappedByBuffId, opts.rid, buff);
+      }
+    }
+  }
+
+  const buffValuesLens = detail.buffs.map((b) =>
+    Array.isArray(b.values) ? b.values.length : 0
   );
+
+  // Upstream currently provides `levels[]` and not `max_level`.
+  // - `levels.length` is the number of visible project levels.
+  // - `buffs[].values` often contains more entries than `levels[]`; we clamp to the
+  //   smaller of these so we only emit real research levels.
+  const maxFromLevels = Array.isArray(detail.levels) ? detail.levels.length : 0;
+  const maxFromLegacyField = Number(detail.max_level) || 0;
+  const candidateMax = maxFromLegacyField || maxFromLevels || Infinity;
+
+  const maxLevel = Math.min(candidateMax, ...buffValuesLens);
   if (maxLevel <= 0) return [];
 
   const levels = [];
@@ -91,7 +136,9 @@ function buildLevelsFromDetail(detail) {
     const bonuses = [];
     for (const buff of detail.buffs) {
       const mapping = resolveBuffStat(buff.id);
-      if (!mapping) continue;
+      if (!mapping) {
+        continue;
+      }
       const values = Array.isArray(buff.values) ? buff.values : [];
       const idx = level - 1;
       if (idx < 0 || idx >= values.length) continue;
@@ -127,6 +174,8 @@ async function main() {
     // ignore
   }
 
+  const unmappedByBuffId = new Map();
+
   const limit = Math.max(0, parseInt(getArg("--limit", "50"), 10));
   const ridArg = getArg("--rid", "");
   const onlyRids = ridArg
@@ -159,7 +208,7 @@ async function main() {
       console.warn(`  [${i + 1}/${toProcess.length}] rid ${rid}: no detail`);
       continue;
     }
-    const levels = buildLevelsFromDetail(detail);
+    const levels = buildLevelsFromDetail(detail, { rid, unmappedByBuffId });
     if (levels.length === 0) continue;
     items.push({
       rid,
@@ -169,6 +218,11 @@ async function main() {
       levels,
     });
     if ((i + 1) % 10 === 0) console.log(`  Processed ${i + 1}/${toProcess.length} …`);
+  }
+
+  if (DUMP_UNMAPPED) {
+    const list = Array.from(unmappedByBuffId.values()).sort((a, b) => b.count - a.count);
+    console.log(JSON.stringify({ unmapped_buff_ids: list }, null, 2));
   }
 
   if (items.length === 0) {
