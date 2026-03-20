@@ -13,10 +13,11 @@ use crate::data::building::{
 use crate::data::building_bid_resolver::{
     load_bid_to_building_id, DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
 };
+use crate::data::forbidden_chaos;
 use crate::data::hostile::HostileRecord;
 use crate::data::import;
 use crate::data::loader::{resolve_hostile, resolve_ship};
-use crate::data::officer::Officer;
+use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
     apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
     merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
@@ -28,13 +29,21 @@ use crate::data::profile_index::{
     ROSTER_IMPORTED,
 };
 use crate::data::ship::{ShipAbility, ShipRecord};
-use crate::lcars::{index_lcars_officers_by_id, resolve_crew_to_buff_set, ResolveOptions};
+use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::CrewCandidate;
 use std::path::Path;
 
 use super::crew_resolution::{
-    build_crew_seats, hash_identifier, normalize_lookup_key, split_name_and_tier,
+    build_crew_seats, hash_identifier, index_officers_by_name, normalize_lookup_key, split_name_and_tier,
 };
+
+const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
+
+fn use_lcars_officer_source_standalone() -> bool {
+    std::env::var("KOBAYASHI_OFFICER_SOURCE")
+        .map(|v| v.eq_ignore_ascii_case("lcars"))
+        .unwrap_or(false)
+}
 
 /// Convert ship hull abilities to crew seat contexts so the combat engine evaluates them per round.
 /// Unknown timing or effect_type are skipped (no-op). Supports timing: combat_begin, round_start,
@@ -525,6 +534,138 @@ pub(crate) fn stable_seed(
         }
     }
     acc
+}
+
+/// Build scenario data for `(ship, hostile)` without a [DataRegistry] — same sources as legacy
+/// [super::simulation::run_monte_carlo_parallel] (canonical officers, profile JSON, optional LCARS).
+pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -> SharedScenarioData {
+    let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
+        .ok()
+        .map(index_officers_by_name)
+        .unwrap_or_default();
+    let pid = profile_index::resolve_profile_id_for_api(None);
+    let profile_path_str = profile_path(&pid, PROFILE_JSON)
+        .to_string_lossy()
+        .to_string();
+    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let mut profile = load_profile(&profile_path_str);
+    let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
+    if let Some(catalog) =
+        forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH)
+    {
+        let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, &catalog);
+        if !effective_fids.is_empty() {
+            merge_tech_fids_into_profile(&mut profile, &effective_fids, &catalog);
+        }
+    }
+
+    let lcars_data = if use_lcars_officer_source_standalone() {
+        load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
+            .ok()
+            .map(|officers| {
+                let by_id = index_lcars_officers_by_id(officers);
+                let name_to_id: HashMap<String, String> = by_id
+                    .values()
+                    .map(|o| (normalize_lookup_key(&o.name), o.id.clone()))
+                    .collect();
+                LcarsOfficerData { by_id, name_to_id }
+            })
+    } else {
+        None
+    };
+
+    let roster_path = profile_path(&pid, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let resolve_options = import::load_imported_roster(&roster_path)
+        .map(|entries| {
+            let officer_tiers: HashMap<String, u8> = entries
+                .into_iter()
+                .filter_map(|e| e.tier.map(|t| (e.canonical_officer_id, t)))
+                .collect();
+            ResolveOptions {
+                tier: None,
+                officer_tiers: if officer_tiers.is_empty() {
+                    None
+                } else {
+                    Some(officer_tiers)
+                },
+            }
+        })
+        .unwrap_or_default();
+
+    let ship_rec = resolve_ship(ship);
+    let hostile_rec = resolve_hostile(hostile);
+
+    let (
+        cached_defender,
+        cached_rounds,
+        cached_defender_hull,
+        cached_pierce,
+        cached_defender_mitigation,
+    ) = if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
+        let attacker_stats = ship_r.to_attacker_stats();
+        let defender_mitigation = mitigation_for_hostile(
+            hostile_r.to_defender_stats(),
+            attacker_stats,
+            hostile_r.ship_type(),
+            hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
+            hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+            hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+        );
+        let pierce = pierce_damage_through_bonus(
+            hostile_r.to_defender_stats(),
+            attacker_stats,
+            hostile_r.ship_type(),
+        );
+        let defender = Combatant {
+            id: hostile.to_string(),
+            attack: 0.0,
+            mitigation: defender_mitigation,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: hostile_r.hull_health,
+            shield_health: hostile_r.shield_health,
+            shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
+            apex_barrier: hostile_r.apex_barrier,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: hostile_r.isolytic_defense,
+            weapons: vec![],
+        };
+        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+        (
+            Some(defender),
+            Some(rounds),
+            Some(hostile_r.hull_health),
+            Some(pierce),
+            Some(defender_mitigation),
+        )
+    } else {
+        (None, None, None, None, None)
+    };
+
+    SharedScenarioData {
+        ship: ship.to_string(),
+        hostile: hostile.to_string(),
+        officer_index,
+        profile,
+        lcars_data,
+        resolve_options,
+        ship_rec,
+        hostile_rec,
+        cached_defender,
+        cached_rounds,
+        cached_defender_hull,
+        cached_pierce,
+        cached_defender_mitigation,
+    }
 }
 
 /// Build SharedScenarioData from registry (officers, ship, hostile) and load profile/roster/LCARS at call time.

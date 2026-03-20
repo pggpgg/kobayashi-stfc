@@ -26,7 +26,10 @@ pub use engine::{
     MITIGATION_CEILING, MITIGATION_FLOOR, MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP,
     SURVEY_COEFFICIENTS,
 };
-pub use damage::compute_damage_through_factor;
+pub use damage::{
+    apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
+    compute_isolytic_taken,
+};
 pub use mitigation_sensitivity::{
     default_percent_sensitivity_rows, format_sensitivity_tsv, HostileMitigationBaseline,
     MitigationSensitivityRow,

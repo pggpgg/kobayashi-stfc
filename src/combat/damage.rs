@@ -34,7 +34,7 @@ pub(crate) fn compute_crit_multiplier(
 
 /// Apex damage factor: 10000 / (10000 + effective_barrier), where barrier is adjusted by shred.
 #[inline]
-pub(crate) fn compute_apex_damage_factor(
+pub fn compute_apex_damage_factor(
     effective_apex_shred: f64,
     effective_apex_barrier: f64,
 ) -> f64 {
@@ -45,7 +45,7 @@ pub(crate) fn compute_apex_damage_factor(
 
 /// Isolytic taken from standard damage: isolytic_damage(...) / (1 + isolytic_defense).
 #[inline]
-pub(crate) fn compute_isolytic_taken(
+pub fn compute_isolytic_taken(
     damage: f64,
     effective_isolytic_damage: f64,
     effective_isolytic_defense: f64,
@@ -59,7 +59,7 @@ pub(crate) fn compute_isolytic_taken(
 /// Shield/hull split: returns (actual_shield_damage, hull_damage_this_round).
 /// When shield_remaining is 0, shield_mitigation is treated as 0 (all damage to hull).
 #[inline]
-pub(crate) fn apply_shield_hull_split(
+pub fn apply_shield_hull_split(
     damage_after_apex: f64,
     shield_mitigation: f64,
     defender_shield_remaining: f64,

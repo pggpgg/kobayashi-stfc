@@ -6,6 +6,7 @@ pub mod ranking;
 pub mod tiered;
 
 use crate::data::data_registry::DataRegistry;
+use crate::optimizer::analytical::expected_damage;
 use crate::optimizer::crew_generator::{CandidateStrategy, CrewCandidate, CrewGenerator};
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::monte_carlo::{
@@ -15,10 +16,30 @@ use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
     run_tiered_with_registry_with_progress, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
 };
+use crate::optimizer::monte_carlo::scenario::{
+    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
+    scenario_to_combat_input_from_shared, SharedScenarioData,
+};
 use crate::parallel::batch_ranges;
 
 /// Number of progress-reporting batches for optimize-with-progress (UI jobs).
 const OPTIMIZE_PROGRESS_BATCH_COUNT: usize = 40;
+
+/// Order candidates by closed-form expected hull damage (high first) so limited `max_candidates`
+/// slices and progress batches prioritize analytically stronger crews. See [crate::optimizer::analytical].
+fn sort_candidates_by_analytical_expected_damage(
+    shared: &SharedScenarioData,
+    candidates: Vec<CrewCandidate>,
+    seed: u64,
+) -> Vec<CrewCandidate> {
+    let mut indexed: Vec<(usize, CrewCandidate)> = candidates.into_iter().enumerate().collect();
+    indexed.sort_by(|(ia, ca), (ib, cb)| {
+        let sa = expected_damage(&scenario_to_combat_input_from_shared(shared, ca, seed));
+        let sb = expected_damage(&scenario_to_combat_input_from_shared(shared, cb, seed));
+        sb.total_cmp(&sa).then_with(|| ia.cmp(ib))
+    });
+    indexed.into_iter().map(|(_, c)| c).collect()
+}
 
 /// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, or tiered (scout → confirm).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -113,6 +134,16 @@ fn optimize_scenario_tiered_with_registry(
         scenario.seed,
         scenario.profile_id,
     );
+    let shared_tiered = build_shared_scenario_data_from_registry(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        None,
+        None,
+        scenario.profile_id,
+    );
+    let candidates =
+        sort_candidates_by_analytical_expected_damage(&shared_tiered, candidates, scenario.seed);
     let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
     let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
     run_tiered_with_registry_with_progress(
@@ -159,6 +190,16 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.seed,
         scenario.profile_id,
     );
+    let shared_ex = build_shared_scenario_data_from_registry(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        scenario.ship_tier,
+        scenario.ship_level,
+        scenario.profile_id,
+    );
+    let candidates =
+        sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
     let simulation_results = run_monte_carlo_parallel_with_registry(
         registry,
         scenario.ship,
@@ -182,6 +223,9 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
+    let shared = build_shared_scenario_data_standalone(scenario.ship, scenario.hostile);
+    let candidates =
+        sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
     let simulation_results = run_monte_carlo_parallel(
         scenario.ship,
         scenario.hostile,
@@ -265,6 +309,9 @@ where
             );
             let candidates =
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
+            let shared = build_shared_scenario_data_standalone(scenario.ship, scenario.hostile);
+            let candidates =
+                sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
             let total = candidates.len();
             if total == 0 {
                 return Vec::new();
@@ -357,6 +404,16 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let shared_ex = build_shared_scenario_data_from_registry(
+                registry,
+                scenario.ship,
+                scenario.hostile,
+                scenario.ship_tier,
+                scenario.ship_level,
+                scenario.profile_id,
+            );
+            let candidates =
+                sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
             let total = candidates.len();
             if total == 0 {
                 return Vec::new();

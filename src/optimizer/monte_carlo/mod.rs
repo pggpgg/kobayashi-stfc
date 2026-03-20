@@ -5,7 +5,7 @@
 //! - [simulation]: run_monte_carlo* and SimulationResult.
 
 mod crew_resolution;
-mod scenario;
+pub(crate) mod scenario;
 mod simulation;
 
 pub use crew_resolution::crew_from_officer_names;
