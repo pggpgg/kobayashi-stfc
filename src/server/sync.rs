@@ -5,6 +5,7 @@ use axum::http::StatusCode;
 use crate::data::import;
 use crate::data::profile_index::{effective_profile_id, load_profile_index, profile_id_by_sync_token, profile_path,
     FORBIDDEN_TECH_IMPORTED, ROSTER_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED};
+use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use chrono::{TimeZone, Utc};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -558,6 +559,13 @@ pub fn sync_status_payload() -> (StatusCode, String) {
     let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
     let forbidden_tech_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
 
+    let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
+    let research_catalog_loaded = research_catalog.is_some();
+    let research_catalog_item_count = research_catalog
+        .as_ref()
+        .map(|c| c.items.len() as u32)
+        .unwrap_or(0);
+
     let body = serde_json::json!({
         "roster_path": roster_path,
         "last_modified_iso": last_modified_iso(&roster_path),
@@ -569,6 +577,8 @@ pub fn sync_status_payload() -> (StatusCode, String) {
         "ships_last_modified_iso": last_modified_iso(&ships_path),
         "forbidden_tech_path": forbidden_tech_path,
         "forbidden_tech_last_modified_iso": last_modified_iso(&forbidden_tech_path),
+        "research_catalog_loaded": research_catalog_loaded,
+        "research_catalog_item_count": research_catalog_item_count,
     });
     let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
         r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string()
