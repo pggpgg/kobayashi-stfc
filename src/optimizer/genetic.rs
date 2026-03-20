@@ -544,6 +544,7 @@ pub fn run_genetic_optimizer(
             &population,
             config.sims_per_eval,
             seed.wrapping_add(generation as u64),
+            config.allow_duplicate_officers,
         );
         let fitness: Vec<f32> = sim_results.iter().map(fitness_from_result).collect();
 
@@ -632,7 +633,14 @@ pub fn run_genetic_optimizer_ranked(
     if top.is_empty() {
         return Vec::new();
     }
-    let final_results = run_monte_carlo_parallel(ship, hostile, &top, final_sims.max(1), seed);
+    let final_results = run_monte_carlo_parallel(
+        ship,
+        hostile,
+        &top,
+        final_sims.max(1),
+        seed,
+        config.allow_duplicate_officers,
+    );
     rank_results(final_results)
 }
 

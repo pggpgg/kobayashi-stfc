@@ -28,6 +28,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     top_k: usize,
     seed: u64,
     profile_id: Option<&str>,
+    allow_duplicate_officers: bool,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
@@ -62,6 +63,7 @@ where
             scout_sims,
             seed,
             profile_id,
+            allow_duplicate_officers,
         );
         scout_results.extend(batch_results);
         if !on_progress(end as u32, total_work as u32) {
@@ -93,6 +95,7 @@ where
         full_sims,
         seed.wrapping_add(1), // distinct seed for confirmation phase
         profile_id,
+        allow_duplicate_officers,
     );
 
     if !on_progress(total_work as u32, total_work as u32) {

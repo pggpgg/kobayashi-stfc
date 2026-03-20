@@ -111,6 +111,7 @@ pub fn run_optimize(
             sims as usize,
             seed,
             profile_id,
+            request.allow_duplicate_officers.unwrap_or(false),
         )
     } else {
         Vec::new()
@@ -352,6 +353,7 @@ pub fn start_optimize_job(
                     sims as usize,
                     seed,
                     profile_id_owned.as_deref(),
+                    allow_duplicate_officers,
                 );
                 if let Ok(mut map) = optimize_jobs().lock() {
                     if let Some(state) = map.get_mut(&job_id_clone) {

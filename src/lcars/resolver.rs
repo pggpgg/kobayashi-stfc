@@ -1,6 +1,6 @@
 //! Resolves parsed LCARS abilities into a [BuffSet] (static buffs + crew config for the engine).
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
@@ -10,12 +10,26 @@ use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
 
 /// Options when resolving officer abilities (e.g. officer tier for scaling).
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct ResolveOptions {
     /// Fallback officer tier (1-based) when per-officer tier is not set.
     pub tier: Option<u8>,
     /// Per-officer tier (canonical_officer_id → tier). When set, each officer uses their tier for scaling (base + per_rank, chance_at_rank).
     pub officer_tiers: Option<HashMap<String, u8>>,
+    /// When `false`, only the first slot assignment per officer id contributes (captain, then each bridge slot in order, then below decks).
+    /// Should match [crate::combat::SimulationConfig::allow_duplicate_officers] for consistent static buffs, proc, and crew effects.
+    pub allow_duplicate_officers: bool,
+}
+
+impl Default for ResolveOptions {
+    fn default() -> Self {
+        Self {
+            tier: None,
+            officer_tiers: None,
+            // Preserve historical resolver behavior when options are defaulted (CLI debug, unit tests).
+            allow_duplicate_officers: true,
+        }
+    }
 }
 
 impl ResolveOptions {
@@ -344,6 +358,7 @@ pub fn resolve_officer_ability(
     seat: CrewSeat,
     class: AbilityClass,
     options: &ResolveOptions,
+    contribution_batch: u32,
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
     for effect in &ability.effects {
@@ -363,6 +378,8 @@ pub fn resolve_officer_ability(
                     condition,
                 },
                 boosted: false,
+                officer_id: Some(officer.id.clone()),
+                contribution_batch,
             });
         }
     }
@@ -380,12 +397,19 @@ pub fn resolve_crew_to_buff_set(
     officers: &HashMap<String, LcarsOfficer>,
     options: &ResolveOptions,
 ) -> BuffSet {
+    let allow_dup = options.allow_duplicate_officers;
     let mut static_buffs: HashMap<String, f64> = HashMap::new();
     let mut seats: Vec<CrewSeatContext> = Vec::new();
     let mut proc_chance = 0.0_f64;
     let mut proc_multiplier = 1.0_f64;
+    let mut next_batch: u32 = 0;
+    let mut seen_slots: HashSet<String> = HashSet::new();
 
-    let mut add_ability = |officer: &LcarsOfficer, ability: &LcarsAbility, seat: CrewSeat, class: AbilityClass| {
+    let mut add_ability = |officer: &LcarsOfficer,
+                           ability: &LcarsAbility,
+                           seat: CrewSeat,
+                           class: AbilityClass,
+                           contribution_batch: u32| {
         let officer_tier = options.tier_for(&officer.id);
         for effect in &ability.effects {
             if effect.effect_type != "stat_modify"
@@ -409,43 +433,52 @@ pub fn resolve_crew_to_buff_set(
                 }
             }
         }
-        let contexts = resolve_officer_ability(officer, ability, seat, class, options);
+        let contexts =
+            resolve_officer_ability(officer, ability, seat, class, options, contribution_batch);
         seats.extend(contexts);
     };
 
     if let Some(o) = officers.get(captain_id) {
+        seen_slots.insert(captain_id.to_string());
         if let Some(ref a) = o.captain_ability {
-            add_ability(o, a, CrewSeat::Captain, AbilityClass::CaptainManeuver);
-        }
-    }
-    for id in bridge {
-        if let Some(o) = officers.get(id.as_str()) {
-            if let Some(ref a) = o.bridge_ability {
-                add_ability(o, a, CrewSeat::Bridge, AbilityClass::BridgeAbility);
-            }
-        }
-    }
-    for id in below_decks {
-        if let Some(o) = officers.get(id.as_str()) {
-            if let Some(ref a) = o.below_decks_ability {
-                add_ability(o, a, CrewSeat::BelowDeck, AbilityClass::BelowDeck);
-            }
+            let b = next_batch;
+            next_batch = next_batch.saturating_add(1);
+            add_ability(o, a, CrewSeat::Captain, AbilityClass::CaptainManeuver, b);
         }
     }
 
-    for (_officer, ability) in [captain_id]
-        .iter()
-        .filter_map(|id| officers.get(*id).and_then(|o| o.captain_ability.as_ref().map(|a| (o, a))))
-        .chain(bridge.iter().filter_map(|id| {
-            officers.get(id.as_str()).and_then(|o| o.bridge_ability.as_ref().map(|a| (o, a)))
-        }))
-        .chain(below_decks.iter().filter_map(|id| {
-            officers
-                .get(id.as_str())
-                .and_then(|o| o.below_decks_ability.as_ref().map(|a| (o, a)))
-        }))
-    {
-        let officer_tier = options.tier_for(&_officer.id);
+    for id in bridge {
+        let Some(o) = officers.get(id.as_str()) else {
+            continue;
+        };
+        if !allow_dup && seen_slots.contains(id.as_str()) {
+            continue;
+        }
+        seen_slots.insert(id.clone());
+        if let Some(ref a) = o.bridge_ability {
+            let b = next_batch;
+            next_batch = next_batch.saturating_add(1);
+            add_ability(o, a, CrewSeat::Bridge, AbilityClass::BridgeAbility, b);
+        }
+    }
+
+    for id in below_decks {
+        let Some(o) = officers.get(id.as_str()) else {
+            continue;
+        };
+        if !allow_dup && seen_slots.contains(id.as_str()) {
+            continue;
+        }
+        seen_slots.insert(id.clone());
+        if let Some(ref a) = o.below_decks_ability {
+            let b = next_batch;
+            next_batch = next_batch.saturating_add(1);
+            add_ability(o, a, CrewSeat::BelowDeck, AbilityClass::BelowDeck, b);
+        }
+    }
+
+    let mut accumulate_proc = |officer: &LcarsOfficer, ability: &LcarsAbility| {
+        let officer_tier = options.tier_for(&officer.id);
         for effect in &ability.effects {
             if effect.effect_type == "extra_attack" {
                 let chance = effect
@@ -459,6 +492,38 @@ pub fn resolve_crew_to_buff_set(
                     proc_multiplier = mult;
                 }
             }
+        }
+    };
+
+    let mut seen_proc: HashSet<String> = HashSet::new();
+    if let Some(o) = officers.get(captain_id) {
+        seen_proc.insert(captain_id.to_string());
+        if let Some(ref a) = o.captain_ability {
+            accumulate_proc(o, a);
+        }
+    }
+    for id in bridge {
+        let Some(o) = officers.get(id.as_str()) else {
+            continue;
+        };
+        if !allow_dup && seen_proc.contains(id.as_str()) {
+            continue;
+        }
+        seen_proc.insert(id.clone());
+        if let Some(ref a) = o.bridge_ability {
+            accumulate_proc(o, a);
+        }
+    }
+    for id in below_decks {
+        let Some(o) = officers.get(id.as_str()) else {
+            continue;
+        };
+        if !allow_dup && seen_proc.contains(id.as_str()) {
+            continue;
+        }
+        seen_proc.insert(id.clone());
+        if let Some(ref a) = o.below_decks_ability {
+            accumulate_proc(o, a);
         }
     }
 
@@ -518,13 +583,20 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
+            ..Default::default()
         };
         let ability_iso = LcarsAbility {
             name: "iso".to_string(),
             effects: vec![lcars_effect_stat_modify("isolytic_damage", 0.15, "on_round_start")],
         };
-        let contexts =
-            resolve_officer_ability(&officer, &ability_iso, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        let contexts = resolve_officer_ability(
+            &officer,
+            &ability_iso,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &options,
+            0,
+        );
         assert_eq!(contexts.len(), 1);
         assert!(matches!(contexts[0].ability.effect, AbilityEffect::IsolyticDamageBonus(v) if (v - 0.15).abs() < 1e-12));
 
@@ -532,8 +604,14 @@ mod tests {
             name: "def".to_string(),
             effects: vec![lcars_effect_stat_modify("isolytic_defense", 20.0, "on_round_start")],
         };
-        let contexts_def =
-            resolve_officer_ability(&officer, &ability_def, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        let contexts_def = resolve_officer_ability(
+            &officer,
+            &ability_def,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &options,
+            0,
+        );
         assert_eq!(contexts_def.len(), 1);
         assert!(matches!(contexts_def[0].ability.effect, AbilityEffect::IsolyticDefenseBonus(v) if (v - 20.0).abs() < 1e-12));
 
@@ -541,8 +619,14 @@ mod tests {
             name: "shield".to_string(),
             effects: vec![lcars_effect_stat_modify("shield_mitigation", 0.05, "on_combat_start")],
         };
-        let contexts_shield =
-            resolve_officer_ability(&officer, &ability_shield, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        let contexts_shield = resolve_officer_ability(
+            &officer,
+            &ability_shield,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &options,
+            0,
+        );
         assert_eq!(contexts_shield.len(), 1);
         assert!(matches!(contexts_shield[0].ability.effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.05).abs() < 1e-12));
 
@@ -550,8 +634,14 @@ mod tests {
             name: "cascade".to_string(),
             effects: vec![lcars_effect_stat_modify("isolytic_cascade_damage", 0.2, "on_round_start")],
         };
-        let contexts_cascade =
-            resolve_officer_ability(&officer, &ability_cascade, CrewSeat::Bridge, AbilityClass::BridgeAbility, &options);
+        let contexts_cascade = resolve_officer_ability(
+            &officer,
+            &ability_cascade,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &options,
+            0,
+        );
         assert_eq!(contexts_cascade.len(), 1);
         assert!(matches!(contexts_cascade[0].ability.effect, AbilityEffect::IsolyticCascadeDamageBonus(v) if (v - 0.2).abs() < 1e-12));
     }
@@ -567,6 +657,7 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
+            ..Default::default()
         };
         let buff_set = resolve_crew_to_buff_set(
             "khan",
@@ -598,6 +689,7 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(3),
             officer_tiers: Some(officer_tiers),
+            ..Default::default()
         };
         assert_eq!(options.tier_for("officer_a"), Some(1));
         assert_eq!(options.tier_for("officer_b"), Some(5));
@@ -605,6 +697,7 @@ mod tests {
         let options_no_fallback = ResolveOptions {
             tier: None,
             officer_tiers: Some([("x".to_string(), 2u8)].into_iter().collect()),
+            ..Default::default()
         };
         assert_eq!(options_no_fallback.tier_for("x"), Some(2));
         assert_eq!(options_no_fallback.tier_for("y"), None);
@@ -652,10 +745,12 @@ mod tests {
         let options_tier1 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 1u8)].into_iter().collect()),
+            ..Default::default()
         };
         let options_tier5 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 5u8)].into_iter().collect()),
+            ..Default::default()
         };
         let buff_tier1 = resolve_crew_to_buff_set(
             "tiered_officer",
@@ -735,6 +830,7 @@ mod tests {
             CrewSeat::Bridge,
             AbilityClass::BridgeAbility,
             &ResolveOptions::default(),
+            0,
         );
         assert_eq!(contexts.len(), 2);
         assert_eq!(contexts[0].ability.timing, TimingWindow::AttackPhase);
@@ -811,6 +907,7 @@ mod tests {
             CrewSeat::Bridge,
             AbilityClass::BridgeAbility,
             &ResolveOptions::default(),
+            0,
         );
         assert_eq!(contexts.len(), 2);
         assert!(matches!(

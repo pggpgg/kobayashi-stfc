@@ -70,6 +70,7 @@ fn bench_simulator(c: &mut Criterion) {
                 rounds,
                 seed: 7,
                 trace_mode: TraceMode::Off,
+                allow_duplicate_officers: false,
             };
             b.iter_batched(
                 || (attacker.clone(), defender.clone()),
@@ -92,6 +93,7 @@ fn bench_simulator(c: &mut Criterion) {
                 rounds,
                 seed: 7,
                 trace_mode: TraceMode::Off,
+                allow_duplicate_officers: false,
             };
             b.iter_batched(
                 || (attacker.clone(), defender.clone()),
@@ -114,6 +116,7 @@ fn bench_simulator(c: &mut Criterion) {
                 rounds,
                 seed: 7,
                 trace_mode: TraceMode::Off,
+                allow_duplicate_officers: false,
             };
             b.iter_batched(
                 || (attacker.clone(), defender.clone()),

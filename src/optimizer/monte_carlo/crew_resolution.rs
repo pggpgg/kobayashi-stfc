@@ -45,17 +45,23 @@ pub(crate) fn build_crew_seats(
     officers_by_name: &HashMap<String, Officer>,
 ) -> Vec<CrewSeatContext> {
     let mut seats = Vec::with_capacity(1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS);
+    let mut next_batch: u32 = 0;
+
+    let cap_batch = next_batch;
+    next_batch = next_batch.saturating_add(1);
     seats.push(seat_from_officer(
         &candidate.captain,
         CrewSeat::Captain,
         AbilityClass::CaptainManeuver,
         officers_by_name,
+        cap_batch,
     ));
     seats.extend(apex_ability_contexts(
         &candidate.captain,
         CrewSeat::Captain,
         AbilityClass::CaptainManeuver,
         officers_by_name,
+        cap_batch,
     ));
     for i in 0..BRIDGE_SLOTS {
         let name = candidate
@@ -67,17 +73,21 @@ pub(crate) fn build_crew_seats(
         if name.is_empty() {
             continue;
         }
+        let b = next_batch;
+        next_batch = next_batch.saturating_add(1);
         seats.push(seat_from_officer(
             name,
             CrewSeat::Bridge,
             AbilityClass::BridgeAbility,
             officers_by_name,
+            b,
         ));
         seats.extend(apex_ability_contexts(
             name,
             CrewSeat::Bridge,
             AbilityClass::BridgeAbility,
             officers_by_name,
+            b,
         ));
     }
     for i in 0..BELOW_DECKS_SLOTS {
@@ -90,17 +100,21 @@ pub(crate) fn build_crew_seats(
         if name.is_empty() {
             continue;
         }
+        let b = next_batch;
+        next_batch = next_batch.saturating_add(1);
         seats.push(seat_from_officer(
             name,
             CrewSeat::BelowDeck,
             AbilityClass::BelowDeck,
             officers_by_name,
+            b,
         ));
         seats.extend(apex_ability_contexts(
             name,
             CrewSeat::BelowDeck,
             AbilityClass::BelowDeck,
             officers_by_name,
+            b,
         ));
     }
     seats
@@ -111,10 +125,12 @@ fn seat_from_officer(
     seat: CrewSeat,
     class: AbilityClass,
     officers_by_name: &HashMap<String, Officer>,
+    contribution_batch: u32,
 ) -> CrewSeatContext {
     let hash = hash_identifier(id);
     let (lookup_name, tier) = split_name_and_tier(id);
     let officer = officers_by_name.get(&normalize_lookup_key(&lookup_name));
+    let officer_id = officer.map(|o| o.id.clone());
     let morale_chance = officer.and_then(|officer| {
         officer
             .abilities
@@ -219,6 +235,8 @@ fn seat_from_officer(
             condition: None,
         },
         boosted: hash % 5 == 0,
+        officer_id,
+        contribution_batch,
     }
 }
 
@@ -285,6 +303,7 @@ fn apex_ability_contexts(
     seat: CrewSeat,
     class: AbilityClass,
     officers_by_name: &HashMap<String, Officer>,
+    contribution_batch: u32,
 ) -> Vec<CrewSeatContext> {
     let (lookup_name, tier) = split_name_and_tier(officer_id);
     let Some(officer) = officers_by_name.get(&normalize_lookup_key(&lookup_name)) else {
@@ -319,6 +338,8 @@ fn apex_ability_contexts(
                 condition: None,
             },
             boosted: false,
+            officer_id: Some(officer.id.clone()),
+            contribution_batch,
         });
     }
     out
@@ -355,6 +376,7 @@ mod tests {
             CrewSeat::BelowDeck,
             AbilityClass::BelowDeck,
             &officers,
+            0,
         );
 
         assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
@@ -387,6 +409,7 @@ mod tests {
             CrewSeat::BelowDeck,
             AbilityClass::BelowDeck,
             &officers,
+            0,
         );
 
         assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
@@ -425,6 +448,7 @@ mod tests {
             CrewSeat::Bridge,
             AbilityClass::BridgeAbility,
             &officers,
+            0,
         );
         assert_eq!(lorca.ability.timing, TimingWindow::RoundStart);
         assert!(matches!(
@@ -459,6 +483,7 @@ mod tests {
             CrewSeat::Captain,
             AbilityClass::CaptainManeuver,
             &officers,
+            0,
         );
         assert_eq!(gorkon.ability.timing, TimingWindow::AttackPhase);
         assert!(matches!(
@@ -493,6 +518,7 @@ mod tests {
             CrewSeat::BelowDeck,
             AbilityClass::BelowDeck,
             &officers,
+            0,
         );
         assert_eq!(belanna.ability.timing, TimingWindow::RoundStart);
         assert!(matches!(
@@ -531,6 +557,7 @@ mod tests {
             CrewSeat::Captain,
             AbilityClass::CaptainManeuver,
             &officers,
+            0,
         );
 
         assert_eq!(nero.ability.timing, TimingWindow::AttackPhase);
@@ -569,6 +596,7 @@ mod tests {
             CrewSeat::BelowDeck,
             AbilityClass::BelowDeck,
             &officers,
+            0,
         );
 
         assert!(

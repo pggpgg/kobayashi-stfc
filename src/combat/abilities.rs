@@ -152,11 +152,94 @@ pub struct Ability {
     pub condition: Option<AbilityCondition>,
 }
 
+/// Sentinel batch id: legacy or non-officer contexts group by consecutive matching [CrewSeatContext::officer_id].
+pub const NO_EXPLICIT_CONTRIBUTION_BATCH: u32 = u32::MAX;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct CrewSeatContext {
     pub seat: CrewSeat,
     pub ability: Ability,
     pub boosted: bool,
+    /// Canonical officer id when this row comes from an officer slot (LCARS / scenario resolution).
+    pub officer_id: Option<String>,
+    /// Rows from one officer **slot** share the same batch (captain, one bridge slot, one below slot).
+    /// Use [NO_EXPLICIT_CONTRIBUTION_BATCH] for ship abilities or hand-built tests without batch metadata.
+    pub contribution_batch: u32,
+}
+
+impl CrewSeatContext {
+    /// Crew row without officer/batch metadata (tests, ship abilities, legacy name-based crew).
+    pub fn legacy(seat: CrewSeat, ability: Ability, boosted: bool) -> Self {
+        Self {
+            seat,
+            ability,
+            boosted,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }
+    }
+}
+
+/// Apply duplicate-officer suppression for a pre-built crew (defense in depth vs LCARS resolution).
+///
+/// When `allow_duplicate_officers` is true, returns a clone of `crew`. When false, drops later groups
+/// that share an `officer_id` with an earlier group. Grouping uses `contribution_batch` when set;
+/// otherwise consecutive rows with the same `officer_id` form one group. Rows with `officer_id: None`
+/// are never dropped by this pass.
+pub fn apply_duplicate_officer_policy(
+    crew: &CrewConfiguration,
+    allow_duplicate_officers: bool,
+) -> CrewConfiguration {
+    if allow_duplicate_officers || crew.seats.is_empty() {
+        return crew.clone();
+    }
+
+    let seats = &crew.seats;
+    let mut out = Vec::with_capacity(seats.len());
+    let mut seen_officers: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut i = 0usize;
+
+    while i < seats.len() {
+        let batch = seats[i].contribution_batch;
+        let j = if batch != NO_EXPLICIT_CONTRIBUTION_BATCH {
+            let mut j = i + 1;
+            while j < seats.len() && seats[j].contribution_batch == batch {
+                j += 1;
+            }
+            j
+        } else if seats[i].officer_id.is_none() {
+            i + 1
+        } else {
+            let oid = seats[i].officer_id.as_deref().unwrap();
+            let mut j = i + 1;
+            while j < seats.len()
+                && seats[j].contribution_batch == NO_EXPLICIT_CONTRIBUTION_BATCH
+                && seats[j].officer_id.as_deref() == Some(oid)
+            {
+                j += 1;
+            }
+            j
+        };
+
+        let group = &seats[i..j];
+        let include = match group.first().and_then(|s| s.officer_id.as_deref()) {
+            Some(oid) => {
+                if seen_officers.contains(oid) {
+                    false
+                } else {
+                    seen_officers.insert(oid.to_string());
+                    true
+                }
+            }
+            None => true,
+        };
+        if include {
+            out.extend_from_slice(group);
+        }
+        i = j;
+    }
+
+    CrewConfiguration { seats: out }
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]

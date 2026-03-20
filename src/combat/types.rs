@@ -108,6 +108,12 @@ pub struct SimulationConfig {
     pub rounds: u32,
     pub seed: u64,
     pub trace_mode: TraceMode,
+    /// When `true`, every crew slot may contribute even if the same canonical officer id appears
+    /// more than once (compatibility with observed duplicate-slot behavior). When `false`, only
+    /// the first slot assignment per officer id applies (captain, then bridge in order, then below;
+    /// mirrored in [crate::lcars::resolve_crew_to_buff_set] when [crate::lcars::ResolveOptions::allow_duplicate_officers] is false).
+    #[serde(default)]
+    pub allow_duplicate_officers: bool,
 }
 
 impl Default for SimulationConfig {
@@ -116,6 +122,7 @@ impl Default for SimulationConfig {
             rounds: 3,
             seed: 7,
             trace_mode: TraceMode::Off,
+            allow_duplicate_officers: false,
         }
     }
 }

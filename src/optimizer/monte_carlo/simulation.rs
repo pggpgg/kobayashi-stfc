@@ -27,8 +27,17 @@ pub fn run_monte_carlo(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
+    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
-    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, false)
+    run_monte_carlo_with_parallelism(
+        ship,
+        hostile,
+        candidates,
+        iterations,
+        seed,
+        false,
+        allow_duplicate_officers,
+    )
 }
 
 /// Like [run_monte_carlo] but distributes candidates across all CPU cores via Rayon.
@@ -39,8 +48,17 @@ pub fn run_monte_carlo_parallel(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
+    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
-    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, true)
+    run_monte_carlo_with_parallelism(
+        ship,
+        hostile,
+        candidates,
+        iterations,
+        seed,
+        true,
+        allow_duplicate_officers,
+    )
 }
 
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
@@ -55,9 +73,17 @@ pub fn run_monte_carlo_parallel_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
+    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
-    let shared =
-        build_shared_scenario_data_from_registry(registry, ship, hostile, ship_tier, ship_level, profile_id);
+    let shared = build_shared_scenario_data_from_registry(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        allow_duplicate_officers,
+    );
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, true)
 }
 
@@ -73,9 +99,17 @@ pub fn run_monte_carlo_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
+    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
-    let shared =
-        build_shared_scenario_data_from_registry(registry, ship, hostile, ship_tier, ship_level, profile_id);
+    let shared = build_shared_scenario_data_from_registry(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        allow_duplicate_officers,
+    );
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, false)
 }
 
@@ -86,8 +120,9 @@ fn run_monte_carlo_with_parallelism(
     iterations: usize,
     seed: u64,
     parallel: bool,
+    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_standalone(ship, hostile);
+    let shared = build_shared_scenario_data_standalone(ship, hostile, allow_duplicate_officers);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel)
 }
 
@@ -115,6 +150,7 @@ pub(crate) fn run_monte_carlo_with_shared(
                     rounds: input.rounds,
                     seed: iteration_seed,
                     trace_mode: TraceMode::Off,
+                    allow_duplicate_officers: input.allow_duplicate_officers,
                 },
                 &input.crew,
             );
