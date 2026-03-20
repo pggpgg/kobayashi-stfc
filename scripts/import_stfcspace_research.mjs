@@ -2,8 +2,12 @@
  * Import research catalog from data.stfc.space for KOBAYASHI.
  * - Reads data/upstream/data-stfc-space/summary-research.json (or fetches research/summary.json).
  * - Fetches research/{id}.json for each node to get per-level buff values.
- * - Maps buff ids to engine stats via RESEARCH_BUFF_MAPPING or data/buildings/buff_id_to_stat.json.
+ * - Maps buff ids to engine stats: RESEARCH_BUFF_MAPPING, data/research/buff_id_to_stat.json,
+ *   data/buildings/buff_id_to_stat.json, then data/research/loca_id_to_stat.json via buff.loca_id.
  * - Writes data/research_catalog.json (KOBAYASHI schema: rid, levels[].bonuses).
+ *
+ * Example (combat subset matching repo catalog intent):
+ *   node scripts/import_stfcspace_research.mjs --from-upstream --rid 2232304457,1914017763,2207112158,2488759501,3666105341,3016411865,3814450797,1240350440,1016099357
  *
  * Usage:
  *   node scripts/import_stfcspace_research.mjs [--from-upstream] [--limit N] [--rid 123,456] [--dump-unmapped]
@@ -27,6 +31,18 @@ const UPSTREAM_SUMMARY_PATH = path.join(
   "summary-research.json"
 );
 const BUFF_ID_TO_STAT_PATH = path.join(REPO_ROOT, "data", "buildings", "buff_id_to_stat.json");
+const RESEARCH_BUFF_ID_TO_STAT_PATH = path.join(
+  REPO_ROOT,
+  "data",
+  "research",
+  "buff_id_to_stat.json"
+);
+const RESEARCH_LOCA_ID_TO_STAT_PATH = path.join(
+  REPO_ROOT,
+  "data",
+  "research",
+  "loca_id_to_stat.json"
+);
 const BASE_URL = "https://data.stfc.space";
 
 const FROM_UPSTREAM =
@@ -42,12 +58,12 @@ function getArg(name, def) {
 
 // Buff id → { stat, operator } for research. Reuse building combat stats where same buff appears.
 // value_is_percentage: true → value from API is already fractional (0.05 = 5%); false → may be flat (e.g. attack).
-const RESEARCH_BUFF_MAPPING = {
-  // Add combat-relevant buff ids as we confirm from translations or game data.
-  // Example: 434613423 might be attack/weapon - verify from loca_id/translations.
-};
+// Inline overrides (highest priority). Prefer data/research/buff_id_to_stat.json for repo-tracked ids.
+const RESEARCH_BUFF_MAPPING = {};
 
 let commonBuffNormalization = {};
+let researchBuffById = {};
+let locaIdToStat = {};
 
 async function loadSummary() {
   if (FROM_UPSTREAM) {
@@ -67,11 +83,37 @@ async function fetchResearchDetail(rid) {
   return res.json();
 }
 
-function resolveBuffStat(buffId) {
-  const known = RESEARCH_BUFF_MAPPING[buffId];
-  if (known) return known;
-  const stat = commonBuffNormalization[buffId];
-  if (stat) return { stat: typeof stat === "string" ? stat : stat.stat ?? stat, operator: "add" };
+function statEntryFromJsonValue(v, defaultOp) {
+  if (v == null) return null;
+  if (typeof v === "string") return { stat: v, operator: defaultOp ?? "add" };
+  if (typeof v === "object" && typeof v.stat === "string") {
+    return { stat: v.stat, operator: v.operator ?? defaultOp ?? "add" };
+  }
+  return null;
+}
+
+function resolveBuffStat(buff) {
+  if (!buff || typeof buff.id !== "number") return null;
+  const buffId = buff.id;
+  const key = String(buffId);
+
+  const inline = RESEARCH_BUFF_MAPPING[buffId];
+  if (inline) {
+    const e = statEntryFromJsonValue(inline, "add");
+    if (e) return e;
+  }
+
+  const researchExplicit = statEntryFromJsonValue(researchBuffById[key], "add");
+  if (researchExplicit) return researchExplicit;
+
+  const fromBuildings = statEntryFromJsonValue(commonBuffNormalization[key], "add");
+  if (fromBuildings) return fromBuildings;
+
+  if (typeof buff.loca_id === "number") {
+    const fromLoca = statEntryFromJsonValue(locaIdToStat[String(buff.loca_id)], "add");
+    if (fromLoca) return fromLoca;
+  }
+
   return null;
 }
 
@@ -109,7 +151,7 @@ function buildLevelsFromDetail(detail, opts) {
 
   if (opts?.unmappedByBuffId) {
     for (const buff of detail.buffs) {
-      const mapping = resolveBuffStat(buff.id);
+      const mapping = resolveBuffStat(buff);
       if (!mapping) {
         addUnmapped(opts.unmappedByBuffId, opts.rid, buff);
       }
@@ -135,7 +177,7 @@ function buildLevelsFromDetail(detail, opts) {
   for (let level = 1; level <= maxLevel; level += 1) {
     const bonuses = [];
     for (const buff of detail.buffs) {
-      const mapping = resolveBuffStat(buff.id);
+      const mapping = resolveBuffStat(buff);
       if (!mapping) {
         continue;
       }
@@ -154,7 +196,11 @@ function buildLevelsFromDetail(detail, opts) {
         // Heuristic: treat small numbers as fractional (e.g. 0.05), large as flat.
         if (value < 10) value = value; // could be fractional already
       }
-      bonuses.push({ stat: mapping.stat, value, operator: mapping.operator ?? "add" });
+      bonuses.push({
+        stat: mapping.stat,
+        value,
+        operator: mapping.operator ?? "add",
+      });
     }
     if (bonuses.length > 0) {
       levels.push({ level, bonuses });
@@ -169,6 +215,26 @@ async function main() {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       commonBuffNormalization = { ...parsed };
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  try {
+    const raw = await fs.readFile(RESEARCH_BUFF_ID_TO_STAT_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      researchBuffById = { ...parsed };
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  try {
+    const raw = await fs.readFile(RESEARCH_LOCA_ID_TO_STAT_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      locaIdToStat = { ...parsed };
     }
   } catch (_) {
     // ignore
@@ -227,7 +293,9 @@ async function main() {
 
   if (items.length === 0) {
     console.log("No research records with mapped combat buffs; leaving existing catalog unchanged.");
-    console.log("Add buff id → stat mappings in RESEARCH_BUFF_MAPPING or data/buildings/buff_id_to_stat.json.");
+    console.log(
+      "Add mappings: data/research/loca_id_to_stat.json (by loca_id), data/research/buff_id_to_stat.json, data/buildings/buff_id_to_stat.json, or RESEARCH_BUFF_MAPPING in this script."
+    );
     return;
   }
   const catalog = {
