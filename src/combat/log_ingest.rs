@@ -29,6 +29,10 @@ pub struct IngestedEvent {
     pub phase: String,
     #[serde(default)]
     pub values: serde_json::Map<String, Value>,
+    /// Sub-round (weapon) index when the simulator uses multi-weapon resolution.
+    /// Omitted for round-level events in the exported log format.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub weapon_index: Option<u32>,
 }
 
 /// Parse a combat log from JSON string (format per docs/combat_log_format.md).
@@ -71,7 +75,7 @@ pub fn ingested_events_to_combat_events(events: &[IngestedEvent]) -> Vec<CombatE
             phase: e.phase.clone(),
             source: EventSource::default(),
             values: e.values.clone(),
-            weapon_index: None,
+            weapon_index: e.weapon_index,
         })
         .collect()
 }

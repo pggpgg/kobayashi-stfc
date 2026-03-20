@@ -59,7 +59,7 @@ Forbidden tech is **partially implemented**. The following is in place; remainin
 ### Partially implemented / gaps
 
 - **Catalog `fid`:** Sync-based merge only matches catalog entries that have a `fid`. The mapping from game `fid` (e.g. 919296) to catalog names is not in-repo; it requires a community/game source (e.g. data.stfc.space or stfc-mod) or manual mapping. Until catalog items have the correct `fid`, synced FT may not apply.
-- **Level/tier:** `ForbiddenTechEntry` has `level` and `tier`, but the merge does **not** use them: it applies the catalog record’s bonuses in full. Whether and how in-game FT scales by level/tier is unspecified; confirm before adding per-level bonuses to the catalog (e.g. research-style levels).
+- **Level/tier:** `ForbiddenTechEntry` includes `level` and `tier`. The merge can optionally scale catalog bonuses by `tier`/`level` when `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` is set (linear scaling within a tier; conservative behavior when catalog tier disagrees with synced tier). The exact in-game scaling is still uncertain, so scaling remains opt-in until confirmed.
 - **Combat timing:** DESIGN and [COMBAT_FEATURES_FROM_STFC_TOOLBOX.md](COMBAT_FEATURES_FROM_STFC_TOOLBOX.md) describe “forbidden tech + chaos tech buffs” as applying **per sub-round**. Current code applies FT only at **profile merge** (pre-combat). A per-sub-round FT phase would be a separate engine change; left as future unless we have evidence the game does it that way.
 
 ---

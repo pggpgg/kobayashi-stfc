@@ -436,8 +436,8 @@ struct FightResult {
 | Sims/sec, single core | 2–5 million |
 | Sims/sec, 16 cores | 30–80 million |
 | Full exhaustive sweep (current: all combos, user sim count) | ~3 min typical |
-| Phase 1 scouting only (planned, tiered) | ~8 seconds |
-| Phase 1 + Phase 2 (planned, tiered) | ~16 seconds |
+| Phase 1 scouting only (tiered strategy) | ~8 seconds |
+| Phase 1 + Phase 2 (tiered strategy) | ~16 seconds |
 
 ---
 
@@ -514,7 +514,7 @@ Modeling every individual research node is a huge data entry burden and may not 
 
 ## 6. Optimizer Strategies
 
-**Current implementation:** The optimizer supports two strategies. **Exhaustive** (default): full candidate set from the crew generator, Monte Carlo, then rank. **Genetic:** implemented in `src/optimizer/genetic.rs`; use for large search spaces. Select via API request field `strategy: "genetic"` (or omit for exhaustive). Tiered simulation (scouting → confirmation) remains planned; placeholder in `src/optimizer/tiered.rs`.
+**Current implementation:** The optimizer supports three strategies. **Exhaustive** (default): full candidate set from the crew generator, Monte Carlo, then rank. **Genetic:** implemented in `src/optimizer/genetic.rs`; use for large search spaces. Select via API request field `strategy: "genetic"` (or omit for exhaustive). **Tiered:** implemented in `src/optimizer/tiered.rs`; select via `strategy: "tiered"` (two-pass scouting → confirmation).
 
 ### 6.1 Monte Carlo Simulation
 
@@ -524,7 +524,7 @@ The baseline approach. Run N thousand iterations of a given crew vs. a given hos
 
 Reduce combat to closed-form math: expected damage per round given stats. Skip simulation entirely and just compute the answer. Dramatically faster, but only works for abilities without complex variance. Useful as a fast pre-filter.
 
-### 6.3 Tiered Simulation (planned; recommended default when implemented)
+### 6.3 Tiered Simulation (implemented)
 
 ```
 Phase 1: "Scouting"
@@ -571,7 +571,7 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 ### 6.8 Recommended Approach
 
-**Current:** Exhaustive (or sampled) sweep by default; use `strategy: "genetic"` for large rosters. Genetic algorithm is available for full below-decks optimization. **Planned:** Tiered simulation with synergy prioritization as the default; analytical pre-filtering to prune obviously bad combos before any simulation runs.
+**Current:** Exhaustive (or sampled) sweep by default; use `strategy: "genetic"` for large rosters; use `strategy: "tiered"` for two-pass scouting → confirmation. Genetic algorithm is available for full below-decks optimization. **Planned:** analytical pre-filtering to prune obviously bad combos before any simulation runs (synergy prioritization within tiered remains open).
 
 ---
 
@@ -656,7 +656,7 @@ Each simulation is independent — the problem is embarrassingly parallel. KOBAY
 
 ### 8.2 Scaling Estimates
 
-For ~280 officers with 3 crew slots. **Current optimizer:** exhaustive/sampled sweep (default) or genetic (`strategy: "genetic"`); no tiered pass yet. **Planned:** tiered (scouting → confirmation).
+For ~280 officers with 3 crew slots. **Current optimizer:** exhaustive/sampled sweep (default) or genetic (`strategy: "genetic"`); tiered (scouting → confirmation) is available via `strategy: "tiered"` (implementation details may depend on registry/candidate context).
 
 | Scenario | Combos | Sims | Total Sims | Time (16 cores) |
 |---|---|---|---|---|
