@@ -1,27 +1,16 @@
 //! Simulation orchestration: run_monte_carlo* and SimulationResult.
 
 use rayon::prelude::*;
-use std::collections::HashMap;
 
 use crate::combat::{simulate_combat, SimulationConfig, TraceMode};
 use crate::data::data_registry::DataRegistry;
-use crate::data::loader::{resolve_hostile, resolve_ship};
-use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
-use crate::data::profile_index::{profile_path, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, ROSTER_IMPORTED};
-use crate::data::{forbidden_chaos, import};
-use crate::data::profile::{
-    load_profile, merge_tech_fids_into_profile, resolve_effective_tech_fids,
-};
-use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir};
 use crate::optimizer::crew_generator::CrewCandidate;
 
-use super::crew_resolution::{index_officers_by_name, normalize_lookup_key, seeded_variance};
+use super::crew_resolution::seeded_variance;
 use super::scenario::{
-    build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
-    LcarsOfficerData, SharedScenarioData,
+    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
+    scenario_to_combat_input_from_shared, SharedScenarioData,
 };
-
-const DEFAULT_LCARS_OFFICERS_DIR: &str = "data/officers";
 
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
@@ -52,12 +41,6 @@ pub fn run_monte_carlo_parallel(
     seed: u64,
 ) -> Vec<SimulationResult> {
     run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, true)
-}
-
-fn use_lcars_officer_source() -> bool {
-    std::env::var("KOBAYASHI_OFFICER_SOURCE")
-        .map(|v| v.eq_ignore_ascii_case("lcars"))
-        .unwrap_or(false)
 }
 
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
@@ -104,131 +87,7 @@ fn run_monte_carlo_with_parallelism(
     seed: u64,
     parallel: bool,
 ) -> Vec<SimulationResult> {
-    let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
-        .ok()
-        .map(index_officers_by_name)
-        .unwrap_or_default();
-    let pid = crate::data::profile_index::resolve_profile_id_for_api(None);
-    let profile_path_str = profile_path(&pid, PROFILE_JSON).to_string_lossy().to_string();
-    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
-    let mut profile = load_profile(&profile_path_str);
-    let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
-    if let Some(catalog) =
-        forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH)
-    {
-        let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, &catalog);
-        if !effective_fids.is_empty() {
-            merge_tech_fids_into_profile(&mut profile, &effective_fids, &catalog);
-        }
-    }
-
-    let lcars_data = if use_lcars_officer_source() {
-        load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR)
-            .ok()
-            .map(|officers| {
-                let by_id = index_lcars_officers_by_id(officers);
-                let name_to_id: HashMap<String, String> = by_id
-                    .values()
-                    .map(|o| (normalize_lookup_key(&o.name), o.id.clone()))
-                    .collect();
-                LcarsOfficerData {
-                    by_id,
-                    name_to_id,
-                }
-            })
-    } else {
-        None
-    };
-
-    let roster_path = profile_path(
-        &crate::data::profile_index::resolve_profile_id_for_api(None),
-        ROSTER_IMPORTED,
-    )
-    .to_string_lossy()
-    .to_string();
-    let resolve_options = import::load_imported_roster(&roster_path)
-        .map(|entries| {
-            let officer_tiers: HashMap<String, u8> = entries
-                .into_iter()
-                .filter_map(|e| e.tier.map(|t| (e.canonical_officer_id, t)))
-                .collect();
-            crate::lcars::ResolveOptions {
-                tier: None,
-                officer_tiers: if officer_tiers.is_empty() {
-                    None
-                } else {
-                    Some(officer_tiers)
-                },
-            }
-        })
-        .unwrap_or_default();
-
-    let ship_rec = resolve_ship(ship);
-    let hostile_rec = resolve_hostile(hostile);
-
-    let (cached_defender, cached_rounds, cached_defender_hull, cached_pierce, cached_defender_mitigation) =
-        if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
-            let attacker_stats = ship_r.to_attacker_stats();
-            let defender_mitigation = crate::combat::mitigation_for_hostile(
-                hostile_r.to_defender_stats(),
-                attacker_stats,
-                hostile_r.ship_type(),
-                hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
-                hostile_r.mitigation_floor.unwrap_or(crate::combat::MITIGATION_FLOOR),
-                hostile_r.mitigation_ceiling.unwrap_or(crate::combat::MITIGATION_CEILING),
-            );
-            let pierce = crate::combat::pierce_damage_through_bonus(
-                hostile_r.to_defender_stats(),
-                attacker_stats,
-                hostile_r.ship_type(),
-            );
-            let defender = crate::combat::Combatant {
-                id: hostile.to_string(),
-                attack: 0.0,
-                mitigation: defender_mitigation,
-                pierce: 0.0,
-                crit_chance: 0.0,
-                crit_multiplier: 1.0,
-                proc_chance: 0.0,
-                proc_multiplier: 1.0,
-                end_of_round_damage: 0.0,
-                hull_health: hostile_r.hull_health,
-                shield_health: hostile_r.shield_health,
-                shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
-                apex_barrier: hostile_r.apex_barrier,
-                apex_shred: 0.0,
-                isolytic_damage: 0.0,
-                isolytic_defense: hostile_r.isolytic_defense,
-                weapons: vec![],
-            };
-            let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
-            (
-                Some(defender),
-                Some(rounds),
-                Some(hostile_r.hull_health),
-                Some(pierce),
-                Some(defender_mitigation),
-            )
-        } else {
-            (None, None, None, None, None)
-        };
-
-    let shared = SharedScenarioData {
-        ship: ship.to_string(),
-        hostile: hostile.to_string(),
-        officer_index,
-        profile,
-        lcars_data,
-        resolve_options,
-        ship_rec,
-        hostile_rec,
-        cached_defender,
-        cached_rounds,
-        cached_defender_hull,
-        cached_pierce,
-        cached_defender_mitigation,
-    };
-
+    let shared = build_shared_scenario_data_standalone(ship, hostile);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel)
 }
 
