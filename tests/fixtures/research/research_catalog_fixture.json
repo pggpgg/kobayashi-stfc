@@ -1,0 +1,38 @@
+{
+  "source": "test_fixture",
+  "last_updated": "2026-03-20",
+  "items": [
+    {
+      "rid": 99000001,
+      "name": "Fixture combat research",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 99000002,
+      "name": "Fixture second rid (catalog size > 1)",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

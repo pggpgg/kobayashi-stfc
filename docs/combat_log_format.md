@@ -74,6 +74,7 @@ The game can export a fight log as a **tab-separated** file with several section
 
 4. **Events** — Header row starting with `Round`. One row per battle event (Attack, Shield Depleted, Combatant Destroyed, etc.).
    - Columns are looked up by **header name** (not by position), so the parser tolerates reordered or added columns. Used names: `Round`, `Type`, `Critical Hit?`, `Hull Damage`, `Shield Damage`, `Total Damage`.
+   - Optional **`Weapon Index`** (unsigned integer): sub-round / weapon slot index for parity with JSON ingested logs and simulator traces. Standard game exports usually omit this column; `FightExportEvent.weapon_index` is then `None`. Extended or synthetic exports may include it — see `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` and `export_parse_tests` in `src/combat/export_csv.rs`.
    - Summary parity uses total damage from summary (initial HP − remaining).
 
 **Mapping to engine:**
@@ -91,4 +92,5 @@ The game can export a fight log as a **tab-separated** file with several section
 ## Fixtures
 
 - `tests/fixtures/recorded_fights/*.json` — sample logs for parser and parity tests.
+- `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` — minimal TSV with optional `Weapon Index` column (fight export parser).
 - `fight samples/*.csv` — game CSV/TSV exports for calibration (e.g. Realta vs Takret Militia 10).

@@ -51,6 +51,8 @@ pub struct FightExportEvent {
     pub shield_damage: f64,
     pub total_damage: f64,
     pub critical_hit: bool,
+    /// Sub-round weapon index when an optional `Weapon Index` column is present in the export.
+    pub weapon_index: Option<u32>,
 }
 
 fn parse_tsv_row(line: &str) -> Vec<String> {
@@ -91,6 +93,7 @@ struct EventColumns {
     hull_damage: Option<usize>,
     shield_damage: Option<usize>,
     total_damage: Option<usize>,
+    weapon_index: Option<usize>,
 }
 
 fn find_event_columns(header: &[String]) -> EventColumns {
@@ -106,6 +109,7 @@ fn find_event_columns(header: &[String]) -> EventColumns {
         hull_damage: find(header, "Hull Damage"),
         shield_damage: find(header, "Shield Damage"),
         total_damage: find(header, "Total Damage"),
+        weapon_index: find(header, "Weapon Index"),
     }
 }
 
@@ -123,6 +127,14 @@ fn get_event_bool_yes(row: &[String], col: Option<usize>) -> bool {
     get_event_cell(row, col)
         .map(|s| s.eq_ignore_ascii_case("YES"))
         .unwrap_or(false)
+}
+
+fn get_event_u32(row: &[String], col: Option<usize>) -> Option<u32> {
+    let s = get_event_cell(row, col)?;
+    if s.is_empty() || s.eq_ignore_ascii_case("--") {
+        return None;
+    }
+    s.parse::<u32>().ok()
 }
 
 /// Parse a full fight export string (tab-separated, multi-section).
@@ -227,6 +239,7 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
                 let shield_damage = get_event_f64(&event_row, event_columns.shield_damage);
                 let total = get_event_f64(&event_row, event_columns.total_damage);
                 let critical = get_event_bool_yes(&event_row, event_columns.critical_hit);
+                let weapon_index = get_event_u32(&event_row, event_columns.weapon_index);
                 events.push(FightExportEvent {
                     round,
                     event_type,
@@ -234,6 +247,7 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
                     shield_damage,
                     total_damage: total,
                     critical_hit: critical,
+                    weapon_index,
                 });
                 i += 1;
             }
@@ -416,4 +430,20 @@ pub fn export_to_combat_input(
     let (attacker, defender) = export_to_combatants(export);
     let crew = export_to_crew(export);
     (attacker, defender, crew)
+}
+
+#[cfg(test)]
+mod export_parse_tests {
+    use super::*;
+
+    const FIXTURE_WEAPON_INDEX: &str =
+        include_str!("../../tests/fixtures/recorded_fights/fight_export_weapon_index.tsv");
+
+    #[test]
+    fn parse_fight_export_reads_optional_weapon_index_column() {
+        let export = parse_fight_export(FIXTURE_WEAPON_INDEX).expect("parse fixture");
+        assert_eq!(export.events.len(), 2);
+        assert_eq!(export.events[0].weapon_index, Some(0));
+        assert_eq!(export.events[1].weapon_index, Some(1));
+    }
 }
