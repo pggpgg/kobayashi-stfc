@@ -40,6 +40,16 @@ use super::crew_resolution::{
 
 const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
 
+/// Append [ShipRecord::abilities] as [CrewSeatContext] (supported id/timing/effect combinations only).
+fn extend_crew_with_ship_abilities(seats: &mut Vec<CrewSeatContext>, ship_rec: Option<&ShipRecord>) {
+    let Some(rec) = ship_rec else {
+        return;
+    };
+    seats.extend(ship_abilities_to_crew_seat_contexts(
+        rec.abilities.as_deref().unwrap_or(&[]),
+    ));
+}
+
 fn use_lcars_officer_source_standalone() -> bool {
     std::env::var("KOBAYASHI_OFFICER_SOURCE")
         .map(|v| v.eq_ignore_ascii_case("lcars"))
@@ -135,9 +145,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
         }
         let mut seats = crew_seats.clone();
-        seats.extend(ship_abilities_to_crew_seat_contexts(
-            ship_rec.abilities.as_deref().unwrap_or(&[]),
-        ));
+        extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
         return CombatSimulationInput {
             attacker,
             defender: defender.clone(),
@@ -179,6 +187,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
     }
 
+    let mut seats = crew_seats.clone();
+    extend_crew_with_ship_abilities(&mut seats, shared.ship_rec.as_ref());
+
     CombatSimulationInput {
         attacker,
         defender: Combatant {
@@ -200,7 +211,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
         },
-        crew: CrewConfiguration { seats: crew_seats },
+        crew: CrewConfiguration { seats },
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
         base_seed,
@@ -344,9 +355,7 @@ pub(crate) fn scenario_to_combat_input(
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
         }
         let mut seats = crew_seats.clone();
-        seats.extend(ship_abilities_to_crew_seat_contexts(
-            ship_rec.abilities.as_deref().unwrap_or(&[]),
-        ));
+        extend_crew_with_ship_abilities(&mut seats, Some(&ship_rec));
         return CombatSimulationInput {
             attacker,
             defender: Combatant {
@@ -406,6 +415,9 @@ pub(crate) fn scenario_to_combat_input(
         attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
     }
 
+    let mut seats = crew_seats.clone();
+    extend_crew_with_ship_abilities(&mut seats, resolve_ship(ship).as_ref());
+
     CombatSimulationInput {
         attacker,
         defender: Combatant {
@@ -427,7 +439,7 @@ pub(crate) fn scenario_to_combat_input(
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
         },
-        crew: CrewConfiguration { seats: crew_seats },
+        crew: CrewConfiguration { seats },
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
         base_seed,
@@ -830,9 +842,77 @@ fn infer_ops_level(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::combat::abilities::{AbilityClass, CrewSeat};
     use crate::combat::AttackerStats;
     use crate::data::import::BuildingEntry;
+    use crate::data::ship::{ShipAbility, ShipRecord};
     use crate::optimizer::crew_generator::CrewCandidate;
+
+    #[test]
+    fn ship_abilities_merged_when_shared_scenario_fallback_no_cached_defender() {
+        let ship_rec = ShipRecord {
+            id: "test_ship".into(),
+            ship_name: "Test".into(),
+            ship_class: "battleship".into(),
+            armor_piercing: 100.0,
+            shield_piercing: 100.0,
+            accuracy: 100.0,
+            attack: 50.0,
+            crit_chance: 0.0,
+            crit_damage: 1.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: None,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: None,
+            abilities: Some(vec![ShipAbility {
+                id: "1".into(),
+                timing: "round_start".into(),
+                effect_type: "pierce_bonus".into(),
+                value: 0.05,
+            }]),
+        };
+
+        let shared = SharedScenarioData {
+            ship: "test_ship".into(),
+            hostile: "unknown_hostile_xyz".into(),
+            officer_index: HashMap::new(),
+            profile: PlayerProfile::default(),
+            lcars_data: None,
+            resolve_options: ResolveOptions {
+                tier: None,
+                officer_tiers: None,
+            },
+            ship_rec: Some(ship_rec),
+            hostile_rec: None,
+            cached_defender: None,
+            cached_rounds: None,
+            cached_defender_hull: None,
+            cached_pierce: None,
+            cached_defender_mitigation: None,
+        };
+
+        let candidate = CrewCandidate {
+            captain: "Kirk".to_string(),
+            bridge: vec!["Spock".to_string(), "Uhura".to_string()],
+            below_decks: vec![
+                "Scotty".to_string(),
+                "McCoy".to_string(),
+                "Rand".to_string(),
+            ],
+        };
+
+        let input = scenario_to_combat_input_from_shared(&shared, &candidate, 1);
+        let ship_seats: Vec<_> = input
+            .crew
+            .seats
+            .iter()
+            .filter(|s| s.seat == CrewSeat::Ship)
+            .collect();
+        assert_eq!(ship_seats.len(), 1);
+        assert_eq!(ship_seats[0].ability.class, AbilityClass::ShipAbility);
+    }
 
     #[test]
     fn computed_mitigation_changes_with_defense_and_piercing_inputs() {
