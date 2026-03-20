@@ -1,0 +1,14 @@
+Player Name	Player Level	Outcome	Ship Name	Ship Level	Ship Strength	Ship XP	Officer One	Officer Two	Officer Three	Hull Health	Hull Health Remaining	Shield Health	Shield Health Remaining	Location	Timestamp
+Player	1	VICTORY	REALTA	1	0	0	--	--	--	100	100	50	50	Here	Now
+Enemy	1	DEFEAT	HOSTILE	1	0	0	--	--	--	100	0	50	0	Here	Now
+
+Reward Name	Count
+Scrap	1
+
+Fleet Type	Attack	Defense	Health	Ship Ability	Captain Maneuver	Officer One Ability	Officer Two Ability	Officer Three Ability	Officer Attack Bonus	Damage Per Round	Armour Pierce	Shield Pierce	Accuracy	Critical Chance	Critical Damage	Officer Defense Bonus	Armour	Shield Deflection	Dodge	Officer Health Bonus	Shield Health	Hull Health	Impulse Speed	Warp Range	Warp Speed	Cargo Capacity	Protected Cargo	Mining Bonus	Debuff applied	Buff applied
+Player Fleet 1	100	0	0	--	--	--	--	--	0	100	0	0	0	0	1	0	0	0	0	0	50	100	0	0	0	0	0	0	0	NO	NO
+Enemy Fleet 1	0	0	0	--	--	--	--	--	0	0	0	0	0	0	1	0	0	0	0	0	50	100	0	0	0	0	0	0	0	NO	NO
+
+Round	Type	Critical Hit?	Hull Damage	Shield Damage	Total Damage	Weapon Index
+1	Attack	NO	10	0	10	0
+1	Attack	NO	5	0	5	1

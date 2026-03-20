@@ -20,6 +20,14 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 ### Sprint 1 (done)
 - Mitigation module, ship-type map, unit tests with golden vectors, CLI entrypoint (`simulate`), and tolerance behavior are in place.
 
+### Log / parity (JSON path — done)
+- **`weapon_index`:** `IngestedEvent` in `src/combat/log_ingest.rs` carries optional `weapon_index`; `ingested_events_to_combat_events` forwards it to `CombatEvent` unchanged. Documented in `docs/combat_log_format.md`; fixture `tests/fixtures/recorded_fights/sample_combat_log.json`; assertions in `tests/log_ingest_tests.rs`.
+
+### Mitigation sensitivity (done)
+- **CLI:** `kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]` (see `src/cli.rs` / `src/main.rs`).
+- **Library:** `src/combat/mitigation_sensitivity.rs` (`HostileMitigationBaseline`, `default_percent_sensitivity_rows`, `format_sensitivity_tsv`); usage notes in `docs/COMBAT_TRACE.md`.
+- **Tests:** unit tests in `mitigation_sensitivity.rs` validate baseline rows against `mitigation_for_hostile` / `pierce_damage_through_bonus` / `compute_damage_through_factor`.
+
 ---
 
 ## Remaining work
@@ -30,7 +38,7 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 
 **Goal:** Parse raw STFC combat logs into an internal event model so simulator output can be compared to real combat (replay/parity checks).
 
-**Status:** `src/combat/log_ingest.rs` already provides a JSON parser and conversion helpers for trace/parity comparisons, with fixture tests in `tests/log_ingest_tests.rs`. The remaining gap for granular sub-round parity is `weapon_index` threading (conversion currently sets `weapon_index: None`).
+**Status:** JSON ingestion is in place (`parse_combat_log_json`, `IngestedCombatLog` / `IngestedEvent` in `src/combat/log_ingest.rs`) with fixture tests in `tests/log_ingest_tests.rs`. Sub-round **`weapon_index`** is parsed from JSON and forwarded through `ingested_events_to_combat_events` when present. Game **TSV** export is parsed by `parse_fight_export` in `src/combat/export_csv.rs`; vanilla exports usually omit per-weapon columns — an optional **`Weapon Index`** column is supported when present (see `docs/combat_log_format.md`).
 
 **Plan:**
 1. Define the expected raw-log format (e.g. paste from game UI or toolbox export) and document it in this repo (e.g. `docs/combat_log_format.md` or a fixture example).
@@ -43,10 +51,11 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 **Definition of done**
 - Parser exists and is tested against fixture logs for core fields.
 - Documented format (or sample) so new logs can be added for parity checks in Phase 3 DoD (replay/parity between parsed logs and engine output).
-- `weapon_index` is parsed and threaded through ingested → engine events when present in the raw log format.
+- `weapon_index` is parsed and threaded through ingested → engine events when present in the JSON format; TSV path documents and optionally parses `Weapon Index` when the export includes it.
 
 **Future / TODO**
-- **Sub-round events:** Add `weapon_index` to `IngestedEvent`, parse it from JSON, and pass it through in `ingested_events_to_combat_events`. Needed for per-weapon parity when logs include sub-round granularity.
+- **Richer TSV → trace parity:** Map additional game event columns (if stable) into a timeline comparable to `CombatEvent` (beyond summary + optional `Weapon Index`).
+- **More fixtures:** Additional recorded logs for regression (multiple fight families).
 
 ---
 
@@ -72,21 +81,19 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 **Goal:** Help users and developers see why a given mitigation or damage number is what it is, and how sensitive it is to inputs.
 
 **Plan:**
-1. **Mitigation sensitivity table:** Add a small CLI subcommand or library function that, for a given defender/attacker/ship-type baseline, prints a table of mitigation values for small deltas (e.g. defense +10%, pierce +10%, or ±N to each stat). Output can be text or CSV. Validate a few cells against the existing `mitigation()` function.
-2. **“Why” trace for mitigation and stacks:** Extend or document the existing event trace so that:
-   - Mitigation: trace already includes `mitigation_calc` and `pierce_calc` with `damage_through_factor`; add a short doc or comment in code that describes how to interpret these for “why did this much damage get through.”
-   - Stack decomposition: for key stats (e.g. pre-attack damage, attack-phase damage), ensure trace or a helper can show base vs modifier vs flat contributions where applicable (e.g. in `EffectAccumulator` or in a debug-only trace). Document how to read it.
-3. Add fixture traces or test assertions that check sensitivity table outputs against reference values and that “why” trace fields are present for a known scenario.
+1. **Mitigation sensitivity table:** ~~Add a small CLI subcommand or library function~~ **Done** — see “Mitigation sensitivity (done)” above and `docs/COMBAT_TRACE.md`.
+2. **“Why” trace for mitigation and stacks:** Mitigation side is largely documented in `docs/COMBAT_TRACE.md` (trace fields `mitigation_calc`, `pierce_calc`, `damage_through_factor`). **Remaining:** stack decomposition “why” — for key stats (e.g. pre-attack damage, attack-phase damage), ensure trace or a helper can show base vs modifier vs flat contributions where applicable (e.g. in `EffectAccumulator` or in a debug-only trace). Document how to read it.
+3. **Fixtures / tests:** Sensitivity rows are covered in `mitigation_sensitivity.rs` tests. **Remaining:** fixture traces or assertions that specific “why” trace fields appear for a known combat scenario (beyond sensitivity module tests).
 
 **Definition of done**
-- Sensitivity table generator implemented and at least one output validated against `mitigation()`.
-- Trace or docs explain how to interpret mitigation and stack decomposition for a given run.
-- Fixtures or tests cover sensitivity and trace shape.
+- ~~Sensitivity table generator implemented and at least one output validated against `mitigation()`.~~ **Met** (hostile path + unit tests).
+- Trace or docs explain how to interpret mitigation ~~and stack decomposition~~ for a given run — **mitigation done**; **stack decomposition still open**.
+- Fixtures or tests cover sensitivity ~~and trace shape~~ — **sensitivity met**; **trace-shape fixtures optional follow-up**.
 
 ---
 
 ## Suggested next execution slice
 
-1. **Phase 3.5 — `weapon_index` gap:** Extend log ingestion so sub-round/per-weapon logs can round-trip into engine events for parity checks.
-2. **Phase 4.8 — Explainability (sensitivity + trace):** Add mitigation sensitivity table and document “why” from existing trace. Low risk, high value for tuning and debugging.
+1. **Phase 4.8 (remainder) — Stack “why” + trace fixtures:** Decompose or document stack contributions; add one trace fixture test if useful.
+2. **Phase 3 — More recorded fixtures:** Broaden parity regression across fight families (see benchmark rules).
 3. **Phase 4.7 — Compatibility toggles:** Add duplicate-officer mode and document combat-local state/rollback once real logs or community reports clarify the exact quirk.

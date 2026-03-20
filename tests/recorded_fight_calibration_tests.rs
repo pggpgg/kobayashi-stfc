@@ -113,6 +113,10 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
     assert_eq!(export.player_ship_name.as_deref(), Some("REALTA"));
     assert_eq!(export.attacker_ship_type, ShipType::Explorer);
     assert_eq!(export.player_officer_one.as_deref(), Some("Livis"));
+    assert!(
+        export.events.iter().all(|e| e.weapon_index.is_none()),
+        "vanilla game TSV omits Weapon Index; events should have weapon_index None"
+    );
 
     let (attacker, defender, crew) = export_to_combat_input(&export);
     let config = SimulationConfig {
