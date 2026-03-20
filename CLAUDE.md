@@ -127,6 +127,7 @@ GET  /api/officers          POST /api/simulate
 GET  /api/ships             POST /api/optimize   (strategy: "exhaustive"|"genetic")
 GET  /api/hostiles          GET  /api/heuristics
 GET  /api/profile           PUT  /api/profile
+GET  /api/profile/buildings-summary
 POST /api/officers/import   POST /api/optimize/start  (async job)
                             GET  /api/optimize/status/:job_id
 GET  /api/sync/status       POST /api/sync/ingress

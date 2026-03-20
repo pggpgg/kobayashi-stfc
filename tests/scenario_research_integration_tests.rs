@@ -43,12 +43,11 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
         if bonuses.is_empty() {
             continue;
         }
-        for (stat, value) in bonuses {
+        if let Some((stat, value)) = bonuses.into_iter().next() {
             // Stats in the catalog should already use engine keys (weapon_damage, hull_hp, etc.).
             chosen_rid = Some(rec.rid);
             chosen_stat = Some(stat);
             chosen_value = Some(value);
-            break;
         }
         if chosen_rid.is_some() {
             break;
@@ -86,15 +85,12 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
         .expect("write research.imported.json for scenario research test");
 
     // Build SharedScenarioData using this profile and confirm the research bonus is present.
-    let pid = Some(profile_id.as_str());
-    let mut profile = kobayashi::data::profile::load_profile(
-        &kobayashi::data::profile_index::profile_path(
-            pid.unwrap(),
-            kobayashi::data::profile_index::PROFILE_JSON,
-        )
-        .to_string_lossy()
-        .to_string(),
+    let profile_json = kobayashi::data::profile_index::profile_path(
+        &profile_id,
+        kobayashi::data::profile_index::PROFILE_JSON,
     );
+    let mut profile =
+        kobayashi::data::profile::load_profile(profile_json.to_string_lossy().as_ref());
 
     if let Some(catalog) = registry.research_catalog() {
         let imported_research =

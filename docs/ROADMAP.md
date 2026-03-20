@@ -14,7 +14,7 @@ Planned features and priorities for Kobayashi.
 
 - **Persisted today:** officer, research, buildings, ships, and **forbidden tech (`type: "ft"`)** — see [SYNC.md](SYNC.md). Research is written to `profiles/{id}/research.imported.json` and merged into the player profile when a research catalog is present. FT is written to `profiles/{id}/forbidden_tech.imported.json` and merged into the player profile (bonuses from `data/forbidden_chaos_tech.json`).
 
-- **Optional next sync work** — the mod also sends payload types that are accepted (200) but not stored. Candidates for future persistence (as product needs and data shapes are clarified): **tech** (e.g. tech tree / research state from the game), traits, slots, buffs, resources, missions, battlelogs, inventory, jobs. Reception and persistence of **tech** is a priority candidate so optimizer and profile can use full tech state if the mod exposes it.
+- **Optional next sync work** — the mod also sends payload types that are accepted (200) but not stored. **Note:** stfc-mod’s JSON `type: "tech"` is **forbidden/chaos tech** (same as `ft`); Kobayashi persists it to `forbidden_tech.imported.json`. Remaining candidates for future persistence: traits, slots, buffs, resources, missions, battlelogs, inventory, jobs, and any **additional** raw tech-tree payloads if the mod exposes shapes beyond research project levels (already covered by `research` sync).
 
 See [SYNC.md](SYNC.md) for the current sync protocol and payload reference.
 
@@ -39,7 +39,7 @@ Buildings are **fully modeled for ship combat** per the “buildings full modeli
 - **Building id ↔ bid in index** — Add bid (or a small mapping file) to the building index for clarity and fallback resolution.
 - **Conditions for station defense** — When station/starbase defense is in scope: populate `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) from import or mapping; support `BuildingMode::StationDefense` in the optimizer.
 - **Strict validation report** — Report that lists all `buff_*` and unmapped conditions (e.g. strict mode or separate script).
-- **Building summary API/UI** — Endpoint or UI to show current profile’s building levels and effective combat bonuses from buildings; allow setting building levels or ops_level in profile for simulation without sync.
+- **Building summary API/UI** — Implemented: `GET /api/profile/buildings-summary` and Roster & Profile → Profile → “Buildings (sync → combat)”. Optional follow-up: editable building levels in the UI (today: sync or manual JSON / tooling such as `building_combat_bonuses`).
 
 ---
 
@@ -92,3 +92,5 @@ Research is **partially implemented**. The following is in place; remaining gaps
 ## Maverick faction
 
 - **Maverick faction support** — Add support for the Maverick faction (Ops 55+, unlocked via Warp Dive Bar): combat-relevant research (e.g. Maverick Research Tree nodes such as Isolytic Defense / Apex Shred / Critical Damage Reduction vs. Conqueror Borg Solo Armadas), any sync or catalog data for Maverick bonuses, and related hostiles (Conqueror Borg Solo Armadas, etc.) as needed for the simulator and optimizer. See [Update 88 First Look: The Maverick Faction](https://startrekfleetcommand.com/news/update-88-first-look-the-maverick-faction/).
+
+**Tracking doc:** [MAVERICK.md](MAVERICK.md) — scope, data pipeline checklist, and explicit uncertainty (no placeholder hostile stats in-repo).
