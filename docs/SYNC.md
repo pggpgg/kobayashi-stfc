@@ -57,21 +57,22 @@ Sync is profile-scoped: the `stfc-sync-token` header identifies the profile, and
 
 | Payload type | Persisted | File / usage |
 |--------------|-----------|--------------|
-| officer | Yes | `rosters/roster.imported.json` — roster for “Owned only” and optimizer |
-| research | Yes | `rosters/research.imported.json` |
-| buildings / module | Yes | `rosters/buildings.imported.json` |
-| ships / ship | Yes | `rosters/ships.imported.json` |
-| ft (forbidden tech) | Yes | `rosters/forbidden_tech.imported.json` — bonuses merged into optimizer profile |
+| officer | Yes | `profiles/{id}/roster.imported.json` — roster for “Owned only” and optimizer |
+| research | Yes | `profiles/{id}/research.imported.json` |
+| buildings / module | Yes | `profiles/{id}/buildings.imported.json` |
+| ships / ship | Yes | `profiles/{id}/ships.imported.json` |
+| ft (forbidden tech) | Yes | `profiles/{id}/forbidden_tech.imported.json` — bonuses merged into optimizer profile |
+| tech | Yes (same as ft) | **STFC Community Mod** sends forbidden/chaos tech with JSON `type: "tech"` (fid, tier, level, shard_count). Written to the same `forbidden_tech.imported.json` as `ft`. |
 | resources, missions, battlelogs, traits, slots, buffs, inventory, jobs | No (accepted, 200) | — |
 
 ## What gets synced
 
-- **Officers**: Each sync payload with `type: "officer"` is merged into `rosters/roster.imported.json`. Game officer IDs (`oid`) are mapped to Kobayashi’s canonical officer IDs via `data/officers/id_registry.json`. The optimizer then uses this roster to restrict crew candidates to officers you own.
+- **Officers**: Each sync payload with `type: "officer"` is merged into `profiles/{id}/roster.imported.json`. Game officer IDs (`oid`) are mapped to Kobayashi’s canonical officer IDs via `data/officers/id_registry.json`. The optimizer then uses this roster to restrict crew candidates to officers you own.
 - **Research**: Payloads with `type: "research"` are merged into `profiles/{id}/research.imported.json` (by `rid`). Load with `load_imported_research`. When a research catalog is present (`data/research_catalog.json`), the optimizer merges research bonuses into the player profile for combat (see `data/README.md` § Research).
 - **Buildings**: Payloads with `type: "buildings"` or `type: "module"` (the mod sends `"module"`) are merged into `profiles/{id}/buildings.imported.json` (by `bid`). The optimizer loads this from the default profile path and merges building bonuses into the player profile (see `data/README.md` § Buildings).
-- **Ships**: Payloads with `type: "ships"` or `type: "ship"` (the mod sends `"ship"`) are merged into `rosters/ships.imported.json` (by `psid`). Load with `load_imported_ships` (path `rosters/ships.imported.json`). In **Roster mode**, the ship dropdown is restricted to ships you own; game `hull_id` from sync is mapped to Kobayashi ship id via `data/hull_id_registry.json`. When new ships are added to the game or to the Kobayashi catalog, regenerate the registry with `node scripts/build_hull_id_registry.mjs` (from the project root).
-- **Forbidden tech (ft)**: Payloads with `type: "ft"` are merged into `rosters/forbidden_tech.imported.json` (by `fid`). Load with `load_imported_forbidden_tech` (path `rosters/forbidden_tech.imported.json`). Player forbidden-tech state is used to compute bonuses (from `data/forbidden_chaos_tech.json` by `fid`) and merge them into the player profile used by the Monte Carlo optimizer.
-- **Other types** (resources, missions, battlelogs, traits, tech, slots, buffs, inventory, jobs): The server accepts the payloads and returns 200 but does not persist them.
+- **Ships**: Payloads with `type: "ships"` or `type: "ship"` (the mod sends `"ship"`) are merged into `profiles/{id}/ships.imported.json` (by `psid`). Load with `load_imported_ships`. In **Roster mode**, the ship dropdown is restricted to ships you own; game `hull_id` from sync is mapped to Kobayashi ship id via `data/hull_id_registry.json`. When new ships are added to the game or to the Kobayashi catalog, regenerate the registry with `node scripts/build_hull_id_registry.mjs` (from the project root).
+- **Forbidden tech (`ft` or `tech`)**: Payloads with `type: "ft"` **or** `type: "tech"` (the mod uses `"tech"`) are merged into `profiles/{id}/forbidden_tech.imported.json` (by `fid`). Load with `load_imported_forbidden_tech`. Player state is merged into the optimizer profile using `data/forbidden_chaos_tech.json` by `fid`.
+- **Other types** (resources, missions, battlelogs, traits, slots, buffs, inventory, jobs): The server accepts the payloads and returns 200 but does not persist them.
 
 ## Officer ID mapping
 
@@ -79,7 +80,7 @@ The mod sends officer IDs in the game’s format (`oid`). Kobayashi maps them to
 
 ## Verification
 
-To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the officers screen or change something). (2) Check that `rosters/roster.imported.json` was updated (file modification time). (3) In the Kobayashi web UI, enable “Owned only” in the crew builder and confirm the officer list matches your in-game roster. You can also call `GET /api/sync/status` to see the roster file path and last modified time.
+To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the officers screen or change something). (2) Check that the profile’s `roster.imported.json` was updated (see `GET /api/sync/status` for the path). (3) In the Kobayashi web UI, enable “Owned only” in the crew builder and confirm the officer list matches your in-game roster.
 
 ## API
 
@@ -101,6 +102,7 @@ The request body is a JSON array; the first element’s `type` field determines 
 | **research** | `type`, `rid` (int64), `level` (int32) | One object per research project level. Persisted to `profiles/{id}/research.imported.json`. Used for combat when `data/research_catalog.json` is present. |
 | **buildings** / **module** | `type`, `bid` (int64), `level` (int32) | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `rosters/buildings.imported.json`. |
 | **ships** / **ship** | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `rosters/ships.imported.json`. |
-| **ft** | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64) | Forbidden/chaos tech. Persisted to `rosters/forbidden_tech.imported.json`. Bonuses from `data/forbidden_chaos_tech.json` (by `fid`) are merged into the player profile for the optimizer. |
+| **ft** | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64) | Forbidden/chaos tech. Persisted to `profiles/{id}/forbidden_tech.imported.json`. |
+| **tech** | Same fields as **ft** | Same persistence as **ft** (stfc-mod queue name for forbidden/chaos tech). |
 
-Other types (resources, missions, battlelogs, traits, tech, slots, buffs, inventory, jobs) are accepted (200) but not persisted.
+Other types (resources, missions, battlelogs, traits, slots, buffs, inventory, jobs) are accepted (200) but not persisted.

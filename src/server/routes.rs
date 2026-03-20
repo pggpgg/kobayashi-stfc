@@ -106,6 +106,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         // Profile
         .route("/api/profile", get(handle_profile_get))
         .route("/api/profile", put(handle_profile_put))
+        .route(
+            "/api/profile/buildings-summary",
+            get(handle_profile_buildings_summary),
+        )
         // Profiles (multi-account)
         .route("/api/profiles", get(handle_profiles_list))
         .route("/api/profiles", post(handle_profiles_create))
@@ -355,6 +359,17 @@ async fn handle_profile_put(
     match api::profile_put_payload(&body, profile_id.as_deref()) {
         Ok(response) => ok_json(response).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_profile_buildings_summary(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::profile_buildings_summary_payload(profile_id.as_deref()) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 

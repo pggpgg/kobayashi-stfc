@@ -17,6 +17,7 @@ use crate::data::heuristics::{list_heuristics_seeds, DEFAULT_HEURISTICS_DIR};
 use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
 };
+use crate::data::building_summary::building_combat_summary_for_profile;
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index,
     profile_path, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
@@ -495,6 +496,13 @@ pub fn profile_put_payload(body: &str, profile_id: Option<&str>) -> Result<Strin
     }
     fs::write(&path, body).map_err(serde_json::Error::io)?;
     serde_json::to_string_pretty(&serde_json::json!({ "status": "ok" }))
+}
+
+/// GET /api/profile/buildings-summary — synced module levels and building-derived combat bonuses.
+pub fn profile_buildings_summary_payload(profile_id: Option<&str>) -> Result<String, serde_json::Error> {
+    let id = resolve_profile_id(profile_id);
+    let summary = building_combat_summary_for_profile(&id);
+    serde_json::to_string_pretty(&summary)
 }
 
 pub fn profiles_list_payload() -> Result<String, serde_json::Error> {

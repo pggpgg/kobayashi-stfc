@@ -140,8 +140,21 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
                 }
             }
         }
+        // stfc-mod uses JSON type "tech" for forbidden/chaos tech (same payload as "ft": fid, tier, level, shard_count).
+        "tech" => {
+            match apply_ft_sync(&payload, &ft_path) {
+                Ok(accepted_count) => {
+                    eprintln!("[sync] 200 OK accepted tech({accepted_count}) -> forbidden_tech.imported.json");
+                    vec![format!("tech({accepted_count})")]
+                }
+                Err(e) => {
+                    eprintln!("[sync] 500 Internal Server Error (tech/ft): {e}");
+                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+                }
+            }
+        }
         "resources" | "missions" | "battlelogs"
-        | "traits" | "tech" | "slots" | "buffs" | "inventory" | "jobs" => {
+        | "traits" | "slots" | "buffs" | "inventory" | "jobs" => {
             eprintln!("[sync] 200 OK accepted {} (not persisted)", type_str);
             vec![type_str.to_string()]
         }
@@ -801,6 +814,27 @@ mod tests {
                 e.fid == 919296 && e.tier == 1 && e.level == 5 && e.shard_count == 10
             }),
             "expected fid=919296 in {:?}",
+            entries
+        );
+    }
+
+    /// stfc-mod queues forbidden/chaos tech with JSON type "tech" (not "ft").
+    #[test]
+    fn ingress_tech_type_persists_to_forbidden_tech_file() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
+        let (status, body) = ingress_payload(
+            r#"[{"type":"tech","fid":424242,"tier":2,"level":3,"shard_count":0}]"#,
+            Some(&token),
+        );
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("tech(1)"));
+        let ft_path = profile_path(&profile_id, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+        let entries = import::load_imported_forbidden_tech(&ft_path)
+            .expect("forbidden_tech.imported.json should exist after tech sync");
+        assert!(
+            entries.iter().any(|e| e.fid == 424242 && e.tier == 2 && e.level == 3),
+            "expected fid=424242 in {:?}",
             entries
         );
     }

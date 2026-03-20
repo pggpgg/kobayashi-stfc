@@ -502,6 +502,38 @@ export async function updateProfile(
   await checkOk(res);
 }
 
+export interface BuildingSummaryRow {
+  bid: number;
+  level: number;
+  kobayashi_building_id?: string | null;
+  building_name?: string | null;
+  catalog_record_present: boolean;
+}
+
+/** Synced starbase modules → effective ship-combat bonuses from buildings only. */
+export interface BuildingCombatSummary {
+  profile_id: string;
+  error?: string | null;
+  ops_level_profile_override?: number | null;
+  ops_level_inferred_from_sync?: number | null;
+  ops_level_effective?: number | null;
+  synced_building_count: number;
+  buildings: BuildingSummaryRow[];
+  unmapped_bids: number[];
+  combat_bonuses_from_buildings?: Record<string, number>;
+}
+
+export async function fetchBuildingCombatSummary(
+  profileId?: string | null,
+): Promise<BuildingCombatSummary> {
+  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : '';
+  const res = await fetch(`${API_BASE}/api/profile/buildings-summary${q}`, {
+    headers: { ...profileHeaders(profileId) },
+  });
+  await checkOk(res);
+  return res.json();
+}
+
 export interface PresetCrew {
   captain?: string | null;
   bridge?: (string | null)[];

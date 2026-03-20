@@ -4,12 +4,14 @@ import {
   fetchProfile,
   updateProfile,
   fetchForbiddenTech,
+  fetchBuildingCombatSummary,
   formatApiError,
 } from '../lib/api';
 import type {
   ImportReport,
   PlayerProfile,
   ForbiddenTechCatalogItem,
+  BuildingCombatSummary,
 } from '../lib/api';
 import { useProfile } from '../contexts/ProfileContext';
 
@@ -27,6 +29,8 @@ export default function RosterProfile() {
   const [forbiddenTechCatalog, setForbiddenTechCatalog] = useState<
     ForbiddenTechCatalogItem[]
   >([]);
+  const [buildingSummary, setBuildingSummary] = useState<BuildingCombatSummary | null>(null);
+  const [buildingSummaryError, setBuildingSummaryError] = useState<string | null>(null);
 
   useEffect(() => {
     let c = false;
@@ -43,6 +47,22 @@ export default function RosterProfile() {
     }).catch(() => {});
     return () => { c = true; };
   }, []);
+
+  useEffect(() => {
+    let c = false;
+    setBuildingSummaryError(null);
+    fetchBuildingCombatSummary(activeProfileId)
+      .then((s) => {
+        if (!c) setBuildingSummary(s);
+      })
+      .catch((e) => {
+        if (!c) {
+          setBuildingSummary(null);
+          setBuildingSummaryError(formatApiError(e));
+        }
+      });
+    return () => { c = true; };
+  }, [activeProfileId]);
 
   const handleImport = async () => {
     setImportError(null);
@@ -297,6 +317,82 @@ token = "${activeProfile.sync_token}"`}
               Copy
             </button>
           </div>
+
+          <h3 style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600 }}>
+            Buildings (sync → combat)
+          </h3>
+          <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Starbase modules from sync (<code>buildings.imported.json</code>) and the combat stat bonuses they contribute in ship combat (same rules as simulate/optimize). Set ops level override under Player Bonuses if you need it without sync.
+          </p>
+          {buildingSummaryError && (
+            <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--error, #c44)' }}>
+              {buildingSummaryError}
+            </p>
+          )}
+          {buildingSummary && (
+            <div style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+              {buildingSummary.error && (
+                <p style={{ margin: '0 0 0.5rem', color: 'var(--error, #c44)' }}>{buildingSummary.error}</p>
+              )}
+              <dl style={{ margin: '0 0 0.75rem', display: 'grid', gap: '0.35rem 1rem', gridTemplateColumns: 'auto 1fr', maxWidth: 520 }}>
+                <dt style={{ color: 'var(--text-muted)' }}>Synced rows</dt>
+                <dd style={{ margin: 0 }}>{buildingSummary.synced_building_count}</dd>
+                <dt style={{ color: 'var(--text-muted)' }}>Ops (profile override)</dt>
+                <dd style={{ margin: 0 }}>{buildingSummary.ops_level_profile_override ?? '—'}</dd>
+                <dt style={{ color: 'var(--text-muted)' }}>Ops (inferred from sync)</dt>
+                <dd style={{ margin: 0 }}>{buildingSummary.ops_level_inferred_from_sync ?? '—'}</dd>
+                <dt style={{ color: 'var(--text-muted)' }}>Ops (effective)</dt>
+                <dd style={{ margin: 0 }}>{buildingSummary.ops_level_effective ?? '—'}</dd>
+              </dl>
+              {buildingSummary.unmapped_bids.length > 0 && (
+                <p style={{ margin: '0 0 0.5rem', color: 'var(--text-muted)' }}>
+                  Unmapped game <code>bid</code> values (no catalog entry):{' '}
+                  {buildingSummary.unmapped_bids.join(', ')}
+                </p>
+              )}
+              {buildingSummary.combat_bonuses_from_buildings &&
+                Object.keys(buildingSummary.combat_bonuses_from_buildings).length > 0 && (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Combat bonuses from buildings</div>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      {Object.entries(buildingSummary.combat_bonuses_from_buildings)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([k, v]) => (
+                          <li key={k}>
+                            <code>{k}</code>: {(v * 100).toFixed(2)}% additive
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              {buildingSummary.buildings.length > 0 && (
+                <div style={{ overflowX: 'auto', maxHeight: 240, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 6 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                        <th style={{ padding: '6px 8px' }}>bid</th>
+                        <th style={{ padding: '6px 8px' }}>Level</th>
+                        <th style={{ padding: '6px 8px' }}>Building</th>
+                        <th style={{ padding: '6px 8px' }}>Catalog</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {buildingSummary.buildings.map((row) => (
+                        <tr key={row.bid} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '6px 8px', fontFamily: 'monospace' }}>{row.bid}</td>
+                          <td style={{ padding: '6px 8px' }}>{row.level}</td>
+                          <td style={{ padding: '6px 8px' }}>
+                            {row.building_name ?? row.kobayashi_building_id ?? '—'}
+                          </td>
+                          <td style={{ padding: '6px 8px' }}>{row.catalog_record_present ? 'yes' : 'no'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
 
           <h3 style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600 }}>
             Forbidden tech
