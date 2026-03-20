@@ -141,6 +141,7 @@ fn optimize_scenario_tiered_with_registry(
         None,
         None,
         scenario.profile_id,
+        scenario.allow_duplicate_officers,
     );
     let candidates =
         sort_candidates_by_analytical_expected_damage(&shared_tiered, candidates, scenario.seed);
@@ -156,6 +157,7 @@ fn optimize_scenario_tiered_with_registry(
         top_k,
         scenario.seed,
         scenario.profile_id,
+        scenario.allow_duplicate_officers,
         |_, _| true,
     )
 }
@@ -197,6 +199,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.ship_tier,
         scenario.ship_level,
         scenario.profile_id,
+        scenario.allow_duplicate_officers,
     );
     let candidates =
         sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
@@ -210,6 +213,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.simulation_count.max(1),
         scenario.seed,
         scenario.profile_id,
+        scenario.allow_duplicate_officers,
     );
     rank_results(simulation_results)
 }
@@ -223,7 +227,11 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
-    let shared = build_shared_scenario_data_standalone(scenario.ship, scenario.hostile);
+    let shared = build_shared_scenario_data_standalone(
+        scenario.ship,
+        scenario.hostile,
+        scenario.allow_duplicate_officers,
+    );
     let candidates =
         sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
     let simulation_results = run_monte_carlo_parallel(
@@ -232,6 +240,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         &candidates,
         scenario.simulation_count.max(1),
         scenario.seed,
+        scenario.allow_duplicate_officers,
     );
     rank_results(simulation_results)
 }
@@ -309,7 +318,11 @@ where
             );
             let candidates =
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
-            let shared = build_shared_scenario_data_standalone(scenario.ship, scenario.hostile);
+            let shared = build_shared_scenario_data_standalone(
+                scenario.ship,
+                scenario.hostile,
+                scenario.allow_duplicate_officers,
+            );
             let candidates =
                 sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
             let total = candidates.len();
@@ -332,6 +345,7 @@ where
                     batch,
                     sim_count,
                     scenario.seed,
+                    scenario.allow_duplicate_officers,
                 );
                 all_results.extend(batch_results);
                 on_progress(end as u32, total as u32);
@@ -385,6 +399,7 @@ where
                 top_k,
                 scenario.seed,
                 scenario.profile_id,
+                scenario.allow_duplicate_officers,
                 &mut on_progress,
             )
         }
@@ -411,6 +426,7 @@ where
                 scenario.ship_tier,
                 scenario.ship_level,
                 scenario.profile_id,
+                scenario.allow_duplicate_officers,
             );
             let candidates =
                 sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
@@ -439,6 +455,7 @@ where
                     sim_count,
                     scenario.seed,
                     scenario.profile_id,
+                    scenario.allow_duplicate_officers,
                 );
                 all_results.extend(batch_results);
                 if !on_progress(end as u32, total as u32) {

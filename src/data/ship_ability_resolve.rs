@@ -10,6 +10,7 @@
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::ship::ShipAbility;
 
@@ -135,6 +136,8 @@ pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSe
             condition: None,
         },
         boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
     })
 }
 

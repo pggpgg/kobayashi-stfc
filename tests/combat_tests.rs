@@ -4,7 +4,7 @@ use kobayashi::combat::{
     serialize_events_json, simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats,
     CombatEvent, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource,
     ShipType, SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector,
-    TraceMode, WeaponStats, EPSILON, PIERCE_CAP,
+    TraceMode, WeaponStats, EPSILON, PIERCE_CAP, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use serde_json::{Map, Value};
 
@@ -339,6 +339,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -419,6 +420,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -472,6 +474,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -523,6 +526,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 3,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -575,6 +579,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -592,6 +597,8 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -648,6 +655,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -665,6 +673,8 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -721,6 +731,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -738,6 +749,8 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -803,10 +816,13 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 2,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -878,6 +894,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -897,6 +915,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
@@ -909,11 +929,14 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
 
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -1000,6 +1023,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -1007,6 +1032,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -1084,6 +1110,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -1091,6 +1119,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -1173,6 +1202,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -1180,6 +1211,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -1240,6 +1272,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 2,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -1452,6 +1485,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 9,
         trace_mode: TraceMode::Events,
@@ -1462,13 +1496,17 @@ fn crew_slot_gating_matrix_controls_activation() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: captain_ability.clone(),
-                boosted: false,
-            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: bridge_ability.clone(),
-                boosted: false,
-            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        },
         ],
     };
     let wrong_seat_crew = CrewConfiguration {
@@ -1476,6 +1514,8 @@ fn crew_slot_gating_matrix_controls_activation() {
             seat: CrewSeat::BelowDeck,
             ability: captain_ability,
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -1547,6 +1587,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 11,
         trace_mode: TraceMode::Events,
@@ -1557,6 +1598,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
             seat: CrewSeat::Bridge,
             ability: non_boostable.clone(),
             boosted: true,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let unboosted = CrewConfiguration {
@@ -1564,6 +1607,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
             seat: CrewSeat::Bridge,
             ability: non_boostable,
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -1626,6 +1671,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 17,
         trace_mode: TraceMode::Events,
@@ -1643,6 +1689,8 @@ fn timing_windows_materially_change_damage_outcomes() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let round_start_crew = CrewConfiguration {
@@ -1657,6 +1705,8 @@ fn timing_windows_materially_change_damage_outcomes() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let defense_phase_crew = CrewConfiguration {
@@ -1671,6 +1721,8 @@ fn timing_windows_materially_change_damage_outcomes() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -1741,6 +1793,8 @@ fn burning_deals_one_percent_hull_per_round() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -1748,6 +1802,7 @@ fn burning_deals_one_percent_hull_per_round() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 3,
             seed: 1,
             trace_mode: TraceMode::Events,
@@ -1819,6 +1874,8 @@ fn emits_ability_activation_for_each_timing_window() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
@@ -1831,6 +1888,8 @@ fn emits_ability_activation_for_each_timing_window() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::BelowDeck,
@@ -1843,6 +1902,8 @@ fn emits_ability_activation_for_each_timing_window() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Captain,
@@ -1855,6 +1916,8 @@ fn emits_ability_activation_for_each_timing_window() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
@@ -1867,6 +1930,8 @@ fn emits_ability_activation_for_each_timing_window() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
@@ -1875,6 +1940,7 @@ fn emits_ability_activation_for_each_timing_window() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 19,
             trace_mode: TraceMode::Events,
@@ -1950,6 +2016,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
@@ -1962,6 +2030,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
@@ -1977,10 +2047,13 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 11,
         trace_mode: TraceMode::Off,
@@ -2049,9 +2122,12 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 5,
         seed: 42,
         trace_mode: TraceMode::Off,
@@ -2117,9 +2193,12 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 5,
         seed: 42,
         trace_mode: TraceMode::Off,
@@ -2174,6 +2253,7 @@ fn combat_rounds_are_capped_at_100() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 150,
             seed: 9,
             trace_mode: TraceMode::Off,
@@ -2239,6 +2319,8 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
@@ -2251,6 +2333,8 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
@@ -2258,6 +2342,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 2,
             seed: 99,
             trace_mode: TraceMode::Off,
@@ -2268,6 +2353,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 2,
             seed: 99,
             trace_mode: TraceMode::Off,
@@ -2329,6 +2415,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 100,
             seed: 3,
             trace_mode: TraceMode::Off,
@@ -2391,6 +2478,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
     let mut attacker_with_iso = attacker_no_iso.clone();
     attacker_with_iso.isolytic_damage = 0.2;
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 5,
         trace_mode: TraceMode::Off,
@@ -2452,6 +2540,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 5,
         trace_mode: TraceMode::Off,
@@ -2469,6 +2558,8 @@ fn crew_isolytic_damage_bonus_increases_damage() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let result_empty = simulate_combat(&attacker, &defender, config, &crew_empty);
@@ -2520,6 +2611,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 5,
         trace_mode: TraceMode::Off,
@@ -2536,6 +2628,8 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let crew_iso_and_cascade = CrewConfiguration {
@@ -2551,6 +2645,8 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Captain,
@@ -2563,6 +2659,8 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
@@ -2618,6 +2716,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -2682,6 +2781,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 1,
         seed: 3,
         trace_mode: TraceMode::Events,
@@ -2750,6 +2850,7 @@ fn shots_bonus_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
+        allow_duplicate_officers: false,
         rounds: 3,
         seed: 42,
         trace_mode: TraceMode::Off,
@@ -2773,6 +2874,8 @@ fn shots_bonus_increases_damage() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
@@ -2839,6 +2942,8 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
@@ -2851,6 +2956,8 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
                     condition: None,
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
@@ -2859,6 +2966,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 13,
             trace_mode: TraceMode::Events,
@@ -2930,6 +3038,8 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
 
@@ -2937,6 +3047,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -2947,6 +3058,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -3018,6 +3130,8 @@ fn combat_end_window_respects_condition_filtering() {
                     condition: Some(kobayashi::combat::AbilityCondition::RoundRange { min: 1, max: 10 }),
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
@@ -3030,6 +3144,8 @@ fn combat_end_window_respects_condition_filtering() {
                     condition: Some(kobayashi::combat::AbilityCondition::RoundRange { min: 999, max: 1000 }),
                 },
                 boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
         ],
     };
@@ -3038,6 +3154,7 @@ fn combat_end_window_respects_condition_filtering() {
         &attacker,
         &defender,
         SimulationConfig {
+            allow_duplicate_officers: false,
             rounds: 1,
             seed: 17,
             trace_mode: TraceMode::Events,

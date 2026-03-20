@@ -7,7 +7,7 @@ use std::path::Path;
 use kobayashi::combat::{
     export_to_combat_input, parse_fight_export, simulate_combat, Ability, AbilityClass,
     AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, ShipType,
-    SimulationConfig, TimingWindow, TraceMode,
+    SimulationConfig, TimingWindow, TraceMode, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -64,6 +64,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         rounds: 10,
         seed: 42,
         trace_mode: TraceMode::Off,
+        allow_duplicate_officers: false,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
 
@@ -123,6 +124,7 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         rounds: 10,
         seed: 42,
         trace_mode: TraceMode::Off,
+        allow_duplicate_officers: false,
     };
     let result = simulate_combat(&attacker, &defender, config, &crew);
 
@@ -207,12 +209,15 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
                 condition: None,
             },
             boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
     let config = SimulationConfig {
         rounds: 2,
         seed: 21,
         trace_mode: TraceMode::Off,
+        allow_duplicate_officers: false,
     };
     let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let with_regen = simulate_combat(&attacker, &defender, config, &with_kill_regen);

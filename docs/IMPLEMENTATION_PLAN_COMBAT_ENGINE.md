@@ -59,14 +59,16 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 
 ---
 
-### Phase 4 — Fidelity and diagnostics (not started)
+### Phase 4 — Fidelity and diagnostics (partial)
 
 **7. Compatibility toggles and known quirks**
 
 **Goal:** Support optional game quirks and temporary state so the simulator can match observed behavior when needed.
 
+**Status (duplicate officers):** Implemented. `SimulationConfig::allow_duplicate_officers` (default `false`) gates `apply_duplicate_officer_policy` in `simulate_combat`. LCARS `resolve_crew_to_buff_set` respects `ResolveOptions::allow_duplicate_officers` (default `true` for ad-hoc resolver calls; scenario/optimizer passes through the scenario flag). Tests: `tests/duplicate_officer_compat_tests.rs`.
+
 **Plan:**
-1. **Duplicate-officer bug mode:** Add a config flag (e.g. on `SimulationConfig` or optimizer scenario) that, when enabled, allows the same officer to appear in more than one seat (or applies a specific stacking/activation rule that mirrors the in-game bug). Document the behavior and when to enable it.
+1. **Duplicate-officer bug mode:** ~~Add a config flag~~ **Done:** `SimulationConfig.allow_duplicate_officers` + optimizer/API alignment; when `true`, duplicate canonical ids may contribute from every slot; when `false`, first slot wins for static buffs, proc, and crew rows (batched by `contribution_batch` / officer id).
 2. **Temporary combat-only state and rollback:** Identify which state (e.g. morale, assimilated, hull breach, burning) is temporary and must be reset or not carried across combats. Ensure `simulate_combat` does not mutate long-lived state; if any shared state is ever introduced, add end-of-combat rollback when this mode is on.
 3. Add tests or scenarios that run with toggles on/off and assert expected differences (e.g. duplicate officer changes outcome when toggle is on).
 

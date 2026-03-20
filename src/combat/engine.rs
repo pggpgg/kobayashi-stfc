@@ -16,8 +16,8 @@ pub use crate::combat::types::{
 use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
-    active_effects_for_timing, filter_effects_by_condition, AbilityEffect,
-    CombatContext, CrewConfiguration, TimingWindow,
+    active_effects_for_timing, apply_duplicate_officer_policy, filter_effects_by_condition,
+    AbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_crit_multiplier,
@@ -36,6 +36,7 @@ pub fn simulate_combat(
     config: SimulationConfig,
     attacker_crew: &CrewConfiguration,
 ) -> SimulationResult {
+    let attacker_crew = apply_duplicate_officer_policy(attacker_crew, config.allow_duplicate_officers);
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let mut total_hull_damage = 0.0;
@@ -48,7 +49,7 @@ pub fn simulate_combat(
     let mut assimilated_rounds_remaining = 0_u32;
     // Active shots bonuses: (bonus_pct, expires_round). B_shots(r) = sum of bonus where expires_round >= r.
     let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
-    let combat_begin_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatBegin);
+    let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_ctx = CombatContext {
         round_index: 0,
         defender_hull_pct: 1.0,
@@ -58,17 +59,17 @@ pub fn simulate_combat(
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
-    let shield_break_effects = active_effects_for_timing(attacker_crew, TimingWindow::ShieldBreak);
-    let kill_effects = active_effects_for_timing(attacker_crew, TimingWindow::Kill);
-    let hull_breach_effects = active_effects_for_timing(attacker_crew, TimingWindow::HullBreach);
-    let receive_damage_effects = active_effects_for_timing(attacker_crew, TimingWindow::ReceiveDamage);
-    let combat_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::CombatEnd);
+    let shield_break_effects = active_effects_for_timing(&attacker_crew, TimingWindow::ShieldBreak);
+    let kill_effects = active_effects_for_timing(&attacker_crew, TimingWindow::Kill);
+    let hull_breach_effects = active_effects_for_timing(&attacker_crew, TimingWindow::HullBreach);
+    let receive_damage_effects = active_effects_for_timing(&attacker_crew, TimingWindow::ReceiveDamage);
+    let combat_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatEnd);
 
     // Pre-compute effects by timing once per combat; round loop only filters by condition.
-    let round_start_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundStart);
-    let attack_phase_effects = active_effects_for_timing(attacker_crew, TimingWindow::AttackPhase);
-    let defense_phase_effects = active_effects_for_timing(attacker_crew, TimingWindow::DefensePhase);
-    let round_end_effects = active_effects_for_timing(attacker_crew, TimingWindow::RoundEnd);
+    let round_start_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundStart);
+    let attack_phase_effects = active_effects_for_timing(&attacker_crew, TimingWindow::AttackPhase);
+    let defense_phase_effects = active_effects_for_timing(&attacker_crew, TimingWindow::DefensePhase);
+    let round_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundEnd);
 
     let combat_begin_assimilated = assimilated_rounds_remaining > 0;
     record_ability_activations(

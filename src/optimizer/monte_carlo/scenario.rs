@@ -70,6 +70,8 @@ pub(crate) struct SharedScenarioData {
     pub profile: PlayerProfile,
     pub lcars_data: Option<LcarsOfficerData>,
     pub resolve_options: ResolveOptions,
+    /// Matches [crate::combat::SimulationConfig::allow_duplicate_officers] for LCARS resolution + combat.
+    pub allow_duplicate_officers: bool,
     pub ship_rec: Option<ShipRecord>,
     #[allow(dead_code)]
     pub hostile_rec: Option<HostileRecord>,
@@ -89,6 +91,7 @@ pub(crate) struct CombatSimulationInput {
     pub rounds: u32,
     pub defender_hull: f64,
     pub base_seed: u64,
+    pub allow_duplicate_officers: bool,
 }
 
 /// Build combat input from pre-resolved shared data and candidate. Resolves ship/hostile only once per run.
@@ -111,6 +114,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &shared.officer_index,
         shared.lcars_data.as_ref(),
         &shared.resolve_options,
+        shared.allow_duplicate_officers,
     );
 
     if let (Some(ref ship_rec), Some(ref defender), Some(rounds), Some(defender_hull)) = (
@@ -153,6 +157,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             rounds,
             defender_hull,
             base_seed,
+            allow_duplicate_officers: shared.allow_duplicate_officers,
         };
     }
 
@@ -215,6 +220,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
         base_seed,
+        allow_duplicate_officers: shared.allow_duplicate_officers,
     }
 }
 
@@ -224,7 +230,11 @@ fn build_crew_and_buffs(
     officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
+    allow_duplicate_officers: bool,
 ) -> (Vec<CrewSeatContext>, HashMap<String, f64>, f64, f64) {
+    let mut lcars_opts = resolve_options.clone();
+    lcars_opts.allow_duplicate_officers = allow_duplicate_officers;
+
     if let Some(lcars) = lcars_data {
         let captain_id = lcars
             .name_to_id
@@ -259,7 +269,7 @@ fn build_crew_and_buffs(
                 &bridge_ids,
                 &below_ids,
                 &lcars.by_id,
-                resolve_options,
+                &lcars_opts,
             );
             (
                 buff_set.to_crew_config().seats.clone(),
@@ -304,11 +314,14 @@ pub(crate) fn scenario_to_combat_input(
         seed,
     );
 
+    let resolve_opts = ResolveOptions::default();
+    let allow_dup = resolve_opts.allow_duplicate_officers;
     let (crew_seats, static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
         candidate,
         officers_by_name,
         lcars_data,
-        &ResolveOptions::default(),
+        &resolve_opts,
+        allow_dup,
     );
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
@@ -381,6 +394,7 @@ pub(crate) fn scenario_to_combat_input(
             rounds,
             defender_hull,
             base_seed,
+            allow_duplicate_officers: allow_dup,
         };
     }
 
@@ -443,6 +457,7 @@ pub(crate) fn scenario_to_combat_input(
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
         base_seed,
+        allow_duplicate_officers: allow_dup,
     }
 }
 
@@ -512,7 +527,11 @@ pub(crate) fn stable_seed(
 
 /// Build scenario data for `(ship, hostile)` without a [DataRegistry] — same sources as legacy
 /// [super::simulation::run_monte_carlo_parallel] (canonical officers, profile JSON, optional LCARS).
-pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -> SharedScenarioData {
+pub(crate) fn build_shared_scenario_data_standalone(
+    ship: &str,
+    hostile: &str,
+    allow_duplicate_officers: bool,
+) -> SharedScenarioData {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
         .map(index_officers_by_name)
@@ -566,6 +585,7 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
                 } else {
                     Some(officer_tiers)
                 },
+                ..Default::default()
             }
         })
         .unwrap_or_default();
@@ -632,6 +652,7 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
         profile,
         lcars_data,
         resolve_options,
+        allow_duplicate_officers,
         ship_rec,
         hostile_rec,
         cached_defender,
@@ -650,6 +671,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     ship_tier: Option<u32>,
     ship_level: Option<u32>,
     profile_id: Option<&str>,
+    allow_duplicate_officers: bool,
 ) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
 
@@ -747,6 +769,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 } else {
                     Some(officer_tiers)
                 },
+                ..Default::default()
             }
         })
         .unwrap_or_default();
@@ -813,6 +836,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         profile,
         lcars_data,
         resolve_options,
+        allow_duplicate_officers,
         ship_rec,
         hostile_rec,
         cached_defender,
@@ -883,7 +907,9 @@ mod tests {
             resolve_options: ResolveOptions {
                 tier: None,
                 officer_tiers: None,
+                ..Default::default()
             },
+            allow_duplicate_officers: false,
             ship_rec: Some(ship_rec),
             hostile_rec: None,
             cached_defender: None,

@@ -407,6 +407,7 @@ pub fn simulate_payload(
         num_sims as usize,
         seed,
         profile_id,
+        false,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {

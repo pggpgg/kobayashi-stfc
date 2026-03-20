@@ -48,6 +48,7 @@ fn bench_monte_carlo_sequential_vs_parallel(c: &mut Criterion) {
                 &candidate_list,
                 iterations,
                 seed,
+                false,
             ))
         });
     });
@@ -60,6 +61,7 @@ fn bench_monte_carlo_sequential_vs_parallel(c: &mut Criterion) {
                 &candidate_list,
                 iterations,
                 seed,
+                false,
             ))
         });
     });

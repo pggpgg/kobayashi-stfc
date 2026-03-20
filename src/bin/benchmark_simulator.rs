@@ -60,6 +60,7 @@ fn main() {
         rounds: rounds_per_combat,
         seed: 7,
         trace_mode: TraceMode::Off,
+        allow_duplicate_officers: false,
     };
     let crew = CrewConfiguration::default();
 
