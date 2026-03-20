@@ -272,3 +272,43 @@ pub fn load_extended_ship_index(extended_dir: &Path) -> Option<ExtendedShipIndex
     let data = fs::read_to_string(path).ok()?;
     serde_json::from_str(&data).ok()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extended_ship_json_abilities_round_trip_to_ship_record() {
+        let json = r#"{
+            "id": "fixture_ship_abilities",
+            "ship_name": "Fixture",
+            "ship_class": "battleship",
+            "tiers": [{
+                "tier": 1,
+                "armor_piercing": 1.0,
+                "shield_piercing": 1.0,
+                "accuracy": 1.0,
+                "attack": 100.0,
+                "crit_chance": 0.0,
+                "crit_damage": 1.0,
+                "hull_health": 1000.0,
+                "shield_health": 0.0
+            }],
+            "levels": [{ "level": 1, "shield": 0.0, "health": 0.0 }],
+            "abilities": [{
+                "id": "42",
+                "timing": "round_start",
+                "effect_type": "pierce_bonus",
+                "value": 0.05
+            }]
+        }"#;
+
+        let extended: ExtendedShipRecord = serde_json::from_str(json).expect("parse extended ship");
+        let rec = extended
+            .to_ship_record(Some(1), Some(1))
+            .expect("tier 1 level 1");
+        let abilities = rec.abilities.expect("abilities present");
+        assert_eq!(abilities.len(), 1);
+        assert_eq!(abilities[0].effect_type, "pierce_bonus");
+    }
+}

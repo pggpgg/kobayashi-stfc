@@ -162,12 +162,32 @@ fn raw_to_extended(
         let arr = raw.get("ability")?.as_array()?;
         let mut out = Vec::new();
         for ab in arr {
-            let id_num = ab.get("id")?.as_u64()?;
+            let Some(id_num) = ab.get("id").and_then(|v| v.as_u64()) else {
+                continue;
+            };
             let id_str = id_num.to_string();
-            let entry = catalog.get(&id_str)?;
-            let value_is_percentage = ab.get("value_is_percentage").and_then(Value::as_bool).unwrap_or(entry.value_is_percentage);
-            let raw_value = ab.get("values")?.as_array()?.first().and_then(|v| v.get("value").and_then(Value::as_f64)).unwrap_or(0.0);
-            let value = if value_is_percentage { raw_value * 0.01 } else { raw_value };
+            let Some(entry) = catalog.get(&id_str) else {
+                continue;
+            };
+            let value_is_percentage = ab
+                .get("value_is_percentage")
+                .and_then(Value::as_bool)
+                .unwrap_or(entry.value_is_percentage);
+            let Some(values_arr) = ab.get("values").and_then(Value::as_array) else {
+                continue;
+            };
+            let Some(first_val) = values_arr.first() else {
+                continue;
+            };
+            let raw_value = first_val
+                .get("value")
+                .and_then(Value::as_f64)
+                .unwrap_or(0.0);
+            let value = if value_is_percentage {
+                raw_value * 0.01
+            } else {
+                raw_value
+            };
             out.push(ShipAbility {
                 id: id_str,
                 timing: entry.timing.clone(),
