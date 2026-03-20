@@ -6,6 +6,7 @@ pub mod engine;
 pub mod events;
 pub mod export_csv;
 pub mod mitigation;
+pub mod mitigation_sensitivity;
 pub mod types;
 pub mod log_ingest;
 pub mod rng;
@@ -24,6 +25,11 @@ pub use engine::{
     BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
     MITIGATION_CEILING, MITIGATION_FLOOR, MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP,
     SURVEY_COEFFICIENTS,
+};
+pub use damage::compute_damage_through_factor;
+pub use mitigation_sensitivity::{
+    default_percent_sensitivity_rows, format_sensitivity_tsv, HostileMitigationBaseline,
+    MitigationSensitivityRow,
 };
 pub use export_csv::{
     export_to_combat_input, export_to_combatants, export_to_attacker, export_to_crew,

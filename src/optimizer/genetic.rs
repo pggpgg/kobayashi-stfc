@@ -38,6 +38,9 @@ pub struct GeneticConfig {
     /// When true, below-decks pool only includes officers that have a below-decks ability.
     pub only_below_decks_with_ability: bool,
 
+    /// When true, the same officer may appear in multiple seats (non-canonical).
+    pub allow_duplicate_officers: bool,
+
     /// Pre-built crew candidates to seed the initial population.
     /// When non-empty, these replace random initialization; remaining slots filled randomly.
     /// When empty, pure random init (current behavior).
@@ -64,6 +67,7 @@ impl Default for GeneticConfig {
             elitism_count: 2,
             stagnation_limit: Some(10),
             only_below_decks_with_ability: false,
+            allow_duplicate_officers: false,
             seed_population: Vec::new(),
             adaptive_mutation: true,
             mutation_rate_floor: 0.05,
@@ -113,14 +117,33 @@ impl RngExt for Rng {
     }
 }
 
-/// Build one random valid crew from pools. Uses names for distinctness.
-fn random_crew(rng: &mut Rng, pools: &OfficerPools) -> Option<CrewCandidate> {
+/// Build one random valid crew from pools. Enforces distinct officers unless `allow_duplicate_officers`.
+fn random_crew(
+    rng: &mut Rng,
+    pools: &OfficerPools,
+    allow_duplicate_officers: bool,
+) -> Option<CrewCandidate> {
     if pools.captains.is_empty()
         || pools.bridge.len() < BRIDGE_SLOTS
         || pools.below_decks.len() < BELOW_DECKS_SLOTS
     {
         return None;
     }
+    if allow_duplicate_officers {
+        let captain = pools.captains[rng.index(pools.captains.len())].clone();
+        let bridge: Vec<String> = (0..BRIDGE_SLOTS)
+            .map(|_| pools.bridge[rng.index(pools.bridge.len())].clone())
+            .collect();
+        let below_decks: Vec<String> = (0..BELOW_DECKS_SLOTS)
+            .map(|_| pools.below_decks[rng.index(pools.below_decks.len())].clone())
+            .collect();
+        return Some(CrewCandidate {
+            captain,
+            bridge,
+            below_decks,
+        });
+    }
+
     let captain = pools.captains[rng.index(pools.captains.len())].clone();
     let mut used: HashSet<String> = HashSet::new();
     used.insert(captain.clone());
@@ -165,6 +188,7 @@ fn init_population_seeded(
     population_size: usize,
     seed_candidates: &[CrewCandidate],
     seed: u64,
+    allow_duplicate_officers: bool,
 ) -> Vec<CrewCandidate> {
     let mut pop = Vec::with_capacity(population_size);
 
@@ -178,7 +202,7 @@ fn init_population_seeded(
     let mut attempts = 0;
     const MAX_ATTEMPTS: usize = 50_000;
     while pop.len() < population_size && attempts < MAX_ATTEMPTS {
-        if let Some(crew) = random_crew(&mut rng, pools) {
+        if let Some(crew) = random_crew(&mut rng, pools, allow_duplicate_officers) {
             pop.push(crew);
         }
         attempts += 1;
@@ -209,13 +233,70 @@ fn tournament_select(
     best_idx
 }
 
-/// Crossover: produce one child from two parents. Child has distinct officers.
-fn crossover(
+fn crossover_allow_duplicates(
     a: &CrewCandidate,
     b: &CrewCandidate,
     pools: &OfficerPools,
     rng: &mut Rng,
 ) -> CrewCandidate {
+    let captain = if rng.next_f64() < 0.5 {
+        a.captain.clone()
+    } else {
+        b.captain.clone()
+    };
+    fn pick_from_slot<'a>(
+        parent_a: &'a CrewCandidate,
+        parent_b: &'a CrewCandidate,
+        pool: &'a [String],
+        slot: usize,
+        rng: &mut Rng,
+        bridge: bool,
+    ) -> String {
+        let mut opts: Vec<&'a String> = Vec::new();
+        let pa = if bridge {
+            parent_a.bridge.get(slot)
+        } else {
+            parent_a.below_decks.get(slot)
+        };
+        let pb = if bridge {
+            parent_b.bridge.get(slot)
+        } else {
+            parent_b.below_decks.get(slot)
+        };
+        if let Some(s) = pa {
+            opts.push(s);
+        }
+        if let Some(s) = pb {
+            opts.push(s);
+        }
+        opts.extend(pool.iter());
+        opts[rng.index(opts.len())].clone()
+    }
+    CrewCandidate {
+        captain,
+        bridge: vec![
+            pick_from_slot(a, b, &pools.bridge, 0, rng, true),
+            pick_from_slot(a, b, &pools.bridge, 1, rng, true),
+        ],
+        below_decks: vec![
+            pick_from_slot(a, b, &pools.below_decks, 0, rng, false),
+            pick_from_slot(a, b, &pools.below_decks, 1, rng, false),
+            pick_from_slot(a, b, &pools.below_decks, 2, rng, false),
+        ],
+    }
+}
+
+/// Crossover: produce one child from two parents. Distinct officers unless `allow_duplicate_officers`.
+fn crossover(
+    a: &CrewCandidate,
+    b: &CrewCandidate,
+    pools: &OfficerPools,
+    rng: &mut Rng,
+    allow_duplicate_officers: bool,
+) -> CrewCandidate {
+    if allow_duplicate_officers {
+        return crossover_allow_duplicates(a, b, pools, rng);
+    }
     let captain = if rng.next_f64() < 0.5 { &a.captain } else { &b.captain };
     let captain = captain.clone();
     let mut used: HashSet<String> = HashSet::new();
@@ -279,8 +360,26 @@ fn crossover(
     }
 }
 
-/// Ensure crew has exactly BRIDGE_SLOTS and BELOW_DECKS_SLOTS with no duplicates. Fill from pools if needed.
-fn repair_crew(crew: &mut CrewCandidate, pools: &OfficerPools, rng: &mut Rng) {
+/// Ensure crew has exactly BRIDGE_SLOTS and BELOW_DECKS_SLOTS. Fills from pools; enforces distinctness unless `allow_duplicate_officers`.
+fn repair_crew(
+    crew: &mut CrewCandidate,
+    pools: &OfficerPools,
+    rng: &mut Rng,
+    allow_duplicate_officers: bool,
+) {
+    if allow_duplicate_officers {
+        while crew.bridge.len() < BRIDGE_SLOTS {
+            crew.bridge
+                .push(pools.bridge[rng.index(pools.bridge.len())].clone());
+        }
+        crew.bridge.truncate(BRIDGE_SLOTS);
+        while crew.below_decks.len() < BELOW_DECKS_SLOTS {
+            crew.below_decks
+                .push(pools.below_decks[rng.index(pools.below_decks.len())].clone());
+        }
+        crew.below_decks.truncate(BELOW_DECKS_SLOTS);
+        return;
+    }
     let mut used: HashSet<String> = HashSet::new();
     used.insert(crew.captain.clone());
     for s in crew.bridge.iter() {
@@ -317,9 +416,43 @@ fn repair_crew(crew: &mut CrewCandidate, pools: &OfficerPools, rng: &mut Rng) {
     crew.below_decks.truncate(BELOW_DECKS_SLOTS);
 }
 
-/// Mutate one slot: replace with random officer from the appropriate pool, enforce distinctness.
-fn mutate(crew: &mut CrewCandidate, pools: &OfficerPools, rate: f64, rng: &mut Rng) {
+/// Mutate one slot: replace with random officer from the appropriate pool.
+fn mutate(
+    crew: &mut CrewCandidate,
+    pools: &OfficerPools,
+    rate: f64,
+    rng: &mut Rng,
+    allow_duplicate_officers: bool,
+) {
     if rng.next_f64() >= rate {
+        return;
+    }
+    if allow_duplicate_officers {
+        let slot = rng.index(6);
+        match slot {
+            0 => {
+                crew.captain = pools.captains[rng.index(pools.captains.len())].clone();
+            }
+            1 => {
+                if !crew.bridge.is_empty() {
+                    crew.bridge[0] = pools.bridge[rng.index(pools.bridge.len())].clone();
+                }
+            }
+            2 => {
+                if crew.bridge.len() > 1 {
+                    crew.bridge[1] = pools.bridge[rng.index(pools.bridge.len())].clone();
+                }
+            }
+            3..=5 => {
+                let di = slot - 3;
+                if di < crew.below_decks.len() {
+                    crew.below_decks[di] =
+                        pools.below_decks[rng.index(pools.below_decks.len())].clone();
+                }
+            }
+            _ => {}
+        }
+        repair_crew(crew, pools, rng, true);
         return;
     }
     let slot = rng.index(6);
@@ -364,7 +497,7 @@ fn mutate(crew: &mut CrewCandidate, pools: &OfficerPools, rate: f64, rng: &mut R
         }
         _ => {}
     }
-    repair_crew(crew, pools, rng);
+    repair_crew(crew, pools, rng, false);
 }
 
 /// Run genetic optimization. Returns top individuals for final ranking.
@@ -386,6 +519,7 @@ pub fn run_genetic_optimizer(
         config.population_size,
         &config.seed_population,
         seed,
+        config.allow_duplicate_officers,
     );
     if population.is_empty() {
         return Vec::new();
@@ -455,9 +589,26 @@ pub fn run_genetic_optimizer(
         while next_pop.len() < config.population_size {
             let pa = tournament_select(&population, &fitness, config.tournament_size, &mut rng);
             let pb = tournament_select(&population, &fitness, config.tournament_size, &mut rng);
-            let mut child = crossover(&population[pa], &population[pb], &pools, &mut rng);
-            repair_crew(&mut child, &pools, &mut rng);
-            mutate(&mut child, &pools, current_mutation_rate, &mut rng);
+            let mut child = crossover(
+                &population[pa],
+                &population[pb],
+                &pools,
+                &mut rng,
+                config.allow_duplicate_officers,
+            );
+            repair_crew(
+                &mut child,
+                &pools,
+                &mut rng,
+                config.allow_duplicate_officers,
+            );
+            mutate(
+                &mut child,
+                &pools,
+                current_mutation_rate,
+                &mut rng,
+                config.allow_duplicate_officers,
+            );
             next_pop.push(child);
         }
         population = next_pop;
@@ -530,7 +681,7 @@ mod tests {
         let pools = small_pools();
         let mut rng = Rng::new(42);
         for _ in 0..20 {
-            let crew = random_crew(&mut rng, &pools).unwrap();
+            let crew = random_crew(&mut rng, &pools, false).unwrap();
             assert!(valid_crew(&crew), "crew should be valid: {:?}", crew);
         }
     }
@@ -542,7 +693,7 @@ mod tests {
         let b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
         let mut rng = Rng::new(99);
         for _ in 0..10 {
-            let child = crossover(&a, &b, &pools, &mut rng);
+            let child = crossover(&a, &b, &pools, &mut rng, false);
             assert!(valid_crew(&child), "child should be valid: {:?}", child);
         }
     }
@@ -553,8 +704,8 @@ mod tests {
         let mut crew = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
         let mut rng = Rng::new(77);
         for _ in 0..20 {
-            mutate(&mut crew, &pools, 1.0, &mut rng);
-            repair_crew(&mut crew, &pools, &mut rng);
+            mutate(&mut crew, &pools, 1.0, &mut rng, false);
+            repair_crew(&mut crew, &pools, &mut rng, false);
             assert!(valid_crew(&crew), "crew should remain valid: {:?}", crew);
         }
     }
@@ -600,7 +751,7 @@ mod tests {
         let seed_b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
         let seeds = vec![seed_a.clone(), seed_b.clone()];
 
-        let pop = init_population_seeded(&pools, 6, &seeds, 42);
+        let pop = init_population_seeded(&pools, 6, &seeds, 42, false);
         assert_eq!(pop.len(), 6, "population should be full");
         // First two should be our seeds.
         assert_eq!(pop[0].captain, seed_a.captain);
@@ -617,14 +768,14 @@ mod tests {
         let seeds: Vec<CrewCandidate> = (0..10)
             .map(|i| make_crew(if i % 2 == 0 { "CapA" } else { "CapB" }, &["B1", "B2"], &["D1", "D2", "D3"]))
             .collect();
-        let pop = init_population_seeded(&pools, 4, &seeds, 99);
+        let pop = init_population_seeded(&pools, 4, &seeds, 99, false);
         assert_eq!(pop.len(), 4, "population should be capped at population_size");
     }
 
     #[test]
     fn init_population_seeded_empty_is_random() {
         let pools = small_pools();
-        let pop_seeded = init_population_seeded(&pools, 8, &[], 42);
+        let pop_seeded = init_population_seeded(&pools, 8, &[], 42, false);
         assert_eq!(pop_seeded.len(), 8);
         for crew in &pop_seeded {
             assert!(valid_crew(crew));

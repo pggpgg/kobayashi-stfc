@@ -2,8 +2,11 @@ use std::env;
 use std::process;
 
 use kobayashi::combat::{
-    simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
+    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat, Combatant,
+    CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING,
+    MITIGATION_FLOOR,
 };
+use kobayashi::data::loader::{resolve_hostile, resolve_ship};
 use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
 use kobayashi::data::profile_index::{migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON, ROSTER_IMPORTED};
@@ -18,6 +21,7 @@ enum Command {
     Import,
     Validate,
     GenerateLcars,
+    MitigationSensitivity,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,6 +53,7 @@ fn parse_command() -> Option<Command> {
         Some("import") => Some(Command::Import),
         Some("validate") => Some(Command::Validate),
         Some("generate-lcars") => Some(Command::GenerateLcars),
+        Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
         _ => None,
     }
 }
@@ -517,14 +522,65 @@ fn run_generate_lcars_bin(bin: &std::path::Path, args: &[String]) -> i32 {
     }
 }
 
+fn mitigation_sensitivity_command(args: &[String]) -> Result<(), String> {
+    let ship = args
+        .first()
+        .map(String::as_str)
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| {
+            "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]".to_string()
+        })?;
+    let hostile = args
+        .get(1)
+        .map(String::as_str)
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| {
+            "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]".to_string()
+        })?;
+    let mut delta_pct = 0.1_f64;
+    let mut i = 2;
+    while i < args.len() {
+        if args[i] == "--delta-pct" {
+            let v = args
+                .get(i + 1)
+                .ok_or_else(|| "--delta-pct requires a value".to_string())?;
+            delta_pct = v
+                .parse::<f64>()
+                .map_err(|_| "delta-pct must be a number (e.g. 0.1 for +10%)".to_string())?;
+            i += 2;
+        } else {
+            i += 1;
+        }
+    }
+
+    let ship_rec = resolve_ship(ship).ok_or_else(|| format!("unknown ship '{ship}'"))?;
+    let hostile_rec = resolve_hostile(hostile).ok_or_else(|| format!("unknown hostile '{hostile}'"))?;
+
+    let attacker = ship_rec.to_attacker_stats();
+    let defender = hostile_rec.to_defender_stats();
+    let baseline = HostileMitigationBaseline {
+        defender,
+        attacker,
+        ship_type: hostile_rec.ship_type(),
+        mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+        mitigation_floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+        mitigation_ceiling: hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+        defense_mitigation_bonus: 0.0,
+    };
+    let rows = default_percent_sensitivity_rows(&baseline, delta_pct);
+    print!("{}", format_sensitivity_tsv(&rows));
+    Ok(())
+}
+
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars|mitigation-sensitivity> [args]\n\
 simulate: kobayashi simulate <rounds> <seed> [--profile <id>]\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
   or kobayashi optimize --ship <id> --hostile <id> --sims <u32> [--max-candidates <u32>] [--profile <id>]\n\
-import: kobayashi import <path> [--profile <id>]"
+import: kobayashi import <path> [--profile <id>]\n\
+mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]"
     );
 }
 
@@ -565,6 +621,13 @@ fn main() {
         }
         Some(Command::GenerateLcars) => {
             exit_code = handle_generate_lcars(&command_args);
+        }
+        Some(Command::MitigationSensitivity) => {
+            if let Err(err) = mitigation_sensitivity_command(&command_args) {
+                eprintln!("mitigation-sensitivity error: {err}");
+                print_usage();
+                exit_code = 2;
+            }
         }
         None => {
             print_usage();

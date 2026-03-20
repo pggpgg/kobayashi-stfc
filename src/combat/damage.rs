@@ -4,8 +4,9 @@ use crate::combat::mitigation::isolytic_damage;
 use crate::combat::types::{EPSILON, HULL_BREACH_CRIT_BONUS};
 
 /// Damage-through factor: (1 - mitigation) + pierce + defense_mitigation_bonus, clamped to >= 0.
+/// Public for explainability tooling ([`crate::combat::mitigation_sensitivity`]).
 #[inline]
-pub(crate) fn compute_damage_through_factor(
+pub fn compute_damage_through_factor(
     mitigation_multiplier: f64,
     effective_pierce: f64,
     defense_mitigation_bonus: f64,
