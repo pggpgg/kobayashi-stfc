@@ -13,6 +13,7 @@ pub mod profile;
 pub mod profile_index;
 pub mod registry;
 pub mod ship;
+pub mod ship_ability_resolve;
 pub mod syndicate_combat;
 pub mod syndicate_reputation;
 pub mod synergy;

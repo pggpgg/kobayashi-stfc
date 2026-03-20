@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, Ability, AbilityClass,
-    AbilityEffect, AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
-    DefenderStats, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
+    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, AttackerStats, Combatant,
+    CrewConfiguration, CrewSeatContext, DefenderStats, ShipType, MITIGATION_CEILING,
+    MITIGATION_FLOOR,
 };
 use crate::data::building::{
     self, BuildingBonusContext, BuildingMode, DEFAULT_BUILDINGS_INDEX_PATH,
@@ -21,14 +21,15 @@ use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_O
 use crate::data::profile::{
     apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
     merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    forbidden_tech_level_tier_scaling_enabled_from_env, merge_tech_fids_into_profile_with_level_tier,
-    resolve_effective_tech_fids, PlayerProfile,
+    forbidden_tech_level_tier_scaling_enabled_from_env, merge_tech_fids_into_profile,
+    merge_tech_fids_into_profile_with_level_tier, resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, RESEARCH_IMPORTED,
     ROSTER_IMPORTED,
 };
-use crate::data::ship::{ShipAbility, ShipRecord};
+use crate::data::ship::ShipRecord;
+use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::CrewCandidate;
 use std::path::Path;
@@ -43,47 +44,6 @@ fn use_lcars_officer_source_standalone() -> bool {
     std::env::var("KOBAYASHI_OFFICER_SOURCE")
         .map(|v| v.eq_ignore_ascii_case("lcars"))
         .unwrap_or(false)
-}
-
-/// Convert ship hull abilities to crew seat contexts so the combat engine evaluates them per round.
-/// Unknown timing or effect_type are skipped (no-op). Supports timing: combat_begin, round_start,
-/// attack_phase, defense_phase, round_end, receive_damage, shield_break, kill, hull_breach, combat_end;
-/// effect_type: pierce_bonus, attack_multiplier.
-fn ship_abilities_to_seat_contexts(abilities: &[ShipAbility]) -> Vec<CrewSeatContext> {
-    let mut out = Vec::with_capacity(abilities.len());
-    for a in abilities {
-        let timing = match a.timing.to_lowercase().replace('-', "_").as_str() {
-            "combat_begin" => TimingWindow::CombatBegin,
-            "round_start" => TimingWindow::RoundStart,
-            "attack_phase" => TimingWindow::AttackPhase,
-            "defense_phase" => TimingWindow::DefensePhase,
-            "round_end" => TimingWindow::RoundEnd,
-            "receive_damage" => TimingWindow::ReceiveDamage,
-            "shield_break" => TimingWindow::ShieldBreak,
-            "kill" => TimingWindow::Kill,
-            "hull_breach" => TimingWindow::HullBreach,
-            "combat_end" => TimingWindow::CombatEnd,
-            _ => continue,
-        };
-        let effect = match a.effect_type.to_lowercase().as_str() {
-            "pierce_bonus" => AbilityEffect::PierceBonus(a.value),
-            "attack_multiplier" => AbilityEffect::AttackMultiplier(a.value),
-            _ => continue,
-        };
-        out.push(CrewSeatContext {
-            seat: CrewSeat::Ship,
-            ability: Ability {
-                name: a.id.clone(),
-                class: AbilityClass::ShipAbility,
-                timing,
-                boostable: false,
-                effect,
-                condition: None,
-            },
-            boosted: false,
-        });
-    }
-    out
 }
 
 #[derive(Debug, Clone)]
@@ -175,7 +135,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
         }
         let mut seats = crew_seats.clone();
-        seats.extend(ship_abilities_to_seat_contexts(
+        seats.extend(ship_abilities_to_crew_seat_contexts(
             ship_rec.abilities.as_deref().unwrap_or(&[]),
         ));
         return CombatSimulationInput {
@@ -383,6 +343,10 @@ pub(crate) fn scenario_to_combat_input(
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
         }
+        let mut seats = crew_seats.clone();
+        seats.extend(ship_abilities_to_crew_seat_contexts(
+            ship_rec.abilities.as_deref().unwrap_or(&[]),
+        ));
         return CombatSimulationInput {
             attacker,
             defender: Combatant {
@@ -404,9 +368,7 @@ pub(crate) fn scenario_to_combat_input(
                 isolytic_defense: hostile_rec.isolytic_defense,
                 weapons: vec![],
             },
-            crew: CrewConfiguration {
-                seats: crew_seats.clone(),
-            },
+            crew: CrewConfiguration { seats },
             rounds,
             defender_hull,
             base_seed,

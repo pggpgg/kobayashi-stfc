@@ -1,0 +1,140 @@
+[
+  {
+    "id": "fixture_rs_pierce",
+    "timing": "round_start",
+    "effect_type": "pierce_bonus",
+    "value": 0.1
+  },
+  {
+    "id": "fixture_rs_attack",
+    "timing": "on_round_start",
+    "effect_type": "attack_multiplier",
+    "value": 0.12
+  },
+  {
+    "id": "fixture_cb_weapon_damage",
+    "timing": "combat_begin",
+    "effect_type": "weapon_damage",
+    "value": 0.05
+  },
+  {
+    "id": "fixture_ap_armor_pierce",
+    "timing": "attack_phase",
+    "effect_type": "armor_pierce",
+    "value": 0.02
+  },
+  {
+    "id": "fixture_dp_shield_pierce",
+    "timing": "defense_phase",
+    "effect_type": "shield_pierce",
+    "value": 0.01
+  },
+  {
+    "id": "fixture_re_shield_regen",
+    "timing": "round_end",
+    "effect_type": "shield_hp_repair",
+    "value": 25.0
+  },
+  {
+    "id": "fixture_re_hull_regen",
+    "timing": "round_end",
+    "effect_type": "hull_regen",
+    "value": 20.0
+  },
+  {
+    "id": "fixture_kill_hull",
+    "timing": "on_kill",
+    "effect_type": "hull_repair",
+    "value": 100.0
+  },
+  {
+    "id": "fixture_sb_pierce",
+    "timing": "on_shield_break",
+    "effect_type": "pierce_bonus",
+    "value": 0.05
+  },
+  {
+    "id": "fixture_rd_shred",
+    "timing": "receive_damage",
+    "effect_type": "apex_shred",
+    "value": 0.03
+  },
+  {
+    "id": "fixture_hb_timing_attack",
+    "timing": "hull_breach",
+    "effect_type": "attack",
+    "value": 0.08
+  },
+  {
+    "id": "fixture_ce_hull",
+    "timing": "combat_end",
+    "effect_type": "hull_hp_repair",
+    "value": 15.0
+  },
+  {
+    "id": "fixture_rs_barrier",
+    "timing": "round_start",
+    "effect_type": "apex_barrier",
+    "value": 500.0
+  },
+  {
+    "id": "fixture_rs_iso_dmg",
+    "timing": "round_start",
+    "effect_type": "isolytic_damage",
+    "value": 0.08
+  },
+  {
+    "id": "fixture_rs_iso_def",
+    "timing": "round_start",
+    "effect_type": "isolytic_defense",
+    "value": 5.0
+  },
+  {
+    "id": "fixture_rs_iso_cascade",
+    "timing": "round_start",
+    "effect_type": "isolytic_cascade_damage",
+    "value": 0.04
+  },
+  {
+    "id": "fixture_rs_shield_mit",
+    "timing": "round_start",
+    "effect_type": "shield_mitigation",
+    "value": 0.01
+  },
+  {
+    "id": "fixture_rs_morale",
+    "timing": "round_start",
+    "effect_type": "morale",
+    "value": 0.5
+  },
+  {
+    "id": "fixture_rs_assim",
+    "timing": "round_start",
+    "effect_type": "assimilated",
+    "value": 30.0
+  },
+  {
+    "id": "fixture_rs_hull_breach_fx",
+    "timing": "round_start",
+    "effect_type": "hull_breach",
+    "value": 40.0
+  },
+  {
+    "id": "fixture_rs_burning",
+    "timing": "round_start",
+    "effect_type": "burning",
+    "value": 10.0
+  },
+  {
+    "id": "fixture_rs_shots",
+    "timing": "round_start",
+    "effect_type": "shots_per_weapon",
+    "value": 0.2
+  },
+  {
+    "id": "fixture_rs_crit",
+    "timing": "round_start",
+    "effect_type": "crit_damage",
+    "value": 0.2
+  }
+]
