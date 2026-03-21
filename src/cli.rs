@@ -192,7 +192,6 @@ fn handle_simulate(args: &[String]) -> i32 {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds,
             seed,
             trace_mode: TraceMode::Events,

@@ -1,6 +1,6 @@
 {
   "source": "community_spreadsheet",
-  "last_updated": "2026-03-20",
+  "last_updated": "2026-03-21",
   "items": [
     {
       "fid": 482782456,
@@ -21,14 +21,39 @@
       ]
     },
     {
-      "fid": null,
-      "name": "Weapon Damage Sample",
+      "fid": 473132032,
+      "name": "S31 Torpedo Pods",
       "tech_type": "forbidden",
-      "tier": null,
+      "tier": 12,
       "bonuses": [
         {
+          "stat": "armor",
+          "value": 0.08,
+          "operator": "add"
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.08,
+          "operator": "add"
+        },
+        {
+          "stat": "dodge",
+          "value": 0.08,
+          "operator": "add"
+        },
+        {
+          "stat": "hull_hp",
+          "value": 0.12,
+          "operator": "add"
+        },
+        {
+          "stat": "pierce",
+          "value": 0.06,
+          "operator": "add"
+        },
+        {
           "stat": "weapon_damage",
-          "value": 0.1,
+          "value": 0.155,
           "operator": "add"
         }
       ]

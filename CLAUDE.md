@@ -30,6 +30,9 @@ cargo clippy --all-targets
 ./target/release/kobayashi serve
 # Binds to 127.0.0.1:3000 by default; override with KOBAYASHI_BIND env var
 
+# Optional simulation/profile tuning (see src/data/profile.rs):
+#   KOBAYASHI_FT_LEVEL_TIER_SCALING=1 — scale forbidden-tech catalog bonuses by synced tier/level
+
 # CLI usage
 ./target/release/kobayashi simulate <rounds> <seed>
 ./target/release/kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]

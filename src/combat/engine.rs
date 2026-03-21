@@ -36,7 +36,7 @@ pub fn simulate_combat(
     config: SimulationConfig,
     attacker_crew: &CrewConfiguration,
 ) -> SimulationResult {
-    let attacker_crew = apply_duplicate_officer_policy(attacker_crew, config.allow_duplicate_officers);
+    let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let mut total_hull_damage = 0.0;

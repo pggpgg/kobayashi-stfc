@@ -31,16 +31,23 @@ Import which officers you own so the optimizer only suggests crew you have.
 - **Command:** `cargo run --bin import_forbidden_chaos`
 - **Output:** `data/forbidden_chaos_tech.json`
 
-**Columns (header row optional):** name, tech_type, tier, stat, value, operator
+**Columns (header row optional):** name, tech_type, tier, fid, stat, value, operator
 
-- `name`: tech name (e.g. "Ablative Armor")
+- `name`: tech name (e.g. "Ablative Armor"); matched to upstream translations to fill missing `fid` when possible
 - `tech_type`: "forbidden" or "chaos"
-- `tier`: numeric tier (optional)
-- `stat`: stat key (e.g. weapon_damage, armor, shield_hp)
+- `tier`: numeric tier (optional; used with level/tier scaling when enabled)
+- `fid`: game id for sync (`profiles/.../forbidden_tech.imported.json`); optional if upstream name match works
+- `stat`: stat key (e.g. weapon_damage, armor, pierce, shield_mitigation, hull_hp)
 - `value`: numeric value (e.g. 0.15 for +15%)
 - `operator`: "add" or "multiply" (default add)
 
 Multiple rows with the same name are merged into one record with multiple bonuses.
+
+**S31 Torpedo Pods (`fid` 473132032):** When [`../upstream/data-stfc-space/forbidden_tech/473132032.json`](../upstream/data-stfc-space/forbidden_tech/473132032.json) is present, rebaseline the six `S31 Torpedo Pods` rows from that file: for each non-empty `buffs[].buffs[]` with `value_is_percentage: true`, take `values[level - 1].value` (1-based tech level) and write `value` as **decimal** (e.g. `8` → `0.08`). The current CSV matches **level 46** (`values[45]`) for loca `56568`–`56571` mapped to `armor` / `shield_mitigation` / `dodge` (same %), `hull_hp`, `pierce`, and `weapon_damage`. Upstream copy still describes Battleship; Kobayashi applies generic combat keys.
+
+**Forbidden tech scaling env (see also `src/data/profile.rs`):**
+
+- `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` — scale catalog bonuses by synced forbidden-tech tier/level (opt-in; formula is approximate).
 
 ## Syndicate reputation
 

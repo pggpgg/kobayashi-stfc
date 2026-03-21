@@ -83,8 +83,6 @@ pub struct OptimizationScenario<'a> {
     pub tiered_scout_sims: Option<usize>,
     /// Tiered only: number of top crews to run full confirmation. None = use default (20).
     pub tiered_top_k: Option<usize>,
-    /// When true, candidate generation / genetic search may reuse the same officer in multiple seats (non-canonical).
-    pub allow_duplicate_officers: bool,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -103,7 +101,6 @@ impl Default for OptimizationScenario<'_> {
             profile_id: None,
             tiered_scout_sims: None,
             tiered_top_k: None,
-            allow_duplicate_officers: false,
         }
     }
 }
@@ -124,7 +121,6 @@ fn optimize_scenario_tiered_with_registry(
     let generator = CrewGenerator::with_strategy(CandidateStrategy {
         max_candidates: scenario.max_candidates,
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-        allow_duplicate_officers: scenario.allow_duplicate_officers,
         ..CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates_from_registry(
@@ -141,7 +137,6 @@ fn optimize_scenario_tiered_with_registry(
         None,
         None,
         scenario.profile_id,
-        scenario.allow_duplicate_officers,
     );
     let candidates =
         sort_candidates_by_analytical_expected_damage(&shared_tiered, candidates, scenario.seed);
@@ -157,7 +152,6 @@ fn optimize_scenario_tiered_with_registry(
         top_k,
         scenario.seed,
         scenario.profile_id,
-        scenario.allow_duplicate_officers,
         |_, _| true,
     )
 }
@@ -182,7 +176,6 @@ fn optimize_scenario_exhaustive_with_registry(
     let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
         max_candidates: scenario.max_candidates,
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-        allow_duplicate_officers: scenario.allow_duplicate_officers,
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates_from_registry(
@@ -199,7 +192,6 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.ship_tier,
         scenario.ship_level,
         scenario.profile_id,
-        scenario.allow_duplicate_officers,
     );
     let candidates =
         sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
@@ -213,7 +205,6 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.simulation_count.max(1),
         scenario.seed,
         scenario.profile_id,
-        scenario.allow_duplicate_officers,
     );
     rank_results(simulation_results)
 }
@@ -223,14 +214,12 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
     let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
         max_candidates: scenario.max_candidates,
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-        allow_duplicate_officers: scenario.allow_duplicate_officers,
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
     let shared = build_shared_scenario_data_standalone(
         scenario.ship,
         scenario.hostile,
-        scenario.allow_duplicate_officers,
     );
     let candidates =
         sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
@@ -240,7 +229,6 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         &candidates,
         scenario.simulation_count.max(1),
         scenario.seed,
-        scenario.allow_duplicate_officers,
     );
     rank_results(simulation_results)
 }
@@ -258,13 +246,11 @@ where
     let config = if scenario.seed_population.is_empty() {
         GeneticConfig {
             only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-            allow_duplicate_officers: scenario.allow_duplicate_officers,
             ..GeneticConfig::default()
         }
     } else {
         let mut cfg = GeneticConfig::seeded(scenario.seed_population.clone());
         cfg.only_below_decks_with_ability = scenario.only_below_decks_with_ability;
-        cfg.allow_duplicate_officers = scenario.allow_duplicate_officers;
         cfg
     };
     run_genetic_optimizer_ranked(
@@ -303,7 +289,6 @@ where
                 profile_id: scenario.profile_id,
                 tiered_scout_sims: scenario.tiered_scout_sims,
                 tiered_top_k: scenario.tiered_top_k,
-                allow_duplicate_officers: scenario.allow_duplicate_officers,
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -312,7 +297,6 @@ where
                 crate::optimizer::crew_generator::CandidateStrategy {
                     max_candidates: scenario.max_candidates,
                     only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                    allow_duplicate_officers: scenario.allow_duplicate_officers,
                     ..crate::optimizer::crew_generator::CandidateStrategy::default()
                 },
             );
@@ -321,7 +305,6 @@ where
             let shared = build_shared_scenario_data_standalone(
                 scenario.ship,
                 scenario.hostile,
-                scenario.allow_duplicate_officers,
             );
             let candidates =
                 sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
@@ -345,7 +328,6 @@ where
                     batch,
                     sim_count,
                     scenario.seed,
-                    scenario.allow_duplicate_officers,
                 );
                 all_results.extend(batch_results);
                 on_progress(end as u32, total as u32);
@@ -377,7 +359,6 @@ where
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 max_candidates: scenario.max_candidates,
                 only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                allow_duplicate_officers: scenario.allow_duplicate_officers,
                 ..CandidateStrategy::default()
             });
             let candidates = generator.generate_candidates_from_registry(
@@ -399,7 +380,6 @@ where
                 top_k,
                 scenario.seed,
                 scenario.profile_id,
-                scenario.allow_duplicate_officers,
                 &mut on_progress,
             )
         }
@@ -408,7 +388,6 @@ where
                 crate::optimizer::crew_generator::CandidateStrategy {
                     max_candidates: scenario.max_candidates,
                     only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                    allow_duplicate_officers: scenario.allow_duplicate_officers,
                     ..crate::optimizer::crew_generator::CandidateStrategy::default()
                 },
             );
@@ -426,7 +405,6 @@ where
                 scenario.ship_tier,
                 scenario.ship_level,
                 scenario.profile_id,
-                scenario.allow_duplicate_officers,
             );
             let candidates =
                 sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
@@ -455,7 +433,6 @@ where
                     sim_count,
                     scenario.seed,
                     scenario.profile_id,
-                    scenario.allow_duplicate_officers,
                 );
                 all_results.extend(batch_results);
                 if !on_progress(end as u32, total as u32) {
@@ -494,7 +471,6 @@ pub fn optimize_crew(
         profile_id,
         tiered_scout_sims: None,
         tiered_top_k: None,
-        allow_duplicate_officers: false,
     })
 }
 
@@ -518,7 +494,6 @@ mod tests {
             profile_id: None,
             tiered_scout_sims: None,
             tiered_top_k: None,
-            allow_duplicate_officers: false,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {

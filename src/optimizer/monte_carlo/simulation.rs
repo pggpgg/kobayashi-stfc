@@ -88,7 +88,6 @@ fn run_candidate_monte_carlo(
         rounds: input.rounds,
         seed: 0,
         trace_mode: TraceMode::Off,
-        allow_duplicate_officers: input.allow_duplicate_officers,
     };
 
     let mut n_done = 0usize;
@@ -158,7 +157,6 @@ pub fn run_monte_carlo(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
-    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
     run_monte_carlo_with_parallelism(
         ship,
@@ -167,7 +165,6 @@ pub fn run_monte_carlo(
         iterations,
         seed,
         false,
-        allow_duplicate_officers,
     )
 }
 
@@ -179,7 +176,6 @@ pub fn run_monte_carlo_parallel(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
-    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
     run_monte_carlo_with_parallelism(
         ship,
@@ -188,7 +184,6 @@ pub fn run_monte_carlo_parallel(
         iterations,
         seed,
         true,
-        allow_duplicate_officers,
     )
 }
 
@@ -200,7 +195,6 @@ pub fn run_monte_carlo_parallel_deduped(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
-    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
     if candidates.is_empty() {
         return Vec::new();
@@ -226,7 +220,6 @@ pub fn run_monte_carlo_parallel_deduped(
         &uniq,
         iterations,
         seed,
-        allow_duplicate_officers,
     );
 
     let mut by_hash: HashMap<u64, SimulationResult> =
@@ -269,7 +262,6 @@ pub fn run_monte_carlo_parallel_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
-    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -278,7 +270,6 @@ pub fn run_monte_carlo_parallel_with_registry(
         ship_tier,
         ship_level,
         profile_id,
-        allow_duplicate_officers,
     );
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, true)
 }
@@ -295,7 +286,6 @@ pub fn run_monte_carlo_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
-    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -304,7 +294,6 @@ pub fn run_monte_carlo_with_registry(
         ship_tier,
         ship_level,
         profile_id,
-        allow_duplicate_officers,
     );
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, false)
 }
@@ -316,9 +305,8 @@ fn run_monte_carlo_with_parallelism(
     iterations: usize,
     seed: u64,
     parallel: bool,
-    allow_duplicate_officers: bool,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_standalone(ship, hostile, allow_duplicate_officers);
+    let shared = build_shared_scenario_data_standalone(ship, hostile);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel)
 }
 
@@ -407,7 +395,6 @@ mod tests {
             &pop,
             8,
             42,
-            false,
         );
         let deduped = run_monte_carlo_parallel_deduped(
             "enterprise",
@@ -415,7 +402,6 @@ mod tests {
             &pop,
             8,
             42,
-            false,
         );
         assert_eq!(full.len(), deduped.len());
         assert_eq!(full[0].win_rate, deduped[0].win_rate);

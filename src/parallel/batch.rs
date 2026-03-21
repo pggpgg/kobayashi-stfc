@@ -56,7 +56,6 @@ pub fn run_simulation_batches(
     candidates: &[crate::optimizer::crew_generator::CrewCandidate],
     iterations: usize,
     seed: u64,
-    allow_duplicate_officers: bool,
     pool: &crate::parallel::pool::WorkerPool,
 ) -> Vec<crate::optimizer::monte_carlo::SimulationResult> {
     pool.install(|| {
@@ -66,7 +65,6 @@ pub fn run_simulation_batches(
             candidates,
             iterations,
             seed,
-            allow_duplicate_officers,
         )
     })
 }

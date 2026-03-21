@@ -180,17 +180,12 @@ impl CrewSeatContext {
     }
 }
 
-/// Apply duplicate-officer suppression for a pre-built crew (defense in depth vs LCARS resolution).
-///
-/// When `allow_duplicate_officers` is true, returns a clone of `crew`. When false, drops later groups
-/// that share an `officer_id` with an earlier group. Grouping uses `contribution_batch` when set;
-/// otherwise consecutive rows with the same `officer_id` form one group. Rows with `officer_id: None`
-/// are never dropped by this pass.
-pub fn apply_duplicate_officer_policy(
-    crew: &CrewConfiguration,
-    allow_duplicate_officers: bool,
-) -> CrewConfiguration {
-    if allow_duplicate_officers || crew.seats.is_empty() {
+/// Drop later seat groups that share an `officer_id` with an earlier group (defense in depth if a
+/// crew row set ever contains duplicates). Grouping uses `contribution_batch` when set; otherwise
+/// consecutive rows with the same `officer_id` form one group. Rows with `officer_id: None` are
+/// never dropped.
+pub fn apply_duplicate_officer_policy(crew: &CrewConfiguration) -> CrewConfiguration {
+    if crew.seats.is_empty() {
         return crew.clone();
     }
 

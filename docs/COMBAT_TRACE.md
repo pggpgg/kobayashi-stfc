@@ -45,8 +45,6 @@ Ability activation traces (`ability_activation` / related event types) show **wh
 
 **When you need a table, not a single fight:** use the CLI `kobayashi mitigation-sensitivity <ship_id> <hostile_id> [--delta-pct <f64>]` (from the project root, with data loaded — ids are the same as in `data/ships_extended` / `data/hostiles`, e.g. `uss_enterprise` and `swarm_cluster_20_interceptor`), or the library helpers in [`src/combat/mitigation_sensitivity.rs`](../src/combat/mitigation_sensitivity.rs) to sweep baseline stats with small deltas.
 
-## Compatibility: duplicate officers in the optimizer
+## Officers: one seat each
 
-When **`allow_duplicate_officers`** is enabled on optimize requests (or `CandidateStrategy`), candidate generation and the genetic optimizer may place the **same officer name** in more than one seat. That can **stack** passive and timed abilities multiple times via [`resolve_crew_to_buff_set`](../src/lcars/resolver.rs), which is **not** how the live game is supposed to behave.
-
-Default remains **unique officers per crew**. Enable the flag only to reproduce a specific bug report or experiment; treat results as **non-canonical**.
+The game does not allow duplicate officers on a crew. The optimizer and [`resolve_crew_to_buff_set`](../src/lcars/resolver.rs) enforce **at most one contribution per officer id** (captain, then bridge order, then below decks). [`apply_duplicate_officer_policy`](../src/combat/abilities.rs) drops duplicate `officer_id` groups if malformed input ever reaches the engine.

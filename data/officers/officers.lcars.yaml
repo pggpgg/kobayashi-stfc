@@ -615,10 +615,11 @@ officers:
   captain_ability:
     name: Kathryn Janeway (Captain)
     effects:
-    - type: tag
-      stat: null
+    # Shield mitigation captain maneuver: values from legacy tag payload; rank curve not in sheet — flat 0.06.
+    - type: stat_modify
+      stat: shield_mitigation
       target: self
-      operator: null
+      operator: add
       value: 0.06
       trigger: passive
       duration: permanent
@@ -626,7 +627,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: shieldmitigation:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -1200,18 +1201,23 @@ officers:
       tag: voyagerasace:unmapped
       accumulate: null
       decay: null
-    - type: tag
+    # Burning vs hostiles (AddState state=2). Linear chance curve approximates rank table 10%/15%/30%/60%/100%.
+    - type: burning
       stat: null
       target: enemy
       operator: null
-      value: 1.0
+      value: null
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base_chance: 0.1
+        per_rank: 0.225
+        max_rank: 5
       condition: null
       chance: null
       multiplier: null
-      tag: add_state:addstate
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -11594,18 +11600,23 @@ officers:
       tag: null
       accumulate: null
       decay: null
-    - type: tag
+    # Hull breach vs hostiles (AddState state=4). Same chance curve as sheet; Kobayashi has no EnemyHostile gate (PVE assumed).
+    - type: hull_breach
       stat: null
       target: enemy
       operator: null
-      value: 1.0
+      value: null
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base_chance: 0.1
+        per_rank: 0.225
+        max_rank: 5
       condition: null
       chance: null
       multiplier: null
-      tag: add_state:addstate
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null

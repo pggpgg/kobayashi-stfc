@@ -45,14 +45,14 @@ fn main() {
 
     // Sequential
     let t0 = Instant::now();
-    let results_seq = run_monte_carlo(ship, hostile, &candidates, iterations, seed, false);
+    let results_seq = run_monte_carlo(ship, hostile, &candidates, iterations, seed);
     let elapsed_seq = t0.elapsed();
     let seq_ms = elapsed_seq.as_secs_f64() * 1000.0;
     println!("Sequential:  {:.2} ms  ({:.1} sims/s)", seq_ms, (n * iterations) as f64 / elapsed_seq.as_secs_f64());
 
     // Parallel
     let t0 = Instant::now();
-    let results_par = run_monte_carlo_parallel(ship, hostile, &candidates, iterations, seed, false);
+    let results_par = run_monte_carlo_parallel(ship, hostile, &candidates, iterations, seed);
     let elapsed_par = t0.elapsed();
     let par_ms = elapsed_par.as_secs_f64() * 1000.0;
     println!("Parallel:    {:.2} ms  ({:.1} sims/s)", par_ms, (n * iterations) as f64 / elapsed_par.as_secs_f64());

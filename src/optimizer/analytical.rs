@@ -115,7 +115,6 @@ mod tests {
             rounds: 3,
             defender_hull: 500.0,
             base_seed: 0,
-            allow_duplicate_officers: false,
         }
     }
 

@@ -16,9 +16,6 @@ pub struct ResolveOptions {
     pub tier: Option<u8>,
     /// Per-officer tier (canonical_officer_id → tier). When set, each officer uses their tier for scaling (base + per_rank, chance_at_rank).
     pub officer_tiers: Option<HashMap<String, u8>>,
-    /// When `false`, only the first slot assignment per officer id contributes (captain, then each bridge slot in order, then below decks).
-    /// Should match [crate::combat::SimulationConfig::allow_duplicate_officers] for consistent static buffs, proc, and crew effects.
-    pub allow_duplicate_officers: bool,
 }
 
 impl Default for ResolveOptions {
@@ -26,8 +23,6 @@ impl Default for ResolveOptions {
         Self {
             tier: None,
             officer_tiers: None,
-            // Preserve historical resolver behavior when options are defaulted (CLI debug, unit tests).
-            allow_duplicate_officers: true,
         }
     }
 }
@@ -387,6 +382,12 @@ pub fn resolve_officer_ability(
 }
 
 /// Build a BuffSet for a crew: captain_id, bridge_ids, below_deck_ids.
+///
+/// Slot rules (aligned with STFC seating):
+/// - **Captain:** [LcarsOfficer::captain_ability] and [LcarsOfficer::bridge_ability] both apply; seat is [CrewSeat::Captain].
+/// - **Bridge:** only [LcarsOfficer::bridge_ability]; seat is [CrewSeat::Bridge].
+/// - **Below decks:** only [LcarsOfficer::below_decks_ability]; seat is [CrewSeat::BelowDeck].
+///
 /// Officers are looked up from the provided map (id -> LcarsOfficer).
 /// Static buffs are accumulated from passive permanent stat_modify effects;
 /// all resolved effects that have a timing go into crew.
@@ -397,7 +398,6 @@ pub fn resolve_crew_to_buff_set(
     officers: &HashMap<String, LcarsOfficer>,
     options: &ResolveOptions,
 ) -> BuffSet {
-    let allow_dup = options.allow_duplicate_officers;
     let mut static_buffs: HashMap<String, f64> = HashMap::new();
     let mut seats: Vec<CrewSeatContext> = Vec::new();
     let mut proc_chance = 0.0_f64;
@@ -445,13 +445,18 @@ pub fn resolve_crew_to_buff_set(
             next_batch = next_batch.saturating_add(1);
             add_ability(o, a, CrewSeat::Captain, AbilityClass::CaptainManeuver, b);
         }
+        if let Some(ref a) = o.bridge_ability {
+            let b = next_batch;
+            next_batch = next_batch.saturating_add(1);
+            add_ability(o, a, CrewSeat::Captain, AbilityClass::BridgeAbility, b);
+        }
     }
 
     for id in bridge {
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if !allow_dup && seen_slots.contains(id.as_str()) {
+        if seen_slots.contains(id.as_str()) {
             continue;
         }
         seen_slots.insert(id.clone());
@@ -466,7 +471,7 @@ pub fn resolve_crew_to_buff_set(
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if !allow_dup && seen_slots.contains(id.as_str()) {
+        if seen_slots.contains(id.as_str()) {
             continue;
         }
         seen_slots.insert(id.clone());
@@ -501,12 +506,15 @@ pub fn resolve_crew_to_buff_set(
         if let Some(ref a) = o.captain_ability {
             accumulate_proc(o, a);
         }
+        if let Some(ref a) = o.bridge_ability {
+            accumulate_proc(o, a);
+        }
     }
     for id in bridge {
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if !allow_dup && seen_proc.contains(id.as_str()) {
+        if seen_proc.contains(id.as_str()) {
             continue;
         }
         seen_proc.insert(id.clone());
@@ -518,7 +526,7 @@ pub fn resolve_crew_to_buff_set(
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if !allow_dup && seen_proc.contains(id.as_str()) {
+        if seen_proc.contains(id.as_str()) {
             continue;
         }
         seen_proc.insert(id.clone());
@@ -543,7 +551,7 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::AbilityEffect;
+    use crate::combat::{AbilityClass, AbilityEffect};
     use crate::lcars::parser::{
         load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
     };
@@ -566,6 +574,64 @@ mod tests {
             accumulate: None,
             decay: None,
         }
+    }
+
+    #[test]
+    fn captain_applies_captain_and_bridge_blocks() {
+        let officer = LcarsOfficer {
+            id: "cap_dual".to_string(),
+            name: "CapDual".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "Cap".to_string(),
+                effects: vec![lcars_effect_stat_modify("isolytic_damage", 0.11, "on_round_start")],
+            }),
+            bridge_ability: Some(LcarsAbility {
+                name: "Bridge".to_string(),
+                effects: vec![lcars_effect_stat_modify("isolytic_cascade_damage", 0.22, "on_combat_start")],
+            }),
+            below_decks_ability: None,
+        };
+        let mut officers = HashMap::new();
+        officers.insert("cap_dual".to_string(), officer);
+        let opts = ResolveOptions {
+            tier: Some(5),
+            ..Default::default()
+        };
+        let buff = resolve_crew_to_buff_set("cap_dual", &[], &[], &officers, &opts);
+        assert_eq!(buff.crew.seats.len(), 2);
+        assert!(buff.crew.seats.iter().all(|s| s.seat == CrewSeat::Captain));
+        let classes: Vec<_> = buff.crew.seats.iter().map(|s| s.ability.class).collect();
+        assert!(classes.contains(&AbilityClass::CaptainManeuver));
+        assert!(classes.contains(&AbilityClass::BridgeAbility));
+    }
+
+    #[test]
+    fn below_decks_does_not_apply_bridge_when_no_below_block() {
+        let bridge = LcarsAbility {
+            name: "Bd Bridge Only (Bridge)".to_string(),
+            effects: vec![lcars_effect_stat_modify("shield_pierce", 10.0, "on_hit")],
+        };
+        let officer = LcarsOfficer {
+            id: "bd_only_bridge".to_string(),
+            name: "BdTest".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: Some(bridge),
+            below_decks_ability: None,
+        };
+        let mut officers = HashMap::new();
+        officers.insert("bd_only_bridge".to_string(), officer);
+        let opts = ResolveOptions {
+            tier: Some(5),
+            ..Default::default()
+        };
+        let buff = resolve_crew_to_buff_set("", &[], &["bd_only_bridge".to_string()], &officers, &opts);
+        assert!(buff.crew.seats.is_empty());
     }
 
     #[test]
@@ -659,24 +725,25 @@ mod tests {
             officer_tiers: None,
             ..Default::default()
         };
-        let buff_set = resolve_crew_to_buff_set(
-            "khan",
-            &["khan".to_string()],
+        // Same officer cannot appear in multiple seats; exercise Khan's blocks on separate minimal crews.
+        let buff_cap_bridge = resolve_crew_to_buff_set("khan", &[], &[], &officers, &options);
+        assert!(
+            buff_cap_bridge.static_buffs.contains_key("shield_pierce"),
+            "expected static shield_pierce from captain ability"
+        );
+        assert!(
+            buff_cap_bridge.static_buffs.contains_key("weapon_damage"),
+            "expected static weapon_damage from bridge ability"
+        );
+        let buff_below = resolve_crew_to_buff_set(
+            "odo-04a97d",
+            &[],
             &["khan".to_string()],
             &officers,
             &options,
         );
-        // Khan's captain/bridge/below are all passive permanent -> static_buffs only; no dynamic seats.
         assert!(
-            buff_set.static_buffs.contains_key("shield_pierce"),
-            "expected static shield_pierce from captain ability"
-        );
-        assert!(
-            buff_set.static_buffs.contains_key("weapon_damage"),
-            "expected static weapon_damage from bridge ability"
-        );
-        assert!(
-            buff_set.static_buffs.contains_key("hull_hp"),
+            buff_below.static_buffs.contains_key("hull_hp"),
             "expected static hull_hp from below decks ability"
         );
     }

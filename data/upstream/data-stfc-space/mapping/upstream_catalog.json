@@ -15,6 +15,12 @@
       "count_order": "thousands",
       "semantics": "Per-hostile combat/detail JSON (components, stats, systems, warp). Same schema per hostile id; see mapping/hostiles.json.",
       "api_shape": "GET /hostile/{id}.json"
+    },
+    {
+      "glob": "forbidden_tech/*.json",
+      "count_order": "few",
+      "semantics": "Per-fid forbidden tech progression: tier-grouped buffs with per-level value tables (`values[]`), `tiers[]`, `levels[]`. Used to calibrate `data/import/forbidden_chaos_tech.csv` (e.g. S31 Torpedo Pods `473132032.json`).",
+      "api_shape": "GET /forbidden_tech/{id}.json (when published)"
     }
   ],
   "directories": [
@@ -27,6 +33,11 @@
       "path": "hostiles/",
       "role": "cached_hostile_details",
       "note": "Bulk; not enumerated file-by-file."
+    },
+    {
+      "path": "forbidden_tech/",
+      "role": "cached_forbidden_tech_details",
+      "note": "Optional per-fid detail JSON; see bulk_patterns_not_individually_documented forbidden_tech/*.json."
     },
     {
       "path": "mapping/",

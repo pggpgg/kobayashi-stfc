@@ -1,4 +1,9 @@
 name,tech_type,tier,fid,stat,value,operator
-Ablative Armor,forbidden,1,,hull_hp,0.05,add
-Ablative Armor,forbidden,1,,shield_hp,0.05,add
-Weapon Damage Sample,forbidden,,,weapon_damage,0.10,add
+Ablative Armor,forbidden,1,482782456,hull_hp,0.05,add
+Ablative Armor,forbidden,1,482782456,shield_hp,0.05,add
+S31 Torpedo Pods,forbidden,12,473132032,armor,0.08,add
+S31 Torpedo Pods,forbidden,12,473132032,shield_mitigation,0.08,add
+S31 Torpedo Pods,forbidden,12,473132032,dodge,0.08,add
+S31 Torpedo Pods,forbidden,12,473132032,hull_hp,0.12,add
+S31 Torpedo Pods,forbidden,12,473132032,pierce,0.06,add
+S31 Torpedo Pods,forbidden,12,473132032,weapon_damage,0.155,add

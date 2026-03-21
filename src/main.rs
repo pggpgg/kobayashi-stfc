@@ -324,7 +324,6 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         } else {
             TraceMode::Off
         },
-        allow_duplicate_officers: false,
     };
 
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
