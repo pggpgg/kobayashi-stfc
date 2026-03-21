@@ -555,8 +555,11 @@ async fn handle_optimize_start(
 
 /// GET /api/optimize/status/:job_id
 async fn handle_optimize_status(Path(job_id): Path<String>) -> impl IntoResponse {
-    match api::optimize_status_payload(&job_id) {
-        Ok(payload) => ok_json(payload).into_response(),
+    match api::get_job_status(&job_id) {
+        Ok(response) => match serde_json::to_string_pretty(&response) {
+            Ok(payload) => ok_json(payload).into_response(),
+            Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+        },
         Err(api::OptimizeStatusError::NotFound) => {
             error_json(StatusCode::NOT_FOUND, "Job not found").into_response()
         }
@@ -574,11 +577,29 @@ async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResp
         loop {
             let result = tokio::task::spawn_blocking({
                 let job_id = job_id.clone();
-                move || api::optimize_status_payload(&job_id)
+                move || api::get_job_status(&job_id)
             })
             .await;
-            let payload_result: Result<String, api::OptimizeStatusError> = match result {
-                Ok(Ok(payload)) => Ok(payload),
+            match result {
+                Ok(Ok(response)) => {
+                    let done = response.status == "done" || response.status == "error";
+                    let payload = match serde_json::to_string(&response) {
+                        Ok(s) => s,
+                        Err(_) => {
+                            let event = Event::default()
+                                .data(r#"{"status":"error","error":"Serialization error"}"#);
+                            let _ = tx.send(Ok(event)).await;
+                            break;
+                        }
+                    };
+                    let event = Event::default().data(payload);
+                    if tx.send(Ok(event)).await.is_err() {
+                        break;
+                    }
+                    if done {
+                        break;
+                    }
+                }
                 Ok(Err(api::OptimizeStatusError::NotFound)) => {
                     let event = Event::default()
                         .data(r#"{"status":"error","error":"Job not found"}"#);
@@ -592,20 +613,6 @@ async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResp
                     break;
                 }
                 Err(_) => break,
-            };
-            if let Ok(payload) = payload_result {
-                let event = Event::default().data(payload.clone());
-                if tx.send(Ok(event)).await.is_err() {
-                    break;
-                }
-                let done = serde_json::from_str::<serde_json::Value>(&payload)
-                    .ok()
-                    .and_then(|v| v.get("status").and_then(|s| s.as_str()).map(|s| s.to_string()))
-                    .map(|s| s == "done" || s == "error")
-                    .unwrap_or(false);
-                if done {
-                    break;
-                }
             }
             tokio::time::sleep(Duration::from_millis(300)).await;
         }

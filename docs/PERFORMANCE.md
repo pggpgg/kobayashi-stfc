@@ -37,3 +37,10 @@ The latest run (after all fixes) is ~2.3× the previous best in this log and ~20
 ## Conclusion
 
 Yes, the sim runs faster with these fixes. Criterion reported significant improvement (44–68% faster), and the raw throughput (120k seq / 513k parallel sims/s in the parallel benchmark, ~830k combats/s in the single-combat benchmark) reflects the reduced allocations and shared scenario caching.
+
+## Runtime tuning (optimizer / Rayon)
+
+- **`KOBAYASHI_RAYON_THREADS`**: positive integer → use a Rayon pool with that many worker threads for code paths that use `WorkerPool::install` (`src/parallel/pool.rs`; default remains “all cores” when unset or `0`).
+- **`KOBAYASHI_PERF_LOG=1`**: logs wall-clock for crew generation and full Monte Carlo batches with shared scenario data (stderr); zero overhead when unset.
+
+Tiered optimization reuses one `SharedScenarioData` build per phase (`src/optimizer/monte_carlo/scenario.rs`), uses adaptive batch counts via `monte_carlo_batch_count_for_candidates` (`src/parallel/batch.rs`), and runs the scout pass with Wilson-bound early stopping where safe (confirmation pass unchanged).

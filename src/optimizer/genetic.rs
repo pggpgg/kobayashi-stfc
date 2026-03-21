@@ -15,7 +15,9 @@ use crate::combat::rng::Rng;
 use crate::optimizer::crew_generator::{
     build_officer_pools, OfficerPools, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS,
 };
-use crate::optimizer::monte_carlo::{run_monte_carlo_parallel, SimulationResult};
+use crate::optimizer::monte_carlo::{
+    run_monte_carlo_parallel, run_monte_carlo_parallel_deduped, SimulationResult,
+};
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use std::collections::HashSet;
 
@@ -538,7 +540,7 @@ pub fn run_genetic_optimizer(
     let mut stagnation = 0_usize;
 
     for generation in 0..config.generations {
-        let sim_results = run_monte_carlo_parallel(
+        let sim_results = run_monte_carlo_parallel_deduped(
             ship,
             hostile,
             &population,
