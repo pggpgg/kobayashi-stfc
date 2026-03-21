@@ -1,7 +1,7 @@
 # Combat data (ships, hostiles, buildings)
 
 - **Ships:** Ship list and combat resolution use **`ships_extended/`** only: `ships_extended/index.json` plus per-ship `ships_extended/<id>.json` (tier + level stats). Built from upstream data via `scripts/build_ship_registry.py` and `cargo run --bin normalize_data_stfc_space`. Game hull_id (from sync) → Kobayashi ship id for Roster mode is in **`hull_id_registry.json`** at the data root; regenerate with `node scripts/build_hull_id_registry.mjs`.
-- **Hostiles:** Loaded from `hostiles/index.json` plus per-id JSON files in the same directory.
+- **Hostiles:** Loaded from `hostiles/index.json` plus per-id JSON files in the same directory. Refresh from cached data.stfc.space detail JSON with `cargo run --bin normalize_hostiles_stfc_space` (inputs under `data/upstream/data-stfc-space/hostiles/`). Optional env: `STFCSPACE_HOSTILES_VERSION`, `STFCSPACE_HOSTILES_SOURCE_NOTE`. STFCcommunity baseline: `cargo run --bin normalize_stfc_data` (different id scheme: string slugs).
 - **Buildings:** Loaded from `buildings/index.json` plus per-building JSON files.
 
 ## Provenance
@@ -13,7 +13,7 @@
 ## Schema
 
 - **Ships:** See `src/data/ship.rs` (`ExtendedShipRecord`, `ShipRecord`). Extended files in `ships_extended/<id>.json` have `tiers[]` (per-tier combat stats) and `levels[]` (shield/health bonuses); resolved at request time to `ShipRecord` for a given tier/level. Fields include attack, hull_health, shield_health, shield_mitigation, apex_shred, isolytic_damage, etc.
-- **Hostiles:** See `src/data/hostile.rs` (`HostileRecord`). Fields include armor, shield_deflection, dodge, hull_health, shield_health, shield_mitigation, apex_barrier, isolytic_defense, etc.
+- **Hostiles:** See `src/data/hostile.rs` (`HostileRecord`). Core combat fields: armor, shield_deflection, dodge, hull_health, shield_health, shield_mitigation, apex_barrier, isolytic_defense, mitigation floor/ceiling, mystery factor. Records from `normalize_hostiles_stfc_space` also include upstream metadata (`loca_id`, `faction`, `upstream_ship_type`, `hull_type_raw`, `systems`, …), full aggregated/offensive stats (`stat_health`, `accuracy`, `armor_piercing`, …), and preserved `components` / `ability` / `resources` JSON arrays.
 - **Buildings:** See `src/data/building.rs` (`BuildingRecord`). Each building has `levels` with `bonuses` (`stat`, `value`, `operator`, optional `conditions`/`notes`). Index is `data/buildings/index.json` (`BuildingIndex`).
 
 ## Buildings: sync and optimizer
