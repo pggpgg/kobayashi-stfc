@@ -4,6 +4,8 @@
 //! synchronous and may do I/O or CPU work).  Heavy operations (optimize,
 //! simulate) are offloaded to a blocking thread pool via
 //! `tokio::task::spawn_blocking` so that the async runtime stays responsive.
+//! `/api/simulate` and synchronous `/api/optimize` share a semaphore
+//! (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`, default 1).
 
 use axum::{
     Router,
@@ -19,6 +21,7 @@ use std::convert::Infallible;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Semaphore;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::data::data_registry::DataRegistry;
@@ -29,6 +32,16 @@ use crate::server::sync;
 #[derive(Clone)]
 pub struct AppState {
     pub registry: Arc<DataRegistry>,
+    /// Limits concurrent CPU-heavy `spawn_blocking` tasks (`/api/simulate`, `/api/optimize`).
+    pub cpu_jobs: Arc<Semaphore>,
+}
+
+fn max_concurrent_cpu_jobs() -> usize {
+    std::env::var("KOBAYASHI_MAX_CONCURRENT_CPU_JOBS")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .filter(|&n| n >= 1)
+        .unwrap_or(1)
 }
 
 // ---------------------------------------------------------------------------
@@ -87,7 +100,10 @@ fn validation_json(payload: api::ValidationErrorResponse) -> JsonResponse {
 // ---------------------------------------------------------------------------
 
 pub fn build_router(registry: Arc<DataRegistry>) -> Router {
-    let state = AppState { registry };
+    let state = AppState {
+        registry,
+        cpu_jobs: Arc::new(Semaphore::new(max_concurrent_cpu_jobs())),
+    };
 
     let api_routes = Router::new()
         // Health
@@ -464,9 +480,20 @@ async fn handle_simulate(
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
+    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+        Ok(p) => p,
+        Err(_) => {
+            return error_json(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "CPU job semaphore closed",
+            )
+            .into_response();
+        }
+    };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
     let result = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
         api::simulate_payload(registry.as_ref(), &body, profile_id.as_deref())
     }).await;
     match result {
@@ -493,9 +520,20 @@ async fn handle_optimize(
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
+    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+        Ok(p) => p,
+        Err(_) => {
+            return error_json(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "CPU job semaphore closed",
+            )
+            .into_response();
+        }
+    };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
     let result = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
         api::optimize_payload(registry.as_ref(), &body, profile_id.as_deref())
     }).await;
     match result {

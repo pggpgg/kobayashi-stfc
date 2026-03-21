@@ -8,8 +8,10 @@ use std::time::Instant;
 
 use kobayashi::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
 use kobayashi::optimizer::monte_carlo::{run_monte_carlo, run_monte_carlo_parallel};
+use kobayashi::parallel::init_from_env;
 
 fn main() {
+    init_from_env();
     let ship = "saladin";
     let hostile = "explorer_30";
     let seed = 12345u64;

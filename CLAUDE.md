@@ -33,6 +33,13 @@ cargo clippy --all-targets
 # Optional simulation/profile tuning (see src/data/profile.rs):
 #   KOBAYASHI_FT_LEVEL_TIER_SCALING=1 — scale forbidden-tech catalog bonuses by synced tier/level
 
+# CPU footprint (process-wide; restart server after changing):
+#   KOBAYASHI_RAYON_THREADS=<n> — cap Rayon’s global pool (Monte Carlo / optimizer). Omit or 0 = all logical CPUs.
+#   KOBAYASHI_LOW_PRIORITY=1 — Windows only: SetPriorityClass(BELOW_NORMAL) for the whole process (keeps UI snappier; does not replace a thread cap).
+#   KOBAYASHI_MAX_CONCURRENT_CPU_JOBS=<n> — server: max concurrent blocking /api/simulate + /api/optimize handlers (default 1).
+# Background optimize jobs use POST /api/optimize/start (detached thread); they still share the same Rayon pool and process priority as the server.
+# Integration tests and Criterion benches that use Rayon before init_from_env runs cannot change the thread count; use default or run those binaries in isolation.
+
 # CLI usage
 ./target/release/kobayashi simulate <rounds> <seed>
 ./target/release/kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]
