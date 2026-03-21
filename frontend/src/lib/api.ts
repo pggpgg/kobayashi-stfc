@@ -264,7 +264,6 @@ export async function getOptimizeEstimate(
     sims?: number;
     max_candidates?: number | null;
     prioritize_below_decks_ability?: boolean;
-    allow_duplicate_officers?: boolean;
   },
   profileId?: string | null,
 ): Promise<OptimizeEstimate> {
@@ -279,9 +278,6 @@ export async function getOptimizeEstimate(
   }
   if (params.prioritize_below_decks_ability === true) {
     search.set('prioritize_below_decks_ability', 'true');
-  }
-  if (params.allow_duplicate_officers === true) {
-    search.set('allow_duplicate_officers', 'true');
   }
   if (profileId) search.set('profile', profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
@@ -354,7 +350,6 @@ export async function optimizeStart(
     below_decks_strategy?: 'ordered' | 'exploration';
     ship_tier?: number | null;
     ship_level?: number | null;
-    allow_duplicate_officers?: boolean;
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -387,9 +382,6 @@ export async function optimizeStart(
   }
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
-  }
-  if (params.allow_duplicate_officers === true) {
-    body.allow_duplicate_officers = true;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',

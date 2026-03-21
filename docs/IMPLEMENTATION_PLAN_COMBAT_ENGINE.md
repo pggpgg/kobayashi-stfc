@@ -65,15 +65,14 @@ This plan turns `COMBAT_FEATURES_FROM_STFC_TOOLBOX.md` into execution phases wit
 
 **Goal:** Support optional game quirks and temporary state so the simulator can match observed behavior when needed.
 
-**Status (duplicate officers):** Implemented. `SimulationConfig::allow_duplicate_officers` (default `false`) gates `apply_duplicate_officer_policy` in `simulate_combat`. LCARS `resolve_crew_to_buff_set` respects `ResolveOptions::allow_duplicate_officers` (default `true` for ad-hoc resolver calls; scenario/optimizer passes through the scenario flag). Tests: `tests/duplicate_officer_compat_tests.rs`.
+**Status (duplicate officers):** STFC does not allow the same officer in multiple seats; Kobayashi matches that. [`resolve_crew_to_buff_set`](../src/lcars/resolver.rs) skips later slot assignments for an already-seen officer id; [`apply_duplicate_officer_policy`](../src/combat/abilities.rs) is a second-pass guard on crew rows.
 
 **Plan:**
-1. **Duplicate-officer bug mode:** ~~Add a config flag~~ **Done:** `SimulationConfig.allow_duplicate_officers` + optimizer/API alignment; when `true`, duplicate canonical ids may contribute from every slot; when `false`, first slot wins for static buffs, proc, and crew rows (batched by `contribution_batch` / officer id).
+1. **Duplicate officers:** ~~N/A~~ **Removed:** No config flag; candidate generation and GA always produce distinct officers per crew.
 2. **Temporary combat-only state and rollback:** Identify which state (e.g. morale, assimilated, hull breach, burning) is temporary and must be reset or not carried across combats. Ensure `simulate_combat` does not mutate long-lived state; if any shared state is ever introduced, add end-of-combat rollback when this mode is on.
-3. Add tests or scenarios that run with toggles on/off and assert expected differences (e.g. duplicate officer changes outcome when toggle is on).
 
 **Definition of done**
-- At least one compatibility toggle (e.g. duplicate-officer) is implemented and gated by config.
+- Crew resolution and combat agree on unique-officer semantics.
 - No unintended long-lived combat state; rollback or clear documentation of what is combat-local.
 
 ---

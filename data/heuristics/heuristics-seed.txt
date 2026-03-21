@@ -12,6 +12,8 @@
 #   - Lines starting with # are comments; blank lines are ignored.
 
 # ── Isolytic damage ──────────────────────────────────────────────────────
+# USS Crozier primary (Ent-E + Voyager BD): Picard captain, Data+Janeway bridge, four BD candidates.
+Crozier Ent-E isolytic:Ent-E Picard,Ent-E Data,Kathryn Janeway:Neelix,B'Elanna Torres,D'Vana Tendi,Tom Paris
 Full isolytic:Ent-E Picard, Ent-E Data,Kathryn Janeway
 Isolytic and loot:Kathryn Janeway,Ent-E Data,Five Of Eleven
 Isolytic Pike boost:Pike,Ent-E Data,Kathryn Janeway

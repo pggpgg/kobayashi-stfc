@@ -1,4 +1,4 @@
-//! Calibration tests: run simulator with recorded-fight scenario and assert outcome within tolerance.
+﻿//! Calibration tests: run simulator with recorded-fight scenario and assert outcome within tolerance.
 //! Fixtures live in tests/fixtures/recorded_fights/ (see docs/combat_log_format.md).
 //! Game CSV exports live in fight samples/ at repo root.
 
@@ -64,7 +64,6 @@ fn calibration_scenario_outcome_within_tolerance() {
         rounds: 10,
         seed: 42,
         trace_mode: TraceMode::Off,
-        allow_duplicate_officers: false,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
 
@@ -124,7 +123,6 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         rounds: 10,
         seed: 42,
         trace_mode: TraceMode::Off,
-        allow_duplicate_officers: false,
     };
     let result = simulate_combat(&attacker, &defender, config, &crew);
 
@@ -217,7 +215,6 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         rounds: 2,
         seed: 21,
         trace_mode: TraceMode::Off,
-        allow_duplicate_officers: false,
     };
     let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let with_regen = simulate_combat(&attacker, &defender, config, &with_kill_regen);

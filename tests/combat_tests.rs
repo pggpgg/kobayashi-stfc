@@ -1,4 +1,4 @@
-use kobayashi::combat::{
+﻿use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
     mitigation, mitigation_with_morale, pierce_damage_through_bonus, round_half_even,
     serialize_events_json, simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats,
@@ -339,7 +339,6 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -348,7 +347,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
 
     let no_barrier = simulate_combat(&attacker, &defender_no_barrier, config, &crew);
     let with_10k_barrier = simulate_combat(&attacker, &defender_10k_barrier, config, &crew);
-    // 10k barrier, 0 shred: factor = 10000/(10000+10000) = 0.5 → 50% damage gets through.
+    // 10k barrier, 0 shred: factor = 10000/(10000+10000) = 0.5 â†’ 50% damage gets through.
     approx_eq(no_barrier.total_damage, 200.0, 1e-12);
     approx_eq(with_10k_barrier.total_damage, 100.0, 1e-12);
 
@@ -399,7 +398,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         isolytic_defense: 0.0,
         weapons: vec![],
     };
-    // Defender with 500 SHP, 80% shield mitigation → 80% of damage to shield, 20% to hull.
+    // Defender with 500 SHP, 80% shield mitigation â†’ 80% of damage to shield, 20% to hull.
     let defender = Combatant {
         id: "defender".to_string(),
         attack: 0.0,
@@ -420,7 +419,6 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -453,7 +451,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         isolytic_defense: 0.0,
         weapons: vec![],
     };
-    // Defender has only 100 SHP; 80% of 1000 = 800 to shield → 100 absorbed, 700 overflow to hull. 20% = 200 to hull. Total hull = 900.
+    // Defender has only 100 SHP; 80% of 1000 = 800 to shield â†’ 100 absorbed, 700 overflow to hull. 20% = 200 to hull. Total hull = 900.
     let defender = Combatant {
         id: "defender".to_string(),
         attack: 0.0,
@@ -474,7 +472,6 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -517,7 +514,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 500.0,
-        shield_health: 50.0, // Round 1: 80% of 100 = 80 to shield → 50 absorbed, 30 overflow; 20% = 20 to hull. Shield gone. Hull takes 20+30 = 50.
+        shield_health: 50.0, // Round 1: 80% of 100 = 80 to shield â†’ 50 absorbed, 30 overflow; 20% = 20 to hull. Shield gone. Hull takes 20+30 = 50.
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
@@ -526,7 +523,6 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 3,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -579,7 +575,6 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -604,9 +599,9 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
 
     let without = simulate_combat(&attacker, &defender, config, &crew_no_apex);
     let with_ability = simulate_combat(&attacker, &defender, config, &crew_with_apex_shred);
-    // Without officer: factor = 10000/(10000+10000) = 0.5 → 100 damage.
+    // Without officer: factor = 10000/(10000+10000) = 0.5 â†’ 100 damage.
     approx_eq(without.total_damage, 100.0, 1e-12);
-    // With +15% Apex Shred: effective_barrier = 10000/1.15 ≈ 8695.65, factor ≈ 10000/18695.65 ≈ 0.535 → ~107 damage.
+    // With +15% Apex Shred: effective_barrier = 10000/1.15 â‰ˆ 8695.65, factor â‰ˆ 10000/18695.65 â‰ˆ 0.535 â†’ ~107 damage.
     assert!(
         with_ability.total_damage > without.total_damage,
         "officer Apex Shred should increase damage through barrier"
@@ -655,7 +650,6 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -680,7 +674,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
 
     let without = simulate_combat(&attacker, &defender_no_bonus, config, &crew_no_apex);
     let with_ability = simulate_combat(&attacker, &defender_no_bonus, config, &crew_with_apex_barrier);
-    // Defender has 5k base barrier; officer adds 5k → effective 10k. Without officer: factor = 10000/15000 = 2/3 → 133.33. With officer: factor = 10000/20000 = 0.5 → 100.
+    // Defender has 5k base barrier; officer adds 5k â†’ effective 10k. Without officer: factor = 10000/15000 = 2/3 â†’ 133.33. With officer: factor = 10000/20000 = 0.5 â†’ 100.
     assert!(
         with_ability.total_damage < without.total_damage,
         "officer Apex Barrier bonus should reduce damage taken"
@@ -731,7 +725,6 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
@@ -822,7 +815,6 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
     };
 
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 2,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -936,7 +928,6 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
     };
 
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -1032,7 +1023,6 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -1119,7 +1109,6 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -1211,7 +1200,6 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -1272,7 +1260,6 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 2,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -1485,7 +1472,6 @@ fn crew_slot_gating_matrix_controls_activation() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 9,
         trace_mode: TraceMode::Events,
@@ -1587,7 +1573,6 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 11,
         trace_mode: TraceMode::Events,
@@ -1671,7 +1656,6 @@ fn timing_windows_materially_change_damage_outcomes() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 17,
         trace_mode: TraceMode::Events,
@@ -1802,7 +1786,6 @@ fn burning_deals_one_percent_hull_per_round() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 3,
             seed: 1,
             trace_mode: TraceMode::Events,
@@ -1940,7 +1923,6 @@ fn emits_ability_activation_for_each_timing_window() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 19,
             trace_mode: TraceMode::Events,
@@ -2053,7 +2035,6 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
     };
 
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 11,
         trace_mode: TraceMode::Off,
@@ -2127,7 +2108,6 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         }],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 5,
         seed: 42,
         trace_mode: TraceMode::Off,
@@ -2198,7 +2178,6 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         }],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 5,
         seed: 42,
         trace_mode: TraceMode::Off,
@@ -2253,7 +2232,6 @@ fn combat_rounds_are_capped_at_100() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 150,
             seed: 9,
             trace_mode: TraceMode::Off,
@@ -2342,7 +2320,6 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 2,
             seed: 99,
             trace_mode: TraceMode::Off,
@@ -2353,7 +2330,6 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 2,
             seed: 99,
             trace_mode: TraceMode::Off,
@@ -2415,7 +2391,6 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 100,
             seed: 3,
             trace_mode: TraceMode::Off,
@@ -2478,7 +2453,6 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
     let mut attacker_with_iso = attacker_no_iso.clone();
     attacker_with_iso.isolytic_damage = 0.2;
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 5,
         trace_mode: TraceMode::Off,
@@ -2540,7 +2514,6 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 5,
         trace_mode: TraceMode::Off,
@@ -2611,7 +2584,6 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 5,
         trace_mode: TraceMode::Off,
@@ -2716,7 +2688,6 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Events,
@@ -2781,7 +2752,6 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 1,
         seed: 3,
         trace_mode: TraceMode::Events,
@@ -2850,7 +2820,6 @@ fn shots_bonus_increases_damage() {
         weapons: vec![],
     };
     let config = SimulationConfig {
-        allow_duplicate_officers: false,
         rounds: 3,
         seed: 42,
         trace_mode: TraceMode::Off,
@@ -2966,7 +2935,6 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 13,
             trace_mode: TraceMode::Events,
@@ -3047,7 +3015,6 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -3058,7 +3025,6 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 7,
             trace_mode: TraceMode::Events,
@@ -3154,7 +3120,6 @@ fn combat_end_window_respects_condition_filtering() {
         &attacker,
         &defender,
         SimulationConfig {
-            allow_duplicate_officers: false,
             rounds: 1,
             seed: 17,
             trace_mode: TraceMode::Events,

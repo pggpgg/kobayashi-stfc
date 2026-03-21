@@ -161,8 +161,6 @@ export default function Workspace() {
           onMaxCandidatesChange={ws.setMaxCandidates}
           prioritizeBelowDecksAbility={ws.prioritizeBelowDecksAbility}
           onPrioritizeBelowDecksAbilityChange={ws.setPrioritizeBelowDecksAbility}
-          allowDuplicateOfficers={ws.allowDuplicateOfficers}
-          onAllowDuplicateOfficersChange={ws.setAllowDuplicateOfficers}
           availableSeeds={ws.availableSeeds}
           selectedSeeds={ws.selectedSeeds}
           onSelectedSeedsChange={ws.setSelectedSeeds}

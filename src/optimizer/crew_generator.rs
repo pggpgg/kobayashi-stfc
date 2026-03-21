@@ -193,8 +193,6 @@ pub struct CandidateStrategy {
     pub use_seeded_shuffle: bool,
     /// When true, below-decks pool only includes officers that have a below-decks ability.
     pub only_below_decks_with_ability: bool,
-    /// When true, the same officer may appear in multiple seats (non-canonical; compatibility / bug repro).
-    pub allow_duplicate_officers: bool,
 }
 
 impl Default for CandidateStrategy {
@@ -206,7 +204,6 @@ impl Default for CandidateStrategy {
             large_pool_bridge_limit: 12,
             use_seeded_shuffle: true,
             only_below_decks_with_ability: false,
-            allow_duplicate_officers: false,
         }
     }
 }
@@ -281,7 +278,6 @@ impl CrewGenerator {
                 &pools.bridge,
                 &pools.below_decks,
                 self.strategy.max_candidates,
-                self.strategy.allow_duplicate_officers,
             )
         } else {
             sampled_candidates(
@@ -290,7 +286,6 @@ impl CrewGenerator {
                 &pools.below_decks,
                 &self.strategy,
                 mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
-                self.strategy.allow_duplicate_officers,
             )
         };
         perf_log::log_duration("crew_generator.generate_candidates_from_pools", t0);
@@ -352,7 +347,6 @@ impl CrewGenerator {
                 &pools.bridge,
                 &pools.below_decks,
                 None,
-                self.strategy.allow_duplicate_officers,
             )
         } else {
             sampled_count(
@@ -362,7 +356,6 @@ impl CrewGenerator {
                 &self.strategy,
                 mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
                 None,
-                self.strategy.allow_duplicate_officers,
             )
         }
     }
@@ -418,11 +411,7 @@ fn exhaustive_candidates(
     bridge: &[String],
     below_decks: &[String],
     max_candidates: Option<usize>,
-    allow_duplicate_officers: bool,
 ) -> Vec<CrewCandidate> {
-    if allow_duplicate_officers {
-        return exhaustive_candidates_allow_duplicates(captains, bridge, below_decks, max_candidates);
-    }
     let reserve = max_candidates.unwrap_or(256).min(4096);
     let mut candidates = Vec::with_capacity(reserve);
 
@@ -464,39 +453,6 @@ fn exhaustive_candidates(
         }
     }
 
-    candidates
-}
-
-fn exhaustive_candidates_allow_duplicates(
-    captains: &[String],
-    bridge: &[String],
-    below_decks: &[String],
-    max_candidates: Option<usize>,
-) -> Vec<CrewCandidate> {
-    let reserve = max_candidates.unwrap_or(256).min(4096);
-    let mut candidates = Vec::with_capacity(reserve);
-    for captain in captains {
-        for b1 in bridge {
-            for b2 in bridge {
-                for d1 in below_decks {
-                    for d2 in below_decks {
-                        for d3 in below_decks {
-                            candidates.push(CrewCandidate {
-                                captain: captain.clone(),
-                                bridge: vec![b1.clone(), b2.clone()],
-                                below_decks: vec![d1.clone(), d2.clone(), d3.clone()],
-                            });
-                            if let Some(cap) = max_candidates {
-                                if candidates.len() >= cap {
-                                    return candidates;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
     candidates
 }
 
@@ -505,11 +461,7 @@ fn exhaustive_count(
     bridge: &[String],
     below_decks: &[String],
     max_count: Option<usize>,
-    allow_duplicate_officers: bool,
 ) -> usize {
-    if allow_duplicate_officers {
-        return exhaustive_count_allow_duplicates(captains, bridge, below_decks, max_count);
-    }
     const ESTIMATE_CAP: usize = 2_000_000;
     let mut count = 0_usize;
 
@@ -550,38 +502,6 @@ fn exhaustive_count(
         }
     }
 
-    count
-}
-
-fn exhaustive_count_allow_duplicates(
-    captains: &[String],
-    bridge: &[String],
-    below_decks: &[String],
-    max_count: Option<usize>,
-) -> usize {
-    const ESTIMATE_CAP: usize = 2_000_000;
-    let mut count = 0_usize;
-    for _captain in captains {
-        for _b1 in bridge {
-            for _b2 in bridge {
-                for _d1 in below_decks {
-                    for _d2 in below_decks {
-                        for _d3 in below_decks {
-                            count += 1;
-                            if let Some(cap) = max_count {
-                                if count >= cap {
-                                    return count;
-                                }
-                            }
-                            if count >= ESTIMATE_CAP {
-                                return ESTIMATE_CAP;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
     count
 }
 
@@ -591,11 +511,7 @@ fn sampled_candidates(
     below_decks: &[String],
     strategy: &CandidateStrategy,
     seed: u64,
-    allow_duplicate_officers: bool,
 ) -> Vec<CrewCandidate> {
-    if allow_duplicate_officers {
-        return sampled_candidates_allow_duplicates(captains, bridge, below_decks, strategy, seed);
-    }
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
     let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
     let reserve = strategy.max_candidates.unwrap_or(256).min(4096);
@@ -649,50 +565,6 @@ fn sampled_candidates(
     candidates
 }
 
-fn sampled_candidates_allow_duplicates(
-    captains: &[String],
-    bridge: &[String],
-    below_decks: &[String],
-    strategy: &CandidateStrategy,
-    _seed: u64,
-) -> Vec<CrewCandidate> {
-    let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
-    let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
-    let below_cap = below_decks
-        .len()
-        .min(bridge_limit.max(BELOW_DECKS_SLOTS))
-        .max(BELOW_DECKS_SLOTS);
-    let mut candidates = Vec::new();
-    for captain in captains.iter().take(captain_limit) {
-        let br: Vec<&String> = bridge.iter().take(bridge_limit).collect();
-        let bd: Vec<&String> = below_decks.iter().take(below_cap).collect();
-        if br.len() < 2 || bd.len() < BELOW_DECKS_SLOTS {
-            continue;
-        }
-        for b1 in &br {
-            for b2 in &br {
-                for d1 in &bd {
-                    for d2 in &bd {
-                        for d3 in &bd {
-                            candidates.push(CrewCandidate {
-                                captain: (*captain).clone(),
-                                bridge: vec![(*b1).clone(), (*b2).clone()],
-                                below_decks: vec![(*d1).clone(), (*d2).clone(), (*d3).clone()],
-                            });
-                            if let Some(cap) = strategy.max_candidates {
-                                if candidates.len() >= cap {
-                                    return candidates;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    candidates
-}
-
 fn sampled_count(
     captains: &[String],
     bridge: &[String],
@@ -700,11 +572,7 @@ fn sampled_count(
     strategy: &CandidateStrategy,
     seed: u64,
     max_count: Option<usize>,
-    allow_duplicate_officers: bool,
 ) -> usize {
-    if allow_duplicate_officers {
-        return sampled_count_allow_duplicates(captains, bridge, below_decks, strategy, seed, max_count);
-    }
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
     let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
     let mut count = 0_usize;
@@ -754,41 +622,6 @@ fn sampled_count(
         }
     }
 
-    count
-}
-
-fn sampled_count_allow_duplicates(
-    captains: &[String],
-    bridge: &[String],
-    below_decks: &[String],
-    strategy: &CandidateStrategy,
-    _seed: u64,
-    max_count: Option<usize>,
-) -> usize {
-    let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
-    let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
-    let below_cap = below_decks
-        .len()
-        .min(bridge_limit.max(BELOW_DECKS_SLOTS))
-        .max(BELOW_DECKS_SLOTS);
-    const ESTIMATE_CAP: usize = 2_000_000;
-    let mut count = 0_usize;
-    for _captain in captains.iter().take(captain_limit) {
-        let br_len = bridge.iter().take(bridge_limit).count();
-        let bd_len = below_decks.iter().take(below_cap).count();
-        if br_len < 2 || bd_len < BELOW_DECKS_SLOTS {
-            continue;
-        }
-        count += br_len * br_len * bd_len * bd_len * bd_len;
-        if let Some(cap) = max_count {
-            if count >= cap {
-                return count;
-            }
-        }
-        if count >= ESTIMATE_CAP {
-            return ESTIMATE_CAP;
-        }
-    }
     count
 }
 
@@ -851,15 +684,5 @@ mod tests {
             "expected at least 10 candidates, got {}",
             candidates.len()
         );
-    }
-
-    #[test]
-    fn allow_duplicate_officers_increases_exhaustive_count() {
-        let captains = ["A".to_string()];
-        let bridge = ["B".to_string(), "C".to_string()];
-        let below = ["D".to_string(), "E".to_string(), "F".to_string()];
-        let unique = super::exhaustive_count(&captains, &bridge, &below, None, false);
-        let dup = super::exhaustive_count(&captains, &bridge, &below, None, true);
-        assert!(dup > unique, "unique={unique} dup={dup}");
     }
 }

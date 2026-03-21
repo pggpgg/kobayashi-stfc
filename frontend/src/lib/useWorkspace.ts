@@ -59,7 +59,6 @@ export function useWorkspace() {
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
   const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] = useState(false);
-  const [allowDuplicateOfficers, setAllowDuplicateOfficers] = useState(false);
 
   // Optimizer strategy
   const [optimizerStrategy, setOptimizerStrategy] = useState<
@@ -133,7 +132,6 @@ export function useWorkspace() {
         sims: simsPerCrew,
         max_candidates: maxCandidates ?? undefined,
         prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
-        allow_duplicate_officers: allowDuplicateOfficers || undefined,
       },
       activeProfileId,
     )
@@ -247,7 +245,6 @@ export function useWorkspace() {
           max_candidates: maxCandidates ?? undefined,
           strategy: optimizerStrategy,
           prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
-          allow_duplicate_officers: allowDuplicateOfficers || undefined,
           heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
           heuristics_only: heuristicsOnly || undefined,
           below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
@@ -402,8 +399,6 @@ export function useWorkspace() {
     setMaxCandidates,
     prioritizeBelowDecksAbility,
     setPrioritizeBelowDecksAbility,
-    allowDuplicateOfficers,
-    setAllowDuplicateOfficers,
     // Heuristics
     availableSeeds,
     selectedSeeds,

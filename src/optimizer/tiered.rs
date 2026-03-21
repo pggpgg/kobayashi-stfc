@@ -29,7 +29,6 @@ pub fn run_tiered_with_registry_with_progress<F>(
     top_k: usize,
     seed: u64,
     profile_id: Option<&str>,
-    allow_duplicate_officers: bool,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
@@ -54,7 +53,6 @@ where
         None,
         None,
         profile_id,
-        allow_duplicate_officers,
     );
 
     // Phase 1: scouting with few sims (Wilson early-stop may reduce per-crew iterations).

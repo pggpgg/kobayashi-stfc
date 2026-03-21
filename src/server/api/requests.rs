@@ -26,8 +26,6 @@ pub struct OptimizeRequest {
     pub heuristics_seeds: Option<Vec<String>>,
     pub heuristics_only: Option<bool>,
     pub below_decks_strategy: Option<String>,
-    /// When true, optimizer may assign the same officer to multiple seats (non-canonical).
-    pub allow_duplicate_officers: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -123,16 +121,15 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 }
 
 /// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates,
-/// optional prioritize_below_decks_ability, optional allow_duplicate_officers.
+/// optional prioritize_below_decks_ability.
 pub fn parse_optimize_estimate_query(
     query: &str,
-) -> (String, String, u32, Option<u32>, bool, bool) {
+) -> (String, String, u32, Option<u32>, bool) {
     let mut ship = String::new();
     let mut hostile = String::new();
     let mut sims = DEFAULT_SIMS;
     let mut max_candidates: Option<u32> = None;
     let mut prioritize_below_decks_ability = false;
-    let mut allow_duplicate_officers = false;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
             let key = key.trim();
@@ -146,9 +143,6 @@ pub fn parse_optimize_estimate_query(
                     prioritize_below_decks_ability =
                         value.eq_ignore_ascii_case("true") || value == "1"
                 }
-                "allow_duplicate_officers" => {
-                    allow_duplicate_officers = value.eq_ignore_ascii_case("true") || value == "1"
-                }
                 _ => {}
             }
         }
@@ -159,6 +153,5 @@ pub fn parse_optimize_estimate_query(
         sims,
         max_candidates,
         prioritize_below_decks_ability,
-        allow_duplicate_officers,
     )
 }

@@ -45,6 +45,7 @@ Buildings are fully modeled for ship combat; optional and backlog items (station
 
 ## Forbidden tech: catalog and partial status
 
-- **Catalog:** `data/forbidden_chaos_tech.json` (source: `data/import/forbidden_chaos_tech.csv`). Import with `cargo run --bin import_forbidden_chaos`. CSV columns: name, tech_type, tier, fid, stat, value, operator. `fid` is optional (game ID for matching synced FT).
+- **Catalog:** `data/forbidden_chaos_tech.json` (source: `data/import/forbidden_chaos_tech.csv`). Import with `cargo run --bin import_forbidden_chaos`. CSV columns: name, tech_type, tier, fid, stat, value, operator. `fid` is optional (game ID for matching synced FT; importer can fill from upstream translations when the name matches).
 - **Where the optimizer reads FT state:** Either synced `profiles/{profile_id}/forbidden_tech.imported.json` or the profile’s `forbidden_tech_override` (list of fids). Bonuses from the catalog (by `fid`) are merged into the player profile; add and mult operators are supported.
-- **Partial / gaps:** Sync merge only matches catalog entries that have a `fid`; the game fid ↔ name mapping is not in-repo (see docs/ROADMAP.md § Forbidden tech). Level/tier from synced entries are not yet used (no per-level bonuses in catalog). See ROADMAP for combat-timing uncertainty (profile-only vs per-sub-round).
+- **Level/tier scaling:** Opt-in via env `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` (linear model; see `forbidden_tech_level_tier_scaling_enabled_from_env` in `src/data/profile.rs`).
+- **Partial / gaps:** Prefer calibrating S31 Torpedo Pods (and similar) from [`upstream/data-stfc-space/forbidden_tech/{fid}.json`](upstream/data-stfc-space/forbidden_tech/473132032.json) when available: use `values[level-1].value` as a percentage → catalog decimal. Some upstream copy is class-specific (e.g. Battleship) while the simulator applies generic profile keys. See ROADMAP for combat-timing uncertainty (profile-only vs per-sub-round).
