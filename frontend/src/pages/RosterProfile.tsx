@@ -5,6 +5,7 @@ import {
   updateProfile,
   fetchForbiddenTech,
   fetchBuildingCombatSummary,
+  fetchResearchCombatSummary,
   formatApiError,
 } from '../lib/api';
 import type {
@@ -12,6 +13,7 @@ import type {
   PlayerProfile,
   ForbiddenTechCatalogItem,
   BuildingCombatSummary,
+  ResearchCombatSummary,
 } from '../lib/api';
 import { useProfile } from '../contexts/ProfileContext';
 
@@ -31,6 +33,8 @@ export default function RosterProfile() {
   >([]);
   const [buildingSummary, setBuildingSummary] = useState<BuildingCombatSummary | null>(null);
   const [buildingSummaryError, setBuildingSummaryError] = useState<string | null>(null);
+  const [researchSummary, setResearchSummary] = useState<ResearchCombatSummary | null>(null);
+  const [researchSummaryError, setResearchSummaryError] = useState<string | null>(null);
 
   useEffect(() => {
     let c = false;
@@ -59,6 +63,22 @@ export default function RosterProfile() {
         if (!c) {
           setBuildingSummary(null);
           setBuildingSummaryError(formatApiError(e));
+        }
+      });
+    return () => { c = true; };
+  }, [activeProfileId]);
+
+  useEffect(() => {
+    let c = false;
+    setResearchSummaryError(null);
+    fetchResearchCombatSummary(activeProfileId)
+      .then((s) => {
+        if (!c) setResearchSummary(s);
+      })
+      .catch((e) => {
+        if (!c) {
+          setResearchSummary(null);
+          setResearchSummaryError(formatApiError(e));
         }
       });
     return () => { c = true; };
@@ -385,6 +405,86 @@ token = "${activeProfile.sync_token}"`}
                             {row.building_name ?? row.kobayashi_building_id ?? '—'}
                           </td>
                           <td style={{ padding: '6px 8px' }}>{row.catalog_record_present ? 'yes' : 'no'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          <h3 style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600 }}>
+            Research (sync → combat)
+          </h3>
+          <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Research levels from sync (<code>research.imported.json</code>) and the combat stat bonuses they contribute in ship combat (same rules as simulate/optimize).
+          </p>
+          {researchSummaryError && (
+            <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--error, #c44)' }}>
+              {researchSummaryError}
+            </p>
+          )}
+          {researchSummary && (
+            <div style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+              {researchSummary.error && (
+                <p style={{ margin: '0 0 0.5rem', color: 'var(--error, #c44)' }}>{researchSummary.error}</p>
+              )}
+              <dl style={{ margin: '0 0 0.75rem', display: 'grid', gap: '0.35rem 1rem', gridTemplateColumns: 'auto 1fr', maxWidth: 520 }}>
+                <dt style={{ color: 'var(--text-muted)' }}>Synced rows</dt>
+                <dd style={{ margin: 0 }}>{researchSummary.synced_research_count}</dd>
+              </dl>
+              {researchSummary.unmapped_rids.length > 0 && (
+                <p style={{ margin: '0 0 0.5rem', color: 'var(--text-muted)' }}>
+                  Unmapped game <code>rid</code> values (no catalog entry):{' '}
+                  {researchSummary.unmapped_rids.join(', ')}
+                </p>
+              )}
+              {researchSummary.combat_bonuses_from_research &&
+                Object.keys(researchSummary.combat_bonuses_from_research).length > 0 && (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Combat bonuses from research (total)</div>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      {Object.entries(researchSummary.combat_bonuses_from_research)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([k, v]) => (
+                          <li key={k}>
+                            <code>{k}</code>: {(v * 100).toFixed(2)}% additive
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              {researchSummary.research.length > 0 && (
+                <div style={{ overflowX: 'auto', maxHeight: 280, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 6 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                        <th style={{ padding: '6px 8px' }}>rid</th>
+                        <th style={{ padding: '6px 8px' }}>Level</th>
+                        <th style={{ padding: '6px 8px' }}>Research</th>
+                        <th style={{ padding: '6px 8px' }}>Catalog</th>
+                        <th style={{ padding: '6px 8px' }}>Combat from row</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {researchSummary.research.map((row, idx) => (
+                        <tr key={`${row.rid}-${idx}`} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '6px 8px', fontFamily: 'monospace' }}>{row.rid}</td>
+                          <td style={{ padding: '6px 8px' }}>{row.level}</td>
+                          <td style={{ padding: '6px 8px' }}>
+                            {row.research_name ?? '—'}
+                          </td>
+                          <td style={{ padding: '6px 8px' }}>{row.catalog_record_present ? 'yes' : 'no'}</td>
+                          <td style={{ padding: '6px 8px', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            {row.combat_bonuses_from_row &&
+                            Object.keys(row.combat_bonuses_from_row).length > 0
+                              ? Object.entries(row.combat_bonuses_from_row)
+                                  .sort(([a], [b]) => a.localeCompare(b))
+                                  .map(([k, v]) => `${k} +${(v * 100).toFixed(2)}%`)
+                                  .join('; ')
+                              : '—'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

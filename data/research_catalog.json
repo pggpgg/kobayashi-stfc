@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-03-20",
+  "last_updated": "2026-03-21",
   "items": [
     {
       "rid": 2232304457,
@@ -498,6 +498,468 @@
             {
               "stat": "shield_mitigation",
               "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3322225012,
+      "name": null,
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.075,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.125,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.175,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.225,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.275,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.325,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 16,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.435,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 17,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 18,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.465,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 19,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 20,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3146647716,
+      "name": null,
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.015,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.025,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.035,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.045,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.055,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.065,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.077,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.085,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 16,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.088,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 17,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.091,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 18,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.094,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 19,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.097,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 20,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1852208276,
+      "name": null,
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 995454242,
+      "name": null,
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
               "operator": "add"
             }
           ]

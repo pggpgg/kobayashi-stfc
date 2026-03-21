@@ -118,6 +118,11 @@ impl<K: Ord> StatStacking<K> {
         self.totals.clear();
     }
 
+    /// Iterate accumulated category totals per key (for trace / diagnostics).
+    pub(crate) fn iter_totals(&self) -> impl Iterator<Item = (&K, &CategoryTotals)> {
+        self.totals.iter()
+    }
+
     /// Merges state from `other` into self (adds totals per key). Used to restore round base without cloning.
     pub fn merge_from(&mut self, other: &StatStacking<K>)
     where

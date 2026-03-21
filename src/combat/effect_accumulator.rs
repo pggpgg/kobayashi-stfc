@@ -3,6 +3,7 @@
 use serde_json::{Map, Value};
 
 use crate::combat::abilities::{AbilityEffect, ActiveAbilityEffect, TimingWindow};
+use crate::combat::events::round_f64;
 use crate::combat::stacking::{StackContribution, StatStacking};
 use crate::combat::types::{
     Combatant, CombatEvent, EventSource, TraceCollector, ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
@@ -31,6 +32,26 @@ pub(crate) enum EffectStatKey {
     IsolyticDefenseBonus,
     IsolyticCascadeDamageBonus,
     ShieldMitigationBonus,
+}
+
+impl EffectStatKey {
+    fn as_trace_key(self) -> &'static str {
+        match self {
+            EffectStatKey::PreAttackPierceBonus => "pre_attack_pierce_bonus",
+            EffectStatKey::DefenseMitigationBonus => "defense_mitigation_bonus",
+            EffectStatKey::PreAttackDamage => "pre_attack_damage",
+            EffectStatKey::AttackPhaseDamage => "attack_phase_damage",
+            EffectStatKey::RoundEndDamage => "round_end_damage",
+            EffectStatKey::ApexShredBonus => "apex_shred_bonus",
+            EffectStatKey::ApexBarrierBonus => "apex_barrier_bonus",
+            EffectStatKey::ShieldRegen => "shield_regen",
+            EffectStatKey::HullRegen => "hull_regen",
+            EffectStatKey::IsolyticDamageBonus => "isolytic_damage_bonus",
+            EffectStatKey::IsolyticDefenseBonus => "isolytic_defense_bonus",
+            EffectStatKey::IsolyticCascadeDamageBonus => "isolytic_cascade_damage_bonus",
+            EffectStatKey::ShieldMitigationBonus => "shield_mitigation_bonus",
+        }
+    }
 }
 
 impl Default for EffectAccumulator {
@@ -184,6 +205,48 @@ impl EffectAccumulator {
         self.pre_attack_modifier_sum = other.pre_attack_modifier_sum;
         self.attack_phase_damage_modifier_sum = other.attack_phase_damage_modifier_sum;
         self.round_end_modifier_sum = other.round_end_modifier_sum;
+    }
+
+    /// JSON-friendly base / modifier / flat decomposition for trace (`stack_resolution` event).
+    pub(crate) fn stack_resolution_values(&self) -> Map<String, Value> {
+        const EPS: f64 = 1e-12;
+        let mut out = Map::new();
+        out.insert(
+            "pre_attack_multiplier".to_string(),
+            Value::from(round_f64(self.pre_attack_multiplier())),
+        );
+        out.insert(
+            "attack_phase_damage_multiplier".to_string(),
+            Value::from(round_f64(1.0 + self.attack_phase_damage_modifier_sum)),
+        );
+        out.insert(
+            "round_end_damage_multiplier".to_string(),
+            Value::from(round_f64(1.0 + self.round_end_modifier_sum)),
+        );
+
+        let mut stacks_obj = Map::new();
+        for (&key, totals) in self.stacks.iter_totals() {
+            if totals.base.abs() <= EPS
+                && totals.modifier.abs() <= EPS
+                && totals.flat.abs() <= EPS
+            {
+                continue;
+            }
+            let composed = totals.compose();
+            stacks_obj.insert(
+                key.as_trace_key().to_string(),
+                Value::Object(Map::from_iter([
+                    ("base".to_string(), Value::from(round_f64(totals.base))),
+                    ("modifier_sum".to_string(), Value::from(round_f64(totals.modifier))),
+                    ("flat".to_string(), Value::from(round_f64(totals.flat))),
+                    ("composed".to_string(), Value::from(round_f64(composed))),
+                ])),
+            );
+        }
+        if !stacks_obj.is_empty() {
+            out.insert("stacks".to_string(), Value::Object(stacks_obj));
+        }
+        out
     }
 
     pub(crate) fn add_effects(

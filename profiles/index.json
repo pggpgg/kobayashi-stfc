@@ -9,6 +9,16 @@
       "id": "higgsbozo",
       "name": "HiggsBozo",
       "sync_token": "e1acf169-d1b7-410d-8706-daf166f71c21"
+    },
+    {
+      "id": "scenario_research_e5061cdf2a49423790fa488f784722f4",
+      "name": "Scenario research integration",
+      "sync_token": "c3eaf0c2-5ade-4b1c-b080-b10b9a227ff9"
+    },
+    {
+      "id": "scenario_research_442a7f8794ea478bb1758a1ca2e38ad4",
+      "name": "Scenario research integration",
+      "sync_token": "098e952b-4f5f-425f-8e36-9e3551472714"
     }
   ],
   "default_id": "demo"

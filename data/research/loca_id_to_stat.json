@@ -39,5 +39,9 @@
   "51": "weapon_damage",
   "52": "shield_hp",
   "53": "pierce",
-  "55": "crit_damage"
+  "55": "crit_damage",
+  "55313": "isolytic_defense",
+  "55314": "isolytic_damage",
+  "57002": "isolytic_damage",
+  "57003": "isolytic_defense"
 }

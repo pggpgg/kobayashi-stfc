@@ -526,6 +526,35 @@ export async function fetchBuildingCombatSummary(
   return res.json();
 }
 
+export interface ResearchSummaryRow {
+  rid: number;
+  level: number;
+  research_name?: string | null;
+  catalog_record_present: boolean;
+  combat_bonuses_from_row?: Record<string, number>;
+}
+
+/** Synced research → effective ship-combat bonuses from research only (same rules as simulate/optimize). */
+export interface ResearchCombatSummary {
+  profile_id: string;
+  error?: string | null;
+  synced_research_count: number;
+  unmapped_rids: number[];
+  combat_bonuses_from_research?: Record<string, number>;
+  research: ResearchSummaryRow[];
+}
+
+export async function fetchResearchCombatSummary(
+  profileId?: string | null,
+): Promise<ResearchCombatSummary> {
+  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : '';
+  const res = await fetch(`${API_BASE}/api/profile/research-summary${q}`, {
+    headers: { ...profileHeaders(profileId) },
+  });
+  await checkOk(res);
+  return res.json();
+}
+
 export interface PresetCrew {
   captain?: string | null;
   bridge?: (string | null)[];

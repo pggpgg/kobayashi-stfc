@@ -43,6 +43,14 @@ Static and timed effects are composed in [`src/combat/stacking.rs`](../src/comba
 
 Ability activation traces (`ability_activation` / related event types) show **which** abilities were considered for a timing window; the numeric composition for a stat is the composed stack for that key, not always a separate per-contributor breakdown in the trace.
 
+### `stack_resolution` (per shot, trace mode)
+
+After pre-attack damage is folded into the stacking model and attack-phase damage is composed, the engine emits **`stack_resolution`** (phase `attack`, `weapon_index` set when applicable). Fields include:
+
+- **`pre_attack_multiplier`**, **`attack_phase_damage_multiplier`**, **`round_end_damage_multiplier`** — channel-level multipliers (`1 +` sum of `AttackMultiplier`-style contributions for that channel where applicable).  
+- **`stacks`** — object keyed by stack name (e.g. `pre_attack_damage`, `defense_mitigation_bonus`). Each entry has **`base`**, **`modifier_sum`**, **`flat`**, and **`composed`** (`base * (1 + modifier_sum) + flat` per [`CategoryTotals`](../src/combat/stacking.rs)). Only stacks with any non-zero component are listed.  
+- **`pre_attack_damage_composed`** / **`damage_after_attack_phase_compose`** — numeric results after the pre-attack and attack-phase channels respectively (before isolytic / apex on hull).
+
 **When you need a table, not a single fight:** use the CLI `kobayashi mitigation-sensitivity <ship_id> <hostile_id> [--delta-pct <f64>]` (from the project root, with data loaded — ids are the same as in `data/ships_extended` / `data/hostiles`, e.g. `uss_enterprise` and `swarm_cluster_20_interceptor`), or the library helpers in [`src/combat/mitigation_sensitivity.rs`](../src/combat/mitigation_sensitivity.rs) to sweep baseline stats with small deltas.
 
 ## Officers: one seat each

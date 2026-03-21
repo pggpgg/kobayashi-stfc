@@ -1,4 +1,4 @@
-﻿use kobayashi::combat::{
+use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
     mitigation, mitigation_with_morale, pierce_damage_through_bonus, round_half_even,
     serialize_events_json, simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats,
@@ -756,6 +756,93 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
 }
 
 #[test]
+fn ship_ability_receive_damage_timing_emits_trace() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 15.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 15.0,
+            shots: Some(1),
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 40.0,
+            shots: Some(1),
+        }],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "receive_damage_apex_shred".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::ReceiveDamage,
+                boostable: false,
+                effect: AbilityEffect::ApexShredBonus(0.04),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 2,
+            seed: 11,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+    let hits: Vec<_> = result
+        .events
+        .iter()
+        .filter(|e| {
+            e.event_type == "ability_activation"
+                && e.phase == "receive_damage"
+                && e.source.ship_ability_id.as_deref() == Some("receive_damage_apex_shred")
+        })
+        .collect();
+    assert!(
+        !hits.is_empty(),
+        "expected receive_damage ship ability activations when defender deals hull damage to attacker"
+    );
+}
+
+#[test]
 fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
     let attacker = Combatant {
         id: "enterprise".to_string(),
@@ -1272,7 +1359,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     assert_eq!(first.events, second.events);
     assert_eq!(first.total_damage, second.total_damage);
 
-    assert_eq!(first.events.len(), 16);
+    assert_eq!(first.events.len(), 18);
     let expected_event_types = vec![
         "round_start",
         "attack_roll",
@@ -1280,12 +1367,13 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         "pierce_calc",
         "crit_resolution",
         "proc_triggers",
+        "stack_resolution",
         "damage_application",
         "end_of_round_effects",
     ];
     for (index, expected) in expected_event_types.iter().enumerate() {
         assert_eq!(first.events[index].event_type, *expected);
-        assert_eq!(first.events[index + 8].event_type, *expected);
+        assert_eq!(first.events[index + 9].event_type, *expected);
     }
 
     // Seed 7 (SplitMix64) produces deterministic rolls; exact values depend on RNG implementation.
@@ -1304,8 +1392,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         Value::Bool(round_one_proc_roll < 0.4)
     );
 
-    let round_two_crit = &first.events[12];
-    let round_two_proc = &first.events[13];
+    let round_two_crit = &first.events[13];
+    let round_two_proc = &first.events[14];
     let round_two_crit_roll = round_two_crit.values["roll"].as_f64().expect("crit roll as f64");
     let round_two_proc_roll = round_two_proc.values["roll"].as_f64().expect("proc roll as f64");
     assert!(round_two_crit_roll >= 0.0 && round_two_crit_roll <= 1.0);
@@ -3135,5 +3223,111 @@ fn combat_end_window_respects_condition_filtering() {
     assert_eq!(
         combat_end_activations[0].source.ship_ability_id.as_deref(),
         Some("combat_end_true")
+    );
+}
+
+#[test]
+fn stack_resolution_trace_emits_effect_stack_breakdown() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 80.0,
+            shots: Some(1),
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "attack_phase_amp".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::AttackPhase,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(0.25),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 3,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+
+    let stack_events: Vec<_> = result
+        .events
+        .iter()
+        .filter(|e| e.event_type == "stack_resolution")
+        .collect();
+    assert!(
+        !stack_events.is_empty(),
+        "expected stack_resolution events when trace_mode is Events"
+    );
+
+    let e = stack_events[0];
+    assert_eq!(e.phase, "attack");
+    assert_eq!(
+        e.source.player_bonus_source.as_deref(),
+        Some("effect_stacks")
+    );
+    let ap_mult = e
+        .values
+        .get("attack_phase_damage_multiplier")
+        .and_then(|v| v.as_f64())
+        .expect("attack_phase_damage_multiplier");
+    approx_eq(ap_mult, 1.25, 1e-9);
+
+    let stacks = e
+        .values
+        .get("stacks")
+        .and_then(|v| v.as_object())
+        .expect("stacks");
+    assert!(
+        stacks.contains_key("pre_attack_damage"),
+        "pre_attack_damage stack should be present for a weapon shot: {stacks:?}"
     );
 }

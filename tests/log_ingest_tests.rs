@@ -103,3 +103,29 @@ fn parse_minimal_log() {
     assert!(log.attacker_won);
     assert_eq!(log.events.len(), 0);
 }
+
+#[test]
+fn parse_multi_weapon_round_fixture() {
+    let path = fixture_path("multi_weapon_round_log.json");
+    let json = std::fs::read_to_string(&path).expect("read fixture");
+    let log: IngestedCombatLog = parse_combat_log_json(&json).expect("parse");
+    assert_eq!(log.rounds_simulated, 1);
+    assert!((log.total_damage - 15.0).abs() < 1e-9);
+    assert_eq!(log.events.len(), 4);
+    let dmg: Vec<_> = log
+        .events
+        .iter()
+        .filter(|e| e.event_type == "damage_application")
+        .collect();
+    assert_eq!(dmg.len(), 2);
+    assert_eq!(dmg[0].weapon_index, Some(0));
+    assert_eq!(dmg[1].weapon_index, Some(1));
+    let combat = ingested_events_to_combat_events(&log.events);
+    assert_eq!(combat.len(), 4);
+    let w_idx: Vec<_> = combat
+        .iter()
+        .filter(|e| e.event_type == "damage_application")
+        .map(|e| e.weapon_index)
+        .collect();
+    assert_eq!(w_idx, vec![Some(0), Some(1)]);
+}

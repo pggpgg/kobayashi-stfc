@@ -626,6 +626,30 @@ pub fn simulate_combat(
         let pre_attack_damage = phase_effects.composed_pre_attack_damage();
         let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
 
+        trace.record_if(|| {
+            let mut values = phase_effects.stack_resolution_values();
+            values.insert(
+                "pre_attack_damage_composed".to_string(),
+                Value::from(round_f64(pre_attack_damage)),
+            );
+            values.insert(
+                "damage_after_attack_phase_compose".to_string(),
+                Value::from(round_f64(damage)),
+            );
+            CombatEvent {
+                event_type: "stack_resolution".to_string(),
+                round_index,
+                phase: "attack".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    player_bonus_source: Some("effect_stacks".to_string()),
+                    ..EventSource::default()
+                },
+                weapon_index: Some(weapon_index_u),
+                values,
+            }
+        });
+
         // Isolytic: from pre-apex standard damage; report formula: isolytic taken = Isolytic Damage / (1 + I_def).
         let effective_isolytic_damage = (attacker.isolytic_damage + phase_effects.composed_isolytic_damage_bonus()).max(0.0);
         let effective_isolytic_defense = (defender.isolytic_defense + phase_effects.composed_isolytic_defense_bonus()).max(0.0);
