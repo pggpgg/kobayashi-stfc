@@ -11,7 +11,8 @@ use crate::data::forbidden_chaos::{
 use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
-use crate::data::hostile::{load_hostile_index, HostileRecord, HostileIndex, DEFAULT_HOSTILES_INDEX_PATH};
+use crate::data::hostile::{load_hostile_index, HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
+use crate::data::hostile_loca::load_hostile_loca_display_names;
 use crate::data::loader::{resolve_hostile_with_index, resolve_ship_with_tier_level};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::ship::{
@@ -57,6 +58,8 @@ pub struct DataRegistry {
     pub officers: OfficerCache,
     pub ship_index: Option<ExtendedShipIndex>,
     pub hostile_index: Option<HostileIndex>,
+    /// `loca_id` → display name from data.stfc.space translation exports (for API / UI).
+    pub hostile_loca_display: HashMap<u64, String>,
     /// LCARS officers when KOBAYASHI_OFFICER_SOURCE=lcars; used by monte_carlo to resolve abilities.
     pub lcars_officers: Option<Vec<LcarsOfficer>>,
     /// Forbidden/chaos tech catalog for merging into profile with imported player tech.
@@ -79,6 +82,7 @@ impl DataRegistry {
             .then(|| load_extended_ship_index(Path::new(DEFAULT_SHIPS_EXTENDED_DIR)))
             .flatten();
         let hostile_index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH);
+        let hostile_loca_display = load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")));
 
         let lcars_officers = if Self::use_lcars_officer_source() {
             load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR)).ok()
@@ -93,6 +97,7 @@ impl DataRegistry {
             officers,
             ship_index,
             hostile_index,
+            hostile_loca_display,
             lcars_officers,
             forbidden_chaos_catalog,
             research_catalog,
@@ -138,6 +143,11 @@ impl DataRegistry {
     /// Hostile index for listing and resolution.
     pub fn hostile_index(&self) -> Option<&HostileIndex> {
         self.hostile_index.as_ref()
+    }
+
+    /// Loca id → English name for hostile list labels (from bundled stfc.space translations).
+    pub fn hostile_loca_display(&self) -> &HashMap<u64, String> {
+        &self.hostile_loca_display
     }
 
     /// Resolve ship by id or name. Uses data/ships_extended with tier=1, level=1 when not specified.

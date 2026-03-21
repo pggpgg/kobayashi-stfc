@@ -126,6 +126,8 @@ export async function getShipTiersLevels(shipId: string): Promise<ShipTiersLevel
 export interface HostileListItem {
   id: string;
   hostile_name: string;
+  /** Resolved from loca translations when available (use for labels). */
+  display_name?: string;
   level: number;
   ship_class: string;
 }

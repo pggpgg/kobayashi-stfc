@@ -1,19 +1,19 @@
 {
-  "ships": {
-    "source": "data-stfc-space",
-    "data_version": "data-stfc-space",
-    "last_updated": "2026-02-22",
-    "path": "ships_extended/index.json"
-  },
   "hostiles": {
-    "source": "stfccommunity",
-    "data_version": "stfccommunity-main",
-    "last_updated": "2026-02-22",
+    "source": "data-stfc-space",
+    "data_version": "stfcspace-hostiles-2026-03-21",
+    "last_updated": "2026-03-21",
     "path": "hostiles/index.json"
   },
   "syndicate_reputation": {
     "source": "community_spreadsheet",
     "last_updated": "2026-02-22",
     "path": "syndicate_reputation.json"
+  },
+  "ships": {
+    "source": "data-stfc-space",
+    "data_version": "data-stfc-space",
+    "last_updated": "2026-02-22",
+    "path": "ships_extended/index.json"
   }
 }

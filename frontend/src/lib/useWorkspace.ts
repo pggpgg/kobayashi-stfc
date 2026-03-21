@@ -119,7 +119,7 @@ export function useWorkspace() {
   // Fetch optimize estimate when parameters change
   useEffect(() => {
     const ship = shipId || 'Saladin';
-    const hostile = scenarioId || 'Explorer_30';
+    const hostile = scenarioId || '2918121098';
     if (!ship || !hostile) {
       setEstimate(null);
       return;
@@ -188,7 +188,7 @@ export function useWorkspace() {
       const res = await simulate(
         {
           ship: shipId || 'Saladin',
-          hostile: scenarioId || 'Explorer_30',
+          hostile: scenarioId || '2918121098',
           crew: {
             captain: crew.captain,
             bridge: crew.bridge,
@@ -240,7 +240,7 @@ export function useWorkspace() {
       const { job_id } = await optimizeStart(
         {
           ship: shipId || 'Saladin',
-          hostile: scenarioId || 'Explorer_30',
+          hostile: scenarioId || '2918121098',
           sims: simsPerCrew,
           max_candidates: maxCandidates ?? undefined,
           strategy: optimizerStrategy,
@@ -345,7 +345,7 @@ export function useWorkspace() {
         {
           name: savePresetName || 'Unnamed',
           ship: shipId || 'Saladin',
-          scenario: scenarioId || 'Explorer_30',
+          scenario: scenarioId || '2918121098',
           crew: {
             captain: crew.captain,
             bridge: crew.bridge,

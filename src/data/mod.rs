@@ -8,6 +8,7 @@ pub mod faction_reputation;
 pub mod forbidden_chaos;
 pub mod heuristics;
 pub mod hostile;
+pub mod hostile_loca;
 pub mod import;
 pub mod loader;
 pub mod officer;

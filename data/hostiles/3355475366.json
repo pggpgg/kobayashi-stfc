@@ -1,0 +1,223 @@
+{
+  "id": "3355475366",
+  "hostile_name": "Hostile 3355475366",
+  "level": 25,
+  "ship_class": "survey",
+  "armor": 1500.0,
+  "shield_deflection": 1500.0,
+  "dodge": 1500.0,
+  "hull_health": 14400.0,
+  "shield_health": 14400.0,
+  "shield_mitigation": 0.8,
+  "apex_barrier": 0.0,
+  "isolytic_defense": 0.0,
+  "mitigation_floor": null,
+  "mitigation_ceiling": null,
+  "mystery_mitigation_factor": null,
+  "loca_id": 12001,
+  "faction": {
+    "id": 669838839,
+    "loca_id": 3
+  },
+  "upstream_ship_type": 11,
+  "hull_type_raw": 1,
+  "rarity": 1,
+  "is_scout": false,
+  "is_outpost": false,
+  "strength": 45876,
+  "systems": [
+    2095413858,
+    168803971,
+    1396202980,
+    2038174376,
+    1556190441,
+    892844237,
+    82872624,
+    1023784753,
+    1342058302,
+    113352984,
+    158586489,
+    1389910171,
+    788343992
+  ],
+  "xp_amount": 157,
+  "warp": 17,
+  "warp_with_superhighway": 17,
+  "stat_health": 14400.0,
+  "stat_defense": 22500.0,
+  "stat_attack": 8976.0,
+  "dpr": 7176.0,
+  "stat_strength": 45876.0,
+  "accuracy": 1200.0,
+  "armor_piercing": 1200.0,
+  "shield_piercing": 1200.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "components": [
+    {
+      "art_id": 5001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "abilities": [],
+        "distance": 2,
+        "speed": 2,
+        "tag": "Warp"
+      },
+      "id": 635429245,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 4001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "dodge": 1500,
+        "impulse": 10,
+        "tag": "Impulse"
+      },
+      "id": 1921906373,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 3001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "absorption": 1500,
+        "hp": 14400,
+        "mitigation": 0.8,
+        "regen_time": 40,
+        "tag": "Shield"
+      },
+      "id": 1654063365,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 2001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "hp": 14400,
+        "plating": 1500,
+        "tag": "Armor"
+      },
+      "id": 1041250280,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 8000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "tag": "Sensor"
+      },
+      "id": 2821665303,
+      "loca_id": 91002,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 9000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "deflection": 120,
+        "tag": "Deflector"
+      },
+      "id": 409142410,
+      "loca_id": 91003,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 6001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "max_resources": 0,
+        "protected": 0,
+        "tag": "Cargo"
+      },
+      "id": 2534309121,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 1200,
+        "cool_down": 1,
+        "crit_chance": 0.1,
+        "crit_modifier": 1.5,
+        "maximum_damage": 6864,
+        "minimum_damage": 5616,
+        "modulation": 1200,
+        "penetration": 1200,
+        "shots": 1,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 1
+      },
+      "id": 1812124979,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    }
+  ],
+  "ability": [],
+  "resources": [
+    {
+      "resource_id": 743985951,
+      "min": 220,
+      "max": 298
+    },
+    {
+      "resource_id": 2614028847,
+      "min": 20,
+      "max": 27
+    },
+    {
+      "resource_id": 970475396,
+      "min": 16,
+      "max": 16
+    },
+    {
+      "resource_id": 4135751670,
+      "min": -124,
+      "max": -124
+    },
+    {
+      "resource_id": 156323681,
+      "min": 34,
+      "max": 34
+    }
+  ]
+}

@@ -82,7 +82,7 @@ fn parse_optimize_args(args: &[String]) -> Result<OptimizeCliArgs, String> {
     }
 
     let mut ship = "saladin".to_string();
-    let mut hostile = "explorer_30".to_string();
+    let mut hostile = "2918121098".to_string();
     let mut sims: u32 = 5_000;
     let mut max_candidates: Option<u32> = None;
 

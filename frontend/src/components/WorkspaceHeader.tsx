@@ -209,11 +209,14 @@ export default function WorkspaceHeader({
         style={selectStyle}
       >
         {hostiles.length === 0 && <option>Loading…</option>}
-        {hostiles.map((h) => (
-          <option key={h.id} value={h.id}>
-            {h.hostile_name} {h.level}
-          </option>
-        ))}
+        {hostiles.map((h) => {
+          const label = h.display_name ?? h.hostile_name;
+          return (
+            <option key={h.id} value={h.id}>
+              {label} (Lvl {h.level})
+            </option>
+          );
+        })}
       </select>
       <select
         aria-label="Preset"
