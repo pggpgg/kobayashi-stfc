@@ -4,6 +4,22 @@
 //! The Monte Carlo runner uses one candidate per parallel task; this module
 //! provides helpers for batch boundaries and optional chunked iteration.
 
+/// Target batch count for tiered / progress-chunked Monte Carlo: balances Rayon parallelism vs
+/// fewer `SharedScenarioData` clones and progress updates.
+pub fn monte_carlo_batch_count_for_candidates(total: usize) -> usize {
+    if total == 0 {
+        return 0;
+    }
+    let threads = rayon::current_num_threads().max(1);
+    // Roughly one batch per ~64 candidates, bounded by thread count and a small cap.
+    let by_size = total.div_ceil(64);
+    by_size
+        .max(1)
+        .min(total)
+        .min(threads.saturating_mul(8).max(1))
+        .min(40)
+}
+
 /// Split `total` items into up to `num_batches` ranges `[start, end)`.
 /// Batches are as equal in size as possible; later batches may be smaller.
 ///
@@ -82,5 +98,12 @@ mod tests {
     fn batch_ranges_empty() {
         assert!(batch_ranges(0, 5).is_empty());
         assert!(batch_ranges(10, 0).is_empty());
+    }
+
+    #[test]
+    fn monte_carlo_batch_count_nonzero_for_work() {
+        assert_eq!(super::monte_carlo_batch_count_for_candidates(0), 0);
+        let n = super::monte_carlo_batch_count_for_candidates(500);
+        assert!(n >= 1 && n <= 40);
     }
 }

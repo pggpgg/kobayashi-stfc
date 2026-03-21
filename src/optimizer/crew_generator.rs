@@ -1,4 +1,5 @@
 use crate::data::data_registry::DataRegistry;
+use crate::perf_log;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
@@ -261,6 +262,7 @@ impl CrewGenerator {
         hostile: &str,
         seed: u64,
     ) -> Vec<CrewCandidate> {
+        let t0 = perf_log::perf_start();
         if self.strategy.use_seeded_shuffle {
             let base_seed = mix_seed(seed, ship, hostile);
             deterministic_shuffle(&mut pools.captains, base_seed);
@@ -273,7 +275,7 @@ impl CrewGenerator {
             .len()
             .min(pools.bridge.len())
             .min(pools.below_decks.len());
-        if min_pool <= self.strategy.exhaustive_pool_threshold {
+        let out = if min_pool <= self.strategy.exhaustive_pool_threshold {
             exhaustive_candidates(
                 &pools.captains,
                 &pools.bridge,
@@ -290,7 +292,9 @@ impl CrewGenerator {
                 mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
                 self.strategy.allow_duplicate_officers,
             )
-        }
+        };
+        perf_log::log_duration("crew_generator.generate_candidates_from_pools", t0);
+        out
     }
 
     /// Returns the number of crew combinations without allocating candidates.
@@ -377,6 +381,25 @@ fn is_captain_eligible(officer: &Officer) -> bool {
         .any(|ability| ability.slot == "captain")
 }
 
+/// True if `name` equals captain or any bridge officer (distinct-officer checks).
+#[inline]
+fn name_conflicts_bridge_captain(name: &str, captain: &str, b1: &str, b2: &str) -> bool {
+    name == captain || name == b1 || name == b2
+}
+
+/// True if `d3` is already used in captain, bridge, or first two below-decks picks.
+#[inline]
+fn below_third_conflicts(
+    d3: &str,
+    captain: &str,
+    b1: &str,
+    b2: &str,
+    d1: &str,
+    d2: &str,
+) -> bool {
+    d3 == captain || d3 == b1 || d3 == b2 || d3 == d1 || d3 == d2
+}
+
 fn can_fill_position(officer: &Officer, position: Position) -> bool {
     let Some(slot) = officer.slot.as_deref() else {
         return true;
@@ -400,7 +423,8 @@ fn exhaustive_candidates(
     if allow_duplicate_officers {
         return exhaustive_candidates_allow_duplicates(captains, bridge, below_decks, max_candidates);
     }
-    let mut candidates = Vec::new();
+    let reserve = max_candidates.unwrap_or(256).min(4096);
+    let mut candidates = Vec::with_capacity(reserve);
 
     for captain in captains {
         for (i, b1) in bridge.iter().enumerate() {
@@ -411,25 +435,16 @@ fn exhaustive_candidates(
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
-                let used: std::collections::HashSet<&str> =
-                    [captain.as_str(), b1.as_str(), b2.as_str()].into_iter().collect();
                 for (di, d1) in below_decks.iter().enumerate() {
-                    if used.contains(d1.as_str()) {
+                    if name_conflicts_bridge_captain(d1, captain, b1, b2) {
                         continue;
                     }
-                    let used2: std::collections::HashSet<&str> =
-                        used.iter().copied().chain(std::iter::once(d1.as_str())).collect();
                     for (dj, d2) in below_decks.iter().enumerate().skip(di + 1) {
-                        if used2.contains(d2.as_str()) {
+                        if name_conflicts_bridge_captain(d2, captain, b1, b2) || d2 == d1 {
                             continue;
                         }
-                        let used3: std::collections::HashSet<&str> = used2
-                            .iter()
-                            .copied()
-                            .chain(std::iter::once(d2.as_str()))
-                            .collect();
                         for d3 in below_decks.iter().skip(dj + 1) {
-                            if used3.contains(d3.as_str()) {
+                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
                                 continue;
                             }
                             candidates.push(CrewCandidate {
@@ -458,7 +473,8 @@ fn exhaustive_candidates_allow_duplicates(
     below_decks: &[String],
     max_candidates: Option<usize>,
 ) -> Vec<CrewCandidate> {
-    let mut candidates = Vec::new();
+    let reserve = max_candidates.unwrap_or(256).min(4096);
+    let mut candidates = Vec::with_capacity(reserve);
     for captain in captains {
         for b1 in bridge {
             for b2 in bridge {
@@ -506,25 +522,16 @@ fn exhaustive_count(
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
-                let used: std::collections::HashSet<&str> =
-                    [captain.as_str(), b1.as_str(), b2.as_str()].into_iter().collect();
                 for (di, d1) in below_decks.iter().enumerate() {
-                    if used.contains(d1.as_str()) {
+                    if name_conflicts_bridge_captain(d1, captain, b1, b2) {
                         continue;
                     }
-                    let used2: std::collections::HashSet<&str> =
-                        used.iter().copied().chain(std::iter::once(d1.as_str())).collect();
                     for (dj, d2) in below_decks.iter().enumerate().skip(di + 1) {
-                        if used2.contains(d2.as_str()) {
+                        if name_conflicts_bridge_captain(d2, captain, b1, b2) || d2 == d1 {
                             continue;
                         }
-                        let used3: std::collections::HashSet<&str> = used2
-                            .iter()
-                            .copied()
-                            .chain(std::iter::once(d2.as_str()))
-                            .collect();
                         for d3 in below_decks.iter().skip(dj + 1) {
-                            if used3.contains(d3.as_str()) {
+                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
                                 continue;
                             }
                             count += 1;
@@ -591,7 +598,8 @@ fn sampled_candidates(
     }
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
     let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
-    let mut candidates = Vec::new();
+    let reserve = strategy.max_candidates.unwrap_or(256).min(4096);
+    let mut candidates = Vec::with_capacity(reserve);
     let stride = ((seed as usize) % 5) + 1;
 
     for captain in captains.iter().take(captain_limit) {
@@ -603,29 +611,22 @@ fn sampled_candidates(
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
-                let used: std::collections::HashSet<&str> =
-                    [captain.as_str(), b1.as_str(), b2.as_str()].into_iter().collect();
                 let below_indices: Vec<usize> = (0..below_decks.len())
                     .step_by(stride)
-                    .filter(|&i| !used.contains(below_decks[i].as_str()))
+                    .filter(|&i| {
+                        !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
+                    })
                     .collect();
                 for (ii, &di) in below_indices.iter().enumerate() {
                     let d1 = &below_decks[di];
-                    let used2: std::collections::HashSet<&str> =
-                        used.iter().copied().chain(std::iter::once(d1.as_str())).collect();
                     for &dj in below_indices.iter().skip(ii + 1) {
                         let d2 = &below_decks[dj];
-                        if used2.contains(d2.as_str()) {
+                        if d2 == d1 || name_conflicts_bridge_captain(d2, captain, b1, b2) {
                             continue;
                         }
-                        let used3: std::collections::HashSet<&str> = used2
-                            .iter()
-                            .copied()
-                            .chain(std::iter::once(d2.as_str()))
-                            .collect();
                         for &dk in below_indices.iter().skip(ii + 2) {
                             let d3 = &below_decks[dk];
-                            if used3.contains(d3.as_str()) {
+                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
                                 continue;
                             }
                             candidates.push(CrewCandidate {
@@ -719,29 +720,22 @@ fn sampled_count(
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
-                let used: std::collections::HashSet<&str> =
-                    [captain.as_str(), b1.as_str(), b2.as_str()].into_iter().collect();
                 let below_indices: Vec<usize> = (0..below_decks.len())
                     .step_by(stride)
-                    .filter(|&i| !used.contains(below_decks[i].as_str()))
+                    .filter(|&i| {
+                        !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
+                    })
                     .collect();
                 for (ii, &di) in below_indices.iter().enumerate() {
                     let d1 = &below_decks[di];
-                    let used2: std::collections::HashSet<&str> =
-                        used.iter().copied().chain(std::iter::once(d1.as_str())).collect();
                     for &dj in below_indices.iter().skip(ii + 1) {
                         let d2 = &below_decks[dj];
-                        if used2.contains(d2.as_str()) {
+                        if d2 == d1 || name_conflicts_bridge_captain(d2, captain, b1, b2) {
                             continue;
                         }
-                        let used3: std::collections::HashSet<&str> = used2
-                            .iter()
-                            .copied()
-                            .chain(std::iter::once(d2.as_str()))
-                            .collect();
                         for &dk in below_indices.iter().skip(ii + 2) {
                             let d3 = &below_decks[dk];
-                            if used3.contains(d3.as_str()) {
+                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
                                 continue;
                             }
                             count += 1;

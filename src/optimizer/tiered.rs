@@ -3,11 +3,12 @@
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewCandidate;
+use crate::optimizer::monte_carlo::scenario::build_shared_scenario_data_from_registry;
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel_with_registry, SimulationResult,
+    run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
-use crate::parallel::batch_ranges;
+use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
 /// Default sims per crew for the scouting pass.
 pub const DEFAULT_SCOUT_SIMS: usize = 500;
@@ -45,25 +46,31 @@ where
         return Vec::new();
     }
 
-    // Phase 1: scouting with few sims
+    // Build scenario once per phase; avoids reloading officers/profile for every batch.
+    let shared = build_shared_scenario_data_from_registry(
+        registry,
+        ship,
+        hostile,
+        None,
+        None,
+        profile_id,
+        allow_duplicate_officers,
+    );
+
+    // Phase 1: scouting with few sims (Wilson early-stop may reduce per-crew iterations).
     let scout_sims = scout_sims.max(1);
-    let num_batches = (40).min(total_candidates);
+    let num_batches = monte_carlo_batch_count_for_candidates(total_candidates);
     let ranges = batch_ranges(total_candidates, num_batches);
     let mut scout_results: Vec<SimulationResult> = Vec::with_capacity(total_candidates);
 
     for (start, end) in ranges {
         let batch = &candidates[start..end];
-        let batch_results = run_monte_carlo_parallel_with_registry(
-            registry,
-            ship,
-            hostile,
-            None,
-            None,
+        let batch_results = run_monte_carlo_scout_phase_with_shared(
+            shared.clone(),
             batch,
             scout_sims,
             seed,
-            profile_id,
-            allow_duplicate_officers,
+            true,
         );
         scout_results.extend(batch_results);
         if !on_progress(end as u32, total_work as u32) {
@@ -85,17 +92,12 @@ where
 
     // Phase 2: full MC on top K
     let full_sims = full_sims.max(1);
-    let confirmation_results = run_monte_carlo_parallel_with_registry(
-        registry,
-        ship,
-        hostile,
-        None,
-        None,
+    let confirmation_results = run_monte_carlo_with_shared(
+        shared,
         &top_crews,
         full_sims,
         seed.wrapping_add(1), // distinct seed for confirmation phase
-        profile_id,
-        allow_duplicate_officers,
+        true,
     );
 
     if !on_progress(total_work as u32, total_work as u32) {

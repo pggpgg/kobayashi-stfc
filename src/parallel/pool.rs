@@ -14,13 +14,20 @@ pub struct WorkerPool {
 
 impl Default for WorkerPool {
     fn default() -> Self {
-        Self {
-            workers: 0, // Rayon default
-        }
+        Self::from_env_or_default()
     }
 }
 
 impl WorkerPool {
+    /// Thread count from `KOBAYASHI_RAYON_THREADS` (empty or invalid → Rayon default / all cores).
+    pub fn from_env_or_default() -> Self {
+        let workers = std::env::var("KOBAYASHI_RAYON_THREADS")
+            .ok()
+            .and_then(|s| s.parse::<usize>().ok())
+            .unwrap_or(0);
+        Self { workers }
+    }
+
     /// Use all available CPU cores (Rayon default).
     pub fn default_workers() -> Self {
         Self::default()

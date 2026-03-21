@@ -63,6 +63,7 @@ pub(crate) struct LcarsOfficerData {
 }
 
 /// Pre-resolved data for (ship, hostile) shared across all candidates in one Monte Carlo run.
+#[derive(Clone)]
 pub(crate) struct SharedScenarioData {
     pub ship: String,
     pub hostile: String,

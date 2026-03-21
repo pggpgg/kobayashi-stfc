@@ -82,6 +82,7 @@ pub fn simulate_combat(
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
+    shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
     let mut rounds_completed = 0u32;
 
     for round_index in 1..=rounds_to_simulate {
