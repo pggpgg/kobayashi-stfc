@@ -586,6 +586,7 @@ mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--del
 
 fn main() {
     let _ = migrate_from_legacy_if_needed();
+    kobayashi::parallel::init_from_env();
 
     let command_args: Vec<String> = env::args().skip(2).collect();
     let mut exit_code = 0;

@@ -11,6 +11,8 @@ use std::net::SocketAddr;
 /// `main.rs` builds the runtime explicitly for the `serve` command so that
 /// all other CLI sub-commands remain synchronous.
 pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
+    crate::parallel::init_from_env();
+
     let addr: SocketAddr = bind_addr
         .parse()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;

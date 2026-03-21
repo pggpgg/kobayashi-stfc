@@ -12,6 +12,7 @@ use crate::data::profile::{apply_profile_to_attacker, load_profile};
 use crate::data::profile_index::{migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON, ROSTER_IMPORTED};
 use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
+use crate::parallel::init_from_env;
 use crate::server;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +41,7 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
 
 pub fn run_with_args(args: &[String]) -> i32 {
     let _ = migrate_from_legacy_if_needed();
+    init_from_env();
 
     match parse_command(args) {
         Some(Command::Serve) => handle_serve(),
