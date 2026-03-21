@@ -4,10 +4,12 @@
 use axum::http::StatusCode;
 use crate::data::import;
 use crate::data::profile_index::{effective_profile_id, load_profile_index, profile_id_by_sync_token, profile_path,
-    FORBIDDEN_TECH_IMPORTED, ROSTER_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED};
+    BUFFS_IMPORTED, FORBIDDEN_TECH_IMPORTED, ROSTER_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED,
+    SHIPS_IMPORTED};
 use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use chrono::{TimeZone, Utc};
 use serde::Deserialize;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Mutex;
@@ -32,6 +34,7 @@ static SYNC_RESEARCH_MTX: Mutex<()> = Mutex::new(());
 static SYNC_BUILDINGS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_FT_MTX: Mutex<()> = Mutex::new(());
+static SYNC_BUFFS_MTX: Mutex<()> = Mutex::new(());
 
 /// Handles POST /api/sync/ingress: token-based routing. The stfc-sync-token header
 /// identifies the profile; sync data is written to that profile's paths.
@@ -54,6 +57,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
     let buildings_path = profile_path(pid, BUILDINGS_IMPORTED).to_string_lossy().to_string();
     let ships_path = profile_path(pid, SHIPS_IMPORTED).to_string_lossy().to_string();
     let ft_path = profile_path(pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+    let buffs_path = profile_path(pid, BUFFS_IMPORTED).to_string_lossy().to_string();
 
     let payload: Vec<serde_json::Value> = match serde_json::from_str(body) {
         Ok(arr) => arr,
@@ -153,8 +157,20 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
                 }
             }
         }
-        "resources" | "missions" | "battlelogs"
-        | "traits" | "slots" | "buffs" | "inventory" | "jobs" => {
+        // Mod may send only removals in a batch (`type: "expired_buffs"` on the first row).
+        "buffs" | "expired_buffs" => {
+            match apply_buffs_sync(&payload, &buffs_path) {
+                Ok(accepted_count) => {
+                    eprintln!("[sync] 200 OK accepted buffs({accepted_count})");
+                    vec![format!("buffs({accepted_count})")]
+                }
+                Err(e) => {
+                    eprintln!("[sync] 500 Internal Server Error (buffs): {e}");
+                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+                }
+            }
+        }
+        "resources" | "missions" | "battlelogs" | "traits" | "slots" | "inventory" | "jobs" => {
             eprintln!("[sync] 200 OK accepted {} (not persisted)", type_str);
             vec![type_str.to_string()]
         }
@@ -308,6 +324,82 @@ struct SyncResearchItem {
     rid: Option<i64>,
     #[serde(default)]
     level: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SyncBuffItem {
+    #[serde(rename = "type", default)]
+    _type: Option<String>,
+    #[serde(default)]
+    bid: Option<i64>,
+    #[serde(default)]
+    level: Option<i64>,
+    #[serde(default)]
+    expiry_time: Option<Value>,
+}
+
+fn apply_buffs_sync(
+    payload: &[serde_json::Value],
+    output_path: &str,
+) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+    let _guard = SYNC_BUFFS_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut by_bid: HashMap<i64, import::GlobalBuffEntry> = import::load_imported_buffs(output_path)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|e| (e.bid, e))
+        .collect();
+
+    let mut accepted = 0usize;
+    for item in payload {
+        let parsed: SyncBuffItem = match serde_json::from_value(item.clone()) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+        let t = parsed
+            ._type
+            .as_deref()
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        let expired = t == "expired_buffs" || (t.starts_with("expired_") && t.contains("buff"));
+        let Some(bid) = parsed.bid else {
+            continue;
+        };
+
+        if expired {
+            by_bid.remove(&bid);
+        } else if t == "buffs" {
+            let level = parsed.level.unwrap_or(0);
+            let expiry_time = match &parsed.expiry_time {
+                None | Some(Value::Null) => None,
+                Some(Value::Number(n)) => n.as_i64(),
+                _ => None,
+            };
+            by_bid.insert(
+                bid,
+                import::GlobalBuffEntry {
+                    bid,
+                    level,
+                    expiry_time,
+                },
+            );
+        } else {
+            continue;
+        }
+        accepted += 1;
+    }
+
+    let mut buffs: Vec<import::GlobalBuffEntry> = by_bid.into_values().collect();
+    buffs.sort_by(|a, b| a.bid.cmp(&b.bid));
+
+    let output_payload = serde_json::json!({
+        "source_path": "stfc-mod sync",
+        "buffs": buffs,
+    });
+    if let Some(parent) = std::path::Path::new(output_path).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    Ok(accepted)
 }
 
 fn apply_research_sync(
@@ -561,7 +653,7 @@ fn last_modified_iso(path: &str) -> Option<String> {
 
 /// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
 /// Uses the default profile's paths so the response matches where the optimizer reads (profile_path(profile_id, ...)).
-/// Also includes research_path, buildings_path, ships_path, forbidden_tech_path and their last_modified_iso when present.
+/// Also includes research_path, buildings_path, ships_path, forbidden_tech_path, buffs_path and their last_modified_iso when present.
 /// Returns `(StatusCode, json_body_string)`.
 pub fn sync_status_payload() -> (StatusCode, String) {
     let index = load_profile_index();
@@ -571,6 +663,7 @@ pub fn sync_status_payload() -> (StatusCode, String) {
     let buildings_path = profile_path(&pid, BUILDINGS_IMPORTED).to_string_lossy().to_string();
     let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
     let forbidden_tech_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+    let buffs_path = profile_path(&pid, BUFFS_IMPORTED).to_string_lossy().to_string();
 
     let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
     let research_catalog_loaded = research_catalog.is_some();
@@ -590,6 +683,8 @@ pub fn sync_status_payload() -> (StatusCode, String) {
         "ships_last_modified_iso": last_modified_iso(&ships_path),
         "forbidden_tech_path": forbidden_tech_path,
         "forbidden_tech_last_modified_iso": last_modified_iso(&forbidden_tech_path),
+        "buffs_path": buffs_path,
+        "buffs_last_modified_iso": last_modified_iso(&buffs_path),
         "research_catalog_loaded": research_catalog_loaded,
         "research_catalog_item_count": research_catalog_item_count,
     });
@@ -605,7 +700,7 @@ mod tests {
     use axum::http::StatusCode;
     use crate::data::import;
     use crate::data::profile_index::{create_profile, delete_profile, load_profile_index, profile_path,
-        RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED, FORBIDDEN_TECH_IMPORTED};
+        BUFFS_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED, FORBIDDEN_TECH_IMPORTED};
     use std::sync::Mutex;
     use std::sync::Once;
     use uuid::Uuid;
@@ -715,6 +810,41 @@ mod tests {
             entries.iter().any(|e| e.rid == 919291 && e.level == 3),
             "expected rid=919291 level=3 in {:?}",
             entries
+        );
+    }
+
+    #[test]
+    fn ingress_buffs_persist_and_expired_removes() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
+        let (status, body) = ingress_payload(
+            r#"[{"type":"buffs","bid":777001,"level":3,"expiry_time":null}]"#,
+            Some(&token),
+        );
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("buffs(1)"));
+        let path = profile_path(&profile_id, BUFFS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
+        let entries = import::load_imported_buffs(&path).expect("buffs.imported.json");
+        assert!(
+            entries
+                .iter()
+                .any(|e| e.bid == 777001 && e.level == 3 && e.expiry_time.is_none()),
+            "expected buff 777001: {:?}",
+            entries
+        );
+
+        let (status2, _) = ingress_payload(
+            r#"[{"type":"expired_buffs","bid":777001}]"#,
+            Some(&token),
+        );
+        assert_eq!(status2, StatusCode::OK);
+        let entries2 = import::load_imported_buffs(&path).unwrap_or_default();
+        assert!(
+            !entries2.iter().any(|e| e.bid == 777001),
+            "expired_buffs should remove bid: {:?}",
+            entries2
         );
     }
 

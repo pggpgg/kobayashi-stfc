@@ -191,10 +191,16 @@ function buildLevelsFromDetail(detail, opts) {
         // API may give 5 for 5% or 0.05 for 5%; normalize to fractional.
         value = value >= 0 && value <= 1.5 ? value : value / 100;
       } else {
-        // Flat stat (e.g. armor, attack) - only include if we have a stat that accepts flat.
-        if (mapping.stat !== "armor" && mapping.stat !== "weapon_damage") continue;
-        // Heuristic: treat small numbers as fractional (e.g. 0.05), large as flat.
-        if (value < 10) value = value; // could be fractional already
+        // Upstream often sets value_is_percentage false even when show_percentage / values are fractional
+        // (e.g. isolytic lines). Only emit stats that use the same small-decimal convention as % bonuses.
+        const nonPctDecimalStats = new Set([
+          "armor",
+          "weapon_damage",
+          "isolytic_damage",
+          "isolytic_defense",
+        ]);
+        if (!nonPctDecimalStats.has(mapping.stat)) continue;
+        if (value < 10) value = value;
       }
       bonuses.push({
         stat: mapping.stat,

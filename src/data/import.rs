@@ -29,6 +29,15 @@ pub struct ResearchEntry {
     pub level: i64,
 }
 
+/// One global active buff from stfc-mod sync (`type: "buffs"`, game buff id in `bid`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GlobalBuffEntry {
+    pub bid: i64,
+    pub level: i64,
+    #[serde(default)]
+    pub expiry_time: Option<i64>,
+}
+
 /// One building level from imported/synced state.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BuildingEntry {
@@ -597,6 +606,11 @@ struct ImportedForbiddenTechFile {
     forbidden_tech: Vec<ForbiddenTechEntry>,
 }
 
+#[derive(Debug, Deserialize)]
+struct ImportedBuffsFile {
+    buffs: Vec<GlobalBuffEntry>,
+}
+
 /// Loads research entries from a synced/imported JSON file (e.g. [DEFAULT_RESEARCH_IMPORT_PATH]).
 /// Returns `None` if the file is missing or invalid.
 pub fn load_imported_research(path: &str) -> Option<Vec<ResearchEntry>> {
@@ -611,6 +625,13 @@ pub fn load_imported_buildings(path: &str) -> Option<Vec<BuildingEntry>> {
     let raw = fs::read_to_string(path).ok()?;
     let payload: ImportedBuildingsFile = serde_json::from_str(&raw).ok()?;
     Some(payload.buildings)
+}
+
+/// Loads global buff entries from `buffs.imported.json` (stfc-mod sync).
+pub fn load_imported_buffs(path: &str) -> Option<Vec<GlobalBuffEntry>> {
+    let raw = fs::read_to_string(path).ok()?;
+    let payload: ImportedBuffsFile = serde_json::from_str(&raw).ok()?;
+    Some(payload.buffs)
 }
 
 /// Loads ship entries from a synced/imported JSON file (e.g. [DEFAULT_SHIPS_IMPORT_PATH]).

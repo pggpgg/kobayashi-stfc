@@ -846,11 +846,22 @@ fn infer_ops_level(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::sync::Mutex;
+
     use crate::combat::abilities::{AbilityClass, CrewSeat};
     use crate::combat::AttackerStats;
+    use crate::data::data_registry::DataRegistry;
     use crate::data::import::BuildingEntry;
+    use crate::data::profile_index::{
+        create_profile, delete_profile, load_profile_index, profile_path, PROFILE_JSON,
+        RESEARCH_IMPORTED,
+    };
     use crate::data::ship::{ShipAbility, ShipRecord};
     use crate::optimizer::crew_generator::CrewCandidate;
+    use uuid::Uuid;
+
+    static SHARED_SCENARIO_RESEARCH_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn ship_abilities_merged_when_shared_scenario_fallback_no_cached_defender() {
@@ -1021,5 +1032,54 @@ mod tests {
         ]);
 
         assert_eq!(infer_ops_level(&imported_buildings, &bid_to_id), Some(35));
+    }
+
+    #[test]
+    fn build_shared_scenario_data_merges_research_import_into_profile() {
+        let _guard = SHARED_SCENARIO_RESEARCH_LOCK.lock().unwrap();
+
+        let mut index = load_profile_index();
+        let id = format!("scenario_research_{}", Uuid::new_v4().as_simple());
+        let entry = create_profile(&mut index, Some(&id), "Scenario research integration")
+            .expect("create profile");
+
+        struct Cleanup(String);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let mut index = load_profile_index();
+                let _ = delete_profile(&mut index, &self.0);
+            }
+        }
+        let _cleanup = Cleanup(entry.id.clone());
+
+        fs::write(profile_path(&entry.id, PROFILE_JSON), "{}").expect("profile.json");
+        fs::write(
+            profile_path(&entry.id, RESEARCH_IMPORTED),
+            r#"{"research":[{"rid":2232304457,"level":2}]}"#,
+        )
+        .expect("research.imported.json");
+
+        let registry = DataRegistry::load().expect("DataRegistry::load");
+        let shared = build_shared_scenario_data_from_registry(
+            registry.as_ref(),
+            "saladin",
+            "swarm_cluster_20_interceptor",
+            None,
+            None,
+            Some(&entry.id),
+        );
+
+        // Catalog rid 2232304457: weapon_damage +0.05 at L1, +0.07 at L2 → cumulative 0.12
+        let wd = shared
+            .profile
+            .bonuses
+            .get("weapon_damage")
+            .copied()
+            .expect("weapon_damage from research merge");
+        assert!(
+            (wd - 0.12).abs() < 1e-9,
+            "expected weapon_damage ≈ 0.12, got {wd} (bonuses={:?})",
+            shared.profile.bonuses
+        );
     }
 }

@@ -91,6 +91,6 @@ The game can export a fight log as a **tab-separated** file with several section
 
 ## Fixtures
 
-- `tests/fixtures/recorded_fights/*.json` — sample logs for parser and parity tests.
+- `tests/fixtures/recorded_fights/*.json` — sample logs for parser and parity tests (including `sample_combat_log.json` and `multi_weapon_round_log.json` for multi–sub-round `weapon_index` in one round).
 - `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` — minimal TSV with optional `Weapon Index` column (fight export parser).
 - `fight samples/*.csv` — game CSV/TSV exports for calibration (e.g. Realta vs Takret Militia 10).

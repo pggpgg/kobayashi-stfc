@@ -63,7 +63,8 @@ Sync is profile-scoped: the `stfc-sync-token` header identifies the profile, and
 | ships / ship | Yes | `profiles/{id}/ships.imported.json` |
 | ft (forbidden tech) | Yes | `profiles/{id}/forbidden_tech.imported.json` — bonuses merged into optimizer profile |
 | tech | Yes (same as ft) | **STFC Community Mod** sends forbidden/chaos tech with JSON `type: "tech"` (fid, tier, level, shard_count). Written to the same `forbidden_tech.imported.json` as `ft`. |
-| resources, missions, battlelogs, traits, slots, buffs, inventory, jobs | No (accepted, 200) | — |
+| buffs | Yes | `profiles/{id}/buffs.imported.json` — global active buffs (`bid`, `level`, optional `expiry_time`). Removals use `type: "expired_buffs"` with `bid` (stfc-mod). |
+| resources, missions, battlelogs, traits, slots, inventory, jobs | No (accepted, 200) | — |
 
 ## What gets synced
 
@@ -72,7 +73,7 @@ Sync is profile-scoped: the `stfc-sync-token` header identifies the profile, and
 - **Buildings**: Payloads with `type: "buildings"` or `type: "module"` (the mod sends `"module"`) are merged into `profiles/{id}/buildings.imported.json` (by `bid`). The optimizer loads this from the default profile path and merges building bonuses into the player profile (see `data/README.md` § Buildings).
 - **Ships**: Payloads with `type: "ships"` or `type: "ship"` (the mod sends `"ship"`) are merged into `profiles/{id}/ships.imported.json` (by `psid`). Load with `load_imported_ships`. In **Roster mode**, the ship dropdown is restricted to ships you own; game `hull_id` from sync is mapped to Kobayashi ship id via `data/hull_id_registry.json`. When new ships are added to the game or to the Kobayashi catalog, regenerate the registry with `node scripts/build_hull_id_registry.mjs` (from the project root).
 - **Forbidden tech (`ft` or `tech`)**: Payloads with `type: "ft"` **or** `type: "tech"` (the mod uses `"tech"`) are merged into `profiles/{id}/forbidden_tech.imported.json` (by `fid`). Load with `load_imported_forbidden_tech`. Player state is merged into the optimizer profile using `data/forbidden_chaos_tech.json` by `fid`.
-- **Other types** (resources, missions, battlelogs, traits, slots, buffs, inventory, jobs): The server accepts the payloads and returns 200 but does not persist them.
+- **Other types** (resources, missions, battlelogs, traits, slots, inventory, jobs): The server accepts the payloads and returns 200 but does not persist them.
 
 ## Officer ID mapping
 
@@ -90,7 +91,7 @@ To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the 
 - **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; 401 if token is required and missing/invalid; 400 if body is not a JSON array.
 
 - **Endpoint**: `GET /api/sync/status`
-- **Response**: 200 with JSON paths for the default profile (same paths the optimizer uses): `roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, each with `*_last_modified_iso` (ISO8601 or null if file missing).
+- **Response**: 200 with JSON paths for the default profile (same paths the optimizer uses): `roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, `buffs_path`, each with `*_last_modified_iso` (ISO8601 or null if file missing).
 
 ## Sync payload reference
 
@@ -104,5 +105,6 @@ The request body is a JSON array; the first element’s `type` field determines 
 | **ships** / **ship** | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `rosters/ships.imported.json`. |
 | **ft** | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64) | Forbidden/chaos tech. Persisted to `profiles/{id}/forbidden_tech.imported.json`. |
 | **tech** | Same fields as **ft** | Same persistence as **ft** (stfc-mod queue name for forbidden/chaos tech). |
+| **buffs** | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds) | Global active buffs → `profiles/{id}/buffs.imported.json`. Removals: `type: "expired_buffs"` with `bid`. |
 
-Other types (resources, missions, battlelogs, traits, slots, buffs, inventory, jobs) are accepted (200) but not persisted.
+Other types (resources, missions, battlelogs, traits, slots, inventory, jobs) are accepted (200) but not persisted.
