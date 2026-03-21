@@ -58,6 +58,18 @@ async fn profile_buildings_summary_returns_json() {
 }
 
 #[tokio::test]
+async fn profile_research_summary_returns_json() {
+    let response = route_request("GET", "/api/profile/research-summary", "", None).await;
+    assert_eq!(response.status_code, 200);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("research-summary json");
+    assert!(payload["profile_id"].as_str().is_some());
+    assert!(payload["synced_research_count"].is_number());
+    assert!(payload["unmapped_rids"].is_array());
+    assert!(payload["research"].is_array());
+}
+
+#[tokio::test]
 async fn optimize_endpoint_returns_ranked_recommendations() {
     let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":7,"max_candidates":64}"#;
     let response = route_request("POST", "/api/optimize", body, None).await;

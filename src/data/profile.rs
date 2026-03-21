@@ -381,6 +381,21 @@ pub fn merge_research_bonuses_into_profile(
     }
 }
 
+/// Adds each `(stat, value)` from `raw` into `profile.bonuses` using the same combat-only
+/// key normalization as research/building merges (e.g. `armor_pierce` → `pierce`).
+pub fn accumulate_combat_only_bonuses_from_raw(
+    profile: &mut PlayerProfile,
+    raw: &HashMap<String, f64>,
+) {
+    for (stat, value) in raw {
+        let Some(key) = normalize_profile_combat_stat(stat) else {
+            continue;
+        };
+        let current = profile.bonuses.get(key).copied().unwrap_or(0.0);
+        profile.bonuses.insert(key.to_string(), current + value);
+    }
+}
+
 /// Load profile from JSON file. Returns default (empty bonuses) if file missing or invalid.
 pub fn load_profile(path: &str) -> PlayerProfile {
     let path = Path::new(path);

@@ -3,6 +3,7 @@ pub mod building_bid_resolver;
 pub mod building_summary;
 pub mod data_registry;
 pub mod research;
+pub mod research_summary;
 pub mod faction_reputation;
 pub mod forbidden_chaos;
 pub mod heuristics;

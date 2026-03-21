@@ -18,6 +18,7 @@ use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
 };
 use crate::data::building_summary::building_combat_summary_for_profile;
+use crate::data::research_summary::research_combat_summary_for_profile;
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index,
     profile_path, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
@@ -502,6 +503,16 @@ pub fn profile_put_payload(body: &str, profile_id: Option<&str>) -> Result<Strin
 pub fn profile_buildings_summary_payload(profile_id: Option<&str>) -> Result<String, serde_json::Error> {
     let id = resolve_profile_id(profile_id);
     let summary = building_combat_summary_for_profile(&id);
+    serde_json::to_string_pretty(&summary)
+}
+
+/// GET /api/profile/research-summary — synced research levels and research-derived combat bonuses.
+pub fn profile_research_summary_payload(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+) -> Result<String, serde_json::Error> {
+    let id = resolve_profile_id(profile_id);
+    let summary = research_combat_summary_for_profile(&id, registry.research_catalog());
     serde_json::to_string_pretty(&summary)
 }
 
