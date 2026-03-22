@@ -69,38 +69,32 @@ pub fn research_combat_summary_for_profile(
         .to_string();
     let imported = import::load_imported_research(&research_path).unwrap_or_default();
 
-    let Some(catalog) = catalog.filter(|c| !c.items.is_empty()) else {
-        return ResearchCombatSummary {
-            profile_id: profile_id.to_string(),
-            error: Some(
-                "missing or empty research catalog (data/research_catalog.json)".to_string(),
-            ),
-            synced_research_count: imported.len(),
-            unmapped_rids: imported.iter().map(|e| e.rid).collect(),
-            combat_bonuses_from_research: HashMap::new(),
-            research: Vec::new(),
-        };
-    };
-
-    let catalog_by_rid = by_rid(catalog);
+    let catalog_nonempty = catalog.filter(|c| !c.items.is_empty());
+    let catalog_by_rid: Option<HashMap<i64, &crate::data::research::ResearchRecord>> =
+        catalog_nonempty.map(by_rid);
 
     let mut rows: Vec<ResearchSummaryRow> = imported
         .iter()
         .map(|e| {
-            let catalog_record_present = catalog_by_rid.contains_key(&e.rid);
-            let research_name = catalog_by_rid
-                .get(&e.rid)
-                .and_then(|r| r.name.clone());
-            let lvl_u32 = effective_level_u32(e.level);
-            let combat_bonuses_from_row = if catalog_record_present && lvl_u32 > 0 {
-                let rec = catalog_by_rid.get(&e.rid).copied().unwrap();
-                let raw = cumulative_research_level_bonuses(rec, lvl_u32);
-                let mut slice = PlayerProfile::default();
-                accumulate_combat_only_bonuses_from_raw(&mut slice, &raw);
-                slice.bonuses
-            } else {
-                HashMap::new()
-            };
+            let (catalog_record_present, research_name, combat_bonuses_from_row) =
+                match catalog_by_rid.as_ref() {
+                    None => (false, None, HashMap::new()),
+                    Some(map) => {
+                        let present = map.contains_key(&e.rid);
+                        let name = map.get(&e.rid).and_then(|r| r.name.clone());
+                        let lvl_u32 = effective_level_u32(e.level);
+                        let combat_bonuses_from_row = if present && lvl_u32 > 0 {
+                            let rec = map.get(&e.rid).copied().unwrap();
+                            let raw = cumulative_research_level_bonuses(rec, lvl_u32);
+                            let mut slice = PlayerProfile::default();
+                            accumulate_combat_only_bonuses_from_raw(&mut slice, &raw);
+                            slice.bonuses
+                        } else {
+                            HashMap::new()
+                        };
+                        (present, name, combat_bonuses_from_row)
+                    }
+                };
             ResearchSummaryRow {
                 rid: e.rid,
                 level: e.level,
@@ -112,11 +106,18 @@ pub fn research_combat_summary_for_profile(
         .collect();
     rows.sort_by(|a, b| a.rid.cmp(&b.rid));
 
-    let unmapped_rids: Vec<i64> = imported
+    let mut unmapped_rids: Vec<i64> = imported
         .iter()
-        .filter(|e| !catalog_by_rid.contains_key(&e.rid))
+        .filter(|e| {
+            catalog_by_rid
+                .as_ref()
+                .map(|m| !m.contains_key(&e.rid))
+                .unwrap_or(true)
+        })
         .map(|e| e.rid)
         .collect();
+    unmapped_rids.sort_unstable();
+    unmapped_rids.dedup();
 
     let mut scratch = PlayerProfile {
         ops_level: player.ops_level,
@@ -124,11 +125,17 @@ pub fn research_combat_summary_for_profile(
         forbidden_tech_override: None,
         chaos_tech_override: None,
     };
-    merge_research_bonuses_into_profile(&mut scratch, &imported, catalog);
+    if let Some(cat) = catalog_nonempty {
+        merge_research_bonuses_into_profile(&mut scratch, &imported, cat);
+    }
+
+    let error = catalog_nonempty.is_none().then(|| {
+        "missing or empty research catalog (data/research_catalog.json); combat bonuses from research are not applied. Synced rid/level pairs remain stored in research.imported.json.".to_string()
+    });
 
     ResearchCombatSummary {
         profile_id: profile_id.to_string(),
-        error: None,
+        error,
         synced_research_count: imported.len(),
         unmapped_rids,
         combat_bonuses_from_research: scratch.bonuses,

@@ -402,6 +402,9 @@ fn apply_buffs_sync(
     Ok(accepted)
 }
 
+/// Merges each payload row into `research.imported.json` by `rid`. Existing rows are loaded first,
+/// so the file is a cumulative savepoint of every `rid` + `level` ever synced for this profile.
+/// [`crate::data::research::ResearchCatalog`] is not consulted here — unmapped `rid`s are still kept.
 fn apply_research_sync(
     payload: &[serde_json::Value],
     output_path: &str,
