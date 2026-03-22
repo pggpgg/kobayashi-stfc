@@ -13,7 +13,7 @@ use kobayashi::parallel::init_from_env;
 fn main() {
     init_from_env();
     let ship = "saladin";
-    let hostile = "explorer_30";
+    let hostile = "2918121098";
     let seed = 12345u64;
     let iterations = 1000;
 

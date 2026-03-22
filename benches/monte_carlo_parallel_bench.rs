@@ -33,7 +33,7 @@ fn candidates(ship: &str, hostile: &str, seed: u64, min_count: usize) -> Vec<Cre
 fn bench_monte_carlo_sequential_vs_parallel(c: &mut Criterion) {
     init_from_env();
     let ship = "saladin";
-    let hostile = "explorer_30";
+    let hostile = "2918121098";
     let seed = 42u64;
     let iterations = 500;
     let candidate_list = candidates(ship, hostile, seed, 32);

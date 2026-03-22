@@ -71,7 +71,7 @@ async fn profile_research_summary_returns_json() {
 
 #[tokio::test]
 async fn optimize_endpoint_returns_ranked_recommendations() {
-    let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":7,"max_candidates":64}"#;
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
     let response = route_request("POST", "/api/optimize", body, None).await;
 
     assert_eq!(response.status_code, 200);
@@ -81,7 +81,7 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
 
     assert_eq!(payload["engine"], "optimizer_v1");
     assert_eq!(payload["scenario"]["ship"], "saladin");
-    assert_eq!(payload["scenario"]["hostile"], "explorer_30");
+    assert_eq!(payload["scenario"]["hostile"], "2918121098");
     assert_eq!(payload["scenario"]["sims"], 2000);
     assert_eq!(payload["scenario"]["seed"], 7);
 
@@ -131,14 +131,14 @@ async fn optimize_endpoint_changes_with_seed() {
     let response_a = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":7,"max_candidates":32}"#,
+        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":7,"max_candidates":32}"#,
         None,
     )
     .await;
     let response_b = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"seed":8,"max_candidates":32}"#,
+        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":8,"max_candidates":32}"#,
         None,
     )
     .await;
@@ -150,7 +150,7 @@ async fn optimize_endpoint_changes_with_seed() {
 
 #[tokio::test]
 async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
-    let body = r#"{"ship":"saladin","hostile":"explorer_30","sims":2000,"seed":77,"max_candidates":64}"#;
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":77,"max_candidates":64}"#;
 
     let response_a = route_request("POST", "/api/optimize", body, None).await;
     let response_b = route_request("POST", "/api/optimize", body, None).await;
@@ -219,7 +219,7 @@ async fn optimize_endpoint_rejects_zero_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"explorer_30","sims":0}"#,
+        r#"{"ship":"saladin","hostile":"2918121098","sims":0}"#,
         None,
     )
     .await;
@@ -239,7 +239,7 @@ async fn optimize_endpoint_rejects_very_large_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"explorer_30","sims":5000000}"#,
+        r#"{"ship":"saladin","hostile":"2918121098","sims":5000000}"#,
         None,
     )
     .await;
@@ -269,7 +269,7 @@ async fn optimize_endpoint_rejects_excessive_max_candidates() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"explorer_30","sims":1000,"max_candidates":3000000}"#,
+        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"max_candidates":3000000}"#,
         None,
     )
     .await;
@@ -292,7 +292,7 @@ async fn optimize_validation_error_has_expected_schema() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"","hostile":"explorer_30","sims":0}"#,
+        r#"{"ship":"","hostile":"2918121098","sims":0}"#,
         None,
     )
     .await;

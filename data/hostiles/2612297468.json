@@ -1,0 +1,646 @@
+{
+  "id": "2612297468",
+  "hostile_name": "Hostile 2612297468",
+  "level": 54,
+  "ship_class": "interceptor",
+  "armor": 112395.0,
+  "shield_deflection": 1887904.0,
+  "dodge": 112395.0,
+  "hull_health": 30323590.0,
+  "shield_health": 38593681.0,
+  "shield_mitigation": 0.8,
+  "apex_barrier": 0.0,
+  "isolytic_defense": 0.0,
+  "mitigation_floor": null,
+  "mitigation_ceiling": null,
+  "mystery_mitigation_factor": null,
+  "loca_id": 36008,
+  "faction": {
+    "id": 157476182,
+    "loca_id": 14
+  },
+  "upstream_ship_type": 7,
+  "hull_type_raw": 2,
+  "rarity": 1,
+  "is_scout": false,
+  "is_outpost": false,
+  "strength": 80389220,
+  "systems": [
+    349777441,
+    1635091362,
+    2098132897,
+    1887075428,
+    1343646662,
+    1465880298,
+    756362891,
+    1229602987,
+    1416025036,
+    574950190
+  ],
+  "xp_amount": 6148,
+  "warp": 205,
+  "warp_with_superhighway": 205,
+  "stat_health": 34458636.0,
+  "stat_defense": 10563470.0,
+  "stat_attack": 35367115.0,
+  "dpr": 27918791.0,
+  "stat_strength": 80389220.0,
+  "accuracy": 1861986.0,
+  "armor_piercing": 931088.0,
+  "shield_piercing": 931088.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.8,
+  "components": [
+    {
+      "art_id": 5001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "abilities": [],
+        "distance": 2,
+        "speed": 2,
+        "tag": "Warp"
+      },
+      "id": 635429245,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 4001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "dodge": 112395,
+        "impulse": 17,
+        "tag": "Impulse"
+      },
+      "id": 2678065411,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 3001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "absorption": 1887904,
+        "hp": 38593681,
+        "mitigation": 0.8,
+        "regen_time": 0,
+        "tag": "Shield"
+      },
+      "id": 4102717105,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 2001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "hp": 30323590,
+        "plating": 112395,
+        "tag": "Armor"
+      },
+      "id": 1883056932,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 8000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "tag": "Sensor"
+      },
+      "id": 2821665303,
+      "loca_id": 91002,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 9000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "deflection": 120,
+        "tag": "Deflector"
+      },
+      "id": 409142410,
+      "loca_id": 91003,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 6001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "max_resources": 0,
+        "protected": 0,
+        "tag": "Cargo"
+      },
+      "id": 2534309121,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 1861986,
+        "cool_down": 1,
+        "crit_chance": 0.1,
+        "crit_modifier": 1.8,
+        "maximum_damage": 2168817,
+        "minimum_damage": 1774515,
+        "modulation": 931088,
+        "penetration": 931088,
+        "shots": 3,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 1
+      },
+      "id": 2275183298,
+      "loca_id": 1,
+      "order": 1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 1861986,
+        "cool_down": 1,
+        "crit_chance": 0.1,
+        "crit_modifier": 1.8,
+        "maximum_damage": 2168817,
+        "minimum_damage": 1774515,
+        "modulation": 931088,
+        "penetration": 931088,
+        "shots": 3,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 1
+      },
+      "id": 2275183298,
+      "loca_id": 1,
+      "order": 1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 1861986,
+        "cool_down": 1,
+        "crit_chance": 0.1,
+        "crit_modifier": 1.8,
+        "maximum_damage": 2168817,
+        "minimum_damage": 1774515,
+        "modulation": 931088,
+        "penetration": 931088,
+        "shots": 3,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 1
+      },
+      "id": 2275183298,
+      "loca_id": 1,
+      "order": 1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1501,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 1861986,
+        "cool_down": 2,
+        "crit_chance": 0.1,
+        "crit_modifier": 1.8,
+        "maximum_damage": 4337635,
+        "minimum_damage": 3549029,
+        "modulation": 931088,
+        "penetration": 931088,
+        "shots": 3,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 2
+      },
+      "id": 3909605113,
+      "loca_id": 1,
+      "order": 2,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    }
+  ],
+  "ability": [
+    {
+      "art_id": 62,
+      "id": 4209455474,
+      "loca_id": 36008,
+      "show_percentage": true,
+      "value_is_percentage": true,
+      "value_type": true,
+      "values": [
+        {
+          "chance": 1,
+          "value": 0.75
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        },
+        {
+          "chance": 1,
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "resource_id": 396152835,
+      "min": 284,
+      "max": 348
+    }
+  ]
+}

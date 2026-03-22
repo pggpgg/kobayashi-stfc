@@ -65,7 +65,7 @@ On Windows, use `target\release\kobayashi.exe` instead of `./target/release/koba
 # Or use the CLI directly
 ./target/release/kobayashi optimize \
   --ship saladin \
-  --hostile explorer_30 \
+  --hostile 2918121098 \
   --sims 5000
 
 # Low-level combat sim (rounds, seed) — for ship/hostile/crew sims, use the Web UI
@@ -89,7 +89,7 @@ On Windows, use `target\release\kobayashi.exe` instead of `./target/release/koba
 ./target/release/kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers]
 
 # Use LCARS as officer source for simulation (default: canonical)
-KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladin --hostile explorer_30 --sims 5000
+KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladin --hostile 2918121098 --sims 5000
 ```
 
 ### Data maintenance policy

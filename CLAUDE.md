@@ -87,6 +87,15 @@ python3 scripts/build_ship_registry.py
 cargo run --bin normalize_data_stfc_space
 ```
 
+### Hostile data (data.stfc.space cache)
+
+Requires `data/upstream/data-stfc-space/hostiles/*.json`. Writes `data/hostiles/` (numeric string ids) and merge-updates `data/registry.json` for the `hostiles` entry only.
+
+```bash
+cargo run --bin normalize_hostiles_stfc_space
+# Optional: STFCSPACE_HOSTILES_VERSION, STFCSPACE_HOSTILES_SOURCE_NOTE
+```
+
 ## Architecture
 
 ### Backend (Rust)
@@ -96,7 +105,7 @@ The library is at `src/lib.rs` and exposes these modules:
 - **`src/combat/`** — Core fight loop (`engine.rs`). This is the hot path: zero allocations, no dynamic dispatch, SplitMix64 PRNG. `abilities.rs` evaluates effects per round; `buffs.rs` implements stacking rules; `stacking.rs` handles the base→flat→pct→multiply→cap resolution order.
 - **`src/lcars/`** — LCARS YAML parser (`parser.rs`) and resolver (`resolver.rs`) that collapses officer definitions into a `BuffSet` (static buffs + per-round effects + triggered effects). Only files matching `*.lcars.yaml` are loaded from a directory.
 - **`src/optimizer/`** — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates; `genetic.rs` is the GA strategy (select via `strategy: "genetic"` in API); `tiered.rs` implements a two-pass scouting → confirmation strategy (select via `strategy: "tiered"`). `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
-- **`src/data/`** — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is canonical; `officers.lcars.yaml` is the LCARS source of truth. `loader.rs` resolves by id or "name_level" (e.g. `explorer_30`).
+- **`src/data/`** — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is canonical; `officers.lcars.yaml` is the LCARS source of truth. `loader.rs` resolves by id (e.g. data.stfc.space numeric string `2918121098`) or by normalized hostile name + level (e.g. `hostile_2918121098_81` for placeholder display names).
 - **`src/server/`** — Axum HTTP server with Tokio async runtime. Heavy operations (simulate, optimize) are offloaded via `spawn_blocking`. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
 - **`src/server/`** — Async HTTP server built on Tokio + Axum 0.7. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers; CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present.
 - **`src/parallel/`** — Rayon thread pool integration; each thread owns its PRNG instance.

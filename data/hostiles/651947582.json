@@ -1,0 +1,211 @@
+{
+  "id": "651947582",
+  "hostile_name": "Hostile 651947582",
+  "level": 40,
+  "ship_class": "survey",
+  "armor": 68333.0,
+  "shield_deflection": 68333.0,
+  "dodge": 68333.0,
+  "hull_health": 510190.0,
+  "shield_health": 510190.0,
+  "shield_mitigation": 0.8,
+  "apex_barrier": 0.0,
+  "isolytic_defense": 0.0,
+  "mitigation_floor": null,
+  "mitigation_ceiling": null,
+  "mystery_mitigation_factor": null,
+  "loca_id": 12002,
+  "faction": {
+    "id": 669838839,
+    "loca_id": 3
+  },
+  "upstream_ship_type": 12,
+  "hull_type_raw": 1,
+  "rarity": 1,
+  "is_scout": false,
+  "is_outpost": false,
+  "strength": 1986823,
+  "systems": [
+    1680845187
+  ],
+  "xp_amount": 420,
+  "warp": 40,
+  "warp_with_superhighway": 40,
+  "stat_health": 510190.0,
+  "stat_defense": 1024995.0,
+  "stat_attack": 451638.0,
+  "dpr": 369639.0,
+  "stat_strength": 1986823.0,
+  "accuracy": 54666.0,
+  "armor_piercing": 54666.0,
+  "shield_piercing": 54666.0,
+  "crit_chance": 0.1,
+  "crit_damage": 1.5,
+  "components": [
+    {
+      "art_id": 5001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "abilities": [],
+        "distance": 2,
+        "speed": 2,
+        "tag": "Warp"
+      },
+      "id": 635429245,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 4001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "dodge": 68333,
+        "impulse": 9,
+        "tag": "Impulse"
+      },
+      "id": 1206061249,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 3001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "absorption": 68333,
+        "hp": 510190,
+        "mitigation": 0.8,
+        "regen_time": 50,
+        "tag": "Shield"
+      },
+      "id": 1636718604,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 2001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "hp": 510190,
+        "plating": 68333,
+        "tag": "Armor"
+      },
+      "id": 3668239785,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 8000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "tag": "Sensor"
+      },
+      "id": 2821665303,
+      "loca_id": 91002,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 9000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "deflection": 120,
+        "tag": "Deflector"
+      },
+      "id": 409142410,
+      "loca_id": 91003,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 6001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "max_resources": 0,
+        "protected": 0,
+        "tag": "Cargo"
+      },
+      "id": 2534309121,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 54666,
+        "cool_down": 1,
+        "crit_chance": 0.1,
+        "crit_modifier": 1.5,
+        "maximum_damage": 353568,
+        "minimum_damage": 289283,
+        "modulation": 54666,
+        "penetration": 54666,
+        "shots": 1,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 1
+      },
+      "id": 1188400086,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    }
+  ],
+  "ability": [],
+  "resources": [
+    {
+      "resource_id": 743985951,
+      "min": 449,
+      "max": 607
+    },
+    {
+      "resource_id": 2614028847,
+      "min": 38,
+      "max": 52
+    },
+    {
+      "resource_id": 970475396,
+      "min": 786,
+      "max": 786
+    },
+    {
+      "resource_id": 4135751670,
+      "min": -5888,
+      "max": -5888
+    },
+    {
+      "resource_id": 156323681,
+      "min": 1570,
+      "max": 1570
+    }
+  ]
+}

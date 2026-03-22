@@ -741,7 +741,7 @@ fn legacy_console_html() -> String {
     <label for="ship">Ship</label>
     <input id="ship" value="Saladin" />
     <label for="hostile">Hostile</label>
-    <input id="hostile" value="Explorer_30" />
+    <input id="hostile" value="2918121098" />
     <label for="sims">Fight iterations per crew</label>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <input id="sims" type="number" min="1" max="100000" value="5000" style="width:90px" />

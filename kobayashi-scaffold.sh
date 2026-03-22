@@ -1524,7 +1524,7 @@ EOF
 cat > data/hostiles.json << 'EOF'
 [
   {
-    "id": "explorer_30",
+    "id": "2918121098",
     "name": "Explorer Lv30",
     "level": 30,
     "weapon_dmg": 8000,
@@ -1638,8 +1638,8 @@ cargo build --release
 ./target/release/kobayashi serve
 
 # Or run from CLI
-./target/release/kobayashi optimize --ship saladin --hostile explorer_30 --sims 5000
-./target/release/kobayashi simulate --ship saladin --hostile explorer_30 --captain khan --bridge nero --below tlaan --sims 10000
+./target/release/kobayashi optimize --ship saladin --hostile 2918121098 --sims 5000
+./target/release/kobayashi simulate --ship saladin --hostile 2918121098 --captain khan --bridge nero --below tlaan --sims 10000
 
 # Validate officer definitions
 ./target/release/kobayashi validate --path data/officers

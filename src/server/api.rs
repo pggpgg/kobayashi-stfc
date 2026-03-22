@@ -11,8 +11,9 @@ pub use requests::{
     ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
 };
 
-use crate::data::loader::ship_tiers_levels;
 use crate::data::data_registry::DataRegistry;
+use crate::data::hostile_loca::resolve_hostile_display_name;
+use crate::data::loader::ship_tiers_levels;
 use crate::data::heuristics::{list_heuristics_seeds, DEFAULT_HEURISTICS_DIR};
 use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
@@ -231,22 +232,31 @@ pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Er
 #[derive(Debug, Clone, Serialize)]
 pub struct HostileListItem {
     pub id: String,
+    /// Raw name from `data/hostiles` (may be a placeholder when using numeric upstream ids).
     pub hostile_name: String,
+    /// Human-readable name for UI (from `loca_id` → translation map when available).
+    pub display_name: String,
     pub level: u32,
     pub ship_class: String,
 }
 
 pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
+    let loca_map = registry.hostile_loca_display();
     let list: Vec<HostileListItem> = registry
         .hostile_index()
         .map(|idx| {
             idx.hostiles
                 .iter()
-                .map(|e| HostileListItem {
-                    id: e.id.clone(),
-                    hostile_name: e.hostile_name.clone(),
-                    level: e.level,
-                    ship_class: e.ship_class.clone(),
+                .map(|e| {
+                    let display_name =
+                        resolve_hostile_display_name(loca_map, e.loca_id, &e.hostile_name);
+                    HostileListItem {
+                        id: e.id.clone(),
+                        hostile_name: e.hostile_name.clone(),
+                        display_name,
+                        level: e.level,
+                        ship_class: e.ship_class.clone(),
+                    }
                 })
                 .collect()
         })

@@ -360,6 +360,8 @@ pub(crate) fn scenario_to_combat_input(
         extend_crew_with_ship_abilities(&mut seats, Some(&ship_rec));
         return CombatSimulationInput {
             attacker,
+            // Hostile as defender: offensive stats and per-weapon data exist on `HostileRecord` (data.stfc.space)
+            // but are not yet mapped into `Combatant` / sub-round resolution.
             defender: Combatant {
                 id: hostile.to_string(),
                 attack: 0.0,
@@ -597,6 +599,7 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
             attacker_stats,
             hostile_r.ship_type(),
         );
+        // Hostile offensive stats on `HostileRecord` are not yet mapped into `Combatant`.
         let defender = Combatant {
             id: hostile.to_string(),
             attack: 0.0,
@@ -779,6 +782,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             attacker_stats,
             hostile_r.ship_type(),
         );
+        // Hostile offensive stats on `HostileRecord` are not yet mapped into `Combatant`.
         let defender = Combatant {
             id: hostile.to_string(),
             attack: 0.0,
@@ -1063,7 +1067,7 @@ mod tests {
         let shared = build_shared_scenario_data_from_registry(
             registry.as_ref(),
             "saladin",
-            "swarm_cluster_20_interceptor",
+            "2918121098",
             None,
             None,
             Some(&entry.id),

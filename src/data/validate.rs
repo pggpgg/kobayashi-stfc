@@ -748,6 +748,9 @@ pub fn validate_ships_extended_dataset(path: &str) -> Result<ValidationReport, S
 /// Validate hostile index + all per-hostile record files for basic structure and plausible stats.
 /// `path` should be the directory containing `index.json` (typically `data/hostiles`).
 ///
+/// `HostileRecord` may include optional data.stfc.space fields (`components`, `ability`, `stat_*`, …);
+/// deserialization of those is covered by parsing each file as a full record (no per-field asserts here).
+///
 /// Individual missing/corrupt file counts are emitted as summary diagnostics rather than
 /// one diagnostic per file to avoid flooding the output for large hostile sets.
 pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String> {

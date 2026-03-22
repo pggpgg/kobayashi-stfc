@@ -1,0 +1,258 @@
+{
+  "id": "4268297615",
+  "hostile_name": "Hostile 4268297615",
+  "level": 38,
+  "ship_class": "explorer",
+  "armor": 3321133.0,
+  "shield_deflection": 830283.0,
+  "dodge": 830283.0,
+  "hull_health": 107685176.0,
+  "shield_health": 80763859.0,
+  "shield_mitigation": 0.8,
+  "apex_barrier": 0.0,
+  "isolytic_defense": 0.0,
+  "mitigation_floor": null,
+  "mitigation_ceiling": null,
+  "mystery_mitigation_factor": null,
+  "loca_id": 61305,
+  "faction": {
+    "id": 2943562711,
+    "loca_id": 13
+  },
+  "upstream_ship_type": 2,
+  "hull_type_raw": 3,
+  "rarity": 1,
+  "is_scout": false,
+  "is_outpost": false,
+  "strength": 282918563,
+  "systems": [],
+  "xp_amount": 825,
+  "warp": 0,
+  "warp_with_superhighway": 0,
+  "stat_health": 94224518.0,
+  "stat_defense": 24908495.0,
+  "stat_attack": 163785550.0,
+  "dpr": 149801832.0,
+  "stat_strength": 282918563.0,
+  "accuracy": 873982.0,
+  "armor_piercing": 873982.0,
+  "shield_piercing": 5243895.0,
+  "crit_chance": 0.24999999999999997,
+  "crit_damage": 1.875,
+  "components": [
+    {
+      "art_id": 5001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "abilities": [],
+        "distance": 2,
+        "speed": 2,
+        "tag": "Warp"
+      },
+      "id": 635429245,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 4001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "dodge": 830283,
+        "impulse": 64,
+        "tag": "Impulse"
+      },
+      "id": 504007108,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 3001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "absorption": 830283,
+        "hp": 80763859,
+        "mitigation": 0.8,
+        "regen_time": 0,
+        "tag": "Shield"
+      },
+      "id": 3225542361,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 2001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "hp": 107685176,
+        "plating": 3321133,
+        "tag": "Armor"
+      },
+      "id": 3733460067,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 8000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "tag": "Sensor"
+      },
+      "id": 2821665303,
+      "loca_id": 91002,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 9000,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "deflection": 120,
+        "tag": "Deflector"
+      },
+      "id": 409142410,
+      "loca_id": 91003,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 6001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "max_resources": 0,
+        "protected": 0,
+        "tag": "Cargo"
+      },
+      "id": 2534309121,
+      "loca_id": 1,
+      "order": -1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 873982,
+        "cool_down": 1,
+        "crit_chance": 0.3,
+        "crit_modifier": 2,
+        "maximum_damage": 3965113,
+        "minimum_damage": 3244194,
+        "modulation": 5243895,
+        "penetration": 873982,
+        "shots": 1,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 1
+      },
+      "id": 1219700269,
+      "loca_id": 1,
+      "order": 1,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1001,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 873982,
+        "cool_down": 4,
+        "crit_chance": 0.3,
+        "crit_modifier": 2,
+        "maximum_damage": 22204748,
+        "minimum_damage": 18167416,
+        "modulation": 5243895,
+        "penetration": 873982,
+        "shots": 1,
+        "tag": "Weapon",
+        "warm_up": 4,
+        "weapon_type": 1
+      },
+      "id": 1094794117,
+      "loca_id": 1,
+      "order": 2,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1501,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 873982,
+        "cool_down": 3,
+        "crit_chance": 0.3,
+        "crit_modifier": 2,
+        "maximum_damage": 19032629,
+        "minimum_damage": 15572183,
+        "modulation": 5243895,
+        "penetration": 873982,
+        "shots": 1,
+        "tag": "Weapon",
+        "warm_up": 1,
+        "weapon_type": 2
+      },
+      "id": 3569319183,
+      "loca_id": 1,
+      "order": 3,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    },
+    {
+      "art_id": 1501,
+      "build_cost": [],
+      "build_time_in_seconds": 0,
+      "data": {
+        "accuracy": 873982,
+        "cool_down": 10,
+        "crit_chance": 0.1,
+        "crit_modifier": 1.5,
+        "maximum_damage": 1212219068,
+        "minimum_damage": 991815785,
+        "modulation": 5243895,
+        "penetration": 873982,
+        "shots": 1,
+        "tag": "Weapon",
+        "warm_up": 10,
+        "weapon_type": 2
+      },
+      "id": 1512607356,
+      "loca_id": 1,
+      "order": 4,
+      "repair_cost": [],
+      "repair_time": -1,
+      "scrap": []
+    }
+  ],
+  "ability": [],
+  "resources": []
+}

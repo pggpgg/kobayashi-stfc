@@ -115,7 +115,7 @@ cargo run --bin merge_lcars -- data/officers
 Set the environment variable to use LCARS as the officer source:
 
 ```bash
-KOBAYASHI_OFFICER_SOURCE=lcars kobayashi optimize --ship saladin --hostile explorer_30 --sims 5000
+KOBAYASHI_OFFICER_SOURCE=lcars kobayashi optimize --ship saladin --hostile 2918121098 --sims 5000
 ```
 
 When unset, the simulator uses the canonical JSON format (default).

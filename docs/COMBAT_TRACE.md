@@ -51,7 +51,7 @@ After pre-attack damage is folded into the stacking model and attack-phase damag
 - **`stacks`** — object keyed by stack name (e.g. `pre_attack_damage`, `defense_mitigation_bonus`). Each entry has **`base`**, **`modifier_sum`**, **`flat`**, and **`composed`** (`base * (1 + modifier_sum) + flat` per [`CategoryTotals`](../src/combat/stacking.rs)). Only stacks with any non-zero component are listed.  
 - **`pre_attack_damage_composed`** / **`damage_after_attack_phase_compose`** — numeric results after the pre-attack and attack-phase channels respectively (before isolytic / apex on hull).
 
-**When you need a table, not a single fight:** use the CLI `kobayashi mitigation-sensitivity <ship_id> <hostile_id> [--delta-pct <f64>]` (from the project root, with data loaded — ids are the same as in `data/ships_extended` / `data/hostiles`, e.g. `uss_enterprise` and `swarm_cluster_20_interceptor`), or the library helpers in [`src/combat/mitigation_sensitivity.rs`](../src/combat/mitigation_sensitivity.rs) to sweep baseline stats with small deltas.
+**When you need a table, not a single fight:** use the CLI `kobayashi mitigation-sensitivity <ship_id> <hostile_id> [--delta-pct <f64>]` (from the project root, with data loaded — ids are the same as in `data/ships_extended` / `data/hostiles`, e.g. `uss_enterprise` and `2918121098` (data.stfc.space numeric hostile id)), or the library helpers in [`src/combat/mitigation_sensitivity.rs`](../src/combat/mitigation_sensitivity.rs) to sweep baseline stats with small deltas.
 
 ## Officers: one seat each
 
