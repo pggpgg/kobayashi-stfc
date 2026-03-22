@@ -288,18 +288,17 @@ pub fn simulate_combat(
 
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
         let round_end_filtered = filter_effects_by_condition(&round_end_effects, &combat_ctx);
-        phase_effects.add_effects(
-            TimingWindow::RoundEnd,
-            &round_end_filtered,
-            attacker.attack,
-            round_end_assimilated_early,
-            round_index,
-        );
+        // RoundEnd stacking (apex, isolytic, shield mitigation, round-end damage multipliers, regen)
+        // must not feed the same-round weapon sub-rounds. Apply RoundEnd only after all weapons
+        // for this round (see merge into `phase_effects_round` below).
         let mut phase_effects_round = phase_effects.clone();
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
         let mut hull_breach_threshold_fired = false;
 
         let mut effective_pierce = attacker.pierce + phase_effects_round.pre_attack_pierce_bonus();
+        // Assumption: only one primary Morale contribution per round (first in officer order).
+        // If multiple morale sources should stack or roll independently, replace this with an
+        // explicit policy once confirmed from game behavior.
         let morale_source = round_start_filtered.iter().find_map(|effect| {
             if let AbilityEffect::Morale(chance) =
                 scale_effect(effect.effect, round_start_assimilated)
@@ -810,6 +809,14 @@ pub fn simulate_combat(
         }
             }
         }
+
+        phase_effects_round.add_effects(
+            TimingWindow::RoundEnd,
+            &round_end_filtered,
+            attacker.attack,
+            round_end_assimilated_early,
+            round_index,
+        );
 
         record_ability_activations(
             &mut trace,

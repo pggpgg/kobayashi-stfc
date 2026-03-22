@@ -589,15 +589,30 @@ async fn handle_optimize_estimate(
     }
 }
 
-/// POST /api/optimize/start — spawns a background std::thread, returns job_id immediately.
+/// POST /api/optimize/start — background job on a std::thread; holds a CPU permit like sync optimize.
 async fn handle_optimize_start(
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
+    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+        Ok(p) => p,
+        Err(_) => {
+            return error_json(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "CPU job semaphore closed",
+            )
+            .into_response();
+        }
+    };
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::optimize_start_payload(state.registry.clone(), &body, profile_id.as_deref()) {
+    match api::optimize_start_payload(
+        permit,
+        state.registry.clone(),
+        &body,
+        profile_id.as_deref(),
+    ) {
         Ok(payload) => ok_json(payload).into_response(),
         Err(api::OptimizePayloadError::Parse(e)) => {
             error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))

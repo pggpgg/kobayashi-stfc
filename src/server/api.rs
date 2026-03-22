@@ -884,6 +884,7 @@ pub fn optimize_payload(
 }
 
 pub fn optimize_start_payload(
+    cpu_permit: tokio::sync::OwnedSemaphorePermit,
     registry: Arc<DataRegistry>,
     body: &str,
     profile_id: Option<&str>,
@@ -892,7 +893,8 @@ pub fn optimize_start_payload(
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
-    let start_response = execution::start_optimize_job(registry, request, profile_id)?;
+    let start_response =
+        execution::start_optimize_job(registry, request, profile_id, cpu_permit)?;
     serde_json::to_string_pretty(&start_response).map_err(OptimizePayloadError::Parse)
 }
 

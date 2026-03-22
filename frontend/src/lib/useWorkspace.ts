@@ -23,6 +23,10 @@ import {
   type OptimizeStatusResponse,
   type Preset,
 } from './api';
+import {
+  buildWorkspaceOptimizeStartBody,
+  buildWorkspaceSimulateParams,
+} from './workspaceRequests';
 import { useProfile } from '../contexts/ProfileContext';
 
 const POLL_INTERVAL_MS = 350;
@@ -178,28 +182,22 @@ export function useWorkspace() {
 
   // Handle running a simulation
   const handleRunSim = async () => {
-    if (!crew.captain) {
+    const simParams = buildWorkspaceSimulateParams({
+      shipId,
+      scenarioId,
+      crew,
+      simsPerCrew,
+      shipTier,
+      shipLevel,
+    });
+    if (!simParams) {
       setError('Select a captain first');
       return;
     }
     setError(null);
     setLoadingSim(true);
     try {
-      const res = await simulate(
-        {
-          ship: shipId || 'Saladin',
-          hostile: scenarioId || '2918121098',
-          crew: {
-            captain: crew.captain,
-            bridge: crew.bridge,
-            below_deck: crew.belowDeck,
-          },
-          num_sims: 5000,
-          ship_tier: shipTier,
-          ship_level: shipLevel,
-        },
-        activeProfileId,
-      );
+      const res = await simulate(simParams, activeProfileId);
       setSimResult(res.stats);
       setRecommendations([]);
     } catch (e) {
@@ -238,19 +236,19 @@ export function useWorkspace() {
     setOptimizeTotalCrews(null);
     try {
       const { job_id } = await optimizeStart(
-        {
-          ship: shipId || 'Saladin',
-          hostile: scenarioId || '2918121098',
-          sims: simsPerCrew,
-          max_candidates: maxCandidates ?? undefined,
-          strategy: optimizerStrategy,
-          prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
-          heuristics_seeds: selectedSeeds.length > 0 ? selectedSeeds : undefined,
-          heuristics_only: heuristicsOnly || undefined,
-          below_decks_strategy: belowDecksStrategy !== 'ordered' ? belowDecksStrategy : undefined,
-          ship_tier: shipTier,
-          ship_level: shipLevel,
-        },
+        buildWorkspaceOptimizeStartBody({
+          shipId,
+          scenarioId,
+          simsPerCrew,
+          maxCandidates,
+          optimizerStrategy,
+          prioritizeBelowDecksAbility,
+          selectedSeeds,
+          heuristicsOnly,
+          belowDecksStrategy,
+          shipTier,
+          shipLevel,
+        }),
         activeProfileId,
       );
       currentOptimizeJobIdRef.current = job_id;
