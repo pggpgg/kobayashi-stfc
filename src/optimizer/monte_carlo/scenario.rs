@@ -80,6 +80,9 @@ pub(crate) struct SharedScenarioData {
     pub cached_pierce: Option<f64>,
     #[allow(dead_code)]
     pub cached_defender_mitigation: Option<f64>,
+    /// True when ship or hostile did not resolve from data and [`scenario_to_combat_input_from_shared`]
+    /// uses hashed placeholder combatants instead of registry-backed stats.
+    pub using_placeholder_combatants: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -631,6 +634,8 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
         (None, None, None, None, None)
     };
 
+    let using_placeholder_combatants = cached_defender.is_none();
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -645,6 +650,7 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
         cached_defender_hull,
         cached_pierce,
         cached_defender_mitigation,
+        using_placeholder_combatants,
     }
 }
 
@@ -814,6 +820,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         (None, None, None, None, None)
     };
 
+    let using_placeholder_combatants = cached_defender.is_none();
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -828,6 +836,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         cached_defender_hull,
         cached_pierce,
         cached_defender_mitigation,
+        using_placeholder_combatants,
     }
 }
 
@@ -911,6 +920,7 @@ mod tests {
             cached_defender_hull: None,
             cached_pierce: None,
             cached_defender_mitigation: None,
+            using_placeholder_combatants: true,
         };
 
         let candidate = CrewCandidate {

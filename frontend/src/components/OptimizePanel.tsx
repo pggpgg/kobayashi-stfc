@@ -209,13 +209,9 @@ export default function OptimizePanel({
         </select>
       </label>
 
-      <label style={{ fontSize: '0.85rem' }}>
-        Primary metric
-        <select style={selectStyle}>
-          <option>Win rate</option>
-          <option>Hull remaining</option>
-        </select>
-      </label>
+      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+        Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see optimizer ranking).
+      </p>
 
       <label style={{ fontSize: '0.85rem' }}>
         Max crews (optional)

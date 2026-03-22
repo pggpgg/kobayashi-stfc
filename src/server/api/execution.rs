@@ -14,7 +14,9 @@ use crate::data::heuristics::{
 };
 use crate::optimizer::crew_generator::{CrewCandidate, BELOW_DECKS_SLOTS};
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel_with_registry, SimulationResult,
+    run_monte_carlo_parallel_with_registry,
+    scenario::build_shared_scenario_data_from_registry,
+    SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::{
@@ -86,6 +88,7 @@ struct OptimizeGatherMeta {
     is_seeded_genetic: bool,
     heuristics_only: bool,
     heuristics_seeds_nonempty: bool,
+    using_placeholder_combatants: bool,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -213,18 +216,29 @@ fn gather_optimize_simulation_results(
         *sink_sg = is_seeded_genetic;
     }
 
+    let using_placeholder_combatants = build_shared_scenario_data_from_registry(
+        registry,
+        &request.ship,
+        &request.hostile,
+        request.ship_tier,
+        request.ship_level,
+        profile_id,
+    )
+    .using_placeholder_combatants;
+
     let meta = OptimizeGatherMeta {
         strategy,
         is_seeded_genetic,
         heuristics_only,
         heuristics_seeds_nonempty,
+        using_placeholder_combatants,
     };
 
     let mut all_results: Vec<SimulationResult> =
         if heuristics_seeds_nonempty && !is_seeded_genetic {
             let h_total = h_candidates.len() as u32;
             sink.on_heuristics_start(h_total);
-            let results = run_monte_carlo_parallel_with_registry(
+            let (results, _) = run_monte_carlo_parallel_with_registry(
                 registry,
                 &request.ship,
                 &request.hostile,
@@ -308,6 +322,14 @@ fn build_optimize_response(
         notes.insert(0, "Heuristics crews were evaluated first.");
     }
 
+    let mut warnings = Vec::new();
+    if meta.using_placeholder_combatants {
+        warnings.push(
+            "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats. Results do not reflect real ship/hostile values."
+                .to_string(),
+        );
+    }
+
     OptimizeResponse {
         status: "ok",
         engine,
@@ -331,7 +353,7 @@ fn build_optimize_response(
             .collect(),
         duration_ms: Some(duration_ms),
         notes,
-        warnings: Vec::new(),
+        warnings,
     }
 }
 
@@ -389,6 +411,10 @@ pub struct OptimizeStatusResponse {
     pub error: Option<String>,
 }
 
+/// Cap on stored job records (running + finished). Oldest **completed** jobs are dropped first
+/// when over limit so the global map cannot grow without bound.
+const MAX_OPTIMIZE_JOBS_RETAINED: usize = 128;
+
 static OPTIMIZE_JOB_COUNTER: OnceLock<AtomicU64> = OnceLock::new();
 static OPTIMIZE_JOBS: OnceLock<Mutex<HashMap<String, OptimizeJobState>>> = OnceLock::new();
 static OPTIMIZE_CANCEL_FLAGS: OnceLock<Mutex<HashMap<String, Arc<AtomicBool>>>> = OnceLock::new();
@@ -409,6 +435,41 @@ fn next_job_id() -> String {
         .unwrap_or_default()
         .as_millis();
     format!("opt_{}_{}", ms, n)
+}
+
+/// Parse `opt_<millis>_<counter>` for eviction ordering (unknown shape → 0 = evicted first among ties).
+fn parse_optimize_job_timestamp_ms(job_id: &str) -> u128 {
+    job_id
+        .strip_prefix("opt_")
+        .and_then(|rest| rest.split('_').next())
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0)
+}
+
+/// Drop oldest finished jobs until `map.len() <= max_entries`. Running jobs are never removed.
+fn prune_completed_optimize_jobs_over_cap(
+    map: &mut HashMap<String, OptimizeJobState>,
+    cancel_flags: &mut HashMap<String, Arc<AtomicBool>>,
+    max_entries: usize,
+) {
+    while map.len() > max_entries {
+        let Some(oldest_id) = map
+            .iter()
+            .filter(|(_, st)| {
+                matches!(
+                    st.status,
+                    OptimizeJobStatus::Done | OptimizeJobStatus::Error
+                )
+            })
+            .map(|(id, _)| (parse_optimize_job_timestamp_ms(id), id.clone()))
+            .min_by(|(a_ts, a_id), (b_ts, b_id)| a_ts.cmp(b_ts).then_with(|| a_id.cmp(b_id)))
+            .map(|(_, id)| id)
+        else {
+            break;
+        };
+        map.remove(&oldest_id);
+        cancel_flags.remove(&oldest_id);
+    }
 }
 
 #[derive(Debug)]
@@ -457,7 +518,13 @@ pub fn start_optimize_job(
                 error: None,
             },
         );
-        optimize_cancel_flags().lock().unwrap().insert(job_id.clone(), cancel_flag.clone());
+        let mut cancel_flags = optimize_cancel_flags().lock().unwrap();
+        cancel_flags.insert(job_id.clone(), cancel_flag.clone());
+        prune_completed_optimize_jobs_over_cap(
+            &mut map,
+            &mut cancel_flags,
+            MAX_OPTIMIZE_JOBS_RETAINED,
+        );
     }
 
     let job_id_thread = job_id.clone();
@@ -534,4 +601,58 @@ pub fn cancel_job(job_id: &str) -> Result<(), OptimizeStatusError> {
     };
     flag.store(true, Ordering::Relaxed);
     Ok(())
+}
+
+#[cfg(test)]
+mod optimize_job_store_tests {
+    use super::*;
+
+    fn done_state() -> OptimizeJobState {
+        OptimizeJobState {
+            status: OptimizeJobStatus::Done,
+            progress: 100,
+            crews_done: 1,
+            total_crews: 1,
+            result: None,
+            error: None,
+        }
+    }
+
+    #[test]
+    fn parse_job_timestamp_reads_opt_prefix() {
+        assert_eq!(parse_optimize_job_timestamp_ms("opt_1700000000123_0"), 1700000000123);
+        assert_eq!(parse_optimize_job_timestamp_ms("opt_99_7"), 99);
+        assert_eq!(parse_optimize_job_timestamp_ms("bad"), 0);
+    }
+
+    #[test]
+    fn prune_drops_oldest_completed_first() {
+        let mut map = HashMap::new();
+        let mut flags = HashMap::new();
+        map.insert("opt_100_0".to_string(), done_state());
+        map.insert("opt_200_1".to_string(), done_state());
+        map.insert("opt_300_2".to_string(), done_state());
+        map.insert(
+            "opt_400_run".to_string(),
+            OptimizeJobState {
+                status: OptimizeJobStatus::Running,
+                progress: 0,
+                crews_done: 0,
+                total_crews: 0,
+                result: None,
+                error: None,
+            },
+        );
+        flags.insert("opt_100_0".to_string(), Arc::new(AtomicBool::new(false)));
+        flags.insert("opt_200_1".to_string(), Arc::new(AtomicBool::new(false)));
+        flags.insert("opt_300_2".to_string(), Arc::new(AtomicBool::new(false)));
+        flags.insert("opt_400_run".to_string(), Arc::new(AtomicBool::new(false)));
+
+        prune_completed_optimize_jobs_over_cap(&mut map, &mut flags, 2);
+        assert_eq!(map.len(), 2);
+        assert!(!map.contains_key("opt_100_0"));
+        assert!(!map.contains_key("opt_200_1"));
+        assert!(map.contains_key("opt_300_2"));
+        assert!(map.contains_key("opt_400_run"));
+    }
 }

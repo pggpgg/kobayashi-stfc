@@ -262,7 +262,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
-) -> Vec<SimulationResult> {
+) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
         ship,
@@ -271,7 +271,11 @@ pub fn run_monte_carlo_parallel_with_registry(
         ship_level,
         profile_id,
     );
-    run_monte_carlo_with_shared(shared, candidates, iterations, seed, true)
+    let placeholder = shared.using_placeholder_combatants;
+    (
+        run_monte_carlo_with_shared(shared, candidates, iterations, seed, true),
+        placeholder,
+    )
 }
 
 /// Like [run_monte_carlo] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
@@ -286,7 +290,7 @@ pub fn run_monte_carlo_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
-) -> Vec<SimulationResult> {
+) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
         ship,
@@ -295,7 +299,11 @@ pub fn run_monte_carlo_with_registry(
         ship_level,
         profile_id,
     );
-    run_monte_carlo_with_shared(shared, candidates, iterations, seed, false)
+    let placeholder = shared.using_placeholder_combatants;
+    (
+        run_monte_carlo_with_shared(shared, candidates, iterations, seed, false),
+        placeholder,
+    )
 }
 
 fn run_monte_carlo_with_parallelism(

@@ -321,3 +321,107 @@ async fn optimize_validation_error_has_expected_schema() {
         );
     }
 }
+
+#[tokio::test]
+async fn async_optimize_start_poll_completes_with_recommendations() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":42,"max_candidates":16}"#;
+    let start = route_request("POST", "/api/optimize/start", body, None).await;
+    assert_eq!(start.status_code, 200, "body: {}", start.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&start.body).expect("start response json");
+    let job_id = payload["job_id"]
+        .as_str()
+        .expect("job_id string");
+
+    for _ in 0..400 {
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+        let status = route_request(
+            "GET",
+            &format!("/api/optimize/status/{job_id}"),
+            "",
+            None,
+        )
+        .await;
+        assert_eq!(status.status_code, 200, "status body: {}", status.body);
+        let s: serde_json::Value =
+            serde_json::from_str(&status.body).expect("status json");
+        if s["status"] == "done" {
+            let result = s["result"].as_object().expect("result object");
+            let recs = result["recommendations"]
+                .as_array()
+                .expect("recommendations array");
+            assert!(
+                !recs.is_empty(),
+                "async optimize should return recommendations"
+            );
+            return;
+        }
+        assert_ne!(
+            s["status"], "error",
+            "unexpected job error: {:?}",
+            s["error"]
+        );
+    }
+    panic!("async optimize did not complete within timeout");
+}
+
+#[tokio::test]
+async fn async_optimize_cancel_unknown_job_returns_404() {
+    let response = route_request(
+        "POST",
+        "/api/optimize/jobs/opt_nonexistent_0/cancel",
+        "",
+        None,
+    )
+    .await;
+    assert_eq!(response.status_code, 404);
+}
+
+#[tokio::test]
+async fn async_optimize_cancel_after_done_is_idempotent_ok() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":8}"#;
+    let start = route_request("POST", "/api/optimize/start", body, None).await;
+    assert_eq!(start.status_code, 200);
+    let payload: serde_json::Value =
+        serde_json::from_str(&start.body).expect("start json");
+    let job_id = payload["job_id"].as_str().expect("job_id");
+
+    let mut finished = false;
+    for _ in 0..400 {
+        tokio::time::sleep(tokio::time::Duration::from_millis(40)).await;
+        let status = route_request(
+            "GET",
+            &format!("/api/optimize/status/{job_id}"),
+            "",
+            None,
+        )
+        .await;
+        let s: serde_json::Value =
+            serde_json::from_str(&status.body).expect("status json");
+        if s["status"] == "done" {
+            finished = true;
+            break;
+        }
+        assert_ne!(s["status"], "error", "{:?}", s["error"]);
+    }
+    assert!(finished, "job should complete");
+
+    let cancel = route_request(
+        "POST",
+        &format!("/api/optimize/jobs/{job_id}/cancel"),
+        "",
+        None,
+    )
+    .await;
+    assert_eq!(cancel.status_code, 200, "{}", cancel.body);
+    let c: serde_json::Value =
+        serde_json::from_str(&cancel.body).expect("cancel json");
+    assert_eq!(c["status"], "ok");
+    assert!(
+        c["message"]
+            .as_str()
+            .is_some_and(|m| m.contains("finished")),
+        "expected idempotent cancel message, got {:?}",
+        c["message"]
+    );
+}

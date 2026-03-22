@@ -253,7 +253,7 @@ export function useWorkspace() {
       );
       currentOptimizeJobIdRef.current = job_id;
       const poll = () => {
-        getOptimizeStatus(job_id, activeProfileId)
+        getOptimizeStatus(job_id)
           .then((status) => {
             if (status.progress != null) setOptimizeProgress(status.progress);
             if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
