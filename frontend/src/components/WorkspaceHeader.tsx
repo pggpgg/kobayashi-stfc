@@ -4,6 +4,7 @@ import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api
 import type { CrewState } from '../lib/types';
 import { useProfile } from '../contexts/ProfileContext';
 import { useWorkspaceMode } from '../contexts/WorkspaceModeContext';
+import HostilePicker from './HostilePicker';
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 
@@ -202,22 +203,11 @@ export default function WorkspaceHeader({
           </option>
         ))}
       </select>
-      <select
-        aria-label="Scenario"
+      <HostilePicker
+        hostiles={hostiles}
         value={scenarioId}
-        onChange={(e) => onScenarioIdChange(e.target.value)}
-        style={selectStyle}
-      >
-        {hostiles.length === 0 && <option>Loading…</option>}
-        {hostiles.map((h) => {
-          const label = h.display_name ?? h.hostile_name;
-          return (
-            <option key={h.id} value={h.id}>
-              {label} (Lvl {h.level})
-            </option>
-          );
-        })}
-      </select>
+        onChange={onScenarioIdChange}
+      />
       <select
         aria-label="Preset"
         style={{

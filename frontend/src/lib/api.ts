@@ -132,6 +132,18 @@ export interface HostileListItem {
   ship_class: string;
 }
 
+/** Primary sort key for hostiles (display name when present). */
+export function hostileSortLabel(h: HostileListItem): string {
+  return h.display_name ?? h.hostile_name;
+}
+
+function compareHostiles(a: HostileListItem, b: HostileListItem): number {
+  const byName = hostileSortLabel(a).localeCompare(hostileSortLabel(b), undefined, { sensitivity: 'base' });
+  if (byName !== 0) return byName;
+  if (a.level !== b.level) return a.level - b.level;
+  return a.id.localeCompare(b.id);
+}
+
 export interface MechanicStatus {
   name: string;
   status: string;
@@ -172,7 +184,8 @@ export async function fetchHostiles(): Promise<HostileListItem[]> {
   const res = await fetch(`${API_BASE}/api/hostiles`);
   await checkOk(res);
   const data = await res.json();
-  return data.hostiles ?? [];
+  const list = (data.hostiles ?? []) as HostileListItem[];
+  return [...list].sort(compareHostiles);
 }
 
 export async function fetchDataVersion(): Promise<DataVersionResponse> {
