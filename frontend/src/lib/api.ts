@@ -407,13 +407,9 @@ export async function optimizeStart(
   return res.json();
 }
 
-export async function getOptimizeStatus(
-  jobId: string,
-  profileId?: string | null,
-): Promise<OptimizeStatusResponse> {
-  const url = profileId
-    ? `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}?profile=${encodeURIComponent(profileId)}`
-    : `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`;
+/** Poll async optimize job status. Jobs are keyed only by `job_id` (profile affects the start request body/headers, not this URL). */
+export async function getOptimizeStatus(jobId: string): Promise<OptimizeStatusResponse> {
+  const url = `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`;
   const res = await fetch(url);
   await checkOk(res);
   return res.json();

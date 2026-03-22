@@ -408,7 +408,7 @@ pub fn simulate_payload(
         below_decks: below_decks.clone(),
     };
     let candidates = vec![candidate];
-    let results = run_monte_carlo_with_registry(
+    let (results, using_placeholder_combatants) = run_monte_carlo_with_registry(
         registry,
         &req.ship,
         &req.hostile,
@@ -434,6 +434,14 @@ pub fn simulate_payload(
     let wins = (result.win_rate * num_sims as f64).round() as u32;
     let ci = binomial_95_ci(wins, num_sims);
 
+    let mut warnings = Vec::new();
+    if using_placeholder_combatants {
+        warnings.push(
+            "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats. Results do not reflect real ship/hostile values."
+                .to_string(),
+        );
+    }
+
     let response = SimulateResponse {
         status: "ok",
         stats: SimulateStats {
@@ -445,7 +453,7 @@ pub fn simulate_payload(
             win_rate_95_ci: Some(ci),
         },
         seed,
-        warnings: Vec::new(),
+        warnings,
     };
     serde_json::to_string_pretty(&response).map_err(SimulateError::Parse)
 }
@@ -884,6 +892,7 @@ pub fn optimize_payload(
 }
 
 pub fn optimize_start_payload(
+    cpu_permit: tokio::sync::OwnedSemaphorePermit,
     registry: Arc<DataRegistry>,
     body: &str,
     profile_id: Option<&str>,
@@ -892,7 +901,8 @@ pub fn optimize_start_payload(
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
-    let start_response = execution::start_optimize_job(registry, request, profile_id)?;
+    let start_response =
+        execution::start_optimize_job(registry, request, profile_id, cpu_permit)?;
     serde_json::to_string_pretty(&start_response).map_err(OptimizePayloadError::Parse)
 }
 

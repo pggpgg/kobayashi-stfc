@@ -418,7 +418,8 @@ token = "${activeProfile.sync_token}"`}
             Research (sync → combat)
           </h3>
           <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Research levels from sync (<code>research.imported.json</code>) and the combat stat bonuses they contribute in ship combat (same rules as simulate/optimize).
+            Sync stores every <code>rid</code> + level in <code>research.imported.json</code> (full savepoint). The maintainer catalog (
+            <code>research_catalog.json</code>) only decides which rows add ship combat stats in simulate/optimize; unmapped rows stay on disk for later mapping.
           </p>
           {researchSummaryError && (
             <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--error, #c44)' }}>

@@ -436,6 +436,8 @@ impl EffectAccumulator {
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. } => {}
             },
+            // Resolved in the engine only after all weapon sub-rounds for the same round
+            // (`engine.rs`: RoundEnd is merged into `phase_effects_round` post-weapon-loop).
             TimingWindow::RoundEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.round_end_modifier_sum += modifier;

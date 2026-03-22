@@ -58,7 +58,7 @@ Sync is profile-scoped: the `stfc-sync-token` header identifies the profile, and
 | Payload type | Persisted | File / usage |
 |--------------|-----------|--------------|
 | officer | Yes | `profiles/{id}/roster.imported.json` — roster for “Owned only” and optimizer |
-| research | Yes | `profiles/{id}/research.imported.json` |
+| research | Yes | `profiles/{id}/research.imported.json` — **full merged savepoint** of every `rid` + `level` synced for this profile (not filtered by `research_catalog.json`; catalog only affects combat bonuses) |
 | buildings / module | Yes | `profiles/{id}/buildings.imported.json` |
 | ships / ship | Yes | `profiles/{id}/ships.imported.json` |
 | ft (forbidden tech) | Yes | `profiles/{id}/forbidden_tech.imported.json` — bonuses merged into optimizer profile |

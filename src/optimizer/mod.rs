@@ -195,7 +195,7 @@ fn optimize_scenario_exhaustive_with_registry(
     );
     let candidates =
         sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
-    let simulation_results = run_monte_carlo_parallel_with_registry(
+    let (simulation_results, _) = run_monte_carlo_parallel_with_registry(
         registry,
         scenario.ship,
         scenario.hostile,
@@ -423,7 +423,7 @@ where
 
             for (start, end) in ranges {
                 let batch = &candidates[start..end];
-                let batch_results = run_monte_carlo_parallel_with_registry(
+                let (batch_results, _) = run_monte_carlo_parallel_with_registry(
                     registry,
                     scenario.ship,
                     scenario.hostile,

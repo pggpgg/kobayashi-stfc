@@ -288,18 +288,17 @@ pub fn simulate_combat(
 
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
         let round_end_filtered = filter_effects_by_condition(&round_end_effects, &combat_ctx);
-        phase_effects.add_effects(
-            TimingWindow::RoundEnd,
-            &round_end_filtered,
-            attacker.attack,
-            round_end_assimilated_early,
-            round_index,
-        );
+        // RoundEnd stacking (apex, isolytic, shield mitigation, round-end damage multipliers, regen)
+        // must not feed the same-round weapon sub-rounds. Apply RoundEnd only after all weapons
+        // for this round (see merge into `phase_effects_round` below).
         let mut phase_effects_round = phase_effects.clone();
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
         let mut hull_breach_threshold_fired = false;
 
         let mut effective_pierce = attacker.pierce + phase_effects_round.pre_attack_pierce_bonus();
+        // Assumption: only one primary Morale contribution per round (first in officer order).
+        // If multiple morale sources should stack or roll independently, replace this with an
+        // explicit policy once confirmed from game behavior.
         let morale_source = round_start_filtered.iter().find_map(|effect| {
             if let AbilityEffect::Morale(chance) =
                 scale_effect(effect.effect, round_start_assimilated)
@@ -760,33 +759,54 @@ pub fn simulate_combat(
         }
 
             if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {
-        // Defender counter-attack: defender deals damage to attacker (ship runs out of HHP ends fight).
-        let def_mitigation_mult = (1.0 - attacker.mitigation).max(0.0);
-        let def_damage_through = (def_mitigation_mult + defender.pierce).max(0.0);
+        // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
+        // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
+        // so the two paths stay in sync. Assumption: no hostile crew / effect stacks on return fire
+        // (no DefensePhase mitigation bonus from player crew on incoming fire, no isolytic cascade
+        // from officer effects on the hostile). If hostile crew is modeled later, thread an
+        // EffectAccumulator for the counter shot analogous to `phase_effects`.
+        let counter_mitigation_mult = (1.0 - attacker.mitigation).max(0.0);
+        let counter_damage_through = compute_damage_through_factor(
+            counter_mitigation_mult,
+            defender.pierce,
+            0.0,
+        );
         let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let def_crit_mult = if def_crit_roll < defender.crit_chance {
-            defender.crit_multiplier
-        } else {
-            1.0
-        };
+        let def_is_crit = def_crit_roll < defender.crit_chance;
+        let def_crit_mult =
+            compute_crit_multiplier(def_is_crit, defender.crit_multiplier, false);
         let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         let def_proc_mult = if def_proc_roll < defender.proc_chance {
             defender.proc_multiplier
         } else {
             1.0
         };
-        let def_to_attacker_damage =
-            defender_weapon_attack * def_damage_through * def_crit_mult * def_proc_mult;
+        let counter_base_damage = defender_weapon_attack
+            * counter_damage_through
+            * def_crit_mult
+            * def_proc_mult;
+        let counter_iso_taken = compute_isolytic_taken(
+            counter_base_damage,
+            defender.isolytic_damage.max(0.0),
+            attacker.isolytic_defense.max(0.0),
+            0.0,
+        );
+        let counter_before_apex = counter_base_damage + counter_iso_taken;
+        let counter_apex_factor = compute_apex_damage_factor(
+            defender.apex_shred.max(0.0),
+            attacker.apex_barrier.max(0.0),
+        );
+        let counter_after_apex = counter_before_apex * counter_apex_factor;
         let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
             attacker.shield_mitigation.clamp(0.0, 1.0)
         } else {
             0.0
         };
-        let att_shield_portion = def_to_attacker_damage * att_shield_mitigation;
-        let att_hull_portion = def_to_attacker_damage * (1.0 - att_shield_mitigation);
-        let att_actual_shield_damage = att_shield_portion.min(attacker_shield_remaining);
-        let att_shield_overflow = att_shield_portion - att_actual_shield_damage;
-        let att_hull_damage_this_round = att_hull_portion + att_shield_overflow;
+        let (att_actual_shield_damage, att_hull_damage_this_round) = apply_shield_hull_split(
+            counter_after_apex,
+            att_shield_mitigation,
+            attacker_shield_remaining,
+        );
         attacker_shield_remaining = (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
         total_attacker_hull_damage += att_hull_damage_this_round;
         if att_hull_damage_this_round > 0.0 {
@@ -810,6 +830,14 @@ pub fn simulate_combat(
         }
             }
         }
+
+        phase_effects_round.add_effects(
+            TimingWindow::RoundEnd,
+            &round_end_filtered,
+            attacker.attack,
+            round_end_assimilated_early,
+            round_index,
+        );
 
         record_ability_activations(
             &mut trace,

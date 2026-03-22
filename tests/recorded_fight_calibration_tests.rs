@@ -1,4 +1,4 @@
-﻿//! Calibration tests: run simulator with recorded-fight scenario and assert outcome within tolerance.
+//! Calibration tests: run simulator with recorded-fight scenario and assert outcome within tolerance.
 //! Fixtures live in tests/fixtures/recorded_fights/ (see docs/combat_log_format.md).
 //! Game CSV exports live in fight samples/ at repo root.
 
@@ -73,14 +73,14 @@ fn calibration_scenario_outcome_within_tolerance() {
         result.rounds_simulated
     );
     assert!(
-        result.total_damage >= 200.0 && result.total_damage <= 2500.0,
-        "total_damage {} should be in [200, 2500]",
+        result.total_damage >= 600.0 && result.total_damage <= 1200.0,
+        "total_damage {} should be in [600, 1200] (deterministic seed 42, 10 rounds)",
         result.total_damage
     );
     // Attacker typically wins this scenario (high attack vs moderate defender); allow for RNG
     assert!(
-        result.defender_hull_remaining >= 0.0 && result.defender_hull_remaining <= 600.0,
-        "defender_hull_remaining should be in [0, 600]"
+        result.defender_hull_remaining >= 0.0 && result.defender_hull_remaining <= 400.0,
+        "defender_hull_remaining should be in [0, 400] (defender max hull)"
     );
 }
 

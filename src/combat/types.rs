@@ -47,6 +47,92 @@ pub const BATTLESHIP_COEFFICIENTS: (f64, f64, f64) = (0.55, 0.2, 0.2);
 pub const EXPLORER_COEFFICIENTS: (f64, f64, f64) = (0.2, 0.55, 0.2);
 pub const INTERCEPTOR_COEFFICIENTS: (f64, f64, f64) = (0.2, 0.2, 0.55);
 
+/// One **enemy type** label: who or what you are fighting in Star Trek Fleet Command.
+///
+/// Kobayashi currently simulates one style of fight (player ship vs a single defender with
+/// shared round/weapon rules). This enum classifies the **opponent category** (hostile, armada,
+/// PvP target, etc.); mechanics, data sources, and UI can branch on it as support lands.
+///
+/// For PvP variants, read “enemy” as the **opposing player entity** (ship or station).
+///
+/// An engagement may carry **several** labels at once (e.g. moving hostile plus wave defense). Use
+/// [`EnemyTypes`] for the full list; this enum is a single tag.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum EnemyType {
+    /// Opposing player ship (space PvP).
+    PvpSpace,
+    /// Opposing player station.
+    PvpStation,
+    /// Standard system hostiles (“reds”) — the case the simulator has targeted most so far.
+    RedMovingSpace,
+    /// Wave defense (often combined with other [`EnemyType`] values in [`EnemyTypes`]).
+    Waves,
+    /// Mission bosses (“yellows”).
+    MissionBosses,
+    GroupArmadas,
+    SoloArmadas,
+    InvadingEntities,
+    Assaults,
+    OutpostArmadas,
+    OutpostRetaliationAttackers,
+}
+
+/// Every enemy-type tag that applies to one engagement (hostile row, scenario, import, etc.).
+///
+/// Serialized as a JSON **array** of snake_case strings, e.g. `["red_moving_space","waves"]`.
+/// Order is preserved; callers may use “first = broadest category” as a convention — not enforced
+/// here. Duplicate entries are allowed; use [`EnemyTypes::dedup`] if you need uniqueness.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct EnemyTypes(pub Vec<EnemyType>);
+
+impl Default for EnemyTypes {
+    fn default() -> Self {
+        Self(vec![EnemyType::RedMovingSpace])
+    }
+}
+
+impl EnemyTypes {
+    pub fn new(tags: Vec<EnemyType>) -> Self {
+        Self(tags)
+    }
+
+    pub fn single(tag: EnemyType) -> Self {
+        Self(vec![tag])
+    }
+
+    pub fn contains(&self, tag: EnemyType) -> bool {
+        self.0.iter().any(|&t| t == tag)
+    }
+
+    /// Same tags, adjacent duplicates collapsed, original order kept.
+    pub fn dedup(&mut self) {
+        self.0.dedup();
+    }
+
+    /// Copy of `self` with [`EnemyTypes::dedup`] applied.
+    pub fn deduplicated(mut self) -> Self {
+        self.dedup();
+        self
+    }
+}
+
+impl std::ops::Deref for EnemyTypes {
+    type Target = [EnemyType];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<EnemyType> for EnemyTypes {
+    fn from(tag: EnemyType) -> Self {
+        Self::single(tag)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ShipType {
@@ -259,5 +345,52 @@ impl ShipType {
             Self::Explorer => EXPLORER_COEFFICIENTS,
             Self::Interceptor => INTERCEPTOR_COEFFICIENTS,
         }
+    }
+}
+
+#[cfg(test)]
+mod enemy_types_tests {
+    use super::*;
+
+    #[test]
+    fn enemy_types_json_is_flat_array() {
+        let t = EnemyTypes(vec![EnemyType::RedMovingSpace, EnemyType::Waves]);
+        let j = serde_json::to_string(&t).unwrap();
+        assert_eq!(j, r#"["red_moving_space","waves"]"#);
+        let back: EnemyTypes = serde_json::from_str(&j).unwrap();
+        assert_eq!(t, back);
+    }
+
+    #[test]
+    fn default_enemy_types_is_red_moving_only() {
+        let d = EnemyTypes::default();
+        assert_eq!(d.len(), 1);
+        assert!(d.contains(EnemyType::RedMovingSpace));
+    }
+
+    #[test]
+    fn contains_and_from_single() {
+        let t: EnemyTypes = EnemyType::SoloArmadas.into();
+        assert!(t.contains(EnemyType::SoloArmadas));
+        assert_eq!(t.len(), 1);
+    }
+
+    #[test]
+    fn dedup_adjacent_only() {
+        let mut t = EnemyTypes(vec![
+            EnemyType::Waves,
+            EnemyType::Waves,
+            EnemyType::RedMovingSpace,
+            EnemyType::Waves,
+        ]);
+        t.dedup();
+        assert_eq!(
+            t.0,
+            vec![
+                EnemyType::Waves,
+                EnemyType::RedMovingSpace,
+                EnemyType::Waves,
+            ]
+        );
     }
 }

@@ -11,7 +11,11 @@ const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
 const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canonical.json";
 pub const DEFAULT_IMPORT_OUTPUT_PATH: &str = "rosters/roster.imported.json";
 
-/// Path for synced research state (stfc-mod sync). Load with [load_imported_research].
+/// Historical doc-only path string. **Sync and optimize use** `profiles/{profile_id}/research.imported.json`
+/// via `profile_index::profile_path` and `profile_index::RESEARCH_IMPORTED`.
+/// The checked-in `rosters/research.imported.json` is not updated by the server (intentionally empty).
+/// Imported research stores **all** merged `rid` + `level` pairs; combat uses entries that also appear in
+/// `data/research_catalog.json`.
 pub const DEFAULT_RESEARCH_IMPORT_PATH: &str = "rosters/research.imported.json";
 /// Path for synced buildings state (stfc-mod sync). Load with [load_imported_buildings].
 pub const DEFAULT_BUILDINGS_IMPORT_PATH: &str = "rosters/buildings.imported.json";
