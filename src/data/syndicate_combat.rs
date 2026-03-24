@@ -91,8 +91,10 @@ fn syndicate_stat_to_engine_keys(stat: &str) -> Option<&'static [&'static str]> 
 }
 
 /// Returns cumulative combat stat bonuses from syndicate reputation for the given levels.
+///
 /// - `syndicate_level`: max syndicate level (levels 1..=syndicate_level are summed).
 /// - `ops_level`: player operations level; used to select the bracket (10-19, ..., 51-60, 61-70).
+///
 /// Keys are engine/LCARS stat names (e.g. weapon_damage, hull_hp); values are additive totals.
 pub fn cumulative_combat_bonuses(
     data: &SyndicateReputationList,

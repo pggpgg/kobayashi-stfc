@@ -124,7 +124,7 @@ fn shield_mitigation_from_components(components: &[Value]) -> Option<f64> {
 }
 
 fn systems_from_values(vals: &[Value]) -> Vec<u64> {
-    vals.iter().filter_map(|v| value_to_u64(v)).collect()
+    vals.iter().filter_map(value_to_u64).collect()
 }
 
 fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {

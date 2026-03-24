@@ -213,6 +213,12 @@ pub struct CrewGenerator {
     strategy: CandidateStrategy,
 }
 
+impl Default for CrewGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CrewGenerator {
     pub fn new() -> Self {
         Self {

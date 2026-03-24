@@ -291,7 +291,7 @@ pub(crate) fn seeded_variance(seed: u64) -> f64 {
 }
 
 fn trigger_to_timing_window(trigger: Option<&str>) -> Option<TimingWindow> {
-    match trigger.as_ref().and_then(|t| Some(t.trim())) {
+    match trigger.as_ref().map(|t| t.trim()) {
         Some("CombatStart") => Some(TimingWindow::CombatBegin),
         Some("RoundStart") => Some(TimingWindow::RoundStart),
         _ => None,

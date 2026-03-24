@@ -32,7 +32,7 @@ use crate::optimizer::monte_carlo::{
     run_monte_carlo_with_registry, SimulationResult,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::Write;
 use std::fmt;
@@ -141,46 +141,45 @@ pub fn ships_payload(
         }
     };
 
-    let (owned_ship_ids, roster_tier_level): (
-        Option<std::collections::HashSet<String>>,
-        std::collections::HashMap<String, (u32, u32)>,
-    ) = if owned_only {
-        let pid = resolve_profile_id(profile_id);
-        let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
-        let imported = load_imported_ships(&ships_path);
-        let hull_registry = load_hull_id_registry();
+    type RosterTierLevel = HashMap<String, (u32, u32)>;
+    let (owned_ship_ids, roster_tier_level): (Option<HashSet<String>>, RosterTierLevel) =
+        if owned_only {
+            let pid = resolve_profile_id(profile_id);
+            let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
+            let imported = load_imported_ships(&ships_path);
+            let hull_registry = load_hull_id_registry();
 
-        let mut roster_tier_level = std::collections::HashMap::new();
-        if let Some(ships) = &imported {
-            for entry in ships {
-                if let Some(sid) = hull_registry.get(&entry.hull_id) {
-                    roster_tier_level
-                        .entry(sid.clone())
-                        .or_insert_with(|| (entry.tier as u32, entry.level as u32));
+            let mut roster_tier_level = HashMap::new();
+            if let Some(ships) = &imported {
+                for entry in ships {
+                    if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                        roster_tier_level
+                            .entry(sid.clone())
+                            .or_insert_with(|| (entry.tier as u32, entry.level as u32));
+                    }
                 }
             }
-        }
 
-        if hull_registry.is_empty() {
-            (None, roster_tier_level)
-        } else if let Some(ships) = imported {
-            let mut ids = std::collections::HashSet::new();
-            for entry in &ships {
-                if let Some(sid) = hull_registry.get(&entry.hull_id) {
-                    ids.insert(sid.clone());
-                }
-            }
-            if ids.is_empty() {
+            if hull_registry.is_empty() {
                 (None, roster_tier_level)
+            } else if let Some(ships) = imported {
+                let mut ids = HashSet::new();
+                for entry in &ships {
+                    if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                        ids.insert(sid.clone());
+                    }
+                }
+                if ids.is_empty() {
+                    (None, roster_tier_level)
+                } else {
+                    (Some(ids), roster_tier_level)
+                }
             } else {
-                (Some(ids), roster_tier_level)
+                (None, roster_tier_level)
             }
         } else {
-            (None, roster_tier_level)
-        }
-    } else {
-        (None, std::collections::HashMap::new())
-    };
+            (None, HashMap::new())
+        };
 
     let list: Vec<ShipListItem> = idx
         .ships
@@ -356,7 +355,7 @@ pub fn simulate_payload(
     profile_id: Option<&str>,
 ) -> Result<String, SimulateError> {
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
-    let num_sims = req.num_sims.unwrap_or(5000).min(100_000).max(1);
+    let num_sims = req.num_sims.unwrap_or(5000).clamp(1, 100_000);
     let seed = req.seed.unwrap_or(0);
 
     let officers: Vec<(String, String)> = registry
@@ -370,7 +369,7 @@ pub fn simulate_payload(
         .captain
         .as_ref()
         .map(|s| officer_id_to_name(s, &officers))
-        .unwrap_or_else(|| "".to_string());
+        .unwrap_or_default();
     let bridge_names: Vec<String> = req
         .crew
         .bridge
@@ -507,7 +506,7 @@ pub fn profile_get_payload(profile_id: Option<&str>) -> Result<String, serde_jso
 }
 
 pub fn profile_put_payload(body: &str, profile_id: Option<&str>) -> Result<String, serde_json::Error> {
-    let _: PlayerProfile = serde_json::from_str(body).map_err(|e| e)?;
+    let _: PlayerProfile = serde_json::from_str(body)?;
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, PROFILE_JSON);
     if let Some(parent) = path.parent() {
@@ -979,7 +978,7 @@ pub fn optimize_estimate_payload(
         }
     };
     let estimated_seconds = (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;
-    let estimated_seconds = estimated_seconds.max(0.1).min(3600.0); // clamp to 0.1s–1h for display
+    let estimated_seconds = estimated_seconds.clamp(0.1, 3600.0); // clamp to 0.1s–1h for display
     let payload = serde_json::json!({
         "estimated_candidates": estimated_candidates,
         "sims_per_crew": sims,

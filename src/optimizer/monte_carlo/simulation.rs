@@ -253,6 +253,7 @@ pub fn run_monte_carlo_parallel_deduped(
 
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_parallel_with_registry(
     registry: &DataRegistry,
     ship: &str,
@@ -281,6 +282,7 @@ pub fn run_monte_carlo_parallel_with_registry(
 
 /// Like [run_monte_carlo] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_with_registry(
     registry: &DataRegistry,
     ship: &str,

@@ -215,23 +215,20 @@ fn raw_to_extended(
 /// Order value used when component has no order or order is -1 (sort after valid weapons).
 const WEAPON_ORDER_LAST: i64 = 999;
 
-fn extract_tier_combat(
-    components: &[Value],
-) -> Result<
-    (
-        f64,
-        f64,
-        f64,
-        f64,
-        f64,
-        f64,
-        f64,
-        f64,
-        f64,
-        Option<Vec<WeaponRecord>>,
-    ),
-    Box<dyn std::error::Error>,
-> {
+type TierCombatExtraction = (
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    Option<Vec<WeaponRecord>>,
+);
+
+fn extract_tier_combat(components: &[Value]) -> Result<TierCombatExtraction, Box<dyn std::error::Error>> {
     let mut hull_health = 0.0;
     let mut shield_health = 0.0;
     let mut shield_mitigation = 0.8;

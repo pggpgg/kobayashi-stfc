@@ -38,7 +38,7 @@ fn parse_combat_log_assert_event_count_and_round_count() {
     let path = fixture_path("sample_combat_log.json");
     let json = std::fs::read_to_string(&path).expect("read fixture");
     let log = parse_combat_log_json(&json).expect("parse");
-    assert!(log.events.len() >= 1, "at least one event");
+    assert!(!log.events.is_empty(), "at least one event");
     assert!(log.rounds_simulated >= 1, "at least one round");
     let round_indices: Vec<u32> = log.events.iter().map(|e| e.round_index).collect();
     let max_round = round_indices.iter().copied().max().unwrap_or(0);

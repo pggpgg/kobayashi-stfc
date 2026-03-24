@@ -47,15 +47,14 @@ fn normalize_tech_name(s: &str) -> String {
     out.trim().to_string()
 }
 
+type ForbiddenTechLocaFidMaps = (
+    HashMap<i64, i64>,                           // loca_id -> fid
+    HashMap<i64, UpstreamForbiddenTechSummaryEntry>, // fid -> entry
+);
+
 fn forbidden_tech_loca_id_to_fid_maps(
     summary_path: &Path,
-) -> Result<
-    (
-        HashMap<i64, i64>,             // loca_id -> fid
-        HashMap<i64, UpstreamForbiddenTechSummaryEntry>, // fid -> entry
-    ),
-    Box<dyn std::error::Error>,
-> {
+) -> Result<ForbiddenTechLocaFidMaps, Box<dyn std::error::Error>> {
     let raw = fs::read_to_string(summary_path)?;
     let entries: Vec<UpstreamForbiddenTechSummaryEntry> = serde_json::from_str(&raw)?;
 

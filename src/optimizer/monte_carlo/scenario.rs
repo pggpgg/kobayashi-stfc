@@ -333,7 +333,7 @@ pub(crate) fn scenario_to_combat_input(
             hostile_rec.ship_type(),
         );
         let defender_hull = hostile_rec.hull_health;
-        let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level as u32));
+        let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level));
         let mut attacker = apply_profile_to_attacker(
             Combatant {
                 id: ship.to_string(),
@@ -573,7 +573,6 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
                 } else {
                     Some(officer_tiers)
                 },
-                ..Default::default()
             }
         })
         .unwrap_or_default();
@@ -622,7 +621,7 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
             isolytic_defense: hostile_r.isolytic_defense,
             weapons: vec![],
         };
-        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
             Some(defender),
             Some(rounds),
@@ -694,9 +693,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     }
 
     if let Some(imported_buildings) = import::load_imported_buildings(
-        &profile_path(&pid, BUILDINGS_IMPORTED)
-            .to_string_lossy()
-            .to_string(),
+        profile_path(&pid, BUILDINGS_IMPORTED)
+            .to_string_lossy().as_ref(),
     ) {
         if !imported_buildings.is_empty() {
             if let Some(building_index) =
@@ -729,7 +727,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     }
 
     if let Some(imported_research) = import::load_imported_research(
-        &profile_path(&pid, RESEARCH_IMPORTED).to_string_lossy().to_string(),
+        profile_path(&pid, RESEARCH_IMPORTED).to_string_lossy().as_ref(),
     ) {
         if let Some(catalog) = registry.research_catalog() {
             merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
@@ -759,7 +757,6 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 } else {
                     Some(officer_tiers)
                 },
-                ..Default::default()
             }
         })
         .unwrap_or_default();
@@ -808,7 +805,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             isolytic_defense: hostile_r.isolytic_defense,
             weapons: vec![],
         };
-        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
             Some(defender),
             Some(rounds),
@@ -911,7 +908,6 @@ mod tests {
             resolve_options: ResolveOptions {
                 tier: None,
                 officer_tiers: None,
-                ..Default::default()
             },
             ship_rec: Some(ship_rec),
             hostile_rec: None,

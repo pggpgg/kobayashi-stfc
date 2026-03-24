@@ -105,8 +105,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn faction_to_filename(faction: &str) -> String {
     let normalized = faction
         .to_lowercase()
-        .replace(' ', "_")
-        .replace('-', "_")
+        .replace([' ', '-'], "_")
         .replace("section_31", "section31");
     match normalized.as_str() {
         "" | "unknown" | "faction" => "independent".to_string(),

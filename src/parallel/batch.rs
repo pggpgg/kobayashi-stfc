@@ -102,6 +102,6 @@ mod tests {
     fn monte_carlo_batch_count_nonzero_for_work() {
         assert_eq!(super::monte_carlo_batch_count_for_candidates(0), 0);
         let n = super::monte_carlo_batch_count_for_candidates(500);
-        assert!(n >= 1 && n <= 40);
+        assert!((1..=40).contains(&n));
     }
 }

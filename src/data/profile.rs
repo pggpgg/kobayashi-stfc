@@ -447,16 +447,13 @@ pub fn apply_static_buffs_to_combatant(
         hull_health: combatant.hull_health * hull_mult,
         shield_health: combatant.shield_health * shield_mult,
         pierce: (combatant.pierce + pierce_add).max(0.0),
-        crit_chance: (combatant.crit_chance + crit_chance_add).max(0.0).min(1.0),
+        crit_chance: (combatant.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (combatant.crit_multiplier * crit_damage_mult).max(0.0),
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
-        shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add)
-            .max(0.0)
-            .min(1.0),
+        shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add).clamp(0.0, 1.0),
         mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add)
-            .max(0.0)
-            .min(1.0),
+            .clamp(0.0, 1.0),
         ..combatant
     }
 }
@@ -485,13 +482,11 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
         attack: attacker.attack * weapon,
         hull_health: attacker.hull_health * hull_hp,
         shield_health: attacker.shield_health * shield_hp,
-        crit_chance: (attacker.crit_chance + crit_chance_add).max(0.0).min(1.0),
+        crit_chance: (attacker.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (attacker.crit_multiplier * crit_damage_mult).max(0.0),
         pierce: (attacker.pierce + pierce_add).max(0.0),
-        mitigation: (attacker.mitigation + mitigation_add).max(0.0).min(1.0),
-        shield_mitigation: (attacker.shield_mitigation + shield_mit_add)
-            .max(0.0)
-            .min(1.0),
+        mitigation: (attacker.mitigation + mitigation_add).clamp(0.0, 1.0),
+        shield_mitigation: (attacker.shield_mitigation + shield_mit_add).clamp(0.0, 1.0),
         isolytic_damage: (attacker.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (attacker.isolytic_defense + isolytic_defense_add).max(0.0),
         ..attacker
@@ -552,7 +547,7 @@ mod tests {
         );
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
-        assert!(profile.bonuses.get("buff_123").is_none());
+        assert!(!profile.bonuses.contains_key("buff_123"));
     }
 
     #[test]
@@ -641,7 +636,7 @@ mod tests {
         };
         merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
-        assert!(profile.bonuses.get("buff_unknown").is_none());
+        assert!(!profile.bonuses.contains_key("buff_unknown"));
     }
 
     #[test]

@@ -142,14 +142,13 @@ fn read_from_xlsx(
 
     // Detect format: long = few columns with level, stat, value
     let header = rows[0];
-    let looks_long = ncols >= 3
-        && ncols <= 5
-        && (cell_trim(header.get(0)).eq_ignore_ascii_case("level")
+    let looks_long = (3..=5).contains(&ncols)
+        && (cell_trim(header.first()).eq_ignore_ascii_case("level")
             || cell_trim(header.get(1)).eq_ignore_ascii_case("stat"));
 
     if looks_long {
         for row in rows.iter().skip(1) {
-            let lvl = cell_to_u32(row.get(0));
+            let lvl = cell_to_u32(row.first());
             let stat = cell_trim(row.get(1)).to_string();
             let val = cell_to_f64(row.get(2));
             if lvl == 0 && stat.is_empty() {
@@ -173,7 +172,7 @@ fn read_from_xlsx(
         // Find first data row (first cell is numeric level >= 1)
         let data_start = rows
             .iter()
-            .position(|row| cell_to_u32(row.get(0)) >= 1)
+            .position(|row| cell_to_u32(row.first()) >= 1)
             .unwrap_or(rows.len());
         if data_start >= rows.len() {
             return Ok(by_level);
@@ -213,7 +212,7 @@ fn read_from_xlsx(
             })
             .collect();
         for row in rows.iter().skip(data_start) {
-            let lvl = cell_to_u32(row.get(0));
+            let lvl = cell_to_u32(row.first());
             if lvl == 0 {
                 continue;
             }
