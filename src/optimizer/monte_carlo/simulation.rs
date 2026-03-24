@@ -124,7 +124,8 @@ fn run_candidate_monte_carlo(
         if let Some(cfg) = early_scout {
             if n_done >= cfg.min_trials
                 && n_done < max_iterations
-                && n_done.is_multiple_of(cfg.check_every)
+                && cfg.check_every > 0
+                && n_done % cfg.check_every == 0
                 && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
             {
                 break;
