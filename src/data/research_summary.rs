@@ -84,11 +84,15 @@ pub fn research_combat_summary_for_profile(
                         let name = map.get(&e.rid).and_then(|r| r.name.clone());
                         let lvl_u32 = effective_level_u32(e.level);
                         let combat_bonuses_from_row = if present && lvl_u32 > 0 {
-                            let rec = map.get(&e.rid).copied().unwrap();
-                            let raw = cumulative_research_level_bonuses(rec, lvl_u32);
-                            let mut slice = PlayerProfile::default();
-                            accumulate_combat_only_bonuses_from_raw(&mut slice, &raw);
-                            slice.bonuses
+                            map.get(&e.rid)
+                                .copied()
+                                .map(|rec| {
+                                    let raw = cumulative_research_level_bonuses(rec, lvl_u32);
+                                    let mut slice = PlayerProfile::default();
+                                    accumulate_combat_only_bonuses_from_raw(&mut slice, &raw);
+                                    slice.bonuses
+                                })
+                                .unwrap_or_default()
                         } else {
                             HashMap::new()
                         };
