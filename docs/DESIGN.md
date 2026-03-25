@@ -98,9 +98,11 @@ LCARS is a YAML-based DSL for describing officer abilities declaratively. Each o
 
 #### Stats (anything the combat engine tracks)
 
-Combat stats: `weapon_damage`, `shield_hp`, `shield_mitigation`, `hull_hp`, `armor`, `crit_chance`, `crit_damage`, `dodge_chance`, `armor_pierce`, `shield_pierce`, `accuracy`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `apex_shred`, `apex_barrier`, `burning_damage`, `shield_regen`
+Combat stats: `weapon_damage`, `shield_hp`, `shield_mitigation`, `hull_hp`, `armor`, `crit_chance`, `crit_damage`, `dodge_chance`, `armor_pierce`, `shield_pierce`, `accuracy`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `apex_shred`, `apex_barrier`, `shield_regen`
 
 Non-combat stats: `repair_speed`, `warp_speed`, `cargo_capacity`, `mining_rate`
+
+**Burning** is not modeled as a scalable combat stat (no known officer/research that turns 1% into 2%, etc.). While burning is active on the target, the engine applies a fixed fraction of the target’s **maximum** hull per round; when inactive, that tick is zero. Combat traces may still label the resulting hull loss with the key `burning_damage` for readability—that is event telemetry, not an officer `stat_modify` target.
 
 The stat list is extensible. The engine ignores stats it doesn't recognize (with a warning).
 
@@ -115,7 +117,7 @@ The simulator tracks implementation status per combat mechanic. LCARS validation
 | Armor | `armor` | **implemented** |
 | Critical | `crit_chance`, `crit_damage`, `on_critical` | **implemented** |
 | Extra attack | `extra_attack`, double-shot style triggers | **implemented** |
-| Burn | `burning_damage`, burn/ignite conditions | **partial** |
+| Burn | LCARS `type: burning` (chance + duration rounds); tick = 1% of target max hull per round while state on, hull-only | **partial** |
 | Regeneration | `shield_regen`, repair/heal effects | **partial** |
 | Isolytic | `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` | **implemented** |
 | Apex | `apex_shred`, `apex_barrier` | **partial** (engine implemented; officer/ability stacking can be added later) |
@@ -339,7 +341,7 @@ The engine implements the canonical STFC client order (from community toolbox / 
    - Officer/ship abilities for that sub-round (AttackPhase, DefensePhase with current weapon base).  
    - Forbidden tech and chaos tech buffs.  
    - Attacker fires weapon `i` (if present), then defender fires weapon `i` (if present).  
-3. **End of round:** `END_ROUND` → ability activation record, burning tick (e.g. 1% initial hull), regen, temporary-effect cleanup, then next round (max 100).
+3. **End of round:** `END_ROUND` → ability activation record, burning tick (1% of target max hull per round while burning active), regen, temporary-effect cleanup, then next round (max 100).
 
 Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon with the scalar `attack` is used (backward compatible). Trace events for attack/damage include optional `weapon_index` for parity with logs (see [docs/combat_log_format.md](docs/combat_log_format.md)).
 

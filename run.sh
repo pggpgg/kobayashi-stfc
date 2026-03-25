@@ -39,7 +39,11 @@ SERVER_PID=$!
 sleep 2
 
 echo "[4/4] Opening http://localhost:3000 ..."
-if command -v xdg-open >/dev/null 2>&1; then
+# Prefer native OS launchers: on macOS, `open` is correct; some setups also
+# install `xdg-open`, which is unreliable here if checked first.
+if [[ "$(uname -s)" == "Darwin" ]] && command -v open >/dev/null 2>&1; then
+  open http://localhost:3000
+elif command -v xdg-open >/dev/null 2>&1; then
   xdg-open http://localhost:3000
 elif command -v open >/dev/null 2>&1; then
   open http://localhost:3000
