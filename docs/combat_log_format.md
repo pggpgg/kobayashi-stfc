@@ -47,7 +47,7 @@ The simulator implements canonical STFC order:
 
 1. `START_ROUND` → `HULL_REPAIR_START` / `HULL_REPAIR_END`
 2. Per sub-round (weapon index 0, 1, …): officer/ship abilities → forbidden/chaos tech → attacker weapon `i` → defender weapon `i`
-3. `END_ROUND`: burning tick (1% initial hull), cleanup, next round (max 100)
+3. `END_ROUND`: burning tick (1% of target max hull per round while burning active), cleanup, next round (max 100)
 
 Trace events for attack/damage include optional `weapon_index` when multi-weapon resolution is used. The ingested format may include sub-round granularity for parity; per-round events remain sufficient for summary parity.
 

@@ -17,7 +17,7 @@ use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy, filter_effects_by_condition,
-    AbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
+    AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_crit_multiplier,
@@ -29,6 +29,54 @@ use crate::combat::effect_accumulator::{
 use crate::combat::events::round_f64;
 use crate::combat::rng::Rng;
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
+
+/// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
+/// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach threshold;
+/// receive_damage (hull); round_end (before burn tick); kill when defender dies.
+fn roll_burning_triggers(
+    effects: &[ActiveAbilityEffect],
+    assimilated_active: bool,
+    rng: &mut Rng,
+    trace: &mut TraceCollector,
+    round_index: u32,
+    phase: &'static str,
+    attacker_id: &str,
+    weapon_index: Option<u32>,
+    burning_rounds_remaining: &mut u32,
+) {
+    for effect in effects {
+        let effective_effect = scale_effect(effect.effect, assimilated_active);
+        if let AbilityEffect::Burning {
+            chance,
+            duration_rounds,
+        } = effective_effect
+        {
+            let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = burning_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let d = duration_rounds.max(1);
+                *burning_rounds_remaining = (*burning_rounds_remaining).max(d);
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "burning_trigger".to_string(),
+                round_index,
+                phase: phase.to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker_id.to_string()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(burning_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
+}
 
 pub fn simulate_combat(
     attacker: &Combatant,
@@ -79,6 +127,17 @@ pub fn simulate_combat(
         attacker,
         &combat_begin_filtered,
         combat_begin_assimilated,
+    );
+    roll_burning_triggers(
+        &combat_begin_filtered,
+        combat_begin_assimilated,
+        &mut rng,
+        &mut trace,
+        0,
+        "combat_begin",
+        &attacker.id,
+        None,
+        &mut burning_rounds_remaining,
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
@@ -220,34 +279,17 @@ pub fn simulate_combat(
                 });
             }
 
-            if let AbilityEffect::Burning {
-                chance,
-                duration_rounds,
-            } = effective_effect
-            {
-                let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = burning_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "burning_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(burning_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
+            roll_burning_triggers(
+                std::slice::from_ref(effect),
+                round_start_assimilated,
+                &mut rng,
+                &mut trace,
+                round_index,
+                "round_start",
+                &attacker.id,
+                None,
+                &mut burning_rounds_remaining,
+            );
 
             if let AbilityEffect::ShotsBonus {
                 chance,
@@ -565,34 +607,31 @@ pub fn simulate_combat(
                 });
             }
 
-            if let AbilityEffect::Burning {
-                chance,
-                duration_rounds,
-            } = effective_effect
-            {
-                let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = burning_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    burning_rounds_remaining = burning_rounds_remaining.max(duration_rounds.max(1));
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "burning_trigger".to_string(),
-                    round_index,
-                    phase: "attack".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(burning_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
+            roll_burning_triggers(
+                std::slice::from_ref(effect),
+                attack_phase_assimilated,
+                &mut rng,
+                &mut trace,
+                round_index,
+                "attack",
+                &attacker.id,
+                None,
+                &mut burning_rounds_remaining,
+            );
+        }
+
+        for effect in &defense_phase_filtered {
+            roll_burning_triggers(
+                std::slice::from_ref(effect),
+                defense_phase_assimilated,
+                &mut rng,
+                &mut trace,
+                round_index,
+                "defense",
+                &attacker.id,
+                None,
+                &mut burning_rounds_remaining,
+            );
         }
 
         let proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
@@ -733,6 +772,17 @@ pub fn simulate_combat(
                 attack_phase_assimilated,
                 round_index,
             );
+            roll_burning_triggers(
+                &shield_break_filtered,
+                attack_phase_assimilated,
+                &mut rng,
+                &mut trace,
+                round_index,
+                "shield_break",
+                &attacker.id,
+                None,
+                &mut burning_rounds_remaining,
+            );
         }
 
         let defender_hull_pct = 1.0
@@ -755,6 +805,17 @@ pub fn simulate_combat(
                 weapon_base,
                 attack_phase_assimilated,
                 round_index,
+            );
+            roll_burning_triggers(
+                &hull_breach_filtered,
+                attack_phase_assimilated,
+                &mut rng,
+                &mut trace,
+                round_index,
+                "hull_breach",
+                &attacker.id,
+                None,
+                &mut burning_rounds_remaining,
             );
         }
 
@@ -827,6 +888,18 @@ pub fn simulate_combat(
                 assimilated_rounds_remaining > 0,
                 round_index,
             );
+            let receive_damage_assimilated = assimilated_rounds_remaining > 0;
+            roll_burning_triggers(
+                &receive_damage_filtered,
+                receive_damage_assimilated,
+                &mut rng,
+                &mut trace,
+                round_index,
+                "receive_damage",
+                &attacker.id,
+                None,
+                &mut burning_rounds_remaining,
+            );
         }
             }
         }
@@ -848,11 +921,44 @@ pub fn simulate_combat(
             round_end_assimilated_early,
         );
 
+        // RoundEnd burning: roll after outbound/counter damage so conditions use end-of-round hull/shield;
+        // procs apply before the burn tick for this same round.
+        let ctx_after_weapons = CombatContext {
+            round_index,
+            defender_hull_pct: 1.0
+                - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: 1.0
+                - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+        };
+        let round_end_burn_filtered =
+            filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
+        roll_burning_triggers(
+            &round_end_burn_filtered,
+            round_end_assimilated_early,
+            &mut rng,
+            &mut trace,
+            round_index,
+            "round_end",
+            &attacker.id,
+            None,
+            &mut burning_rounds_remaining,
+        );
+
         let round_end_apex_shred = (attacker.apex_shred + phase_effects_round.composed_apex_shred_bonus()).max(0.0);
         let round_end_apex_barrier = (defender.apex_barrier + phase_effects_round.composed_apex_barrier_bonus()).max(0.0);
         let round_end_apex_factor = 10000.0 / (10000.0 + round_end_apex_barrier / (1.0 + round_end_apex_shred).max(EPSILON));
         let bonus_damage = phase_effects_round.compose_round_end_damage(attacker.end_of_round_damage);
-        // Burning: 1% of max hull per round (official: Δ HHP_burn = 0.01 × HHP_max), no scaling.
+        // Burning: binary per-round tick — 1% of defender max hull while state active (Δ HHP_burn = 0.01 × HHP_max); no officer/research scaling of that rate.
         let burning_damage = if burning_rounds_remaining > 0 {
             defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
         } else {
@@ -924,15 +1030,27 @@ pub fn simulate_combat(
                 },
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
+            let kill_assimilated = assimilated_rounds_remaining > 0;
             record_ability_activations(
                 &mut trace,
                 round_index,
                 "kill",
                 attacker,
                 &kill_filtered,
-                assimilated_rounds_remaining > 0,
+                kill_assimilated,
             );
-            let on_kill_regen = sum_on_kill_hull_regen(&kill_filtered, assimilated_rounds_remaining > 0);
+            roll_burning_triggers(
+                &kill_filtered,
+                kill_assimilated,
+                &mut rng,
+                &mut trace,
+                round_index,
+                "kill",
+                &attacker.id,
+                None,
+                &mut burning_rounds_remaining,
+            );
+            let on_kill_regen = sum_on_kill_hull_regen(&kill_filtered, kill_assimilated);
             total_attacker_hull_damage =
                 (total_attacker_hull_damage - on_kill_regen * attacker.hull_health.max(0.0)).max(0.0);
             attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);

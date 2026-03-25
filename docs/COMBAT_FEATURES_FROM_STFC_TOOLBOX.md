@@ -26,7 +26,7 @@ Source pages reviewed:
    - Encode canonical round/sub-round ordering from observed client event identifiers:
      - `START_ROUND` → `HULL_REPAIR_START/END` (once per round, before first sub-round)
      - Per sub-round: officer/ship abilities apply, then forbidden tech + chaos tech buffs, then attacks for that sub-round weapon index
-     - `END_ROUND`: burning tick (1% initial hull), temporary-effect cleanup, then next round (up to 100 rounds)
+     - `END_ROUND`: burning tick (1% of target max hull per round while burning active), temporary-effect cleanup, then next round (up to 100 rounds)
    - Persist full ordered event stream (including repeated per-ship applications) even when the UI collapses duplicate ability/FT log lines.
 
 3. **Add Monte Carlo combat simulator mode**
