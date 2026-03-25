@@ -167,6 +167,12 @@ export async function fetchOfficers(
   return data.officers ?? [];
 }
 
+function compareShips(a: ShipListItem, b: ShipListItem): number {
+  const byName = a.ship_name.localeCompare(b.ship_name, undefined, { sensitivity: 'base' });
+  if (byName !== 0) return byName;
+  return a.id.localeCompare(b.id);
+}
+
 export async function fetchShips(
   ownedOnly = false,
   profileId?: string | null,
@@ -177,7 +183,8 @@ export async function fetchShips(
   const res = await fetch(url, { headers: profileHeaders(profileId) });
   await checkOk(res);
   const data = await res.json();
-  return data.ships ?? [];
+  const list = (data.ships ?? []) as ShipListItem[];
+  return [...list].sort(compareShips);
 }
 
 export async function fetchHostiles(): Promise<HostileListItem[]> {
