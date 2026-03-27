@@ -847,7 +847,7 @@ pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_jso
         MechanicStatus { name: "Piercing".to_string(), status: "implemented".to_string() },
         MechanicStatus { name: "Armor".to_string(), status: "implemented".to_string() },
         MechanicStatus { name: "Critical".to_string(), status: "implemented".to_string() },
-        MechanicStatus { name: "Burn".to_string(), status: "partial".to_string() },
+        MechanicStatus { name: "Burn".to_string(), status: "implemented".to_string() },
         MechanicStatus { name: "Regeneration".to_string(), status: "partial".to_string() },
         MechanicStatus { name: "Isolytic".to_string(), status: "planned".to_string() },
         MechanicStatus { name: "Apex".to_string(), status: "planned".to_string() },

@@ -107,6 +107,10 @@ export default function DataMechanics() {
             ))}
           </tbody>
         </table>
+        <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          Burning applies to the hostile in ship-vs-hostile sims (fixed 1% of target max hull per active
+          round). Hostile abilities that burn your ship are not modeled yet.
+        </p>
       </section>
     </div>
   );
