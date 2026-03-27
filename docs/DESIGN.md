@@ -117,7 +117,7 @@ The simulator tracks implementation status per combat mechanic. LCARS validation
 | Armor | `armor` | **implemented** |
 | Critical | `crit_chance`, `crit_damage`, `on_critical` | **implemented** |
 | Extra attack | `extra_attack`, double-shot style triggers | **implemented** |
-| Burn | LCARS `type: burning` (chance + duration rounds); tick = 1% of target max hull per round while state on, hull-only | **partial** |
+| Burn | LCARS `type: burning` / ship `burning` at supported timings; tick = 1% of target max hull per round while state on, hull-only; hostile burning the player ship is not modeled | **implemented** |
 | Regeneration | `shield_regen`, repair/heal effects | **partial** |
 | Isolytic | `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` | **implemented** |
 | Apex | `apex_shred`, `apex_barrier` | **partial** (engine implemented; officer/ability stacking can be added later) |

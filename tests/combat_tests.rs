@@ -1891,6 +1891,422 @@ fn burning_deals_one_percent_hull_per_round() {
     assert_eq!(burning_ticks, 3);
 }
 
+fn burning_only_crew(timing: TimingWindow) -> CrewConfiguration {
+    CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "burn-timing-test".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing,
+                boostable: true,
+                effect: AbilityEffect::Burning {
+                    chance: 1.0,
+                    duration_rounds: 2,
+                },
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    }
+}
+
+fn assert_burning_phase(events: &[CombatEvent], phase: &str) {
+    let n = events
+        .iter()
+        .filter(|e| e.event_type == "burning_trigger" && e.phase == phase)
+        .count();
+    assert!(
+        n > 0,
+        "expected at least one burning_trigger in phase {phase:?}, got events: {:?}",
+        events
+            .iter()
+            .filter(|e| e.event_type == "burning_trigger")
+            .map(|e| e.phase.as_str())
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn burning_triggers_on_combat_begin() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 500.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 2,
+            seed: 7,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::CombatBegin),
+    );
+    assert_burning_phase(&r.events, "combat_begin");
+}
+
+#[test]
+fn burning_triggers_on_defense_phase_per_shot() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 50.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 11,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::DefensePhase),
+    );
+    assert_burning_phase(&r.events, "defense");
+}
+
+#[test]
+fn burning_triggers_on_round_end_before_tick() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 500.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 2,
+            seed: 13,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::RoundEnd),
+    );
+    assert_burning_phase(&r.events, "round_end");
+    let ticks = r
+        .events
+        .iter()
+        .filter(|e| e.event_type == "end_of_round_effects")
+        .filter(|e| e.values.get("burning_damage").and_then(|v| v.as_f64()) > Some(0.0))
+        .count();
+    assert!(ticks > 0, "round_end burn should tick same round");
+}
+
+#[test]
+fn burning_triggers_on_shield_break() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 500.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 200.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 17,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::ShieldBreak),
+    );
+    assert_burning_phase(&r.events, "shield_break");
+}
+
+#[test]
+fn burning_triggers_on_hull_breach_threshold() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 600.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 19,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::HullBreach),
+    );
+    assert_burning_phase(&r.events, "hull_breach");
+}
+
+#[test]
+fn burning_triggers_on_receive_damage_hull() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 1.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 400.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 23,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::ReceiveDamage),
+    );
+    assert_burning_phase(&r.events, "receive_damage");
+}
+
+#[test]
+fn burning_triggers_on_kill() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 500.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 29,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::Kill),
+    );
+    assert_burning_phase(&r.events, "kill");
+}
+
 #[test]
 fn emits_ability_activation_for_each_timing_window() {
     let attacker = Combatant {
