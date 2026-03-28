@@ -1,5 +1,10 @@
 //! Ship data: normalized combat stats for player ships (from STFCcommunity or manual).
 //! Used to build AttackerStats + Combatant when resolving by name/id.
+//!
+//! **Hull abilities:** Upstream `ability` JSON is normalized into [`ShipAbility`] on
+//! [`ExtendedShipRecord`] / [`ShipRecord`], then converted to combat seats in
+//! [`crate::data::ship_ability_resolve`] and merged in
+//! [`crate::optimizer::monte_carlo::scenario`]. See `docs/DESIGN.md` §3.6 (Ship hull abilities).
 
 use std::fs;
 use std::path::Path;
@@ -28,6 +33,18 @@ pub struct ShipAbility {
     pub effect_type: String,
     /// Effect magnitude (e.g. 0.1 for +10% pierce). Interpretation depends on effect_type.
     pub value: f64,
+    /// Optional duration from catalog (e.g. hostile crit reduction rounds for U.S.S. Crozier).
+    #[serde(default)]
+    pub duration_rounds: Option<u32>,
+    /// Gated on round-start Morale proc (see [AbilityCondition::MoraleActive]).
+    #[serde(default)]
+    pub condition_morale: bool,
+    /// Gated on defender Burning state.
+    #[serde(default)]
+    pub condition_defender_burning: bool,
+    /// Gated on defender Hull Breach state.
+    #[serde(default)]
+    pub condition_defender_hull_breach: bool,
 }
 
 #[derive(Debug, Clone)]

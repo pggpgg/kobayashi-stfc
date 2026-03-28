@@ -7,15 +7,38 @@
 //! Unknown `timing` or `effect_type` → skipped (same as legacy behavior). Complex LCARS effects
 //! that need extra parameters (decay, accumulate, shots duration) are not representable with the
 //! single scalar `ShipAbility::value` and are omitted here until the schema grows.
+//!
+//! **Morale (U.S.S. Enterprise-D / Galaxy Class):** Cumulative weapon damage uses
+//! [`AbilityCondition::MoraleActive`], satisfied when the primary round-start [AbilityEffect::Morale]
+//! roll succeeds that round.
 
 use crate::combat::abilities::{
-    Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
+use crate::combat::types::MAX_COMBAT_ROUNDS;
 use crate::data::ship::ShipAbility;
 
 fn normalize_key(s: &str) -> String {
     s.trim().to_lowercase().replace('-', "_")
+}
+
+fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition> {
+    let mut parts: Vec<AbilityCondition> = Vec::new();
+    if ability.condition_morale {
+        parts.push(AbilityCondition::MoraleActive);
+    }
+    if ability.condition_defender_burning {
+        parts.push(AbilityCondition::DefenderBurning);
+    }
+    if ability.condition_defender_hull_breach {
+        parts.push(AbilityCondition::DefenderHullBreach);
+    }
+    match parts.len() {
+        0 => None,
+        1 => Some(parts[0].clone()),
+        _ => Some(AbilityCondition::And(parts)),
+    }
 }
 
 /// Map catalog timing string to engine window. Accepts Kobayashi canonical names and LCARS-style triggers.
@@ -52,16 +75,43 @@ fn normalize_probability(value: f64) -> f64 {
 }
 
 /// Map catalog `effect_type` + timing to [AbilityEffect]. `value` is already scaled by the
-/// normalizer (`value_is_percentage` → decimal).
+/// normalizer (`value_is_percentage` → decimal). `duration_rounds` is used by some hull abilities
+/// (e.g. hostile crit reduction duration).
 pub fn ship_ability_effect_from_catalog(
     effect_type: &str,
     timing: TimingWindow,
     value: f64,
+    duration_rounds: Option<u32>,
 ) -> Option<AbilityEffect> {
     match normalize_key(effect_type).as_str() {
+        // Catalogued for every hull; no combat seat until modeled explicitly.
+        "combat_noop" | "unmodeled" | "not_applicable" => None,
+        "hostile_crit_damage_reduction" | "reduce_hostile_crit_damage" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileCritDamageReduction {
+                reduction: value.clamp(0.0, 0.95),
+                duration_rounds: duration_rounds.unwrap_or(5).max(1),
+            })
+        }
         "pierce_bonus" | "armor_pierce" | "shield_pierce" => Some(AbilityEffect::PierceBonus(value)),
 
         "attack_multiplier" | "weapon_damage" | "attack" => Some(AbilityEffect::AttackMultiplier(value)),
+
+        // Per-round cumulative weapon damage (round n → additive modifier n * value on pre-attack multiplier).
+        "accumulating_attack_multiplier" | "cumulative_weapon_damage" => {
+            if timing != TimingWindow::RoundStart {
+                return None;
+            }
+            let growth = value;
+            let ceiling = 1.0 + growth * MAX_COMBAT_ROUNDS as f64 + 1.0;
+            Some(AbilityEffect::AccumulatingAttackMultiplier {
+                initial: 1.0,
+                growth_per_round: growth,
+                ceiling,
+            })
+        },
 
         // LCARS uses this rough mapping for crit stats when they appear as timed crew effects.
         "crit_chance" | "crit_damage" => Some(AbilityEffect::AttackMultiplier(1.0 + value * 0.5)),
@@ -124,7 +174,13 @@ pub fn ship_ability_effect_from_catalog(
 /// One ship hull ability → one seat context, or None if unsupported.
 pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSeatContext> {
     let timing = parse_ship_ability_timing(&ability.timing)?;
-    let effect = ship_ability_effect_from_catalog(&ability.effect_type, timing, ability.value)?;
+    let effect = ship_ability_effect_from_catalog(
+        &ability.effect_type,
+        timing,
+        ability.value,
+        ability.duration_rounds,
+    )?;
+    let condition = conditions_for_ship_ability(ability);
     Some(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
@@ -133,7 +189,7 @@ pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSe
             timing,
             boostable: false,
             effect,
-            condition: None,
+            condition,
         },
         boosted: false,
         officer_id: None,
@@ -152,7 +208,7 @@ pub fn ship_abilities_to_crew_seat_contexts(abilities: &[ShipAbility]) -> Vec<Cr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::abilities::AbilityEffect;
+    use crate::combat::abilities::{AbilityCondition, AbilityEffect};
 
     #[test]
     fn timing_accepts_lcars_style_aliases() {
@@ -172,6 +228,7 @@ mod tests {
             "hull_repair",
             TimingWindow::Kill,
             500.0,
+            None,
         )
         .unwrap();
         assert!(matches!(e, AbilityEffect::OnKillHullRegen(500.0)));
@@ -183,6 +240,7 @@ mod tests {
             "hull_repair",
             TimingWindow::RoundEnd,
             100.0,
+            None,
         )
         .unwrap();
         assert!(matches!(e, AbilityEffect::HullRegen(100.0)));
@@ -190,8 +248,8 @@ mod tests {
 
     #[test]
     fn shots_bonus_requires_round_start_or_combat_begin() {
-        assert!(ship_ability_effect_from_catalog("shots_bonus", TimingWindow::RoundStart, 0.2).is_some());
-        assert!(ship_ability_effect_from_catalog("shots_bonus", TimingWindow::AttackPhase, 0.2).is_none());
+        assert!(ship_ability_effect_from_catalog("shots_bonus", TimingWindow::RoundStart, 0.2, None).is_some());
+        assert!(ship_ability_effect_from_catalog("shots_bonus", TimingWindow::AttackPhase, 0.2, None).is_none());
     }
 
     #[test]
@@ -203,6 +261,92 @@ mod tests {
             seats.len(),
             abilities.len(),
             "each fixture row should resolve; missing mappings?"
+        );
+    }
+
+    #[test]
+    fn accumulating_attack_multiplier_requires_round_start() {
+        let g = 0.0085;
+        let e = ship_ability_effect_from_catalog(
+            "accumulating_attack_multiplier",
+            TimingWindow::RoundStart,
+            g,
+            None,
+        )
+        .expect("round_start maps");
+        let ceiling = 1.0 + g * MAX_COMBAT_ROUNDS as f64 + 1.0;
+        assert!(
+            matches!(
+                e,
+                AbilityEffect::AccumulatingAttackMultiplier {
+                    initial: 1.0,
+                    growth_per_round,
+                    ceiling: c
+                } if (growth_per_round - g).abs() < 1e-12 && (c - ceiling).abs() < 1e-9
+            ),
+            "{e:?}"
+        );
+        assert!(
+            ship_ability_effect_from_catalog(
+                "accumulating_attack_multiplier",
+                TimingWindow::CombatBegin,
+                g,
+                None,
+            )
+            .is_none(),
+            "must be round_start only"
+        );
+    }
+
+    #[test]
+    fn enterprise_d_hull_ability_resolves_to_accumulating_multiplier() {
+        let seat = ship_ability_to_crew_seat_context(&ShipAbility {
+            id: "448699234".to_string(),
+            timing: "round_start".to_string(),
+            effect_type: "accumulating_attack_multiplier".to_string(),
+            value: 0.0085,
+            duration_rounds: None,
+            condition_morale: true,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+        })
+        .expect("Galaxy Class seat");
+        assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
+        assert!(matches!(
+            seat.ability.effect,
+            AbilityEffect::AccumulatingAttackMultiplier { .. }
+        ));
+        assert_eq!(seat.ability.condition, Some(AbilityCondition::MoraleActive));
+    }
+
+    #[test]
+    fn hostile_crit_damage_reduction_maps_from_combat_begin() {
+        let e = ship_ability_effect_from_catalog(
+            "hostile_crit_damage_reduction",
+            TimingWindow::CombatBegin,
+            0.02,
+            Some(5),
+        )
+        .expect("maps");
+        assert!(
+            matches!(
+                e,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: r,
+                    duration_rounds: 5
+                } if (r - 0.02).abs() < 1e-12
+            ),
+            "{e:?}"
+        );
+        assert!(
+            ship_ability_effect_from_catalog(
+                "hostile_crit_damage_reduction",
+                TimingWindow::RoundStart,
+                0.02,
+                Some(5),
+            )
+            .is_none(),
+            "must be combat_begin only"
         );
     }
 }

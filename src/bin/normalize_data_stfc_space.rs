@@ -5,13 +5,30 @@
 use std::fs;
 use std::path::Path;
 
+use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct AbilityCatalogEntry {
     timing: String,
     effect_type: String,
+    #[serde(default)]
     value_is_percentage: bool,
+    /// When true, use only catalog `value_is_percentage` (ignore upstream `value_is_percentage`).
+    /// Needed when upstream marks small decimals as `%` but values are already fractional (e.g. 0.02 = 2%).
+    #[serde(default)]
+    ignore_upstream_value_is_percentage: bool,
+    #[serde(default)]
+    duration_rounds: Option<u32>,
+    /// When set, use this value instead of reading `ability.values[0].value` (e.g. 0 for catalogued-but-unmodeled rows).
+    #[serde(default)]
+    value_override: Option<f64>,
+    #[serde(default)]
+    condition_morale: bool,
+    #[serde(default)]
+    condition_defender_burning: bool,
+    #[serde(default)]
+    condition_defender_hull_breach: bool,
 }
 
 use kobayashi::data::ship::{
@@ -47,10 +64,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let entries = root.get("entries")?.as_object()?;
                 let mut map = std::collections::HashMap::new();
                 for (k, v) in entries {
-                    let timing = v.get("timing")?.as_str()?.to_string();
-                    let effect_type = v.get("effect_type")?.as_str()?.to_string();
-                    let value_is_percentage = v.get("value_is_percentage").and_then(Value::as_bool).unwrap_or(false);
-                    map.insert(k.clone(), AbilityCatalogEntry { timing, effect_type, value_is_percentage });
+                    let entry: AbilityCatalogEntry = serde_json::from_value(v.clone()).ok()?;
+                    map.insert(k.clone(), entry);
                 }
                 Some(map)
             });
@@ -169,30 +184,41 @@ fn raw_to_extended(
             let Some(entry) = catalog.get(&id_str) else {
                 continue;
             };
-            let value_is_percentage = ab
-                .get("value_is_percentage")
-                .and_then(Value::as_bool)
-                .unwrap_or(entry.value_is_percentage);
-            let Some(values_arr) = ab.get("values").and_then(Value::as_array) else {
-                continue;
-            };
-            let Some(first_val) = values_arr.first() else {
-                continue;
-            };
-            let raw_value = first_val
-                .get("value")
-                .and_then(Value::as_f64)
-                .unwrap_or(0.0);
-            let value = if value_is_percentage {
-                raw_value * 0.01
+            let value_is_percentage = if entry.ignore_upstream_value_is_percentage {
+                entry.value_is_percentage
             } else {
-                raw_value
+                ab.get("value_is_percentage")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(entry.value_is_percentage)
+            };
+            let value = if let Some(v) = entry.value_override {
+                v
+            } else {
+                let Some(values_arr) = ab.get("values").and_then(Value::as_array) else {
+                    continue;
+                };
+                let Some(first_val) = values_arr.first() else {
+                    continue;
+                };
+                let raw_value = first_val
+                    .get("value")
+                    .and_then(Value::as_f64)
+                    .unwrap_or(0.0);
+                if value_is_percentage {
+                    raw_value * 0.01
+                } else {
+                    raw_value
+                }
             };
             out.push(ShipAbility {
                 id: id_str,
                 timing: entry.timing.clone(),
                 effect_type: entry.effect_type.clone(),
                 value,
+                duration_rounds: entry.duration_rounds,
+                condition_morale: entry.condition_morale,
+                condition_defender_burning: entry.condition_defender_burning,
+                condition_defender_hull_breach: entry.condition_defender_hull_breach,
             });
         }
         if out.is_empty() {

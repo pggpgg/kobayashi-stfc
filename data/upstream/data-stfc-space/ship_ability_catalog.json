@@ -1,4 +1,931 @@
 {
-  "description": "Maps upstream ship ability id (ships/*.json ability[].id, numeric string key) to Kobayashi timing and effect_type. The normalizer copies the first values[].value per ship (tier curve not modeled per-level yet). value_is_percentage: when true, raw JSON value is scaled by 0.01 before storage. Entries are empty until a mechanic is confirmed; add keys as you verify each id. Ability rows whose id is missing from entries are skipped (other rows on the same ship still emit). You can also set \"abilities\" on data/ships_extended/<id>.json manually (same shape as normalized output). Supported timing strings (also LCARS-style aliases): combat_begin, round_start, attack_phase, defense_phase, round_end, shield_break, kill, hull_breach, receive_damage, combat_end — plus on_round_start, on_shield_break, on_kill, etc. Supported effect_type strings (LCARS-aligned where possible): pierce_bonus, armor_pierce, shield_pierce, attack_multiplier, weapon_damage, attack, crit_chance, crit_damage, apex_shred, apex_barrier, shield_regen, shield_hp_repair, hull_regen, hull_hp_repair, hull_repair (OnKillHullRegen when timing is kill), isolytic_damage, isolytic_defense, isolytic_cascade, isolytic_cascade_damage, shield_mitigation, morale, assimilated, hull_breach, burning, shots, weapon_shots, shots_per_weapon, shots_bonus. Resolution: src/data/ship_ability_resolve.rs. Fixture: tests/fixtures/ship_abilities/catalog_effect_coverage.json.",
-  "entries": {}
+  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs.",
+  "entries": {
+    "34867572": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "47269853": {
+      "timing": "combat_begin",
+      "effect_type": "hostile_crit_damage_reduction",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "duration_rounds": 5
+    },
+    "49906243": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "78080222": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "87414807": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "88812954": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "108924704": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "293385368": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "311330874": {
+      "timing": "receive_damage",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false
+    },
+    "354762123": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "390344944": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "393740394": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "394860549": {
+      "timing": "receive_damage",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false
+    },
+    "407462527": {
+      "timing": "receive_damage",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false
+    },
+    "448699234": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false,
+      "condition_morale": true
+    },
+    "457140182": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "546190599": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "593579233": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "644714972": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "673187302": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "701705952": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "711428193": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "732090900": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "793996890": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "835292335": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "915894112": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "953555085": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "957303751": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "957865248": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false,
+      "condition_defender_hull_breach": true
+    },
+    "974800413": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "985810609": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "987222969": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1004533782": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1027217748": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1029262994": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1054619032": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1087128295": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1090374551": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1109770210": {
+      "timing": "round_start",
+      "effect_type": "shots",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "duration_rounds": 1,
+      "condition_defender_burning": true
+    },
+    "1150511104": {
+      "timing": "receive_damage",
+      "effect_type": "pierce_bonus",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1160666017": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1220133742": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1242395578": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1244824002": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1247530723": {
+      "timing": "round_start",
+      "effect_type": "shots",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "duration_rounds": 1,
+      "condition_defender_burning": true
+    },
+    "1273528452": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1279606467": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1307832955": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1379978713": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1428543762": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1439253182": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1457441777": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1463338054": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1465044910": {
+      "timing": "receive_damage",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false
+    },
+    "1492898704": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1535317053": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1577508895": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1628890938": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false
+    },
+    "1713777939": {
+      "timing": "combat_begin",
+      "effect_type": "apex_shred",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1721384497": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1738424547": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1773930736": {
+      "timing": "combat_begin",
+      "effect_type": "apex_shred",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1784814733": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1800726742": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1823660918": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1839370465": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1842444641": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1851148569": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1878809713": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1905773933": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1947674592": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1960089851": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1972093910": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "1982797639": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2004925834": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2016654425": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2039765033": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2057434885": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2084947256": {
+      "timing": "combat_begin",
+      "effect_type": "pierce_bonus",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2165876444": {
+      "timing": "combat_begin",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2195955652": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2254702328": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2289346504": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2302150828": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2432056626": {
+      "timing": "combat_begin",
+      "effect_type": "pierce_bonus",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false
+    },
+    "2441576367": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2468986074": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2474117534": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2483093372": {
+      "timing": "receive_damage",
+      "effect_type": "shield_regen",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false,
+      "condition_morale": true
+    },
+    "2499526039": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2500322687": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2520552521": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2529591723": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2539194335": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2623051508": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2643213631": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2686586954": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2704350076": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2704762692": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2747851475": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2749594341": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2797581949": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2802730028": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2836931919": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2868529361": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2869476908": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2919480363": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2942211100": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2968519195": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3005922948": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3006451338": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3014221215": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3033866568": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3046584086": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3056258007": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3057038289": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3087961933": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3261907549": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3376611577": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3426564736": {
+      "timing": "receive_damage",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false
+    },
+    "3427079124": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "3432906971": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3459465041": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false,
+      "condition_defender_burning": true
+    },
+    "3541570803": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3554487827": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3602514688": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3658971555": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3665388873": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3682502332": {
+      "timing": "combat_begin",
+      "effect_type": "pierce_bonus",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "3694387091": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3803001941": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "3990933991": {
+      "timing": "receive_damage",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false,
+      "condition_morale": true
+    },
+    "4089825668": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "4108466526": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "4132047263": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false,
+      "condition_morale": true
+    },
+    "4214885989": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "4234400629": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    }
+  }
 }

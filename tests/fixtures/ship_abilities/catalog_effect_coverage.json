@@ -12,6 +12,12 @@
     "value": 0.12
   },
   {
+    "id": "fixture_rs_accum_weapon",
+    "timing": "round_start",
+    "effect_type": "accumulating_attack_multiplier",
+    "value": 0.05
+  },
+  {
     "id": "fixture_cb_weapon_damage",
     "timing": "combat_begin",
     "effect_type": "weapon_damage",
