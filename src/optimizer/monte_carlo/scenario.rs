@@ -19,10 +19,11 @@ use crate::data::import;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
-    apply_profile_to_attacker, apply_static_buffs_to_combatant, load_profile,
+    apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
+    apply_static_buffs_to_combatant, forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
     merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    forbidden_tech_level_tier_scaling_enabled_from_env, merge_tech_fids_into_profile,
-    merge_tech_fids_into_profile_with_level_tier, resolve_effective_tech_fids, PlayerProfile,
+    merge_tech_fids_into_profile, merge_tech_fids_into_profile_with_level_tier,
+    resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, RESEARCH_IMPORTED,
@@ -318,6 +319,7 @@ pub(crate) fn scenario_to_combat_input(
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let mut attacker_stats = ship_rec.to_attacker_stats();
+        apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, profile);
         attacker_stats.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
         let defender_mitigation = mitigation_for_hostile(
             hostile_rec.to_defender_stats(),
@@ -333,7 +335,7 @@ pub(crate) fn scenario_to_combat_input(
             hostile_rec.ship_type(),
         );
         let defender_hull = hostile_rec.hull_health;
-        let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level as u32));
+        let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level));
         let mut attacker = apply_profile_to_attacker(
             Combatant {
                 id: ship.to_string(),
@@ -573,7 +575,6 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
                 } else {
                     Some(officer_tiers)
                 },
-                ..Default::default()
             }
         })
         .unwrap_or_default();
@@ -588,7 +589,8 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
         cached_pierce,
         cached_defender_mitigation,
     ) = if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
-        let attacker_stats = ship_r.to_attacker_stats();
+        let mut attacker_stats = ship_r.to_attacker_stats();
+        apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, &profile);
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
@@ -622,7 +624,7 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
             isolytic_defense: hostile_r.isolytic_defense,
             weapons: vec![],
         };
-        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
             Some(defender),
             Some(rounds),
@@ -694,9 +696,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     }
 
     if let Some(imported_buildings) = import::load_imported_buildings(
-        &profile_path(&pid, BUILDINGS_IMPORTED)
+        profile_path(&pid, BUILDINGS_IMPORTED)
             .to_string_lossy()
-            .to_string(),
+            .as_ref(),
     ) {
         if !imported_buildings.is_empty() {
             if let Some(building_index) =
@@ -729,7 +731,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     }
 
     if let Some(imported_research) = import::load_imported_research(
-        &profile_path(&pid, RESEARCH_IMPORTED).to_string_lossy().to_string(),
+        profile_path(&pid, RESEARCH_IMPORTED)
+            .to_string_lossy()
+            .as_ref(),
     ) {
         if let Some(catalog) = registry.research_catalog() {
             merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
@@ -759,7 +763,6 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 } else {
                     Some(officer_tiers)
                 },
-                ..Default::default()
             }
         })
         .unwrap_or_default();
@@ -774,7 +777,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         cached_pierce,
         cached_defender_mitigation,
     ) = if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
-        let attacker_stats = ship_r.to_attacker_stats();
+        let mut attacker_stats = ship_r.to_attacker_stats();
+        apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, &profile);
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
@@ -808,7 +812,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             isolytic_defense: hostile_r.isolytic_defense,
             weapons: vec![],
         };
-        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level as u32));
+        let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
             Some(defender),
             Some(rounds),
@@ -911,7 +915,6 @@ mod tests {
             resolve_options: ResolveOptions {
                 tier: None,
                 officer_tiers: None,
-                ..Default::default()
             },
             ship_rec: Some(ship_rec),
             hostile_rec: None,

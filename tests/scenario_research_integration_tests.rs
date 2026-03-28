@@ -29,8 +29,8 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
         "expected regenerated research_catalog.json (not kobayashi_stub)"
     );
     assert!(
-        catalog.items.len() > 1,
-        "expected a non-trivial research catalog (more than one rid)"
+        catalog.items.len() >= 50,
+        "expected a broad research catalog (regenerate via scripts/import_stfcspace_research.mjs)"
     );
 
     // Find a research record with at least one combat-relevant bonus at level 1.

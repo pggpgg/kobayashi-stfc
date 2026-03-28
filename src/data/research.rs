@@ -1,6 +1,10 @@
 //! Research catalog: rid + level → combat stat bonuses (KOBAYASHI schema).
 //! Sync sends (rid, level); we look up record by rid and sum bonuses for levels 1..=level.
 //! Same engine stat keys and add/multiply semantics as buildings and forbidden tech.
+//!
+//! **Across different research projects** (`rid`), per-project cumulative totals are combined
+//! additively in [`cumulative_research_bonuses`] (then added into `profile.bonuses`). Multiply
+//! operators apply only within a single project's level chain, in ascending level order.
 
 use std::collections::HashMap;
 use std::fs;
@@ -93,8 +97,17 @@ pub fn cumulative_research_level_bonuses(
         return HashMap::new();
     }
     let cap = level.min(max_level(record));
+    let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = record
+        .levels
+        .iter()
+        .enumerate()
+        .filter(|(_, l)| l.level <= cap)
+        .map(|(i, l)| (l.level, i, l))
+        .collect();
+    level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+
     let mut out: HashMap<String, f64> = HashMap::new();
-    for lvl in record.levels.iter().filter(|l| l.level <= cap) {
+    for (_, _, lvl) in level_refs {
         for bonus in &lvl.bonuses {
             let op = if bonus.operator.is_empty() {
                 "add"
@@ -244,5 +257,44 @@ mod tests {
         levels.insert(999i64, 5u32); // not in catalog
         let b = cumulative_research_bonuses(&records, &levels);
         assert!(b.is_empty());
+    }
+
+    /// Levels JSON order [2, 1] must not change add→mult composition vs canonical order 1 then 2.
+    #[test]
+    fn cumulative_level_bonuses_apply_levels_in_ascending_order() {
+        let r = ResearchRecord {
+            rid: 1,
+            name: None,
+            data_version: None,
+            source_note: None,
+            levels: vec![
+                ResearchLevel {
+                    level: 2,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "weapon_damage".to_string(),
+                        value: 0.10,
+                        operator: "mult".to_string(),
+                    }],
+                },
+                ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "weapon_damage".to_string(),
+                        value: 0.10,
+                        operator: "add".to_string(),
+                    }],
+                },
+            ],
+        };
+        let b = cumulative_research_level_bonuses(&r, 2);
+        let wd = b.get("weapon_damage").copied().unwrap_or_default();
+        let mut expected: HashMap<String, f64> = HashMap::new();
+        super::accumulate_bonus(&mut expected, "weapon_damage", "add", 0.10);
+        super::accumulate_bonus(&mut expected, "weapon_damage", "mult", 0.10);
+        let want = *expected.get("weapon_damage").unwrap();
+        assert!(
+            (wd - want).abs() < 1e-9,
+            "got weapon_damage {wd}, want {want} (add then mult)"
+        );
     }
 }

@@ -5,6 +5,10 @@ node_modules/
 
 # Fetched upstream (scripts/fetch_stfc_data.ps1) — ignore generated subdirs, not the whole folder
 data/upstream/stfccommunity-data/
+# Research detail JSON cache (scripts/fetch_stfcspace_research.mjs); summary/translations stay tracked
+data/upstream/data-stfc-space/research/
+# Generated mapping backlog (node scripts/import_stfcspace_research.mjs --dump-unmapped)
+data/research/unmapped_buff_backlog.json
 **/.DS_Store
 
 # User-specific import/sync output (generated in rosters/)
