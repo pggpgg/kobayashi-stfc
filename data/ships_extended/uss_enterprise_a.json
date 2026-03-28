@@ -627,7 +627,8 @@
       "duration_rounds": null,
       "condition_morale": true,
       "condition_defender_burning": false,
-      "condition_defender_hull_breach": false
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null
     }
   ]
 }

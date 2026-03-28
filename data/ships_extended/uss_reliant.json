@@ -1077,7 +1077,8 @@
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,
-      "condition_defender_hull_breach": false
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null
     },
     {
       "id": "1972093910",
@@ -1087,7 +1088,8 @@
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,
-      "condition_defender_hull_breach": false
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null
     },
     {
       "id": "793996890",
@@ -1097,7 +1099,8 @@
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,
-      "condition_defender_hull_breach": false
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null
     }
   ]
 }
