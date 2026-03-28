@@ -830,5 +830,27 @@
       "shield": 91764119.025,
       "health": 105528736.665
     }
+  ],
+  "abilities": [
+    {
+      "id": "2500322687",
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value": 1.5,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    },
+    {
+      "id": "1457441777",
+      "timing": "combat_begin",
+      "effect_type": "isolytic_defense",
+      "value": 5.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

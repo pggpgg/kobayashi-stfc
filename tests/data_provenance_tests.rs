@@ -95,4 +95,18 @@ fn crozier_tier1_has_per_shot_attack_and_shots() {
         "secondary per-shot attack ~258662, got {}",
         weapons[1].attack
     );
+
+    let abilities = extended
+        .abilities
+        .as_ref()
+        .expect("ship_ability_catalog should map U.S.S. Crozier ability id 47269853");
+    assert_eq!(abilities.len(), 1, "one hull ability row upstream");
+    assert_eq!(abilities[0].id, "47269853");
+    assert_eq!(abilities[0].effect_type, "hostile_crit_damage_reduction");
+    assert!(
+        (abilities[0].value - 0.02).abs() < 1e-12,
+        "tier-1 value 0.02 as fractional reduction (2%), got {}",
+        abilities[0].value
+    );
+    assert_eq!(abilities[0].duration_rounds, Some(5));
 }

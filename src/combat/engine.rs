@@ -17,7 +17,8 @@ use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy, filter_effects_by_condition,
-    AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
+    hostile_crit_damage_reduction_from_crew, AbilityEffect, ActiveAbilityEffect, CombatContext,
+    CrewConfiguration, TimingWindow,
 };
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_crit_multiplier,
@@ -85,6 +86,8 @@ pub fn simulate_combat(
     attacker_crew: &CrewConfiguration,
 ) -> SimulationResult {
     let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
+    let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
+        hostile_crit_damage_reduction_from_crew(&attacker_crew);
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let mut total_hull_damage = 0.0;
@@ -104,6 +107,9 @@ pub fn simulate_combat(
         defender_shield_pct: 1.0,
         attacker_hull_pct: 1.0,
         attacker_shield_pct: 1.0,
+        attacker_morale_active: false,
+        defender_burning_active: false,
+        defender_hull_breach_active: false,
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
@@ -147,7 +153,7 @@ pub fn simulate_combat(
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
 
-        let combat_ctx = CombatContext {
+        let mut combat_ctx = CombatContext {
             round_index,
             defender_hull_pct: 1.0
                 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
@@ -163,6 +169,9 @@ pub fn simulate_combat(
             } else {
                 1.0
             },
+            attacker_morale_active: false,
+            defender_burning_active: burning_rounds_remaining > 0,
+            defender_hull_breach_active: hull_breach_rounds_remaining > 0,
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -194,24 +203,25 @@ pub fn simulate_combat(
         });
 
         let round_start_assimilated = assimilated_rounds_remaining > 0;
-        let round_start_filtered = filter_effects_by_condition(&round_start_effects, &combat_ctx);
+        // Round-start conditions that do not use [AbilityCondition::MoraleActive] (morale unknown yet).
+        let bench = filter_effects_by_condition(&round_start_effects, &combat_ctx);
         record_ability_activations(
             &mut trace,
             round_index,
             "round_start",
             attacker,
-            &round_start_filtered,
+            &bench,
             round_start_assimilated,
         );
         phase_effects.add_effects(
             TimingWindow::RoundStart,
-            &round_start_filtered,
+            &bench,
             attacker.attack,
             round_start_assimilated,
             round_index,
         );
 
-        for effect in &round_start_filtered {
+        for effect in &bench {
             let effective_effect = scale_effect(effect.effect, round_start_assimilated);
 
             if let AbilityEffect::Assimilated {
@@ -324,6 +334,75 @@ pub fn simulate_combat(
             }
         }
 
+        // Morale proc after other round-start RNG consumers (assimilated, hull breach, burning, shots).
+        // Sets [CombatContext::attacker_morale_active] for [AbilityCondition::MoraleActive] and pierce.
+        let morale_triggered = {
+            let morale_source = bench.iter().find_map(|effect| {
+                if let AbilityEffect::Morale(chance) =
+                    scale_effect(effect.effect, round_start_assimilated)
+                {
+                    Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
+                } else {
+                    None
+                }
+            });
+            if let Some((morale_source, morale_chance)) = morale_source {
+                let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = morale_roll < morale_chance;
+                trace.record_if(|| CombatEvent {
+                    event_type: "morale_activation".to_string(),
+                    round_index,
+                    phase: "round_start".to_string(),
+                    source: EventSource {
+                        ship_ability_id: Some(morale_source),
+                        ..EventSource::default()
+                    },
+                    weapon_index: None,
+                    values: Map::from_iter([
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("roll".to_string(), Value::from(round_f64(morale_roll))),
+                        ("chance".to_string(), Value::from(round_f64(morale_chance))),
+                        (
+                            "applied_to".to_string(),
+                            Value::String("primary_piercing".to_string()),
+                        ),
+                        (
+                            "multiplier".to_string(),
+                            Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
+                        ),
+                    ]),
+                });
+                triggered
+            } else {
+                false
+            }
+        };
+        combat_ctx.attacker_morale_active = morale_triggered;
+
+        let full_round_start = filter_effects_by_condition(&round_start_effects, &combat_ctx);
+        let round_start_extra: Vec<_> = full_round_start
+            .iter()
+            .filter(|e| !bench.contains(e))
+            .cloned()
+            .collect();
+        if !round_start_extra.is_empty() {
+            record_ability_activations(
+                &mut trace,
+                round_index,
+                "round_start",
+                attacker,
+                &round_start_extra,
+                round_start_assimilated,
+            );
+            phase_effects.add_effects(
+                TimingWindow::RoundStart,
+                &round_start_extra,
+                attacker.attack,
+                round_start_assimilated,
+                round_index,
+            );
+        }
+
         // Prune expired shots bonuses and compute B_shots(r) for this round.
         shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
         let b_shots: f64 = shots_bonus_entries.iter().map(|(b, _)| b).sum();
@@ -338,47 +417,8 @@ pub fn simulate_combat(
         let mut hull_breach_threshold_fired = false;
 
         let mut effective_pierce = attacker.pierce + phase_effects_round.pre_attack_pierce_bonus();
-        // Assumption: only one primary Morale contribution per round (first in officer order).
-        // If multiple morale sources should stack or roll independently, replace this with an
-        // explicit policy once confirmed from game behavior.
-        let morale_source = round_start_filtered.iter().find_map(|effect| {
-            if let AbilityEffect::Morale(chance) =
-                scale_effect(effect.effect, round_start_assimilated)
-            {
-                Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
-            } else {
-                None
-            }
-        });
-        if let Some((morale_source, morale_chance)) = morale_source {
-            let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-            let morale_triggered = morale_roll < morale_chance;
-            if morale_triggered {
-                effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
-            }
-            trace.record_if(|| CombatEvent {
-                event_type: "morale_activation".to_string(),
-                round_index,
-                phase: "round_start".to_string(),
-                source: EventSource {
-                    ship_ability_id: Some(morale_source),
-                    ..EventSource::default()
-                },
-                weapon_index: None,
-                values: Map::from_iter([
-                    ("triggered".to_string(), Value::Bool(morale_triggered)),
-                    ("roll".to_string(), Value::from(round_f64(morale_roll))),
-                    ("chance".to_string(), Value::from(round_f64(morale_chance))),
-                    (
-                        "applied_to".to_string(),
-                        Value::String("primary_piercing".to_string()),
-                    ),
-                    (
-                        "multiplier".to_string(),
-                        Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
-                    ),
-                ]),
-            });
+        if morale_triggered {
+            effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
         }
 
         let attack_phase_assimilated = assimilated_rounds_remaining > 0;
@@ -834,8 +874,16 @@ pub fn simulate_combat(
         );
         let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         let def_is_crit = def_crit_roll < defender.crit_chance;
-        let def_crit_mult =
+        let mut def_crit_mult =
             compute_crit_multiplier(def_is_crit, defender.crit_multiplier, false);
+        // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
+        if def_is_crit
+            && hostile_crit_reduction > 0.0
+            && hostile_crit_reduction_rounds > 0
+            && round_index <= hostile_crit_reduction_rounds
+        {
+            def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
+        }
         let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         let def_proc_mult = if def_proc_roll < defender.proc_chance {
             defender.proc_multiplier
@@ -939,6 +987,9 @@ pub fn simulate_combat(
             } else {
                 1.0
             },
+            attacker_morale_active: combat_ctx.attacker_morale_active,
+            defender_burning_active: combat_ctx.defender_burning_active,
+            defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
         };
         let round_end_burn_filtered =
             filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
@@ -1028,6 +1079,9 @@ pub fn simulate_combat(
                 } else {
                     1.0
                 },
+                attacker_morale_active: combat_ctx.attacker_morale_active,
+                defender_burning_active: combat_ctx.defender_burning_active,
+                defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
@@ -1074,6 +1128,9 @@ pub fn simulate_combat(
         } else {
             1.0
         },
+        attacker_morale_active: false,
+        defender_burning_active: false,
+        defender_hull_breach_active: false,
     };
     let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(

@@ -1067,5 +1067,17 @@
       "shield": 9483926.0,
       "health": 8986268.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "394860549",
+      "timing": "receive_damage",
+      "effect_type": "attack_multiplier",
+      "value": 0.218,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

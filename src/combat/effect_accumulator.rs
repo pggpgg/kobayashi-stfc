@@ -315,6 +315,7 @@ impl EffectAccumulator {
                     ));
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -374,6 +375,7 @@ impl EffectAccumulator {
                     ));
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -433,6 +435,7 @@ impl EffectAccumulator {
                     ));
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. } => {}
             },
@@ -482,6 +485,7 @@ impl EffectAccumulator {
                     ));
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -549,6 +553,7 @@ impl EffectAccumulator {
                     ));
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -717,5 +722,6 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             bonus_pct: bonus_pct * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             duration_rounds,
         },
+        AbilityEffect::HostileCritDamageReduction { .. } => effect,
     }
 }

@@ -428,5 +428,17 @@
       "shield": 158701.0,
       "health": 209000.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "957865248",
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value": 0.0001,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": true
+    }
   ]
 }

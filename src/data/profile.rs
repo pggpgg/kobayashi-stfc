@@ -269,6 +269,8 @@ fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
         "hull_hp" => Some("hull_hp"),
         "shield_hp" => Some("shield_hp"),
         "isolytic_damage" => Some("isolytic_damage"),
+        // Morale-gated isolytic (research NS Morale Isolytic Damage, rid 4133019450): scenario injects a round-start seat.
+        "isolytic_damage_morale" => Some("isolytic_damage_morale"),
         "isolytic_defense" => Some("isolytic_defense"),
         "crit_chance" => Some("crit_chance"),
         "crit_damage" => Some("crit_damage"),

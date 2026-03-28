@@ -965,6 +965,114 @@
           ]
         }
       ]
+    },
+    {
+      "rid": 4133019450,
+      "name": "NS Morale Isolytic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "Morale-gated isolytic (translations loca 70101). Values are placeholders per level — re-run import from data.stfc.space to align with live curves.",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage_morale",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

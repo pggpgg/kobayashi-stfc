@@ -330,6 +330,41 @@ Notes:
 - UI logs can collapse duplicate ability/forbidden-tech lines even when multiple ships apply the same source.
 - Ordering details for per-ship buff application are currently treated as implementation targets inferred from raw logs and should remain test-backed as fixtures expand.
 
+#### Ship hull abilities (data.stfc.space → engine)
+
+Officer abilities come from LCARS. **Ship hull abilities** are separate: they originate from the upstream ship JSON `ability` array (numeric `id`, `values[]`, optional `value_is_percentage` per row). End-to-end path:
+
+1. **Catalog:** [data/upstream/data-stfc-space/ship_ability_catalog.json](../data/upstream/data-stfc-space/ship_ability_catalog.json) maps each ability `id` (string key) to `timing`, `effect_type`, and default percentage semantics. Rows with no catalog entry are skipped during normalization; other rows on the same ship still emit.
+2. **Normalizer:** `cargo run --bin normalize_data_stfc_space` reads `data/upstream/data-stfc-space/ships/<numeric_id>.json`, applies the catalog, and writes [data/ships_extended/](../data/ships_extended/) `<kobayashi_id>.json` with optional top-level `abilities`: `{ id, timing, effect_type, value }` (first `values[].value` only; per-tier ability curves are not modeled yet).
+3. **Load / resolve:** [src/data/ship.rs](../src/data/ship.rs) (`ExtendedShipRecord`, `ShipRecord`) deserializes `abilities`; `ExtendedShipRecord::to_ship_record` copies them onto the flat record for the chosen tier/level.
+4. **Scenario:** [src/optimizer/monte_carlo/scenario.rs](../src/optimizer/monte_carlo/scenario.rs) calls `extend_crew_with_ship_abilities`, which appends [src/data/ship_ability_resolve.rs](../src/data/ship_ability_resolve.rs) `ship_abilities_to_crew_seat_contexts` after officer seats. Each supported ability becomes a `CrewSeatContext` with `CrewSeat::Ship` and `AbilityClass::ShipAbility`.
+5. **Combat loop:** The hot path treats these like other timed crew effects: [src/combat/engine.rs](../src/combat/engine.rs) and [src/combat/effect_accumulator.rs](../src/combat/effect_accumulator.rs) apply the same `TimingWindow` ordering described above (passive, round start, per sub-round attack/defense, round end, shield break, receive_damage, kill, hull breach, combat end).
+
+**Manual / test data:** You can set `abilities` on `ships_extended/<id>.json` directly (same JSON shape as normalizer output). Fixture coverage for catalog effect types: [tests/fixtures/ship_abilities/catalog_effect_coverage.json](../tests/fixtures/ship_abilities/catalog_effect_coverage.json).
+
+**Implemented (example):** U.S.S. Crozier *Gunboat Diplomacy* maps to `hostile_crit_damage_reduction` in the catalog: on **defender return fire**, when the hostile rolls a crit, damage uses `crit_mult *= max(0.05, 1.0 - reduction)` for combat rounds `1..=duration_rounds` (default 5). This is an approximation of in-game wording; the client may apply reduction only to the crit *bonus* portion rather than the full multiplier.
+
+**Catalog approximations (heuristic pass):** The regenerator [scripts/generate_full_ship_ability_catalog.py](../scripts/generate_full_ship_ability_catalog.py) classifies upstream ability text into catalog rows. Where the engine does not mirror the client verbatim, the following proxies apply:
+
+- **Morale, burning, hull breach** — Optional `condition_morale`, `condition_defender_burning`, `condition_defender_hull_breach` gate effects using round-start `CombatContext` flags. This assumes morale success and DOT state align with those flags for the purpose of the sim (RNG and exact client timing may differ).
+- **Cumulative weapon damage with morale (e.g. Galaxy class, Enterprise-E)** — Implemented as `round_start` + `accumulating_attack_multiplier` while morale is active, not as per-weapon-hit or per-sub-round stacks tied to individual shots.
+- **Shield restore when hit while morale (e.g. Enterprise TOS)** — `receive_damage` + `shield_regen` (percentage of max shields). The engine ties this to the receive-damage path; client rules about which hits count may differ.
+- **Weapon damage increase when hit while morale (e.g. Enterprise-A)** — `receive_damage` + `attack_multiplier` (percentage). Treated as stacking attack bonus on damage taken, not a separate “on hull hit only” layer unless the engine already filters that path.
+- **“Each time hit” + cumulative weapon damage (e.g. Northcutt-style)** — Same `receive_damage` / `attack_multiplier` pattern; true stack caps and reset rules are not copied from the client.
+- **“Each time hit” + cumulative critical damage (e.g. Vor’cha-style)** — **Explicit proxy:** `attack_multiplier` stands in for crit damage scaling because there is no ship-ability hook for “crit damage only” in the catalog resolver.
+- **Opponent burning + extra shots** — `round_start` + `shots` with `duration_rounds: 1` and `condition_defender_burning`. Models an extra shot for the round while burning is active, not necessarily the client’s exact shot order or proc window.
+- **Opponent burning + cumulative weapon damage** — `round_start` + `accumulating_attack_multiplier` with burning condition (e.g. Scimitar / Augur-style text).
+- **Defender hull breach + cumulative weapon damage** — `round_start` + `accumulating_attack_multiplier` with `condition_defender_hull_breach` (D4 / Krennla-style lines). Hull breach + crit + cumulative proc chains are left as `combat_noop` where the text would require chained procs.
+- **I.S.S. Jellyfish-style stacking each combat round (no morale in text)** — `round_start` + `accumulating_attack_multiplier` without a morale gate.
+- **Piercing increases each time hit (Corvus-style)** — `receive_damage` + `pierce_bonus`; pierce is folded into the engine’s pierce stack like other sources.
+- **Isolytic offense / defense** — `combat_begin` + `isolytic_damage` or `isolytic_defense`; numeric scaling follows catalog `value_is_percentage` / `ignore_upstream_value_is_percentage` conventions, not guaranteed 1:1 with client buff ids.
+- **Apex shred / barrier** — `combat_begin` + `apex_shred` / `apex_barrier` using the same stat hooks as elsewhere in the engine.
+- **Generic “when fighting hostiles” weapon damage (e.g. Gladius)** — `combat_begin` + `attack_multiplier` applied **unconditionally** in the sim (no hostile-only branch); see gap note below.
+- **Combat start: armor/shield piercing or weapon damage** — Mapped to `combat_begin` + `pierce_bonus` or `attack_multiplier` with percentage flags set from text heuristics. **“Ignore X% of enemy shields” (Breen-style)** — Mapped to percentage `pierce_bonus`; the client may implement this as a distinct bypass layer rather than the same stat as armor piercing.
+- **Upstream `values[]`** — Only the first scalar value is normalized onto the ship; per-tier ability curves are not modeled.
+
+**Gaps:** In-game copy often mentions **accuracy** changes; there is no dedicated `AbilityEffect` for accuracy yet (only pierce, attack multiplier, etc.—see `ship_ability_effect_from_catalog`). Adding accuracy ship abilities would require an engine stat path analogous to pierce stacking. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids should be periodically reviewed; see [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
+
 **Combat-begin and pre-combat stats:** Combat_begin effects are applied at the start of each round to a fresh per-round effect accumulator (see engine loop). They are not re-accumulated across rounds, so they behave as permanent pre-combat modifiers. The first round uses the same effective stats as later rounds (same accumulator build: combat_begin → round_start → attack → defense → round_end).
 
 #### Sub-round and weapon-index ordering

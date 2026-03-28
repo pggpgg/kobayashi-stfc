@@ -3,9 +3,10 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, AttackerStats, Combatant,
-    CrewConfiguration, CrewSeatContext, DefenderStats, ShipType, MITIGATION_CEILING,
-    MITIGATION_FLOOR,
+    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, Ability, AbilityClass,
+    AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, DefenderStats, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingBonusContext, BuildingMode, DEFAULT_BUILDINGS_INDEX_PATH,
@@ -41,7 +42,9 @@ use super::crew_resolution::{
 
 const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
 
-/// Append [ShipRecord::abilities] as [CrewSeatContext] (supported id/timing/effect combinations only).
+/// Append the ship [`ShipRecord`]'s optional `abilities` as [`CrewSeatContext`] rows
+/// (supported timing/`effect_type` only; see [`crate::data::ship_ability_resolve`]).
+/// Called after officer seats so hull abilities use the same engine phases as DESIGN.md §3.6.
 fn extend_crew_with_ship_abilities(seats: &mut Vec<CrewSeatContext>, ship_rec: Option<&ShipRecord>) {
     let Some(rec) = ship_rec else {
         return;
@@ -49,6 +52,31 @@ fn extend_crew_with_ship_abilities(seats: &mut Vec<CrewSeatContext>, ship_rec: O
     seats.extend(ship_abilities_to_crew_seat_contexts(
         rec.abilities.as_deref().unwrap_or(&[]),
     ));
+}
+
+/// Research / profile bonuses that only apply while Morale is active (see [AbilityCondition::MoraleActive]).
+fn extend_crew_with_morale_gated_profile_bonuses(
+    seats: &mut Vec<CrewSeatContext>,
+    profile: &PlayerProfile,
+) {
+    let v = profile.bonuses.get("isolytic_damage_morale").copied().unwrap_or(0.0);
+    if v == 0.0 {
+        return;
+    }
+    seats.push(CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: "research_isolytic_damage_morale".to_string(),
+            class: AbilityClass::ShipAbility,
+            timing: TimingWindow::RoundStart,
+            boostable: false,
+            effect: AbilityEffect::IsolyticDamageBonus(v),
+            condition: Some(AbilityCondition::MoraleActive),
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    });
 }
 
 fn use_lcars_officer_source_standalone() -> bool {
@@ -151,6 +179,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         }
         let mut seats = crew_seats.clone();
         extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
+        extend_crew_with_morale_gated_profile_bonuses(&mut seats, &shared.profile);
         return CombatSimulationInput {
             attacker,
             defender: defender.clone(),
@@ -194,6 +223,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
 
     let mut seats = crew_seats.clone();
     extend_crew_with_ship_abilities(&mut seats, shared.ship_rec.as_ref());
+    extend_crew_with_morale_gated_profile_bonuses(&mut seats, &shared.profile);
 
     CombatSimulationInput {
         attacker,
@@ -903,6 +933,10 @@ mod tests {
                 timing: "round_start".into(),
                 effect_type: "pierce_bonus".into(),
                 value: 0.05,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
             }]),
         };
 

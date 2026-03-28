@@ -90,6 +90,13 @@ pub enum AbilityEffect {
         bonus_pct: f64,
         duration_rounds: u32,
     },
+    /// Reduces damage when the **defender** (e.g. hostile) scores a critical hit on return fire.
+    /// `reduction` is a fraction (0.02 = 2% less damage on that crit). Applied as `crit_mult *= 1.0 - reduction`.
+    /// `duration_rounds`: 1-based combat rounds `1..=duration_rounds` (e.g. Crozier "first 5 rounds").
+    HostileCritDamageReduction {
+        reduction: f64,
+        duration_rounds: u32,
+    },
 }
 
 /// Combat context for condition evaluation at runtime.
@@ -100,6 +107,12 @@ pub struct CombatContext {
     pub defender_shield_pct: f64,
     pub attacker_hull_pct: f64,
     pub attacker_shield_pct: f64,
+    /// True after the round-start Morale proc succeeds for this combat round (attacker).
+    pub attacker_morale_active: bool,
+    /// True when the defender (hostile) still has a Burning duration from the attacker's procs.
+    pub defender_burning_active: bool,
+    /// True when the defender still has a Hull Breach duration from the attacker's procs.
+    pub defender_hull_breach_active: bool,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -108,6 +121,12 @@ pub enum AbilityCondition {
     StatBelow { stat: String, threshold_pct: f64 },
     StatAbove { stat: String, threshold_pct: f64 },
     RoundRange { min: u32, max: u32 },
+    /// True when the attacker succeeded on the primary round-start [AbilityEffect::Morale] roll this round.
+    MoraleActive,
+    /// True when [CombatContext::defender_burning_active] (opponent has burning state).
+    DefenderBurning,
+    /// True when [CombatContext::defender_hull_breach_active].
+    DefenderHullBreach,
     And(Vec<AbilityCondition>),
     Or(Vec<AbilityCondition>),
 }
@@ -136,6 +155,9 @@ impl AbilityCondition {
                 pct > *threshold_pct
             }
             Self::RoundRange { min, max } => ctx.round_index >= *min && ctx.round_index <= *max,
+            Self::MoraleActive => ctx.attacker_morale_active,
+            Self::DefenderBurning => ctx.defender_burning_active,
+            Self::DefenderHullBreach => ctx.defender_hull_breach_active,
             Self::And(conds) => conds.iter().all(|c| c.evaluate(ctx)),
             Self::Or(conds) => conds.iter().any(|c| c.evaluate(ctx)),
         }
@@ -298,4 +320,22 @@ pub fn filter_effects_by_condition(
         })
         .cloned()
         .collect()
+}
+
+/// Hostile crit damage reduction from ship hull abilities (e.g. U.S.S. Crozier).
+/// When multiple seats match, uses the maximum `reduction` and maximum `duration_rounds`.
+pub fn hostile_crit_damage_reduction_from_crew(crew: &CrewConfiguration) -> (f64, u32) {
+    let mut reduction = 0.0_f64;
+    let mut rounds = 0_u32;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileCritDamageReduction {
+            reduction: r,
+            duration_rounds: d,
+        } = s.ability.effect
+        {
+            reduction = reduction.max(r);
+            rounds = rounds.max(d);
+        }
+    }
+    (reduction.clamp(0.0, 0.95), rounds)
 }
