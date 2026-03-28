@@ -4,7 +4,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 
 ### Combat engine mechanics (correctness)
 
-- [ ] 1. Add a first-class `accuracy`/evasion stat path end-to-end (data → stacking → engine usage), so ship/officer effects that mention accuracy can be modeled.
+- [x] 1. Add a first-class `accuracy`/evasion stat path end-to-end (data → stacking → engine usage), so ship/officer effects that mention accuracy can be modeled.
 - [x] 2. Implement hostile-side effects on defender return fire (defender “crew” / abilities / debuffs), applied during counter-attack resolution.
 - [ ] 3. Expand LCARS condition support to include faction gating and morale/burning/hull-breach state predicates as explicit condition nodes.
 - [ ] 4. Replace the LCARS `crit_chance` / `crit_damage` placeholder mapping with typed crit modifiers applied in the crit step (not an attack-multiplier approximation).

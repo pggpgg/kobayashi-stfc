@@ -11,6 +11,10 @@
 //! **Morale (U.S.S. Enterprise-D / Galaxy Class):** Cumulative weapon damage uses
 //! [`AbilityCondition::MoraleActive`], satisfied when the primary round-start [AbilityEffect::Morale]
 //! roll succeeds that round.
+//!
+//! **Accuracy:** `accuracy` / `accuracy_bonus` at **combat begin** are summed by
+//! [`sum_combat_begin_accuracy_from_ship_abilities`] and folded into pre-mitigation [`AttackerStats`]
+//! (not a crew seat). Other timings are not modeled yet.
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
@@ -194,8 +198,29 @@ pub fn ship_ability_effect_from_catalog(
             }
         }
 
+        // Handled only via [`sum_combat_begin_accuracy_from_ship_abilities`] so dodge mitigation
+        // and pierce-through see stacked accuracy before combat. Non-combat-begin timing is not
+        // modeled in the engine yet.
+        "accuracy" | "accuracy_bonus" => None,
+
         _ => None,
     }
+}
+
+/// Flat accuracy from hull abilities at combat begin, folded into [`crate::combat::AttackerStats`]
+/// before hostile mitigation / pierce-through (see [`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`]).
+pub fn sum_combat_begin_accuracy_from_ship_abilities(abilities: &[ShipAbility]) -> f64 {
+    let mut sum = 0.0;
+    for a in abilities {
+        if parse_ship_ability_timing(&a.timing) != Some(TimingWindow::CombatBegin) {
+            continue;
+        }
+        match normalize_key(&a.effect_type).as_str() {
+            "accuracy" | "accuracy_bonus" => sum += a.value,
+            _ => {}
+        }
+    }
+    sum
 }
 
 /// One ship hull ability → one seat context, or None if unsupported.
@@ -277,6 +302,38 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(e, AbilityEffect::HullRegen(100.0)));
+    }
+
+    #[test]
+    fn sum_combat_begin_accuracy_ignores_non_combat_begin_rows() {
+        let abilities = vec![
+            ShipAbility {
+                id: "cb".into(),
+                timing: "combat_begin".into(),
+                effect_type: "accuracy".into(),
+                value: 15.0,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+            },
+            ShipAbility {
+                id: "rs".into(),
+                timing: "round_start".into(),
+                effect_type: "accuracy".into(),
+                value: 999.0,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+            },
+        ];
+        assert_eq!(
+            sum_combat_begin_accuracy_from_ship_abilities(&abilities),
+            15.0
+        );
     }
 
     #[test]

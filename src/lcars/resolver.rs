@@ -282,6 +282,8 @@ fn resolve_effect(
                     };
                     Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
                 }
+                // Combat-begin accuracy is merged in [resolve_crew_to_buff_set]; other timings are not modeled.
+                "accuracy" => None,
                 "shots" | "weapon_shots" | "shots_per_weapon" | "shots_per_attack" => {
                     // +X% shots for Y rounds (round half-even applied in engine). Only at round start or combat begin.
                     if matches!(timing, TimingWindow::RoundStart | TimingWindow::CombatBegin) {
@@ -431,6 +433,41 @@ pub fn resolve_crew_to_buff_set(
                         .and_modify(|x| *x += v)
                         .or_insert(v);
                 }
+            }
+        }
+        // Combat-begin `stat_modify` accuracy: stacks into pre-mitigation attacker stats (scenario),
+        // not a crew seat. Multiplicative entries use key `accuracy_cb_mult`.
+        for effect in &ability.effects {
+            if effect.effect_type != "stat_modify" {
+                continue;
+            }
+            if trigger_to_timing(effect.trigger.as_deref()) != Some(TimingWindow::CombatBegin) {
+                continue;
+            }
+            let stat = effect.stat.as_deref().unwrap_or("").trim();
+            if !stat.eq_ignore_ascii_case("accuracy") {
+                continue;
+            }
+            let Some(value) = effect
+                .value
+                .or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(officer_tier)))
+            else {
+                continue;
+            };
+            let op = normalize_operator(effect.operator.as_deref());
+            if matches!(
+                op.as_str(),
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd"
+            ) {
+                static_buffs
+                    .entry("accuracy_cb_mult".to_string())
+                    .and_modify(|x| *x *= value)
+                    .or_insert(value);
+            } else {
+                static_buffs
+                    .entry("accuracy".to_string())
+                    .and_modify(|x| *x += value)
+                    .or_insert(value);
             }
         }
         let contexts =

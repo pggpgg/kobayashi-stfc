@@ -443,6 +443,8 @@ fn get_bonus(profile: &PlayerProfile, key: &str) -> f64 {
 /// [crate::lcars::resolve_crew_to_buff_set]. Keys applied: isolytic_damage, isolytic_defense,
 /// shield_mitigation (additive; shield_mitigation clamped to [0, 1]), weapon_damage (mult to attack),
 /// hull_hp, shield_hp (mult), shield_pierce/armor_pierce (add to pierce), crit_chance (add), crit_damage (mult).
+/// `accuracy` is **not** applied here: it is folded into [`AttackerStats`] when computing hostile
+/// mitigation and pierce-through ([`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`]).
 pub fn apply_static_buffs_to_combatant(
     combatant: Combatant,
     static_buffs: &HashMap<String, f64>,
