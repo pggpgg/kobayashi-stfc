@@ -25,8 +25,17 @@ This document tracks **what Maverick-related support means** for Kobayashi and w
 
 ### Faction / station copy
 
+- **Warp Dive Bar (game `bid` 88)** — Community DB entry: [stfc.space buildings/88](https://stfc.space/buildings/88?level=1&c=$description:true%26build_cost:false%26requirements:false%26rewards:false%26weapon_stats:false%26consumables:false). Normalized catalog: `data/buildings/88_the_warp_dive_bar.json` (`building_88`), from raw API-shaped detail converted into `BuildingRecord`. Buff ids **301108821**, **4020430113**, **2665414430** are emitted as `buff_*` until mapped in `data/buildings/buff_id_to_stat.json` (likely Maverick economy / keys — not ship combat stats).
 - **`translations-factions.json`** — Maverick UI strings (e.g. task keys, Warp Dive Bar) and placeholder `id` **88001**; Kobayashi does not yet consume this file for combat—useful for tooling and future faction-aware UX.
 - **`translations-starbase_modules.json`** — Warp Dive Bar and other module names for building sync / resolver; already part of the building bid → id pipeline ([data/README.md](../data/README.md) § Buildings).
+
+## Low priority (backlog)
+
+Remaining Maverick-facing work that is **explicitly deferred** (no simulator support yet; add when upstream data and product priority align):
+
+1. **Maverick faction research** — Extend `data/research_catalog.json` / mappings for the Maverick research tree and related nodes once buff → engine-stat semantics are clear (see checklist § Research above). Overlaps [ROADMAP.md](ROADMAP.md) § Research conditional/armada scope.
+2. **Maverick favors** — Faction favor bonuses (store / progression) are not modeled in the player profile or combat layer today. Would need catalog schema, sync persistence (if stfc-mod exposes it), and merge rules analogous to buildings/FT/research.
+3. **New Maverick artifacts** — Exocomp / artifact combat bonuses for Maverick content are not in-repo. Would need data source, normalization to profile keys, and merge path (artifacts are called out at high level in [DESIGN.md](DESIGN.md) as future profile inputs).
 
 ## Uncertainty
 

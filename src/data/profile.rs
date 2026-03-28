@@ -1,5 +1,6 @@
 //! Player profile: effective_bonuses applied as pre-combat modifier layer (DESIGN §5).
-//! Keys match engine/LCARS stats: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce, etc.
+//! Keys match engine/LCARS stats: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce,
+//! accuracy (scales ship AttackerStats for dodge mitigation), etc.
 //! Bonuses from synced forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
 //! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
 //! Bonuses from synced research (by rid) are merged in when [merge_research_bonuses_into_profile] is used.
@@ -10,7 +11,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::Combatant;
+use crate::combat::{AttackerStats, Combatant};
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
@@ -88,13 +89,13 @@ pub fn resolve_effective_tech_fids(
     let forbidden_fids: Vec<i64> = if profile
         .forbidden_tech_override
         .as_ref()
-        .map_or(false, |v| !v.is_empty())
+        .is_some_and(|v| !v.is_empty())
     {
         profile.forbidden_tech_override.as_ref().unwrap().clone()
     } else {
         imported_ft
             .iter()
-            .filter(|e| by_fid.get(&e.fid).map_or(false, is_forbidden))
+            .filter(|e| by_fid.get(&e.fid).is_some_and(is_forbidden))
             .map(|e| e.fid)
             .collect()
     };
@@ -102,13 +103,13 @@ pub fn resolve_effective_tech_fids(
     let chaos_fids: Vec<i64> = if profile
         .chaos_tech_override
         .as_ref()
-        .map_or(false, |v| !v.is_empty())
+        .is_some_and(|v| !v.is_empty())
     {
         profile.chaos_tech_override.as_ref().unwrap().clone()
     } else {
         imported_ft
             .iter()
-            .filter(|e| by_fid.get(&e.fid).map_or(false, is_chaos))
+            .filter(|e| by_fid.get(&e.fid).is_some_and(is_chaos))
             .map(|e| e.fid)
             .collect()
     };
@@ -276,6 +277,9 @@ fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
         "armor" => Some("armor"),
         "dodge" => Some("dodge"),
         "damage_reduction" => Some("damage_reduction"),
+        // Used with ship `AttackerStats.accuracy` for dodge leg of mitigation (see scenario.rs).
+        // Catalog values are fractional (e.g. 0.1 = +10% effective accuracy vs base ship stat).
+        "accuracy" => Some("accuracy"),
         _ => None,
     }
 }
@@ -334,16 +338,15 @@ pub fn merge_building_bonuses_into_profile(
     }
 }
 
-/// Merges combat stat bonuses from player's synced research into `profile.bonuses`.
-/// For each imported research entry (rid, level), looks up the catalog by rid and sums
-/// cumulative bonuses for levels 1..=level. Only combat stats are applied (same keys as buildings).
-pub fn merge_research_bonuses_into_profile(
-    profile: &mut PlayerProfile,
+/// Effective combat stat bonuses from synced research only (engine keys after normalization).
+/// Duplicate `rid` rows use the **maximum** synced level for that `rid`.
+/// Used by [`merge_research_bonuses_into_profile`] and [`crate::data::research_summary::research_combat_summary_for_profile`].
+pub fn combat_research_bonuses_from_import(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
-) {
+) -> HashMap<String, f64> {
     if imported_research.is_empty() || catalog.items.is_empty() {
-        return;
+        return HashMap::new();
     }
 
     let mut levels_by_rid: HashMap<i64, u32> = HashMap::new();
@@ -354,11 +357,14 @@ pub fn merge_research_bonuses_into_profile(
             0
         };
         if level > 0 {
-            levels_by_rid.insert(entry.rid, level);
+            levels_by_rid
+                .entry(entry.rid)
+                .and_modify(|e| *e = (*e).max(level))
+                .or_insert(level);
         }
     }
     if levels_by_rid.is_empty() {
-        return;
+        return HashMap::new();
     }
 
     let records: Vec<&crate::data::research::ResearchRecord> = catalog
@@ -367,17 +373,34 @@ pub fn merge_research_bonuses_into_profile(
         .filter(|r| levels_by_rid.contains_key(&r.rid))
         .collect();
     if records.is_empty() {
-        return;
+        return HashMap::new();
     }
 
     let bonuses = cumulative_research_bonuses(&records, &levels_by_rid);
-
+    let mut out: HashMap<String, f64> = HashMap::new();
     for (stat, value) in bonuses {
         let Some(key) = normalize_profile_combat_stat(&stat) else {
             continue;
         };
-        let current = profile.bonuses.get(key).copied().unwrap_or(0.0);
-        profile.bonuses.insert(key.to_string(), current + value);
+        let current = out.get(key).copied().unwrap_or(0.0);
+        out.insert(key.to_string(), current + value);
+    }
+    out
+}
+
+/// Merges combat stat bonuses from player's synced research into `profile.bonuses`.
+/// For each imported research entry (rid, level), looks up the catalog by rid and sums
+/// cumulative bonuses for levels 1..=level. Only combat stats are applied (same keys as buildings).
+/// Duplicate `rid` rows use the **maximum** synced level for that `rid`.
+pub fn merge_research_bonuses_into_profile(
+    profile: &mut PlayerProfile,
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+) {
+    let bonuses = combat_research_bonuses_from_import(imported_research, catalog);
+    for (key, value) in bonuses {
+        let current = profile.bonuses.get(&key).copied().unwrap_or(0.0);
+        profile.bonuses.insert(key, current + value);
     }
 }
 
@@ -447,17 +470,23 @@ pub fn apply_static_buffs_to_combatant(
         hull_health: combatant.hull_health * hull_mult,
         shield_health: combatant.shield_health * shield_mult,
         pierce: (combatant.pierce + pierce_add).max(0.0),
-        crit_chance: (combatant.crit_chance + crit_chance_add).max(0.0).min(1.0),
+        crit_chance: (combatant.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (combatant.crit_multiplier * crit_damage_mult).max(0.0),
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
-        shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add)
-            .max(0.0)
-            .min(1.0),
-        mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add)
-            .max(0.0)
-            .min(1.0),
+        shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add).clamp(0.0, 1.0),
+        mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add).clamp(0.0, 1.0),
         ..combatant
+    }
+}
+
+/// Scales ship-derived [`AttackerStats::accuracy`] by profile research/building/FT bonuses.
+/// `profile.bonuses["accuracy"]` is a **fractional** increase (catalog convention: `0.1` ⇒ ×1.1), aligned with
+/// `weapon_damage` semantics. Officer flat accuracy in `scenario_to_combat_input` is applied **after** this.
+pub fn apply_profile_accuracy_to_attacker_stats(stats: &mut AttackerStats, profile: &PlayerProfile) {
+    let b = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
+    if b != 0.0 {
+        stats.accuracy *= 1.0 + b.max(-0.999);
     }
 }
 
@@ -485,13 +514,11 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
         attack: attacker.attack * weapon,
         hull_health: attacker.hull_health * hull_hp,
         shield_health: attacker.shield_health * shield_hp,
-        crit_chance: (attacker.crit_chance + crit_chance_add).max(0.0).min(1.0),
+        crit_chance: (attacker.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (attacker.crit_multiplier * crit_damage_mult).max(0.0),
         pierce: (attacker.pierce + pierce_add).max(0.0),
-        mitigation: (attacker.mitigation + mitigation_add).max(0.0).min(1.0),
-        shield_mitigation: (attacker.shield_mitigation + shield_mit_add)
-            .max(0.0)
-            .min(1.0),
+        mitigation: (attacker.mitigation + mitigation_add).clamp(0.0, 1.0),
+        shield_mitigation: (attacker.shield_mitigation + shield_mit_add).clamp(0.0, 1.0),
         isolytic_damage: (attacker.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (attacker.isolytic_defense + isolytic_defense_add).max(0.0),
         ..attacker
@@ -502,7 +529,7 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
 mod tests {
     use std::collections::HashMap;
 
-    use crate::combat::Combatant;
+    use crate::combat::{AttackerStats, Combatant};
     use crate::data::building::{
         BuildingBonusContext, BuildingIndex, BuildingIndexEntry, BuildingMode,
     };
@@ -741,6 +768,20 @@ mod tests {
 
         let out = apply_profile_to_attacker(attacker, &profile);
         assert!((out.mitigation - 0.19).abs() < 1e-9);
+    }
+
+    #[test]
+    fn apply_profile_accuracy_to_attacker_stats_multiplies_base() {
+        let mut stats = AttackerStats {
+            armor_piercing: 100.0,
+            shield_piercing: 100.0,
+            accuracy: 200.0,
+        };
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.insert("accuracy".to_string(), 0.1);
+        apply_profile_accuracy_to_attacker_stats(&mut stats, &profile);
+        assert!((stats.accuracy - 220.0).abs() < 1e-9);
+        assert!((stats.armor_piercing - 100.0).abs() < 1e-9);
     }
 
     #[test]

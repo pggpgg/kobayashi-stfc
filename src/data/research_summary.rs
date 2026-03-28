@@ -6,10 +6,9 @@ use serde::Serialize;
 
 use crate::data::import;
 use crate::data::profile::{
-    accumulate_combat_only_bonuses_from_raw, load_profile, merge_research_bonuses_into_profile,
-    PlayerProfile,
+    accumulate_combat_only_bonuses_from_raw, combat_research_bonuses_from_import, PlayerProfile,
 };
-use crate::data::profile_index::{profile_path, PROFILE_JSON, RESEARCH_IMPORTED};
+use crate::data::profile_index::{profile_path, RESEARCH_IMPORTED};
 use crate::data::research::{cumulative_research_level_bonuses, ResearchCatalog};
 
 /// One row from `research.imported.json` with catalog resolution and per-row combat slice.
@@ -62,8 +61,6 @@ pub fn research_combat_summary_for_profile(
     profile_id: &str,
     catalog: Option<&ResearchCatalog>,
 ) -> ResearchCombatSummary {
-    let profile_json = profile_path(profile_id, PROFILE_JSON);
-    let player = load_profile(&profile_json.to_string_lossy());
     let research_path = profile_path(profile_id, RESEARCH_IMPORTED)
         .to_string_lossy()
         .to_string();
@@ -119,15 +116,9 @@ pub fn research_combat_summary_for_profile(
     unmapped_rids.sort_unstable();
     unmapped_rids.dedup();
 
-    let mut scratch = PlayerProfile {
-        ops_level: player.ops_level,
-        bonuses: HashMap::new(),
-        forbidden_tech_override: None,
-        chaos_tech_override: None,
-    };
-    if let Some(cat) = catalog_nonempty {
-        merge_research_bonuses_into_profile(&mut scratch, &imported, cat);
-    }
+    let combat_bonuses_from_research = catalog_nonempty
+        .map(|cat| combat_research_bonuses_from_import(&imported, cat))
+        .unwrap_or_default();
 
     let error = catalog_nonempty.is_none().then(|| {
         "missing or empty research catalog (data/research_catalog.json); combat bonuses from research are not applied. Synced rid/level pairs remain stored in research.imported.json.".to_string()
@@ -138,7 +129,7 @@ pub fn research_combat_summary_for_profile(
         error,
         synced_research_count: imported.len(),
         unmapped_rids,
-        combat_bonuses_from_research: scratch.bonuses,
+        combat_bonuses_from_research,
         research: rows,
     }
 }
@@ -147,6 +138,7 @@ pub fn research_combat_summary_for_profile(
 mod tests {
     use super::*;
     use crate::data::import::ResearchEntry;
+    use crate::data::profile::merge_research_bonuses_into_profile;
     use crate::data::research::{ResearchBonusEntry, ResearchLevel, ResearchRecord};
 
     fn tiny_catalog() -> ResearchCatalog {

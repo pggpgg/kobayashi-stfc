@@ -96,6 +96,17 @@ cargo run --bin normalize_hostiles_stfc_space
 # Optional: STFCSPACE_HOSTILES_VERSION, STFCSPACE_HOSTILES_SOURCE_NOTE
 ```
 
+### Research catalog (data.stfc.space)
+
+Caches per-`rid` JSON under `data/upstream/data-stfc-space/research/` (gitignored), then writes `data/research_catalog.json`.
+
+```bash
+node scripts/fetch_stfcspace_research.mjs   # or supply research/*.json by other means
+node scripts/import_stfcspace_research.mjs --from-upstream --limit 0   # reads local research/*.json only
+# Subset: --limit N, --rid a,b  |  Inspect unmapped buff ids: --dump-unmapped
+# Heuristic CSV hints (human review): node scripts/suggest_research_buff_mappings.mjs
+```
+
 ## Architecture
 
 ### Backend (Rust)

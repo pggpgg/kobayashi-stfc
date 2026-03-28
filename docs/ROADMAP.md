@@ -2,6 +2,10 @@
 
 Planned features and priorities for Kobayashi.
 
+## Next pillar (chosen)
+
+After research sync/catalog merge work, the **next major combat-engine focus** is **ship abilities** (data.stfc.space `ability` on ships, distinct from officers). Maverick faction support remains a parallel content track; see [MAVERICK.md](MAVERICK.md).
+
 ---
 
 ## Ship Abilities
@@ -66,31 +70,36 @@ Forbidden tech is **partially implemented**. The following is in place; remainin
 
 ## Research (partial)
 
-Research is **partially implemented**. The following is in place; remaining gaps are documented so we don't lose track of what's missing.
+Research **sync and catalog merge** are implemented for ship-combat stats. Gaps are mainly **stats the engine does not yet fold into the player profile** (e.g. accuracy) and **conditional in-game scopes** that the catalog still treats as unconditional bonuses.
 
 ### Implemented
 
 - **Sync:** Research payloads (`type: "research"`, `rid`, `level`) are persisted to `profiles/{id}/research.imported.json`. See [SYNC.md](SYNC.md).
-- **Catalog:** `data/research_catalog.json` (KOBAYASHI schema: `rid`, `levels[].bonuses` with engine stat keys). Loaded at startup into `DataRegistry.research_catalog`. Currently contains a stub entry (rid 1) for testing; real combat research requires buff id → stat mappings.
-- **Merge:** `merge_research_bonuses_into_profile` matches synced entries by `rid`, sums cumulative bonuses for levels 1..=level, and merges only combat stats (weapon_damage, hull_hp, shield_hp, etc.) into `profile.bonuses`. Merge order: forbidden tech → buildings → research.
+- **Catalog:** `data/research_catalog.json` (KOBAYASHI schema: `rid`, optional `name`, `levels[].bonuses` with engine stat keys). Loaded at startup into `DataRegistry.research_catalog`. Regenerated from data.stfc.space via `scripts/import_stfcspace_research.mjs` (description + name heuristics, `data/research/loca_id_to_stat.json`, `data/research/buff_id_to_stat.json`, and `data/buildings/buff_id_to_stat.json` where buff ids overlap).
+- **Merge:** `merge_research_bonuses_into_profile` matches synced entries by `rid`, sums cumulative bonuses for levels 1..=level, and merges only combat stats (weapon_damage, hull_hp, shield_hp, isolytic_*, crit_*, pierce, shield_mitigation, armor, dodge, damage_reduction) into `profile.bonuses`. Merge order: forbidden tech → buildings → research.
 - **Scenario wiring:** `build_shared_scenario_data_from_registry` loads `research.imported.json` and calls the merge when the catalog is present.
-- **Import script:** `node scripts/import_stfcspace_research.mjs [--from-upstream] [--limit N] [--rid ...]` reads summary-research.json, fetches per-research detail from data.stfc.space, and can write the catalog. It does **not** overwrite the catalog when no buff mappings exist (leaves stub in place).
+- **Import / cache:** Populate `data/upstream/data-stfc-space/research/{id}.json` (gitignored) via `scripts/fetch_stfcspace_research.mjs` or an external bulk fetch; `import_stfcspace_research.mjs` reads **only** those local files for per-rid detail (no HTTP for `research/{id}.json`). It may still fetch `research/summary.json` when `--from-upstream` is not used.
+- **Sync status:** `GET /api/sync/status` includes `research_catalog_loaded` and `research_catalog_item_count` (see `src/server/sync.rs`).
+- **Integration test:** `tests/scenario_research_integration_tests.rs` builds a temp profile with `research.imported.json` and asserts merged `profile.bonuses` when the catalog is present.
 - **Docs:** [data/README.md](../data/README.md) § Research, [DESIGN.md](DESIGN.md) §5.4, [SYNC.md](SYNC.md).
 
 ### Partially implemented / gaps (roadmap items)
 
-- **Research buff id → stat mapping** — The import script has empty `RESEARCH_BUFF_MAPPING` and `data/buildings/buff_id_to_stat.json` has no research-specific entries. Data.stfc.space research nodes use buff `id` and `loca_id`; we need a mapping from those to engine stats (weapon_damage, hull_hp, shield_hp, etc.) so the import can emit combat bonuses. Options: derive from `data/upstream/data-stfc-space/translations-research.json` (or similar), reuse building buff mappings where the same buff id appears in research, or add a dedicated `data/research/buff_id_to_stat.json`. Until mappings exist, the catalog stays stub-only and only the test rid 1 affects combat.
+- **Accuracy** — `accuracy` is merged into `profile.bonuses` and scales ship `AttackerStats.accuracy` when computing hostile mitigation / pierce-through (`scenario.rs`). Catalog values are treated as fractional bonuses (×(1 + sum)), same convention as `weapon_damage`; in-game wording may differ—verify with logs/toolbox if fights look off.
+- **Other combat stats** — Stats not in `normalize_profile_combat_stat` still need end-to-end wiring before research mappings affect simulation.
 
-- **Populate research catalog from upstream** — Once buff mappings exist, run the import script (with a subset of combat-relevant rids or `--limit`) to fill `data/research_catalog.json` with real research nodes. Prefer a subset of high-impact combat research first (e.g. weapon damage, hull/shield, mitigation) to validate the pipeline before scaling.
+- **Apex (shred / barrier)** — Not merged from research into the player profile; add keys and merge rules if research-only apex must affect the scenario.
 
-- **Integration test: scenario + research** — Add a test that builds `SharedScenarioData` for a profile that has `research.imported.json` with at least one rid present in the catalog, and asserts that `profile.bonuses` contains the expected combat stat(s). Requires a test profile dir (e.g. temp or fixture) with `research.imported.json` and a registry that has the catalog loaded; document if the test is skipped when run without data dir.
+- **Conditional bonuses** — Armada-, class-, PvP-, or faction-scoped lines may be mapped as **global** ship bonuses when descriptions look generic; tightening requires engine/scenario context or buff-level overrides in `data/research/buff_id_to_stat.json`.
 
-- **Optional: research catalog version in sync/status** — Expose in `GET /api/sync/status` (or data version API) that research is applied for combat when the catalog is present, e.g. `research_catalog_loaded: true` or `research_catalog_item_count: N`, so the UI or tools can show that research bonuses are active.
+- **Catalog refresh** — After upstream drops, re-run `fetch_stfcspace_research.mjs` then `import_stfcspace_research.mjs`; use `--dump-unmapped` to extend `data/research/buff_id_to_stat.json` / `loca_id_to_stat.json` for buff ids that still do not resolve.
 
 ---
 
 ## Maverick faction
 
-- **Maverick faction support** — Add support for the Maverick faction (Ops 55+, unlocked via Warp Dive Bar): combat-relevant research (e.g. Maverick Research Tree nodes such as Isolytic Defense / Apex Shred / Critical Damage Reduction vs. Conqueror Borg Solo Armadas), any sync or catalog data for Maverick bonuses, and related hostiles (Conqueror Borg Solo Armadas, etc.) as needed for the simulator and optimizer. See [Update 88 First Look: The Maverick Faction](https://startrekfleetcommand.com/news/update-88-first-look-the-maverick-faction/).
+- **Maverick faction support** — Add support for the Maverick faction (Ops 55+, unlocked via Warp Dive Bar): combat-relevant research, hostiles (e.g. Conqueror Borg Solo Armadas), buildings/sync where applicable. See [Update 88 First Look: The Maverick Faction](https://startrekfleetcommand.com/news/update-88-first-look-the-maverick-faction/).
 
-**Tracking doc:** [MAVERICK.md](MAVERICK.md) — scope, data pipeline checklist, and explicit uncertainty (no placeholder hostile stats in-repo).
+- **Low priority (backlog)** — Deferred items: **Maverick faction research** (catalog + mappings), **Maverick favors** (faction-store / favor bonuses — not modeled yet), **new Maverick artifacts** (exocomp/artifact bonuses — not modeled yet). Detailed checklist: [MAVERICK.md](MAVERICK.md) § Low priority (backlog).
+
+**Tracking doc:** [MAVERICK.md](MAVERICK.md) — scope, data pipeline, Warp Dive Bar (`building_88`), uncertainty (no placeholder hostile stats in-repo).
