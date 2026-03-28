@@ -83,6 +83,12 @@ pub enum AbilityEffect {
     IsolyticCascadeDamageBonus(f64),
     /// Officer-granted shield mitigation; additive to base (clamped 0..1).
     ShieldMitigationBonus(f64),
+    /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
+    /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
+    CritChanceBonus(f64),
+    /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
+    /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
+    CritDamageMultiplier(f64),
     /// Hull HP restored when this ship gets a kill (on_kill). Reduces total_attacker_hull_damage.
     OnKillHullRegen(f64),
     /// Attack multiplier that decays each round. initial - round * decay_per_round, floored.

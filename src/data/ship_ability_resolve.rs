@@ -20,7 +20,7 @@ use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
-use crate::combat::types::{OpponentFactionTag, MAX_COMBAT_ROUNDS};
+use crate::combat::types::{OpponentFactionTag, EPSILON, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
 
 fn normalize_key(s: &str) -> String {
@@ -144,8 +144,8 @@ pub fn ship_ability_effect_from_catalog(
             })
         },
 
-        // LCARS uses this rough mapping for crit stats when they appear as timed crew effects.
-        "crit_chance" | "crit_damage" => Some(AbilityEffect::AttackMultiplier(1.0 + value * 0.5)),
+        "crit_chance" => Some(AbilityEffect::CritChanceBonus(normalize_probability(value))),
+        "crit_damage" => Some(AbilityEffect::CritDamageMultiplier((1.0 + value).max(EPSILON))),
 
         "apex_shred" => Some(AbilityEffect::ApexShredBonus(value)),
         "apex_barrier" => Some(AbilityEffect::ApexBarrierBonus(value)),
@@ -302,6 +302,16 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(e, AbilityEffect::HullRegen(100.0)));
+    }
+
+    #[test]
+    fn crit_stats_map_to_typed_effects_not_attack_multiplier() {
+        let cc = ship_ability_effect_from_catalog("crit_chance", TimingWindow::RoundStart, 0.15, None)
+            .expect("crit_chance");
+        assert!(matches!(cc, AbilityEffect::CritChanceBonus(v) if (v - 0.15).abs() < 1e-12));
+        let cd = ship_ability_effect_from_catalog("crit_damage", TimingWindow::RoundStart, 0.2, None)
+            .expect("crit_damage");
+        assert!(matches!(cd, AbilityEffect::CritDamageMultiplier(m) if (m - 1.2).abs() < 1e-12));
     }
 
     #[test]

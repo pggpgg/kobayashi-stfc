@@ -236,9 +236,31 @@ fn resolve_effect(
                     };
                     Some((timing, AbilityEffect::PierceBonus(add)))
                 }
-                "crit_chance" | "crit_damage" => {
-                    // Engine applies crit from ship; we could fold into static_buffs later.
-                    Some((timing, AbilityEffect::AttackMultiplier(1.0 + value * 0.5)))
+                "crit_chance" => {
+                    let add = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                        | "multiplybaseadd" => return None,
+                        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
+                        | "multiplybasesub" => -value,
+                        "set" => return None,
+                        _ => value,
+                    };
+                    Some((timing, AbilityEffect::CritChanceBonus(add)))
+                }
+                "crit_damage" => {
+                    let mult = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                        | "multiplybaseadd" => value,
+                        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
+                        | "multiplybasesub" => (1.0 - value).max(0.0),
+                        "set" => value.max(0.0),
+                        _ => 1.0 + value,
+                    };
+                    if mult.is_finite() && mult > 0.0 {
+                        Some((timing, AbilityEffect::CritDamageMultiplier(mult)))
+                    } else {
+                        None
+                    }
                 }
                 "apex_shred" => Some((timing, AbilityEffect::ApexShredBonus(value))),
                 "apex_barrier" => Some((timing, AbilityEffect::ApexBarrierBonus(value))),

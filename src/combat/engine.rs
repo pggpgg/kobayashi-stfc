@@ -610,11 +610,15 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         });
 
         let hull_breach_active = hull_breach_rounds_remaining > 0;
+        let effective_crit_chance = (attacker.crit_chance + phase_effects.crit_chance_bonus())
+            .clamp(0.0, 1.0);
         let crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let is_crit = crit_roll < attacker.crit_chance;
+        let is_crit = crit_roll < effective_crit_chance;
+        let base_crit_multiplier =
+            attacker.crit_multiplier * phase_effects.crit_damage_multiplier();
         let crit_multiplier = compute_crit_multiplier(
             is_crit,
-            attacker.crit_multiplier,
+            base_crit_multiplier,
             hull_breach_active,
         );
         trace.record_if(|| CombatEvent {
@@ -631,6 +635,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 ("roll".to_string(), Value::from(round_f64(crit_roll))),
                 ("is_crit".to_string(), Value::Bool(is_crit)),
                 ("multiplier".to_string(), Value::from(crit_multiplier)),
+                (
+                    "effective_crit_chance".to_string(),
+                    Value::from(round_f64(effective_crit_chance)),
+                ),
                 (
                     "hull_breach_active".to_string(),
                     Value::Bool(hull_breach_active),
@@ -1026,10 +1034,15 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender.pierce,
             defender_phase_effects.defense_mitigation_bonus(),
         );
+        let def_effective_crit_chance = (defender.crit_chance
+            + defender_phase_effects.crit_chance_bonus())
+        .clamp(0.0, 1.0);
         let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let def_is_crit = def_crit_roll < defender.crit_chance;
+        let def_is_crit = def_crit_roll < def_effective_crit_chance;
+        let def_base_crit_mult =
+            defender.crit_multiplier * defender_phase_effects.crit_damage_multiplier();
         let mut def_crit_mult =
-            compute_crit_multiplier(def_is_crit, defender.crit_multiplier, false);
+            compute_crit_multiplier(def_is_crit, def_base_crit_mult, false);
         // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
         if def_is_crit
             && hostile_crit_reduction > 0.0
