@@ -4,7 +4,8 @@ use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use crate::combat::{
-    simulate_combat_with_defender_faction, OpponentFactionTag, SimulationConfig, TraceMode,
+    simulate_combat_with_defender_faction_and_defender_crew, OpponentFactionTag, SimulationConfig,
+    TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewCandidate;
@@ -101,12 +102,13 @@ fn run_candidate_monte_carlo(
             .as_ref()
             .map(|h| h.opponent_faction_tag())
             .unwrap_or(OpponentFactionTag::Unknown);
-        let result = simulate_combat_with_defender_faction(
+        let result = simulate_combat_with_defender_faction_and_defender_crew(
             &input.attacker,
             &input.defender,
             combat_config,
             &input.crew,
             defender_faction,
+            &input.defender_crew,
         );
         let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
 
@@ -132,7 +134,8 @@ fn run_candidate_monte_carlo(
         if let Some(cfg) = early_scout {
             if n_done >= cfg.min_trials
                 && n_done < max_iterations
-                && n_done.is_multiple_of(cfg.check_every)
+                && cfg.check_every > 0
+                && (n_done % cfg.check_every == 0)
                 && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
             {
                 break;

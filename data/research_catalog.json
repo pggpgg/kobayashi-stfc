@@ -1,10 +1,2238 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-03-21",
+  "last_updated": "2026-03-28",
   "items": [
     {
+      "rid": 31812373,
+      "name": "Explorer Targeting Array",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 1.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.0175,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 39547410,
+      "name": "Federation Weakpoints",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.21,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 84519495,
+      "name": "Battleship Tactics",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 176472186,
+      "name": "Pinpoint Targeting",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "crit_chance",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "crit_chance",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 223812814,
+      "name": "Fortified Romulans",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 597105669,
+      "name": "Valor of Starfleet",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 807950654,
+      "name": "Survey Hull Integrity",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 976276933,
+      "name": "Federation Firepower",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.16,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1016099357,
+      "name": "Prime Defenses",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1026711247,
+      "name": "Klingon Firepower",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.16,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1030229359,
+      "name": "Interceptor Hull Boost",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1180934239,
+      "name": "Station Piercing",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.13,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.17,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.21,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1240350440,
+      "name": "Piercing Shots",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1262620847,
+      "name": "Explorer Tactics",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1313725449,
+      "name": "Strength of Kahless",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1343183052,
+      "name": "Interceptor Tactics",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1542792630,
+      "name": "Battleship Hull Boost",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1714093355,
+      "name": "Battleship Shields",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1762164246,
+      "name": "Shield Modulation",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.9,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1771384540,
+      "name": "Evasive Interceptors",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1809403996,
+      "name": "Explorer Barriers",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1848813183,
+      "name": "Romulan Firepower",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.16,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1914017763,
+      "name": "Defensive Tactics",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "damage_reduction",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "damage_reduction",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "damage_reduction",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "damage_reduction",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "damage_reduction",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2006522561,
+      "name": "Critical Interceptor Hit",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2035229102,
+      "name": "Battleship Firepower",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2207112158,
+      "name": "Shield Efficiency",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 1.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2232304457,
-      "name": null,
+      "name": "Battle Tactics",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -61,8 +2289,8 @@
       ]
     },
     {
-      "rid": 1914017763,
-      "name": null,
+      "rid": 2322509934,
+      "name": "Exploit Weakpoints",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -70,8 +2298,8 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "damage_reduction",
-              "value": 0.05,
+              "stat": "crit_damage",
+              "value": 0.01,
               "operator": "add"
             }
           ]
@@ -80,8 +2308,8 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "damage_reduction",
-              "value": 0.1,
+              "stat": "crit_damage",
+              "value": 0.02,
               "operator": "add"
             }
           ]
@@ -90,8 +2318,8 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "damage_reduction",
-              "value": 0.15,
+              "stat": "crit_damage",
+              "value": 0.03,
               "operator": "add"
             }
           ]
@@ -100,8 +2328,8 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "damage_reduction",
-              "value": 0.2,
+              "stat": "crit_damage",
+              "value": 0.04,
               "operator": "add"
             }
           ]
@@ -110,8 +2338,38 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "damage_reduction",
-              "value": 0.3,
+              "stat": "crit_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.1,
               "operator": "add"
             }
           ]
@@ -119,8 +2377,8 @@
       ]
     },
     {
-      "rid": 2207112158,
-      "name": null,
+      "rid": 2392271998,
+      "name": "Modulated Federation",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -129,13 +2387,73 @@
           "bonuses": [
             {
               "stat": "shield_mitigation",
-              "value": 0.25,
+              "value": 0.1,
               "operator": "add"
             }
           ]
         },
         {
           "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
           "bonuses": [
             {
               "stat": "shield_mitigation",
@@ -145,11 +2463,59 @@
           ]
         },
         {
-          "level": 3,
+          "level": 9,
           "bonuses": [
             {
               "stat": "shield_mitigation",
-              "value": 0.8,
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "shield_mitigation",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2486605249,
+      "name": "Survey Shield Array",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.5,
               "operator": "add"
             }
           ]
@@ -158,8 +2524,8 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
-              "value": 1.3,
+              "stat": "shield_hp",
+              "value": 0.6,
               "operator": "add"
             }
           ]
@@ -168,8 +2534,38 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
-              "value": 0.02,
+              "stat": "shield_hp",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1.5,
               "operator": "add"
             }
           ]
@@ -178,7 +2574,7 @@
     },
     {
       "rid": 2488759501,
-      "name": null,
+      "name": "Reinforced Bulkheads",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -235,8 +2631,8 @@
       ]
     },
     {
-      "rid": 3666105341,
-      "name": null,
+      "rid": 2547999705,
+      "name": "Fortified Battleships",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -244,8 +2640,8 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
-              "value": 0.25,
+              "stat": "armor",
+              "value": 0.1,
               "operator": "add"
             }
           ]
@@ -254,8 +2650,8 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
-              "value": 0.5,
+              "stat": "armor",
+              "value": 0.15,
               "operator": "add"
             }
           ]
@@ -264,8 +2660,8 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
-              "value": 0.8,
+              "stat": "armor",
+              "value": 0.2,
               "operator": "add"
             }
           ]
@@ -274,8 +2670,8 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
-              "value": 1.3,
+              "stat": "armor",
+              "value": 0.3,
               "operator": "add"
             }
           ]
@@ -284,8 +2680,252 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "armor",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2576852433,
+      "name": "Explorer Weaponry",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
               "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2619037259,
+      "name": "Interceptor Shields",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2813432740,
+      "name": "Prime Hulls",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -294,7 +2934,7 @@
     },
     {
       "rid": 3016411865,
-      "name": null,
+      "name": "Prime Damage",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -311,8 +2951,8 @@
       ]
     },
     {
-      "rid": 3814450797,
-      "name": null,
+      "rid": 3027799493,
+      "name": "Battleship Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -320,674 +2960,18 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "pierce",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "pierce",
-              "value": 0.15,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "pierce",
-              "value": 0.2,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "pierce",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "pierce",
-              "value": 0.4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "pierce",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "pierce",
-              "value": 0.65,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "pierce",
-              "value": 1,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 1240350440,
-      "name": null,
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 0.15,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 0.2,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 0.4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 0.65,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "armor",
-              "value": 1,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 1016099357,
-      "name": null,
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 1,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 3322225012,
-      "name": null,
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.075,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.125,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.15,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.175,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.2,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.225,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.25,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.275,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 11,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 12,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.325,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 13,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.35,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 14,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.38,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 15,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.42,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 16,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.435,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 17,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.45,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 18,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.465,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 19,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.48,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 20,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 3146647716,
-      "name": null,
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.01,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.015,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
+              "stat": "weapon_damage",
               "value": 0.02,
               "operator": "add"
             }
           ]
         },
         {
-          "level": 4,
+          "level": 2,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
-              "value": 0.025,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.03,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.035,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
+              "stat": "weapon_damage",
               "value": 0.04,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.045,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.055,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 11,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.06,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 12,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.065,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 13,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.07,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 14,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.077,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 15,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.085,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 16,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.088,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 17,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.091,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 18,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.094,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 19,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.097,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 20,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 1852208276,
-      "name": null,
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "isolytic_defense",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 995454242,
-      "name": null,
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 4133019450,
-      "name": "NS Morale Isolytic Damage",
-      "data_version": "stfcspace-upstream",
-      "source_note": "Morale-gated isolytic (translations loca 70101). Values are placeholders per level — re-run import from data.stfc.space to align with live curves.",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
               "operator": "add"
             }
           ]
@@ -996,8 +2980,8 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
+              "stat": "weapon_damage",
+              "value": 0.06,
               "operator": "add"
             }
           ]
@@ -1006,8 +2990,8 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
+              "stat": "weapon_damage",
+              "value": 0.14,
               "operator": "add"
             }
           ]
@@ -1016,8 +3000,8 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
+              "stat": "weapon_damage",
+              "value": 0.2,
               "operator": "add"
             }
           ]
@@ -1026,8 +3010,8 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
+              "stat": "weapon_damage",
+              "value": 0.26,
               "operator": "add"
             }
           ]
@@ -1036,8 +3020,8 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
+              "stat": "weapon_damage",
+              "value": 0.32,
               "operator": "add"
             }
           ]
@@ -1046,8 +3030,96 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3147494882,
+      "name": "Battleship Penetration",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 1.25,
               "operator": "add"
             }
           ]
@@ -1056,8 +3128,8 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
-              "value": 0.01,
+              "stat": "pierce",
+              "value": 0.0175,
               "operator": "add"
             }
           ]
@@ -1066,8 +3138,1640 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "pierce",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3188071677,
+      "name": "Explorer Shields",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3239946264,
+      "name": "Evasive Klingons",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3305839465,
+      "name": "Explorer Firepower",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
               "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3367947674,
+      "name": "Romulan Weakpoints",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.21,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3653191691,
+      "name": "Explorer Hull Boost",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3666105341,
+      "name": "Evasive Maneuvers",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 1.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "dodge",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3753633758,
+      "name": "Energy Blast",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.24,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3814450797,
+      "name": "Shield Penetration",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3895069487,
+      "name": "Targeting Array",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3905683554,
+      "name": "Prime Piercing",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "pierce",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3986052092,
+      "name": "Interceptor Weaponry",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4016091904,
+      "name": "Klingon Weakpoints",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.21,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4016442869,
+      "name": "Romulan Fortitude",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4055439002,
+      "name": "Hull Density",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "hull_hp",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4167134122,
+      "name": "Kinetic Shockwave",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.24,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4189748843,
+      "name": "Siege Warfare",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.17,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4206162812,
+      "name": "Prime Shields",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "shield_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4206610122,
+      "name": "Interceptor Armor Piercing",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 1.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.0175,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "armor",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4270726289,
+      "name": "Survey Firepower",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.016,
               "operator": "add"
             }
           ]

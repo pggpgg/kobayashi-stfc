@@ -32,6 +32,10 @@ use crate::data::profile_index::{
 };
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
+use crate::data::hostile_ability_resolve::{
+    hostile_abilities_to_defender_crew, load_hostile_ability_catalog,
+    DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
+};
 use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::CrewCandidate;
 use std::path::Path;
@@ -160,6 +164,9 @@ pub(crate) struct SharedScenarioData {
 pub(crate) struct CombatSimulationInput {
     pub attacker: Combatant,
     pub defender: Combatant,
+    /// Defender-side effects (hostile upstream abilities) applied to return fire.
+    /// Empty by default; populated only when a hostile ability id is mapped in the hostile ability catalog.
+    pub defender_crew: CrewConfiguration,
     pub crew: CrewConfiguration,
     pub rounds: u32,
     pub defender_hull: f64,
@@ -187,6 +194,13 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared.lcars_data.as_ref(),
         &shared.resolve_options,
     );
+
+    let hostile_ability_catalog = load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
+    let defender_crew = shared
+        .hostile_rec
+        .as_ref()
+        .map(|h| hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog.as_ref()))
+        .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() });
 
     if let (Some(ref ship_rec), Some(ref defender), Some(rounds), Some(defender_hull)) = (
         &shared.ship_rec,
@@ -225,6 +239,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         return CombatSimulationInput {
             attacker,
             defender: defender.clone(),
+            defender_crew,
             crew: CrewConfiguration { seats },
             rounds,
             defender_hull,
@@ -288,6 +303,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
         },
+        defender_crew,
         crew: CrewConfiguration { seats },
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
@@ -390,6 +406,9 @@ pub(crate) fn scenario_to_combat_input(
     );
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
+        let hostile_ability_catalog = load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
+        let defender_crew =
+            hostile_abilities_to_defender_crew(&hostile_rec.ability, hostile_ability_catalog.as_ref());
         let mut attacker_stats = ship_rec.to_attacker_stats();
         apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, profile);
         attacker_stats.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
@@ -443,6 +462,7 @@ pub(crate) fn scenario_to_combat_input(
                 defender_mitigation,
                 ship_rec.ship_type(),
             ),
+            defender_crew,
             crew: CrewConfiguration { seats },
             rounds,
             defender_hull,
@@ -484,6 +504,7 @@ pub(crate) fn scenario_to_combat_input(
     let mut seats = crew_seats.clone();
     extend_crew_with_ship_abilities(&mut seats, resolve_ship(ship).as_ref());
 
+    let defender_crew = CrewConfiguration { seats: Vec::new() };
     CombatSimulationInput {
         attacker,
         defender: Combatant {
@@ -505,6 +526,7 @@ pub(crate) fn scenario_to_combat_input(
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
         },
+        defender_crew,
         crew: CrewConfiguration { seats },
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,

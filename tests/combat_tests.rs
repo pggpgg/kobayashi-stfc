@@ -1,10 +1,11 @@
 use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
     mitigation, mitigation_with_morale, pierce_damage_through_bonus, round_half_even,
-    serialize_events_json, simulate_combat, simulate_combat_with_defender_faction, Ability,
-    AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, OpponentFactionTag,
-    ShipType, SimulationConfig, StackContribution, StatStacking, TimingWindow,
+    serialize_events_json, simulate_combat, simulate_combat_with_defender_faction,
+    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass, AbilityCondition,
+    AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
+    DefenderStats, EventSource, OpponentFactionTag, ShipType, SimulationConfig, StackContribution,
+    StatStacking, TimingWindow,
     TraceCollector, TraceMode, WeaponStats, EPSILON, PIERCE_CAP, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use serde_json::{Map, Value};
@@ -200,6 +201,100 @@ fn morale_boosts_only_primary_piercing_per_ship_type() {
     approx_eq(armada.armor_piercing, 100.0, 1e-12);
     approx_eq(armada.shield_piercing, 80.0, 1e-12);
     approx_eq(armada.accuracy, 60.0, 1e-12);
+}
+
+#[test]
+fn defender_crew_can_modify_counter_fire_damage() {
+    // Mechanic: defender-side (hostile) upstream abilities are resolved into a `defender_crew` that
+    // can apply proc-gated multipliers/bonuses to the defender's return fire.
+    //
+    // This test uses deterministic (chance=1.0) procs so it is stable across RNG changes.
+    let attacker = Combatant {
+        id: "att".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 2000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "def".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 2000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats { attack: 100.0, shots: Some(1) }],
+    };
+    let attacker_crew = CrewConfiguration { seats: vec![] };
+    let defender_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "hostile_proc_attack_x2".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::ProcAttackMultiplier {
+                    chance: 1.0,
+                    multiplier: 2.0,
+                },
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 1,
+        trace_mode: TraceMode::Off,
+    };
+
+    let baseline = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        cfg,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let boosted = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        cfg,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        &defender_crew,
+    );
+
+    assert!(
+        boosted.attacker_hull_remaining < baseline.attacker_hull_remaining,
+        "defender proc attack multiplier should increase return-fire damage"
+    );
 }
 
 #[test]

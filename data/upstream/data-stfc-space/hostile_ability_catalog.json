@@ -1,0 +1,5 @@
+{
+  "description": "Maps upstream hostile ability id (hostiles/*.json ability[].id) to Kobayashi timing/effect_type. This is intentionally small and opt-in: unmapped hostile ability ids are ignored to avoid guessing mechanics. See src/data/hostile_ability_resolve.rs.",
+  "entries": {}
+}
+
