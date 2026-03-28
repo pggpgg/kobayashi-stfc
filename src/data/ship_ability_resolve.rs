@@ -16,11 +16,33 @@ use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
-use crate::combat::types::MAX_COMBAT_ROUNDS;
+use crate::combat::types::{OpponentFactionTag, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
 
 fn normalize_key(s: &str) -> String {
     s.trim().to_lowercase().replace('-', "_")
+}
+
+fn opponent_faction_from_catalog_slug(s: &str) -> Option<OpponentFactionTag> {
+    match normalize_key(s).as_str() {
+        "unknown" => Some(OpponentFactionTag::Unknown),
+        "federation" => Some(OpponentFactionTag::Federation),
+        "klingon" => Some(OpponentFactionTag::Klingon),
+        "romulan" => Some(OpponentFactionTag::Romulan),
+        "borg" => Some(OpponentFactionTag::Borg),
+        "cardassian" => Some(OpponentFactionTag::Cardassian),
+        "augment" => Some(OpponentFactionTag::Augment),
+        "dominion" => Some(OpponentFactionTag::Dominion),
+        "mirror_universe" => Some(OpponentFactionTag::MirrorUniverse),
+        "assimilated" => Some(OpponentFactionTag::Assimilated),
+        "ex_borg" | "exborg" => Some(OpponentFactionTag::ExBorg),
+        "swarm" => Some(OpponentFactionTag::Swarm),
+        "actian" => Some(OpponentFactionTag::Actian),
+        "gorn_hunting_pack" | "gorn" => Some(OpponentFactionTag::GornHuntingPack),
+        "xindi" => Some(OpponentFactionTag::Xindi),
+        "breen" => Some(OpponentFactionTag::Breen),
+        _ => None,
+    }
 }
 
 fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition> {
@@ -33,6 +55,11 @@ fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition
     }
     if ability.condition_defender_hull_breach {
         parts.push(AbilityCondition::DefenderHullBreach);
+    }
+    if let Some(ref slug) = ability.condition_opponent_faction {
+        if let Some(tag) = opponent_faction_from_catalog_slug(slug) {
+            parts.push(AbilityCondition::DefenderFactionIs(tag));
+        }
     }
     match parts.len() {
         0 => None,
@@ -173,6 +200,11 @@ pub fn ship_ability_effect_from_catalog(
 
 /// One ship hull ability → one seat context, or None if unsupported.
 pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSeatContext> {
+    if let Some(ref slug) = ability.condition_opponent_faction {
+        if opponent_faction_from_catalog_slug(slug).is_none() {
+            return None;
+        }
+    }
     let timing = parse_ship_ability_timing(&ability.timing)?;
     let effect = ship_ability_effect_from_catalog(
         &ability.effect_type,
@@ -209,6 +241,7 @@ pub fn ship_abilities_to_crew_seat_contexts(abilities: &[ShipAbility]) -> Vec<Cr
 mod tests {
     use super::*;
     use crate::combat::abilities::{AbilityCondition, AbilityEffect};
+    use crate::combat::types::OpponentFactionTag;
 
     #[test]
     fn timing_accepts_lcars_style_aliases() {
@@ -299,6 +332,29 @@ mod tests {
     }
 
     #[test]
+    fn opponent_faction_slug_merges_into_and_condition() {
+        let seat = ship_ability_to_crew_seat_context(&ShipAbility {
+            id: "test_vs_klingon".to_string(),
+            timing: "combat_begin".to_string(),
+            effect_type: "attack_multiplier".to_string(),
+            value: 0.1,
+            duration_rounds: None,
+            condition_morale: true,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+            condition_opponent_faction: Some("klingon".to_string()),
+        })
+        .expect("faction + morale");
+        assert_eq!(
+            seat.ability.condition,
+            Some(AbilityCondition::And(vec![
+                AbilityCondition::MoraleActive,
+                AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon),
+            ]))
+        );
+    }
+
+    #[test]
     fn enterprise_d_hull_ability_resolves_to_accumulating_multiplier() {
         let seat = ship_ability_to_crew_seat_context(&ShipAbility {
             id: "448699234".to_string(),
@@ -309,6 +365,7 @@ mod tests {
             condition_morale: true,
             condition_defender_burning: false,
             condition_defender_hull_breach: false,
+            condition_opponent_faction: None,
         })
         .expect("Galaxy Class seat");
         assert_eq!(seat.ability.timing, TimingWindow::RoundStart);

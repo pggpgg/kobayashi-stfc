@@ -8,8 +8,8 @@ pub use crate::combat::mitigation::{
 };
 pub use crate::combat::types::{
     round_half_even, AttackerStats, CombatEvent, Combatant, DefenderStats, EventSource, FightResult,
-    ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode, WeaponStats,
-    BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
+    OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode,
+    WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
     MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
 };
 
@@ -79,11 +79,29 @@ fn roll_burning_triggers(
     }
 }
 
+/// Same as [`simulate_combat_with_defender_faction`] with [`OpponentFactionTag::Unknown`]
+/// (faction-gated ship abilities never satisfy the faction condition).
 pub fn simulate_combat(
     attacker: &Combatant,
     defender: &Combatant,
     config: SimulationConfig,
     attacker_crew: &CrewConfiguration,
+) -> SimulationResult {
+    simulate_combat_with_defender_faction(
+        attacker,
+        defender,
+        config,
+        attacker_crew,
+        OpponentFactionTag::Unknown,
+    )
+}
+
+pub fn simulate_combat_with_defender_faction(
+    attacker: &Combatant,
+    defender: &Combatant,
+    config: SimulationConfig,
+    attacker_crew: &CrewConfiguration,
+    defender_faction: OpponentFactionTag,
 ) -> SimulationResult {
     let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
     let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
@@ -110,6 +128,7 @@ pub fn simulate_combat(
         attacker_morale_active: false,
         defender_burning_active: false,
         defender_hull_breach_active: false,
+        defender_faction,
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
@@ -172,6 +191,7 @@ pub fn simulate_combat(
             attacker_morale_active: false,
             defender_burning_active: burning_rounds_remaining > 0,
             defender_hull_breach_active: hull_breach_rounds_remaining > 0,
+            defender_faction,
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -990,6 +1010,7 @@ pub fn simulate_combat(
             attacker_morale_active: combat_ctx.attacker_morale_active,
             defender_burning_active: combat_ctx.defender_burning_active,
             defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
+            defender_faction,
         };
         let round_end_burn_filtered =
             filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
@@ -1082,6 +1103,7 @@ pub fn simulate_combat(
                 attacker_morale_active: combat_ctx.attacker_morale_active,
                 defender_burning_active: combat_ctx.defender_burning_active,
                 defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
+                defender_faction,
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
@@ -1131,6 +1153,7 @@ pub fn simulate_combat(
         attacker_morale_active: false,
         defender_burning_active: false,
         defender_hull_breach_active: false,
+        defender_faction,
     };
     let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(

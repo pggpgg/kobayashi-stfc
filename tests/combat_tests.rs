@@ -1,9 +1,10 @@
 use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
     mitigation, mitigation_with_morale, pierce_damage_through_bonus, round_half_even,
-    serialize_events_json, simulate_combat, Ability, AbilityClass, AbilityCondition, AbilityEffect,
-    AttackerStats, CombatEvent, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
-    EventSource, ShipType, SimulationConfig, StackContribution, StatStacking, TimingWindow,
+    serialize_events_json, simulate_combat, simulate_combat_with_defender_faction, Ability,
+    AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, OpponentFactionTag,
+    ShipType, SimulationConfig, StackContribution, StatStacking, TimingWindow,
     TraceCollector, TraceMode, WeaponStats, EPSILON, PIERCE_CAP, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use serde_json::{Map, Value};
@@ -753,6 +754,92 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         with_ability.total_damage > without.total_damage,
         "ship ability pierce_bonus at round_start should increase damage"
     );
+}
+
+#[test]
+fn defender_faction_gates_combat_begin_attack_multiplier() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 11,
+        trace_mode: TraceMode::Off,
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "vs_klingon".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                // `AttackMultiplier` is additive on the pre-attack sum: effective mult = 1 + sum(modifiers).
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon)),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let romulan = simulate_combat_with_defender_faction(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Romulan,
+    );
+    let klingon = simulate_combat_with_defender_faction(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Klingon,
+    );
+    assert!(
+        klingon.total_damage > romulan.total_damage,
+        "faction-gated attack multiplier should apply only for matching defender faction"
+    );
+    approx_eq(romulan.total_damage, klingon.total_damage / 2.0, 1.0);
 }
 
 #[test]

@@ -3,7 +3,9 @@
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
-use crate::combat::{simulate_combat, SimulationConfig, TraceMode};
+use crate::combat::{
+    simulate_combat_with_defender_faction, OpponentFactionTag, SimulationConfig, TraceMode,
+};
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::perf_log;
@@ -94,11 +96,17 @@ fn run_candidate_monte_carlo(
     while n_done < max_iterations {
         let iteration_seed = input.base_seed.wrapping_add(n_done as u64);
         combat_config.seed = iteration_seed;
-        let result = simulate_combat(
+        let defender_faction = shared
+            .hostile_rec
+            .as_ref()
+            .map(|h| h.opponent_faction_tag())
+            .unwrap_or(OpponentFactionTag::Unknown);
+        let result = simulate_combat_with_defender_faction(
             &input.attacker,
             &input.defender,
             combat_config,
             &input.crew,
+            defender_faction,
         );
         let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
 

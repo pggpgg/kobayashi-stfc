@@ -1,5 +1,5 @@
 {
-  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs.",
+  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach, condition_opponent_faction. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs.",
   "entries": {
     "34867572": {
       "timing": "combat_begin",
@@ -281,10 +281,10 @@
     },
     "1220133742": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "condition_opponent_faction": "klingon"
     },
     "1242395578": {
       "timing": "combat_begin",
@@ -482,10 +482,10 @@
     },
     "1960089851": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "condition_opponent_faction": "romulan"
     },
     "1972093910": {
       "timing": "combat_begin",
@@ -663,10 +663,10 @@
     },
     "2704762692": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "condition_opponent_faction": "romulan"
     },
     "2747851475": {
       "timing": "combat_begin",
@@ -697,10 +697,10 @@
     },
     "2836931919": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "condition_opponent_faction": "federation"
     },
     "2868529361": {
       "timing": "combat_begin",
@@ -745,10 +745,10 @@
     },
     "3006451338": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "condition_opponent_faction": "romulan"
     },
     "3014221215": {
       "timing": "combat_begin",
@@ -801,10 +801,10 @@
     },
     "3376611577": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "condition_opponent_faction": "klingon"
     },
     "3426564736": {
       "timing": "receive_damage",
@@ -841,10 +841,10 @@
     },
     "3554487827": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "condition_opponent_faction": "federation"
     },
     "3602514688": {
       "timing": "combat_begin",

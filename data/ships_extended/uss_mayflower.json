@@ -469,12 +469,13 @@
     {
       "id": "1220133742",
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value": 0.0,
+      "effect_type": "attack_multiplier",
+      "value": 0.3,
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,
-      "condition_defender_hull_breach": false
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": "klingon"
     }
   ]
 }

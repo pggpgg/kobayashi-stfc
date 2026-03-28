@@ -79,6 +79,48 @@ fn extend_crew_with_morale_gated_profile_bonuses(
     });
 }
 
+/// Defender [`Combatant`] from [`HostileRecord`], including weapons and pierce/crit used on the
+/// engine’s counter-attack path (see `engine.rs` — hostile fire vs player).
+fn defender_combatant_from_hostile_record(
+    hostile_lookup_id: &str,
+    hostile_rec: &HostileRecord,
+    defender_mitigation: f64,
+    player_ship_type: ShipType,
+) -> Combatant {
+    let weapons = hostile_rec.weapons_from_components();
+    let attack = if weapons.is_empty() {
+        hostile_rec.scalar_attack_fallback()
+    } else {
+        0.0
+    };
+    let pierce = hostile_rec.counter_pierce_damage_through_bonus(player_ship_type);
+    let crit_chance = hostile_rec.crit_chance.clamp(0.0, 1.0);
+    let crit_multiplier = if hostile_rec.crit_damage.is_finite() && hostile_rec.crit_damage > 0.0 {
+        hostile_rec.crit_damage
+    } else {
+        1.0
+    };
+    Combatant {
+        id: hostile_lookup_id.to_string(),
+        attack,
+        mitigation: defender_mitigation,
+        pierce,
+        crit_chance,
+        crit_multiplier,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: hostile_rec.hull_health,
+        shield_health: hostile_rec.shield_health,
+        shield_mitigation: hostile_rec.shield_mitigation.unwrap_or(0.8),
+        apex_barrier: hostile_rec.apex_barrier,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: hostile_rec.isolytic_defense,
+        weapons,
+    }
+}
+
 fn use_lcars_officer_source_standalone() -> bool {
     std::env::var("KOBAYASHI_OFFICER_SOURCE")
         .map(|v| v.eq_ignore_ascii_case("lcars"))
@@ -395,27 +437,12 @@ pub(crate) fn scenario_to_combat_input(
         extend_crew_with_ship_abilities(&mut seats, Some(&ship_rec));
         return CombatSimulationInput {
             attacker,
-            // Hostile as defender: offensive stats and per-weapon data exist on `HostileRecord` (data.stfc.space)
-            // but are not yet mapped into `Combatant` / sub-round resolution.
-            defender: Combatant {
-                id: hostile.to_string(),
-                attack: 0.0,
-                mitigation: defender_mitigation,
-                pierce: 0.0,
-                crit_chance: 0.0,
-                crit_multiplier: 1.0,
-                proc_chance: 0.0,
-                proc_multiplier: 1.0,
-                end_of_round_damage: 0.0,
-                hull_health: defender_hull,
-                shield_health: hostile_rec.shield_health,
-                shield_mitigation: hostile_rec.shield_mitigation.unwrap_or(0.8),
-                apex_barrier: hostile_rec.apex_barrier,
-                apex_shred: 0.0,
-                isolytic_damage: 0.0,
-                isolytic_defense: hostile_rec.isolytic_defense,
-                weapons: vec![],
-            },
+            defender: defender_combatant_from_hostile_record(
+                hostile,
+                &hostile_rec,
+                defender_mitigation,
+                ship_rec.ship_type(),
+            ),
             crew: CrewConfiguration { seats },
             rounds,
             defender_hull,
@@ -634,26 +661,12 @@ pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -
             attacker_stats,
             hostile_r.ship_type(),
         );
-        // Hostile offensive stats on `HostileRecord` are not yet mapped into `Combatant`.
-        let defender = Combatant {
-            id: hostile.to_string(),
-            attack: 0.0,
-            mitigation: defender_mitigation,
-            pierce: 0.0,
-            crit_chance: 0.0,
-            crit_multiplier: 1.0,
-            proc_chance: 0.0,
-            proc_multiplier: 1.0,
-            end_of_round_damage: 0.0,
-            hull_health: hostile_r.hull_health,
-            shield_health: hostile_r.shield_health,
-            shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
-            apex_barrier: hostile_r.apex_barrier,
-            apex_shred: 0.0,
-            isolytic_damage: 0.0,
-            isolytic_defense: hostile_r.isolytic_defense,
-            weapons: vec![],
-        };
+        let defender = defender_combatant_from_hostile_record(
+            hostile,
+            hostile_r,
+            defender_mitigation,
+            ship_r.ship_type(),
+        );
         let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
             Some(defender),
@@ -822,26 +835,12 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             attacker_stats,
             hostile_r.ship_type(),
         );
-        // Hostile offensive stats on `HostileRecord` are not yet mapped into `Combatant`.
-        let defender = Combatant {
-            id: hostile.to_string(),
-            attack: 0.0,
-            mitigation: defender_mitigation,
-            pierce: 0.0,
-            crit_chance: 0.0,
-            crit_multiplier: 1.0,
-            proc_chance: 0.0,
-            proc_multiplier: 1.0,
-            end_of_round_damage: 0.0,
-            hull_health: hostile_r.hull_health,
-            shield_health: hostile_r.shield_health,
-            shield_mitigation: hostile_r.shield_mitigation.unwrap_or(0.8),
-            apex_barrier: hostile_r.apex_barrier,
-            apex_shred: 0.0,
-            isolytic_damage: 0.0,
-            isolytic_defense: hostile_r.isolytic_defense,
-            weapons: vec![],
-        };
+        let defender = defender_combatant_from_hostile_record(
+            hostile,
+            hostile_r,
+            defender_mitigation,
+            ship_r.ship_type(),
+        );
         let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
             Some(defender),
@@ -894,11 +893,13 @@ fn infer_ops_level(
 mod tests {
     use super::*;
     use std::fs;
+    use std::path::Path;
     use std::sync::Mutex;
 
     use crate::combat::abilities::{AbilityClass, CrewSeat};
     use crate::combat::AttackerStats;
     use crate::data::data_registry::DataRegistry;
+    use crate::data::hostile::load_hostile_record;
     use crate::data::import::BuildingEntry;
     use crate::data::profile_index::{
         create_profile, delete_profile, load_profile_index, profile_path, PROFILE_JSON,
@@ -909,6 +910,25 @@ mod tests {
     use uuid::Uuid;
 
     static SHARED_SCENARIO_RESEARCH_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn bundled_numeric_hostile_maps_weapon_components_for_scenario() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/hostiles");
+        let rec = load_hostile_record(&dir, "2918121098").expect("bundled hostile 2918121098.json");
+        let w = rec.weapons_from_components();
+        assert!(
+            !w.is_empty(),
+            "expected data.stfc.space style hostile to yield per-weapon stats from components"
+        );
+        let d = defender_combatant_from_hostile_record(
+            "2918121098",
+            &rec,
+            0.5,
+            ShipType::Explorer,
+        );
+        assert!(!d.weapons.is_empty());
+        assert!(d.pierce > 0.0, "counter pierce-through should be positive");
+    }
 
     #[test]
     fn ship_abilities_merged_when_shared_scenario_fallback_no_cached_defender() {
@@ -937,6 +957,7 @@ mod tests {
                 condition_morale: false,
                 condition_defender_burning: false,
                 condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
             }]),
         };
 

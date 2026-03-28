@@ -6,7 +6,8 @@ Uses each ability row's `loca_id` when present, else the ship-level `loca_id`, w
 translations-ship_buffs `ship_ability_desc`.
 
 Optional catalog fields (omit when false):
-  condition_morale, condition_defender_burning, condition_defender_hull_breach
+  condition_morale, condition_defender_burning, condition_defender_hull_breach,
+  condition_opponent_faction (slug matching OpponentFactionTag serde names, e.g. klingon)
 
 Usage (repo root):  python3 scripts/generate_full_ship_ability_catalog.py
 """
@@ -56,6 +57,7 @@ def modeled(
     condition_morale: bool = False,
     condition_defender_burning: bool = False,
     condition_defender_hull_breach: bool = False,
+    condition_opponent_faction: str | None = None,
 ) -> dict:
     d: dict = {
         "timing": timing,
@@ -71,7 +73,31 @@ def modeled(
         d["condition_defender_burning"] = True
     if condition_defender_hull_breach:
         d["condition_defender_hull_breach"] = True
+    if condition_opponent_faction:
+        d["condition_opponent_faction"] = condition_opponent_faction
     return d
+
+
+def opponent_faction_slug_from_against_clause(p: str) -> str | None:
+    """Plain lowercased ability text → catalog `condition_opponent_faction` slug (serde snake_case)."""
+    # Longer / compound phrases before single tokens where needed
+    if "against mirror" in p or "mirror universe" in p:
+        return "mirror_universe"
+    if "against cardassian" in p:
+        return "cardassian"
+    if "against romulan" in p:
+        return "romulan"
+    if "against klingon" in p:
+        return "klingon"
+    if "against federation" in p or "against federat" in p:
+        return "federation"
+    if "against borg" in p:
+        return "borg"
+    if "against augment" in p:
+        return "augment"
+    if "against dominion" in p:
+        return "dominion"
+    return None
 
 
 def classify_single_ability(_loca: int, text: str) -> dict:
@@ -315,12 +341,37 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             ignore_upstream_value_is_percentage=True,
         )
 
+    # Faction-tagged weapon damage — gated on defender faction in sim (`condition_opponent_faction`).
+    if (
+        "weapon damage" in p
+        and "increas" in p
+        and "against" in p
+        and (
+            "romulan" in p
+            or "klingon" in p
+            or "federation" in p
+            or "borg" in p
+            or "cardassian" in p
+            or "mirror" in p
+            or "augment" in p
+            or "dominion" in p
+        )
+        and "if the opponent" not in p
+    ):
+        slug = opponent_faction_slug_from_against_clause(p)
+        if slug:
+            return modeled(
+                "combat_begin",
+                "attack_multiplier",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                condition_opponent_faction=slug,
+            )
+
     # Opponent class / tag / role (sim does not branch)
     if "if the opponent" in p or "if the opponent's ship is" in p:
         return dict(NOOP)
     if "delta quadrant" in p or "[dq]" in p:
-        return dict(NOOP)
-    if "klingon" in p and "against" in p:
         return dict(NOOP)
     if "when defending" in p or "when defend" in p:
         return dict(NOOP)
@@ -418,7 +469,8 @@ def main() -> None:
             "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. "
             "Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. "
             "Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; "
-            "optional condition_morale, condition_defender_burning, condition_defender_hull_breach. "
+            "optional condition_morale, condition_defender_burning, condition_defender_hull_breach, "
+            "condition_opponent_faction. "
             "combat_noop: catalogued only. See src/data/ship_ability_resolve.rs."
         ),
         "entries": dict(sorted(entries.items(), key=lambda kv: int(kv[0]))),

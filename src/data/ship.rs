@@ -45,6 +45,9 @@ pub struct ShipAbility {
     /// Gated on defender Hull Breach state.
     #[serde(default)]
     pub condition_defender_hull_breach: bool,
+    /// Gated on defending hostile faction slug (`klingon`, `romulan`, …); matches [`crate::combat::OpponentFactionTag`] serde names.
+    #[serde(default)]
+    pub condition_opponent_faction: Option<String>,
 }
 
 #[derive(Debug, Clone)]
