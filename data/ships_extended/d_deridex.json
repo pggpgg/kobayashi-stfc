@@ -617,5 +617,17 @@
       "shield": 609993.0,
       "health": 521250.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "1247530723",
+      "timing": "round_start",
+      "effect_type": "shots",
+      "value": 0.1,
+      "duration_rounds": 1,
+      "condition_morale": false,
+      "condition_defender_burning": true,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

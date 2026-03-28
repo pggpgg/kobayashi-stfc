@@ -617,5 +617,17 @@
       "shield": 682615.0,
       "health": 1193485.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "47269853",
+      "timing": "combat_begin",
+      "effect_type": "hostile_crit_damage_reduction",
+      "value": 0.02,
+      "duration_rounds": 5,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

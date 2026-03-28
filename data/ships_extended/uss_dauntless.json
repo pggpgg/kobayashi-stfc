@@ -830,5 +830,47 @@
       "shield": 90750.0,
       "health": 99825.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "1905773933",
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value": 1450.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    },
+    {
+      "id": "3658971555",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    },
+    {
+      "id": "915894112",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    },
+    {
+      "id": "985810609",
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value": 40000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

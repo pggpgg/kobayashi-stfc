@@ -617,5 +617,17 @@
       "shield": 639381.0,
       "health": 581260.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "1150511104",
+      "timing": "receive_damage",
+      "effect_type": "pierce_bonus",
+      "value": 0.4,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

@@ -830,5 +830,47 @@
       "shield": 0.0,
       "health": 0.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "4234400629",
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value": 5000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    },
+    {
+      "id": "2747851475",
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value": 500000000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    },
+    {
+      "id": "4214885989",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    },
+    {
+      "id": "953555085",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

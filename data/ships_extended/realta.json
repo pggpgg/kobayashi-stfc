@@ -193,5 +193,17 @@
       "shield": 72.38,
       "health": 129.36
     }
+  ],
+  "abilities": [
+    {
+      "id": "987222969",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }

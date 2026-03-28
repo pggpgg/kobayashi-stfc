@@ -923,5 +923,17 @@
       "shield": 3418661.0,
       "health": 3418661.0
     }
+  ],
+  "abilities": [
+    {
+      "id": "3682502332",
+      "timing": "combat_begin",
+      "effect_type": "pierce_bonus",
+      "value": 10.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false
+    }
   ]
 }
