@@ -10,7 +10,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::combat::{DefenderStats, ShipType};
+use crate::combat::{AttackerStats, DefenderStats, OpponentFactionTag, ShipType, WeaponStats};
 
 #[derive(Debug, Clone)]
 pub struct Hostile {
@@ -164,9 +164,157 @@ impl HostileRecord {
         }
     }
 
+    /// Piercing + accuracy for mitigation / pierce-through formulas when this hostile is the attacker
+    /// (e.g. counter-fire vs the player ship).
+    pub fn to_attacker_stats(&self) -> AttackerStats {
+        AttackerStats {
+            armor_piercing: self.armor_piercing,
+            shield_piercing: self.shield_piercing,
+            accuracy: self.accuracy,
+        }
+    }
+
+    /// Per-weapon stats from normalized `components` entries whose `data.tag` is `"Weapon"`.
+    /// Matches the mean-of-min/max convention used for player ships in upstream normalization.
+    /// Empty when `components` is empty or has no weapon rows (legacy hostiles).
+    pub fn weapons_from_components(&self) -> Vec<WeaponStats> {
+        let mut out = Vec::new();
+        for comp in &self.components {
+            let data = comp.as_object().and_then(|o| o.get("data")).unwrap_or(comp);
+            if let Some(w) = weapon_stats_from_component_data(data) {
+                out.push(w);
+            }
+        }
+        out
+    }
+
+    /// Scalar attack when [`Self::weapons_from_components`] is empty: prefer `stat_attack`, then `dpr`.
+    pub fn scalar_attack_fallback(&self) -> f64 {
+        let a = self.stat_attack;
+        if a > 0.0 {
+            a
+        } else if self.dpr > 0.0 {
+            self.dpr
+        } else {
+            0.0
+        }
+    }
+
+    /// Additive pierce damage-through bonus for this hostile firing at the player (engine counter-attack path).
+    ///
+    /// **Assumption:** [`ShipRecord`] does not yet expose player hull `DefenderStats` (armor / deflection /
+    /// dodge components). We use [`DefenderStats::default`] (zeros) so hostile piercing is still
+    /// reflected in the pierce-through term; the player’s profile-based [`crate::combat::Combatant::mitigation`]
+    /// continues to apply separately on incoming fire.
+    pub fn counter_pierce_damage_through_bonus(&self, player_ship_type: ShipType) -> f64 {
+        crate::combat::pierce_damage_through_bonus(
+            DefenderStats {
+                armor: 0.0,
+                shield_deflection: 0.0,
+                dodge: 0.0,
+            },
+            self.to_attacker_stats(),
+            player_ship_type,
+        )
+    }
+
+    /// Faction tag for defender-context ship abilities ("weapon damage vs Klingon", etc.).
+    ///
+    /// Prefers mapped upstream `faction.id` values; when `id` is unknown (`-1`), uses `faction.loca_id`
+    /// where that id matches `translations-factions.json` `faction_name` rows (e.g. 2 = Klingon).
+    /// Unmapped combinations → [`OpponentFactionTag::Unknown`].
+    pub fn opponent_faction_tag(&self) -> OpponentFactionTag {
+        let Some(f) = self.faction.as_ref() else {
+            return OpponentFactionTag::Unknown;
+        };
+        opponent_faction_from_upstream_id(f.id)
+            .or_else(|| f.loca_id.and_then(opponent_faction_from_faction_loca_id))
+            .unwrap_or(OpponentFactionTag::Unknown)
+    }
+
     pub fn ship_type(&self) -> ShipType {
         ship_class_to_type(&self.ship_class)
     }
+}
+
+fn opponent_faction_from_upstream_id(id: i64) -> Option<OpponentFactionTag> {
+    match id {
+        2064723306 => Some(OpponentFactionTag::Federation),
+        4153667145 => Some(OpponentFactionTag::Klingon),
+        669838839 => Some(OpponentFactionTag::Romulan),
+        2706737293 | 2943562711 | 356485724 => Some(OpponentFactionTag::Borg),
+        3536012672 => Some(OpponentFactionTag::Cardassian),
+        2504833658 | 1645257079 => Some(OpponentFactionTag::MirrorUniverse),
+        1742105784 => Some(OpponentFactionTag::Actian),
+        1530685377 => Some(OpponentFactionTag::Dominion),
+        133823197 => Some(OpponentFactionTag::GornHuntingPack),
+        4138978039 => Some(OpponentFactionTag::ExBorg),
+        157476182 => Some(OpponentFactionTag::Assimilated),
+        2352723133 | 2745774076 | 505966333 => Some(OpponentFactionTag::Xindi),
+        2489857622 => Some(OpponentFactionTag::Swarm),
+        1125688202 => Some(OpponentFactionTag::Breen),
+        _ => None,
+    }
+}
+
+fn opponent_faction_from_faction_loca_id(loca: u64) -> Option<OpponentFactionTag> {
+    match loca {
+        1 => Some(OpponentFactionTag::Federation),
+        2 => Some(OpponentFactionTag::Klingon),
+        3 => Some(OpponentFactionTag::Romulan),
+        11 => Some(OpponentFactionTag::Augment),
+        12 => Some(OpponentFactionTag::Swarm),
+        14 => Some(OpponentFactionTag::Assimilated),
+        17 => Some(OpponentFactionTag::Actian),
+        19 => Some(OpponentFactionTag::Cardassian),
+        21 => Some(OpponentFactionTag::Dominion),
+        24 => Some(OpponentFactionTag::ExBorg),
+        30 | 31 | 32 => Some(OpponentFactionTag::Xindi),
+        33 => Some(OpponentFactionTag::GornHuntingPack),
+        34 | 36 => Some(OpponentFactionTag::MirrorUniverse),
+        84003 => Some(OpponentFactionTag::Borg),
+        80004 => Some(OpponentFactionTag::Breen),
+        _ => None,
+    }
+}
+
+/// Parse one `components[].data` value into weapon stats when `tag == "Weapon"` and damage is present.
+fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
+    let obj = data.as_object()?;
+    let tag = obj.get("tag")?.as_str()?;
+    if !tag.eq_ignore_ascii_case("weapon") {
+        return None;
+    }
+    let min = obj
+        .get("minimum_damage")
+        .or_else(|| obj.get("min_damage"))
+        .and_then(json_f64);
+    let max = obj
+        .get("maximum_damage")
+        .or_else(|| obj.get("max_damage"))
+        .and_then(json_f64);
+    let attack = match (min, max) {
+        (Some(a), Some(b)) => (a + b) / 2.0,
+        (None, Some(b)) => b,
+        (Some(a), None) => a,
+        (None, None) => obj
+            .get("damage")
+            .or_else(|| obj.get("dps"))
+            .and_then(json_f64)?,
+    };
+    if !attack.is_finite() || attack <= 0.0 {
+        return None;
+    }
+    let shots = obj
+        .get("shots")
+        .and_then(|v| v.as_u64().map(|u| u as u32).or_else(|| v.as_i64().map(|i| i.max(0) as u32)));
+    Some(WeaponStats { attack, shots })
+}
+
+fn json_f64(v: &Value) -> Option<f64> {
+    v.as_f64()
+        .or_else(|| v.as_i64().map(|i| i as f64))
+        .or_else(|| v.as_u64().map(|u| u as f64))
 }
 
 pub fn ship_class_to_type(ship_class: &str) -> ShipType {
@@ -210,6 +358,26 @@ pub fn load_hostile_record(data_dir: &Path, id: &str) -> Option<HostileRecord> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::combat::{OpponentFactionTag, ShipType};
+
+    #[test]
+    fn opponent_faction_tag_maps_upstream_faction_id_and_loca_fallback() {
+        let j = r#"{
+            "id":"k1","hostile_name":"K","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":4153667145,"loca_id":2}
+        }"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        assert_eq!(r.opponent_faction_tag(), OpponentFactionTag::Klingon);
+
+        let j2 = r#"{
+            "id":"f1","hostile_name":"F","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":-1,"loca_id":1}
+        }"#;
+        let r2: HostileRecord = serde_json::from_str(j2).unwrap();
+        assert_eq!(r2.opponent_faction_tag(), OpponentFactionTag::Federation);
+    }
 
     #[test]
     fn hostile_record_deserializes_legacy_minimal_json() {
@@ -232,5 +400,33 @@ mod tests {
         assert_eq!(hull_type_raw_to_ship_class(0), Some("battleship"));
         assert_eq!(hull_type_raw_to_ship_class(3), Some("explorer"));
         assert_eq!(hull_type_raw_to_ship_class(99), None);
+    }
+
+    #[test]
+    fn weapons_from_components_parses_weapon_tag_and_shots() {
+        let j = r#"{
+            "id":"h1","hostile_name":"X","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "components":[
+                {"data":{"tag":"Weapon","minimum_damage":100,"maximum_damage":200,"shots":3}}
+            ]
+        }"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        let w = r.weapons_from_components();
+        assert_eq!(w.len(), 1);
+        assert!((w[0].attack - 150.0).abs() < 1e-9);
+        assert_eq!(w[0].shots, Some(3));
+    }
+
+    #[test]
+    fn counter_pierce_uses_attacker_stats() {
+        let j = r#"{
+            "id":"h2","hostile_name":"Y","level":1,"ship_class":"explorer",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "armor_piercing":500.0,"shield_piercing":400.0,"accuracy":300.0
+        }"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        let p = r.counter_pierce_damage_through_bonus(ShipType::Explorer);
+        assert!(p > 0.0 && p <= crate::combat::PIERCE_CAP);
     }
 }

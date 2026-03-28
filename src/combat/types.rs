@@ -182,6 +182,31 @@ pub struct CombatEvent {
     pub weapon_index: Option<u32>,
 }
 
+/// Major hostile / opponent faction for gating ship abilities ("against Klingon", etc.).
+/// Derived from data.stfc.space hostile `faction` + `translations-factions` `faction_name` loca ids.
+/// Unmapped or missing faction → [`OpponentFactionTag::Unknown`] (faction-gated abilities do not fire).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum OpponentFactionTag {
+    #[default]
+    Unknown,
+    Federation,
+    Klingon,
+    Romulan,
+    Borg,
+    Cardassian,
+    Augment,
+    Dominion,
+    MirrorUniverse,
+    Assimilated,
+    ExBorg,
+    Swarm,
+    Actian,
+    GornHuntingPack,
+    Xindi,
+    Breen,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TraceMode {

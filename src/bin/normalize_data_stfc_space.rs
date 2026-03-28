@@ -29,6 +29,8 @@ struct AbilityCatalogEntry {
     condition_defender_burning: bool,
     #[serde(default)]
     condition_defender_hull_breach: bool,
+    #[serde(default)]
+    condition_opponent_faction: Option<String>,
 }
 
 use kobayashi::data::ship::{
@@ -219,6 +221,7 @@ fn raw_to_extended(
                 condition_morale: entry.condition_morale,
                 condition_defender_burning: entry.condition_defender_burning,
                 condition_defender_hull_breach: entry.condition_defender_hull_breach,
+                condition_opponent_faction: entry.condition_opponent_faction.clone(),
             });
         }
         if out.is_empty() {

@@ -7,7 +7,7 @@ use std::path::Path;
 use kobayashi::combat::{
     export_to_combat_input, parse_fight_export, simulate_combat, Ability, AbilityClass,
     AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, ShipType,
-    SimulationConfig, TimingWindow, TraceMode, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    SimulationConfig, TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -81,6 +81,64 @@ fn calibration_scenario_outcome_within_tolerance() {
     assert!(
         result.defender_hull_remaining >= 0.0 && result.defender_hull_remaining <= 400.0,
         "defender_hull_remaining should be in [0, 400] (defender max hull)"
+    );
+}
+
+/// Regression: defender counter-fire (per-weapon) must reduce attacker hull when hostile offense is non-trivial.
+/// Mirrors scenario wiring from [`HostileRecord::weapons_from_components`] + counter pierce path in `engine.rs`.
+#[test]
+fn bidirectional_counter_fire_reduces_attacker_hull() {
+    let attacker = Combatant {
+        id: "player_ship".to_string(),
+        attack: 120.0,
+        mitigation: 0.12,
+        pierce: 0.1,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 2000.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "hostile".to_string(),
+        attack: 0.0,
+        mitigation: 0.35,
+        pierce: 0.07,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1.0e9,
+        shield_health: 1.0e9,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 550.0,
+            shots: Some(2),
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 10,
+        seed: 99,
+        trace_mode: TraceMode::Off,
+    };
+    let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    assert!(
+        result.attacker_hull_remaining < attacker.hull_health - 100.0,
+        "expected counter-fire to consume attacker hull; remaining={}",
+        result.attacker_hull_remaining
     );
 }
 

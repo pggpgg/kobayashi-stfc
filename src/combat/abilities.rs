@@ -1,3 +1,5 @@
+use crate::combat::types::OpponentFactionTag;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AbilityClass {
     CaptainManeuver,
@@ -113,6 +115,8 @@ pub struct CombatContext {
     pub defender_burning_active: bool,
     /// True when the defender still has a Hull Breach duration from the attacker's procs.
     pub defender_hull_breach_active: bool,
+    /// Faction of the defending ship (hostile) in PvE; used for "against Klingon" style abilities.
+    pub defender_faction: OpponentFactionTag,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -127,6 +131,8 @@ pub enum AbilityCondition {
     DefenderBurning,
     /// True when [CombatContext::defender_hull_breach_active].
     DefenderHullBreach,
+    /// True when the defending hostile’s faction matches (see [`CombatContext::defender_faction`]).
+    DefenderFactionIs(OpponentFactionTag),
     And(Vec<AbilityCondition>),
     Or(Vec<AbilityCondition>),
 }
@@ -158,6 +164,7 @@ impl AbilityCondition {
             Self::MoraleActive => ctx.attacker_morale_active,
             Self::DefenderBurning => ctx.defender_burning_active,
             Self::DefenderHullBreach => ctx.defender_hull_breach_active,
+            Self::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
             Self::And(conds) => conds.iter().all(|c| c.evaluate(ctx)),
             Self::Or(conds) => conds.iter().any(|c| c.evaluate(ctx)),
         }
