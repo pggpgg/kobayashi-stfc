@@ -388,6 +388,11 @@
       "file": "86_signal_observatory"
     },
     {
+      "id": "building_88",
+      "building_name": "The Warp Dive Bar",
+      "file": "88_the_warp_dive_bar"
+    },
+    {
       "id": "building_1000",
       "building_name": "Assembly Chambers",
       "file": "1000_assembly_chambers"
