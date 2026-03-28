@@ -111,6 +111,7 @@ mod tests {
                 isolytic_defense: 0.0,
                 weapons: vec![],
             },
+            defender_crew: CrewConfiguration { seats: vec![] },
             crew: CrewConfiguration { seats: vec![] },
             rounds: 3,
             defender_hull: 500.0,

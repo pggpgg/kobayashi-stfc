@@ -267,7 +267,7 @@ impl EffectAccumulator {
         }
     }
 
-    fn add_effect(
+    pub(crate) fn add_effect(
         &mut self,
         timing: TimingWindow,
         effect: AbilityEffect,
@@ -283,6 +283,8 @@ impl EffectAccumulator {
                     EffectStatKey::PreAttackPierceBonus,
                     value,
                 )),
+                AbilityEffect::ProcAttackMultiplier { .. } => {}
+                AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -343,6 +345,8 @@ impl EffectAccumulator {
                     EffectStatKey::AttackPhaseDamage,
                     value * base_attack * 0.5,
                 )),
+                AbilityEffect::ProcAttackMultiplier { .. } => {}
+                AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -403,6 +407,8 @@ impl EffectAccumulator {
                     EffectStatKey::DefenseMitigationBonus,
                     value,
                 )),
+                AbilityEffect::ProcAttackMultiplier { .. } => {}
+                AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -449,6 +455,8 @@ impl EffectAccumulator {
                     EffectStatKey::RoundEndDamage,
                     value,
                 )),
+                AbilityEffect::ProcAttackMultiplier { .. } => {}
+                AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -517,6 +525,8 @@ impl EffectAccumulator {
                     EffectStatKey::PreAttackPierceBonus,
                     value,
                 )),
+                AbilityEffect::ProcAttackMultiplier { .. } => {}
+                AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -642,6 +652,16 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::PierceBonus(value) => {
             AbilityEffect::PierceBonus(value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
+        AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
+            AbilityEffect::ProcAttackMultiplier {
+                chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                multiplier,
+            }
+        }
+        AbilityEffect::ProcPierceBonus { chance, bonus } => AbilityEffect::ProcPierceBonus {
+            chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            bonus: bonus * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+        },
         AbilityEffect::Morale(chance) => {
             AbilityEffect::Morale(chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }

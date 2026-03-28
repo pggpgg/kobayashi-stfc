@@ -1,0 +1,245 @@
+//! Resolve hostile upstream `ability[]` entries into combat [`CrewSeatContext`] rows.
+//!
+//! Hostile records keep the raw upstream JSON (`HostileRecord::ability`). We only model defender-side
+//! effects when an upstream ability id is explicitly mapped in a catalog, to avoid guessing mechanics.
+//!
+//! Catalog format mirrors `ship_ability_catalog.json` but is scoped to hostiles:
+//! `data/upstream/data-stfc-space/hostile_ability_catalog.json`.
+//!
+//! Supported effect types are intentionally minimal and reuse existing `AbilityEffect` variants so
+//! defender abilities can feed the same stacking/effect accumulator logic as officer + ship abilities.
+
+use serde::Deserialize;
+use serde_json::Value;
+use std::collections::HashMap;
+
+use crate::combat::abilities::{
+    Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
+};
+use crate::combat::CrewConfiguration;
+use crate::data::ship_ability_resolve::parse_ship_ability_timing;
+
+pub const DEFAULT_HOSTILE_ABILITY_CATALOG_PATH: &str =
+    "data/upstream/data-stfc-space/hostile_ability_catalog.json";
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct HostileAbilityCatalog {
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub entries: HashMap<String, HostileAbilityCatalogEntry>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct HostileAbilityCatalogEntry {
+    pub timing: String,
+    pub effect_type: String,
+    #[serde(default)]
+    pub value_is_percentage: bool,
+    #[serde(default)]
+    pub ignore_upstream_value_is_percentage: bool,
+    #[serde(default)]
+    pub value_override: Option<f64>,
+    #[serde(default)]
+    pub duration_rounds: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvedHostileAbility {
+    pub id: String,
+    pub chance: f64,
+    pub value: f64,
+    pub upstream_value_is_percentage: Option<bool>,
+}
+
+pub fn load_hostile_ability_catalog(path: &str) -> Option<HostileAbilityCatalog> {
+    let s = std::fs::read_to_string(path).ok()?;
+    serde_json::from_str(&s).ok()
+}
+
+fn json_f64(v: &Value) -> Option<f64> {
+    v.as_f64()
+        .or_else(|| v.as_i64().map(|i| i as f64))
+        .or_else(|| v.as_u64().map(|u| u as f64))
+}
+
+fn parse_one_upstream_ability(v: &Value) -> Option<ResolvedHostileAbility> {
+    let obj = v.as_object()?;
+    let id = obj
+        .get("id")
+        .and_then(|x| x.as_u64().or_else(|| x.as_i64().filter(|&i| i >= 0).map(|i| i as u64)))?
+        .to_string();
+    let upstream_value_is_percentage = obj.get("value_is_percentage").and_then(|b| b.as_bool());
+    let first = obj.get("values")?.as_array()?.first()?;
+    let chance = first.get("chance").and_then(json_f64).unwrap_or(100.0);
+    let value = first.get("value").and_then(json_f64).unwrap_or(0.0);
+    Some(ResolvedHostileAbility {
+        id,
+        chance,
+        value,
+        upstream_value_is_percentage,
+    })
+}
+
+fn normalize_probability(value: f64) -> f64 {
+    if (1.0..=100.0).contains(&value) {
+        value / 100.0
+    } else {
+        value.clamp(0.0, 1.0)
+    }
+}
+
+fn normalize_catalog_value(
+    catalog_value_is_percentage: bool,
+    ignore_upstream_value_is_percentage: bool,
+    upstream_value_is_percentage: Option<bool>,
+    value: f64,
+) -> f64 {
+    if catalog_value_is_percentage {
+        let upstream_is_pct = if ignore_upstream_value_is_percentage {
+            true
+        } else {
+            upstream_value_is_percentage.unwrap_or(true)
+        };
+        if upstream_is_pct {
+            value / 100.0
+        } else {
+            value
+        }
+    } else {
+        value
+    }
+}
+
+fn hostile_ability_effect_from_catalog(
+    effect_type: &str,
+    timing: TimingWindow,
+    chance: f64,
+    value: f64,
+    duration_rounds: Option<u32>,
+) -> Option<AbilityEffect> {
+    // We intentionally keep this small: these are the effects we can safely apply to the defender’s
+    // return fire without additional engine mechanics.
+    match effect_type.trim().to_lowercase().replace('-', "_").as_str() {
+        "combat_noop" | "unmodeled" | "not_applicable" => None,
+        "attack_multiplier" | "weapon_damage" | "attack" => {
+            Some(AbilityEffect::ProcAttackMultiplier {
+                chance: normalize_probability(chance),
+                multiplier: value,
+            })
+        }
+        "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
+            Some(AbilityEffect::ProcPierceBonus {
+                chance: normalize_probability(chance),
+                bonus: value,
+            })
+        }
+        "hostile_crit_damage_reduction" | "reduce_attacker_crit_damage" => {
+            // Defender-side crit reduction doesn't exist; but we can reuse HostileCritDamageReduction
+            // to apply to attacker crits only if engine threads it. Out of scope for task 2.
+            let _ = (timing, chance, duration_rounds);
+            None
+        }
+        _ => {
+            let _ = (timing, chance, duration_rounds);
+            None
+        }
+    }
+}
+
+pub fn hostile_abilities_to_defender_crew(
+    upstream_abilities: &[Value],
+    catalog: Option<&HostileAbilityCatalog>,
+) -> CrewConfiguration {
+    let Some(catalog) = catalog else {
+        return CrewConfiguration { seats: Vec::new() };
+    };
+    if upstream_abilities.is_empty() || catalog.entries.is_empty() {
+        return CrewConfiguration { seats: Vec::new() };
+    }
+
+    let mut seats: Vec<CrewSeatContext> = Vec::new();
+    for raw in upstream_abilities {
+        let Some(parsed) = parse_one_upstream_ability(raw) else {
+            continue;
+        };
+        let Some(entry) = catalog.entries.get(parsed.id.as_str()) else {
+            continue;
+        };
+        let Some(timing) = parse_ship_ability_timing(&entry.timing) else {
+            continue;
+        };
+        let normalized_value = entry
+            .value_override
+            .unwrap_or_else(|| normalize_catalog_value(
+                entry.value_is_percentage,
+                entry.ignore_upstream_value_is_percentage,
+                parsed.upstream_value_is_percentage,
+                parsed.value,
+            ));
+        let chance = parsed.chance;
+        let Some(effect) = hostile_ability_effect_from_catalog(
+            &entry.effect_type,
+            timing,
+            chance,
+            normalized_value,
+            entry.duration_rounds,
+        ) else {
+            continue;
+        };
+        seats.push(CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: parsed.id.clone(),
+                class: AbilityClass::ShipAbility,
+                timing,
+                boostable: false,
+                effect,
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        });
+    }
+    CrewConfiguration { seats }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_one_upstream_ability_reads_id_values_and_flags() {
+        let v: Value = serde_json::from_str(
+            r#"{"id":123,"value_is_percentage":true,"values":[{"chance":25,"value":10}]}"#,
+        )
+        .unwrap();
+        let p = parse_one_upstream_ability(&v).unwrap();
+        assert_eq!(p.id, "123");
+        assert_eq!(p.chance, 25.0);
+        assert_eq!(p.value, 10.0);
+        assert_eq!(p.upstream_value_is_percentage, Some(true));
+    }
+
+    #[test]
+    fn abilities_resolve_only_when_catalog_has_entry_and_timing_is_valid() {
+        let catalog: HostileAbilityCatalog = serde_json::from_str(
+            r#"{
+              "entries": {
+                "123": {"timing":"round_start","effect_type":"attack_multiplier","value_is_percentage":true,"ignore_upstream_value_is_percentage":false}
+              }
+            }"#,
+        )
+        .unwrap();
+        let raw: Vec<Value> = vec![serde_json::from_str(
+            r#"{"id":123,"value_is_percentage":true,"values":[{"chance":100,"value":10}]}"#,
+        )
+        .unwrap()];
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        assert_eq!(crew.seats.len(), 1);
+        assert_eq!(crew.seats[0].ability.name, "123");
+    }
+}
+

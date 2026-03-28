@@ -41,6 +41,18 @@ pub enum CrewSeat {
 pub enum AbilityEffect {
     AttackMultiplier(f64),
     PierceBonus(f64),
+    /// Chance-gated multiplier that applies to this combatant's shot calculation when evaluated.
+    /// Used for hostile-side (defender) upstream abilities on return fire.
+    ProcAttackMultiplier {
+        chance: f64,
+        multiplier: f64,
+    },
+    /// Chance-gated pierce bonus that applies when evaluated.
+    /// Used for hostile-side (defender) upstream abilities on return fire.
+    ProcPierceBonus {
+        chance: f64,
+        bonus: f64,
+    },
     Morale(f64),
     Assimilated {
         chance: f64,
