@@ -29,7 +29,8 @@ use crate::optimizer::crew_generator::{
     resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
-    replay_optimize_iteration_with_registry, run_monte_carlo_with_registry, SimulationResult,
+    compare_crews_monte_carlo_with_registry, replay_optimize_iteration_with_registry,
+    run_monte_carlo_with_registry, SimulationResult,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -322,6 +323,51 @@ pub struct SimulateStats {
     pub win_rate_95_ci: Option<[f64; 2]>,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct CompareCrewsRequest {
+    pub ship: String,
+    pub hostile: String,
+    pub ship_tier: Option<u32>,
+    pub ship_level: Option<u32>,
+    pub crews: Vec<SimulateCrew>,
+    #[serde(default)]
+    pub num_sims: Option<u32>,
+    #[serde(default)]
+    pub seed: Option<u64>,
+    #[serde(default)]
+    pub below_decks_slots: Option<u32>,
+    /// Traced trials per crew (capped) to estimate proc-like event rates; 0 = skip.
+    #[serde(default)]
+    pub proc_sample_trials: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CompareCrewsResponse {
+    pub status: &'static str,
+    pub seed: u64,
+    pub crews: Vec<crate::optimizer::monte_carlo::CompareCrewDistribution>,
+    pub using_placeholder_combatants: bool,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+}
+
+#[derive(Debug)]
+pub enum CompareCrewsError {
+    Parse(serde_json::Error),
+    Validation(String),
+}
+
+impl fmt::Display for CompareCrewsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Parse(e) => write!(f, "{e}"),
+            Self::Validation(s) => f.write_str(s),
+        }
+    }
+}
+
+impl std::error::Error for CompareCrewsError {}
+
 fn officer_id_to_name(id: &str, officers: &[(String, String)]) -> String {
     officers
         .iter()
@@ -495,6 +541,82 @@ pub fn simulate_payload(
         warnings,
     };
     serde_json::to_string_pretty(&response).map_err(SimulateError::Parse)
+}
+
+pub fn compare_crews_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, CompareCrewsError> {
+    let req: CompareCrewsRequest = serde_json::from_str(body).map_err(CompareCrewsError::Parse)?;
+    let crew_count = req.crews.len();
+    if !(2..=5).contains(&crew_count) {
+        return Err(CompareCrewsError::Validation(
+            "crews must contain between 2 and 5 entries".to_string(),
+        ));
+    }
+    let num_sims = req.num_sims.unwrap_or(3000).min(20_000).max(200);
+    let seed = req.seed.unwrap_or(0);
+    if let Some(n) = req.below_decks_slots {
+        let lo = crate::optimizer::crew_generator::MIN_BELOW_DECKS_SLOTS as u32;
+        let hi = crate::optimizer::crew_generator::MAX_BELOW_DECKS_SLOTS as u32;
+        if !(lo..=hi).contains(&n) {
+            return Err(CompareCrewsError::Validation(format!(
+                "below_decks_slots must be between {lo} and {hi}"
+            )));
+        }
+    }
+    let proc_sample = req.proc_sample_trials.unwrap_or(0).min(150);
+    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, req.below_decks_slots);
+
+    let officers: Vec<(String, String)> = registry
+        .officers()
+        .iter()
+        .map(|o| (o.id.clone(), o.name.clone()))
+        .collect();
+
+    let mut candidates = Vec::with_capacity(crew_count);
+    for c in &req.crews {
+        let cand = crew_candidate_from_officer_fields(
+            c.captain.as_deref(),
+            c.bridge.as_ref().map(|v| v.as_slice()),
+            c.below_deck.as_ref().map(|v| v.as_slice()),
+            &officers,
+            below_decks_slots,
+        )
+        .map_err(CompareCrewsError::Validation)?;
+        candidates.push(cand);
+    }
+
+    let outcome = compare_crews_monte_carlo_with_registry(
+        registry,
+        &req.ship,
+        &req.hostile,
+        req.ship_tier,
+        req.ship_level,
+        &candidates,
+        num_sims as usize,
+        seed,
+        profile_id,
+        proc_sample,
+    );
+
+    let mut warnings = Vec::new();
+    if outcome.using_placeholder_combatants {
+        warnings.push(
+            "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
+                .to_string(),
+        );
+    }
+
+    let response = CompareCrewsResponse {
+        status: "ok",
+        seed,
+        crews: outcome.crews,
+        using_placeholder_combatants: outcome.using_placeholder_combatants,
+        warnings,
+    };
+    serde_json::to_string_pretty(&response).map_err(CompareCrewsError::Parse)
 }
 
 #[derive(Debug)]

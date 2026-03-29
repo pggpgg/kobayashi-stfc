@@ -140,6 +140,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/presets/:id", get(handle_preset_get))
         // Simulate (CPU-bound, blocking pool)
         .route("/api/simulate", post(handle_simulate))
+        .route("/api/compare/crews", post(handle_compare_crews))
         // Optimize synchronous (long-running, blocking pool)
         .route("/api/optimize", post(handle_optimize))
         .route("/api/optimize/replay-seed", post(handle_optimize_replay_seed))
@@ -520,6 +521,47 @@ async fn handle_simulate(
                 .into_response()
         }
         Ok(Err(api::SimulateError::Validation(msg))) => {
+            error_json(StatusCode::BAD_REQUEST, &msg).into_response()
+        }
+        Err(e) => error_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &format!("Task panicked: {e}"),
+        )
+        .into_response(),
+    }
+}
+
+/// POST /api/compare/crews — Monte Carlo distributions for 2–5 crews (blocking pool).
+async fn handle_compare_crews(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+        Ok(p) => p,
+        Err(_) => {
+            return error_json(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "CPU job semaphore closed",
+            )
+            .into_response();
+        }
+    };
+    let profile_id = profile_id_from_request(&headers, &params);
+    let registry = state.registry.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        api::compare_crews_payload(registry.as_ref(), &body, profile_id.as_deref())
+    })
+    .await;
+    match result {
+        Ok(Ok(payload)) => ok_json(payload).into_response(),
+        Ok(Err(api::CompareCrewsError::Parse(e))) => {
+            error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))
+                .into_response()
+        }
+        Ok(Err(api::CompareCrewsError::Validation(msg))) => {
             error_json(StatusCode::BAD_REQUEST, &msg).into_response()
         }
         Err(e) => error_json(

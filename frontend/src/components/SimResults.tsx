@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
-import type { SimulateStats } from '../lib/api';
-import type { CrewRecommendation } from '../lib/api';
+import {
+  compareCrewsDistributions,
+  crewRecommendationToSimulateCrew,
+  formatApiError,
+  type CompareCrewDistribution,
+  type CrewRecommendation,
+  type SimulateStats,
+} from '../lib/api';
 
 const PER_PAGE_OPTIONS = [50, 100, 200, 500] as const;
 const DEFAULT_PER_PAGE = 50;
@@ -20,6 +26,72 @@ function formatPctWithCi(p: number, lo: number, hi: number): string {
   return `${main}\u00a0(${a}\u2013${b})`;
 }
 
+/** Scenario context for POST /api/compare/crews (Monte Carlo distributions). */
+export interface CompareWorkspaceParams {
+  ship: string;
+  hostile: string;
+  shipTier: number;
+  shipLevel: number;
+  numSims: number;
+  belowDecksSlots: number;
+  profileId: string | null;
+}
+
+function SideBySideHistograms({
+  crews,
+  title,
+  getCounts,
+}: {
+  crews: CompareCrewDistribution[];
+  title: string;
+  getCounts: (c: CompareCrewDistribution) => number[];
+}) {
+  const series = crews.map(getCounts);
+  const max = Math.max(1, ...series.flat());
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6 }}>{title}</div>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+        {crews.map((c, ci) => {
+          const vals = getCounts(c);
+          return (
+            <div key={`${c.captain}-${ci}`} style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: '0.7rem',
+                  marginBottom: 4,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {c.captain}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 80 }}>
+                {vals.map((count, i) => (
+                  <div
+                    key={i}
+                    title={String(count)}
+                    style={{
+                      flex: 1,
+                      minWidth: 2,
+                      height: `${(count / max) * 100}%`,
+                      minHeight: count > 0 ? 2 : 0,
+                      background: 'var(--accent)',
+                      opacity: 0.88,
+                      borderRadius: 1,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface SimResultsProps {
   simResult: SimulateStats | null;
   recommendations: CrewRecommendation[];
@@ -28,6 +100,7 @@ interface SimResultsProps {
   optimizeProgress: number | null;
   optimizeCrewsDone: number | null;
   optimizeTotalCrews: number | null;
+  compareWorkspace?: CompareWorkspaceParams | null;
 }
 
 export default function SimResults({
@@ -38,10 +111,15 @@ export default function SimResults({
   optimizeProgress,
   optimizeCrewsDone,
   optimizeTotalCrews,
+  compareWorkspace = null,
 }: SimResultsProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
+  const [compareDist, setCompareDist] = useState<CompareCrewDistribution[] | null>(null);
+  const [compareSeed, setCompareSeed] = useState<number | null>(null);
+  const [loadingCompareDist, setLoadingCompareDist] = useState(false);
+  const [compareDistErr, setCompareDistErr] = useState<string | null>(null);
   const hasSim = simResult != null;
   const hasRecs = recommendations.length > 0;
 
@@ -56,6 +134,12 @@ export default function SimResults({
     if (page > totalPages && totalPages >= 1) setPage(1);
   }, [totalPages, total]);
 
+  useEffect(() => {
+    setCompareDist(null);
+    setCompareSeed(null);
+    setCompareDistErr(null);
+  }, [recommendations]);
+
   const toggleSelect = (i: number) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -67,6 +151,41 @@ export default function SimResults({
 
   const selectedList = Array.from(selected).sort((a, b) => a - b);
   const showCompare = selectedList.length >= 2 && selectedList.length <= 5;
+
+  const runCompareDistributions = async () => {
+    if (!compareWorkspace || !showCompare) return;
+    setCompareDistErr(null);
+    setLoadingCompareDist(true);
+    try {
+      const crews = selectedList.map((idx) =>
+        crewRecommendationToSimulateCrew(
+          recommendations[idx],
+          compareWorkspace.belowDecksSlots,
+        ),
+      );
+      const res = await compareCrewsDistributions(
+        {
+          ship: compareWorkspace.ship,
+          hostile: compareWorkspace.hostile,
+          crews,
+          num_sims: compareWorkspace.numSims,
+          seed: Date.now() % 1_000_000_001,
+          ship_tier: compareWorkspace.shipTier,
+          ship_level: compareWorkspace.shipLevel,
+          below_decks_slots: compareWorkspace.belowDecksSlots,
+          proc_sample_trials: 60,
+        },
+        compareWorkspace.profileId,
+      );
+      setCompareDist(res.crews);
+      setCompareSeed(res.seed);
+    } catch (e) {
+      setCompareDist(null);
+      setCompareDistErr(formatApiError(e));
+    } finally {
+      setLoadingCompareDist(false);
+    }
+  };
 
   return (
     <section
@@ -323,6 +442,76 @@ export default function SimResults({
                   );
                 })}
               </div>
+              {compareWorkspace != null && compareWorkspace.ship && compareWorkspace.hostile && (
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => void runCompareDistributions()}
+                    disabled={loadingCompareDist}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      background: 'var(--accent)',
+                      border: 'none',
+                      borderRadius: 4,
+                      color: 'var(--bg)',
+                      cursor: loadingCompareDist ? 'wait' : 'pointer',
+                      opacity: loadingCompareDist ? 0.7 : 1,
+                    }}
+                  >
+                    {loadingCompareDist ? 'Running compare…' : 'Compare distributions (MC)'}
+                  </button>
+                  <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Re-runs Monte Carlo for selected crews only. Bars: rounds to win (1–20, last bucket merges tail),
+                    hull remaining on clean wins (10 bins), plus traced proc sample (~60 trials/crew).
+                  </p>
+                  {compareDistErr != null && (
+                    <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: 'salmon' }}>{compareDistErr}</p>
+                  )}
+                </div>
+              )}
+              {compareDist != null && compareDist.length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  <strong style={{ fontSize: '0.9rem' }}>Distribution comparison</strong>
+                  {compareSeed != null && (
+                    <span style={{ marginLeft: 8, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      seed={compareSeed}
+                    </span>
+                  )}
+                  <SideBySideHistograms
+                    crews={compareDist}
+                    title="Rounds to win (clean wins only; bucket 20 = 20+)"
+                    getCounts={(c) => c.rounds_histogram.map(([, n]) => n)}
+                  />
+                  <SideBySideHistograms
+                    crews={compareDist}
+                    title="Attacker hull % on clean wins (10 bins, 0–10% … 90–100%)"
+                    getCounts={(c) => c.hull_remaining_bins}
+                  />
+                  {compareDist.some((c) => c.proc_rates && Object.keys(c.proc_rates).length > 0) && (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6 }}>
+                        Proc-like events (mean count per traced trial)
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                        {compareDist.map((c, i) => (
+                          <div key={`proc-${i}`} style={{ fontSize: '0.75rem', minWidth: 120 }}>
+                            <div style={{ fontWeight: 600 }}>{c.captain}</div>
+                            <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>
+                              {Object.entries(c.proc_rates ?? {})
+                                .sort(([a], [b]) => a.localeCompare(b))
+                                .map(([k, v]) => (
+                                  <li key={k}>
+                                    {k}: {v.toFixed(2)}
+                                  </li>
+                                ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </>

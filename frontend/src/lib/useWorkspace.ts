@@ -447,5 +447,6 @@ export function useWorkspace() {
     setRightPanelCollapsed,
     error,
     setError,
+    activeProfileId,
   };
 }

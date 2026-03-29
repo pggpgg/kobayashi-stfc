@@ -254,6 +254,78 @@ export async function simulate(
   return res.json();
 }
 
+/** Map optimize recommendation row to simulate/compare crew JSON (officer names). */
+export function crewRecommendationToSimulateCrew(
+  r: CrewRecommendation,
+  belowDecksSlots: number,
+): { captain: string; bridge: (string | null)[]; below_deck: (string | null)[] } {
+  const br = Array.isArray(r.bridge) ? r.bridge : [r.bridge];
+  const bdRaw = Array.isArray(r.below_decks) ? r.below_decks : [r.below_decks];
+  const bridge: (string | null)[] = [br[0] ?? null, br[1] ?? null];
+  const below_deck = Array.from({ length: belowDecksSlots }, (_, i) => {
+    const v = bdRaw[i];
+    return v != null && String(v).trim() !== '' ? String(v) : null;
+  });
+  return { captain: r.captain, bridge, below_deck };
+}
+
+export interface CompareCrewDistribution {
+  captain: string;
+  trials: number;
+  wins: number;
+  stalls: number;
+  losses: number;
+  rounds_histogram: [number, number][];
+  hull_remaining_bins: number[];
+  proc_rates?: Record<string, number>;
+}
+
+export interface CompareCrewsResponse {
+  status: string;
+  seed: number;
+  crews: CompareCrewDistribution[];
+  using_placeholder_combatants: boolean;
+  warnings?: string[];
+}
+
+export async function compareCrewsDistributions(
+  params: {
+    ship: string;
+    hostile: string;
+    crews: { captain: string; bridge: (string | null)[]; below_deck: (string | null)[] }[];
+    num_sims?: number;
+    seed?: number;
+    ship_tier?: number | null;
+    ship_level?: number | null;
+    below_decks_slots?: number | null;
+    proc_sample_trials?: number;
+  },
+  profileId?: string | null,
+): Promise<CompareCrewsResponse> {
+  const body: Record<string, unknown> = {
+    ship: params.ship,
+    hostile: params.hostile,
+    crews: params.crews,
+    num_sims: params.num_sims ?? 3000,
+    seed: params.seed ?? 0,
+  };
+  if (params.ship_tier != null && params.ship_tier > 0) body.ship_tier = params.ship_tier;
+  if (params.ship_level != null && params.ship_level > 0) body.ship_level = params.ship_level;
+  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+    body.below_decks_slots = params.below_decks_slots;
+  }
+  if (params.proc_sample_trials != null && params.proc_sample_trials > 0) {
+    body.proc_sample_trials = params.proc_sample_trials;
+  }
+  const res = await fetch(`${API_BASE}/api/compare/crews`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
+    body: JSON.stringify(body),
+  });
+  await checkOk(res);
+  return res.json();
+}
+
 export interface CrewRecommendation {
   captain: string;
   /** API returns string[]; we accept string for backward compatibility. */

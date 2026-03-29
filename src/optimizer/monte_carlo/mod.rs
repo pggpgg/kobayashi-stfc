@@ -4,10 +4,14 @@
 //! - [scenario]: shared scenario data and candidate → combat input.
 //! - [simulation]: run_monte_carlo* and SimulationResult.
 
+mod compare_crews;
 mod crew_resolution;
 pub(crate) mod scenario;
 mod simulation;
 
+pub use compare_crews::{
+    compare_crews_monte_carlo_with_registry, CompareCrewDistribution, CompareCrewsOutcome,
+};
 pub use crew_resolution::crew_from_officer_names;
 pub(crate) use simulation::{run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared};
 pub use simulation::{

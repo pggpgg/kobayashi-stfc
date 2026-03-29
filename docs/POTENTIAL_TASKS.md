@@ -30,7 +30,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 
 ### UI / workflow
 
-- [ ] 16. Add a “compare crews” view showing side-by-side distributions (rounds-to-kill, hull remaining, proc rates), not just means.
+- [x] 16. Add a “compare crews” view showing side-by-side distributions (rounds-to-kill, hull remaining, proc rates), not just means.
 
 ### Testing / regression protection
 

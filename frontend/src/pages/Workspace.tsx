@@ -2,10 +2,23 @@ import WorkspaceHeader from '../components/WorkspaceHeader';
 import CrewBuilder from '../components/CrewBuilder';
 import OptimizePanel from '../components/OptimizePanel';
 import SimResults from '../components/SimResults';
+import { belowDeckSlotCount } from '../lib/types';
 import { useWorkspace } from '../lib/useWorkspace';
 
 export default function Workspace() {
   const ws = useWorkspace();
+  const compareWorkspace =
+    ws.shipId && ws.scenarioId
+      ? {
+          ship: ws.shipId,
+          hostile: ws.scenarioId,
+          shipTier: ws.shipTier,
+          shipLevel: ws.shipLevel,
+          numSims: ws.simsPerCrew,
+          belowDecksSlots: belowDeckSlotCount(ws.shipLevel),
+          profileId: ws.activeProfileId,
+        }
+      : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100vh' }}>
@@ -147,6 +160,7 @@ export default function Workspace() {
               optimizeProgress={ws.optimizeProgress}
               optimizeCrewsDone={ws.optimizeCrewsDone}
               optimizeTotalCrews={ws.optimizeTotalCrews}
+              compareWorkspace={compareWorkspace}
             />
           </div>
         </section>

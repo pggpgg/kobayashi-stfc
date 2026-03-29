@@ -509,3 +509,25 @@ async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
     assert!(events.len() <= 50);
     assert!(p["summary"]["attacker_won"].is_boolean());
 }
+
+#[tokio::test]
+async fn compare_crews_returns_distribution_payload() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":400,"seed":3,"crews":[
+        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},
+        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}
+    ]}"#;
+    let response = route_request("POST", "/api/compare/crews", body, None).await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+    let p: serde_json::Value = serde_json::from_str(&response.body).expect("compare json");
+    assert_eq!(p["status"], "ok");
+    assert_eq!(p["seed"], 3);
+    let crews = p["crews"].as_array().expect("crews array");
+    assert_eq!(crews.len(), 2);
+    for c in crews {
+        assert_eq!(c["trials"], 400);
+        let rh = c["rounds_histogram"].as_array().expect("rounds_histogram");
+        assert_eq!(rh.len(), 20);
+        let hb = c["hull_remaining_bins"].as_array().expect("hull_remaining_bins");
+        assert_eq!(hb.len(), 10);
+    }
+}
