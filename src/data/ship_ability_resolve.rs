@@ -27,28 +27,6 @@ fn normalize_key(s: &str) -> String {
     s.trim().to_lowercase().replace('-', "_")
 }
 
-fn opponent_faction_from_catalog_slug(s: &str) -> Option<OpponentFactionTag> {
-    match normalize_key(s).as_str() {
-        "unknown" => Some(OpponentFactionTag::Unknown),
-        "federation" => Some(OpponentFactionTag::Federation),
-        "klingon" => Some(OpponentFactionTag::Klingon),
-        "romulan" => Some(OpponentFactionTag::Romulan),
-        "borg" => Some(OpponentFactionTag::Borg),
-        "cardassian" => Some(OpponentFactionTag::Cardassian),
-        "augment" => Some(OpponentFactionTag::Augment),
-        "dominion" => Some(OpponentFactionTag::Dominion),
-        "mirror_universe" => Some(OpponentFactionTag::MirrorUniverse),
-        "assimilated" => Some(OpponentFactionTag::Assimilated),
-        "ex_borg" | "exborg" => Some(OpponentFactionTag::ExBorg),
-        "swarm" => Some(OpponentFactionTag::Swarm),
-        "actian" => Some(OpponentFactionTag::Actian),
-        "gorn_hunting_pack" | "gorn" => Some(OpponentFactionTag::GornHuntingPack),
-        "xindi" => Some(OpponentFactionTag::Xindi),
-        "breen" => Some(OpponentFactionTag::Breen),
-        _ => None,
-    }
-}
-
 fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition> {
     let mut parts: Vec<AbilityCondition> = Vec::new();
     if ability.condition_morale {
@@ -61,7 +39,7 @@ fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition
         parts.push(AbilityCondition::DefenderHullBreach);
     }
     if let Some(ref slug) = ability.condition_opponent_faction {
-        if let Some(tag) = opponent_faction_from_catalog_slug(slug) {
+        if let Some(tag) = OpponentFactionTag::from_data_slug(slug) {
             parts.push(AbilityCondition::DefenderFactionIs(tag));
         }
     }
@@ -226,7 +204,7 @@ pub fn sum_combat_begin_accuracy_from_ship_abilities(abilities: &[ShipAbility]) 
 /// One ship hull ability → one seat context, or None if unsupported.
 pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSeatContext> {
     if let Some(ref slug) = ability.condition_opponent_faction {
-        if opponent_faction_from_catalog_slug(slug).is_none() {
+        if OpponentFactionTag::from_data_slug(slug).is_none() {
             return None;
         }
     }

@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, TimingWindow,
+    CrewSeatContext, OpponentFactionTag, TimingWindow,
 };
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
@@ -68,7 +68,7 @@ impl BuffSet {
 }
 
 fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCondition> {
-    let ty = c.condition_type.trim().to_lowercase();
+    let ty = c.condition_type.trim().to_lowercase().replace('-', "_");
     Some(match ty.as_str() {
         "stat_below" => AbilityCondition::StatBelow {
             stat: c.stat.clone().unwrap_or_else(|| "hull_hp".to_string()),
@@ -82,6 +82,16 @@ fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCon
             min: c.min.unwrap_or(1),
             max: c.max.unwrap_or(100),
         },
+        "morale_active" | "attacker_morale" | "morale" => AbilityCondition::MoraleActive,
+        "defender_burning" | "target_burning" | "burning" => AbilityCondition::DefenderBurning,
+        "defender_hull_breach" | "target_hull_breach" | "hull_breach_active" => {
+            AbilityCondition::DefenderHullBreach
+        }
+        "defender_faction_is" | "defender_faction" | "opponent_faction_is" | "opponent_faction"
+        | "faction_is" => {
+            let slug = c.faction.as_deref().or_else(|| c.tag.as_deref())?;
+            AbilityCondition::DefenderFactionIs(OpponentFactionTag::from_data_slug(slug)?)
+        }
         "and" => {
             let conds: Vec<AbilityCondition> = c
                 .conditions
@@ -610,9 +620,11 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::{AbilityClass, AbilityEffect};
+    use crate::combat::abilities::CombatContext;
+    use crate::combat::{AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag};
     use crate::lcars::parser::{
-        load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
+        load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect, LcarsOfficer,
+        LcarsScaling,
     };
     use std::path::Path;
 
@@ -633,6 +645,151 @@ mod tests {
             accumulate: None,
             decay: None,
         }
+    }
+
+    fn lcars_condition(ty: &str) -> LcarsCondition {
+        LcarsCondition {
+            condition_type: ty.to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            conditions: None,
+        }
+    }
+
+    fn lcars_effect_stat_modify_with_condition(
+        stat: &str,
+        value: f64,
+        trigger: &str,
+        condition: LcarsCondition,
+    ) -> LcarsEffect {
+        LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some(stat.to_string()),
+            target: None,
+            operator: Some("add".to_string()),
+            value: Some(value),
+            trigger: Some(trigger.to_string()),
+            duration: None,
+            scaling: None,
+            condition: Some(condition),
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        }
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_morale_burning_hull_breach_and_faction() {
+        let officer = LcarsOfficer {
+            id: "cond_officer".to_string(),
+            name: "Cond".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+        };
+        let mut fc = lcars_condition("defender_faction_is");
+        fc.faction = Some("klingon".to_string());
+        let compound = LcarsCondition {
+            condition_type: "and".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            conditions: Some(vec![lcars_condition("morale_active"), fc.clone()]),
+        };
+        let ability = LcarsAbility {
+            name: "predicates".to_string(),
+            effects: vec![
+                lcars_effect_stat_modify_with_condition(
+                    "weapon_damage",
+                    0.01,
+                    "on_round_start",
+                    lcars_condition("morale_active"),
+                ),
+                lcars_effect_stat_modify_with_condition(
+                    "weapon_damage",
+                    0.02,
+                    "on_round_start",
+                    lcars_condition("defender_burning"),
+                ),
+                lcars_effect_stat_modify_with_condition(
+                    "weapon_damage",
+                    0.03,
+                    "on_round_start",
+                    lcars_condition("defender_hull_breach"),
+                ),
+                lcars_effect_stat_modify_with_condition(
+                    "weapon_damage",
+                    0.04,
+                    "on_round_start",
+                    fc,
+                ),
+                lcars_effect_stat_modify_with_condition(
+                    "weapon_damage",
+                    0.05,
+                    "on_round_start",
+                    compound,
+                ),
+            ],
+        };
+        let contexts = resolve_officer_ability(
+            &officer,
+            &ability,
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            &ResolveOptions::default(),
+            0,
+        );
+        assert_eq!(contexts.len(), 5);
+        assert_eq!(
+            contexts[0].ability.condition,
+            Some(AbilityCondition::MoraleActive)
+        );
+        assert_eq!(
+            contexts[1].ability.condition,
+            Some(AbilityCondition::DefenderBurning)
+        );
+        assert_eq!(
+            contexts[2].ability.condition,
+            Some(AbilityCondition::DefenderHullBreach)
+        );
+        assert_eq!(
+            contexts[3].ability.condition,
+            Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon))
+        );
+        let and_cond = contexts[4].ability.condition.clone().unwrap();
+        let ctx_ok = CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: true,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            defender_faction: OpponentFactionTag::Klingon,
+        };
+        assert!(and_cond.evaluate(&ctx_ok));
+        let ctx_no_morale = CombatContext {
+            attacker_morale_active: false,
+            ..ctx_ok
+        };
+        assert!(!and_cond.evaluate(&ctx_no_morale));
     }
 
     #[test]

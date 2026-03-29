@@ -207,6 +207,33 @@ pub enum OpponentFactionTag {
     Breen,
 }
 
+impl OpponentFactionTag {
+    /// Parse hostile / ship-catalog / LCARS faction slug (`klingon`, `mirror_universe`, `gorn`, …).
+    /// Unknown slugs return `None` (callers skip faction gating rather than matching every defender).
+    pub fn from_data_slug(s: &str) -> Option<Self> {
+        let k = s.trim().to_lowercase().replace('-', "_");
+        match k.as_str() {
+            "unknown" => Some(Self::Unknown),
+            "federation" => Some(Self::Federation),
+            "klingon" => Some(Self::Klingon),
+            "romulan" => Some(Self::Romulan),
+            "borg" => Some(Self::Borg),
+            "cardassian" => Some(Self::Cardassian),
+            "augment" => Some(Self::Augment),
+            "dominion" => Some(Self::Dominion),
+            "mirror_universe" => Some(Self::MirrorUniverse),
+            "assimilated" => Some(Self::Assimilated),
+            "ex_borg" | "exborg" => Some(Self::ExBorg),
+            "swarm" => Some(Self::Swarm),
+            "actian" => Some(Self::Actian),
+            "gorn_hunting_pack" | "gorn" => Some(Self::GornHuntingPack),
+            "xindi" => Some(Self::Xindi),
+            "breen" => Some(Self::Breen),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TraceMode {
