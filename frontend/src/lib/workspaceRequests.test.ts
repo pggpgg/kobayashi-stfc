@@ -3,6 +3,7 @@ import { createEmptyCrew } from './types';
 import {
   buildWorkspaceOptimizeStartBody,
   buildWorkspaceSimulateParams,
+  buildOptimizeConstraintsFromForm,
 } from './workspaceRequests';
 
 describe('buildWorkspaceSimulateParams', () => {
@@ -79,5 +80,52 @@ describe('buildWorkspaceOptimizeStartBody', () => {
     expect(body.heuristics_seeds).toEqual(['meta']);
     expect(body.heuristics_only).toBe(true);
     expect(body.below_decks_strategy).toBe('exploration');
+  });
+
+  it('includes constraints when form fields are set', () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: 'S',
+      scenarioId: 'H',
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: 'exhaustive',
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: 'ordered',
+      shipTier: 1,
+      shipLevel: 50,
+      optimizeConstraints: {
+        mustIncludeComma: 'Alice, Bob',
+        excludeComma: 'Eve',
+        captainMust: 'Alice',
+        bridgeMustComma: 'Bob',
+        belowMustComma: 'Zed',
+        groupsJson: '[{"officers":["X","Y"],"min_count":2}]',
+      },
+    });
+    expect(body.constraints).toEqual({
+      must_include: ['Alice', 'Bob'],
+      exclude: ['Eve'],
+      captain_must_be: 'Alice',
+      bridge_must_include: ['Bob'],
+      below_decks_must_include: ['Zed'],
+      groups: [{ officers: ['X', 'Y'], min_count: 2 }],
+    });
+  });
+});
+
+describe('buildOptimizeConstraintsFromForm', () => {
+  it('returns undefined when all empty', () => {
+    expect(
+      buildOptimizeConstraintsFromForm({
+        mustIncludeComma: '',
+        excludeComma: '  ',
+        captainMust: '',
+        bridgeMustComma: '',
+        belowMustComma: '',
+        groupsJson: '',
+      }),
+    ).toBeUndefined();
   });
 });

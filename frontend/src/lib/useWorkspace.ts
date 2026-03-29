@@ -75,6 +75,14 @@ export function useWorkspace() {
   const [heuristicsOnly, setHeuristicsOnly] = useState(false);
   const [belowDecksStrategy, setBelowDecksStrategy] = useState<'ordered' | 'exploration'>('ordered');
 
+  // Optimize constraints (comma-separated lists; groups JSON optional)
+  const [optimizeMustInclude, setOptimizeMustInclude] = useState('');
+  const [optimizeExclude, setOptimizeExclude] = useState('');
+  const [optimizeCaptainMust, setOptimizeCaptainMust] = useState('');
+  const [optimizeBridgeMust, setOptimizeBridgeMust] = useState('');
+  const [optimizeBelowMust, setOptimizeBelowMust] = useState('');
+  const [optimizeGroupsJson, setOptimizeGroupsJson] = useState('');
+
   // Preset saving state
   const [showSavePreset, setShowSavePreset] = useState(false);
   const [savePresetName, setSavePresetName] = useState('');
@@ -248,6 +256,14 @@ export function useWorkspace() {
           belowDecksStrategy,
           shipTier,
           shipLevel,
+          optimizeConstraints: {
+            mustIncludeComma: optimizeMustInclude,
+            excludeComma: optimizeExclude,
+            captainMust: optimizeCaptainMust,
+            bridgeMustComma: optimizeBridgeMust,
+            belowMustComma: optimizeBelowMust,
+            groupsJson: optimizeGroupsJson,
+          },
         }),
         activeProfileId,
       );
@@ -407,6 +423,18 @@ export function useWorkspace() {
     setBelowDecksStrategy,
     optimizerStrategy,
     setOptimizerStrategy,
+    optimizeMustInclude,
+    setOptimizeMustInclude,
+    optimizeExclude,
+    setOptimizeExclude,
+    optimizeCaptainMust,
+    setOptimizeCaptainMust,
+    optimizeBridgeMust,
+    setOptimizeBridgeMust,
+    optimizeBelowMust,
+    setOptimizeBelowMust,
+    optimizeGroupsJson,
+    setOptimizeGroupsJson,
     // Presets
     showSavePreset,
     setShowSavePreset,

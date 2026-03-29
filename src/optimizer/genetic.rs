@@ -12,6 +12,7 @@
 //! balancing gentle exploration around good seeds with escape from local optima.
 
 use crate::combat::rng::Rng;
+use crate::optimizer::constraints::CrewSearchConstraints;
 use crate::optimizer::crew_generator::{
     build_officer_pools, OfficerPools, CrewCandidate, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
@@ -56,6 +57,9 @@ pub struct GeneticConfig {
 
     /// Maximum mutation rate for adaptive schedule. Defaults to 0.40.
     pub mutation_rate_ceiling: f64,
+
+    /// When set, random init and post-crossover repair favor crews that satisfy these rules.
+    pub constraints: Option<CrewSearchConstraints>,
 }
 
 impl Default for GeneticConfig {
@@ -74,6 +78,7 @@ impl Default for GeneticConfig {
             adaptive_mutation: true,
             mutation_rate_floor: 0.05,
             mutation_rate_ceiling: 0.40,
+            constraints: None,
         }
     }
 }
@@ -169,6 +174,23 @@ fn random_crew(
     })
 }
 
+/// Random crew satisfying optional constraints (rejection sampling).
+fn random_crew_constrained(
+    rng: &mut Rng,
+    pools: &OfficerPools,
+    below_decks_slots: usize,
+    constraints: Option<&CrewSearchConstraints>,
+) -> Option<CrewCandidate> {
+    const MAX_TRIES: usize = 25_000;
+    for _ in 0..MAX_TRIES {
+        let c = random_crew(rng, pools, below_decks_slots)?;
+        if constraints.map_or(true, |co| co.satisfies(&c)) {
+            return Some(c);
+        }
+    }
+    None
+}
+
 /// Initialize population with optional seed candidates, filling remaining slots randomly.
 /// When `seed_candidates` is empty, this behaves identically to pure random initialization.
 fn init_population_seeded(
@@ -177,12 +199,15 @@ fn init_population_seeded(
     seed_candidates: &[CrewCandidate],
     seed: u64,
     below_decks_slots: usize,
+    constraints: Option<&CrewSearchConstraints>,
 ) -> Vec<CrewCandidate> {
     let mut pop = Vec::with_capacity(population_size);
 
     // Inject seed candidates (up to population_size, preserving order = author priority).
     for candidate in seed_candidates.iter().take(population_size) {
-        pop.push(candidate.clone());
+        if constraints.map_or(true, |co| co.satisfies(candidate)) {
+            pop.push(candidate.clone());
+        }
     }
 
     // Fill remaining slots with random crews.
@@ -190,7 +215,12 @@ fn init_population_seeded(
     let mut attempts = 0;
     const MAX_ATTEMPTS: usize = 50_000;
     while pop.len() < population_size && attempts < MAX_ATTEMPTS {
-        if let Some(crew) = random_crew(&mut rng, pools, below_decks_slots) {
+        if let Some(crew) = random_crew_constrained(
+            &mut rng,
+            pools,
+            below_decks_slots,
+            constraints,
+        ) {
             pop.push(crew);
         }
         attempts += 1;
@@ -413,6 +443,7 @@ pub fn run_genetic_optimizer(
         &config.seed_population,
         seed,
         bd_slots,
+        config.constraints.as_ref(),
     );
     if population.is_empty() {
         return Vec::new();
@@ -502,6 +533,12 @@ pub fn run_genetic_optimizer(
                 &mut rng,
                 bd_slots,
             );
+            if let Some(co) = config.constraints.as_ref() {
+                if !co.satisfies(&child) {
+                    child = random_crew_constrained(&mut rng, &pools, bd_slots, Some(co))
+                        .unwrap_or_else(|| child);
+                }
+            }
             next_pop.push(child);
         }
         population = next_pop;
@@ -656,7 +693,14 @@ mod tests {
         let seed_b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
         let seeds = vec![seed_a.clone(), seed_b.clone()];
 
-        let pop = init_population_seeded(&pools, 6, &seeds, 42, DEFAULT_BELOW_DECKS_SLOTS);
+        let pop = init_population_seeded(
+            &pools,
+            6,
+            &seeds,
+            42,
+            DEFAULT_BELOW_DECKS_SLOTS,
+            None,
+        );
         assert_eq!(pop.len(), 6, "population should be full");
         // First two should be our seeds.
         assert_eq!(pop[0].captain, seed_a.captain);
@@ -673,14 +717,14 @@ mod tests {
         let seeds: Vec<CrewCandidate> = (0..10)
             .map(|i| make_crew(if i % 2 == 0 { "CapA" } else { "CapB" }, &["B1", "B2"], &["D1", "D2", "D3"]))
             .collect();
-        let pop = init_population_seeded(&pools, 4, &seeds, 99, DEFAULT_BELOW_DECKS_SLOTS);
+        let pop = init_population_seeded(&pools, 4, &seeds, 99, DEFAULT_BELOW_DECKS_SLOTS, None);
         assert_eq!(pop.len(), 4, "population should be capped at population_size");
     }
 
     #[test]
     fn init_population_seeded_empty_is_random() {
         let pools = small_pools();
-        let pop_seeded = init_population_seeded(&pools, 8, &[], 42, DEFAULT_BELOW_DECKS_SLOTS);
+        let pop_seeded = init_population_seeded(&pools, 8, &[], 42, DEFAULT_BELOW_DECKS_SLOTS, None);
         assert_eq!(pop_seeded.len(), 8);
         for crew in &pop_seeded {
             assert!(valid_crew(crew));

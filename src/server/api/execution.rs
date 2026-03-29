@@ -12,6 +12,7 @@ use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
+use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{resolve_below_decks_slots, CrewCandidate};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry,
@@ -24,8 +25,8 @@ use crate::optimizer::{
 };
 
 use super::requests::{
-    parse_below_decks_strategy, parse_strategy, OptimizePayloadError, OptimizeRequest,
-    DEFAULT_SIMS,
+    build_crew_search_constraints, parse_below_decks_strategy, parse_strategy,
+    OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -50,6 +51,32 @@ pub struct CrewRecommendation {
     pub avg_hull_remaining_ci_high: f64,
 }
 
+/// Counts-only echo of active optimize constraints (for clients / debugging).
+#[derive(Debug, Clone, Serialize)]
+pub struct OptimizeConstraintsSummary {
+    pub must_include: usize,
+    pub exclude: usize,
+    pub groups: usize,
+    pub captain_must_be: bool,
+    pub bridge_must_include: usize,
+    pub below_decks_must_include: usize,
+}
+
+fn summarize_constraints(con: Option<&CrewSearchConstraints>) -> Option<OptimizeConstraintsSummary> {
+    let c = con?;
+    if c.is_empty() {
+        return None;
+    }
+    Some(OptimizeConstraintsSummary {
+        must_include: c.must_include.len(),
+        exclude: c.exclude.len(),
+        groups: c.groups.len(),
+        captain_must_be: c.captain_must_be.is_some(),
+        bridge_must_include: c.bridge_must_include.len(),
+        below_decks_must_include: c.below_decks_must_include.len(),
+    })
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct ScenarioSummary {
     pub ship: String,
@@ -58,6 +85,8 @@ pub struct ScenarioSummary {
     pub seed: u64,
     /// Resolved below-decks slot count used for candidate generation.
     pub below_decks_slots: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimize_constraints: Option<OptimizeConstraintsSummary>,
     /// Requested cap on crews after analytical ranking (if any).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analytical_prefilter_keep: Option<u32>,
@@ -118,6 +147,7 @@ struct OptimizeGatherMeta {
     /// `Some((generated, kept))` when analytical pre-filter truncated the candidate list.
     analytical_prefilter: Option<(usize, usize)>,
     below_decks_slots: usize,
+    optimize_constraints: Option<OptimizeConstraintsSummary>,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -240,12 +270,16 @@ fn gather_optimize_simulation_results(
     let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
     let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
     let below_decks_slots = resolve_below_decks_slots(request.ship_tier, request.below_decks_slots);
+    let crew_constraints = build_crew_search_constraints(request);
 
-    let h_candidates = if heuristics_seeds_nonempty {
+    let mut h_candidates = if heuristics_seeds_nonempty {
         load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
     } else {
         Vec::new()
     };
+    if let Some(ref c) = crew_constraints {
+        h_candidates = filter_candidates(h_candidates, c);
+    }
     let is_seeded_genetic =
         strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
 
@@ -311,6 +345,7 @@ fn gather_optimize_simulation_results(
                 .analytical_prefilter_keep
                 .map(|n| n as usize),
             below_decks_slots,
+            constraints: crew_constraints.clone(),
         };
         let outcome = optimize_scenario_with_progress_with_registry(
             registry,
@@ -340,6 +375,7 @@ fn gather_optimize_simulation_results(
         using_placeholder_combatants,
         analytical_prefilter,
         below_decks_slots,
+        optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
     };
 
     Ok((all_results, meta))
@@ -405,6 +441,7 @@ fn build_optimize_response(
             sims,
             seed,
             below_decks_slots: meta.below_decks_slots as u32,
+            optimize_constraints: meta.optimize_constraints.clone(),
             analytical_prefilter_keep: request.analytical_prefilter_keep,
             analytical_prefilter_from: meta
                 .analytical_prefilter

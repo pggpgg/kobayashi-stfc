@@ -288,6 +288,15 @@ export interface OptimizeResponse {
     seed: number;
     /** Resolved below-decks slot count used for candidate generation. */
     below_decks_slots: number;
+    /** Present when optimize constraints were applied (counts only). */
+    optimize_constraints?: {
+      must_include: number;
+      exclude: number;
+      groups: number;
+      captain_must_be: boolean;
+      bridge_must_include: number;
+      below_decks_must_include: number;
+    };
     analytical_prefilter_keep?: number;
     analytical_prefilter_from?: number;
     analytical_prefilter_kept?: number;
@@ -404,6 +413,16 @@ export async function fetchHeuristics(): Promise<string[]> {
 
 export type OptimizerStrategyType = 'exhaustive' | 'genetic' | 'tiered';
 
+/** Sub-object for POST /api/optimize/start `constraints` (matches server OptimizeConstraintsDto). */
+export interface OptimizeCrewConstraintsBody {
+  must_include?: string[];
+  exclude?: string[];
+  groups?: { officers: string[]; min_count: number }[];
+  captain_must_be?: string;
+  bridge_must_include?: string[];
+  below_decks_must_include?: string[];
+}
+
 export async function optimizeStart(
   params: {
     ship: string;
@@ -418,6 +437,8 @@ export async function optimizeStart(
     below_decks_strategy?: 'ordered' | 'exploration';
     ship_tier?: number | null;
     ship_level?: number | null;
+    below_decks_slots?: number | null;
+    constraints?: OptimizeCrewConstraintsBody;
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -453,6 +474,9 @@ export async function optimizeStart(
   }
   if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
     body.below_decks_slots = params.below_decks_slots;
+  }
+  if (params.constraints && Object.keys(params.constraints).length > 0) {
+    body.constraints = params.constraints;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',

@@ -1,4 +1,5 @@
 pub mod analytical;
+pub mod constraints;
 pub mod crew_generator;
 pub mod genetic;
 pub mod monte_carlo;
@@ -7,6 +8,7 @@ pub mod tiered;
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::analytical::expected_damage;
+use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, DEFAULT_BELOW_DECKS_SLOTS,
 };
@@ -26,6 +28,16 @@ use crate::parallel::batch_ranges;
 
 /// Number of progress-reporting batches for optimize-with-progress (UI jobs).
 const OPTIMIZE_PROGRESS_BATCH_COUNT: usize = 40;
+
+fn apply_crew_constraints(
+    candidates: Vec<CrewCandidate>,
+    scenario: &OptimizationScenario<'_>,
+) -> Vec<CrewCandidate> {
+    match &scenario.constraints {
+        Some(c) => filter_candidates(candidates, c),
+        None => candidates,
+    }
+}
 
 /// Order candidates by closed-form expected hull damage (high first) so limited `max_candidates`
 /// slices and progress batches prioritize analytically stronger crews. See [crate::optimizer::analytical].
@@ -118,6 +130,8 @@ pub struct OptimizationScenario<'a> {
     pub analytical_prefilter_keep: Option<usize>,
     /// Below-decks slot count for candidate generation (resolved from API / tier defaults upstream).
     pub below_decks_slots: usize,
+    /// Optional filters on candidate crews (must-include, exclude, groups, seating).
+    pub constraints: Option<CrewSearchConstraints>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -138,6 +152,7 @@ impl Default for OptimizationScenario<'_> {
             tiered_top_k: None,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+            constraints: None,
         }
     }
 }
@@ -168,6 +183,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.seed,
         scenario.profile_id,
     );
+    let candidates = apply_crew_constraints(candidates, scenario);
     let shared_tiered = build_shared_scenario_data_from_registry(
         registry,
         scenario.ship,
@@ -265,6 +281,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
+    let candidates = apply_crew_constraints(candidates, scenario);
     let shared = build_shared_scenario_data_standalone(
         scenario.ship,
         scenario.hostile,
@@ -295,14 +312,23 @@ pub fn optimize_scenario_genetic<F>(
 where
     F: FnMut(usize, usize, f32) -> bool,
 {
-    let config = if scenario.seed_population.is_empty() {
+    let filtered_seeds: Vec<CrewCandidate> = apply_crew_constraints(
+        scenario.seed_population.clone(),
+        scenario,
+    );
+
+    let config = if filtered_seeds.is_empty() {
         GeneticConfig {
             only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+            below_decks_slots: scenario.below_decks_slots,
+            constraints: scenario.constraints.clone(),
             ..GeneticConfig::default()
         }
     } else {
-        let mut cfg = GeneticConfig::seeded(scenario.seed_population.clone());
+        let mut cfg = GeneticConfig::seeded(filtered_seeds);
         cfg.only_below_decks_with_ability = scenario.only_below_decks_with_ability;
+        cfg.below_decks_slots = scenario.below_decks_slots;
+        cfg.constraints = scenario.constraints.clone();
         cfg
     };
     run_genetic_optimizer_ranked(
@@ -343,6 +369,7 @@ where
                 tiered_top_k: scenario.tiered_top_k,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
                 below_decks_slots: scenario.below_decks_slots,
+                constraints: scenario.constraints.clone(),
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -357,6 +384,7 @@ where
             );
             let candidates =
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
+            let candidates = apply_crew_constraints(candidates, scenario);
             let shared = build_shared_scenario_data_standalone(
                 scenario.ship,
                 scenario.hostile,
@@ -428,6 +456,7 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let candidates = apply_crew_constraints(candidates, scenario);
             let shared = build_shared_scenario_data_from_registry(
                 registry,
                 scenario.ship,
@@ -477,6 +506,7 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let candidates = apply_crew_constraints(candidates, scenario);
             let shared_ex = build_shared_scenario_data_from_registry(
                 registry,
                 scenario.ship,
@@ -566,6 +596,7 @@ pub fn optimize_crew(
         tiered_top_k: None,
         analytical_prefilter_keep: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+        constraints: None,
     })
 }
 
@@ -595,6 +626,7 @@ mod tests {
             tiered_top_k: None,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+            constraints: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -626,6 +658,7 @@ mod tests {
             tiered_top_k: None,
             analytical_prefilter_keep: Some(4),
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+            constraints: None,
         };
         let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_, _| true);
         assert!(

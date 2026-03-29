@@ -29,6 +29,18 @@ const baseProps = {
   onBelowDecksStrategyChange: vi.fn(),
   optimizerStrategy: 'exhaustive' as const,
   onOptimizerStrategyChange: vi.fn(),
+  optimizeMustInclude: '',
+  onOptimizeMustIncludeChange: vi.fn(),
+  optimizeExclude: '',
+  onOptimizeExcludeChange: vi.fn(),
+  optimizeCaptainMust: '',
+  onOptimizeCaptainMustChange: vi.fn(),
+  optimizeBridgeMust: '',
+  onOptimizeBridgeMustChange: vi.fn(),
+  optimizeBelowMust: '',
+  onOptimizeBelowMustChange: vi.fn(),
+  optimizeGroupsJson: '',
+  onOptimizeGroupsJsonChange: vi.fn(),
 };
 
 describe('OptimizePanel', () => {

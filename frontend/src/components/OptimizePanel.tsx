@@ -20,6 +20,18 @@ interface OptimizePanelProps {
   onBelowDecksStrategyChange: (value: 'ordered' | 'exploration') => void;
   optimizerStrategy: import('../lib/api').OptimizerStrategyType;
   onOptimizerStrategyChange: (value: import('../lib/api').OptimizerStrategyType) => void;
+  optimizeMustInclude: string;
+  onOptimizeMustIncludeChange: (value: string) => void;
+  optimizeExclude: string;
+  onOptimizeExcludeChange: (value: string) => void;
+  optimizeCaptainMust: string;
+  onOptimizeCaptainMustChange: (value: string) => void;
+  optimizeBridgeMust: string;
+  onOptimizeBridgeMustChange: (value: string) => void;
+  optimizeBelowMust: string;
+  onOptimizeBelowMustChange: (value: string) => void;
+  optimizeGroupsJson: string;
+  onOptimizeGroupsJsonChange: (value: string) => void;
 }
 
 const selectStyle: CSSProperties = {
@@ -60,6 +72,18 @@ export default function OptimizePanel({
   onBelowDecksStrategyChange,
   optimizerStrategy,
   onOptimizerStrategyChange,
+  optimizeMustInclude,
+  onOptimizeMustIncludeChange,
+  optimizeExclude,
+  onOptimizeExcludeChange,
+  optimizeCaptainMust,
+  onOptimizeCaptainMustChange,
+  optimizeBridgeMust,
+  onOptimizeBridgeMustChange,
+  optimizeBelowMust,
+  onOptimizeBelowMustChange,
+  optimizeGroupsJson,
+  onOptimizeGroupsJsonChange,
 }: OptimizePanelProps) {
   if (collapsed) {
     return (
@@ -212,6 +236,125 @@ export default function OptimizePanel({
       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
         Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see optimizer ranking).
       </p>
+
+      <div style={{ fontSize: '0.85rem', fontWeight: 600, marginTop: 4 }}>Search constraints</div>
+      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        Comma-separated names. Optional JSON array for groups, e.g.{' '}
+        <code style={{ fontSize: '0.7rem' }}>[{`{"officers":["A","B"],"min_count":2}`}]</code>
+      </p>
+      <label style={{ fontSize: '0.8rem' }}>
+        Must include (any seat)
+        <input
+          type="text"
+          value={optimizeMustInclude}
+          onChange={(e) => onOptimizeMustIncludeChange(e.target.value)}
+          placeholder="Officer A, Officer B"
+          style={{
+            display: 'block',
+            marginTop: 4,
+            width: '100%',
+            padding: '0.35rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            color: 'var(--text)',
+          }}
+        />
+      </label>
+      <label style={{ fontSize: '0.8rem' }}>
+        Exclude
+        <input
+          type="text"
+          value={optimizeExclude}
+          onChange={(e) => onOptimizeExcludeChange(e.target.value)}
+          style={{
+            display: 'block',
+            marginTop: 4,
+            width: '100%',
+            padding: '0.35rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            color: 'var(--text)',
+          }}
+        />
+      </label>
+      <label style={{ fontSize: '0.8rem' }}>
+        Captain must be
+        <input
+          type="text"
+          value={optimizeCaptainMust}
+          onChange={(e) => onOptimizeCaptainMustChange(e.target.value)}
+          style={{
+            display: 'block',
+            marginTop: 4,
+            width: '100%',
+            padding: '0.35rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            color: 'var(--text)',
+          }}
+        />
+      </label>
+      <label style={{ fontSize: '0.8rem' }}>
+        Bridge must include
+        <input
+          type="text"
+          value={optimizeBridgeMust}
+          onChange={(e) => onOptimizeBridgeMustChange(e.target.value)}
+          style={{
+            display: 'block',
+            marginTop: 4,
+            width: '100%',
+            padding: '0.35rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            color: 'var(--text)',
+          }}
+        />
+      </label>
+      <label style={{ fontSize: '0.8rem' }}>
+        Below-decks must include
+        <input
+          type="text"
+          value={optimizeBelowMust}
+          onChange={(e) => onOptimizeBelowMustChange(e.target.value)}
+          style={{
+            display: 'block',
+            marginTop: 4,
+            width: '100%',
+            padding: '0.35rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            color: 'var(--text)',
+          }}
+        />
+      </label>
+      <label style={{ fontSize: '0.8rem' }}>
+        Groups (JSON)
+        <textarea
+          value={optimizeGroupsJson}
+          onChange={(e) => onOptimizeGroupsJsonChange(e.target.value)}
+          rows={2}
+          placeholder='[{"officers":["A","B"],"min_count":2}]'
+          style={{
+            display: 'block',
+            marginTop: 4,
+            width: '100%',
+            padding: '0.35rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            color: 'var(--text)',
+            fontFamily: 'monospace',
+            fontSize: '0.75rem',
+            resize: 'vertical',
+          }}
+        />
+      </label>
 
       <label style={{ fontSize: '0.85rem' }}>
         Max crews (optional)
