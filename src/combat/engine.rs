@@ -480,11 +480,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
         let mut hull_breach_threshold_fired = false;
 
-        let mut effective_pierce = attacker.pierce + phase_effects_round.pre_attack_pierce_bonus();
-        if morale_triggered {
-            effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
-        }
-
         let attack_phase_assimilated = assimilated_rounds_remaining > 0;
         let attack_phase_filtered =
             filter_effects_by_condition(&attack_phase_effects, &combat_ctx);
@@ -517,6 +512,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             phase_effects.merge_from(&weapon_round_base);
             phase_effects.merge_carry_additive(&after_subround_carry);
             let weapon_base = attacker.weapon_attack(weapon_index).unwrap_or(attacker.attack);
+            let mut effective_pierce = attacker.weapon_pierce(weapon_index)
+                + phase_effects_round.pre_attack_pierce_bonus();
+            if morale_triggered {
+                effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
+            }
             phase_effects.add_effects(
                 TimingWindow::AttackPhase,
                 &attack_phase_filtered,
@@ -613,12 +613,13 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         });
 
         let hull_breach_active = hull_breach_rounds_remaining > 0;
-        let effective_crit_chance = (attacker.crit_chance + phase_effects.crit_chance_bonus())
+        let effective_crit_chance = (attacker.weapon_crit_chance(weapon_index)
+            + phase_effects.crit_chance_bonus())
             .clamp(0.0, 1.0);
         let crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         let is_crit = crit_roll < effective_crit_chance;
-        let base_crit_multiplier =
-            attacker.crit_multiplier * phase_effects.crit_damage_multiplier();
+        let base_crit_multiplier = attacker.weapon_crit_multiplier(weapon_index)
+            * phase_effects.crit_damage_multiplier();
         let crit_multiplier = compute_crit_multiplier(
             is_crit,
             base_crit_multiplier,
@@ -749,9 +750,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         }
 
         let proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let did_proc = proc_roll < attacker.proc_chance;
+        let w_proc_chance = attacker.weapon_proc_chance(weapon_index);
+        let did_proc = proc_roll < w_proc_chance;
         let proc_multiplier = if did_proc {
-            attacker.proc_multiplier
+            attacker.weapon_proc_multiplier(weapon_index)
         } else {
             1.0
         };
@@ -1034,16 +1036,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
         let counter_damage_through = compute_damage_through_factor(
             counter_mitigation_mult,
-            defender.pierce,
+            defender.weapon_pierce(weapon_index),
             defender_phase_effects.defense_mitigation_bonus(),
         );
-        let def_effective_crit_chance = (defender.crit_chance
+        let def_effective_crit_chance = (defender.weapon_crit_chance(weapon_index)
             + defender_phase_effects.crit_chance_bonus())
         .clamp(0.0, 1.0);
         let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         let def_is_crit = def_crit_roll < def_effective_crit_chance;
-        let def_base_crit_mult =
-            defender.crit_multiplier * defender_phase_effects.crit_damage_multiplier();
+        let def_base_crit_mult = defender.weapon_crit_multiplier(weapon_index)
+            * defender_phase_effects.crit_damage_multiplier();
         let mut def_crit_mult =
             compute_crit_multiplier(def_is_crit, def_base_crit_mult, false);
         // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
@@ -1055,8 +1057,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
         }
         let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let def_proc_mult = if def_proc_roll < defender.proc_chance {
-            defender.proc_multiplier
+        let def_w_proc = defender.weapon_proc_chance(weapon_index);
+        let def_proc_mult = if def_proc_roll < def_w_proc {
+            defender.weapon_proc_multiplier(weapon_index)
         } else {
             1.0
         };

@@ -272,13 +272,26 @@ pub struct SimulationResult {
     pub events: Vec<CombatEvent>,
 }
 
-/// Per-weapon stats for sub-round resolution. Combatant-level pierce/crit/proc apply to all weapons.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Per-weapon stats for sub-round resolution. Optional fields override [`Combatant`] ship-level
+/// pierce/crit/proc for that weapon index only; unset → use combatant defaults.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct WeaponStats {
     pub attack: f64,
     /// Base shots per weapon per round (n_w,0). When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
     #[serde(default)]
     pub shots: Option<u32>,
+    /// Damage-through pierce bonus for this weapon (same units as [`Combatant::pierce`]).
+    #[serde(default)]
+    pub pierce: Option<f64>,
+    #[serde(default)]
+    pub crit_chance: Option<f64>,
+    /// Per-weapon crit damage tier when set; else [`Combatant::crit_multiplier`].
+    #[serde(default)]
+    pub crit_multiplier: Option<f64>,
+    #[serde(default)]
+    pub proc_chance: Option<f64>,
+    #[serde(default)]
+    pub proc_multiplier: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -352,6 +365,40 @@ impl Combatant {
         } else {
             self.weapons.get(weapon_index).map(|w| w.attack)
         }
+    }
+
+    fn weapon_row(&self, weapon_index: usize) -> Option<&WeaponStats> {
+        self.weapons.get(weapon_index)
+    }
+
+    pub fn weapon_pierce(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.pierce)
+            .unwrap_or(self.pierce)
+    }
+
+    pub fn weapon_crit_chance(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.crit_chance)
+            .unwrap_or(self.crit_chance)
+    }
+
+    pub fn weapon_crit_multiplier(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.crit_multiplier)
+            .unwrap_or(self.crit_multiplier)
+    }
+
+    pub fn weapon_proc_chance(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.proc_chance)
+            .unwrap_or(self.proc_chance)
+    }
+
+    pub fn weapon_proc_multiplier(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.proc_multiplier)
+            .unwrap_or(self.proc_multiplier)
     }
 }
 

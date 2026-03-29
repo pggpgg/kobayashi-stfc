@@ -9,7 +9,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 - [x] 3. Expand LCARS condition support to include faction gating and morale/burning/hull-breach state predicates as explicit condition nodes.
 - [x] 4. Replace the LCARS `crit_chance` / `crit_damage` placeholder mapping with typed crit modifiers applied in the crit step (not an attack-multiplier approximation).
 - [x] 5. Add an “after-shot / subround-end” timing window to model effects that modify the next shot(s) within the same round.
-- [ ] 6. Add per-weapon stat overrides (pierce/crit/proc/shots) in `WeaponStats` and thread through scenario building to better match multi-weapon logs.
+- [x] 6. Add per-weapon stat overrides (pierce/crit/proc/shots) in `WeaponStats` and thread through scenario building to better match multi-weapon logs.
 - [ ] 7. Improve trace explainability: emit optional per-effect contribution breakdown for key stacks in trace mode.
 
 ### Optimizer / Monte Carlo (performance + output quality)

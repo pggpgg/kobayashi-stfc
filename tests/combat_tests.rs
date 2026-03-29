@@ -245,7 +245,11 @@ fn defender_crew_can_modify_counter_fire_damage() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
-        weapons: vec![WeaponStats { attack: 100.0, shots: Some(1) }],
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
     };
     let attacker_crew = CrewConfiguration { seats: vec![] };
     let defender_crew = CrewConfiguration {
@@ -873,6 +877,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         weapons: vec![WeaponStats {
             attack: 100.0,
             shots: None,
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -960,6 +965,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         weapons: vec![WeaponStats {
             attack: 10.0,
             shots: None,
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -982,6 +988,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         weapons: vec![WeaponStats {
             attack: 100.0,
             shots: None,
+            ..Default::default()
         }],
     };
     let config = SimulationConfig {
@@ -1042,6 +1049,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
         weapons: vec![WeaponStats {
             attack: 15.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -1064,6 +1072,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
         weapons: vec![WeaponStats {
             attack: 40.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let crew = CrewConfiguration {
@@ -3763,8 +3772,16 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![
-            WeaponStats { attack: 50.0, shots: None },
-            WeaponStats { attack: 100.0, shots: None },
+            WeaponStats {
+                attack: 50.0,
+                shots: None,
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 100.0,
+                shots: None,
+                ..Default::default()
+            },
         ],
     };
     let defender = Combatant {
@@ -3827,8 +3844,16 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![
-            WeaponStats { attack: 500.0, shots: None },
-            WeaponStats { attack: 200.0, shots: None },
+            WeaponStats {
+                attack: 500.0,
+                shots: None,
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 200.0,
+                shots: None,
+                ..Default::default()
+            },
         ],
     };
     let defender = Combatant {
@@ -3897,7 +3922,11 @@ fn shots_bonus_increases_damage() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
-        weapons: vec![WeaponStats { attack: 80.0, shots: None }],
+        weapons: vec![WeaponStats {
+            attack: 80.0,
+            shots: None,
+            ..Default::default()
+        }],
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -4259,6 +4288,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         weapons: vec![WeaponStats {
             attack: 80.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let defender = Combatant {

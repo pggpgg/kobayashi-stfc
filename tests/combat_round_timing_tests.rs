@@ -133,10 +133,12 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
             WeaponStats {
                 attack: 100.0,
                 shots: Some(1),
+                ..Default::default()
             },
             WeaponStats {
                 attack: 100.0,
                 shots: Some(1),
+                ..Default::default()
             },
         ],
     };
@@ -190,6 +192,76 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
     );
 }
 
+#[test]
+fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
+    let attacker = Combatant {
+        id: "split".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+                pierce: Some(0.5),
+                crit_chance: Some(1.0),
+                crit_multiplier: Some(2.0),
+                proc_chance: Some(1.0),
+                proc_multiplier: Some(3.0),
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+        ],
+    };
+    let defender = Combatant {
+        id: "t".to_string(),
+        attack: 0.0,
+        mitigation: 0.5,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 100_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+    let r = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    // Weapon0: high pierce + guaranteed crit x2 + proc x3 vs weapon1: no pierce, no crit, no proc.
+    assert!(
+        r.total_damage > 450.0,
+        "expected weapon0 lane to far out-damage weapon1; total={}",
+        r.total_damage
+    );
+}
+
 /// Hostile return fire uses the same damage-through, isolytic, apex, and shield-split helpers as outbound shots.
 #[test]
 fn defender_counter_attack_matches_helper_pipeline() {
@@ -213,6 +285,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
         weapons: vec![WeaponStats {
             attack: 1.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -235,6 +308,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
         weapons: vec![WeaponStats {
             attack: 200.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let config = SimulationConfig {

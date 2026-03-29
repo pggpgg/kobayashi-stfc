@@ -127,6 +127,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         weapons: vec![WeaponStats {
             attack: 550.0,
             shots: Some(2),
+            ..Default::default()
         }],
     };
     let config = SimulationConfig {

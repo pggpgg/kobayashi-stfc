@@ -308,7 +308,38 @@ fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
     let shots = obj
         .get("shots")
         .and_then(|v| v.as_u64().map(|u| u as u32).or_else(|| v.as_i64().map(|i| i.max(0) as u32)));
-    Some(WeaponStats { attack, shots })
+    let ap = obj.get("armor_piercing").and_then(json_f64).unwrap_or(0.0);
+    let sp = obj.get("shield_piercing").and_then(json_f64).unwrap_or(0.0);
+    let pierce = if ap > 0.0 || sp > 0.0 {
+        Some(ap + sp)
+    } else {
+        None
+    };
+    let crit_chance = obj
+        .get("crit_chance")
+        .or_else(|| obj.get("critical_chance"))
+        .and_then(json_f64);
+    let crit_multiplier = obj
+        .get("crit_damage")
+        .or_else(|| obj.get("critical_damage"))
+        .or_else(|| obj.get("crit_multiplier"))
+        .and_then(json_f64)
+        .filter(|v| v.is_finite() && *v > 0.0);
+    let proc_chance = obj.get("proc_chance").and_then(json_f64);
+    let proc_multiplier = obj
+        .get("proc_multiplier")
+        .and_then(json_f64)
+        .filter(|v| v.is_finite() && *v > 0.0);
+
+    Some(WeaponStats {
+        attack,
+        shots,
+        pierce,
+        crit_chance,
+        crit_multiplier,
+        proc_chance,
+        proc_multiplier,
+    })
 }
 
 fn json_f64(v: &Value) -> Option<f64> {
