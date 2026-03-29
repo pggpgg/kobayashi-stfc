@@ -18,7 +18,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 - [ ] 9. Implement an analytical pre-filter stage used by optimize strategies to prune obviously bad crews before Monte Carlo (explicitly labeled approximate).
 - [ ] 10. Add optimize constraints (must-include, exclude, group count, seating rules) exposed in API and UI.
 - [ ] 11. Make below-decks slot count a first-class scenario parameter (ship-aware defaults) and update candidate generation accordingly.
-- [ ] 12. Add a deterministic “replay one seed” endpoint that returns a compact trace + summary for a chosen seed from an optimize result.
+- [x] 12. Add a deterministic “replay one seed” endpoint that returns a compact trace + summary for a chosen seed from an optimize result.
 - [ ] 13. Improve async optimize job UX: richer SSE status payload (phase, throughput, ETA, top-N preview) and show it live in Workspace.
 
 ### Data persistence + provenance

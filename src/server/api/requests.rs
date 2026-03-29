@@ -10,6 +10,30 @@ pub const DEFAULT_SIMS: u32 = 5000;
 pub const MAX_SIMS: u32 = 100_000;
 pub const MAX_CANDIDATES: u32 = 2_000_000;
 
+/// Same JSON shape as simulate `crew` — duplicated so `requests` stays independent of `api`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ReplaySeedCrew {
+    pub captain: Option<String>,
+    pub bridge: Option<Vec<Option<String>>>,
+    pub below_deck: Option<Vec<Option<String>>>,
+}
+
+/// Replay one Monte Carlo draw from an optimize/simulate run (`seed` + `sim_index` → `iteration_seed`).
+#[derive(Debug, Clone, Deserialize)]
+pub struct ReplaySeedRequest {
+    pub ship: String,
+    pub hostile: String,
+    pub ship_tier: Option<u32>,
+    pub ship_level: Option<u32>,
+    /// Scenario seed from the optimize/simulate request (defaults to 0).
+    pub seed: Option<u64>,
+    /// Zero-based iteration index: `iteration_seed = stable_base.wrapping_add(sim_index)`.
+    pub sim_index: u64,
+    /// Cap on returned trace events (tail of the fight). Default 500, max 2000.
+    pub max_trace_events: Option<u32>,
+    pub crew: ReplaySeedCrew,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct OptimizeRequest {
     pub ship: String,

@@ -4,8 +4,8 @@ use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use crate::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, OpponentFactionTag, SimulationConfig,
-    TraceMode,
+    simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, OpponentFactionTag,
+    SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewCandidate;
@@ -315,6 +315,109 @@ pub fn run_monte_carlo_with_registry(
         run_monte_carlo_with_shared(shared, candidates, iterations, seed, false),
         placeholder,
     )
+}
+
+/// One Monte Carlo draw replayed with full combat trace — same RNG seed as
+/// [`run_candidate_monte_carlo`]: `iteration_seed = base_seed.wrapping_add(sim_index)`.
+#[derive(Debug, Clone)]
+pub struct MonteCarloSeedReplay {
+    pub using_placeholder_combatants: bool,
+    pub scenario_seed: u64,
+    pub sim_index: u64,
+    pub base_seed: u64,
+    pub iteration_seed: u64,
+    pub effective_defender_hull: f64,
+    pub attacker_won: bool,
+    pub winner_by_round_limit: bool,
+    pub rounds_simulated: u32,
+    pub total_damage: f64,
+    pub attacker_hull_remaining: f64,
+    pub defender_hull_remaining: f64,
+    pub defender_shield_remaining: f64,
+    pub trace_event_count: usize,
+    pub trace_events_returned: usize,
+    pub trace_truncated: bool,
+    pub trace_events: Vec<CombatEvent>,
+}
+
+/// Replay a single iteration from an optimize/simulate Monte Carlo run (`scenario_seed` matches the request seed).
+pub fn replay_optimize_iteration_with_registry(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    candidate: &CrewCandidate,
+    scenario_seed: u64,
+    sim_index: u64,
+    profile_id: Option<&str>,
+    max_trace_events: usize,
+) -> MonteCarloSeedReplay {
+    let shared = build_shared_scenario_data_from_registry(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+    );
+    let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
+    let iteration_seed = input.base_seed.wrapping_add(sim_index);
+    let effective_defender_hull = input.defender_hull * seeded_variance(iteration_seed);
+
+    let defender_faction = shared
+        .hostile_rec
+        .as_ref()
+        .map(|h| h.opponent_faction_tag())
+        .unwrap_or(OpponentFactionTag::Unknown);
+
+    let combat_config = SimulationConfig {
+        rounds: input.rounds,
+        seed: iteration_seed,
+        trace_mode: TraceMode::Events,
+    };
+
+    let combat = simulate_combat_with_defender_faction_and_defender_crew(
+        &input.attacker,
+        &input.defender,
+        combat_config,
+        &input.crew,
+        defender_faction,
+        &input.defender_crew,
+    );
+
+    let trace_event_count = combat.events.len();
+    let max_kept = max_trace_events.max(1);
+    let (trace_truncated, trace_events) = if combat.events.len() > max_kept {
+        let skip = combat.events.len() - max_kept;
+        (
+            true,
+            combat.events.into_iter().skip(skip).collect::<Vec<_>>(),
+        )
+    } else {
+        (false, combat.events)
+    };
+    let trace_events_returned = trace_events.len();
+
+    MonteCarloSeedReplay {
+        using_placeholder_combatants: shared.using_placeholder_combatants,
+        scenario_seed,
+        sim_index,
+        base_seed: input.base_seed,
+        iteration_seed,
+        effective_defender_hull,
+        attacker_won: combat.attacker_won,
+        winner_by_round_limit: combat.winner_by_round_limit,
+        rounds_simulated: combat.rounds_simulated,
+        total_damage: combat.total_damage,
+        attacker_hull_remaining: combat.attacker_hull_remaining,
+        defender_hull_remaining: combat.defender_hull_remaining,
+        defender_shield_remaining: combat.defender_shield_remaining,
+        trace_event_count,
+        trace_events_returned,
+        trace_truncated,
+        trace_events,
+    }
 }
 
 fn run_monte_carlo_with_parallelism(
