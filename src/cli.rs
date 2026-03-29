@@ -6,10 +6,13 @@ use crate::combat::{
     CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING,
     MITIGATION_FLOOR,
 };
-use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
+use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::profile::{apply_profile_to_attacker, load_profile};
-use crate::data::profile_index::{migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON, ROSTER_IMPORTED};
+use crate::data::profile_index::{
+    migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON,
+    ROSTER_IMPORTED,
+};
 use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
 use crate::parallel::init_from_env;
@@ -41,6 +44,7 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
 
 pub fn run_with_args(args: &[String]) -> i32 {
     let _ = migrate_from_legacy_if_needed();
+    crate::logging::init();
     init_from_env();
 
     match parse_command(args) {
@@ -64,14 +68,18 @@ fn handle_mitigation_sensitivity(args: &[String]) -> i32 {
     let ship = match args.get(2).map(String::as_str).filter(|s| !s.is_empty()) {
         Some(s) => s,
         None => {
-            eprintln!("usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]");
+            eprintln!(
+                "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]"
+            );
             return 2;
         }
     };
     let hostile = match args.get(3).map(String::as_str).filter(|s| !s.is_empty()) {
         Some(s) => s,
         None => {
-            eprintln!("usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]");
+            eprintln!(
+                "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]"
+            );
             return 2;
         }
     };
@@ -145,7 +153,9 @@ fn handle_simulate(args: &[String]) -> i32 {
     let as_table = args.iter().any(|arg| arg == "--table");
 
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
-    let profile_path_str = profile_path(&profile_id, PROFILE_JSON).to_string_lossy().to_string();
+    let profile_path_str = profile_path(&profile_id, PROFILE_JSON)
+        .to_string_lossy()
+        .to_string();
     let player_profile = load_profile(&profile_path_str);
 
     let attacker = apply_profile_to_attacker(
@@ -258,7 +268,9 @@ fn handle_import(args: &[String]) -> i32 {
     };
 
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
-    let output_path = profile_path(&profile_id, ROSTER_IMPORTED).to_string_lossy().to_string();
+    let output_path = profile_path(&profile_id, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
 
     let result = if path.ends_with(".txt") {
         import_roster_csv_to(&path, &output_path)

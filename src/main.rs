@@ -6,10 +6,13 @@ use kobayashi::combat::{
     CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING,
     MITIGATION_FLOOR,
 };
-use kobayashi::data::loader::{resolve_hostile, resolve_ship};
 use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
+use kobayashi::data::loader::{resolve_hostile, resolve_ship};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
-use kobayashi::data::profile_index::{migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON, ROSTER_IMPORTED};
+use kobayashi::data::profile_index::{
+    migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON,
+    ROSTER_IMPORTED,
+};
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
 
@@ -256,8 +259,9 @@ fn optimize_command(args: &[String]) -> Result<(), String> {
 
     let registry = kobayashi::data::data_registry::DataRegistry::load()
         .map_err(|e| format!("Failed to load data registry: {e}"))?;
-    let payload = server::api::optimize_payload(registry.as_ref(), &body, Some(profile_id.as_str()))
-        .map_err(|err| format!("failed to build optimize response: {err}"))?;
+    let payload =
+        server::api::optimize_payload(registry.as_ref(), &body, Some(profile_id.as_str()))
+            .map_err(|err| format!("failed to build optimize response: {err}"))?;
     let response: serde_json::Value =
         serde_json::from_str(&payload).map_err(|err| format!("invalid optimize payload: {err}"))?;
 
@@ -272,7 +276,9 @@ fn optimize_command(args: &[String]) -> Result<(), String> {
 fn simulate_command(args: &[String]) -> Result<(), String> {
     let parsed = parse_simulate_args(args)?;
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
-    let profile_path_str = profile_path(&profile_id, PROFILE_JSON).to_string_lossy().to_string();
+    let profile_path_str = profile_path(&profile_id, PROFILE_JSON)
+        .to_string_lossy()
+        .to_string();
     let player_profile = load_profile(&profile_path_str);
 
     let attacker = apply_profile_to_attacker(
@@ -354,7 +360,9 @@ fn handle_import(args: &[String]) -> i32 {
         format!("{ROSTERS_DIR}/{raw}")
     };
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
-    let output_path = profile_path(&profile_id, ROSTER_IMPORTED).to_string_lossy().to_string();
+    let output_path = profile_path(&profile_id, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
 
     let result = if path.ends_with(".txt") {
         import_roster_csv_to(&path, &output_path)
@@ -528,14 +536,16 @@ fn mitigation_sensitivity_command(args: &[String]) -> Result<(), String> {
         .map(String::as_str)
         .filter(|s| !s.is_empty())
         .ok_or_else(|| {
-            "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]".to_string()
+            "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]"
+                .to_string()
         })?;
     let hostile = args
         .get(1)
         .map(String::as_str)
         .filter(|s| !s.is_empty())
         .ok_or_else(|| {
-            "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]".to_string()
+            "usage: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]"
+                .to_string()
         })?;
     let mut delta_pct = 0.1_f64;
     let mut i = 2;
@@ -554,7 +564,8 @@ fn mitigation_sensitivity_command(args: &[String]) -> Result<(), String> {
     }
 
     let ship_rec = resolve_ship(ship).ok_or_else(|| format!("unknown ship '{ship}'"))?;
-    let hostile_rec = resolve_hostile(hostile).ok_or_else(|| format!("unknown hostile '{hostile}'"))?;
+    let hostile_rec =
+        resolve_hostile(hostile).ok_or_else(|| format!("unknown hostile '{hostile}'"))?;
 
     let attacker = ship_rec.to_attacker_stats();
     let defender = hostile_rec.to_defender_stats();
@@ -586,6 +597,7 @@ mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--del
 
 fn main() {
     let _ = migrate_from_legacy_if_needed();
+    kobayashi::logging::init();
     kobayashi::parallel::init_from_env();
 
     let command_args: Vec<String> = env::args().skip(2).collect();

@@ -7,7 +7,7 @@ Checklist derived from a codebase audit (not from existing roadmaps or `POTENTIA
 - [ ] **1. HTTP body size limits** — Add Axum/tower limits on large POST routes (`/api/sync/ingress`, `/api/optimize`, `/api/simulate`, imports) to reduce DoS and memory exhaustion risk.
 - [x] **2. Optimize job store robustness** — Harden `Mutex` usage in `src/server/api/execution.rs` (async optimize jobs); avoid assumptions that locks never fail.
 - [x] **3. React error boundary** — Add a top-level boundary (Shell or `App`) with recovery UI so render failures don’t blank the whole app.
-- [ ] **4. Structured logging** — Introduce `tracing` (or similar) with env filtering; replace ad-hoc `eprintln!` on critical server/sync/CPU paths.
+- [x] **4. Structured logging** — Introduce `tracing` (or similar) with env filtering; replace ad-hoc `eprintln!` on critical server/sync/CPU paths.
 - [x] **5. Health / status metadata** — Enrich `/api/health` or add `/api/status` with build identity, data/version signals, and effective `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`.
 - [x] **6. Deployment threat model** — Document local vs LAN vs internet; clarify that `X-Profile-Id` / `?profile=` is not strong auth. Optionally gate mutating routes behind a shared secret when exposed beyond localhost.
 

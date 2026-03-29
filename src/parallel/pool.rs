@@ -8,6 +8,7 @@
 
 use rayon::ThreadPoolBuilder;
 use std::sync::Once;
+use tracing::warn;
 
 static INIT_PARALLEL_RUNTIME: Once = Once::new();
 
@@ -36,8 +37,10 @@ fn init_rayon_global_pool_from_env() {
     match ThreadPoolBuilder::new().num_threads(threads).build_global() {
         Ok(_) => {}
         Err(e) => {
-            eprintln!(
-                "kobayashi: KOBAYASHI_RAYON_THREADS={threads} not applied (Rayon global pool already initialized): {e}"
+            warn!(
+                threads,
+                error = %e,
+                "KOBAYASHI_RAYON_THREADS not applied (Rayon global pool already initialized)"
             );
         }
     }

@@ -5,6 +5,7 @@ pub mod static_files;
 pub mod sync;
 
 use std::net::SocketAddr;
+use tracing::info;
 
 /// Max concurrent CPU-heavy API jobs (`spawn_blocking`), from `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS` (default 1).
 pub(crate) fn max_concurrent_cpu_jobs_from_env() -> usize {
@@ -30,13 +31,15 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
     // Validate all data files before accepting any connections.
     // This catches corrupt or missing records immediately rather than surfacing
     // mid-simulation after the user has already waited minutes.
-    println!("kobayashi: validating data files…");
-    crate::data::validate::validate_all_startup_data().map_err(|e| {
-        std::io::Error::new(std::io::ErrorKind::InvalidData, e)
-    })?;
+    info!("validating data files before accepting connections");
+    crate::data::validate::validate_all_startup_data()
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
     crate::data::profile_index::migrate_from_legacy_if_needed().map_err(|e| {
-        std::io::Error::new(std::io::ErrorKind::Other, format!("Profile migration failed: {e}"))
+        std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Profile migration failed: {e}"),
+        )
     })?;
 
     let registry = crate::data::data_registry::DataRegistry::load().map_err(|e| {
@@ -49,25 +52,23 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
     let app = routes::build_router(registry);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    println!("kobayashi server listening on http://{bind_addr}");
-    println!("  Sync: token-based routing (each profile has its own sync token).");
+    info!(%bind_addr, "kobayashi server listening");
+    info!("sync ingress uses token-based routing (per-profile stfc-sync-token)");
     if std::env::var("KOBAYASHI_API_KEY")
         .map(|s| !s.trim().is_empty())
         .unwrap_or(false)
     {
-        println!(
-            "  API key: mutating /api routes require Authorization: Bearer or X-Api-Key \
-             (loopback clients are trusted by default; set KOBAYASHI_API_KEY_TRUST_LOOPBACK=0 to require the key everywhere). \
-             See docs/DEPLOYMENT_SECURITY.md."
+        info!(
+            "mutating /api routes require Authorization: Bearer or X-Api-Key \
+             (loopback trusted by default; set KOBAYASHI_API_KEY_TRUST_LOOPBACK=0 to require the key everywhere); \
+             see docs/DEPLOYMENT_SECURITY.md"
         );
     }
     if static_files::static_files_available() {
-        println!("  SPA: serving frontend from frontend/dist");
+        info!("serving SPA from frontend/dist");
     } else {
-        println!(
-            "  SPA: not found (API-only mode). \
-             To use the MVP UI: cd frontend, run 'npm install' then 'npm run build', \
-             then restart the server from the project root."
+        info!(
+            "SPA not found (API-only); build the UI with: cd frontend && npm install && npm run build"
         );
     }
 

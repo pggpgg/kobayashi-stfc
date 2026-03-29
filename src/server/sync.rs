@@ -1,12 +1,14 @@
 //! Sync ingress for STFC Community Mod: accepts type-specific JSON arrays and
 //! updates roster (and optionally other state) for quasi real-time optimizer use.
 
-use axum::http::StatusCode;
 use crate::data::import;
-use crate::data::profile_index::{effective_profile_id, load_profile_index, profile_id_by_sync_token, profile_path,
-    BUFFS_IMPORTED, FORBIDDEN_TECH_IMPORTED, ROSTER_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED,
-    SHIPS_IMPORTED};
+use crate::data::profile_index::{
+    effective_profile_id, load_profile_index, profile_id_by_sync_token, profile_path,
+    BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, RESEARCH_IMPORTED,
+    ROSTER_IMPORTED, SHIPS_IMPORTED,
+};
 use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
+use axum::http::StatusCode;
 use chrono::{TimeZone, Utc};
 use serde::Deserialize;
 use serde_json::Value;
@@ -14,6 +16,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
+use tracing::{error, info, warn};
 
 /// Default path for game officer id -> canonical_officer_id mapping (same as id_registry).
 pub const DEFAULT_GAME_ID_MAP_PATH: &str = "data/officers/id_registry.json";
@@ -42,27 +45,45 @@ static SYNC_BUFFS_MTX: Mutex<()> = Mutex::new(());
 pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, String) {
     let body_len = body.len();
     let ts = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ");
-    append_sync_log(&format!("{} POST /api/sync/ingress body_len={}", ts, body_len));
-    eprintln!("[sync] POST /api/sync/ingress received, body_len={}", body_len);
+    append_sync_log(&format!(
+        "{} POST /api/sync/ingress body_len={}",
+        ts, body_len
+    ));
+    info!(body_len, "sync ingress POST /api/sync/ingress");
 
     let index = load_profile_index();
     let profile_id = profile_id_by_sync_token(&index, sync_token.unwrap_or(""));
     let Some(ref pid) = profile_id else {
-        eprintln!("[sync] 401 Unauthorized (no profile for stfc-sync-token)");
-        return json_error_response(StatusCode::UNAUTHORIZED, "Invalid or missing stfc-sync-token");
+        warn!("sync ingress 401: no profile for stfc-sync-token");
+        return json_error_response(
+            StatusCode::UNAUTHORIZED,
+            "Invalid or missing stfc-sync-token",
+        );
     };
 
-    let roster_path = profile_path(pid, ROSTER_IMPORTED).to_string_lossy().to_string();
-    let research_path = profile_path(pid, RESEARCH_IMPORTED).to_string_lossy().to_string();
-    let buildings_path = profile_path(pid, BUILDINGS_IMPORTED).to_string_lossy().to_string();
-    let ships_path = profile_path(pid, SHIPS_IMPORTED).to_string_lossy().to_string();
-    let ft_path = profile_path(pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
-    let buffs_path = profile_path(pid, BUFFS_IMPORTED).to_string_lossy().to_string();
+    let roster_path = profile_path(pid, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let research_path = profile_path(pid, RESEARCH_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let buildings_path = profile_path(pid, BUILDINGS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let ships_path = profile_path(pid, SHIPS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let ft_path = profile_path(pid, FORBIDDEN_TECH_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let buffs_path = profile_path(pid, BUFFS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
 
     let payload: Vec<serde_json::Value> = match serde_json::from_str(body) {
         Ok(arr) => arr,
         Err(e) => {
-            eprintln!("[sync] 400 Bad Request: body is not a JSON array: {e}");
+            warn!(error = %e, "sync ingress 400: body is not a JSON array");
             return json_error_response(
                 StatusCode::BAD_REQUEST,
                 &format!("Request body must be a JSON array: {e}"),
@@ -71,7 +92,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
     };
 
     if payload.is_empty() {
-        eprintln!("[sync] 200 OK accepted=[] (empty array)");
+        info!("sync ingress 200: accepted empty array");
         return ok_accepted_response(&[]);
     }
 
@@ -81,101 +102,91 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         .and_then(|v| v.as_str())
         .unwrap_or("unknown");
     let type_lower = type_str.to_ascii_lowercase();
-    eprintln!("[sync] type={type_str} count={}", payload.len());
+    info!(sync_type = %type_str, count = payload.len(), "sync ingress batch");
 
     let accepted = match type_lower.as_str() {
-        "officer" => {
-            match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, &roster_path) {
-                Ok(accepted_count) => {
-                    eprintln!("[sync] 200 OK accepted officer({accepted_count})");
-                    vec![format!("officer({accepted_count})")]
-                }
-                Err(e) => {
-                    eprintln!("[sync] 500 Internal Server Error (officer): {e}");
-                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
+        "officer" => match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, &roster_path) {
+            Ok(accepted_count) => {
+                info!(accepted_count, kind = "officer", "sync ingress 200");
+                vec![format!("officer({accepted_count})")]
             }
-        }
-        "research" => {
-            match apply_research_sync(&payload, &research_path) {
-                Ok(accepted_count) => {
-                    eprintln!("[sync] 200 OK accepted research({accepted_count})");
-                    vec![format!("research({accepted_count})")]
-                }
-                Err(e) => {
-                    eprintln!("[sync] 500 Internal Server Error (research): {e}");
-                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
+            Err(e) => {
+                error!(error = %e, kind = "officer", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
             }
-        }
-        "buildings" | "module" => {
-            match apply_buildings_sync(&payload, &buildings_path) {
-                Ok(accepted_count) => {
-                    eprintln!("[sync] 200 OK accepted buildings({accepted_count})");
-                    vec![format!("buildings({accepted_count})")]
-                }
-                Err(e) => {
-                    eprintln!("[sync] 500 Internal Server Error (buildings): {e}");
-                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
+        },
+        "research" => match apply_research_sync(&payload, &research_path) {
+            Ok(accepted_count) => {
+                info!(accepted_count, kind = "research", "sync ingress 200");
+                vec![format!("research({accepted_count})")]
             }
-        }
-        "ships" | "ship" => {
-            match apply_ships_sync(&payload, &ships_path) {
-                Ok(accepted_count) => {
-                    eprintln!("[sync] 200 OK accepted ships({accepted_count})");
-                    vec![format!("ships({accepted_count})")]
-                }
-                Err(e) => {
-                    eprintln!("[sync] 500 Internal Server Error (ships): {e}");
-                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
+            Err(e) => {
+                error!(error = %e, kind = "research", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
             }
-        }
-        "ft" => {
-            match apply_ft_sync(&payload, &ft_path) {
-                Ok(accepted_count) => {
-                    eprintln!("[sync] 200 OK accepted ft({accepted_count})");
-                    vec![format!("ft({accepted_count})")]
-                }
-                Err(e) => {
-                    eprintln!("[sync] 500 Internal Server Error (ft): {e}");
-                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
+        },
+        "buildings" | "module" => match apply_buildings_sync(&payload, &buildings_path) {
+            Ok(accepted_count) => {
+                info!(accepted_count, kind = "buildings", "sync ingress 200");
+                vec![format!("buildings({accepted_count})")]
             }
-        }
+            Err(e) => {
+                error!(error = %e, kind = "buildings", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            }
+        },
+        "ships" | "ship" => match apply_ships_sync(&payload, &ships_path) {
+            Ok(accepted_count) => {
+                info!(accepted_count, kind = "ships", "sync ingress 200");
+                vec![format!("ships({accepted_count})")]
+            }
+            Err(e) => {
+                error!(error = %e, kind = "ships", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            }
+        },
+        "ft" => match apply_ft_sync(&payload, &ft_path) {
+            Ok(accepted_count) => {
+                info!(accepted_count, kind = "ft", "sync ingress 200");
+                vec![format!("ft({accepted_count})")]
+            }
+            Err(e) => {
+                error!(error = %e, kind = "ft", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            }
+        },
         // stfc-mod uses JSON type "tech" for forbidden/chaos tech (same payload as "ft": fid, tier, level, shard_count).
-        "tech" => {
-            match apply_ft_sync(&payload, &ft_path) {
-                Ok(accepted_count) => {
-                    eprintln!("[sync] 200 OK accepted tech({accepted_count}) -> forbidden_tech.imported.json");
-                    vec![format!("tech({accepted_count})")]
-                }
-                Err(e) => {
-                    eprintln!("[sync] 500 Internal Server Error (tech/ft): {e}");
-                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
+        "tech" => match apply_ft_sync(&payload, &ft_path) {
+            Ok(accepted_count) => {
+                info!(
+                    accepted_count,
+                    kind = "tech",
+                    "sync ingress 200 -> forbidden_tech.imported.json"
+                );
+                vec![format!("tech({accepted_count})")]
             }
-        }
+            Err(e) => {
+                error!(error = %e, kind = "tech", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            }
+        },
         // Mod may send only removals in a batch (`type: "expired_buffs"` on the first row).
-        "buffs" | "expired_buffs" => {
-            match apply_buffs_sync(&payload, &buffs_path) {
-                Ok(accepted_count) => {
-                    eprintln!("[sync] 200 OK accepted buffs({accepted_count})");
-                    vec![format!("buffs({accepted_count})")]
-                }
-                Err(e) => {
-                    eprintln!("[sync] 500 Internal Server Error (buffs): {e}");
-                    return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
+        "buffs" | "expired_buffs" => match apply_buffs_sync(&payload, &buffs_path) {
+            Ok(accepted_count) => {
+                info!(accepted_count, kind = "buffs", "sync ingress 200");
+                vec![format!("buffs({accepted_count})")]
             }
-        }
+            Err(e) => {
+                error!(error = %e, kind = "buffs", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            }
+        },
         "resources" | "missions" | "battlelogs" | "traits" | "slots" | "inventory" | "jobs" => {
-            eprintln!("[sync] 200 OK accepted {} (not persisted)", type_str);
+            info!(sync_type = %type_str, "sync ingress 200 accepted (not persisted)");
             vec![type_str.to_string()]
         }
         _ => {
-            eprintln!("[sync] 200 OK accepted {} (unknown type)", type_str);
+            info!(sync_type = %type_str, "sync ingress 200 accepted (unknown type)");
             vec![type_str.to_string()]
         }
     };
@@ -203,15 +214,18 @@ fn apply_officer_sync(
     game_id_map_path: &str,
     roster_output_path: &str,
 ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-    let _guard = SYNC_ROSTER_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let _guard = SYNC_ROSTER_MTX
+        .lock()
+        .map_err(|e| format!("lock poisoned: {e}"))?;
     let game_id_to_canonical = load_game_id_map(game_id_map_path)?;
     let canonical_names = load_canonical_names("data/officers/officers.canonical.json")?;
 
-    let mut roster_map: HashMap<String, import::RosterEntry> = load_existing_roster(roster_output_path)
-        .unwrap_or_default()
-        .into_iter()
-        .map(|e| (e.canonical_officer_id.clone(), e))
-        .collect();
+    let mut roster_map: HashMap<String, import::RosterEntry> =
+        load_existing_roster(roster_output_path)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|e| (e.canonical_officer_id.clone(), e))
+            .collect();
 
     let mut accepted = 0usize;
     for item in payload {
@@ -228,9 +242,7 @@ fn apply_officer_sync(
             .cloned()
             .unwrap_or_else(|| canonical_id.clone());
         let rank = item.rank.and_then(|r| u8::try_from(r).ok());
-        let level = item
-            .level
-            .and_then(|l| u16::try_from(l).ok());
+        let level = item.level.and_then(|l| u16::try_from(l).ok());
         let tier = rank;
 
         let entry = import::RosterEntry {
@@ -260,7 +272,9 @@ fn apply_officer_sync(
     Ok(accepted)
 }
 
-fn oid_to_map_key(oid: Option<&serde_json::Value>) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+fn oid_to_map_key(
+    oid: Option<&serde_json::Value>,
+) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let v = oid.ok_or("missing oid")?;
     if let Some(s) = v.as_str() {
         return Ok(s.to_string());
@@ -277,13 +291,17 @@ fn oid_to_map_key(oid: Option<&serde_json::Value>) -> Result<String, Box<dyn std
     Err("oid must be string or number".into())
 }
 
-fn load_game_id_map(path: &str) -> Result<HashMap<String, String>, Box<dyn std::error::Error + Send + Sync>> {
+fn load_game_id_map(
+    path: &str,
+) -> Result<HashMap<String, String>, Box<dyn std::error::Error + Send + Sync>> {
     let raw = std::fs::read_to_string(path)?;
     let parsed: HashMap<String, String> = serde_json::from_str(&raw)?;
     Ok(parsed)
 }
 
-fn load_canonical_names(path: &str) -> Result<HashMap<String, String>, Box<dyn std::error::Error + Send + Sync>> {
+fn load_canonical_names(
+    path: &str,
+) -> Result<HashMap<String, String>, Box<dyn std::error::Error + Send + Sync>> {
     #[derive(serde::Deserialize)]
     struct File {
         officers: Vec<CanonicalOfficer>,
@@ -295,14 +313,9 @@ fn load_canonical_names(path: &str) -> Result<HashMap<String, String>, Box<dyn s
     }
     let raw = std::fs::read_to_string(path)?;
     let file: File = serde_json::from_str(&raw)?;
-    let map = file
-        .officers
-        .into_iter()
-        .map(|o| (o.id, o.name))
-        .collect();
+    let map = file.officers.into_iter().map(|o| (o.id, o.name)).collect();
     Ok(map)
 }
-
 
 fn load_existing_roster(path: &str) -> Option<Vec<import::RosterEntry>> {
     #[derive(serde::Deserialize)]
@@ -342,12 +355,15 @@ fn apply_buffs_sync(
     payload: &[serde_json::Value],
     output_path: &str,
 ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-    let _guard = SYNC_BUFFS_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
-    let mut by_bid: HashMap<i64, import::GlobalBuffEntry> = import::load_imported_buffs(output_path)
-        .unwrap_or_default()
-        .into_iter()
-        .map(|e| (e.bid, e))
-        .collect();
+    let _guard = SYNC_BUFFS_MTX
+        .lock()
+        .map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut by_bid: HashMap<i64, import::GlobalBuffEntry> =
+        import::load_imported_buffs(output_path)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|e| (e.bid, e))
+            .collect();
 
     let mut accepted = 0usize;
     for item in payload {
@@ -355,11 +371,7 @@ fn apply_buffs_sync(
             Ok(i) => i,
             Err(_) => continue,
         };
-        let t = parsed
-            ._type
-            .as_deref()
-            .unwrap_or("")
-            .to_ascii_lowercase();
+        let t = parsed._type.as_deref().unwrap_or("").to_ascii_lowercase();
         let expired = t == "expired_buffs" || (t.starts_with("expired_") && t.contains("buff"));
         let Some(bid) = parsed.bid else {
             continue;
@@ -409,12 +421,15 @@ fn apply_research_sync(
     payload: &[serde_json::Value],
     output_path: &str,
 ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-    let _guard = SYNC_RESEARCH_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
-    let mut by_rid: HashMap<i64, import::ResearchEntry> = import::load_imported_research(output_path)
-        .unwrap_or_default()
-        .into_iter()
-        .map(|e| (e.rid, e))
-        .collect();
+    let _guard = SYNC_RESEARCH_MTX
+        .lock()
+        .map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut by_rid: HashMap<i64, import::ResearchEntry> =
+        import::load_imported_research(output_path)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|e| (e.rid, e))
+            .collect();
 
     let mut accepted = 0usize;
     for item in payload {
@@ -458,7 +473,9 @@ fn apply_buildings_sync(
     payload: &[serde_json::Value],
     output_path: &str,
 ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-    let _guard = SYNC_BUILDINGS_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let _guard = SYNC_BUILDINGS_MTX
+        .lock()
+        .map_err(|e| format!("lock poisoned: {e}"))?;
     let mut by_bid: HashMap<i64, import::BuildingEntry> =
         import::load_imported_buildings(output_path)
             .unwrap_or_default()
@@ -516,7 +533,9 @@ fn apply_ships_sync(
     payload: &[serde_json::Value],
     output_path: &str,
 ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-    let _guard = SYNC_SHIPS_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let _guard = SYNC_SHIPS_MTX
+        .lock()
+        .map_err(|e| format!("lock poisoned: {e}"))?;
     let mut by_psid: HashMap<i64, import::ShipEntry> = import::load_imported_ships(output_path)
         .unwrap_or_default()
         .into_iter()
@@ -577,7 +596,9 @@ fn apply_ft_sync(
     payload: &[serde_json::Value],
     output_path: &str,
 ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-    let _guard = SYNC_FT_MTX.lock().map_err(|e| format!("lock poisoned: {e}"))?;
+    let _guard = SYNC_FT_MTX
+        .lock()
+        .map_err(|e| format!("lock poisoned: {e}"))?;
     let mut by_fid: HashMap<i64, import::ForbiddenTechEntry> =
         import::load_imported_forbidden_tech(output_path)
             .unwrap_or_default()
@@ -661,12 +682,24 @@ fn last_modified_iso(path: &str) -> Option<String> {
 pub fn sync_status_payload() -> (StatusCode, String) {
     let index = load_profile_index();
     let pid = effective_profile_id(&index);
-    let roster_path = profile_path(&pid, ROSTER_IMPORTED).to_string_lossy().to_string();
-    let research_path = profile_path(&pid, RESEARCH_IMPORTED).to_string_lossy().to_string();
-    let buildings_path = profile_path(&pid, BUILDINGS_IMPORTED).to_string_lossy().to_string();
-    let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
-    let forbidden_tech_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
-    let buffs_path = profile_path(&pid, BUFFS_IMPORTED).to_string_lossy().to_string();
+    let roster_path = profile_path(&pid, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let research_path = profile_path(&pid, RESEARCH_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let buildings_path = profile_path(&pid, BUILDINGS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let ships_path = profile_path(&pid, SHIPS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let forbidden_tech_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let buffs_path = profile_path(&pid, BUFFS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
 
     let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
     let research_catalog_loaded = research_catalog.is_some();
@@ -700,10 +733,12 @@ pub fn sync_status_payload() -> (StatusCode, String) {
 #[cfg(test)]
 mod tests {
     use super::ingress_payload;
-    use axum::http::StatusCode;
     use crate::data::import;
-    use crate::data::profile_index::{create_profile, delete_profile, load_profile_index, profile_path,
-        BUFFS_IMPORTED, RESEARCH_IMPORTED, BUILDINGS_IMPORTED, SHIPS_IMPORTED, FORBIDDEN_TECH_IMPORTED};
+    use crate::data::profile_index::{
+        create_profile, delete_profile, load_profile_index, profile_path, BUFFS_IMPORTED,
+        BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, RESEARCH_IMPORTED, SHIPS_IMPORTED,
+    };
+    use axum::http::StatusCode;
     use std::sync::Mutex;
     use std::sync::Once;
     use uuid::Uuid;
@@ -758,8 +793,13 @@ mod tests {
         cleanup_orphan_sync_test_profiles();
         let mut index = load_profile_index();
         let id = format!("sync_test_{}", Uuid::new_v4().as_simple());
-        let entry = create_profile(&mut index, Some(&id), "Sync Test").expect("create test profile");
-        (entry.sync_token, entry.id.clone(), TestProfileGuard(entry.id))
+        let entry =
+            create_profile(&mut index, Some(&id), "Sync Test").expect("create test profile");
+        (
+            entry.sync_token,
+            entry.id.clone(),
+            TestProfileGuard(entry.id),
+        )
     }
 
     #[test]
@@ -794,7 +834,8 @@ mod tests {
     fn ingress_research_type_returns_200() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
         let (token, _, _cleanup) = ensure_test_profile();
-        let (status, body) = ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, Some(&token));
+        let (status, body) =
+            ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("research"));
     }
@@ -803,10 +844,15 @@ mod tests {
     fn ingress_research_persists_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
         let (token, profile_id, _cleanup) = ensure_test_profile();
-        let (status, body) = ingress_payload(r#"[{"type":"research","rid":919291,"level":3}]"#, Some(&token));
+        let (status, body) = ingress_payload(
+            r#"[{"type":"research","rid":919291,"level":3}]"#,
+            Some(&token),
+        );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("research(1)"));
-        let research_path = profile_path(&profile_id, RESEARCH_IMPORTED).to_string_lossy().to_string();
+        let research_path = profile_path(&profile_id, RESEARCH_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let entries = import::load_imported_research(&research_path)
             .expect("research.imported.json should exist after sync");
         assert!(
@@ -838,10 +884,8 @@ mod tests {
             entries
         );
 
-        let (status2, _) = ingress_payload(
-            r#"[{"type":"expired_buffs","bid":777001}]"#,
-            Some(&token),
-        );
+        let (status2, _) =
+            ingress_payload(r#"[{"type":"expired_buffs","bid":777001}]"#, Some(&token));
         assert_eq!(status2, StatusCode::OK);
         let entries2 = import::load_imported_buffs(&path).unwrap_or_default();
         assert!(
@@ -855,10 +899,15 @@ mod tests {
     fn ingress_buildings_persist_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
         let (token, profile_id, _cleanup) = ensure_test_profile();
-        let (status, body) = ingress_payload(r#"[{"type":"buildings","bid":919292,"level":5}]"#, Some(&token));
+        let (status, body) = ingress_payload(
+            r#"[{"type":"buildings","bid":919292,"level":5}]"#,
+            Some(&token),
+        );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("buildings(1)"));
-        let buildings_path = profile_path(&profile_id, BUILDINGS_IMPORTED).to_string_lossy().to_string();
+        let buildings_path = profile_path(&profile_id, BUILDINGS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let entries = import::load_imported_buildings(&buildings_path)
             .expect("buildings.imported.json should exist after sync");
         assert!(
@@ -878,13 +927,15 @@ mod tests {
         );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("ships(1)"));
-        let ships_path = profile_path(&profile_id, SHIPS_IMPORTED).to_string_lossy().to_string();
+        let ships_path = profile_path(&profile_id, SHIPS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let entries = import::load_imported_ships(&ships_path)
             .expect("ships.imported.json should exist after sync");
         assert!(
-            entries.iter().any(|e| {
-                e.psid == 919293 && e.tier == 2 && e.level == 10 && e.hull_id == 100
-            }),
+            entries
+                .iter()
+                .any(|e| { e.psid == 919293 && e.tier == 2 && e.level == 10 && e.hull_id == 100 }),
             "expected psid=919293 in {:?}",
             entries
         );
@@ -894,10 +945,15 @@ mod tests {
     fn ingress_module_type_persists_to_file() {
         let _guard = SYNC_TEST_LOCK.lock().unwrap();
         let (token, profile_id, _cleanup) = ensure_test_profile();
-        let (status, body) = ingress_payload(r#"[{"type":"module","bid":919294,"level":7}]"#, Some(&token));
+        let (status, body) = ingress_payload(
+            r#"[{"type":"module","bid":919294,"level":7}]"#,
+            Some(&token),
+        );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("buildings(1)"));
-        let buildings_path = profile_path(&profile_id, BUILDINGS_IMPORTED).to_string_lossy().to_string();
+        let buildings_path = profile_path(&profile_id, BUILDINGS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let entries = import::load_imported_buildings(&buildings_path)
             .expect("buildings.imported.json should exist after sync");
         assert!(
@@ -917,13 +973,15 @@ mod tests {
         );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("ships(1)"));
-        let ships_path = profile_path(&profile_id, SHIPS_IMPORTED).to_string_lossy().to_string();
+        let ships_path = profile_path(&profile_id, SHIPS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let entries = import::load_imported_ships(&ships_path)
             .expect("ships.imported.json should exist after sync");
         assert!(
-            entries.iter().any(|e| {
-                e.psid == 919295 && e.tier == 3 && e.level == 15 && e.hull_id == 200
-            }),
+            entries
+                .iter()
+                .any(|e| { e.psid == 919295 && e.tier == 3 && e.level == 15 && e.hull_id == 200 }),
             "expected psid=919295 in {:?}",
             entries
         );
@@ -939,13 +997,15 @@ mod tests {
         );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("ft(1)"));
-        let ft_path = profile_path(&profile_id, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+        let ft_path = profile_path(&profile_id, FORBIDDEN_TECH_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let entries = import::load_imported_forbidden_tech(&ft_path)
             .expect("forbidden_tech.imported.json should exist after sync");
         assert!(
-            entries.iter().any(|e| {
-                e.fid == 919296 && e.tier == 1 && e.level == 5 && e.shard_count == 10
-            }),
+            entries
+                .iter()
+                .any(|e| { e.fid == 919296 && e.tier == 1 && e.level == 5 && e.shard_count == 10 }),
             "expected fid=919296 in {:?}",
             entries
         );
@@ -962,11 +1022,15 @@ mod tests {
         );
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("tech(1)"));
-        let ft_path = profile_path(&profile_id, FORBIDDEN_TECH_IMPORTED).to_string_lossy().to_string();
+        let ft_path = profile_path(&profile_id, FORBIDDEN_TECH_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let entries = import::load_imported_forbidden_tech(&ft_path)
             .expect("forbidden_tech.imported.json should exist after tech sync");
         assert!(
-            entries.iter().any(|e| e.fid == 424242 && e.tier == 2 && e.level == 3),
+            entries
+                .iter()
+                .any(|e| e.fid == 424242 && e.tier == 2 && e.level == 3),
             "expected fid=424242 in {:?}",
             entries
         );

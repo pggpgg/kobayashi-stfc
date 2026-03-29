@@ -11,6 +11,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
+use tracing::warn;
+
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
 
 pub const DEFAULT_HEURISTICS_DIR: &str = "data/heuristics";
@@ -84,7 +86,7 @@ pub fn load_seed_file(
     let content = match fs::read_to_string(&path) {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("heuristics: could not read '{path}': {e}", path = path.display());
+            warn!(path = %path.display(), error = %e, "heuristics: could not read seed file");
             return Vec::new();
         }
     };
@@ -109,7 +111,10 @@ pub fn expand_crews(
     below_decks_slots: usize,
     strategy: BelowDecksStrategy,
 ) -> Vec<HeuristicsCandidate> {
-    crews.into_iter().flat_map(|crew| expand_crew(crew, below_decks_slots, strategy)).collect()
+    crews
+        .into_iter()
+        .flat_map(|crew| expand_crew(crew, below_decks_slots, strategy))
+        .collect()
 }
 
 fn parse_line(
@@ -153,8 +158,9 @@ fn parse_line(
     let below_decks_candidates: Vec<String> = if bd_section.is_empty() {
         Vec::new()
     } else {
-        let used: std::collections::HashSet<&str> =
-            std::iter::once(captain.as_str()).chain(bridge.iter().map(String::as_str)).collect();
+        let used: std::collections::HashSet<&str> = std::iter::once(captain.as_str())
+            .chain(bridge.iter().map(String::as_str))
+            .collect();
         bd_section
             .split(',')
             .map(str::trim)
@@ -164,7 +170,12 @@ fn parse_line(
             .collect()
     };
 
-    Some(ParsedHeuristicsCrew { label, captain, bridge, below_decks_candidates })
+    Some(ParsedHeuristicsCrew {
+        label,
+        captain,
+        bridge,
+        below_decks_candidates,
+    })
 }
 
 fn expand_crew(
@@ -245,24 +256,30 @@ fn resolve_name(
     }
 
     // 2. Exact case-insensitive match
-    if let Some(name) = canonical_names.iter().find(|n| n.eq_ignore_ascii_case(trimmed)) {
+    if let Some(name) = canonical_names
+        .iter()
+        .find(|n| n.eq_ignore_ascii_case(trimmed))
+    {
         return Some(name.clone());
     }
 
     // 3. Unique substring match
     let lower = trimmed.to_lowercase();
-    let matches: Vec<&String> =
-        canonical_names.iter().filter(|n| n.to_lowercase().contains(&lower)).collect();
+    let matches: Vec<&String> = canonical_names
+        .iter()
+        .filter(|n| n.to_lowercase().contains(&lower))
+        .collect();
     match matches.len() {
         1 => Some(matches[0].clone()),
         0 => {
-            eprintln!("heuristics: no match for officer name '{trimmed}'; skipping");
+            warn!(%trimmed, "heuristics: no match for officer name; skipping");
             None
         }
         n => {
-            eprintln!(
-                "heuristics: ambiguous officer name '{trimmed}' ({n} matches); skipping. \
-                 Use a more specific name."
+            warn!(
+                %trimmed,
+                match_count = n,
+                "heuristics: ambiguous officer name; skipping (use a more specific name)"
             );
             None
         }
@@ -311,7 +328,13 @@ mod tests {
             label: "test".into(),
             captain: "Alpha".into(),
             bridge: vec!["Beta".into(), "Gamma".into()],
-            below_decks_candidates: vec!["D1".into(), "D2".into(), "D3".into(), "D4".into(), "D5".into()],
+            below_decks_candidates: vec![
+                "D1".into(),
+                "D2".into(),
+                "D3".into(),
+                "D4".into(),
+                "D5".into(),
+            ],
         };
         let candidates = super::expand_crew(crew, 3, BelowDecksStrategy::Ordered);
         assert_eq!(candidates.len(), 1);

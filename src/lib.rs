@@ -3,6 +3,7 @@ pub mod cli;
 pub mod combat;
 pub mod data;
 pub mod lcars;
+pub mod logging;
 pub mod mechanics;
 pub mod optimizer;
 pub mod parallel;
