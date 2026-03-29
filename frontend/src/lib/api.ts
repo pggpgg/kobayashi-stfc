@@ -261,16 +261,51 @@ export interface CrewRecommendation {
   /** API returns string[]; we accept string for backward compatibility. */
   below_decks: string | string[];
   win_rate: number;
+  win_rate_ci_low: number;
+  win_rate_ci_high: number;
   stall_rate: number;
+  stall_rate_ci_low: number;
+  stall_rate_ci_high: number;
   loss_rate: number;
+  loss_rate_ci_low: number;
+  loss_rate_ci_high: number;
+  /** Win on round 1 (not a round-limit stall). */
+  r1_kill_rate: number;
+  r1_kill_rate_ci_low: number;
+  r1_kill_rate_ci_high: number;
   avg_hull_remaining: number;
+  avg_hull_remaining_ci_low: number;
+  avg_hull_remaining_ci_high: number;
 }
 
 export interface OptimizeResponse {
   status: string;
-  scenario: { ship: string; hostile: string; sims: number; seed: number };
+  engine?: string;
+  scenario: {
+    ship: string;
+    hostile: string;
+    sims: number;
+    seed: number;
+    /** Resolved below-decks slot count used for candidate generation. */
+    below_decks_slots: number;
+    /** Present when optimize constraints were applied (counts only). */
+    optimize_constraints?: {
+      must_include: number;
+      exclude: number;
+      groups: number;
+      captain_must_be: boolean;
+      bridge_must_include: number;
+      below_decks_must_include: number;
+    };
+    analytical_prefilter_keep?: number;
+    analytical_prefilter_from?: number;
+    analytical_prefilter_kept?: number;
+  };
   recommendations: CrewRecommendation[];
   duration_ms?: number;
+  notes?: string[];
+  approximate_notes?: string[];
+  warnings?: string[];
 }
 
 export interface OptimizeEstimate {
@@ -286,6 +321,8 @@ export async function getOptimizeEstimate(
     sims?: number;
     max_candidates?: number | null;
     prioritize_below_decks_ability?: boolean;
+    ship_tier?: number | null;
+    below_decks_slots?: number | null;
   },
   profileId?: string | null,
 ): Promise<OptimizeEstimate> {
@@ -301,6 +338,12 @@ export async function getOptimizeEstimate(
   if (params.prioritize_below_decks_ability === true) {
     search.set('prioritize_below_decks_ability', 'true');
   }
+  if (params.ship_tier != null && params.ship_tier > 0) {
+    search.set('ship_tier', String(params.ship_tier));
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+    search.set('below_decks_slots', String(params.below_decks_slots));
+  }
   if (profileId) search.set('profile', profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
   const res = await fetch(url);
@@ -315,6 +358,9 @@ export async function optimize(
     sims?: number;
     seed?: number;
     max_candidates?: number | null;
+    ship_tier?: number | null;
+    ship_level?: number | null;
+    below_decks_slots?: number | null;
   },
   profileId?: string | null,
 ): Promise<OptimizeResponse> {
@@ -326,6 +372,15 @@ export async function optimize(
   };
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;
+  }
+  if (params.ship_tier != null && params.ship_tier > 0) {
+    body.ship_tier = params.ship_tier;
+  }
+  if (params.ship_level != null && params.ship_level > 0) {
+    body.ship_level = params.ship_level;
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+    body.below_decks_slots = params.below_decks_slots;
   }
   const res = await fetch(`${API_BASE}/api/optimize`, {
     method: 'POST',
@@ -358,6 +413,16 @@ export async function fetchHeuristics(): Promise<string[]> {
 
 export type OptimizerStrategyType = 'exhaustive' | 'genetic' | 'tiered';
 
+/** Sub-object for POST /api/optimize/start `constraints` (matches server OptimizeConstraintsDto). */
+export interface OptimizeCrewConstraintsBody {
+  must_include?: string[];
+  exclude?: string[];
+  groups?: { officers: string[]; min_count: number }[];
+  captain_must_be?: string;
+  bridge_must_include?: string[];
+  below_decks_must_include?: string[];
+}
+
 export async function optimizeStart(
   params: {
     ship: string;
@@ -372,6 +437,8 @@ export async function optimizeStart(
     below_decks_strategy?: 'ordered' | 'exploration';
     ship_tier?: number | null;
     ship_level?: number | null;
+    below_decks_slots?: number | null;
+    constraints?: OptimizeCrewConstraintsBody;
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -404,6 +471,12 @@ export async function optimizeStart(
   }
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+    body.below_decks_slots = params.below_decks_slots;
+  }
+  if (params.constraints && Object.keys(params.constraints).length > 0) {
+    body.constraints = params.constraints;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',

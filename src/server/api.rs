@@ -7,8 +7,8 @@ pub use execution::{
     OptimizeStatusResponse, ScenarioSummary,
 };
 pub use requests::{
-    validate_request, OptimizePayloadError, OptimizeRequest, ValidationErrorResponse,
-    ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
+    validate_request, OptimizePayloadError, OptimizeRequest, ReplaySeedRequest,
+    ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
 };
 
 use crate::data::data_registry::DataRegistry;
@@ -26,10 +26,10 @@ use crate::data::profile_index::{
 };
 use crate::data::import::load_imported_ships;
 use crate::optimizer::crew_generator::{
-    CandidateStrategy, CrewCandidate, CrewGenerator, BELOW_DECKS_SLOTS, BRIDGE_SLOTS,
+    resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_with_registry, SimulationResult,
+    replay_optimize_iteration_with_registry, run_monte_carlo_with_registry, SimulationResult,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -289,6 +289,8 @@ pub struct SimulateRequest {
     pub crew: SimulateCrew,
     pub num_sims: Option<u32>,
     pub seed: Option<u64>,
+    /// Below-decks slot count for padding crew (2–5). Omitted = tier default.
+    pub below_decks_slots: Option<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -329,6 +331,50 @@ fn officer_id_to_name(id: &str, officers: &[(String, String)]) -> String {
         .to_string()
 }
 
+fn crew_candidate_from_officer_fields(
+    captain: Option<&str>,
+    bridge: Option<&[Option<String>]>,
+    below_deck: Option<&[Option<String>]>,
+    officers: &[(String, String)],
+    below_decks_slots: usize,
+) -> Result<CrewCandidate, String> {
+    let captain = captain
+        .map(|s| officer_id_to_name(s, officers))
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "crew.captain is required".to_string())?;
+    let bridge_names: Vec<String> = bridge
+        .map(|v| {
+            v.iter()
+                .take(BRIDGE_SLOTS)
+                .map(|s| {
+                    s.as_ref()
+                        .map(|id| officer_id_to_name(id, officers))
+                        .unwrap_or_default()
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let below_names: Vec<String> = below_deck
+        .map(|v| {
+            v.iter()
+                .take(below_decks_slots)
+                .map(|s| {
+                    s.as_ref()
+                        .map(|id| officer_id_to_name(id, officers))
+                        .unwrap_or_default()
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let bridge = pad_to_len(bridge_names, BRIDGE_SLOTS);
+    let below_decks = pad_to_len(below_names, below_decks_slots);
+    Ok(CrewCandidate {
+        captain,
+        bridge,
+        below_decks,
+    })
+}
+
 fn pad_to_len(mut v: Vec<String>, len: usize) -> Vec<String> {
     let first = v.first().cloned().unwrap_or_default();
     while v.len() < len {
@@ -358,6 +404,16 @@ pub fn simulate_payload(
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
     let num_sims = req.num_sims.unwrap_or(5000).min(100_000).max(1);
     let seed = req.seed.unwrap_or(0);
+    if let Some(n) = req.below_decks_slots {
+        let lo = crate::optimizer::crew_generator::MIN_BELOW_DECKS_SLOTS as u32;
+        let hi = crate::optimizer::crew_generator::MAX_BELOW_DECKS_SLOTS as u32;
+        if !(lo..=hi).contains(&n) {
+            return Err(SimulateError::Validation(format!(
+                "below_decks_slots must be between {lo} and {hi}"
+            )));
+        }
+    }
+    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, req.below_decks_slots);
 
     let officers: Vec<(String, String)> = registry
         .officers()
@@ -365,48 +421,20 @@ pub fn simulate_payload(
         .map(|o| (o.id.clone(), o.name.clone()))
         .collect();
 
-    let captain = req
-        .crew
-        .captain
-        .as_ref()
-        .map(|s| officer_id_to_name(s, &officers))
-        .unwrap_or_else(|| "".to_string());
-    let bridge_names: Vec<String> = req
-        .crew
-        .bridge
-        .as_ref()
-        .map(|v| {
-            v.iter()
-                .take(BRIDGE_SLOTS)
-                .map(|s| s.as_ref().map(|id| officer_id_to_name(id, &officers)).unwrap_or_default())
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
-    let below_names: Vec<String> = req
-        .crew
-        .below_deck
-        .as_ref()
-        .map(|v| {
-            v.iter()
-                .take(BELOW_DECKS_SLOTS)
-                .map(|s| s.as_ref().map(|id| officer_id_to_name(id, &officers)).unwrap_or_default())
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
+    let candidate = crew_candidate_from_officer_fields(
+        req.crew.captain.as_deref(),
+        req.crew.bridge.as_ref().map(|v| v.as_slice()),
+        req.crew.below_deck.as_ref().map(|v| v.as_slice()),
+        &officers,
+        below_decks_slots,
+    )
+    .map_err(SimulateError::Validation)?;
 
-    if captain.is_empty() {
-        return Err(SimulateError::Validation("crew.captain is required".to_string()));
-    }
-
-    // Pad to fixed slot counts: 2 bridge, 3 below decks (repeat first if fewer provided).
-    let bridge = pad_to_len(bridge_names, BRIDGE_SLOTS);
-    let below_decks = pad_to_len(below_names, BELOW_DECKS_SLOTS);
-
-    let candidate = CrewCandidate {
-        captain: captain.clone(),
-        bridge: bridge.clone(),
-        below_decks: below_decks.clone(),
-    };
+    let CrewCandidate {
+        captain,
+        bridge,
+        below_decks,
+    } = candidate.clone();
     let candidates = vec![candidate];
     let (results, using_placeholder_combatants) = run_monte_carlo_with_registry(
         registry,
@@ -426,9 +454,20 @@ pub fn simulate_payload(
             below_decks,
         },
         win_rate: 0.0,
+        win_rate_ci_low: 0.0,
+        win_rate_ci_high: 0.0,
         stall_rate: 0.0,
+        stall_rate_ci_low: 0.0,
+        stall_rate_ci_high: 0.0,
         loss_rate: 0.0,
+        loss_rate_ci_low: 0.0,
+        loss_rate_ci_high: 0.0,
+        r1_kill_rate: 0.0,
+        r1_kill_rate_ci_low: 0.0,
+        r1_kill_rate_ci_high: 0.0,
         avg_hull_remaining: 0.0,
+        avg_hull_remaining_ci_low: 0.0,
+        avg_hull_remaining_ci_high: 0.0,
     });
 
     let wins = (result.win_rate * num_sims as f64).round() as u32;
@@ -474,6 +513,120 @@ impl fmt::Display for SimulateError {
 }
 
 impl std::error::Error for SimulateError {}
+
+const DEFAULT_REPLAY_MAX_TRACE_EVENTS: u32 = 500;
+const MAX_REPLAY_MAX_TRACE_EVENTS_CAP: u32 = 2000;
+
+#[derive(Debug)]
+pub enum ReplaySeedError {
+    Parse(serde_json::Error),
+    Validation(String),
+}
+
+impl fmt::Display for ReplaySeedError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Parse(e) => write!(f, "{e}"),
+            Self::Validation(m) => write!(f, "{m}"),
+        }
+    }
+}
+
+impl std::error::Error for ReplaySeedError {}
+
+/// POST `/api/optimize/replay-seed` — replay one Monte Carlo iteration with a combat event trace.
+pub fn replay_optimize_seed_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, ReplaySeedError> {
+    let req: ReplaySeedRequest = serde_json::from_str(body).map_err(ReplaySeedError::Parse)?;
+
+    if req.ship.trim().is_empty() {
+        return Err(ReplaySeedError::Validation("ship must not be empty".to_string()));
+    }
+    if req.hostile.trim().is_empty() {
+        return Err(ReplaySeedError::Validation(
+            "hostile must not be empty".to_string(),
+        ));
+    }
+
+    let officers: Vec<(String, String)> = registry
+        .officers()
+        .iter()
+        .map(|o| (o.id.clone(), o.name.clone()))
+        .collect();
+
+    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, None);
+    let candidate = crew_candidate_from_officer_fields(
+        req.crew.captain.as_deref(),
+        req.crew.bridge.as_ref().map(|v| v.as_slice()),
+        req.crew.below_deck.as_ref().map(|v| v.as_slice()),
+        &officers,
+        below_decks_slots,
+    )
+    .map_err(ReplaySeedError::Validation)?;
+
+    let scenario_seed = req.seed.unwrap_or(0);
+    let max_trace = req
+        .max_trace_events
+        .unwrap_or(DEFAULT_REPLAY_MAX_TRACE_EVENTS)
+        .clamp(1, MAX_REPLAY_MAX_TRACE_EVENTS_CAP) as usize;
+
+    let replay = replay_optimize_iteration_with_registry(
+        registry,
+        req.ship.trim(),
+        req.hostile.trim(),
+        req.ship_tier,
+        req.ship_level,
+        &candidate,
+        scenario_seed,
+        req.sim_index,
+        profile_id,
+        max_trace,
+    );
+
+    let mut warnings = Vec::new();
+    if replay.using_placeholder_combatants {
+        warnings.push(
+            "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
+                .to_string(),
+        );
+    }
+
+    let response_json = serde_json::json!({
+        "status": "ok",
+        "scenario": {
+            "ship": req.ship.trim(),
+            "hostile": req.hostile.trim(),
+            "ship_tier": req.ship_tier,
+            "ship_level": req.ship_level,
+            "scenario_seed": scenario_seed,
+            "sim_index": req.sim_index,
+            "base_seed": replay.base_seed,
+            "iteration_seed": replay.iteration_seed,
+            "effective_defender_hull": replay.effective_defender_hull,
+        },
+        "summary": {
+            "attacker_won": replay.attacker_won,
+            "winner_by_round_limit": replay.winner_by_round_limit,
+            "rounds_simulated": replay.rounds_simulated,
+            "total_damage": replay.total_damage,
+            "attacker_hull_remaining": replay.attacker_hull_remaining,
+            "defender_hull_remaining": replay.defender_hull_remaining,
+            "defender_shield_remaining": replay.defender_shield_remaining,
+        },
+        "trace": {
+            "event_count": replay.trace_event_count,
+            "events_returned": replay.trace_events_returned,
+            "truncated": replay.trace_truncated,
+            "events": replay.trace_events,
+        },
+        "warnings": warnings,
+    });
+
+    serde_json::to_string_pretty(&response_json).map_err(ReplaySeedError::Parse)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerProfile {
@@ -937,6 +1090,8 @@ pub fn optimize_estimate_payload(
         sims,
         max_candidates,
         prioritize_below_decks_ability,
+        ship_tier,
+        bd_explicit,
     ) = requests::parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
@@ -949,11 +1104,13 @@ pub fn optimize_estimate_payload(
             }],
         }));
     }
+    let below_decks_slots = resolve_below_decks_slots(ship_tier, bd_explicit);
     let estimated_candidates = match max_candidates {
         Some(cap) if cap <= MAX_CANDIDATES => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 max_candidates: Some(cap as usize),
                 only_below_decks_with_ability: prioritize_below_decks_ability,
+                below_decks_slots,
                 ..CandidateStrategy::default()
             });
             generator
@@ -973,6 +1130,7 @@ pub fn optimize_estimate_payload(
         None => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 only_below_decks_with_ability: prioritize_below_decks_ability,
+                below_decks_slots,
                 ..CandidateStrategy::default()
             });
             generator.count_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)

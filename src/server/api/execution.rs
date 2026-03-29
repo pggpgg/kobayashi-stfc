@@ -12,7 +12,8 @@ use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
-use crate::optimizer::crew_generator::{CrewCandidate, BELOW_DECKS_SLOTS};
+use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
+use crate::optimizer::crew_generator::{resolve_below_decks_slots, CrewCandidate};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry,
     scenario::build_shared_scenario_data_from_registry,
@@ -24,8 +25,8 @@ use crate::optimizer::{
 };
 
 use super::requests::{
-    parse_below_decks_strategy, parse_strategy, OptimizePayloadError, OptimizeRequest,
-    DEFAULT_SIMS,
+    build_crew_search_constraints, parse_below_decks_strategy, parse_strategy,
+    OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -34,9 +35,46 @@ pub struct CrewRecommendation {
     pub bridge: Vec<String>,
     pub below_decks: Vec<String>,
     pub win_rate: f64,
+    pub win_rate_ci_low: f64,
+    pub win_rate_ci_high: f64,
     pub stall_rate: f64,
+    pub stall_rate_ci_low: f64,
+    pub stall_rate_ci_high: f64,
     pub loss_rate: f64,
+    pub loss_rate_ci_low: f64,
+    pub loss_rate_ci_high: f64,
+    pub r1_kill_rate: f64,
+    pub r1_kill_rate_ci_low: f64,
+    pub r1_kill_rate_ci_high: f64,
     pub avg_hull_remaining: f64,
+    pub avg_hull_remaining_ci_low: f64,
+    pub avg_hull_remaining_ci_high: f64,
+}
+
+/// Counts-only echo of active optimize constraints (for clients / debugging).
+#[derive(Debug, Clone, Serialize)]
+pub struct OptimizeConstraintsSummary {
+    pub must_include: usize,
+    pub exclude: usize,
+    pub groups: usize,
+    pub captain_must_be: bool,
+    pub bridge_must_include: usize,
+    pub below_decks_must_include: usize,
+}
+
+fn summarize_constraints(con: Option<&CrewSearchConstraints>) -> Option<OptimizeConstraintsSummary> {
+    let c = con?;
+    if c.is_empty() {
+        return None;
+    }
+    Some(OptimizeConstraintsSummary {
+        must_include: c.must_include.len(),
+        exclude: c.exclude.len(),
+        groups: c.groups.len(),
+        captain_must_be: c.captain_must_be.is_some(),
+        bridge_must_include: c.bridge_must_include.len(),
+        below_decks_must_include: c.below_decks_must_include.len(),
+    })
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -45,6 +83,19 @@ pub struct ScenarioSummary {
     pub hostile: String,
     pub sims: u32,
     pub seed: u64,
+    /// Resolved below-decks slot count used for candidate generation.
+    pub below_decks_slots: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimize_constraints: Option<OptimizeConstraintsSummary>,
+    /// Requested cap on crews after analytical ranking (if any).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_keep: Option<u32>,
+    /// Crew count before analytical truncation (only when truncation ran).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_from: Option<u32>,
+    /// Crew count after analytical truncation (only when truncation ran).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_kept: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -56,6 +107,9 @@ pub struct OptimizeResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration_ms: Option<u64>,
     pub notes: Vec<&'static str>,
+    /// Extra human-readable notes (e.g. approximate pre-filter semantics).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub approximate_notes: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
 }
@@ -65,13 +119,14 @@ pub fn load_heuristics_candidates(
     registry: &DataRegistry,
     seed_names: &[String],
     bd_strategy: BelowDecksStrategy,
+    below_decks_slots: usize,
 ) -> Vec<CrewCandidate> {
     let canonical_names: Vec<String> = registry.officers().iter().map(|o| o.name.clone()).collect();
     seed_names
         .iter()
         .flat_map(|name| {
             let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
-            let candidates = expand_crews(parsed, BELOW_DECKS_SLOTS, bd_strategy);
+            let candidates = expand_crews(parsed, below_decks_slots, bd_strategy);
             candidates.into_iter().map(|c| CrewCandidate {
                 captain: c.captain,
                 bridge: c.bridge,
@@ -82,13 +137,17 @@ pub fn load_heuristics_candidates(
 }
 
 /// Metadata from the shared optimize gather path (sync + async jobs).
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct OptimizeGatherMeta {
     strategy: OptimizerStrategy,
     is_seeded_genetic: bool,
     heuristics_only: bool,
     heuristics_seeds_nonempty: bool,
     using_placeholder_combatants: bool,
+    /// `Some((generated, kept))` when analytical pre-filter truncated the candidate list.
+    analytical_prefilter: Option<(usize, usize)>,
+    below_decks_slots: usize,
+    optimize_constraints: Option<OptimizeConstraintsSummary>,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -179,9 +238,20 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
             below_decks: r.below_decks,
         },
         win_rate: r.win_rate,
+        win_rate_ci_low: r.win_rate_ci_low,
+        win_rate_ci_high: r.win_rate_ci_high,
         stall_rate: r.stall_rate,
+        stall_rate_ci_low: r.stall_rate_ci_low,
+        stall_rate_ci_high: r.stall_rate_ci_high,
         loss_rate: r.loss_rate,
+        loss_rate_ci_low: r.loss_rate_ci_low,
+        loss_rate_ci_high: r.loss_rate_ci_high,
+        r1_kill_rate: r.r1_kill_rate,
+        r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+        r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
         avg_hull_remaining: r.avg_hull_remaining,
+        avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+        avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
     }
 }
 
@@ -199,12 +269,17 @@ fn gather_optimize_simulation_results(
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
     let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
+    let below_decks_slots = resolve_below_decks_slots(request.ship_tier, request.below_decks_slots);
+    let crew_constraints = build_crew_search_constraints(request);
 
-    let h_candidates = if heuristics_seeds_nonempty {
-        load_heuristics_candidates(registry, heuristics_seeds, bd_strategy)
+    let mut h_candidates = if heuristics_seeds_nonempty {
+        load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
     } else {
         Vec::new()
     };
+    if let Some(ref c) = crew_constraints {
+        h_candidates = filter_candidates(h_candidates, c);
+    }
     let is_seeded_genetic =
         strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
 
@@ -225,14 +300,6 @@ fn gather_optimize_simulation_results(
         profile_id,
     )
     .using_placeholder_combatants;
-
-    let meta = OptimizeGatherMeta {
-        strategy,
-        is_seeded_genetic,
-        heuristics_only,
-        heuristics_seeds_nonempty,
-        using_placeholder_combatants,
-    };
 
     let mut all_results: Vec<SimulationResult> =
         if heuristics_seeds_nonempty && !is_seeded_genetic {
@@ -255,7 +322,7 @@ fn gather_optimize_simulation_results(
             Vec::new()
         };
 
-    if !heuristics_only {
+    let analytical_prefilter = if !heuristics_only {
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: &request.hostile,
@@ -274,8 +341,13 @@ fn gather_optimize_simulation_results(
             profile_id,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            analytical_prefilter_keep: request
+                .analytical_prefilter_keep
+                .map(|n| n as usize),
+            below_decks_slots,
+            constraints: crew_constraints.clone(),
         };
-        let normal_results = optimize_scenario_with_progress_with_registry(
+        let outcome = optimize_scenario_with_progress_with_registry(
             registry,
             &scenario,
             |crews_done, total_crews| sink.on_optimize_progress(crews_done, total_crews),
@@ -283,12 +355,28 @@ fn gather_optimize_simulation_results(
         if sink.job_cancelled() {
             return Err(());
         }
+        let pf = outcome.analytical_prefilter;
         all_results.extend(
-            normal_results
+            outcome
+                .ranked
                 .into_iter()
                 .map(ranked_crew_to_simulation_result),
         );
-    }
+        pf
+    } else {
+        None
+    };
+
+    let meta = OptimizeGatherMeta {
+        strategy,
+        is_seeded_genetic,
+        heuristics_only,
+        heuristics_seeds_nonempty,
+        using_placeholder_combatants,
+        analytical_prefilter,
+        below_decks_slots,
+        optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
+    };
 
     Ok((all_results, meta))
 }
@@ -314,12 +402,26 @@ fn build_optimize_response(
             OptimizerStrategy::Tiered => "tiered",
         }
     };
-    let mut notes =
-        vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];
+    let mut notes = vec![
+        "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+        "Per-crew 95% intervals: Wilson score for win/stall/loss/R1-kill rates; normal approximation for mean hull score per trial (hull fraction on wins, 0 on losses).",
+    ];
     if meta.is_seeded_genetic {
         notes.insert(0, "GA population seeded with heuristics crews.");
     } else if meta.heuristics_seeds_nonempty {
         notes.insert(0, "Heuristics crews were evaluated first.");
+    }
+
+    let mut approximate_notes = Vec::new();
+    if let Some((generated, kept)) = meta.analytical_prefilter {
+        approximate_notes.push(format!(
+            "Approximate analytical pre-filter (closed-form expected hull damage to defender, not win rate) kept {kept} of {generated} crews before Monte Carlo."
+        ));
+    } else if request.analytical_prefilter_keep.is_some() && matches!(meta.strategy, OptimizerStrategy::Genetic) {
+        approximate_notes.push(
+            "analytical_prefilter_keep was ignored because the genetic strategy builds its own population."
+                .to_string(),
+        );
     }
 
     let mut warnings = Vec::new();
@@ -338,6 +440,15 @@ fn build_optimize_response(
             hostile: request.hostile.clone(),
             sims,
             seed,
+            below_decks_slots: meta.below_decks_slots as u32,
+            optimize_constraints: meta.optimize_constraints.clone(),
+            analytical_prefilter_keep: request.analytical_prefilter_keep,
+            analytical_prefilter_from: meta
+                .analytical_prefilter
+                .map(|(g, _)| g as u32),
+            analytical_prefilter_kept: meta
+                .analytical_prefilter
+                .map(|(_, k)| k as u32),
         },
         recommendations: ranked_results
             .into_iter()
@@ -346,13 +457,25 @@ fn build_optimize_response(
                 bridge: result.bridge,
                 below_decks: result.below_decks,
                 win_rate: result.win_rate,
+                win_rate_ci_low: result.win_rate_ci_low,
+                win_rate_ci_high: result.win_rate_ci_high,
                 stall_rate: result.stall_rate,
+                stall_rate_ci_low: result.stall_rate_ci_low,
+                stall_rate_ci_high: result.stall_rate_ci_high,
                 loss_rate: result.loss_rate,
+                loss_rate_ci_low: result.loss_rate_ci_low,
+                loss_rate_ci_high: result.loss_rate_ci_high,
+                r1_kill_rate: result.r1_kill_rate,
+                r1_kill_rate_ci_low: result.r1_kill_rate_ci_low,
+                r1_kill_rate_ci_high: result.r1_kill_rate_ci_high,
                 avg_hull_remaining: result.avg_hull_remaining,
+                avg_hull_remaining_ci_low: result.avg_hull_remaining_ci_low,
+                avg_hull_remaining_ci_high: result.avg_hull_remaining_ci_high,
             })
             .collect(),
         duration_ms: Some(duration_ms),
         notes,
+        approximate_notes,
         warnings,
     }
 }

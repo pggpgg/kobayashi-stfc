@@ -4,8 +4,8 @@ use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use crate::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, OpponentFactionTag, SimulationConfig,
-    TraceMode,
+    simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, OpponentFactionTag,
+    SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewCandidate;
@@ -21,9 +21,23 @@ use super::scenario::{
 pub struct SimulationResult {
     pub candidate: CrewCandidate,
     pub win_rate: f64,
+    /// Wilson 95% interval lower bound (inclusive), clamped to [0, 1].
+    pub win_rate_ci_low: f64,
+    pub win_rate_ci_high: f64,
     pub stall_rate: f64,
+    pub stall_rate_ci_low: f64,
+    pub stall_rate_ci_high: f64,
     pub loss_rate: f64,
+    pub loss_rate_ci_low: f64,
+    pub loss_rate_ci_high: f64,
+    /// Fraction of trials where the attacker won on round 1 (no round-limit stall).
+    pub r1_kill_rate: f64,
+    pub r1_kill_rate_ci_low: f64,
+    pub r1_kill_rate_ci_high: f64,
     pub avg_hull_remaining: f64,
+    /// Normal-approx 95% CI for the per-trial mean (hull fraction on wins, 0 on losses).
+    pub avg_hull_remaining_ci_low: f64,
+    pub avg_hull_remaining_ci_high: f64,
 }
 
 /// Stable hash for deduplicating identical crews in GA populations (same process = deterministic).
@@ -39,20 +53,27 @@ pub fn crew_candidate_stable_hash(c: &CrewCandidate) -> u64 {
     h.finish()
 }
 
-/// Wilson score upper bound (approx. 95% interval) for binomial win proportion.
-/// Used to drop scout iterations for crews that are very unlikely to rank in the top K.
-fn win_rate_upper_wilson_95(wins: usize, trials: usize) -> f64 {
+/// Wilson score 95% two-sided interval for a binomial proportion.
+fn wilson_95_interval(successes: usize, trials: usize) -> (f64, f64) {
     if trials == 0 {
-        return 1.0;
+        return (0.0, 1.0);
     }
     const Z: f64 = 1.96;
     let n = trials as f64;
-    let p = wins as f64 / n;
+    let p = successes as f64 / n;
     let z2 = Z * Z;
     let denom = 1.0 + z2 / n;
-    let center = p + z2 / (2.0 * n);
-    let rad = Z * ((p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt());
-    ((center + rad) / denom).clamp(0.0, 1.0)
+    let center = (p + z2 / (2.0 * n)) / denom;
+    let rad = Z / denom * ((p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt());
+    let lo = (center - rad).clamp(0.0, 1.0);
+    let hi = (center + rad).clamp(0.0, 1.0);
+    (lo, hi)
+}
+
+/// Wilson score upper bound (approx. 95% interval) for binomial win proportion.
+/// Used to drop scout iterations for crews that are very unlikely to rank in the top K.
+fn win_rate_upper_wilson_95(wins: usize, trials: usize) -> f64 {
+    wilson_95_interval(wins, trials).1
 }
 
 #[derive(Clone, Copy)]
@@ -85,7 +106,10 @@ fn run_candidate_monte_carlo(
     let mut wins = 0usize;
     let mut stalls = 0usize;
     let mut losses = 0usize;
+    let mut r1_kills = 0usize;
     let mut surviving_hull_sum = 0.0f64;
+    let mut hull_mean = 0.0f64;
+    let mut hull_m2 = 0.0f64;
 
     let mut combat_config = SimulationConfig {
         rounds: input.rounds,
@@ -120,13 +144,28 @@ fn run_candidate_monte_carlo(
             losses += 1;
         }
 
-        if result.attacker_won {
+        let hull_draw = if result.attacker_won {
             let remaining = if result.winner_by_round_limit {
                 (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0)).clamp(0.0, 1.0)
             } else {
                 ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
             };
             surviving_hull_sum += remaining;
+            remaining
+        } else {
+            0.0
+        };
+        let i = n_done + 1;
+        let delta = hull_draw - hull_mean;
+        hull_mean += delta / i as f64;
+        let delta2 = hull_draw - hull_mean;
+        hull_m2 += delta * delta2;
+
+        if result.attacker_won
+            && !result.winner_by_round_limit
+            && result.rounds_simulated == 1
+        {
+            r1_kills += 1;
         }
 
         n_done += 1;
@@ -147,18 +186,53 @@ fn run_candidate_monte_carlo(
     let win_rate = if n_done == 0 { 0.0 } else { wins as f64 / n };
     let stall_rate = if n_done == 0 { 0.0 } else { stalls as f64 / n };
     let loss_rate = if n_done == 0 { 0.0 } else { losses as f64 / n };
+    let r1_kill_rate = if n_done == 0 {
+        0.0
+    } else {
+        r1_kills as f64 / n
+    };
     let avg_hull_remaining = if n_done == 0 {
         0.0
     } else {
         surviving_hull_sum / n
     };
 
+    let (win_rate_ci_low, win_rate_ci_high) = wilson_95_interval(wins, n_done);
+    let (stall_rate_ci_low, stall_rate_ci_high) = wilson_95_interval(stalls, n_done);
+    let (loss_rate_ci_low, loss_rate_ci_high) = wilson_95_interval(losses, n_done);
+    let (r1_kill_rate_ci_low, r1_kill_rate_ci_high) = wilson_95_interval(r1_kills, n_done);
+
+    let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if n_done == 0 {
+        (0.0, 0.0)
+    } else if n_done == 1 {
+        (avg_hull_remaining, avg_hull_remaining)
+    } else {
+        let var = hull_m2 / (n_done as f64 - 1.0);
+        let se = (var / n_done as f64).sqrt().max(0.0);
+        const Z: f64 = 1.96;
+        (
+            (avg_hull_remaining - Z * se).clamp(0.0, 1.0),
+            (avg_hull_remaining + Z * se).clamp(0.0, 1.0),
+        )
+    };
+
     SimulationResult {
         candidate: candidate.clone(),
         win_rate,
+        win_rate_ci_low,
+        win_rate_ci_high,
         stall_rate,
+        stall_rate_ci_low,
+        stall_rate_ci_high,
         loss_rate,
+        loss_rate_ci_low,
+        loss_rate_ci_high,
+        r1_kill_rate,
+        r1_kill_rate_ci_low,
+        r1_kill_rate_ci_high,
         avg_hull_remaining,
+        avg_hull_remaining_ci_low,
+        avg_hull_remaining_ci_high,
     }
 }
 
@@ -243,9 +317,20 @@ pub fn run_monte_carlo_parallel_deduped(
             SimulationResult {
                 candidate: c.clone(),
                 win_rate: r.win_rate,
+                win_rate_ci_low: r.win_rate_ci_low,
+                win_rate_ci_high: r.win_rate_ci_high,
                 stall_rate: r.stall_rate,
+                stall_rate_ci_low: r.stall_rate_ci_low,
+                stall_rate_ci_high: r.stall_rate_ci_high,
                 loss_rate: r.loss_rate,
+                loss_rate_ci_low: r.loss_rate_ci_low,
+                loss_rate_ci_high: r.loss_rate_ci_high,
+                r1_kill_rate: r.r1_kill_rate,
+                r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+                r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
                 avg_hull_remaining: r.avg_hull_remaining,
+                avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+                avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
             },
         );
     }
@@ -315,6 +400,109 @@ pub fn run_monte_carlo_with_registry(
         run_monte_carlo_with_shared(shared, candidates, iterations, seed, false),
         placeholder,
     )
+}
+
+/// One Monte Carlo draw replayed with full combat trace — same RNG seed as
+/// [`run_candidate_monte_carlo`]: `iteration_seed = base_seed.wrapping_add(sim_index)`.
+#[derive(Debug, Clone)]
+pub struct MonteCarloSeedReplay {
+    pub using_placeholder_combatants: bool,
+    pub scenario_seed: u64,
+    pub sim_index: u64,
+    pub base_seed: u64,
+    pub iteration_seed: u64,
+    pub effective_defender_hull: f64,
+    pub attacker_won: bool,
+    pub winner_by_round_limit: bool,
+    pub rounds_simulated: u32,
+    pub total_damage: f64,
+    pub attacker_hull_remaining: f64,
+    pub defender_hull_remaining: f64,
+    pub defender_shield_remaining: f64,
+    pub trace_event_count: usize,
+    pub trace_events_returned: usize,
+    pub trace_truncated: bool,
+    pub trace_events: Vec<CombatEvent>,
+}
+
+/// Replay a single iteration from an optimize/simulate Monte Carlo run (`scenario_seed` matches the request seed).
+pub fn replay_optimize_iteration_with_registry(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    candidate: &CrewCandidate,
+    scenario_seed: u64,
+    sim_index: u64,
+    profile_id: Option<&str>,
+    max_trace_events: usize,
+) -> MonteCarloSeedReplay {
+    let shared = build_shared_scenario_data_from_registry(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+    );
+    let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
+    let iteration_seed = input.base_seed.wrapping_add(sim_index);
+    let effective_defender_hull = input.defender_hull * seeded_variance(iteration_seed);
+
+    let defender_faction = shared
+        .hostile_rec
+        .as_ref()
+        .map(|h| h.opponent_faction_tag())
+        .unwrap_or(OpponentFactionTag::Unknown);
+
+    let combat_config = SimulationConfig {
+        rounds: input.rounds,
+        seed: iteration_seed,
+        trace_mode: TraceMode::Events,
+    };
+
+    let combat = simulate_combat_with_defender_faction_and_defender_crew(
+        &input.attacker,
+        &input.defender,
+        combat_config,
+        &input.crew,
+        defender_faction,
+        &input.defender_crew,
+    );
+
+    let trace_event_count = combat.events.len();
+    let max_kept = max_trace_events.max(1);
+    let (trace_truncated, trace_events) = if combat.events.len() > max_kept {
+        let skip = combat.events.len() - max_kept;
+        (
+            true,
+            combat.events.into_iter().skip(skip).collect::<Vec<_>>(),
+        )
+    } else {
+        (false, combat.events)
+    };
+    let trace_events_returned = trace_events.len();
+
+    MonteCarloSeedReplay {
+        using_placeholder_combatants: shared.using_placeholder_combatants,
+        scenario_seed,
+        sim_index,
+        base_seed: input.base_seed,
+        iteration_seed,
+        effective_defender_hull,
+        attacker_won: combat.attacker_won,
+        winner_by_round_limit: combat.winner_by_round_limit,
+        rounds_simulated: combat.rounds_simulated,
+        total_damage: combat.total_damage,
+        attacker_hull_remaining: combat.attacker_hull_remaining,
+        defender_hull_remaining: combat.defender_hull_remaining,
+        defender_shield_remaining: combat.defender_shield_remaining,
+        trace_event_count,
+        trace_events_returned,
+        trace_truncated,
+        trace_events,
+    }
 }
 
 fn run_monte_carlo_with_parallelism(
@@ -398,6 +586,14 @@ mod tests {
         let u50 = super::win_rate_upper_wilson_95(0, 50);
         let u200 = super::win_rate_upper_wilson_95(0, 200);
         assert!(u200 < u50, "more data should tighten upper bound: {u50} vs {u200}");
+    }
+
+    #[test]
+    fn wilson_interval_brackets_sample_proportion() {
+        let (lo, hi) = super::wilson_95_interval(50, 100);
+        assert!(lo <= 0.5 && 0.5 <= hi, "p=0.5 should lie in [{lo}, {hi}]");
+        let (lo0, hi0) = super::wilson_95_interval(0, 50);
+        assert!(lo0 <= 0.0 && 0.0 <= hi0);
     }
 
     #[test]

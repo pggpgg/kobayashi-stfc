@@ -170,6 +170,18 @@ export default function Workspace() {
           onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
           optimizerStrategy={ws.optimizerStrategy}
           onOptimizerStrategyChange={ws.setOptimizerStrategy}
+          optimizeMustInclude={ws.optimizeMustInclude}
+          onOptimizeMustIncludeChange={ws.setOptimizeMustInclude}
+          optimizeExclude={ws.optimizeExclude}
+          onOptimizeExcludeChange={ws.setOptimizeExclude}
+          optimizeCaptainMust={ws.optimizeCaptainMust}
+          onOptimizeCaptainMustChange={ws.setOptimizeCaptainMust}
+          optimizeBridgeMust={ws.optimizeBridgeMust}
+          onOptimizeBridgeMustChange={ws.setOptimizeBridgeMust}
+          optimizeBelowMust={ws.optimizeBelowMust}
+          onOptimizeBelowMustChange={ws.setOptimizeBelowMust}
+          optimizeGroupsJson={ws.optimizeGroupsJson}
+          onOptimizeGroupsJsonChange={ws.setOptimizeGroupsJson}
         />
       </div>
     </div>

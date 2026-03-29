@@ -3,6 +3,44 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import SimResults from './SimResults';
 import type { SimulateStats, CrewRecommendation } from '../lib/api';
 
+/** Minimal valid optimize row for tests (CI bounds bracket the point estimate). */
+function crewRec(p: {
+  captain: string;
+  bridge: string | string[];
+  below_decks: string | string[];
+  win_rate: number;
+  stall_rate: number;
+  loss_rate: number;
+  avg_hull_remaining: number;
+  r1_kill_rate?: number;
+}): CrewRecommendation {
+  const w = p.win_rate;
+  const s = p.stall_rate;
+  const l = p.loss_rate;
+  const h = p.avg_hull_remaining;
+  const r1 = p.r1_kill_rate ?? 0.05;
+  return {
+    captain: p.captain,
+    bridge: p.bridge,
+    below_decks: p.below_decks,
+    win_rate: w,
+    win_rate_ci_low: Math.max(0, w - 0.02),
+    win_rate_ci_high: Math.min(1, w + 0.02),
+    stall_rate: s,
+    stall_rate_ci_low: Math.max(0, s - 0.02),
+    stall_rate_ci_high: Math.min(1, s + 0.02),
+    loss_rate: l,
+    loss_rate_ci_low: Math.max(0, l - 0.02),
+    loss_rate_ci_high: Math.min(1, l + 0.02),
+    r1_kill_rate: r1,
+    r1_kill_rate_ci_low: Math.max(0, r1 - 0.02),
+    r1_kill_rate_ci_high: Math.min(1, r1 + 0.02),
+    avg_hull_remaining: h,
+    avg_hull_remaining_ci_low: Math.max(0, h - 0.02),
+    avg_hull_remaining_ci_high: Math.min(1, h + 0.02),
+  };
+}
+
 const baseProps = {
   simResult: null as SimulateStats | null,
   recommendations: [] as CrewRecommendation[],
@@ -70,7 +108,7 @@ describe('SimResults', () => {
 
   it('renders recommendation rows with array bridge/below_decks (API shape) as comma-separated', () => {
     const recs: CrewRecommendation[] = [
-      {
+      crewRec({
         captain: 'Janeway',
         bridge: ['Ent-E Data', 'Tuvok'],
         below_decks: ['Seven', 'Neelix', 'Chakotay'],
@@ -78,7 +116,7 @@ describe('SimResults', () => {
         stall_rate: 0.06,
         loss_rate: 0.06,
         avg_hull_remaining: 0.5,
-      },
+      }),
     ];
     render(<SimResults {...baseProps} recommendations={recs} />);
     expect(screen.getByText('Janeway')).toBeTruthy();
@@ -88,7 +126,7 @@ describe('SimResults', () => {
 
   it('renders recommendation rows', () => {
     const recs: CrewRecommendation[] = [
-      {
+      crewRec({
         captain: 'Kirk',
         bridge: 'Spock, Uhura',
         below_decks: 'Scotty, McCoy, Sulu',
@@ -96,8 +134,8 @@ describe('SimResults', () => {
         stall_rate: 0.03,
         loss_rate: 0.02,
         avg_hull_remaining: 0.6,
-      },
-      {
+      }),
+      crewRec({
         captain: 'Picard',
         bridge: 'Riker, Data',
         below_decks: 'Worf, Crusher, LaForge',
@@ -105,18 +143,18 @@ describe('SimResults', () => {
         stall_rate: 0.05,
         loss_rate: 0.05,
         avg_hull_remaining: 0.55,
-      },
+      }),
     ];
     render(<SimResults {...baseProps} recommendations={recs} />);
     expect(screen.getByText('Kirk')).toBeTruthy();
     expect(screen.getByText('Picard')).toBeTruthy();
     expect(screen.getByText('Spock, Uhura')).toBeTruthy();
-    expect(screen.getByText('Select 2\u20135 rows to compare.')).toBeTruthy();
+    expect(screen.getByText(/Select 2\u20135 rows to compare/)).toBeTruthy();
   });
 
   it('shows compare section when 2+ rows selected', () => {
     const recs: CrewRecommendation[] = [
-      {
+      crewRec({
         captain: 'Kirk',
         bridge: 'Spock, Uhura',
         below_decks: 'Scotty, McCoy, Sulu',
@@ -124,8 +162,8 @@ describe('SimResults', () => {
         stall_rate: 0.03,
         loss_rate: 0.02,
         avg_hull_remaining: 0.6,
-      },
-      {
+      }),
+      crewRec({
         captain: 'Picard',
         bridge: 'Riker, Data',
         below_decks: 'Worf, Crusher, LaForge',
@@ -133,7 +171,7 @@ describe('SimResults', () => {
         stall_rate: 0.05,
         loss_rate: 0.05,
         avg_hull_remaining: 0.55,
-      },
+      }),
     ];
     render(<SimResults {...baseProps} recommendations={recs} />);
 
@@ -146,15 +184,17 @@ describe('SimResults', () => {
   });
 
   it('limits selection to 5 rows', () => {
-    const recs: CrewRecommendation[] = Array.from({ length: 7 }, (_, i) => ({
-      captain: `Cap${i}`,
-      bridge: `B${i}`,
-      below_decks: `BD${i}`,
-      win_rate: 0.9 - i * 0.05,
-      stall_rate: 0.05,
-      loss_rate: 0.05,
-      avg_hull_remaining: 0.5,
-    }));
+    const recs: CrewRecommendation[] = Array.from({ length: 7 }, (_, i) =>
+      crewRec({
+        captain: `Cap${i}`,
+        bridge: `B${i}`,
+        below_decks: `BD${i}`,
+        win_rate: 0.9 - i * 0.05,
+        stall_rate: 0.05,
+        loss_rate: 0.05,
+        avg_hull_remaining: 0.5,
+      }),
+    );
     render(<SimResults {...baseProps} recommendations={recs} />);
 
     const checkboxes = screen.getAllByRole('checkbox');

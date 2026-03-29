@@ -176,6 +176,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let defense_phase_effects =
         active_effects_for_timing(&attacker_crew, TimingWindow::DefensePhase);
     let round_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundEnd);
+    let after_subround_effects = active_effects_for_timing(&attacker_crew, TimingWindow::AfterSubround);
 
     // Defender-side effects for return fire.
     let defender_combat_begin_effects =
@@ -479,11 +480,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
         let mut hull_breach_threshold_fired = false;
 
-        let mut effective_pierce = attacker.pierce + phase_effects_round.pre_attack_pierce_bonus();
-        if morale_triggered {
-            effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
-        }
-
         let attack_phase_assimilated = assimilated_rounds_remaining > 0;
         let attack_phase_filtered =
             filter_effects_by_condition(&attack_phase_effects, &combat_ctx);
@@ -510,10 +506,19 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
         let weapon_round_base = phase_effects_round.clone();
         let mut phase_effects = EffectAccumulator::default();
+        let mut after_subround_carry = EffectAccumulator::default();
+        after_subround_carry.set_trace_contributions(trace.is_enabled());
         for weapon_index in 0..num_sub_rounds {
             phase_effects.clear();
+            phase_effects.set_trace_contributions(trace.is_enabled());
             phase_effects.merge_from(&weapon_round_base);
+            phase_effects.merge_carry_additive(&after_subround_carry);
             let weapon_base = attacker.weapon_attack(weapon_index).unwrap_or(attacker.attack);
+            let mut effective_pierce = attacker.weapon_pierce(weapon_index)
+                + phase_effects_round.pre_attack_pierce_bonus();
+            if morale_triggered {
+                effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
+            }
             phase_effects.add_effects(
                 TimingWindow::AttackPhase,
                 &attack_phase_filtered,
@@ -610,11 +615,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         });
 
         let hull_breach_active = hull_breach_rounds_remaining > 0;
+        let effective_crit_chance = (attacker.weapon_crit_chance(weapon_index)
+            + phase_effects.crit_chance_bonus())
+            .clamp(0.0, 1.0);
         let crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let is_crit = crit_roll < attacker.crit_chance;
+        let is_crit = crit_roll < effective_crit_chance;
+        let base_crit_multiplier = attacker.weapon_crit_multiplier(weapon_index)
+            * phase_effects.crit_damage_multiplier();
         let crit_multiplier = compute_crit_multiplier(
             is_crit,
-            attacker.crit_multiplier,
+            base_crit_multiplier,
             hull_breach_active,
         );
         trace.record_if(|| CombatEvent {
@@ -631,6 +641,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 ("roll".to_string(), Value::from(round_f64(crit_roll))),
                 ("is_crit".to_string(), Value::Bool(is_crit)),
                 ("multiplier".to_string(), Value::from(crit_multiplier)),
+                (
+                    "effective_crit_chance".to_string(),
+                    Value::from(round_f64(effective_crit_chance)),
+                ),
                 (
                     "hull_breach_active".to_string(),
                     Value::Bool(hull_breach_active),
@@ -738,9 +752,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         }
 
         let proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let did_proc = proc_roll < attacker.proc_chance;
+        let w_proc_chance = attacker.weapon_proc_chance(weapon_index);
+        let did_proc = proc_roll < w_proc_chance;
         let proc_multiplier = if did_proc {
-            attacker.proc_multiplier
+            attacker.weapon_proc_multiplier(weapon_index)
         } else {
             1.0
         };
@@ -930,6 +945,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
         // Build defender-side effect accumulator for this weapon base.
         let mut defender_phase_effects = EffectAccumulator::default();
+        defender_phase_effects.set_trace_contributions(trace.is_enabled());
         let defender_ctx = CombatContext {
             round_index,
             defender_hull_pct: combat_ctx.defender_hull_pct,
@@ -1013,23 +1029,30 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             AbilityEffect::AttackMultiplier(proc_pre_attack_multiplier - 1.0),
             defender_weapon_attack,
             round_index,
+            None,
         );
         defender_phase_effects.add_effect(
             TimingWindow::CombatBegin,
             AbilityEffect::PierceBonus(proc_pre_attack_pierce_bonus),
             defender_weapon_attack,
             round_index,
+            None,
         );
 
         let counter_damage_through = compute_damage_through_factor(
             counter_mitigation_mult,
-            defender.pierce,
+            defender.weapon_pierce(weapon_index),
             defender_phase_effects.defense_mitigation_bonus(),
         );
+        let def_effective_crit_chance = (defender.weapon_crit_chance(weapon_index)
+            + defender_phase_effects.crit_chance_bonus())
+        .clamp(0.0, 1.0);
         let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let def_is_crit = def_crit_roll < defender.crit_chance;
+        let def_is_crit = def_crit_roll < def_effective_crit_chance;
+        let def_base_crit_mult = defender.weapon_crit_multiplier(weapon_index)
+            * defender_phase_effects.crit_damage_multiplier();
         let mut def_crit_mult =
-            compute_crit_multiplier(def_is_crit, defender.crit_multiplier, false);
+            compute_crit_multiplier(def_is_crit, def_base_crit_mult, false);
         // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
         if def_is_crit
             && hostile_crit_reduction > 0.0
@@ -1039,8 +1062,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
         }
         let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-        let def_proc_mult = if def_proc_roll < defender.proc_chance {
-            defender.proc_multiplier
+        let def_w_proc = defender.weapon_proc_chance(weapon_index);
+        let def_proc_mult = if def_proc_roll < def_w_proc {
+            defender.weapon_proc_multiplier(weapon_index)
         } else {
             1.0
         };
@@ -1114,6 +1138,56 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             );
         }
             }
+
+        let ctx_after_subround = CombatContext {
+            round_index,
+            defender_hull_pct: 1.0
+                - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: 1.0
+                - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+            attacker_morale_active: combat_ctx.attacker_morale_active,
+            defender_burning_active: burning_rounds_remaining > 0,
+            defender_hull_breach_active: hull_breach_rounds_remaining > 0,
+            defender_faction,
+        };
+        let after_subround_filtered =
+            filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "after_subround",
+            attacker,
+            &after_subround_filtered,
+            attack_phase_assimilated,
+        );
+        roll_burning_triggers(
+            &after_subround_filtered,
+            attack_phase_assimilated,
+            &mut rng,
+            &mut trace,
+            round_index,
+            "after_subround",
+            &attacker.id,
+            None,
+            &mut burning_rounds_remaining,
+        );
+        after_subround_carry.add_effects(
+            TimingWindow::AfterSubround,
+            &after_subround_filtered,
+            weapon_base,
+            attack_phase_assimilated,
+            round_index,
+        );
         }
 
         phase_effects_round.add_effects(

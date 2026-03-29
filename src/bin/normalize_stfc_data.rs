@@ -584,6 +584,7 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
                 .map(|a| kobayashi::data::ship::WeaponRecord {
                     attack: a,
                     shots: None,
+                    ..Default::default()
                 })
                 .collect(),
         )

@@ -94,3 +94,7 @@ The game can export a fight log as a **tab-separated** file with several section
 - `tests/fixtures/recorded_fights/*.json` — sample logs for parser and parity tests (including `sample_combat_log.json` and `multi_weapon_round_log.json` for multi–sub-round `weapon_index` in one round).
 - `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` — minimal TSV with optional `Weapon Index` column (fight export parser).
 - `fight samples/*.csv` — game CSV/TSV exports for calibration (e.g. Realta vs Takret Militia 10).
+
+### Drift calibration fixtures (`drift_*.json`)
+
+Synthetic scenarios (not raw combat logs) used for regression: each file describes attacker/defender stats, `simulation.rounds` / `seed`, and inclusive numeric **bands** for key `SimulationResult` fields. The library module `kobayashi::calibration` loads a fixture, runs `simulate_combat` with an empty crew, and builds a **drift report** (per-metric σ from band midpoint, in/out of band). Use `format_drift_summary` to print a multi-fixture table (including the largest |σ| metrics — what moved farthest from the reference center). Tests: `tests/calibration_drift_tests.rs`.

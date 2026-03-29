@@ -4,21 +4,21 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 
 ### Combat engine mechanics (correctness)
 
-- [ ] 1. Add a first-class `accuracy`/evasion stat path end-to-end (data → stacking → engine usage), so ship/officer effects that mention accuracy can be modeled.
+- [x] 1. Add a first-class `accuracy`/evasion stat path end-to-end (data → stacking → engine usage), so ship/officer effects that mention accuracy can be modeled.
 - [x] 2. Implement hostile-side effects on defender return fire (defender “crew” / abilities / debuffs), applied during counter-attack resolution.
-- [ ] 3. Expand LCARS condition support to include faction gating and morale/burning/hull-breach state predicates as explicit condition nodes.
-- [ ] 4. Replace the LCARS `crit_chance` / `crit_damage` placeholder mapping with typed crit modifiers applied in the crit step (not an attack-multiplier approximation).
-- [ ] 5. Add an “after-shot / subround-end” timing window to model effects that modify the next shot(s) within the same round.
-- [ ] 6. Add per-weapon stat overrides (pierce/crit/proc/shots) in `WeaponStats` and thread through scenario building to better match multi-weapon logs.
-- [ ] 7. Improve trace explainability: emit optional per-effect contribution breakdown for key stacks in trace mode.
+- [x] 3. Expand LCARS condition support to include faction gating and morale/burning/hull-breach state predicates as explicit condition nodes.
+- [x] 4. Replace the LCARS `crit_chance` / `crit_damage` placeholder mapping with typed crit modifiers applied in the crit step (not an attack-multiplier approximation).
+- [x] 5. Add an “after-shot / subround-end” timing window to model effects that modify the next shot(s) within the same round.
+- [x] 6. Add per-weapon stat overrides (pierce/crit/proc/shots) in `WeaponStats` and thread through scenario building to better match multi-weapon logs.
+- [x] 7. Improve trace explainability: emit optional per-effect contribution breakdown for key stacks in trace mode.
 
 ### Optimizer / Monte Carlo (performance + output quality)
 
-- [ ] 8. Add confidence intervals/error bars to optimize outputs (win rate, hull remaining, R1 kill rate) and surface them in the UI.
-- [ ] 9. Implement an analytical pre-filter stage used by optimize strategies to prune obviously bad crews before Monte Carlo (explicitly labeled approximate).
-- [ ] 10. Add optimize constraints (must-include, exclude, group count, seating rules) exposed in API and UI.
-- [ ] 11. Make below-decks slot count a first-class scenario parameter (ship-aware defaults) and update candidate generation accordingly.
-- [ ] 12. Add a deterministic “replay one seed” endpoint that returns a compact trace + summary for a chosen seed from an optimize result.
+- [x] 8. Add confidence intervals/error bars to optimize outputs (win rate, hull remaining, R1 kill rate) and surface them in the UI.
+- [x] 9. Implement an analytical pre-filter stage used by optimize strategies to prune obviously bad crews before Monte Carlo (explicitly labeled approximate).
+- [x] 10. Add optimize constraints (must-include, exclude, group count, seating rules) exposed in API and UI.
+- [x] 11. Make below-decks slot count a first-class scenario parameter (ship-aware defaults) and update candidate generation accordingly.
+- [x] 12. Add a deterministic “replay one seed” endpoint that returns a compact trace + summary for a chosen seed from an optimize result.
 - [ ] 13. Improve async optimize job UX: richer SSE status payload (phase, throughput, ETA, top-N preview) and show it live in Workspace.
 
 ### Data persistence + provenance
@@ -34,7 +34,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 
 ### Testing / regression protection
 
-- [ ] 19. Add more recorded-fight calibration fixtures and a drift summary harness (what got closer/farther) to spot regressions.
+- [x] 19. Add more recorded-fight calibration fixtures and a drift summary harness (what got closer/farther) to spot regressions.
 - [ ] 20. Refactor `simulate_combat_with_defender_faction`/combat loop into smaller testable units while preserving deterministic RNG consumption order.
 
 ### Suggested execution order

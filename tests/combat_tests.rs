@@ -245,7 +245,11 @@ fn defender_crew_can_modify_counter_fire_damage() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
-        weapons: vec![WeaponStats { attack: 100.0, shots: Some(1) }],
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
     };
     let attacker_crew = CrewConfiguration { seats: vec![] };
     let defender_crew = CrewConfiguration {
@@ -873,6 +877,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         weapons: vec![WeaponStats {
             attack: 100.0,
             shots: None,
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -960,6 +965,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         weapons: vec![WeaponStats {
             attack: 10.0,
             shots: None,
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -982,6 +988,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         weapons: vec![WeaponStats {
             attack: 100.0,
             shots: None,
+            ..Default::default()
         }],
     };
     let config = SimulationConfig {
@@ -1042,6 +1049,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
         weapons: vec![WeaponStats {
             attack: 15.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -1064,6 +1072,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
         weapons: vec![WeaponStats {
             attack: 40.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let crew = CrewConfiguration {
@@ -1589,6 +1598,163 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         3.0,
         1e-12,
     );
+}
+
+#[test]
+fn typed_crit_chance_bonus_applies_at_crit_roll() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 2.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "crit_cap".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::CritChanceBonus(1.0),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 42,
+            trace_mode: TraceMode::Events,
+        },
+        &crew,
+    );
+
+    let crit_event = result
+        .events
+        .iter()
+        .find(|e| e.event_type == "crit_resolution")
+        .expect("crit resolution");
+    assert_eq!(crit_event.values["is_crit"], Value::Bool(true));
+    approx_eq(
+        crit_event.values["multiplier"]
+            .as_f64()
+            .expect("multiplier as f64"),
+        2.0,
+        1e-9,
+    );
+    approx_eq(result.total_damage, 200.0, 1e-6);
+}
+
+#[test]
+fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 1.0,
+        crit_multiplier: 2.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "crit_dmg".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::CritDamageMultiplier(1.5),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 1,
+            trace_mode: TraceMode::Off,
+        },
+        &crew,
+    );
+
+    approx_eq(result.total_damage, 300.0, 1e-6);
 }
 
 #[test]
@@ -2678,6 +2844,59 @@ fn burning_triggers_on_kill() {
 }
 
 #[test]
+fn burning_triggers_on_after_subround() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 50.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 31,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::AfterSubround),
+    );
+    assert_burning_phase(&r.events, "after_subround");
+}
+
+#[test]
 fn emits_ability_activation_for_each_timing_window() {
     let attacker = Combatant {
         id: "nero".to_string(),
@@ -2790,6 +3009,20 @@ fn emits_ability_activation_for_each_timing_window() {
                 officer_id: None,
                 contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
+            CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: "after_sub_alpha".to_string(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::AfterSubround,
+                    boostable: false,
+                    effect: AbilityEffect::AttackMultiplier(0.01),
+                    condition: None,
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
         ],
     };
 
@@ -2816,6 +3049,7 @@ fn emits_ability_activation_for_each_timing_window() {
     assert!(phases.contains(&"attack"));
     assert!(phases.contains(&"defense"));
     assert!(phases.contains(&"round_end"));
+    assert!(phases.contains(&"after_subround"));
 }
 
 #[test]
@@ -3538,8 +3772,16 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![
-            WeaponStats { attack: 50.0, shots: None },
-            WeaponStats { attack: 100.0, shots: None },
+            WeaponStats {
+                attack: 50.0,
+                shots: None,
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 100.0,
+                shots: None,
+                ..Default::default()
+            },
         ],
     };
     let defender = Combatant {
@@ -3602,8 +3844,16 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![
-            WeaponStats { attack: 500.0, shots: None },
-            WeaponStats { attack: 200.0, shots: None },
+            WeaponStats {
+                attack: 500.0,
+                shots: None,
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 200.0,
+                shots: None,
+                ..Default::default()
+            },
         ],
     };
     let defender = Combatant {
@@ -3672,7 +3922,11 @@ fn shots_bonus_increases_damage() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
-        weapons: vec![WeaponStats { attack: 80.0, shots: None }],
+        weapons: vec![WeaponStats {
+            attack: 80.0,
+            shots: None,
+            ..Default::default()
+        }],
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -4034,6 +4288,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         weapons: vec![WeaponStats {
             attack: 80.0,
             shots: Some(1),
+            ..Default::default()
         }],
     };
     let defender = Combatant {
@@ -4116,4 +4371,31 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         stacks.contains_key("pre_attack_damage"),
         "pre_attack_damage stack should be present for a weapon shot: {stacks:?}"
     );
+
+    let contrib = e
+        .values
+        .get("effect_contributions")
+        .and_then(|v| v.as_array())
+        .expect("effect_contributions array");
+    let row = contrib
+        .iter()
+        .find(|row| {
+            row.get("ability").and_then(|a| a.as_str()) == Some("attack_phase_amp")
+                && row.get("effect").and_then(|x| x.as_str()) == Some("AttackMultiplier")
+        })
+        .expect("per-effect row for attack_phase_amp AttackMultiplier");
+    assert_eq!(
+        row.get("target").and_then(|t| t.as_str()),
+        Some("attack_phase_damage_modifier_sum")
+    );
+    assert_eq!(
+        row.get("timing").and_then(|t| t.as_str()),
+        Some("attack_phase")
+    );
+    approx_eq(
+        row.get("value").and_then(|v| v.as_f64()).expect("value"),
+        0.25,
+        1e-9,
+    );
+    assert!(row.get("officer_id").is_none());
 }

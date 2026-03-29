@@ -338,6 +338,7 @@ fn extract_tier_combat(
         weapons_out.push(WeaponRecord {
             attack: avg_damage,
             shots: Some(shots),
+            ..Default::default()
         });
     }
 

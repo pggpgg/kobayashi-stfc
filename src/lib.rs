@@ -1,3 +1,4 @@
+pub mod calibration;
 pub mod cli;
 pub mod combat;
 pub mod data;

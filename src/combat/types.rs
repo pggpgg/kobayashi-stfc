@@ -207,6 +207,33 @@ pub enum OpponentFactionTag {
     Breen,
 }
 
+impl OpponentFactionTag {
+    /// Parse hostile / ship-catalog / LCARS faction slug (`klingon`, `mirror_universe`, `gorn`, …).
+    /// Unknown slugs return `None` (callers skip faction gating rather than matching every defender).
+    pub fn from_data_slug(s: &str) -> Option<Self> {
+        let k = s.trim().to_lowercase().replace('-', "_");
+        match k.as_str() {
+            "unknown" => Some(Self::Unknown),
+            "federation" => Some(Self::Federation),
+            "klingon" => Some(Self::Klingon),
+            "romulan" => Some(Self::Romulan),
+            "borg" => Some(Self::Borg),
+            "cardassian" => Some(Self::Cardassian),
+            "augment" => Some(Self::Augment),
+            "dominion" => Some(Self::Dominion),
+            "mirror_universe" => Some(Self::MirrorUniverse),
+            "assimilated" => Some(Self::Assimilated),
+            "ex_borg" | "exborg" => Some(Self::ExBorg),
+            "swarm" => Some(Self::Swarm),
+            "actian" => Some(Self::Actian),
+            "gorn_hunting_pack" | "gorn" => Some(Self::GornHuntingPack),
+            "xindi" => Some(Self::Xindi),
+            "breen" => Some(Self::Breen),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TraceMode {
@@ -245,13 +272,26 @@ pub struct SimulationResult {
     pub events: Vec<CombatEvent>,
 }
 
-/// Per-weapon stats for sub-round resolution. Combatant-level pierce/crit/proc apply to all weapons.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Per-weapon stats for sub-round resolution. Optional fields override [`Combatant`] ship-level
+/// pierce/crit/proc for that weapon index only; unset → use combatant defaults.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct WeaponStats {
     pub attack: f64,
     /// Base shots per weapon per round (n_w,0). When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
     #[serde(default)]
     pub shots: Option<u32>,
+    /// Damage-through pierce bonus for this weapon (same units as [`Combatant::pierce`]).
+    #[serde(default)]
+    pub pierce: Option<f64>,
+    #[serde(default)]
+    pub crit_chance: Option<f64>,
+    /// Per-weapon crit damage tier when set; else [`Combatant::crit_multiplier`].
+    #[serde(default)]
+    pub crit_multiplier: Option<f64>,
+    #[serde(default)]
+    pub proc_chance: Option<f64>,
+    #[serde(default)]
+    pub proc_multiplier: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -326,6 +366,40 @@ impl Combatant {
             self.weapons.get(weapon_index).map(|w| w.attack)
         }
     }
+
+    fn weapon_row(&self, weapon_index: usize) -> Option<&WeaponStats> {
+        self.weapons.get(weapon_index)
+    }
+
+    pub fn weapon_pierce(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.pierce)
+            .unwrap_or(self.pierce)
+    }
+
+    pub fn weapon_crit_chance(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.crit_chance)
+            .unwrap_or(self.crit_chance)
+    }
+
+    pub fn weapon_crit_multiplier(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.crit_multiplier)
+            .unwrap_or(self.crit_multiplier)
+    }
+
+    pub fn weapon_proc_chance(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.proc_chance)
+            .unwrap_or(self.proc_chance)
+    }
+
+    pub fn weapon_proc_multiplier(&self, weapon_index: usize) -> f64 {
+        self.weapon_row(weapon_index)
+            .and_then(|w| w.proc_multiplier)
+            .unwrap_or(self.proc_multiplier)
+    }
 }
 
 #[derive(Debug, Default)]
@@ -354,6 +428,11 @@ impl TraceCollector {
         if self.enabled {
             self.events.push(f());
         }
+    }
+
+    #[inline]
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
     }
 
     pub fn events(self) -> Vec<CombatEvent> {

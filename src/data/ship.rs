@@ -14,12 +14,22 @@ use serde::{Deserialize, Serialize};
 use crate::combat::{AttackerStats, ShipType, WeaponStats};
 
 /// Per-weapon attack (and optional base shots) for sub-round resolution. When present on ShipRecord, used to build Combatant.weapons.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WeaponRecord {
     pub attack: f64,
     /// Base shots per weapon per round. When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
     #[serde(default)]
     pub shots: Option<u32>,
+    #[serde(default)]
+    pub pierce: Option<f64>,
+    #[serde(default)]
+    pub crit_chance: Option<f64>,
+    #[serde(default)]
+    pub crit_multiplier: Option<f64>,
+    #[serde(default)]
+    pub proc_chance: Option<f64>,
+    #[serde(default)]
+    pub proc_multiplier: Option<f64>,
 }
 
 /// Normalized ship hull ability (from data.stfc.space ability array). Trigger and effect are resolved when building crew.
@@ -209,13 +219,20 @@ impl ShipRecord {
                     .map(|r| WeaponStats {
                         attack: r.attack,
                         shots: r.shots,
+                        pierce: r.pierce,
+                        crit_chance: r.crit_chance,
+                        crit_multiplier: r.crit_multiplier,
+                        proc_chance: r.proc_chance,
+                        proc_multiplier: r.proc_multiplier,
                     })
                     .collect()
             })
-            .unwrap_or_else(|| vec![WeaponStats {
-                attack: self.attack,
-                shots: None,
-            }])
+            .unwrap_or_else(|| {
+                vec![WeaponStats {
+                    attack: self.attack,
+                    ..Default::default()
+                }]
+            })
     }
 }
 

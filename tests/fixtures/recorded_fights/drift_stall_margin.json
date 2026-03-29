@@ -1,0 +1,31 @@
+{
+  "id": "drift_stall_margin",
+  "description": "Barely enough DPR to threaten a tanky defender; may hit round cap without kill.",
+  "attacker": {
+    "id": "stall_a",
+    "attack": 40,
+    "mitigation": 0.0,
+    "pierce": 0.02,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "stall_d",
+    "attack": 0,
+    "mitigation": 0.55,
+    "hull_health": 5000,
+    "shield_health": 2000,
+    "shield_mitigation": 0.8
+  },
+  "simulation": {
+    "rounds": 25,
+    "seed": 131
+  },
+  "bands": {
+    "total_damage": [50, 6000],
+    "rounds_simulated": [10, 25],
+    "defender_hull_remaining": [1000, 5000],
+    "defender_shield_remaining": [0, 2000],
+    "attacker_hull_remaining": [4000, 5000]
+  }
+}

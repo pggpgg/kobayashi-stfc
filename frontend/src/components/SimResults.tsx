@@ -12,6 +12,14 @@ function formatCrewCell(value: string | string[] | null | undefined): string {
   return String(value);
 }
 
+/** Percent point estimate with 95% CI in parentheses (Wilson/normal per server notes). */
+function formatPctWithCi(p: number, lo: number, hi: number): string {
+  const main = (p * 100).toFixed(2);
+  const a = (lo * 100).toFixed(1);
+  const b = (hi * 100).toFixed(1);
+  return `${main}\u00a0(${a}\u2013${b})`;
+}
+
 interface SimResultsProps {
   simResult: SimulateStats | null;
   recommendations: CrewRecommendation[];
@@ -137,7 +145,8 @@ export default function SimResults({
       {hasRecs && (
         <>
           <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Select 2–5 rows to compare.
+            Select 2–5 rows to compare. Optimize columns show point % (95% CI): Wilson for win/stall/loss/R1;
+            normal approx for hull score per trial.
           </p>
           <div
             style={{
@@ -230,6 +239,7 @@ export default function SimResults({
                 <th style={{ textAlign: 'right', padding: '0.4rem' }}>Win %</th>
                 <th style={{ textAlign: 'right', padding: '0.4rem' }}>Stall %</th>
                 <th style={{ textAlign: 'right', padding: '0.4rem' }}>Loss %</th>
+                <th style={{ textAlign: 'right', padding: '0.4rem' }}>R1 %</th>
                 <th style={{ textAlign: 'right', padding: '0.4rem' }}>Hull %</th>
               </tr>
             </thead>
@@ -256,17 +266,24 @@ export default function SimResults({
                     <td style={{ padding: '0.4rem' }}>{formatCrewCell(r.captain)}</td>
                     <td style={{ padding: '0.4rem' }}>{formatCrewCell(r.bridge)}</td>
                     <td style={{ padding: '0.4rem' }}>{formatCrewCell(r.below_decks)}</td>
-                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                      {(r.win_rate * 100).toFixed(2)}
+                    <td style={{ padding: '0.4rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {formatPctWithCi(r.win_rate, r.win_rate_ci_low, r.win_rate_ci_high)}
                     </td>
-                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                      {(r.stall_rate * 100).toFixed(2)}
+                    <td style={{ padding: '0.4rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {formatPctWithCi(r.stall_rate, r.stall_rate_ci_low, r.stall_rate_ci_high)}
                     </td>
-                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                      {(r.loss_rate * 100).toFixed(2)}
+                    <td style={{ padding: '0.4rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {formatPctWithCi(r.loss_rate, r.loss_rate_ci_low, r.loss_rate_ci_high)}
                     </td>
-                    <td style={{ padding: '0.4rem', textAlign: 'right' }}>
-                      {(r.avg_hull_remaining * 100).toFixed(2)}
+                    <td style={{ padding: '0.4rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {formatPctWithCi(r.r1_kill_rate, r.r1_kill_rate_ci_low, r.r1_kill_rate_ci_high)}
+                    </td>
+                    <td style={{ padding: '0.4rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {formatPctWithCi(
+                        r.avg_hull_remaining,
+                        r.avg_hull_remaining_ci_low,
+                        r.avg_hull_remaining_ci_high,
+                      )}
                     </td>
                   </tr>
                 );
@@ -292,13 +309,14 @@ export default function SimResults({
                   const deltaWin = prev != null ? (r.win_rate - prev.win_rate) * 100 : 0;
                   const deltaStall = prev != null ? (r.stall_rate - prev.stall_rate) * 100 : 0;
                   const deltaLoss = prev != null ? (r.loss_rate - prev.loss_rate) * 100 : 0;
+                  const deltaR1 = prev != null ? (r.r1_kill_rate - prev.r1_kill_rate) * 100 : 0;
                   const deltaHull = prev != null ? (r.avg_hull_remaining - prev.avg_hull_remaining) * 100 : 0;
                   return (
                     <div key={idx} style={{ fontSize: '0.85rem' }}>
                       <span style={{ fontWeight: 600 }}>#{idx + 1}</span> {formatCrewCell(r.captain)} / {formatCrewCell(r.bridge)} / {formatCrewCell(r.below_decks)}
                       {prev != null && (
                         <span style={{ marginLeft: 8, color: 'var(--text-muted)' }}>
-                          Δ Win {deltaWin >= 0 ? '+' : ''}{deltaWin.toFixed(2)}%, Δ Stall {deltaStall >= 0 ? '+' : ''}{deltaStall.toFixed(2)}%, Δ Loss {deltaLoss >= 0 ? '+' : ''}{deltaLoss.toFixed(2)}%, Δ Hull {deltaHull >= 0 ? '+' : ''}{deltaHull.toFixed(2)}%
+                          Δ Win {deltaWin >= 0 ? '+' : ''}{deltaWin.toFixed(2)}%, Δ Stall {deltaStall >= 0 ? '+' : ''}{deltaStall.toFixed(2)}%, Δ Loss {deltaLoss >= 0 ? '+' : ''}{deltaLoss.toFixed(2)}%, Δ R1 {deltaR1 >= 0 ? '+' : ''}{deltaR1.toFixed(2)}%, Δ Hull {deltaHull >= 0 ? '+' : ''}{deltaHull.toFixed(2)}%
                         </span>
                       )}
                     </div>

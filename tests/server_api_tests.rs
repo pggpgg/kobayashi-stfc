@@ -99,6 +99,16 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     assert!(first["below_decks"].as_array().is_some(), "below_decks should be an array");
     assert!(first["win_rate"].as_f64().is_some());
     assert!(first["avg_hull_remaining"].as_f64().is_some());
+    let wr = first["win_rate"].as_f64().expect("win_rate");
+    let wr_lo = first["win_rate_ci_low"].as_f64().expect("win_rate_ci_low");
+    let wr_hi = first["win_rate_ci_high"].as_f64().expect("win_rate_ci_high");
+    const CI_EPS: f64 = 1e-5;
+    assert!(
+        wr_lo - CI_EPS <= wr && wr <= wr_hi + CI_EPS,
+        "win rate {wr} should lie in Wilson CI [{wr_lo}, {wr_hi}]"
+    );
+    assert!(first["r1_kill_rate"].as_f64().is_some());
+    assert!(first["r1_kill_rate_ci_low"].as_f64().is_some());
 
     let mut prior_score: Option<f64> = None;
     let mut saw_non_trivial_metric = false;
@@ -288,6 +298,52 @@ async fn optimize_endpoint_rejects_excessive_max_candidates() {
 }
 
 #[tokio::test]
+async fn optimize_endpoint_rejects_zero_analytical_prefilter_keep() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"2918121098","sims":100,"analytical_prefilter_keep":0}"#,
+        None,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 400);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(
+        errors.iter().any(|e| e["field"] == "analytical_prefilter_keep"),
+        "analytical_prefilter_keep validation error should be present"
+    );
+}
+
+#[tokio::test]
+async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":800,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
+    let response = route_request("POST", "/api/optimize", body, None).await;
+    assert_eq!(response.status_code, 200, "body: {}", response.body);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["scenario"]["analytical_prefilter_keep"], 4);
+    assert_eq!(payload["scenario"]["analytical_prefilter_kept"], 4);
+    assert!(payload["scenario"]["analytical_prefilter_from"].as_u64().unwrap_or(0) > 4);
+    let notes = payload["approximate_notes"]
+        .as_array()
+        .expect("approximate_notes should be an array");
+    assert!(
+        notes.iter().any(|n| {
+            n.as_str()
+                .is_some_and(|s| s.contains("pre-filter") && s.contains("Monte Carlo"))
+        }),
+        "approximate_notes should describe analytical pre-filter: {:?}",
+        notes
+    );
+}
+
+#[tokio::test]
 async fn optimize_validation_error_has_expected_schema() {
     let response = route_request(
         "POST",
@@ -424,4 +480,32 @@ async fn async_optimize_cancel_after_done_is_idempotent_ok() {
         "expected idempotent cancel message, got {:?}",
         c["message"]
     );
+}
+
+#[tokio::test]
+async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","seed":77,"sim_index":12,"max_trace_events":50,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}}"#;
+    let a = route_request("POST", "/api/optimize/replay-seed", body, None).await;
+    let b = route_request("POST", "/api/optimize/replay-seed", body, None).await;
+    assert_eq!(a.status_code, 200, "{}", a.body);
+    assert_eq!(b.status_code, 200);
+    assert_eq!(a.body, b.body);
+
+    let p: serde_json::Value = serde_json::from_str(&a.body).expect("replay json");
+    assert_eq!(p["status"], "ok");
+    let sc = &p["scenario"];
+    assert_eq!(sc["scenario_seed"], 77);
+    assert_eq!(sc["sim_index"], 12);
+    let base = sc["base_seed"].as_u64().expect("base_seed");
+    let iteration = sc["iteration_seed"].as_u64().expect("iteration_seed");
+    assert_eq!(iteration, base.wrapping_add(12));
+
+    let tr = &p["trace"];
+    assert!(
+        tr["event_count"].as_u64().is_some_and(|n| n > 0),
+        "expected combat trace events"
+    );
+    let events = tr["events"].as_array().expect("events array");
+    assert!(events.len() <= 50);
+    assert!(p["summary"]["attacker_won"].is_boolean());
 }

@@ -14,6 +14,8 @@ pub enum TimingWindow {
     CombatBegin,
     RoundStart,
     AttackPhase,
+    /// After each weapon sub-round (outbound shots for that weapon and defender counter); stacks carry into later weapons this round only.
+    AfterSubround,
     DefensePhase,
     RoundEnd,
     /// When target's shields reach 0 (on_shield_break).
@@ -83,6 +85,12 @@ pub enum AbilityEffect {
     IsolyticCascadeDamageBonus(f64),
     /// Officer-granted shield mitigation; additive to base (clamped 0..1).
     ShieldMitigationBonus(f64),
+    /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
+    /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
+    CritChanceBonus(f64),
+    /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
+    /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
+    CritDamageMultiplier(f64),
     /// Hull HP restored when this ship gets a kill (on_kill). Reduces total_attacker_hull_damage.
     OnKillHullRegen(f64),
     /// Attack multiplier that decays each round. initial - round * decay_per_round, floored.
@@ -286,6 +294,8 @@ pub struct CrewConfiguration {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActiveAbilityEffect {
     pub ability_name: String,
+    /// Canonical officer id when this row comes from an officer seat (for trace attribution).
+    pub officer_id: Option<String>,
     pub effect: AbilityEffect,
     pub boosted: bool,
     pub condition: Option<AbilityCondition>,
@@ -318,6 +328,7 @@ pub fn active_effects_for_timing(
         })
         .map(|seat_context| ActiveAbilityEffect {
             ability_name: seat_context.ability.name.clone(),
+            officer_id: seat_context.officer_id.clone(),
             effect: seat_context.ability.effect,
             boosted: seat_context.boosted,
             condition: seat_context.ability.condition.clone(),

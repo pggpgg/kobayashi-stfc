@@ -83,6 +83,48 @@ fn extend_crew_with_morale_gated_profile_bonuses(
     });
 }
 
+/// [`AttackerStats`] for hostile mitigation and player pierce-through: ship components, profile
+/// accuracy multiplier, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
+/// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
+pub(crate) fn effective_attacker_stats_for_mitigation(
+    ship_rec: &ShipRecord,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+) -> AttackerStats {
+    let mut s = ship_rec.to_attacker_stats();
+    apply_profile_accuracy_to_attacker_stats(&mut s, profile);
+    s.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
+    s.accuracy += crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
+        ship_rec.abilities.as_deref().unwrap_or(&[]),
+    );
+    let cbm = static_buffs.get("accuracy_cb_mult").copied().unwrap_or(1.0);
+    if cbm.is_finite() && cbm > 0.0 {
+        s.accuracy *= cbm;
+    }
+    s
+}
+
+pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
+    ship_rec: &ShipRecord,
+    hostile_rec: &HostileRecord,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+) -> (f64, f64) {
+    let attacker_stats = effective_attacker_stats_for_mitigation(ship_rec, profile, static_buffs);
+    let defender_stats = hostile_rec.to_defender_stats();
+    let ship_type = hostile_rec.ship_type();
+    let defender_mitigation = mitigation_for_hostile(
+        defender_stats,
+        attacker_stats,
+        ship_type,
+        hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+        hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+        hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+    );
+    let pierce = pierce_damage_through_bonus(defender_stats, attacker_stats, ship_type);
+    (defender_mitigation, pierce)
+}
+
 /// Defender [`Combatant`] from [`HostileRecord`], including weapons and pierce/crit used on the
 /// engine’s counter-attack path (see `engine.rs` — hostile fire vs player).
 fn defender_combatant_from_hostile_record(
@@ -202,18 +244,38 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         .map(|h| hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog.as_ref()))
         .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() });
 
-    if let (Some(ref ship_rec), Some(ref defender), Some(rounds), Some(defender_hull)) = (
+    if let (Some(ref ship_rec), Some(ref cached_defender), Some(rounds), Some(defender_hull)) = (
         &shared.ship_rec,
         &shared.cached_defender,
         shared.cached_rounds,
         shared.cached_defender_hull,
     ) {
+        let (defender_mitigation, pierce) = shared
+            .hostile_rec
+            .as_ref()
+            .map(|h| {
+                mitigation_and_pierce_for_player_vs_hostile(
+                    ship_rec,
+                    h,
+                    &shared.profile,
+                    &static_buffs,
+                )
+            })
+            .unwrap_or_else(|| {
+                (
+                    shared.cached_defender_mitigation.unwrap_or(cached_defender.mitigation),
+                    shared.cached_pierce.unwrap_or(0.0),
+                )
+            });
+        let mut defender = cached_defender.clone();
+        defender.mitigation = defender_mitigation;
+
         let mut attacker = apply_profile_to_attacker(
             Combatant {
                 id: shared.ship.clone(),
                 attack: ship_rec.attack,
                 mitigation: 0.0,
-                pierce: shared.cached_pierce.unwrap_or(0.0),
+                pierce,
                 crit_chance: ship_rec.crit_chance,
                 crit_multiplier: ship_rec.crit_damage,
                 proc_chance,
@@ -238,7 +300,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         extend_crew_with_morale_gated_profile_bonuses(&mut seats, &shared.profile);
         return CombatSimulationInput {
             attacker,
-            defender: defender.clone(),
+            defender,
             defender_crew,
             crew: CrewConfiguration { seats },
             rounds,
@@ -409,21 +471,11 @@ pub(crate) fn scenario_to_combat_input(
         let hostile_ability_catalog = load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
         let defender_crew =
             hostile_abilities_to_defender_crew(&hostile_rec.ability, hostile_ability_catalog.as_ref());
-        let mut attacker_stats = ship_rec.to_attacker_stats();
-        apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, profile);
-        attacker_stats.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
-        let defender_mitigation = mitigation_for_hostile(
-            hostile_rec.to_defender_stats(),
-            attacker_stats,
-            hostile_rec.ship_type(),
-            hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
-            hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
-            hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
-        );
-        let pierce = pierce_damage_through_bonus(
-            hostile_rec.to_defender_stats(),
-            attacker_stats,
-            hostile_rec.ship_type(),
+        let (defender_mitigation, pierce) = mitigation_and_pierce_for_player_vs_hostile(
+            &ship_rec,
+            &hostile_rec,
+            profile,
+            &static_buffs,
         );
         let defender_hull = hostile_rec.hull_health;
         let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level));
@@ -950,6 +1002,103 @@ mod tests {
         );
         assert!(!d.weapons.is_empty());
         assert!(d.pierce > 0.0, "counter pierce-through should be positive");
+    }
+
+    #[test]
+    fn effective_accuracy_stacks_profile_officer_buffs_hull_combat_begin_and_mult() {
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.insert("accuracy".to_string(), 0.25);
+
+        let ship_rec = ShipRecord {
+            id: "s".into(),
+            ship_name: "S".into(),
+            ship_class: "battleship".into(),
+            armor_piercing: 100.0,
+            shield_piercing: 100.0,
+            accuracy: 100.0,
+            attack: 50.0,
+            crit_chance: 0.0,
+            crit_damage: 1.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: None,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: None,
+            abilities: Some(vec![ShipAbility {
+                id: "cb".into(),
+                timing: "combat_begin".into(),
+                effect_type: "accuracy".into(),
+                value: 20.0,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+            }]),
+        };
+        let mut static_buffs = HashMap::new();
+        static_buffs.insert("accuracy".to_string(), 10.0);
+        static_buffs.insert("accuracy_cb_mult".to_string(), 1.2);
+
+        let stats = effective_attacker_stats_for_mitigation(&ship_rec, &profile, &static_buffs);
+        // 100 * 1.25 = 125; +10 officer static = 135; +20 hull combat_begin = 155; *1.2 = 186
+        assert!(
+            (stats.accuracy - 186.0).abs() < 1e-6,
+            "got {}",
+            stats.accuracy
+        );
+    }
+
+    #[test]
+    fn officer_accuracy_buff_lowers_hostile_mitigation_and_raises_pierce() {
+        // Moderate defender stats so mitigation is not stuck at the hostile ceiling (high-tier
+        // bundled hostiles often clamp, hiding the dodge/accuracy leg).
+        let hostile_rec: HostileRecord = serde_json::from_value(serde_json::json!({
+            "id": "test_hostile",
+            "hostile_name": "Test Hostile",
+            "level": 10,
+            "ship_class": "battleship",
+            "armor": 220.0,
+            "shield_deflection": 210.0,
+            "dodge": 190.0,
+            "hull_health": 5000.0,
+            "shield_health": 2000.0
+        }))
+        .expect("minimal hostile JSON");
+        let ship_rec = ShipRecord {
+            id: "test_ship".into(),
+            ship_name: "Test".into(),
+            ship_class: "explorer".into(),
+            armor_piercing: 150.0,
+            shield_piercing: 150.0,
+            accuracy: 120.0,
+            attack: 100.0,
+            crit_chance: 0.1,
+            crit_damage: 1.5,
+            hull_health: 5000.0,
+            shield_health: 1000.0,
+            shield_mitigation: None,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: None,
+            abilities: None,
+        };
+        let profile = PlayerProfile::default();
+        let (m0, p0) = mitigation_and_pierce_for_player_vs_hostile(
+            &ship_rec,
+            &hostile_rec,
+            &profile,
+            &HashMap::new(),
+        );
+        let mut buffs = HashMap::new();
+        buffs.insert("accuracy".to_string(), 80.0);
+        let (m1, p1) =
+            mitigation_and_pierce_for_player_vs_hostile(&ship_rec, &hostile_rec, &profile, &buffs);
+        assert!(
+            p1 > p0 && m1 < m0,
+            "expected more pierce and less mitigation with accuracy; m0={m0} m1={m1} p0={p0} p1={p1}"
+        );
     }
 
     #[test]

@@ -11,38 +11,20 @@
 //! **Morale (U.S.S. Enterprise-D / Galaxy Class):** Cumulative weapon damage uses
 //! [`AbilityCondition::MoraleActive`], satisfied when the primary round-start [AbilityEffect::Morale]
 //! roll succeeds that round.
+//!
+//! **Accuracy:** `accuracy` / `accuracy_bonus` at **combat begin** are summed by
+//! [`sum_combat_begin_accuracy_from_ship_abilities`] and folded into pre-mitigation [`AttackerStats`]
+//! (not a crew seat). Other timings are not modeled yet.
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
-use crate::combat::types::{OpponentFactionTag, MAX_COMBAT_ROUNDS};
+use crate::combat::types::{OpponentFactionTag, EPSILON, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
 
 fn normalize_key(s: &str) -> String {
     s.trim().to_lowercase().replace('-', "_")
-}
-
-fn opponent_faction_from_catalog_slug(s: &str) -> Option<OpponentFactionTag> {
-    match normalize_key(s).as_str() {
-        "unknown" => Some(OpponentFactionTag::Unknown),
-        "federation" => Some(OpponentFactionTag::Federation),
-        "klingon" => Some(OpponentFactionTag::Klingon),
-        "romulan" => Some(OpponentFactionTag::Romulan),
-        "borg" => Some(OpponentFactionTag::Borg),
-        "cardassian" => Some(OpponentFactionTag::Cardassian),
-        "augment" => Some(OpponentFactionTag::Augment),
-        "dominion" => Some(OpponentFactionTag::Dominion),
-        "mirror_universe" => Some(OpponentFactionTag::MirrorUniverse),
-        "assimilated" => Some(OpponentFactionTag::Assimilated),
-        "ex_borg" | "exborg" => Some(OpponentFactionTag::ExBorg),
-        "swarm" => Some(OpponentFactionTag::Swarm),
-        "actian" => Some(OpponentFactionTag::Actian),
-        "gorn_hunting_pack" | "gorn" => Some(OpponentFactionTag::GornHuntingPack),
-        "xindi" => Some(OpponentFactionTag::Xindi),
-        "breen" => Some(OpponentFactionTag::Breen),
-        _ => None,
-    }
 }
 
 fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition> {
@@ -57,7 +39,7 @@ fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition
         parts.push(AbilityCondition::DefenderHullBreach);
     }
     if let Some(ref slug) = ability.condition_opponent_faction {
-        if let Some(tag) = opponent_faction_from_catalog_slug(slug) {
+        if let Some(tag) = OpponentFactionTag::from_data_slug(slug) {
             parts.push(AbilityCondition::DefenderFactionIs(tag));
         }
     }
@@ -77,6 +59,8 @@ pub fn parse_ship_ability_timing(s: &str) -> Option<TimingWindow> {
         "round_start" | "roundstart" | "on_round_start" => Some(TimingWindow::RoundStart),
         "attack_phase" | "on_attack" | "on_hit" | "on_critical" | "criticalshotfired"
         | "enemytakeshit" => Some(TimingWindow::AttackPhase),
+        "after_shot" | "on_after_shot" | "subround_end" | "on_subround_end" | "after_weapon"
+        | "on_after_weapon" => Some(TimingWindow::AfterSubround),
         "defense_phase" | "on_defense" | "hittaken" => Some(TimingWindow::DefensePhase),
         "round_end" | "roundend" | "on_round_end" => Some(TimingWindow::RoundEnd),
         "shield_break" | "on_shield_break" | "shieldsdepleted" | "targetshieldsdepleted" => {
@@ -140,8 +124,8 @@ pub fn ship_ability_effect_from_catalog(
             })
         },
 
-        // LCARS uses this rough mapping for crit stats when they appear as timed crew effects.
-        "crit_chance" | "crit_damage" => Some(AbilityEffect::AttackMultiplier(1.0 + value * 0.5)),
+        "crit_chance" => Some(AbilityEffect::CritChanceBonus(normalize_probability(value))),
+        "crit_damage" => Some(AbilityEffect::CritDamageMultiplier((1.0 + value).max(EPSILON))),
 
         "apex_shred" => Some(AbilityEffect::ApexShredBonus(value)),
         "apex_barrier" => Some(AbilityEffect::ApexBarrierBonus(value)),
@@ -194,14 +178,35 @@ pub fn ship_ability_effect_from_catalog(
             }
         }
 
+        // Handled only via [`sum_combat_begin_accuracy_from_ship_abilities`] so dodge mitigation
+        // and pierce-through see stacked accuracy before combat. Non-combat-begin timing is not
+        // modeled in the engine yet.
+        "accuracy" | "accuracy_bonus" => None,
+
         _ => None,
     }
+}
+
+/// Flat accuracy from hull abilities at combat begin, folded into [`crate::combat::AttackerStats`]
+/// before hostile mitigation / pierce-through (see [`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`]).
+pub fn sum_combat_begin_accuracy_from_ship_abilities(abilities: &[ShipAbility]) -> f64 {
+    let mut sum = 0.0;
+    for a in abilities {
+        if parse_ship_ability_timing(&a.timing) != Some(TimingWindow::CombatBegin) {
+            continue;
+        }
+        match normalize_key(&a.effect_type).as_str() {
+            "accuracy" | "accuracy_bonus" => sum += a.value,
+            _ => {}
+        }
+    }
+    sum
 }
 
 /// One ship hull ability → one seat context, or None if unsupported.
 pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSeatContext> {
     if let Some(ref slug) = ability.condition_opponent_faction {
-        if opponent_faction_from_catalog_slug(slug).is_none() {
+        if OpponentFactionTag::from_data_slug(slug).is_none() {
             return None;
         }
     }
@@ -277,6 +282,48 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(e, AbilityEffect::HullRegen(100.0)));
+    }
+
+    #[test]
+    fn crit_stats_map_to_typed_effects_not_attack_multiplier() {
+        let cc = ship_ability_effect_from_catalog("crit_chance", TimingWindow::RoundStart, 0.15, None)
+            .expect("crit_chance");
+        assert!(matches!(cc, AbilityEffect::CritChanceBonus(v) if (v - 0.15).abs() < 1e-12));
+        let cd = ship_ability_effect_from_catalog("crit_damage", TimingWindow::RoundStart, 0.2, None)
+            .expect("crit_damage");
+        assert!(matches!(cd, AbilityEffect::CritDamageMultiplier(m) if (m - 1.2).abs() < 1e-12));
+    }
+
+    #[test]
+    fn sum_combat_begin_accuracy_ignores_non_combat_begin_rows() {
+        let abilities = vec![
+            ShipAbility {
+                id: "cb".into(),
+                timing: "combat_begin".into(),
+                effect_type: "accuracy".into(),
+                value: 15.0,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+            },
+            ShipAbility {
+                id: "rs".into(),
+                timing: "round_start".into(),
+                effect_type: "accuracy".into(),
+                value: 999.0,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+            },
+        ];
+        assert_eq!(
+            sum_combat_begin_accuracy_from_ship_abilities(&abilities),
+            15.0
+        );
     }
 
     #[test]
