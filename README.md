@@ -94,6 +94,8 @@ KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladi
 
 ### Data maintenance policy
 
+**Refreshing combat/game data:** use the orchestrated importer chain — `npm run data:refresh` (optional flags `--stfcspace`, `--stfccommunity`, `--all`). See [scripts/README.md](scripts/README.md) for order and prerequisites.
+
 The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports). You can also sync your roster **quasi real-time** from the game using the [STFC Community Mod](https://github.com/netniV/stfc-mod); see [docs/SYNC.md](docs/SYNC.md) for setup.
 
 For canonical officer data provenance, `officers.canonical.json` uses neutral metadata labels: each officer `source.workbook` value is set to `manual_curation` rather than storing a specific workbook filename.
