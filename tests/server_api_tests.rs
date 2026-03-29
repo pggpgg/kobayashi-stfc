@@ -48,6 +48,17 @@ async fn health_endpoint_returns_ok_json() {
 }
 
 #[tokio::test]
+async fn mechanics_coverage_returns_tier_counts() {
+    let response = route_request("GET", "/api/mechanics/coverage", "", None).await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+    let p: serde_json::Value = serde_json::from_str(&response.body).expect("coverage json");
+    assert_eq!(p["status"], "ok");
+    assert!(p["lcars_effects"]["implemented"].as_u64().is_some());
+    assert!(p["ship_hull_abilities"].is_object());
+    assert!(p["hostile_catalog_entries"].is_object());
+}
+
+#[tokio::test]
 async fn profile_buildings_summary_returns_json() {
     let response = route_request("GET", "/api/profile/buildings-summary", "", None).await;
     assert_eq!(response.status_code, 200);

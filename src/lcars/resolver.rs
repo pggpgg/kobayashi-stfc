@@ -8,6 +8,7 @@ use crate::combat::{
 };
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
+use serde::Serialize;
 
 /// Options when resolving officer abilities (e.g. officer tier for scaling).
 #[derive(Debug, Clone)]
@@ -381,6 +382,100 @@ fn resolve_effect(
         }
         "tag" => None, // Non-combat; skip.
         _ => None,
+    }
+}
+
+/// Coarse coverage tier for `/api/mechanics/coverage` (LCARS effects).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MechanicCoverageTier {
+    Implemented,
+    Partial,
+    Ignored,
+}
+
+/// How a single LCARS effect is treated when resolving a crew (static buff, dynamic seat, proc, or skipped).
+#[derive(Debug, Clone, Serialize)]
+pub struct LcarsEffectCoverage {
+    pub tier: MechanicCoverageTier,
+    /// Short machine-readable reason / pathway.
+    pub pathway: String,
+}
+
+/// Classify one LCARS effect for mechanics coverage reports. Uses the same rules as [resolve_effect] and static/proc paths in [resolve_crew_to_buff_set].
+pub fn lcars_effect_coverage(
+    effect: &LcarsEffect,
+    officer_id: &str,
+    options: &ResolveOptions,
+) -> LcarsEffectCoverage {
+    if effect.effect_type == "tag" {
+        return LcarsEffectCoverage {
+            tier: MechanicCoverageTier::Ignored,
+            pathway: "tag_non_combat".to_string(),
+        };
+    }
+    if effect.effect_type == "extra_attack" {
+        return LcarsEffectCoverage {
+            tier: MechanicCoverageTier::Implemented,
+            pathway: "proc_extra_attack".to_string(),
+        };
+    }
+    if is_static_effect(effect) {
+        return LcarsEffectCoverage {
+            tier: MechanicCoverageTier::Implemented,
+            pathway: "static_passive_stat_modify".to_string(),
+        };
+    }
+    if effect.effect_type == "stat_modify" {
+        let stat = effect.stat.as_deref().unwrap_or("").trim();
+        if stat.eq_ignore_ascii_case("accuracy") {
+            let pathway = if trigger_to_timing(effect.trigger.as_deref()) == Some(TimingWindow::CombatBegin)
+            {
+                "combat_begin_accuracy_static"
+            } else {
+                "accuracy_non_combat_begin_skipped"
+            };
+            return LcarsEffectCoverage {
+                tier: if pathway.starts_with("combat_begin") {
+                    MechanicCoverageTier::Implemented
+                } else {
+                    MechanicCoverageTier::Partial
+                },
+                pathway: pathway.to_string(),
+            };
+        }
+    }
+
+    if trigger_to_timing(effect.trigger.as_deref()).is_none() {
+        let tr = effect
+            .trigger
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .unwrap_or("(missing)");
+        return LcarsEffectCoverage {
+            tier: MechanicCoverageTier::Ignored,
+            pathway: format!("unknown_trigger:{tr}"),
+        };
+    }
+
+    if resolve_effect(effect, "", options, officer_id).is_some() {
+        return LcarsEffectCoverage {
+            tier: MechanicCoverageTier::Implemented,
+            pathway: "dynamic_crew_ability".to_string(),
+        };
+    }
+
+    if effect.effect_type == "stat_modify" {
+        return LcarsEffectCoverage {
+            tier: MechanicCoverageTier::Partial,
+            pathway: "stat_modify_not_modeled_or_timing".to_string(),
+        };
+    }
+
+    LcarsEffectCoverage {
+        tier: MechanicCoverageTier::Ignored,
+        pathway: format!("effect_type_not_modeled:{}", effect.effect_type),
     }
 }
 

@@ -112,7 +112,7 @@ fn normalize_catalog_value(
     }
 }
 
-fn hostile_ability_effect_from_catalog(
+pub(crate) fn hostile_ability_effect_from_catalog(
     effect_type: &str,
     timing: TimingWindow,
     chance: f64,

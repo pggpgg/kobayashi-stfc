@@ -25,6 +25,7 @@ use tokio::sync::Semaphore;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::data::data_registry::DataRegistry;
+use crate::mechanics::coverage::mechanics_coverage_json;
 use crate::server::api;
 use crate::server::sync;
 
@@ -108,6 +109,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     let api_routes = Router::new()
         // Health
         .route("/api/health", get(handle_health))
+        .route("/api/mechanics/coverage", get(handle_mechanics_coverage))
         // Officers
         .route("/api/officers", get(handle_officers))
         .route("/api/officers/import", post(handle_officers_import))
@@ -282,6 +284,13 @@ async fn handle_no_spa_fallback(OriginalUri(uri): OriginalUri) -> Response {
 
 async fn handle_health() -> impl IntoResponse {
     match api::health_payload() {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_mechanics_coverage(State(state): State<AppState>) -> impl IntoResponse {
+    match mechanics_coverage_json(state.registry.as_ref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
