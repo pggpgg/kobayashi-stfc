@@ -14,7 +14,7 @@ Checklist derived from a codebase audit (not from existing roadmaps or `POTENTIA
 ## API contracts and CI quality
 
 - [ ] **7. Machine-readable API contracts** — OpenAPI 3 or JSON Schema for heavy payloads (optimize, simulate, compare, sync).
-- [ ] **8. CI gates** — `cargo fmt --check`; frontend linter (ESLint or Biome); align TypeScript strictness policy with CI.
+- [x] **8. CI gates** — `cargo fmt --check`; frontend linter (ESLint or Biome); align TypeScript strictness policy with CI.
 - [x] **9. Frontend test coverage** — Expand Vitest beyond current files: `useWorkspace`, profile/preset flows, `ResultsLibrary`, navigation.
 - [x] **10. Long optimize UX** — SSE/stream reconnect with backoff; survive refresh where feasible; clearer cancel and error states.
 

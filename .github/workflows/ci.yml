@@ -1,6 +1,10 @@
 # Supply-chain policy (audit task 17):
 # - Rust: `cargo audit` — FAIL on any RustSec advisory (non-zero exit).
 # - npm: `npm audit --audit-level=high` — FAIL on high/critical only; moderate/low do not fail the job.
+#
+# CI quality (audit task 8):
+# - Rust: `cargo fmt --check` (requires rustfmt).
+# - Frontend: Biome (`npm run lint`); TypeScript same policy as local builds (`npm run typecheck` = `tsc -b`; see frontend/tsconfig.json strict options).
 
 name: CI
 
@@ -20,7 +24,10 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: rustfmt, clippy
+
+      - name: cargo fmt --check
+        run: cargo fmt --all -- --check
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -70,6 +77,14 @@ jobs:
       - name: npm audit
         working-directory: frontend
         run: npm audit --audit-level=high
+
+      - name: Frontend lint (Biome)
+        working-directory: frontend
+        run: npm run lint
+
+      - name: TypeScript check
+        working-directory: frontend
+        run: npm run typecheck
 
       - name: Run frontend tests
         working-directory: frontend

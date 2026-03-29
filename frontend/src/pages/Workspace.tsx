@@ -1,10 +1,10 @@
-import WorkspaceHeader from '../components/WorkspaceHeader';
-import SavePresetModal from '../components/SavePresetModal';
-import CrewBuilder from '../components/CrewBuilder';
-import OptimizePanel from '../components/OptimizePanel';
-import SimResults from '../components/SimResults';
-import { belowDeckSlotCount } from '../lib/types';
-import { useWorkspace } from '../lib/useWorkspace';
+import CrewBuilder from "../components/CrewBuilder";
+import OptimizePanel from "../components/OptimizePanel";
+import SavePresetModal from "../components/SavePresetModal";
+import SimResults from "../components/SimResults";
+import WorkspaceHeader from "../components/WorkspaceHeader";
+import { belowDeckSlotCount } from "../lib/types";
+import { useWorkspace } from "../lib/useWorkspace";
 
 export default function Workspace() {
   const ws = useWorkspace();
@@ -22,7 +22,14 @@ export default function Workspace() {
       : null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100vh' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: "100vh",
+      }}
+    >
       <WorkspaceHeader
         shipId={ws.shipId}
         scenarioId={ws.scenarioId}
@@ -61,28 +68,28 @@ export default function Workspace() {
       {ws.workspaceInfo && (
         <div
           style={{
-            padding: '0.5rem 1rem',
-            background: 'rgba(201, 162, 39, 0.2)',
-            borderBottom: '1px solid var(--warning)',
-            color: 'var(--text)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            padding: "0.5rem 1rem",
+            background: "rgba(201, 162, 39, 0.2)",
+            borderBottom: "1px solid var(--warning)",
+            color: "var(--text)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             gap: 12,
           }}
         >
-          <span style={{ fontSize: '0.9rem' }}>{ws.workspaceInfo}</span>
+          <span style={{ fontSize: "0.9rem" }}>{ws.workspaceInfo}</span>
           <button
             type="button"
             onClick={() => ws.setWorkspaceInfo(null)}
             style={{
               flexShrink: 0,
-              padding: '0.25rem 0.6rem',
-              fontSize: '0.8rem',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
+              padding: "0.25rem 0.6rem",
+              fontSize: "0.8rem",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: 4,
-              color: 'var(--text)',
+              color: "var(--text)",
             }}
           >
             Dismiss
@@ -91,7 +98,11 @@ export default function Workspace() {
       )}
       {ws.error && (
         <div
-          style={{ padding: '0.5rem 1rem', background: 'var(--error)', color: 'white' }}
+          style={{
+            padding: "0.5rem 1rem",
+            background: "var(--error)",
+            color: "white",
+          }}
           role="alert"
         >
           {ws.error}
@@ -99,21 +110,21 @@ export default function Workspace() {
       )}
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           flex: 1,
           minHeight: 0,
           maxWidth: 1400,
-          width: '100%',
-          alignSelf: 'center',
+          width: "100%",
+          alignSelf: "center",
         }}
       >
         <section
           style={{
             flex: 1,
             minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '0 1rem',
+            display: "flex",
+            flexDirection: "column",
+            padding: "0 1rem",
           }}
         >
           <CrewBuilder
@@ -142,7 +153,9 @@ export default function Workspace() {
         </section>
         <OptimizePanel
           collapsed={ws.rightPanelCollapsed}
-          onToggleCollapsed={() => ws.setRightPanelCollapsed(!ws.rightPanelCollapsed)}
+          onToggleCollapsed={() =>
+            ws.setRightPanelCollapsed(!ws.rightPanelCollapsed)
+          }
           crew={ws.crew}
           loadingOptimize={ws.loadingOptimize}
           optimizeCrewsDone={ws.optimizeCrewsDone}
@@ -153,7 +166,9 @@ export default function Workspace() {
           maxCandidates={ws.maxCandidates}
           onMaxCandidatesChange={ws.setMaxCandidates}
           prioritizeBelowDecksAbility={ws.prioritizeBelowDecksAbility}
-          onPrioritizeBelowDecksAbilityChange={ws.setPrioritizeBelowDecksAbility}
+          onPrioritizeBelowDecksAbilityChange={
+            ws.setPrioritizeBelowDecksAbility
+          }
           availableSeeds={ws.availableSeeds}
           selectedSeeds={ws.selectedSeeds}
           onSelectedSeedsChange={ws.setSelectedSeeds}

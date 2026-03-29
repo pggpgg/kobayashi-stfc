@@ -1,25 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
+import { useProfile } from "../contexts/ProfileContext";
+import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
+import type {
+  HostileListItem,
+  OptimizeEstimate,
+  ShipListItem,
+} from "../lib/api";
 import {
-  fetchShips,
   fetchHostiles,
-  getShipTiersLevels,
+  fetchShips,
   formatApiError,
   formatOptimizePhaseLabel,
-} from '../lib/api';
-import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api';
-import type { CrewState } from '../lib/types';
-import { useProfile } from '../contexts/ProfileContext';
-import { useWorkspaceMode } from '../contexts/WorkspaceModeContext';
-import HostilePicker from './HostilePicker';
+  getShipTiersLevels,
+} from "../lib/api";
+import type { CrewState } from "../lib/types";
+import HostilePicker from "./HostilePicker";
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 
 const selectStyle = {
-  padding: '0.4rem 0.6rem',
-  background: 'var(--bg)',
-  border: '1px solid var(--border)',
+  padding: "0.4rem 0.6rem",
+  background: "var(--bg)",
+  border: "1px solid var(--border)",
   borderRadius: 6,
-  color: 'var(--text)',
+  color: "var(--text)",
 } as const;
 
 interface WorkspaceHeaderProps {
@@ -48,7 +52,7 @@ interface WorkspaceHeaderProps {
   optimizePhase?: string | null;
   optimizeEtaSeconds?: number | null;
   /** Live stream vs polling while optimizing. */
-  optimizeStreamMode?: 'sse' | 'reconnecting' | 'polling' | null;
+  optimizeStreamMode?: "sse" | "reconnecting" | "polling" | null;
 }
 
 export default function WorkspaceHeader({
@@ -80,7 +84,9 @@ export default function WorkspaceHeader({
   const { activeProfileId } = useProfile();
   const { ownedOnly } = useWorkspaceMode();
   const [ships, setShips] = useState<ShipListItem[]>([]);
-  const [shipsLoadState, setShipsLoadState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [shipsLoadState, setShipsLoadState] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
   const [shipsError, setShipsError] = useState<string | null>(null);
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
   const [tiers, setTiers] = useState<number[]>([1]);
@@ -88,13 +94,13 @@ export default function WorkspaceHeader({
 
   useEffect(() => {
     let c = false;
-    setShipsLoadState('loading');
+    setShipsLoadState("loading");
     setShipsError(null);
     fetchShips(ownedOnly, activeProfileId)
       .then((list) => {
         if (!c) {
           setShips(list);
-          setShipsLoadState('done');
+          setShipsLoadState("done");
           if (list.length && !shipId) {
             const first = list[0];
             if (first) {
@@ -110,10 +116,12 @@ export default function WorkspaceHeader({
       .catch((err) => {
         if (!c) {
           setShipsError(formatApiError(err));
-          setShipsLoadState('error');
+          setShipsLoadState("error");
         }
       });
-    return () => { c = true; };
+    return () => {
+      c = true;
+    };
   }, [ownedOnly, activeProfileId]);
 
   // When ship changes: in roster mode pre-fill tier/level from roster
@@ -133,57 +141,67 @@ export default function WorkspaceHeader({
       return;
     }
     let c = false;
-    getShipTiersLevels(shipId).then((data) => {
-      if (!c) {
-        const t = data.tiers?.length ? data.tiers : [1];
-        const l = data.levels?.length ? data.levels : [1, 10, 20, 30, 40, 50, 60];
-        setTiers(t);
-        setLevels(l);
-        if (!t.includes(shipTier)) onShipTierChange(t[0] ?? 1);
-        if (!l.includes(shipLevel)) onShipLevelChange(l[0] ?? 1);
-      }
-    }).catch(() => {
-      if (!c) {
-        setTiers([1]);
-        setLevels([1, 10, 20, 30, 40, 50, 60]);
-      }
-    });
-    return () => { c = true; };
+    getShipTiersLevels(shipId)
+      .then((data) => {
+        if (!c) {
+          const t = data.tiers?.length ? data.tiers : [1];
+          const l = data.levels?.length
+            ? data.levels
+            : [1, 10, 20, 30, 40, 50, 60];
+          setTiers(t);
+          setLevels(l);
+          if (!t.includes(shipTier)) onShipTierChange(t[0] ?? 1);
+          if (!l.includes(shipLevel)) onShipLevelChange(l[0] ?? 1);
+        }
+      })
+      .catch(() => {
+        if (!c) {
+          setTiers([1]);
+          setLevels([1, 10, 20, 30, 40, 50, 60]);
+        }
+      });
+    return () => {
+      c = true;
+    };
   }, [shipId]);
 
   useEffect(() => {
     let c = false;
     fetchHostiles().then((list) => {
       if (!c) setHostiles(list);
-      if (list.length && !scenarioId) onScenarioIdChange(list[0]?.id ?? '');
+      if (list.length && !scenarioId) onScenarioIdChange(list[0]?.id ?? "");
     });
-    return () => { c = true; };
+    return () => {
+      c = true;
+    };
   }, []);
 
   return (
     <header
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        padding: '0.75rem 1rem',
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
-        flexWrap: 'wrap',
+        display: "flex",
+        alignItems: "center",
+        gap: "1rem",
+        padding: "0.75rem 1rem",
+        background: "var(--surface)",
+        borderBottom: "1px solid var(--border)",
+        flexWrap: "wrap",
       }}
     >
       <select
         aria-label="Ship"
-        value={ships.length > 0 ? shipId : ''}
+        value={ships.length > 0 ? shipId : ""}
         onChange={(e) => handleShipChange(e.target.value)}
         style={selectStyle}
-        disabled={shipsLoadState === 'loading'}
+        disabled={shipsLoadState === "loading"}
       >
-        {shipsLoadState === 'loading' && <option>Loading…</option>}
-        {shipsLoadState === 'done' && ships.length === 0 && (
-          <option value="">{ownedOnly ? 'No ships in roster' : 'No ships available'}</option>
+        {shipsLoadState === "loading" && <option>Loading…</option>}
+        {shipsLoadState === "done" && ships.length === 0 && (
+          <option value="">
+            {ownedOnly ? "No ships in roster" : "No ships available"}
+          </option>
         )}
-        {shipsLoadState === 'error' && shipsError && (
+        {shipsLoadState === "error" && shipsError && (
           <option value="">{shipsError}</option>
         )}
         {ships.map((s) => (
@@ -224,38 +242,50 @@ export default function WorkspaceHeader({
       <select
         aria-label="Preset"
         style={{
-          padding: '0.4rem 0.6rem',
-          background: 'var(--bg)',
-          border: '1px solid var(--border)',
+          padding: "0.4rem 0.6rem",
+          background: "var(--bg)",
+          border: "1px solid var(--border)",
           borderRadius: 6,
-          color: 'var(--text)',
+          color: "var(--text)",
         }}
       >
         <option>Preset</option>
       </select>
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          flexWrap: 'wrap',
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          flexWrap: "wrap",
         }}
       >
-        <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <label
+          style={{
+            fontSize: "0.8rem",
+            color: "var(--text-muted)",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
           Fight iterations/crew
           <input
             type="number"
             min={1}
             max={100000}
             value={simsPerCrew}
-            onChange={(e) => onSimsPerCrewChange(Math.max(1, Math.min(100000, Number(e.target.value) || 1000)))}
+            onChange={(e) =>
+              onSimsPerCrewChange(
+                Math.max(1, Math.min(100000, Number(e.target.value) || 1000)),
+              )
+            }
             style={{
               width: 72,
-              padding: '0.35rem 0.5rem',
-              background: 'var(--bg)',
-              border: '1px solid var(--border)',
+              padding: "0.35rem 0.5rem",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
               borderRadius: 4,
-              color: 'var(--text)',
+              color: "var(--text)",
             }}
           />
         </label>
@@ -266,12 +296,13 @@ export default function WorkspaceHeader({
             aria-label={`Set fight iterations to ${n.toLocaleString()}`}
             onClick={() => onSimsPerCrewChange(n)}
             style={{
-              padding: '0.35rem 0.5rem',
-              background: simsPerCrew === n ? 'var(--accent)' : 'var(--surface)',
-              border: '1px solid var(--border)',
+              padding: "0.35rem 0.5rem",
+              background:
+                simsPerCrew === n ? "var(--accent)" : "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: 4,
-              color: simsPerCrew === n ? 'var(--bg)' : 'var(--text)',
-              fontSize: '0.8rem',
+              color: simsPerCrew === n ? "var(--bg)" : "var(--text)",
+              fontSize: "0.8rem",
             }}
           >
             {n >= 1000 ? `${n / 1000}k` : n}
@@ -279,20 +310,36 @@ export default function WorkspaceHeader({
         ))}
       </div>
       {estimate != null && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          Est. ~{estimate.estimated_seconds < 1 ? '<1' : estimate.estimated_seconds.toFixed(1)} s
-          {estimate.estimated_candidates > 0 && ` (${estimate.estimated_candidates} crews)`}
+        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+          Est. ~
+          {estimate.estimated_seconds < 1
+            ? "<1"
+            : estimate.estimated_seconds.toFixed(1)}{" "}
+          s
+          {estimate.estimated_candidates > 0 &&
+            ` (${estimate.estimated_candidates} crews)`}
         </span>
       )}
       {lastOptimizeDurationMs != null && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
           Completed in {(lastOptimizeDurationMs / 1000).toFixed(1)} s
         </span>
       )}
       {loadingOptimize && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} role="status" aria-live="polite">
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 8 }}
+          role="status"
+          aria-live="polite"
+        >
           {optimizeProgress != null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                minWidth: 120,
+              }}
+            >
               <div
                 role="progressbar"
                 aria-valuemin={0}
@@ -302,57 +349,70 @@ export default function WorkspaceHeader({
                 style={{
                   flex: 1,
                   height: 6,
-                  background: 'var(--border)',
+                  background: "var(--border)",
                   borderRadius: 3,
-                  overflow: 'hidden',
+                  overflow: "hidden",
                 }}
               >
                 <div
                   style={{
                     width: `${optimizeProgress}%`,
-                    height: '100%',
-                    background: 'var(--accent)',
+                    height: "100%",
+                    background: "var(--accent)",
                     borderRadius: 3,
-                    transition: 'width 0.2s ease',
+                    transition: "width 0.2s ease",
                   }}
                 />
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                {optimizePhase === 'genetic' &&
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--text-muted)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {optimizePhase === "genetic" &&
                 optimizeTotalCrews != null &&
                 optimizeCrewsDone != null &&
                 optimizeTotalCrews > 0
                   ? `gen ${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
-                  : optimizeTotalCrews != null && optimizeCrewsDone != null && optimizeTotalCrews > 0
+                  : optimizeTotalCrews != null &&
+                      optimizeCrewsDone != null &&
+                      optimizeTotalCrews > 0
                     ? `${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
                     : `${optimizeProgress}%`}
               </span>
-              {(formatOptimizePhaseLabel(optimizePhase) || optimizeEtaSeconds != null) && (
+              {(formatOptimizePhaseLabel(optimizePhase) ||
+                optimizeEtaSeconds != null) && (
                 <span
                   style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--text-muted)',
-                    whiteSpace: 'nowrap',
+                    fontSize: "0.7rem",
+                    color: "var(--text-muted)",
+                    whiteSpace: "nowrap",
                     maxWidth: 200,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                   title={
                     formatOptimizePhaseLabel(optimizePhase) +
-                    (optimizeEtaSeconds != null ? ` · ETA ~${optimizeEtaSeconds}s` : '')
+                    (optimizeEtaSeconds != null
+                      ? ` · ETA ~${optimizeEtaSeconds}s`
+                      : "")
                   }
                 >
                   {formatOptimizePhaseLabel(optimizePhase)}
-                  {optimizeEtaSeconds != null ? ` · ~${optimizeEtaSeconds}s` : ''}
+                  {optimizeEtaSeconds != null
+                    ? ` · ~${optimizeEtaSeconds}s`
+                    : ""}
                 </span>
               )}
             </div>
           )}
-          {optimizeStreamMode === 'reconnecting' && (
+          {optimizeStreamMode === "reconnecting" && (
             <span
               style={{
-                fontSize: '0.7rem',
-                color: 'var(--warning)',
+                fontSize: "0.7rem",
+                color: "var(--warning)",
                 maxWidth: 200,
               }}
               title="The browser lost the live progress connection; retrying with backoff before falling back to polling."
@@ -360,9 +420,13 @@ export default function WorkspaceHeader({
               Reconnecting to live progress…
             </span>
           )}
-          {optimizeStreamMode === 'polling' && (
+          {optimizeStreamMode === "polling" && (
             <span
-              style={{ fontSize: '0.7rem', color: 'var(--text-muted)', maxWidth: 220 }}
+              style={{
+                fontSize: "0.7rem",
+                color: "var(--text-muted)",
+                maxWidth: 220,
+              }}
               title="Updates load over HTTP polling instead of a live stream."
             >
               Polling for progress
@@ -373,12 +437,12 @@ export default function WorkspaceHeader({
             onClick={onCancelOptimize}
             aria-label="Cancel optimization"
             style={{
-              padding: '0.35rem 0.75rem',
-              fontSize: '0.85rem',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
+              padding: "0.35rem 0.75rem",
+              fontSize: "0.85rem",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: 6,
-              color: 'var(--text)',
+              color: "var(--text)",
             }}
           >
             Cancel run
@@ -390,11 +454,11 @@ export default function WorkspaceHeader({
         type="button"
         onClick={onSavePreset}
         style={{
-          padding: '0.5rem 1rem',
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
+          padding: "0.5rem 1rem",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: 6,
-          color: 'var(--text)',
+          color: "var(--text)",
         }}
       >
         Save as Preset
@@ -404,16 +468,16 @@ export default function WorkspaceHeader({
         onClick={onRunSim}
         disabled={loadingSim || loadingOptimize}
         aria-busy={loadingSim}
-        aria-label={loadingSim ? 'Running simulation' : 'Run simulation'}
+        aria-label={loadingSim ? "Running simulation" : "Run simulation"}
         style={{
-          padding: '0.5rem 1rem',
-          background: 'var(--accent-dim)',
-          border: 'none',
+          padding: "0.5rem 1rem",
+          background: "var(--accent-dim)",
+          border: "none",
           borderRadius: 6,
-          color: 'var(--text)',
+          color: "var(--text)",
         }}
       >
-        {loadingSim ? 'Running…' : 'Run Sim'}
+        {loadingSim ? "Running…" : "Run Sim"}
       </button>
       <button
         type="button"
@@ -424,20 +488,22 @@ export default function WorkspaceHeader({
           loadingOptimize
             ? optimizeProgress != null
               ? `Optimizing, ${Math.round(optimizeProgress)} percent complete`
-              : 'Running optimization'
-            : 'Run optimization'
+              : "Running optimization"
+            : "Run optimization"
         }
         style={{
-          padding: '0.5rem 1rem',
-          background: 'var(--accent)',
-          border: 'none',
+          padding: "0.5rem 1rem",
+          background: "var(--accent)",
+          border: "none",
           borderRadius: 6,
-          color: 'var(--bg)',
+          color: "var(--bg)",
         }}
       >
         {loadingOptimize
-          ? (optimizeProgress != null ? `Optimizing… ${optimizeProgress}%` : 'Running…')
-          : 'Run Optimize'}
+          ? optimizeProgress != null
+            ? `Optimizing… ${optimizeProgress}%`
+            : "Running…"
+          : "Run Optimize"}
       </button>
     </header>
   );

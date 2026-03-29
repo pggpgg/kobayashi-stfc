@@ -1,5 +1,5 @@
-import type { CrewState } from './types';
-import type { OptimizerStrategyType, OptimizeCrewConstraintsBody } from './api';
+import type { OptimizeCrewConstraintsBody, OptimizerStrategyType } from "./api";
+import type { CrewState } from "./types";
 
 /** Params for POST /api/simulate from workspace UI (single-crew Monte Carlo). */
 export function buildWorkspaceSimulateParams(args: {
@@ -12,15 +12,19 @@ export function buildWorkspaceSimulateParams(args: {
 }): {
   ship: string;
   hostile: string;
-  crew: { captain: string; bridge: (string | null)[]; below_deck: (string | null)[] };
+  crew: {
+    captain: string;
+    bridge: (string | null)[];
+    below_deck: (string | null)[];
+  };
   num_sims: number;
   ship_tier: number;
   ship_level: number;
 } | null {
   if (!args.crew.captain) return null;
   return {
-    ship: args.shipId || 'Saladin',
-    hostile: args.scenarioId || '2918121098',
+    ship: args.shipId || "Saladin",
+    hostile: args.scenarioId || "2918121098",
     crew: {
       captain: args.crew.captain,
       bridge: args.crew.bridge,
@@ -40,7 +44,9 @@ function splitOfficerList(s: string | undefined): string[] {
     .filter(Boolean);
 }
 
-function parseGroupsJson(raw: string | undefined): OptimizeCrewConstraintsBody['groups'] {
+function parseGroupsJson(
+  raw: string | undefined,
+): OptimizeCrewConstraintsBody["groups"] {
   const t = raw?.trim();
   if (!t) return undefined;
   try {
@@ -48,11 +54,12 @@ function parseGroupsJson(raw: string | undefined): OptimizeCrewConstraintsBody['
     if (!Array.isArray(v)) return undefined;
     const out: { officers: string[]; min_count: number }[] = [];
     for (const item of v) {
-      if (!item || typeof item !== 'object') continue;
+      if (!item || typeof item !== "object") continue;
       const o = item as Record<string, unknown>;
-      if (!Array.isArray(o.officers) || typeof o.min_count !== 'number') continue;
+      if (!Array.isArray(o.officers) || typeof o.min_count !== "number")
+        continue;
       const officers = o.officers
-        .filter((x): x is string => typeof x === 'string')
+        .filter((x): x is string => typeof x === "string")
         .map((x) => x.trim())
         .filter(Boolean);
       const min_count = Math.floor(o.min_count);
@@ -95,8 +102,10 @@ export function buildOptimizeConstraintsFromForm(args: {
   const body: OptimizeCrewConstraintsBody = {};
   if (must_include.length) body.must_include = must_include;
   if (exclude.length) body.exclude = exclude;
-  if (bridge_must_include.length) body.bridge_must_include = bridge_must_include;
-  if (below_decks_must_include.length) body.below_decks_must_include = below_decks_must_include;
+  if (bridge_must_include.length)
+    body.bridge_must_include = bridge_must_include;
+  if (below_decks_must_include.length)
+    body.below_decks_must_include = below_decks_must_include;
   if (captain_must_be) body.captain_must_be = captain_must_be;
   if (groups?.length) body.groups = groups;
   return body;
@@ -112,7 +121,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
   prioritizeBelowDecksAbility: boolean;
   selectedSeeds: string[];
   heuristicsOnly: boolean;
-  belowDecksStrategy: 'ordered' | 'exploration';
+  belowDecksStrategy: "ordered" | "exploration";
   shipTier: number;
   shipLevel: number;
   optimizeConstraints?: {
@@ -129,16 +138,20 @@ export function buildWorkspaceOptimizeStartBody(args: {
     : undefined;
 
   return {
-    ship: args.shipId || 'Saladin',
-    hostile: args.scenarioId || '2918121098',
+    ship: args.shipId || "Saladin",
+    hostile: args.scenarioId || "2918121098",
     sims: args.simsPerCrew,
     max_candidates: args.maxCandidates ?? undefined,
     strategy: args.optimizerStrategy,
-    prioritize_below_decks_ability: args.prioritizeBelowDecksAbility || undefined,
-    heuristics_seeds: args.selectedSeeds.length > 0 ? args.selectedSeeds : undefined,
+    prioritize_below_decks_ability:
+      args.prioritizeBelowDecksAbility || undefined,
+    heuristics_seeds:
+      args.selectedSeeds.length > 0 ? args.selectedSeeds : undefined,
     heuristics_only: args.heuristicsOnly || undefined,
     below_decks_strategy:
-      args.belowDecksStrategy !== 'ordered' ? args.belowDecksStrategy : undefined,
+      args.belowDecksStrategy !== "ordered"
+        ? args.belowDecksStrategy
+        : undefined,
     ship_tier: args.shipTier,
     ship_level: args.shipLevel,
     ...(constraints ? { constraints } : {}),

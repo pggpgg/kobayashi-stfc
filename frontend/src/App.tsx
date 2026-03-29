@@ -1,9 +1,9 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Shell from './components/Shell';
-import Workspace from './pages/Workspace';
-import ResultsLibrary from './pages/ResultsLibrary';
-import RosterProfile from './pages/RosterProfile';
-import DataMechanics from './pages/DataMechanics';
+import { Navigate, Route, Routes } from "react-router-dom";
+import Shell from "./components/Shell";
+import DataMechanics from "./pages/DataMechanics";
+import ResultsLibrary from "./pages/ResultsLibrary";
+import RosterProfile from "./pages/RosterProfile";
+import Workspace from "./pages/Workspace";
 
 export default function App() {
   return (

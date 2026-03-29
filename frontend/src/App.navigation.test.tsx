@@ -1,31 +1,31 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { ProfileProvider } from './contexts/ProfileContext';
-import { WorkspaceModeProvider } from './contexts/WorkspaceModeContext';
-import App from './App';
+import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, expect, it, vi } from "vitest";
+import App from "./App";
+import { ProfileProvider } from "./contexts/ProfileContext";
+import { WorkspaceModeProvider } from "./contexts/WorkspaceModeContext";
 
-vi.mock('./pages/Workspace', () => ({
+vi.mock("./pages/Workspace", () => ({
   default: () => <div>WorkspacePageMarker</div>,
 }));
-vi.mock('./pages/ResultsLibrary', () => ({
+vi.mock("./pages/ResultsLibrary", () => ({
   default: () => <div>ResultsLibraryPageMarker</div>,
 }));
-vi.mock('./pages/RosterProfile', () => ({
+vi.mock("./pages/RosterProfile", () => ({
   default: () => <div>RosterProfilePageMarker</div>,
 }));
-vi.mock('./pages/DataMechanics', () => ({
+vi.mock("./pages/DataMechanics", () => ({
   default: () => <div>DataMechanicsPageMarker</div>,
 }));
 
-vi.mock('./lib/api', () => ({
+vi.mock("./lib/api", () => ({
   fetchProfiles: vi.fn().mockResolvedValue({
-    profiles: [{ id: 'p1', name: 'Main', sync_token: 't' }],
-    default_id: 'p1',
+    profiles: [{ id: "p1", name: "Main", sync_token: "t" }],
+    default_id: "p1",
   }),
 }));
 
-function renderApp(initialPath = '/') {
+function renderApp(initialPath = "/") {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <WorkspaceModeProvider>
@@ -37,25 +37,25 @@ function renderApp(initialPath = '/') {
   );
 }
 
-describe('App navigation', () => {
-  it('renders workspace on /', () => {
-    renderApp('/');
-    expect(screen.getByText('WorkspacePageMarker')).toBeTruthy();
+describe("App navigation", () => {
+  it("renders workspace on /", () => {
+    renderApp("/");
+    expect(screen.getByText("WorkspacePageMarker")).toBeTruthy();
   });
 
-  it('navigates to Results Library, Roster, and Data via shell links', () => {
-    renderApp('/');
+  it("navigates to Results Library, Roster, and Data via shell links", () => {
+    renderApp("/");
 
-    fireEvent.click(screen.getByRole('link', { name: 'Results Library' }));
-    expect(screen.getByText('ResultsLibraryPageMarker')).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Results Library" }));
+    expect(screen.getByText("ResultsLibraryPageMarker")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('link', { name: 'Roster & Profile' }));
-    expect(screen.getByText('RosterProfilePageMarker')).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Roster & Profile" }));
+    expect(screen.getByText("RosterProfilePageMarker")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('link', { name: 'Data & Mechanics' }));
-    expect(screen.getByText('DataMechanicsPageMarker')).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Data & Mechanics" }));
+    expect(screen.getByText("DataMechanicsPageMarker")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('link', { name: 'Workspace' }));
-    expect(screen.getByText('WorkspacePageMarker')).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Workspace" }));
+    expect(screen.getByText("WorkspacePageMarker")).toBeTruthy();
   });
 });

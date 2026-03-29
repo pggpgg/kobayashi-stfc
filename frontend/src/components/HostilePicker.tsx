@@ -1,5 +1,13 @@
-import { useState, useEffect, useRef, useId, useMemo, type CSSProperties, type KeyboardEvent } from 'react';
-import { type HostileListItem, hostileSortLabel } from '../lib/api';
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { type HostileListItem, hostileSortLabel } from "../lib/api";
 
 const LIST_LIMIT = 200;
 
@@ -25,12 +33,16 @@ export default function HostilePicker({
 }: HostilePickerProps) {
   const listId = useId();
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selected = hostiles.find((h) => h.id === value);
-  const selectedLabel = selected ? hostileRowLabel(selected) : (value ? value : '');
+  const selectedLabel = selected
+    ? hostileRowLabel(selected)
+    : value
+      ? value
+      : "";
   const displayValue = open ? query : selectedLabel;
 
   const q = query.trim().toLowerCase();
@@ -44,7 +56,7 @@ export default function HostilePicker({
   const limited = useMemo(() => filtered.slice(0, LIST_LIMIT), [filtered]);
 
   useEffect(() => {
-    if (!open) setQuery('');
+    if (!open) setQuery("");
   }, [open]);
 
   useEffect(() => {
@@ -67,10 +79,13 @@ export default function HostilePicker({
   }, [limited.length, open]);
 
   useEffect(() => {
-    if (!open || highlightedIndex < 0 || highlightedIndex >= limited.length) return;
+    if (!open || highlightedIndex < 0 || highlightedIndex >= limited.length)
+      return;
     const h = limited[highlightedIndex];
     if (!h) return;
-    document.getElementById(`${listId}-opt-${h.id}`)?.scrollIntoView({ block: 'nearest' });
+    document
+      .getElementById(`${listId}-opt-${h.id}`)
+      ?.scrollIntoView({ block: "nearest" });
   }, [highlightedIndex, open, limited, listId]);
 
   const handleBlur = () => {
@@ -80,39 +95,43 @@ export default function HostilePicker({
   const handleSelect = (id: string) => {
     onChange(id);
     setOpen(false);
-    setQuery('');
+    setQuery("");
   };
 
+  const highlightedHostile =
+    highlightedIndex >= 0 && highlightedIndex < limited.length
+      ? limited[highlightedIndex]
+      : undefined;
   const activeOptionId =
-    open && limited.length > 0 && highlightedIndex >= 0 && highlightedIndex < limited.length
-      ? `${listId}-opt-${limited[highlightedIndex]!.id}`
+    open && highlightedHostile
+      ? `${listId}-opt-${highlightedHostile.id}`
       : undefined;
 
   const loading = !disabled && hostiles.length === 0;
 
   const onInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (disabled || loading) return;
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       e.preventDefault();
       setOpen(false);
-      setQuery('');
+      setQuery("");
       return;
     }
-    if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
       e.preventDefault();
       setOpen(true);
       return;
     }
     if (!open) return;
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       if (limited.length === 0) return;
       setHighlightedIndex((i) => (i + 1) % limited.length);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (limited.length === 0) return;
       setHighlightedIndex((i) => (i - 1 + limited.length) % limited.length);
-    } else if (e.key === 'Enter') {
+    } else if (e.key === "Enter") {
       e.preventDefault();
       const h = limited[highlightedIndex];
       if (h) handleSelect(h.id);
@@ -122,7 +141,7 @@ export default function HostilePicker({
   return (
     <div
       style={{
-        position: 'relative',
+        position: "relative",
         minWidth: 200,
         maxWidth: 280,
         ...style,
@@ -132,7 +151,7 @@ export default function HostilePicker({
         ref={inputRef}
         type="text"
         role="combobox"
-        value={loading ? '' : displayValue}
+        value={loading ? "" : displayValue}
         readOnly={loading || disabled}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -143,7 +162,7 @@ export default function HostilePicker({
         }}
         onBlur={handleBlur}
         onKeyDown={onInputKeyDown}
-        placeholder={loading ? 'Loading…' : 'Search scenario…'}
+        placeholder={loading ? "Loading…" : "Search scenario…"}
         aria-label="Scenario"
         aria-autocomplete="list"
         aria-expanded={open}
@@ -151,14 +170,14 @@ export default function HostilePicker({
         aria-activedescendant={activeOptionId}
         disabled={disabled}
         style={{
-          width: '100%',
-          boxSizing: 'border-box',
-          padding: '0.4rem 0.6rem',
-          background: 'var(--bg)',
-          border: '1px solid var(--border)',
+          width: "100%",
+          boxSizing: "border-box",
+          padding: "0.4rem 0.6rem",
+          background: "var(--bg)",
+          border: "1px solid var(--border)",
           borderRadius: 6,
-          color: 'var(--text)',
-          fontSize: '0.9rem',
+          color: "var(--text)",
+          fontSize: "0.9rem",
         }}
       />
       {open && !loading && !disabled && (
@@ -166,22 +185,28 @@ export default function HostilePicker({
           id={listId}
           role="listbox"
           style={{
-            position: 'absolute',
+            position: "absolute",
             left: 0,
             right: 0,
-            top: '100%',
+            top: "100%",
             marginTop: 2,
             maxHeight: 220,
-            overflowY: 'auto',
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
+            overflowY: "auto",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
             borderRadius: 6,
             zIndex: 100,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
           }}
         >
           {limited.length === 0 && (
-            <div style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <div
+              style={{
+                padding: "0.4rem 0.6rem",
+                fontSize: "0.85rem",
+                color: "var(--text-muted)",
+              }}
+            >
               No match
             </div>
           )}
@@ -194,15 +219,19 @@ export default function HostilePicker({
               aria-selected={h.id === value}
               tabIndex={-1}
               style={{
-                display: 'block',
-                width: '100%',
-                padding: '0.4rem 0.6rem',
-                textAlign: 'left',
+                display: "block",
+                width: "100%",
+                padding: "0.4rem 0.6rem",
+                textAlign: "left",
                 background:
-                  i === highlightedIndex ? 'var(--accent-dim)' : h.id === value ? 'var(--border)' : 'transparent',
-                border: 'none',
-                color: 'var(--text)',
-                fontSize: '0.85rem',
+                  i === highlightedIndex
+                    ? "var(--accent-dim)"
+                    : h.id === value
+                      ? "var(--border)"
+                      : "transparent",
+                border: "none",
+                color: "var(--text)",
+                fontSize: "0.85rem",
               }}
               onMouseEnter={() => setHighlightedIndex(i)}
               onMouseDown={(e) => {

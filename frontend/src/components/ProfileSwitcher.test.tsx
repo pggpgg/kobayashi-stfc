@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import ProfileSwitcher from './ProfileSwitcher';
-import { ProfileProvider } from '../contexts/ProfileContext';
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ProfileProvider } from "../contexts/ProfileContext";
+import ProfileSwitcher from "./ProfileSwitcher";
 
-vi.mock('../lib/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../lib/api')>();
+vi.mock("../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
     fetchProfiles: vi.fn(),
@@ -13,23 +13,23 @@ vi.mock('../lib/api', async (importOriginal) => {
   };
 });
 
-import * as api from '../lib/api';
+import * as api from "../lib/api";
 
-describe('ProfileSwitcher', () => {
+describe("ProfileSwitcher", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     vi.mocked(api.fetchProfiles).mockResolvedValue({
       profiles: [
-        { id: 'a', name: 'Alpha', sync_token: 't1' },
-        { id: 'b', name: 'Beta', sync_token: 't2' },
+        { id: "a", name: "Alpha", sync_token: "t1" },
+        { id: "b", name: "Beta", sync_token: "t2" },
       ],
-      default_id: 'a',
+      default_id: "a",
     });
     vi.mocked(api.createProfile).mockResolvedValue({
-      id: 'new',
-      name: 'Gamma',
-      sync_token: 't3',
+      id: "new",
+      name: "Gamma",
+      sync_token: "t3",
     });
     vi.mocked(api.deleteProfile).mockResolvedValue(undefined);
   });
@@ -42,47 +42,47 @@ describe('ProfileSwitcher', () => {
     );
   }
 
-  it('opens menu and switches active profile', async () => {
+  it("opens menu and switches active profile", async () => {
     renderSwitcher();
 
     await waitFor(() => {
-      expect(screen.getByTitle('Alpha')).toBeTruthy();
+      expect(screen.getByTitle("Alpha")).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'AL' }));
+    fireEvent.click(screen.getByRole("button", { name: "AL" }));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'BE Beta' })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "BE Beta" })).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'BE Beta' }));
+    fireEvent.click(screen.getByRole("button", { name: "BE Beta" }));
 
     await waitFor(() => {
-      expect(localStorage.getItem('kobayashi_active_profile')).toBe('b');
+      expect(localStorage.getItem("kobayashi_active_profile")).toBe("b");
     });
   });
 
-  it('creates a profile from add flow', async () => {
+  it("creates a profile from add flow", async () => {
     renderSwitcher();
 
     await waitFor(() => {
-      expect(screen.getByTitle('Alpha')).toBeTruthy();
+      expect(screen.getByTitle("Alpha")).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'AL' }));
-    fireEvent.click(screen.getByRole('button', { name: '+ Add profile' }));
+    fireEvent.click(screen.getByRole("button", { name: "AL" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add profile" }));
 
-    fireEvent.change(screen.getByPlaceholderText('Profile name'), {
-      target: { value: 'Gamma' },
+    fireEvent.change(screen.getByPlaceholderText("Profile name"), {
+      target: { value: "Gamma" },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() => {
-      expect(api.createProfile).toHaveBeenCalledWith({ name: 'Gamma' });
+      expect(api.createProfile).toHaveBeenCalledWith({ name: "Gamma" });
     });
 
     await waitFor(() => {
-      expect(localStorage.getItem('kobayashi_active_profile')).toBe('new');
+      expect(localStorage.getItem("kobayashi_active_profile")).toBe("new");
     });
   });
 });

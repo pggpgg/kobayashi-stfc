@@ -2,9 +2,10 @@
  * Base URL for API requests. Empty string = same origin.
  * Set at build time via VITE_API_BASE (e.g. for deployment behind a proxy).
  */
-export const API_BASE = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE != null
-  ? String(import.meta.env.VITE_API_BASE).replace(/\/$/, '')
-  : '';
+export const API_BASE =
+  typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE != null
+    ? String(import.meta.env.VITE_API_BASE).replace(/\/$/, "")
+    : "";
 
 /** Structured error from the API (status code + server message when available). */
 export class ApiError extends Error {
@@ -14,25 +15,28 @@ export class ApiError extends Error {
     public readonly code: string,
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
 function codeFromStatus(status: number): string {
-  if (status >= 500) return 'SERVER_ERROR';
-  if (status === 404) return 'NOT_FOUND';
-  if (status === 400 || status === 422) return 'VALIDATION';
-  if (status === 401 || status === 403) return 'AUTH';
-  return 'ERROR';
+  if (status >= 500) return "SERVER_ERROR";
+  if (status === 404) return "NOT_FOUND";
+  if (status === 400 || status === 422) return "VALIDATION";
+  if (status === 401 || status === 403) return "AUTH";
+  return "ERROR";
 }
 
 /** Parse error response body; returns an ApiError with server message when JSON has status/message. */
-export async function parseApiError(res: Response, bodyText: string): Promise<ApiError> {
+export async function parseApiError(
+  res: Response,
+  bodyText: string,
+): Promise<ApiError> {
   let message = bodyText || res.statusText;
   const code = codeFromStatus(res.status);
   try {
     const json = JSON.parse(bodyText) as { message?: string; status?: string };
-    if (typeof json.message === 'string' && json.message.trim()) {
+    if (typeof json.message === "string" && json.message.trim()) {
       message = json.message.trim();
     }
   } catch {
@@ -44,7 +48,7 @@ export async function parseApiError(res: Response, bodyText: string): Promise<Ap
 /** Format any thrown value for user display; adds retry hint for server errors. */
 export function formatApiError(e: unknown): string {
   const message = e instanceof Error ? e.message : String(e);
-  if (e instanceof ApiError && e.code === 'SERVER_ERROR') {
+  if (e instanceof ApiError && e.code === "SERVER_ERROR") {
     return `${message} Try again later.`;
   }
   return message;
@@ -59,7 +63,7 @@ async function checkOk(res: Response): Promise<void> {
 /** Build headers with X-Profile-Id when profileId is provided. */
 function profileHeaders(profileId?: string | null): Record<string, string> {
   if (!profileId) return {};
-  return { 'X-Profile-Id': profileId };
+  return { "X-Profile-Id": profileId };
 }
 
 export interface ProfileEntry {
@@ -79,10 +83,13 @@ export async function fetchProfiles(): Promise<ProfilesResponse> {
   return res.json();
 }
 
-export async function createProfile(params: { id?: string; name: string }): Promise<ProfileEntry> {
+export async function createProfile(params: {
+  id?: string;
+  name: string;
+}): Promise<ProfileEntry> {
   const res = await fetch(`${API_BASE}/api/profiles`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
   });
   await checkOk(res);
@@ -90,9 +97,12 @@ export async function createProfile(params: { id?: string; name: string }): Prom
 }
 
 export async function deleteProfile(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/profiles/${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-  });
+  const res = await fetch(
+    `${API_BASE}/api/profiles/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    },
+  );
   await checkOk(res);
 }
 
@@ -117,8 +127,12 @@ export interface ShipTiersLevels {
   levels: number[];
 }
 
-export async function getShipTiersLevels(shipId: string): Promise<ShipTiersLevels> {
-  const res = await fetch(`${API_BASE}/api/ships/${encodeURIComponent(shipId)}/tiers-levels`);
+export async function getShipTiersLevels(
+  shipId: string,
+): Promise<ShipTiersLevels> {
+  const res = await fetch(
+    `${API_BASE}/api/ships/${encodeURIComponent(shipId)}/tiers-levels`,
+  );
   await checkOk(res);
   return res.json();
 }
@@ -138,7 +152,11 @@ export function hostileSortLabel(h: HostileListItem): string {
 }
 
 function compareHostiles(a: HostileListItem, b: HostileListItem): number {
-  const byName = hostileSortLabel(a).localeCompare(hostileSortLabel(b), undefined, { sensitivity: 'base' });
+  const byName = hostileSortLabel(a).localeCompare(
+    hostileSortLabel(b),
+    undefined,
+    { sensitivity: "base" },
+  );
   if (byName !== 0) return byName;
   if (a.level !== b.level) return a.level - b.level;
   return a.id.localeCompare(b.id);
@@ -160,7 +178,9 @@ export async function fetchOfficers(
   ownedOnly = false,
   profileId?: string | null,
 ): Promise<OfficerListItem[]> {
-  const url = ownedOnly ? `${API_BASE}/api/officers?owned_only=1` : `${API_BASE}/api/officers`;
+  const url = ownedOnly
+    ? `${API_BASE}/api/officers?owned_only=1`
+    : `${API_BASE}/api/officers`;
   const res = await fetch(url, { headers: profileHeaders(profileId) });
   await checkOk(res);
   const data = await res.json();
@@ -168,7 +188,9 @@ export async function fetchOfficers(
 }
 
 function compareShips(a: ShipListItem, b: ShipListItem): number {
-  const byName = a.ship_name.localeCompare(b.ship_name, undefined, { sensitivity: 'base' });
+  const byName = a.ship_name.localeCompare(b.ship_name, undefined, {
+    sensitivity: "base",
+  });
   if (byName !== 0) return byName;
   return a.id.localeCompare(b.id);
 }
@@ -246,8 +268,11 @@ export async function simulate(
     body.ship_level = params.ship_level;
   }
   const res = await fetch(`${API_BASE}/api/simulate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
     body: JSON.stringify(body),
   });
   await checkOk(res);
@@ -258,13 +283,17 @@ export async function simulate(
 export function crewRecommendationToSimulateCrew(
   r: CrewRecommendation,
   belowDecksSlots: number,
-): { captain: string; bridge: (string | null)[]; below_deck: (string | null)[] } {
+): {
+  captain: string;
+  bridge: (string | null)[];
+  below_deck: (string | null)[];
+} {
   const br = Array.isArray(r.bridge) ? r.bridge : [r.bridge];
   const bdRaw = Array.isArray(r.below_decks) ? r.below_decks : [r.below_decks];
   const bridge: (string | null)[] = [br[0] ?? null, br[1] ?? null];
   const below_deck = Array.from({ length: belowDecksSlots }, (_, i) => {
     const v = bdRaw[i];
-    return v != null && String(v).trim() !== '' ? String(v) : null;
+    return v != null && String(v).trim() !== "" ? String(v) : null;
   });
   return { captain: r.captain, bridge, below_deck };
 }
@@ -292,7 +321,11 @@ export async function compareCrewsDistributions(
   params: {
     ship: string;
     hostile: string;
-    crews: { captain: string; bridge: (string | null)[]; below_deck: (string | null)[] }[];
+    crews: {
+      captain: string;
+      bridge: (string | null)[];
+      below_deck: (string | null)[];
+    }[];
     num_sims?: number;
     seed?: number;
     ship_tier?: number | null;
@@ -309,8 +342,10 @@ export async function compareCrewsDistributions(
     num_sims: params.num_sims ?? 3000,
     seed: params.seed ?? 0,
   };
-  if (params.ship_tier != null && params.ship_tier > 0) body.ship_tier = params.ship_tier;
-  if (params.ship_level != null && params.ship_level > 0) body.ship_level = params.ship_level;
+  if (params.ship_tier != null && params.ship_tier > 0)
+    body.ship_tier = params.ship_tier;
+  if (params.ship_level != null && params.ship_level > 0)
+    body.ship_level = params.ship_level;
   if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
     body.below_decks_slots = params.below_decks_slots;
   }
@@ -318,8 +353,11 @@ export async function compareCrewsDistributions(
     body.proc_sample_trials = params.proc_sample_trials;
   }
   const res = await fetch(`${API_BASE}/api/compare/crews`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
     body: JSON.stringify(body),
   });
   await checkOk(res);
@@ -405,18 +443,18 @@ export async function getOptimizeEstimate(
     sims: String(sims),
   });
   if (params.max_candidates != null && params.max_candidates > 0) {
-    search.set('max_candidates', String(params.max_candidates));
+    search.set("max_candidates", String(params.max_candidates));
   }
   if (params.prioritize_below_decks_ability === true) {
-    search.set('prioritize_below_decks_ability', 'true');
+    search.set("prioritize_below_decks_ability", "true");
   }
   if (params.ship_tier != null && params.ship_tier > 0) {
-    search.set('ship_tier', String(params.ship_tier));
+    search.set("ship_tier", String(params.ship_tier));
   }
   if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
-    search.set('below_decks_slots', String(params.below_decks_slots));
+    search.set("below_decks_slots", String(params.below_decks_slots));
   }
-  if (profileId) search.set('profile', profileId);
+  if (profileId) search.set("profile", profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
   const res = await fetch(url);
   await checkOk(res);
@@ -455,8 +493,11 @@ export async function optimize(
     body.below_decks_slots = params.below_decks_slots;
   }
   const res = await fetch(`${API_BASE}/api/optimize`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
     body: JSON.stringify(body),
   });
   await checkOk(res);
@@ -482,16 +523,18 @@ export interface OptimizeStatusResponse {
 }
 
 /** Human-readable label for optimize job `phase` (status / SSE). */
-export function formatOptimizePhaseLabel(phase: string | null | undefined): string {
-  if (!phase) return '';
+export function formatOptimizePhaseLabel(
+  phase: string | null | undefined,
+): string {
+  if (!phase) return "";
   const map: Record<string, string> = {
-    heuristics: 'Heuristics',
-    monte_carlo: 'Monte Carlo',
-    genetic: 'Genetic search',
-    tiered_scout: 'Tiered (scout)',
-    tiered_confirm: 'Tiered (confirm)',
+    heuristics: "Heuristics",
+    monte_carlo: "Monte Carlo",
+    genetic: "Genetic search",
+    tiered_scout: "Tiered (scout)",
+    tiered_confirm: "Tiered (confirm)",
   };
-  return map[phase] ?? phase.replace(/_/g, ' ');
+  return map[phase] ?? phase.replace(/_/g, " ");
 }
 
 export async function fetchHeuristics(): Promise<string[]> {
@@ -501,7 +544,7 @@ export async function fetchHeuristics(): Promise<string[]> {
   return data.seeds ?? [];
 }
 
-export type OptimizerStrategyType = 'exhaustive' | 'genetic' | 'tiered';
+export type OptimizerStrategyType = "exhaustive" | "genetic" | "tiered";
 
 /** Sub-object for POST /api/optimize/start `constraints` (matches server OptimizeConstraintsDto). */
 export interface OptimizeCrewConstraintsBody {
@@ -524,7 +567,7 @@ export async function optimizeStart(
     prioritize_below_decks_ability?: boolean;
     heuristics_seeds?: string[];
     heuristics_only?: boolean;
-    below_decks_strategy?: 'ordered' | 'exploration';
+    below_decks_strategy?: "ordered" | "exploration";
     ship_tier?: number | null;
     ship_level?: number | null;
     below_decks_slots?: number | null;
@@ -541,7 +584,7 @@ export async function optimizeStart(
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;
   }
-  if (params.strategy && params.strategy !== 'exhaustive') {
+  if (params.strategy && params.strategy !== "exhaustive") {
     body.strategy = params.strategy;
   }
   if (params.prioritize_below_decks_ability === true) {
@@ -553,7 +596,10 @@ export async function optimizeStart(
   if (params.heuristics_only === true) {
     body.heuristics_only = true;
   }
-  if (params.below_decks_strategy && params.below_decks_strategy !== 'ordered') {
+  if (
+    params.below_decks_strategy &&
+    params.below_decks_strategy !== "ordered"
+  ) {
     body.below_decks_strategy = params.below_decks_strategy;
   }
   if (params.ship_tier != null && params.ship_tier > 0) {
@@ -569,8 +615,11 @@ export async function optimizeStart(
     body.constraints = params.constraints;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
     body: JSON.stringify(body),
   });
   await checkOk(res);
@@ -578,7 +627,9 @@ export async function optimizeStart(
 }
 
 /** Poll async optimize job status. Jobs are keyed only by `job_id` (profile affects the start request body/headers, not this URL). */
-export async function getOptimizeStatus(jobId: string): Promise<OptimizeStatusResponse> {
+export async function getOptimizeStatus(
+  jobId: string,
+): Promise<OptimizeStatusResponse> {
   const url = `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`;
   const res = await fetch(url);
   await checkOk(res);
@@ -592,9 +643,12 @@ export function getOptimizeStreamUrl(jobId: string): string {
 
 /** Request cancellation of a running optimize job. */
 export async function cancelOptimizeJob(jobId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/optimize/jobs/${encodeURIComponent(jobId)}/cancel`, {
-    method: 'POST',
-  });
+  const res = await fetch(
+    `${API_BASE}/api/optimize/jobs/${encodeURIComponent(jobId)}/cancel`,
+    {
+      method: "POST",
+    },
+  );
   await checkOk(res);
 }
 
@@ -638,8 +692,8 @@ export async function importRoster(
   profileId?: string | null,
 ): Promise<ImportReport> {
   const res = await fetch(`${API_BASE}/api/officers/import`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain', ...profileHeaders(profileId) },
+    method: "POST",
+    headers: { "Content-Type": "text/plain", ...profileHeaders(profileId) },
     body: body.trim(),
   });
   await checkOk(res);
@@ -664,7 +718,9 @@ export interface ForbiddenTechCatalogResponse {
   items: ForbiddenTechCatalogItem[];
 }
 
-export async function fetchForbiddenTech(): Promise<ForbiddenTechCatalogItem[]> {
+export async function fetchForbiddenTech(): Promise<
+  ForbiddenTechCatalogItem[]
+> {
   const res = await fetch(`${API_BASE}/api/forbidden-tech`);
   await checkOk(res);
   const data: ForbiddenTechCatalogResponse = await res.json();
@@ -679,7 +735,9 @@ export interface PlayerProfile {
   chaos_tech_override?: number[] | null;
 }
 
-export async function fetchProfile(profileId?: string | null): Promise<PlayerProfile> {
+export async function fetchProfile(
+  profileId?: string | null,
+): Promise<PlayerProfile> {
   const url = profileId
     ? `${API_BASE}/api/profile?profile=${encodeURIComponent(profileId)}`
     : `${API_BASE}/api/profile`;
@@ -693,8 +751,11 @@ export async function updateProfile(
   profileId?: string | null,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/api/profile`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
     body: JSON.stringify(profile),
   });
   await checkOk(res);
@@ -724,7 +785,7 @@ export interface BuildingCombatSummary {
 export async function fetchBuildingCombatSummary(
   profileId?: string | null,
 ): Promise<BuildingCombatSummary> {
-  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : '';
+  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : "";
   const res = await fetch(`${API_BASE}/api/profile/buildings-summary${q}`, {
     headers: { ...profileHeaders(profileId) },
   });
@@ -753,7 +814,7 @@ export interface ResearchCombatSummary {
 export async function fetchResearchCombatSummary(
   profileId?: string | null,
 ): Promise<ResearchCombatSummary> {
-  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : '';
+  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : "";
   const res = await fetch(`${API_BASE}/api/profile/research-summary${q}`, {
     headers: { ...profileHeaders(profileId) },
   });
@@ -795,7 +856,9 @@ export interface PresetSummary {
   schema_version?: number | null;
 }
 
-export async function fetchPresets(profileId?: string | null): Promise<PresetSummary[]> {
+export async function fetchPresets(
+  profileId?: string | null,
+): Promise<PresetSummary[]> {
   const url = profileId
     ? `${API_BASE}/api/presets?profile=${encodeURIComponent(profileId)}`
     : `${API_BASE}/api/presets`;
@@ -827,10 +890,13 @@ export async function savePreset(
   profileId?: string | null,
 ): Promise<Preset> {
   const res = await fetch(`${API_BASE}/api/presets`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...profileHeaders(profileId) },
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
     body: JSON.stringify({
-      name: preset.name ?? 'Unnamed',
+      name: preset.name ?? "Unnamed",
       ship: preset.ship,
       scenario: preset.scenario,
       crew: preset.crew,

@@ -1,15 +1,15 @@
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useMemo,
   useState,
-  type ReactNode,
-} from 'react';
+} from "react";
 
-const STORAGE_KEY = 'kobayashi_workspace_mode';
+const STORAGE_KEY = "kobayashi_workspace_mode";
 
-export type WorkspaceMode = 'roster' | 'sandbox';
+export type WorkspaceMode = "roster" | "sandbox";
 
 interface WorkspaceModeContextValue {
   mode: WorkspaceMode;
@@ -17,14 +17,16 @@ interface WorkspaceModeContextValue {
   ownedOnly: boolean;
 }
 
-const WorkspaceModeContext = createContext<WorkspaceModeContextValue | null>(null);
+const WorkspaceModeContext = createContext<WorkspaceModeContextValue | null>(
+  null,
+);
 
 function loadStoredMode(): WorkspaceMode {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'roster' || stored === 'sandbox') return stored;
+    if (stored === "roster" || stored === "sandbox") return stored;
   } catch {}
-  return 'roster';
+  return "roster";
 }
 
 export function WorkspaceModeProvider({ children }: { children: ReactNode }) {
@@ -41,7 +43,7 @@ export function WorkspaceModeProvider({ children }: { children: ReactNode }) {
     () => ({
       mode,
       setMode,
-      ownedOnly: mode === 'roster',
+      ownedOnly: mode === "roster",
     }),
     [mode, setMode],
   );
@@ -56,7 +58,9 @@ export function WorkspaceModeProvider({ children }: { children: ReactNode }) {
 export function useWorkspaceMode() {
   const ctx = useContext(WorkspaceModeContext);
   if (!ctx) {
-    throw new Error('useWorkspaceMode must be used within WorkspaceModeProvider');
+    throw new Error(
+      "useWorkspaceMode must be used within WorkspaceModeProvider",
+    );
   }
   return ctx;
 }

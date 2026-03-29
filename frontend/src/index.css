@@ -9,7 +9,12 @@
   --success: #4e9d6b;
   --warning: #c9a227;
   --error: #c9544a;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -33,7 +38,9 @@ button {
   cursor: pointer;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font: inherit;
 }
 

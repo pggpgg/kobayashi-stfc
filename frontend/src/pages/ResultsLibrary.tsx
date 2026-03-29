@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchPresets, fetchPreset, formatApiError } from '../lib/api';
-import type { PresetSummary } from '../lib/api';
-import { useProfile } from '../contexts/ProfileContext';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useProfile } from "../contexts/ProfileContext";
+import type { PresetSummary } from "../lib/api";
+import { fetchPreset, fetchPresets, formatApiError } from "../lib/api";
 
 export default function ResultsLibrary() {
   const { activeProfileId } = useProfile();
@@ -23,14 +23,16 @@ export default function ResultsLibrary() {
       .finally(() => {
         if (!c) setLoading(false);
       });
-    return () => { c = true; };
+    return () => {
+      c = true;
+    };
   }, [activeProfileId]);
 
   const handleLoad = async (id: string) => {
     setError(null);
     try {
       const preset = await fetchPreset(id, activeProfileId);
-      navigate('/', { state: { preset } });
+      navigate("/", { state: { preset } });
     } catch (e) {
       setError(formatApiError(e));
     }
@@ -38,13 +40,27 @@ export default function ResultsLibrary() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: '1rem' }}>Results Library</h1>
-      <p style={{ marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+      <h1 style={{ marginBottom: "1rem" }}>Results Library</h1>
+      <p
+        style={{
+          marginBottom: "1rem",
+          color: "var(--text-muted)",
+          fontSize: "0.9rem",
+        }}
+      >
         Saved presets. Load one to apply it in the Workspace.
       </p>
 
       {error && (
-        <div style={{ marginBottom: 8, padding: 8, background: 'var(--error)', color: 'white', borderRadius: 6 }}>
+        <div
+          style={{
+            marginBottom: 8,
+            padding: 8,
+            background: "var(--error)",
+            color: "white",
+            borderRadius: 6,
+          }}
+        >
           {error}
         </div>
       )}
@@ -52,28 +68,36 @@ export default function ResultsLibrary() {
       {loading && <p>Loading…</p>}
 
       {!loading && presets.length === 0 && (
-        <p style={{ color: 'var(--text-muted)' }}>No saved presets. Save a crew from the Workspace.</p>
+        <p style={{ color: "var(--text-muted)" }}>
+          No saved presets. Save a crew from the Workspace.
+        </p>
       )}
 
       {!loading && presets.length > 0 && (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {presets.map((p) => (
             <li
               key={p.id}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.75rem',
-                border: '1px solid var(--border)',
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0.75rem",
+                border: "1px solid var(--border)",
                 borderRadius: 6,
                 marginBottom: 8,
-                background: 'var(--surface)',
+                background: "var(--surface)",
               }}
             >
               <div>
                 <strong>{p.name}</strong>
-                <span style={{ marginLeft: 8, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                <span
+                  style={{
+                    marginLeft: 8,
+                    color: "var(--text-muted)",
+                    fontSize: "0.9rem",
+                  }}
+                >
                   {p.ship} / {p.scenario}
                 </span>
               </div>
@@ -81,11 +105,11 @@ export default function ResultsLibrary() {
                 type="button"
                 onClick={() => handleLoad(p.id)}
                 style={{
-                  padding: '0.4rem 0.75rem',
-                  background: 'var(--accent)',
-                  border: 'none',
+                  padding: "0.4rem 0.75rem",
+                  background: "var(--accent)",
+                  border: "none",
                   borderRadius: 6,
-                  color: 'var(--bg)',
+                  color: "var(--bg)",
                 }}
               >
                 Load

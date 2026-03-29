@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useId } from 'react';
-import type { OfficerListItem } from '../lib/api';
-import type { CrewState, PinsState } from '../lib/types';
-import { belowDeckSlotCount } from '../lib/types';
-import { fetchOfficers } from '../lib/api';
-import { useProfile } from '../contexts/ProfileContext';
-import { useWorkspaceMode } from '../contexts/WorkspaceModeContext';
+import { useEffect, useId, useRef, useState } from "react";
+import { useProfile } from "../contexts/ProfileContext";
+import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
+import type { OfficerListItem } from "../lib/api";
+import { fetchOfficers } from "../lib/api";
+import type { CrewState, PinsState } from "../lib/types";
+import { belowDeckSlotCount } from "../lib/types";
 
 interface CrewBuilderProps {
   shipLevel: number;
@@ -56,7 +56,10 @@ export default function CrewBuilder({
   };
   const setBridge = (index: number, id: string | null) => {
     const cleared = clearIdFromOtherSlots(id);
-    const bridge = [...(cleared.bridge ?? crew.bridge)] as [string | null, string | null];
+    const bridge = [...(cleared.bridge ?? crew.bridge)] as [
+      string | null,
+      string | null,
+    ];
     bridge[index] = id;
     onCrewChange({ ...crew, ...cleared, bridge });
   };
@@ -68,73 +71,82 @@ export default function CrewBuilder({
   };
 
   const togglePin = (
-    kind: 'captain' | 'bridge' | 'belowDeck',
-    index?: number
+    kind: "captain" | "bridge" | "belowDeck",
+    index?: number,
   ) => {
-    if (kind === 'captain') {
+    if (kind === "captain") {
       onPinsChange({ ...pins, captain: !pins.captain });
-    } else if (kind === 'bridge' && index !== undefined) {
+    } else if (kind === "bridge" && index !== undefined) {
       const next = [...pins.bridge] as [boolean, boolean];
       next[index] = !next[index];
       onPinsChange({ ...pins, bridge: next });
-    } else if (kind === 'belowDeck' && index !== undefined) {
+    } else if (kind === "belowDeck" && index !== undefined) {
       const next = [...pins.belowDeck];
       next[index] = !next[index];
       onPinsChange({ ...pins, belowDeck: next });
     }
   };
 
-  const selectedIds = new Set([
-    crew.captain,
-    ...crew.bridge,
-    ...crew.belowDeck,
-  ].filter(Boolean) as string[]);
+  const selectedIds = new Set(
+    [crew.captain, ...crew.bridge, ...crew.belowDeck].filter(
+      Boolean,
+    ) as string[],
+  );
 
   const slotStyle = (isCaptain?: boolean) => ({
     flex: 1,
     minWidth: 100,
     maxWidth: isCaptain ? 160 : 140,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
     gap: 4,
   });
 
   const boxStyle = (isCaptain?: boolean) => ({
-    width: '100%',
-    padding: '0.5rem',
-    background: 'var(--bg)',
-    border: `1px solid ${isCaptain ? 'var(--accent)' : 'var(--border)'}`,
+    width: "100%",
+    padding: "0.5rem",
+    background: "var(--bg)",
+    border: `1px solid ${isCaptain ? "var(--accent)" : "var(--border)"}`,
     borderRadius: 8,
-    boxShadow: isCaptain ? '0 0 0 1px var(--accent)' : undefined,
+    boxShadow: isCaptain ? "0 0 0 1px var(--accent)" : undefined,
   });
 
   return (
     <section
       style={{
-        padding: '1rem',
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
+        padding: "1rem",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: 8,
-        marginBottom: '1rem',
+        marginBottom: "1rem",
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1rem' }}>BRIDGE</h2>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "0.75rem",
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: "1rem" }}>BRIDGE</h2>
       </div>
 
       {/* Top row: Bridge 1 | Captain (center) | Bridge 2 */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
           gap: 8,
-          marginBottom: '1rem',
+          marginBottom: "1rem",
         }}
       >
         <div style={slotStyle(false)}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Bridge 1</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+            Bridge 1
+          </span>
           <div style={boxStyle(false)}>
             <TypeAheadSlot
               officers={officers}
@@ -146,15 +158,21 @@ export default function CrewBuilder({
           </div>
           <button
             type="button"
-            onClick={() => togglePin('bridge', 0)}
-            style={{ fontSize: '0.7rem', padding: '2px 6px', opacity: pins.bridge[0] ? 1 : 0.6 }}
+            onClick={() => togglePin("bridge", 0)}
+            style={{
+              fontSize: "0.7rem",
+              padding: "2px 6px",
+              opacity: pins.bridge[0] ? 1 : 0.6,
+            }}
           >
-            {pins.bridge[0] ? 'Pinned' : 'Pin'}
+            {pins.bridge[0] ? "Pinned" : "Pin"}
           </button>
         </div>
 
         <div style={slotStyle(true)}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--accent)' }}>Captain</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--accent)" }}>
+            Captain
+          </span>
           <div style={boxStyle(true)}>
             <TypeAheadSlot
               officers={officers}
@@ -166,15 +184,21 @@ export default function CrewBuilder({
           </div>
           <button
             type="button"
-            onClick={() => togglePin('captain')}
-            style={{ fontSize: '0.7rem', padding: '2px 6px', opacity: pins.captain ? 1 : 0.6 }}
+            onClick={() => togglePin("captain")}
+            style={{
+              fontSize: "0.7rem",
+              padding: "2px 6px",
+              opacity: pins.captain ? 1 : 0.6,
+            }}
           >
-            {pins.captain ? 'Pinned' : 'Pin'}
+            {pins.captain ? "Pinned" : "Pin"}
           </button>
         </div>
 
         <div style={slotStyle(false)}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Bridge 2</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+            Bridge 2
+          </span>
           <div style={boxStyle(false)}>
             <TypeAheadSlot
               officers={officers}
@@ -186,28 +210,43 @@ export default function CrewBuilder({
           </div>
           <button
             type="button"
-            onClick={() => togglePin('bridge', 1)}
-            style={{ fontSize: '0.7rem', padding: '2px 6px', opacity: pins.bridge[1] ? 1 : 0.6 }}
+            onClick={() => togglePin("bridge", 1)}
+            style={{
+              fontSize: "0.7rem",
+              padding: "2px 6px",
+              opacity: pins.bridge[1] ? 1 : 0.6,
+            }}
           >
-            {pins.bridge[1] ? 'Pinned' : 'Pin'}
+            {pins.bridge[1] ? "Pinned" : "Pin"}
           </button>
         </div>
       </div>
 
       {/* Bottom row: Below Deck slots */}
-      <div style={{ marginBottom: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+      <div
+        style={{
+          marginBottom: "0.5rem",
+          fontSize: "0.75rem",
+          color: "var(--text-muted)",
+        }}
+      >
         Below deck
       </div>
       <div
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
+          display: "flex",
+          flexWrap: "wrap",
           gap: 8,
         }}
       >
         {crew.belowDeck.slice(0, belowN).map((id, i) => (
-          <div key={i} style={{ ...slotStyle(false), minWidth: 120, maxWidth: 140 }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Below {i + 1}</span>
+          <div
+            key={i}
+            style={{ ...slotStyle(false), minWidth: 120, maxWidth: 140 }}
+          >
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+              Below {i + 1}
+            </span>
             <div style={boxStyle(false)}>
               <TypeAheadSlot
                 officers={officers}
@@ -219,16 +258,26 @@ export default function CrewBuilder({
             </div>
             <button
               type="button"
-              onClick={() => togglePin('belowDeck', i)}
-              style={{ fontSize: '0.7rem', padding: '2px 6px', opacity: pins.belowDeck[i] ? 1 : 0.6 }}
+              onClick={() => togglePin("belowDeck", i)}
+              style={{
+                fontSize: "0.7rem",
+                padding: "2px 6px",
+                opacity: pins.belowDeck[i] ? 1 : 0.6,
+              }}
             >
-              {pins.belowDeck[i] ? 'Pinned' : 'Pin'}
+              {pins.belowDeck[i] ? "Pinned" : "Pin"}
             </button>
           </div>
         ))}
       </div>
 
-      <p style={{ margin: '0.75rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+      <p
+        style={{
+          margin: "0.75rem 0 0",
+          fontSize: "0.8rem",
+          color: "var(--text-muted)",
+        }}
+      >
         Synergy: — (hint strip when data available)
       </p>
     </section>
@@ -250,12 +299,14 @@ function TypeAheadSlot({
 }) {
   const listId = useId();
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const selectedName = value ? (officers.find((o) => o.id === value)?.name ?? value) : null;
-  const displayValue = open ? query : (selectedName ?? '');
+  const selectedName = value
+    ? (officers.find((o) => o.id === value)?.name ?? value)
+    : null;
+  const displayValue = open ? query : (selectedName ?? "");
 
   const filtered = query.trim()
     ? officers.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
@@ -263,7 +314,7 @@ function TypeAheadSlot({
   const limited = filtered.slice(0, 200);
 
   useEffect(() => {
-    if (!open) setQuery('');
+    if (!open) setQuery("");
   }, [open]);
 
   useEffect(() => {
@@ -277,14 +328,15 @@ function TypeAheadSlot({
   const handleSelect = (id: string | null) => {
     onChange(id);
     setOpen(false);
-    setQuery('');
+    setQuery("");
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div style={{ position: "relative", width: "100%" }}>
       <input
         ref={inputRef}
         type="text"
+        role="combobox"
         value={displayValue}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -297,13 +349,12 @@ function TypeAheadSlot({
         aria-expanded={open}
         aria-controls={listId}
         style={{
-          width: '100%',
-          padding: '0.35rem 0.5rem',
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--text)',
-          fontSize: '0.9rem',
-          outline: 'none',
+          width: "100%",
+          padding: "0.35rem 0.5rem",
+          background: "transparent",
+          border: "none",
+          color: "var(--text)",
+          fontSize: "0.9rem",
         }}
       />
       {open && (
@@ -312,39 +363,48 @@ function TypeAheadSlot({
           id={listId}
           role="listbox"
           style={{
-            position: 'absolute',
+            position: "absolute",
             left: 0,
             right: 0,
-            top: '100%',
+            top: "100%",
             marginTop: 2,
             maxHeight: 220,
-            overflowY: 'auto',
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
+            overflowY: "auto",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
             borderRadius: 6,
             zIndex: 100,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
           }}
         >
           <button
             type="button"
             role="option"
             style={{
-              display: 'block',
-              width: '100%',
-              padding: '0.4rem 0.6rem',
-              textAlign: 'left',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              fontSize: '0.85rem',
+              display: "block",
+              width: "100%",
+              padding: "0.4rem 0.6rem",
+              textAlign: "left",
+              background: "transparent",
+              border: "none",
+              color: "var(--text-muted)",
+              fontSize: "0.85rem",
             }}
-            onMouseDown={(e) => { e.preventDefault(); handleSelect(null); }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleSelect(null);
+            }}
           >
             — Clear —
           </button>
           {limited.length === 0 && (
-            <div style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <div
+              style={{
+                padding: "0.4rem 0.6rem",
+                fontSize: "0.85rem",
+                color: "var(--text-muted)",
+              }}
+            >
               No match
             </div>
           )}
@@ -354,19 +414,24 @@ function TypeAheadSlot({
               type="button"
               role="option"
               style={{
-                display: 'block',
-                width: '100%',
-                padding: '0.4rem 0.6rem',
-                textAlign: 'left',
-                background: selectedIds.has(o.id) ? 'var(--border)' : 'transparent',
-                border: 'none',
-                color: 'var(--text)',
-                fontSize: '0.85rem',
+                display: "block",
+                width: "100%",
+                padding: "0.4rem 0.6rem",
+                textAlign: "left",
+                background: selectedIds.has(o.id)
+                  ? "var(--border)"
+                  : "transparent",
+                border: "none",
+                color: "var(--text)",
+                fontSize: "0.85rem",
               }}
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(o.id); }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(o.id);
+              }}
             >
               {o.name}
-              {selectedIds.has(o.id) ? ' ✓' : ''}
+              {selectedIds.has(o.id) ? " ✓" : ""}
             </button>
           ))}
         </div>

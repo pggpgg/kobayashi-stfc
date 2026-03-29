@@ -1,7 +1,8 @@
 // Vitest setup for jsdom environment.
 // This file runs before each test file.
-import { afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
+
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 // Automatically unmount React trees after each test.
 afterEach(() => {

@@ -1,39 +1,39 @@
-import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useProfile } from "../contexts/ProfileContext";
 import {
-  createEmptyCrew,
-  createEmptyPins,
-  belowDeckSlotCount,
-  type CrewState,
-  type PinsState,
-} from './types';
-import {
-  simulate,
-  optimizeStart,
-  getOptimizeStatus,
-  getOptimizeStreamUrl,
+  type CrewRecommendation,
   cancelOptimizeJob,
-  savePreset,
-  getOptimizeEstimate,
   fetchHeuristics,
   formatApiError,
-  type SimulateStats,
+  getOptimizeEstimate,
+  getOptimizeStatus,
+  getOptimizeStreamUrl,
   type OptimizeEstimate,
-  type CrewRecommendation,
   type OptimizeStatusResponse,
+  optimizeStart,
   type Preset,
-} from './api';
+  type SimulateStats,
+  savePreset,
+  simulate,
+} from "./api";
+import {
+  clearPersistedOptimizeJob,
+  persistOptimizeJob,
+  profileMatchesPersisted,
+  readPersistedOptimizeJob,
+} from "./optimizeJobStorage";
+import {
+  belowDeckSlotCount,
+  type CrewState,
+  createEmptyCrew,
+  createEmptyPins,
+  type PinsState,
+} from "./types";
 import {
   buildWorkspaceOptimizeStartBody,
   buildWorkspaceSimulateParams,
-} from './workspaceRequests';
-import { useProfile } from '../contexts/ProfileContext';
-import {
-  persistOptimizeJob,
-  clearPersistedOptimizeJob,
-  readPersistedOptimizeJob,
-  profileMatchesPersisted,
-} from './optimizeJobStorage';
+} from "./workspaceRequests";
 
 const POLL_INTERVAL_MS = 350;
 /** Max automatic SSE reconnect attempts before falling back to HTTP polling only. */
@@ -41,7 +41,7 @@ const MAX_SSE_RECONNECT_ATTEMPTS = 8;
 const SSE_BACKOFF_BASE_MS = 500;
 const SSE_BACKOFF_CAP_MS = 30_000;
 
-export type OptimizeStreamMode = 'sse' | 'reconnecting' | 'polling';
+export type OptimizeStreamMode = "sse" | "reconnecting" | "polling";
 
 export function useWorkspace() {
   const location = useLocation();
@@ -51,8 +51,8 @@ export function useWorkspace() {
   // Scenario state
   const [shipTier, setShipTier] = useState(1);
   const [shipLevel, setShipLevel] = useState(50);
-  const [shipId, setShipId] = useState('');
-  const [scenarioId, setScenarioId] = useState('');
+  const [shipId, setShipId] = useState("");
+  const [scenarioId, setScenarioId] = useState("");
 
   // Crew state
   const [crew, setCrew] = useState<CrewState>(() => createEmptyCrew(50));
@@ -63,45 +63,61 @@ export function useWorkspace() {
   const [loadingSim, setLoadingSim] = useState(false);
 
   // Optimization state
-  const [recommendations, setRecommendations] = useState<CrewRecommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<CrewRecommendation[]>(
+    [],
+  );
   const [loadingOptimize, setLoadingOptimize] = useState(false);
   const [optimizeProgress, setOptimizeProgress] = useState<number | null>(null);
-  const [optimizeCrewsDone, setOptimizeCrewsDone] = useState<number | null>(null);
-  const [optimizeTotalCrews, setOptimizeTotalCrews] = useState<number | null>(null);
+  const [optimizeCrewsDone, setOptimizeCrewsDone] = useState<number | null>(
+    null,
+  );
+  const [optimizeTotalCrews, setOptimizeTotalCrews] = useState<number | null>(
+    null,
+  );
   const [optimizePhase, setOptimizePhase] = useState<string | null>(null);
-  const [optimizeEtaSeconds, setOptimizeEtaSeconds] = useState<number | null>(null);
-  const [optimizeThroughput, setOptimizeThroughput] = useState<number | null>(null);
-  const [optimizePreview, setOptimizePreview] = useState<CrewRecommendation[] | null>(null);
+  const [optimizeEtaSeconds, setOptimizeEtaSeconds] = useState<number | null>(
+    null,
+  );
+  const [optimizeThroughput, setOptimizeThroughput] = useState<number | null>(
+    null,
+  );
+  const [optimizePreview, setOptimizePreview] = useState<
+    CrewRecommendation[] | null
+  >(null);
   const [estimate, setEstimate] = useState<OptimizeEstimate | null>(null);
-  const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<number | null>(null);
+  const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<
+    number | null
+  >(null);
 
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
-  const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] = useState(false);
+  const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] =
+    useState(false);
 
   // Optimizer strategy
-  const [optimizerStrategy, setOptimizerStrategy] = useState<
-    import('./api').OptimizerStrategyType
-  >('exhaustive');
+  const [optimizerStrategy, setOptimizerStrategy] =
+    useState<import("./api").OptimizerStrategyType>("exhaustive");
 
   // Heuristics state
   const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
   const [selectedSeeds, setSelectedSeeds] = useState<string[]>([]);
   const [heuristicsOnly, setHeuristicsOnly] = useState(false);
-  const [belowDecksStrategy, setBelowDecksStrategy] = useState<'ordered' | 'exploration'>('ordered');
+  const [belowDecksStrategy, setBelowDecksStrategy] = useState<
+    "ordered" | "exploration"
+  >("ordered");
 
   // Optimize constraints (comma-separated lists; groups JSON optional)
-  const [optimizeMustInclude, setOptimizeMustInclude] = useState('');
-  const [optimizeExclude, setOptimizeExclude] = useState('');
-  const [optimizeCaptainMust, setOptimizeCaptainMust] = useState('');
-  const [optimizeBridgeMust, setOptimizeBridgeMust] = useState('');
-  const [optimizeBelowMust, setOptimizeBelowMust] = useState('');
-  const [optimizeGroupsJson, setOptimizeGroupsJson] = useState('');
+  const [optimizeMustInclude, setOptimizeMustInclude] = useState("");
+  const [optimizeExclude, setOptimizeExclude] = useState("");
+  const [optimizeCaptainMust, setOptimizeCaptainMust] = useState("");
+  const [optimizeBridgeMust, setOptimizeBridgeMust] = useState("");
+  const [optimizeBelowMust, setOptimizeBelowMust] = useState("");
+  const [optimizeGroupsJson, setOptimizeGroupsJson] = useState("");
 
   // Preset saving state
   const [showSavePreset, setShowSavePreset] = useState(false);
-  const [savePresetName, setSavePresetName] = useState('');
+  const [savePresetName, setSavePresetName] = useState("");
   const [savingPreset, setSavingPreset] = useState(false);
 
   // UI state
@@ -110,13 +126,16 @@ export function useWorkspace() {
   /** Non-error feedback (e.g. after cancel). */
   const [workspaceInfo, setWorkspaceInfo] = useState<string | null>(null);
   /** How progress updates are delivered while optimizing. */
-  const [optimizeStreamMode, setOptimizeStreamMode] = useState<OptimizeStreamMode | null>(null);
+  const [optimizeStreamMode, setOptimizeStreamMode] =
+    useState<OptimizeStreamMode | null>(null);
 
   // Polling ref, SSE ref, and current job id (for cancel + cleanup on unmount)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const currentOptimizeJobIdRef = useRef<string | null>(null);
-  const sseReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sseReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const sseAttemptRef = useRef(0);
   const usePollingOnlyRef = useRef(false);
 
@@ -133,7 +152,7 @@ export function useWorkspace() {
         bridge: [bridge[0] ?? null, bridge[1] ?? null],
         belowDeck: c?.below_deck ?? [],
       });
-      navigate('.', { replace: true, state: {} });
+      navigate(".", { replace: true, state: {} });
     }
   }, [location.state, navigate]);
 
@@ -157,8 +176,8 @@ export function useWorkspace() {
 
   // Fetch optimize estimate when parameters change
   useEffect(() => {
-    const ship = shipId || 'Saladin';
-    const hostile = scenarioId || '2918121098';
+    const ship = shipId || "Saladin";
+    const hostile = scenarioId || "2918121098";
     if (!ship || !hostile) {
       setEstimate(null);
       return;
@@ -170,7 +189,8 @@ export function useWorkspace() {
         hostile,
         sims: simsPerCrew,
         max_candidates: maxCandidates ?? undefined,
-        prioritize_below_decks_ability: prioritizeBelowDecksAbility || undefined,
+        prioritize_below_decks_ability:
+          prioritizeBelowDecksAbility || undefined,
       },
       activeProfileId,
     )
@@ -180,12 +200,23 @@ export function useWorkspace() {
       .catch(() => {
         if (!cancelled) setEstimate(null);
       });
-    return () => { cancelled = true; };
-  }, [shipId, scenarioId, simsPerCrew, maxCandidates, prioritizeBelowDecksAbility, activeProfileId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    shipId,
+    scenarioId,
+    simsPerCrew,
+    maxCandidates,
+    prioritizeBelowDecksAbility,
+    activeProfileId,
+  ]);
 
   // Fetch available heuristic seeds
   useEffect(() => {
-    fetchHeuristics().then(setAvailableSeeds).catch(() => setAvailableSeeds([]));
+    fetchHeuristics()
+      .then(setAvailableSeeds)
+      .catch(() => setAvailableSeeds([]));
   }, []);
 
   // Sync crew/pins with ship level changes
@@ -216,7 +247,7 @@ export function useWorkspace() {
       shipLevel,
     });
     if (!simParams) {
-      setError('Select a captain first');
+      setError("Select a captain first");
       return;
     }
     setError(null);
@@ -251,12 +282,13 @@ export function useWorkspace() {
     }
     usePollingOnlyRef.current = false;
     sseAttemptRef.current = 0;
-    if (status.status === 'done' && status.result) {
+    if (status.status === "done" && status.result) {
       setRecommendations(status.result.recommendations ?? []);
       setSimResult(null);
-      if (status.result.duration_ms != null) setLastOptimizeDurationMs(status.result.duration_ms);
-    } else if (status.status === 'error') {
-      const detail = status.error?.trim() || 'Unknown error';
+      if (status.result.duration_ms != null)
+        setLastOptimizeDurationMs(status.result.duration_ms);
+    } else if (status.status === "error") {
+      const detail = status.error?.trim() || "Unknown error";
       setError(`Optimization failed: ${detail}`);
     }
     setLoadingOptimize(false);
@@ -311,7 +343,7 @@ export function useWorkspace() {
       getOptimizeStatus(jobId)
         .then((status) => {
           applyRunningOptimizeStatus(status);
-          if (status.status === 'done' || status.status === 'error') {
+          if (status.status === "done" || status.status === "error") {
             applyOptimizeDone(status);
           }
         })
@@ -344,14 +376,18 @@ export function useWorkspace() {
     const startPollingOnly = () => {
       if (pollIntervalRef.current) return;
       usePollingOnlyRef.current = true;
-      setOptimizeStreamMode('polling');
+      setOptimizeStreamMode("polling");
       poll();
       pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
     };
 
     const openSse = () => {
-      if (usePollingOnlyRef.current || currentOptimizeJobIdRef.current !== jobId) return;
-      if (typeof EventSource === 'undefined') {
+      if (
+        usePollingOnlyRef.current ||
+        currentOptimizeJobIdRef.current !== jobId
+      )
+        return;
+      if (typeof EventSource === "undefined") {
         startPollingOnly();
         return;
       }
@@ -364,11 +400,11 @@ export function useWorkspace() {
       eventSourceRef.current = es;
       es.onmessage = (event) => {
         sseAttemptRef.current = 0;
-        setOptimizeStreamMode('sse');
+        setOptimizeStreamMode("sse");
         try {
           const status = JSON.parse(event.data) as OptimizeStatusResponse;
           applyRunningOptimizeStatus(status);
-          if (status.status === 'done' || status.status === 'error') {
+          if (status.status === "done" || status.status === "error") {
             es.close();
             eventSourceRef.current = null;
             applyOptimizeDone(status);
@@ -380,21 +416,29 @@ export function useWorkspace() {
       es.onerror = () => {
         es.close();
         eventSourceRef.current = null;
-        if (usePollingOnlyRef.current || currentOptimizeJobIdRef.current !== jobId) return;
+        if (
+          usePollingOnlyRef.current ||
+          currentOptimizeJobIdRef.current !== jobId
+        )
+          return;
         sseAttemptRef.current += 1;
         const attempt = sseAttemptRef.current;
         if (attempt > MAX_SSE_RECONNECT_ATTEMPTS) {
           startPollingOnly();
           return;
         }
-        setOptimizeStreamMode('reconnecting');
+        setOptimizeStreamMode("reconnecting");
         const delayMs = Math.min(
           SSE_BACKOFF_CAP_MS,
           SSE_BACKOFF_BASE_MS * 2 ** (attempt - 1),
         );
         sseReconnectTimerRef.current = setTimeout(() => {
           sseReconnectTimerRef.current = null;
-          if (currentOptimizeJobIdRef.current !== jobId || usePollingOnlyRef.current) return;
+          if (
+            currentOptimizeJobIdRef.current !== jobId ||
+            usePollingOnlyRef.current
+          )
+            return;
           openSse();
         }, delayMs);
       };
@@ -406,7 +450,10 @@ export function useWorkspace() {
   // Resume in-flight job after refresh (same tab session + matching profile).
   useEffect(() => {
     const persisted = readPersistedOptimizeJob();
-    if (!persisted || !profileMatchesPersisted(activeProfileId, persisted.profileId)) {
+    if (
+      !persisted ||
+      !profileMatchesPersisted(activeProfileId, persisted.profileId)
+    ) {
       return;
     }
     if (currentOptimizeJobIdRef.current === persisted.jobId) {
@@ -418,7 +465,7 @@ export function useWorkspace() {
       try {
         const status = await getOptimizeStatus(persisted.jobId);
         if (cancelled) return;
-        if (status.status === 'done' || status.status === 'error') {
+        if (status.status === "done" || status.status === "error") {
           clearPersistedOptimizeJob();
           applyRunningOptimizeStatus(status);
           applyOptimizeDone(status);
@@ -515,7 +562,7 @@ export function useWorkspace() {
       cancelOptimizeJob(jobId).catch(() => {});
     }
     setWorkspaceInfo(
-      'Optimization cancelled. The server may still finish this job in the background; wait a moment before starting another run on the same scenario if you see odd results.',
+      "Optimization cancelled. The server may still finish this job in the background; wait a moment before starting another run on the same scenario if you see odd results.",
     );
     setLoadingOptimize(false);
     setOptimizeStreamMode(null);
@@ -536,9 +583,9 @@ export function useWorkspace() {
     try {
       await savePreset(
         {
-          name: savePresetName || 'Unnamed',
-          ship: shipId || 'Saladin',
-          scenario: scenarioId || '2918121098',
+          name: savePresetName || "Unnamed",
+          ship: shipId || "Saladin",
+          scenario: scenarioId || "2918121098",
           crew: {
             captain: crew.captain,
             bridge: crew.bridge,
@@ -548,7 +595,7 @@ export function useWorkspace() {
         activeProfileId,
       );
       setShowSavePreset(false);
-      setSavePresetName('');
+      setSavePresetName("");
     } catch (e) {
       setError(formatApiError(e));
     } finally {

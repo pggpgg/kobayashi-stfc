@@ -1,13 +1,18 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { ProfileProvider } from './contexts/ProfileContext';
-import { WorkspaceModeProvider } from './contexts/WorkspaceModeContext';
-import ErrorBoundary from './components/ErrorBoundary';
-import App from './App';
-import './index.css';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { ProfileProvider } from "./contexts/ProfileContext";
+import { WorkspaceModeProvider } from "./contexts/WorkspaceModeContext";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const rootEl = document.getElementById("root");
+if (rootEl == null) {
+  throw new Error("Missing element #root");
+}
+
+ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <BrowserRouter>
       <ErrorBoundary>
@@ -18,5 +23,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </ProfileProvider>
       </ErrorBoundary>
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

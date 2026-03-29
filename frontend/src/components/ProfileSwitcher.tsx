@@ -1,23 +1,27 @@
-import { useState, useRef, useEffect } from 'react';
-import { useProfile } from '../contexts/ProfileContext';
-import { createProfile, deleteProfile } from '../lib/api';
+import { useEffect, useRef, useState } from "react";
+import { useProfile } from "../contexts/ProfileContext";
+import { createProfile, deleteProfile } from "../lib/api";
 
 /** Derive initials from profile name (e.g. "Main" -> "M", "Alt Account" -> "AA"). */
 function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return '?';
+  if (words.length === 0) return "?";
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
 
 export default function ProfileSwitcher() {
-  const { activeProfileId, setActiveProfileId, profiles, refreshProfiles } = useProfile();
+  const { activeProfileId, setActiveProfileId, profiles, refreshProfiles } =
+    useProfile();
   const [open, setOpen] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -25,13 +29,16 @@ export default function ProfileSwitcher() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
         setShowAdd(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleAddProfile = async () => {
@@ -42,10 +49,12 @@ export default function ProfileSwitcher() {
       const created = await createProfile({ name: newName.trim() });
       await refreshProfiles();
       setActiveProfileId(created.id);
-      setNewName('');
+      setNewName("");
       setShowAdd(false);
     } catch (e) {
-      setCreateError(e instanceof Error ? e.message : 'Failed to create profile');
+      setCreateError(
+        e instanceof Error ? e.message : "Failed to create profile",
+      );
     } finally {
       setCreating(false);
     }
@@ -59,53 +68,55 @@ export default function ProfileSwitcher() {
       await refreshProfiles();
       if (activeProfileId === deleteConfirm.id) {
         const remaining = profiles.filter((p) => p.id !== deleteConfirm.id);
-        setActiveProfileId(remaining[0]?.id ?? '');
+        setActiveProfileId(remaining[0]?.id ?? "");
       }
       setDeleteConfirm(null);
       setOpen(false);
     } catch (e) {
-      setCreateError(e instanceof Error ? e.message : 'Failed to delete profile');
+      setCreateError(
+        e instanceof Error ? e.message : "Failed to delete profile",
+      );
     } finally {
       setDeleting(false);
     }
   };
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
+    <div ref={dropdownRef} style={{ position: "relative" }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        title={activeProfile?.name ?? 'Switch profile'}
+        title={activeProfile?.name ?? "Switch profile"}
         style={{
           width: 36,
           height: 36,
-          borderRadius: '50%',
-          border: '1px solid var(--border)',
-          background: 'var(--surface)',
-          color: 'var(--text)',
-          fontSize: '0.85rem',
+          borderRadius: "50%",
+          border: "1px solid var(--border)",
+          background: "var(--surface)",
+          color: "var(--text)",
+          fontSize: "0.85rem",
           fontWeight: 600,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        {activeProfile ? initials(activeProfile.name) : '?'}
+        {activeProfile ? initials(activeProfile.name) : "?"}
       </button>
 
       {open && (
         <div
           style={{
-            position: 'absolute',
-            top: '100%',
+            position: "absolute",
+            top: "100%",
             right: 0,
             marginTop: 4,
             minWidth: 180,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
             borderRadius: 8,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             zIndex: 1000,
             padding: 4,
           }}
@@ -114,11 +125,12 @@ export default function ProfileSwitcher() {
             <div
               key={p.id}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 borderRadius: 4,
-                background: p.id === activeProfileId ? 'var(--accent)' : 'transparent',
+                background:
+                  p.id === activeProfileId ? "var(--accent)" : "transparent",
               }}
             >
               <button
@@ -129,16 +141,18 @@ export default function ProfileSwitcher() {
                 }}
                 style={{
                   flex: 1,
-                  padding: '0.5rem 0.75rem',
-                  textAlign: 'left',
-                  background: 'transparent',
-                  color: p.id === activeProfileId ? 'var(--bg)' : 'var(--text)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
+                  padding: "0.5rem 0.75rem",
+                  textAlign: "left",
+                  background: "transparent",
+                  color: p.id === activeProfileId ? "var(--bg)" : "var(--text)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
                 }}
               >
-                <span style={{ fontWeight: 600, marginRight: 6 }}>{initials(p.name)}</span>
+                <span style={{ fontWeight: 600, marginRight: 6 }}>
+                  {initials(p.name)}
+                </span>
                 {p.name}
               </button>
               {profiles.length > 1 && (
@@ -147,12 +161,15 @@ export default function ProfileSwitcher() {
                   onClick={() => setDeleteConfirm({ id: p.id, name: p.name })}
                   title={`Delete ${p.name}`}
                   style={{
-                    padding: '0.25rem 0.5rem',
-                    background: 'transparent',
-                    color: p.id === activeProfileId ? 'var(--bg)' : 'var(--text-muted)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
+                    padding: "0.25rem 0.5rem",
+                    background: "transparent",
+                    color:
+                      p.id === activeProfileId
+                        ? "var(--bg)"
+                        : "var(--text-muted)",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
                     opacity: 0.7,
                   }}
                 >
@@ -163,7 +180,13 @@ export default function ProfileSwitcher() {
           ))}
 
           {showAdd ? (
-            <div style={{ padding: 8, borderTop: '1px solid var(--border)', marginTop: 4 }}>
+            <div
+              style={{
+                padding: 8,
+                borderTop: "1px solid var(--border)",
+                marginTop: 4,
+              }}
+            >
               <input
                 type="text"
                 value={newName}
@@ -171,52 +194,58 @@ export default function ProfileSwitcher() {
                 placeholder="Profile name"
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddProfile();
-                  if (e.key === 'Escape') setShowAdd(false);
+                  if (e.key === "Enter") handleAddProfile();
+                  if (e.key === "Escape") setShowAdd(false);
                 }}
                 style={{
-                  width: '100%',
-                  padding: '0.4rem',
+                  width: "100%",
+                  padding: "0.4rem",
                   marginBottom: 6,
-                  background: 'var(--bg)',
-                  border: '1px solid var(--border)',
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
                   borderRadius: 4,
-                  color: 'var(--text)',
+                  color: "var(--text)",
                 }}
               />
               {createError && (
-                <div style={{ fontSize: '0.8rem', color: 'var(--error)', marginBottom: 4 }}>
+                <div
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "var(--error)",
+                    marginBottom: 4,
+                  }}
+                >
                   {createError}
                 </div>
               )}
-              <div style={{ display: 'flex', gap: 4 }}>
+              <div style={{ display: "flex", gap: 4 }}>
                 <button
                   type="button"
                   onClick={handleAddProfile}
                   disabled={creating || !newName.trim()}
                   style={{
-                    padding: '0.35rem 0.6rem',
-                    background: 'var(--accent)',
-                    border: 'none',
+                    padding: "0.35rem 0.6rem",
+                    background: "var(--accent)",
+                    border: "none",
                     borderRadius: 4,
-                    color: 'var(--bg)',
-                    fontSize: '0.85rem',
-                    cursor: creating ? 'not-allowed' : 'pointer',
+                    color: "var(--bg)",
+                    fontSize: "0.85rem",
+                    cursor: creating ? "not-allowed" : "pointer",
                   }}
                 >
-                  {creating ? 'Creating…' : 'Add'}
+                  {creating ? "Creating…" : "Add"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAdd(false)}
                   style={{
-                    padding: '0.35rem 0.6rem',
-                    background: 'var(--border)',
-                    border: 'none',
+                    padding: "0.35rem 0.6rem",
+                    background: "var(--border)",
+                    border: "none",
                     borderRadius: 4,
-                    color: 'var(--text)',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
+                    color: "var(--text)",
+                    fontSize: "0.85rem",
+                    cursor: "pointer",
                   }}
                 >
                   Cancel
@@ -228,16 +257,16 @@ export default function ProfileSwitcher() {
               type="button"
               onClick={() => setShowAdd(true)}
               style={{
-                display: 'block',
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                textAlign: 'left',
-                background: 'transparent',
-                color: 'var(--text-muted)',
-                border: 'none',
+                display: "block",
+                width: "100%",
+                padding: "0.5rem 0.75rem",
+                textAlign: "left",
+                background: "transparent",
+                color: "var(--text-muted)",
+                border: "none",
                 borderRadius: 4,
-                cursor: 'pointer',
-                fontSize: '0.85rem',
+                cursor: "pointer",
+                fontSize: "0.85rem",
                 marginTop: 2,
               }}
             >
@@ -250,45 +279,53 @@ export default function ProfileSwitcher() {
       {deleteConfirm && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 2000,
           }}
           onClick={() => !deleting && setDeleteConfirm(null)}
         >
           <div
             style={{
-              background: 'var(--surface)',
-              padding: '1.5rem',
+              background: "var(--surface)",
+              padding: "1.5rem",
               borderRadius: 8,
-              border: '1px solid var(--border)',
+              border: "1px solid var(--border)",
               minWidth: 280,
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: '0 0 1rem', fontWeight: 600 }}>
+            <p style={{ margin: "0 0 1rem", fontWeight: 600 }}>
               Delete profile &quot;{deleteConfirm.name}&quot;?
             </p>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-              This will permanently delete all roster, research, buildings, ships, and presets for
-              this profile. This cannot be undone.
+            <p
+              style={{
+                margin: "0 0 1rem",
+                fontSize: "0.9rem",
+                color: "var(--text-muted)",
+              }}
+            >
+              This will permanently delete all roster, research, buildings,
+              ships, and presets for this profile. This cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <div
+              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
+            >
               <button
                 type="button"
                 onClick={() => setDeleteConfirm(null)}
                 disabled={deleting}
                 style={{
-                  padding: '0.5rem 1rem',
-                  background: 'var(--border)',
-                  border: 'none',
+                  padding: "0.5rem 1rem",
+                  background: "var(--border)",
+                  border: "none",
                   borderRadius: 6,
-                  color: 'var(--text)',
-                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  color: "var(--text)",
+                  cursor: deleting ? "not-allowed" : "pointer",
                 }}
               >
                 Cancel
@@ -298,15 +335,15 @@ export default function ProfileSwitcher() {
                 onClick={handleDeleteProfile}
                 disabled={deleting}
                 style={{
-                  padding: '0.5rem 1rem',
-                  background: 'var(--error)',
-                  border: 'none',
+                  padding: "0.5rem 1rem",
+                  background: "var(--error)",
+                  border: "none",
                   borderRadius: 6,
-                  color: 'white',
-                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  color: "white",
+                  cursor: deleting ? "not-allowed" : "pointer",
                 }}
               >
-                {deleting ? 'Deleting…' : 'Delete'}
+                {deleting ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>
