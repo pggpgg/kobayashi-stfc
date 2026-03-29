@@ -464,12 +464,13 @@ async fn handle_preset_get(
 }
 
 async fn handle_preset_post(
+    State(state): State<AppState>,
     headers: HeaderMap,
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::preset_post_payload(&body, profile_id.as_deref()) {
+    match api::preset_post_payload(&body, profile_id.as_deref(), state.registry.as_ref()) {
         Ok(response) => ok_json(response).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
     }

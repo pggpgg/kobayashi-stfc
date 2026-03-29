@@ -988,13 +988,63 @@ pub struct PresetCrew {
     pub below_deck: Option<Vec<String>>,
 }
 
+/// Snapshot written when saving a preset (task 14 provenance).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PresetProvenance {
+    /// RFC3339 timestamp when the preset was written (or file mtime for legacy reads).
+    pub saved_at: String,
+    pub kobayashi_version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hostile_data_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ship_data_version: Option<String>,
+    #[serde(default = "default_preset_source")]
+    pub source: String,
+    /// True when provenance was synthesized for a legacy on-disk file (no embedded snapshot).
+    #[serde(default)]
+    pub inferred: bool,
+}
+
+fn default_preset_source() -> String {
+    "kobayashi_api".to_string()
+}
+
+fn snapshot_registry_data_versions(registry: &DataRegistry) -> (Option<String>, Option<String>) {
+    let hostile = registry
+        .hostile_index
+        .as_ref()
+        .and_then(|i| i.data_version.clone());
+    let ship = registry
+        .ship_index
+        .as_ref()
+        .and_then(|i| i.data_version.clone());
+    (hostile, ship)
+}
+
+fn build_preset_provenance(registry: &DataRegistry, inferred: bool) -> PresetProvenance {
+    let (hostile_data_version, ship_data_version) = snapshot_registry_data_versions(registry);
+    PresetProvenance {
+        saved_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+        kobayashi_version: env!("CARGO_PKG_VERSION").to_string(),
+        hostile_data_version,
+        ship_data_version,
+        source: default_preset_source(),
+        inferred,
+    }
+}
+
+/// Preset JSON schema: v1 = original fields only; v2 adds `schema_version` + `provenance`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Preset {
+    #[serde(default)]
+    pub schema_version: Option<u32>,
     pub id: String,
     pub name: String,
     pub ship: String,
     pub scenario: String,
     pub crew: PresetCrew,
+    #[serde(default)]
+    pub provenance: Option<PresetProvenance>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1003,6 +1053,56 @@ pub struct PresetSummary {
     pub name: String,
     pub ship: String,
     pub scenario: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema_version: Option<u32>,
+}
+
+fn enrich_preset_on_read(path: &std::path::Path, mut preset: Preset) -> Preset {
+    let saved_from_mtime = std::fs::metadata(path)
+        .ok()
+        .and_then(|m| m.modified().ok())
+        .and_then(|t| {
+            t.duration_since(std::time::UNIX_EPOCH)
+                .ok()
+                .and_then(|d| chrono::DateTime::from_timestamp(d.as_secs() as i64, 0))
+        })
+        .map(|dt| dt.to_rfc3339_opts(chrono::SecondsFormat::Secs, true))
+        .unwrap_or_else(|| "unknown".to_string());
+
+    if preset.provenance.is_none() {
+        preset.provenance = Some(if preset.schema_version == Some(2) {
+            PresetProvenance {
+                saved_at: saved_from_mtime.clone(),
+                kobayashi_version: env!("CARGO_PKG_VERSION").to_string(),
+                hostile_data_version: None,
+                ship_data_version: None,
+                source: "repaired_v2_missing_provenance".to_string(),
+                inferred: true,
+            }
+        } else {
+            PresetProvenance {
+                saved_at: saved_from_mtime,
+                kobayashi_version: "unknown".to_string(),
+                hostile_data_version: None,
+                ship_data_version: None,
+                source: "legacy_file_no_provenance".to_string(),
+                inferred: true,
+            }
+        });
+        if preset.schema_version.is_none() {
+            preset.schema_version = Some(1);
+        }
+        return preset;
+    }
+
+    if preset.schema_version.is_none() {
+        preset.schema_version = Some(1);
+        if let Some(ref mut pr) = preset.provenance {
+            pr.inferred = true;
+        }
+    }
+
+    preset
 }
 
 fn preset_id_from_name(name: &str) -> String {
@@ -1038,6 +1138,7 @@ pub fn presets_list_payload(profile_id: Option<&str>) -> Result<String, serde_js
                         name: p.name,
                         ship: p.ship,
                         scenario: p.scenario,
+                        schema_version: p.schema_version,
                     });
                 }
             }
@@ -1054,7 +1155,9 @@ pub fn preset_get_payload(id: &str, profile_id: Option<&str>) -> Result<String, 
         return Err(PresetError::NotFound);
     }
     let raw = fs::read_to_string(&path).map_err(PresetError::Io)?;
-    Ok(raw)
+    let preset: Preset = serde_json::from_str(&raw).map_err(PresetError::Serialize)?;
+    let enriched = enrich_preset_on_read(&path, preset);
+    serde_json::to_string_pretty(&enriched).map_err(PresetError::Serialize)
 }
 
 fn sanitize_preset_id(id: &str) -> String {
@@ -1088,7 +1191,11 @@ impl fmt::Display for PresetError {
 
 impl std::error::Error for PresetError {}
 
-pub fn preset_post_payload(body: &str, profile_id: Option<&str>) -> Result<String, PresetError> {
+pub fn preset_post_payload(
+    body: &str,
+    profile_id: Option<&str>,
+    registry: &DataRegistry,
+) -> Result<String, PresetError> {
     #[derive(Debug, Deserialize)]
     struct In {
         name: Option<String>,
@@ -1103,11 +1210,13 @@ pub fn preset_post_payload(body: &str, profile_id: Option<&str>) -> Result<Strin
     let path = presets_dir_for_profile(&pid).join(sanitize_preset_id(&id));
     ensure_presets_dir(&pid).map_err(PresetError::Io)?;
     let preset = Preset {
+        schema_version: Some(2),
         id: id.clone(),
         name: name.clone(),
         ship: in_.ship,
         scenario: in_.scenario,
         crew: in_.crew,
+        provenance: Some(build_preset_provenance(registry, false)),
     };
     let raw = serde_json::to_string_pretty(&preset).map_err(PresetError::Serialize)?;
     fs::write(&path, raw).map_err(PresetError::Io)?;
@@ -1266,4 +1375,57 @@ pub fn optimize_estimate_payload(
         "estimated_seconds": (estimated_seconds * 10.0).round() / 10.0,
     });
     serde_json::to_string_pretty(&payload).map_err(OptimizePayloadError::Parse)
+}
+
+#[cfg(test)]
+mod preset_schema_tests {
+    use super::*;
+
+    #[test]
+    fn preset_deserializes_legacy_json_without_schema_or_provenance() {
+        let j = r#"{"id":"x","name":"n","ship":"s","scenario":"h","crew":{}}"#;
+        let p: Preset = serde_json::from_str(j).unwrap();
+        assert_eq!(p.schema_version, None);
+        assert!(p.provenance.is_none());
+    }
+
+    #[test]
+    fn enrich_legacy_adds_inferred_provenance_and_schema_v1() {
+        let p: Preset = serde_json::from_str(
+            r#"{"id":"x","name":"n","ship":"s","scenario":"h","crew":{}}"#,
+        )
+        .unwrap();
+        let tmp = std::env::temp_dir().join(format!(
+            "kobayashi_preset_legacy_{}.json",
+            std::process::id()
+        ));
+        std::fs::write(&tmp, "{}").unwrap();
+        let out = enrich_preset_on_read(&tmp, p);
+        assert_eq!(out.schema_version, Some(1));
+        let pr = out.provenance.expect("provenance");
+        assert!(pr.inferred);
+        assert_eq!(pr.source, "legacy_file_no_provenance");
+        assert_eq!(pr.kobayashi_version, "unknown");
+        let _ = std::fs::remove_file(&tmp);
+    }
+
+    #[test]
+    fn enrich_v2_missing_provenance_repairs() {
+        let p: Preset = serde_json::from_str(
+            r#"{"schema_version":2,"id":"x","name":"n","ship":"s","scenario":"h","crew":{}}"#,
+        )
+        .unwrap();
+        assert!(p.provenance.is_none());
+        let tmp = std::env::temp_dir().join(format!(
+            "kobayashi_preset_v2_{}.json",
+            std::process::id()
+        ));
+        std::fs::write(&tmp, "{}").unwrap();
+        let out = enrich_preset_on_read(&tmp, p);
+        assert_eq!(out.schema_version, Some(2));
+        let pr = out.provenance.expect("provenance");
+        assert!(pr.inferred);
+        assert_eq!(pr.source, "repaired_v2_missing_provenance");
+        let _ = std::fs::remove_file(&tmp);
+    }
 }

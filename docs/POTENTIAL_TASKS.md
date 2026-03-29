@@ -23,7 +23,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 
 ### Data persistence + provenance
 
-- [ ] 14. Results library schema migration + provenance (store data version, migrate old saved results/presets, show provenance in UI).
+- [x] 14. Results library schema migration + provenance (store data version, migrate old saved results/presets, show provenance in UI).
 - [x] 15. Add a mechanics coverage report endpoint (implemented/partial/ignored) derived from LCARS + ability catalogs and expose via `/api/mechanics/coverage`.
 - [ ] 17. Add a profile diff/attribution inspector showing exactly which sources contributed which effective stats.
 - [ ] 18. Improve roster import diagnostics (unknown officer mapping, alias suggestions, tier/level bounds) with actionable messages.
