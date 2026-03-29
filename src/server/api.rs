@@ -39,11 +39,42 @@ use std::io::Write;
 use std::fmt;
 use std::sync::Arc;
 
-pub fn health_payload() -> Result<String, serde_json::Error> {
+/// GET `/api/health` — liveness plus build identity, effective CPU concurrency, and loaded data signals.
+pub fn health_payload(
+    registry: &DataRegistry,
+    started_at_utc: chrono::DateTime<chrono::Utc>,
+) -> Result<String, serde_json::Error> {
+    let git_short = env!("KOBAYASHI_GIT_SHA_SHORT");
+    let git_sha_short = if git_short.is_empty() {
+        serde_json::Value::Null
+    } else {
+        serde_json::Value::String(git_short.to_string())
+    };
+
+    let hostile_index = registry.hostile_index();
+    let ship_index = registry.ship_index();
+    let max_cpu = super::max_concurrent_cpu_jobs_from_env();
+    let officer_count = registry.officers().len();
+
     serde_json::to_string_pretty(&serde_json::json!({
         "status": "ok",
         "service": "kobayashi-api",
-        "version": env!("CARGO_PKG_VERSION")
+        "build": {
+            "cargo_pkg_version": env!("CARGO_PKG_VERSION"),
+            "git_sha_short": git_sha_short,
+        },
+        "server": {
+            "started_at_utc": started_at_utc.to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+            "max_concurrent_cpu_jobs": max_cpu,
+            "max_concurrent_cpu_jobs_from_env": std::env::var("KOBAYASHI_MAX_CONCURRENT_CPU_JOBS").is_ok(),
+        },
+        "data": {
+            "officer_count": officer_count,
+            "hostile_data_version": hostile_index.and_then(|i| i.data_version.clone()),
+            "ship_data_version": ship_index.and_then(|i| i.data_version.clone()),
+            "hostile_index_loaded": hostile_index.is_some(),
+            "ship_index_loaded": ship_index.is_some(),
+        },
     }))
 }
 

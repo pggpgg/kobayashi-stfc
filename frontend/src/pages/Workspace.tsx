@@ -47,6 +47,7 @@ export default function Workspace() {
         optimizeTotalCrews={ws.optimizeTotalCrews}
         optimizePhase={ws.optimizePhase}
         optimizeEtaSeconds={ws.optimizeEtaSeconds}
+        optimizeStreamMode={ws.optimizeStreamMode}
       />
       {ws.showSavePreset && (
         <div
@@ -122,8 +123,42 @@ export default function Workspace() {
           </div>
         </div>
       )}
+      {ws.workspaceInfo && (
+        <div
+          style={{
+            padding: '0.5rem 1rem',
+            background: 'rgba(201, 162, 39, 0.2)',
+            borderBottom: '1px solid var(--warning)',
+            color: 'var(--text)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: '0.9rem' }}>{ws.workspaceInfo}</span>
+          <button
+            type="button"
+            onClick={() => ws.setWorkspaceInfo(null)}
+            style={{
+              flexShrink: 0,
+              padding: '0.25rem 0.6rem',
+              fontSize: '0.8rem',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              color: 'var(--text)',
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       {ws.error && (
-        <div style={{ padding: '0.5rem 1rem', background: 'var(--error)', color: 'white' }}>
+        <div
+          style={{ padding: '0.5rem 1rem', background: 'var(--error)', color: 'white' }}
+          role="alert"
+        >
           {ws.error}
         </div>
       )}

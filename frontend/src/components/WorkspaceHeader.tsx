@@ -47,6 +47,8 @@ interface WorkspaceHeaderProps {
   optimizeTotalCrews: number | null;
   optimizePhase?: string | null;
   optimizeEtaSeconds?: number | null;
+  /** Live stream vs polling while optimizing. */
+  optimizeStreamMode?: 'sse' | 'reconnecting' | 'polling' | null;
 }
 
 export default function WorkspaceHeader({
@@ -73,6 +75,7 @@ export default function WorkspaceHeader({
   optimizeTotalCrews,
   optimizePhase = null,
   optimizeEtaSeconds = null,
+  optimizeStreamMode = null,
 }: WorkspaceHeaderProps) {
   const { activeProfileId } = useProfile();
   const { ownedOnly } = useWorkspaceMode();
@@ -339,9 +342,30 @@ export default function WorkspaceHeader({
               )}
             </div>
           )}
+          {optimizeStreamMode === 'reconnecting' && (
+            <span
+              style={{
+                fontSize: '0.7rem',
+                color: 'var(--warning)',
+                maxWidth: 200,
+              }}
+              title="The browser lost the live progress connection; retrying with backoff before falling back to polling."
+            >
+              Reconnecting to live progress…
+            </span>
+          )}
+          {optimizeStreamMode === 'polling' && (
+            <span
+              style={{ fontSize: '0.7rem', color: 'var(--text-muted)', maxWidth: 220 }}
+              title="Updates load over HTTP polling instead of a live stream."
+            >
+              Polling for progress
+            </span>
+          )}
           <button
             type="button"
             onClick={onCancelOptimize}
+            aria-label="Cancel optimization"
             style={{
               padding: '0.35rem 0.75rem',
               fontSize: '0.85rem',
@@ -351,7 +375,7 @@ export default function WorkspaceHeader({
               color: 'var(--text)',
             }}
           >
-            Cancel
+            Cancel run
           </button>
         </div>
       )}

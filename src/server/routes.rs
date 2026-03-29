@@ -12,6 +12,7 @@ use axum::{
     extract::OriginalUri,
     extract::{Path, Query, State},
     http::{HeaderMap, HeaderValue, StatusCode, header},
+    middleware,
     response::sse::{Event, Sse},
     response::{IntoResponse, Response},
     routing::{delete, get, post, put},
@@ -27,6 +28,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use crate::data::data_registry::DataRegistry;
 use crate::mechanics::coverage::mechanics_coverage_json;
 use crate::server::api;
+use crate::server::api_key;
 use crate::server::sync;
 
 /// Application state shared by all handlers.
@@ -35,14 +37,8 @@ pub struct AppState {
     pub registry: Arc<DataRegistry>,
     /// Limits concurrent CPU-heavy `spawn_blocking` tasks (`/api/simulate`, `/api/optimize`).
     pub cpu_jobs: Arc<Semaphore>,
-}
-
-fn max_concurrent_cpu_jobs() -> usize {
-    std::env::var("KOBAYASHI_MAX_CONCURRENT_CPU_JOBS")
-        .ok()
-        .and_then(|s| s.parse::<usize>().ok())
-        .filter(|&n| n >= 1)
-        .unwrap_or(1)
+    /// Wall-clock time when this server process built router state (after data validation).
+    pub started_at_utc: chrono::DateTime<chrono::Utc>,
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +99,8 @@ fn validation_json(payload: api::ValidationErrorResponse) -> JsonResponse {
 pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     let state = AppState {
         registry,
-        cpu_jobs: Arc::new(Semaphore::new(max_concurrent_cpu_jobs())),
+        cpu_jobs: Arc::new(Semaphore::new(crate::server::max_concurrent_cpu_jobs_from_env())),
+        started_at_utc: chrono::Utc::now(),
     };
 
     let api_routes = Router::new()
@@ -158,6 +155,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         // Sync ingress
         .route("/api/sync/status", get(handle_sync_status))
         .route("/api/sync/ingress", post(handle_sync_ingress))
+        .layer(middleware::from_fn(api_key::middleware))
         .with_state(state);
 
     // Wire the SPA or legacy console fallback depending on whether the dist
@@ -282,8 +280,8 @@ async fn handle_no_spa_fallback(OriginalUri(uri): OriginalUri) -> Response {
 // API handler implementations
 // ---------------------------------------------------------------------------
 
-async fn handle_health() -> impl IntoResponse {
-    match api::health_payload() {
+async fn handle_health(State(state): State<AppState>) -> impl IntoResponse {
+    match api::health_payload(state.registry.as_ref(), state.started_at_utc) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }

@@ -1,7 +1,9 @@
 use axum::body::Body;
+use axum::extract::connect_info::ConnectInfo;
 use axum::http::{Method, Request};
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::server::routes::build_router;
+use std::net::SocketAddr;
 use tower::ServiceExt;
 
 struct TestResponse {
@@ -10,7 +12,17 @@ struct TestResponse {
     body: String,
 }
 
-async fn route_request(method: &str, path: &str, body: &str, _headers: Option<()>) -> TestResponse {
+async fn route_request(method: &str, path: &str, body: &str) -> TestResponse {
+    route_request_ex(method, path, body, None, &[]).await
+}
+
+async fn route_request_ex(
+    method: &str,
+    path: &str,
+    body: &str,
+    peer: Option<SocketAddr>,
+    extra_headers: &[(&str, &str)],
+) -> TestResponse {
     let registry = DataRegistry::load().expect("data registry required for server tests");
     let app = build_router(registry);
     let m = match method {
@@ -18,12 +30,16 @@ async fn route_request(method: &str, path: &str, body: &str, _headers: Option<()
         "PUT" => Method::PUT,
         _ => Method::GET,
     };
-    let req = Request::builder()
+    let addr = peer.unwrap_or_else(|| "127.0.0.1:12345".parse().expect("loopback"));
+    let mut builder = Request::builder()
         .method(m)
         .uri(path)
-        .header("content-type", "application/json")
-        .body(Body::from(body.to_string()))
-        .unwrap();
+        .header("content-type", "application/json");
+    for (name, value) in extra_headers {
+        builder = builder.header(*name, *value);
+    }
+    let mut req = builder.body(Body::from(body.to_string())).unwrap();
+    req.extensions_mut().insert(ConnectInfo(addr));
     let resp = app.oneshot(req).await.unwrap();
     let status_code = resp.status().as_u16();
     let content_type = resp
@@ -39,17 +55,28 @@ async fn route_request(method: &str, path: &str, body: &str, _headers: Option<()
     TestResponse { status_code, content_type, body }
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn health_endpoint_returns_ok_json() {
-    let response = route_request("GET", "/api/health", "", None).await;
+    let response = route_request("GET", "/api/health", "").await;
     assert_eq!(response.status_code, 200);
     assert_eq!(response.content_type, "application/json");
-    assert!(response.body.contains("\"status\": \"ok\""));
+    let p: serde_json::Value = serde_json::from_str(&response.body).expect("health json");
+    assert_eq!(p["status"], "ok");
+    assert_eq!(p["service"], "kobayashi-api");
+    assert!(p["build"]["cargo_pkg_version"].as_str().is_some());
+    assert!(p["server"]["started_at_utc"].as_str().is_some());
+    assert_eq!(p["server"]["max_concurrent_cpu_jobs"], 1);
+    assert_eq!(p["server"]["max_concurrent_cpu_jobs_from_env"], false);
+    assert!(p["data"]["officer_count"].as_u64().is_some());
+    assert!(p["data"]["hostile_index_loaded"].is_boolean());
+    assert!(p["data"]["ship_index_loaded"].is_boolean());
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn mechanics_coverage_returns_tier_counts() {
-    let response = route_request("GET", "/api/mechanics/coverage", "", None).await;
+    let response = route_request("GET", "/api/mechanics/coverage", "").await;
     assert_eq!(response.status_code, 200, "{}", response.body);
     let p: serde_json::Value = serde_json::from_str(&response.body).expect("coverage json");
     assert_eq!(p["status"], "ok");
@@ -58,9 +85,10 @@ async fn mechanics_coverage_returns_tier_counts() {
     assert!(p["hostile_catalog_entries"].is_object());
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn profile_buildings_summary_returns_json() {
-    let response = route_request("GET", "/api/profile/buildings-summary", "", None).await;
+    let response = route_request("GET", "/api/profile/buildings-summary", "").await;
     assert_eq!(response.status_code, 200);
     let payload: serde_json::Value =
         serde_json::from_str(&response.body).expect("buildings-summary json");
@@ -68,9 +96,10 @@ async fn profile_buildings_summary_returns_json() {
     assert!(payload["synced_building_count"].is_number());
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn profile_research_summary_returns_json() {
-    let response = route_request("GET", "/api/profile/research-summary", "", None).await;
+    let response = route_request("GET", "/api/profile/research-summary", "").await;
     assert_eq!(response.status_code, 200);
     let payload: serde_json::Value =
         serde_json::from_str(&response.body).expect("research-summary json");
@@ -80,10 +109,11 @@ async fn profile_research_summary_returns_json() {
     assert!(payload["research"].is_array());
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_returns_ranked_recommendations() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
-    let response = route_request("POST", "/api/optimize", body, None).await;
+    let response = route_request("POST", "/api/optimize", body).await;
 
     assert_eq!(response.status_code, 200);
 
@@ -147,20 +177,19 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     );
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_changes_with_seed() {
     let response_a = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":7,"max_candidates":32}"#,
-        None,
     )
     .await;
     let response_b = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":8,"max_candidates":32}"#,
-        None,
     )
     .await;
 
@@ -169,12 +198,13 @@ async fn optimize_endpoint_changes_with_seed() {
     assert_ne!(response_a.body, response_b.body);
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":77,"max_candidates":64}"#;
 
-    let response_a = route_request("POST", "/api/optimize", body, None).await;
-    let response_b = route_request("POST", "/api/optimize", body, None).await;
+    let response_a = route_request("POST", "/api/optimize", body).await;
+    let response_b = route_request("POST", "/api/optimize", body).await;
 
     assert_eq!(response_a.status_code, 200);
     assert_eq!(response_b.status_code, 200);
@@ -187,20 +217,21 @@ async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
     assert_eq!(payload_a["recommendations"], payload_b["recommendations"]);
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_rejects_invalid_payload() {
-    let response = route_request("POST", "/api/optimize", "{bad json}", None).await;
+    let response = route_request("POST", "/api/optimize", "{bad json}").await;
     assert_eq!(response.status_code, 400);
     assert!(response.body.contains("Invalid request body"));
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_rejects_empty_ship_and_hostile() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"","hostile":"   ","sims":100}"#,
-        None,
     )
     .await;
 
@@ -235,13 +266,13 @@ async fn optimize_endpoint_rejects_empty_ship_and_hostile() {
     );
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_rejects_zero_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"2918121098","sims":0}"#,
-        None,
     )
     .await;
 
@@ -255,13 +286,13 @@ async fn optimize_endpoint_rejects_zero_sims() {
     assert!(errors.iter().any(|error| error["field"] == "sims"));
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_rejects_very_large_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"2918121098","sims":5000000}"#,
-        None,
     )
     .await;
 
@@ -285,13 +316,13 @@ async fn optimize_endpoint_rejects_very_large_sims() {
     );
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_rejects_excessive_max_candidates() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"max_candidates":3000000}"#,
-        None,
     )
     .await;
 
@@ -308,13 +339,13 @@ async fn optimize_endpoint_rejects_excessive_max_candidates() {
     );
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_rejects_zero_analytical_prefilter_keep() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"saladin","hostile":"2918121098","sims":100,"analytical_prefilter_keep":0}"#,
-        None,
     )
     .await;
 
@@ -330,10 +361,11 @@ async fn optimize_endpoint_rejects_zero_analytical_prefilter_keep() {
     );
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":800,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
-    let response = route_request("POST", "/api/optimize", body, None).await;
+    let response = route_request("POST", "/api/optimize", body).await;
     assert_eq!(response.status_code, 200, "body: {}", response.body);
 
     let payload: serde_json::Value =
@@ -354,13 +386,13 @@ async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
     );
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_validation_error_has_expected_schema() {
     let response = route_request(
         "POST",
         "/api/optimize",
         r#"{"ship":"","hostile":"2918121098","sims":0}"#,
-        None,
     )
     .await;
 
@@ -389,10 +421,11 @@ async fn optimize_validation_error_has_expected_schema() {
     }
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn async_optimize_start_poll_completes_with_recommendations() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":42,"max_candidates":16}"#;
-    let start = route_request("POST", "/api/optimize/start", body, None).await;
+    let start = route_request("POST", "/api/optimize/start", body).await;
     assert_eq!(start.status_code, 200, "body: {}", start.body);
     let payload: serde_json::Value =
         serde_json::from_str(&start.body).expect("start response json");
@@ -406,7 +439,6 @@ async fn async_optimize_start_poll_completes_with_recommendations() {
             "GET",
             &format!("/api/optimize/status/{job_id}"),
             "",
-            None,
         )
         .await;
         assert_eq!(status.status_code, 200, "status body: {}", status.body);
@@ -432,22 +464,23 @@ async fn async_optimize_start_poll_completes_with_recommendations() {
     panic!("async optimize did not complete within timeout");
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn async_optimize_cancel_unknown_job_returns_404() {
     let response = route_request(
         "POST",
         "/api/optimize/jobs/opt_nonexistent_0/cancel",
         "",
-        None,
     )
     .await;
     assert_eq!(response.status_code, 404);
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn async_optimize_cancel_after_done_is_idempotent_ok() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":8}"#;
-    let start = route_request("POST", "/api/optimize/start", body, None).await;
+    let start = route_request("POST", "/api/optimize/start", body).await;
     assert_eq!(start.status_code, 200);
     let payload: serde_json::Value =
         serde_json::from_str(&start.body).expect("start json");
@@ -460,7 +493,6 @@ async fn async_optimize_cancel_after_done_is_idempotent_ok() {
             "GET",
             &format!("/api/optimize/status/{job_id}"),
             "",
-            None,
         )
         .await;
         let s: serde_json::Value =
@@ -477,7 +509,6 @@ async fn async_optimize_cancel_after_done_is_idempotent_ok() {
         "POST",
         &format!("/api/optimize/jobs/{job_id}/cancel"),
         "",
-        None,
     )
     .await;
     assert_eq!(cancel.status_code, 200, "{}", cancel.body);
@@ -493,11 +524,12 @@ async fn async_optimize_cancel_after_done_is_idempotent_ok() {
     );
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","seed":77,"sim_index":12,"max_trace_events":50,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}}"#;
-    let a = route_request("POST", "/api/optimize/replay-seed", body, None).await;
-    let b = route_request("POST", "/api/optimize/replay-seed", body, None).await;
+    let a = route_request("POST", "/api/optimize/replay-seed", body).await;
+    let b = route_request("POST", "/api/optimize/replay-seed", body).await;
     assert_eq!(a.status_code, 200, "{}", a.body);
     assert_eq!(b.status_code, 200);
     assert_eq!(a.body, b.body);
@@ -521,13 +553,14 @@ async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
     assert!(p["summary"]["attacker_won"].is_boolean());
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn compare_crews_returns_distribution_payload() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":400,"seed":3,"crews":[
         {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},
         {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}
     ]}"#;
-    let response = route_request("POST", "/api/compare/crews", body, None).await;
+    let response = route_request("POST", "/api/compare/crews", body).await;
     assert_eq!(response.status_code, 200, "{}", response.body);
     let p: serde_json::Value = serde_json::from_str(&response.body).expect("compare json");
     assert_eq!(p["status"], "ok");
@@ -541,4 +574,37 @@ async fn compare_crews_returns_distribution_payload() {
         let hb = c["hull_remaining_bins"].as_array().expect("hull_remaining_bins");
         assert_eq!(hb.len(), 10);
     }
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn api_key_required_for_non_loopback_when_configured() {
+    std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
+    std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+    let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
+    let response = route_request_ex("POST", "/api/optimize", body, Some(lan), &[]).await;
+    assert_eq!(response.status_code, 401, "{}", response.body);
+    std::env::remove_var("KOBAYASHI_API_KEY");
+    std::env::remove_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK");
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn api_key_bearer_allows_non_loopback_when_configured() {
+    std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
+    std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+    let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
+    let response = route_request_ex(
+        "POST",
+        "/api/optimize",
+        body,
+        Some(lan),
+        &[("authorization", "Bearer unit-test-secret")],
+    )
+    .await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+    std::env::remove_var("KOBAYASHI_API_KEY");
+    std::env::remove_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK");
 }

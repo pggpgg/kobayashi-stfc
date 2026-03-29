@@ -29,6 +29,16 @@
       "id": "scenario_research_0f63270d5a1e46678f6f17029841d2dd",
       "name": "Scenario research integration",
       "sync_token": "0fd436ab-bd8a-45d7-b779-98322bcc94fd"
+    },
+    {
+      "id": "scenario_research_05ce4b4656b741c19c8d65d13f921000",
+      "name": "Scenario research integration",
+      "sync_token": "eb237866-4a14-4006-8f17-2b8e2fedab86"
+    },
+    {
+      "id": "scenario_research_2d7d02cd4e9c4942809fa1923e02716d",
+      "name": "Scenario research integration",
+      "sync_token": "ab585a85-0d0c-4e9d-ae42-301b0a766be9"
     }
   ],
   "default_id": "demo"

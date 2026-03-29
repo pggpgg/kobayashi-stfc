@@ -1,9 +1,19 @@
 pub mod api;
+pub mod api_key;
 pub mod routes;
 pub mod static_files;
 pub mod sync;
 
 use std::net::SocketAddr;
+
+/// Max concurrent CPU-heavy API jobs (`spawn_blocking`), from `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS` (default 1).
+pub(crate) fn max_concurrent_cpu_jobs_from_env() -> usize {
+    std::env::var("KOBAYASHI_MAX_CONCURRENT_CPU_JOBS")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .filter(|&n| n >= 1)
+        .unwrap_or(1)
+}
 
 /// Start the Axum HTTP server and block until it shuts down.
 ///
@@ -41,6 +51,16 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     println!("kobayashi server listening on http://{bind_addr}");
     println!("  Sync: token-based routing (each profile has its own sync token).");
+    if std::env::var("KOBAYASHI_API_KEY")
+        .map(|s| !s.trim().is_empty())
+        .unwrap_or(false)
+    {
+        println!(
+            "  API key: mutating /api routes require Authorization: Bearer or X-Api-Key \
+             (loopback clients are trusted by default; set KOBAYASHI_API_KEY_TRUST_LOOPBACK=0 to require the key everywhere). \
+             See docs/DEPLOYMENT_SECURITY.md."
+        );
+    }
     if static_files::static_files_available() {
         println!("  SPA: serving frontend from frontend/dist");
     } else {
@@ -51,7 +71,11 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
         );
     }
 
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }
 

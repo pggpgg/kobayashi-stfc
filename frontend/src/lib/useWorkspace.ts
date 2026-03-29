@@ -28,8 +28,20 @@ import {
   buildWorkspaceSimulateParams,
 } from './workspaceRequests';
 import { useProfile } from '../contexts/ProfileContext';
+import {
+  persistOptimizeJob,
+  clearPersistedOptimizeJob,
+  readPersistedOptimizeJob,
+  profileMatchesPersisted,
+} from './optimizeJobStorage';
 
 const POLL_INTERVAL_MS = 350;
+/** Max automatic SSE reconnect attempts before falling back to HTTP polling only. */
+const MAX_SSE_RECONNECT_ATTEMPTS = 8;
+const SSE_BACKOFF_BASE_MS = 500;
+const SSE_BACKOFF_CAP_MS = 30_000;
+
+export type OptimizeStreamMode = 'sse' | 'reconnecting' | 'polling';
 
 export function useWorkspace() {
   const location = useLocation();
@@ -95,11 +107,18 @@ export function useWorkspace() {
   // UI state
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Non-error feedback (e.g. after cancel). */
+  const [workspaceInfo, setWorkspaceInfo] = useState<string | null>(null);
+  /** How progress updates are delivered while optimizing. */
+  const [optimizeStreamMode, setOptimizeStreamMode] = useState<OptimizeStreamMode | null>(null);
 
   // Polling ref, SSE ref, and current job id (for cancel + cleanup on unmount)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const currentOptimizeJobIdRef = useRef<string | null>(null);
+  const sseReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sseAttemptRef = useRef(0);
+  const usePollingOnlyRef = useRef(false);
 
   // Load preset from location state
   useEffect(() => {
@@ -118,12 +137,16 @@ export function useWorkspace() {
     }
   }, [location.state, navigate]);
 
-  // Close SSE and polling on unmount
+  // Close SSE, reconnect timers, and polling on unmount
   useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
+      }
+      if (sseReconnectTimerRef.current) {
+        clearTimeout(sseReconnectTimerRef.current);
+        sseReconnectTimerRef.current = null;
       }
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
@@ -182,16 +205,6 @@ export function useWorkspace() {
     });
   }, [shipLevel]);
 
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-    };
-  }, []);
-
   // Handle running a simulation
   const handleRunSim = async () => {
     const simParams = buildWorkspaceSimulateParams({
@@ -207,6 +220,7 @@ export function useWorkspace() {
       return;
     }
     setError(null);
+    setWorkspaceInfo(null);
     setLoadingSim(true);
     try {
       const res = await simulate(simParams, activeProfileId);
@@ -220,17 +234,30 @@ export function useWorkspace() {
   };
 
   const applyOptimizeDone = (status: OptimizeStatusResponse) => {
+    clearPersistedOptimizeJob();
+    setOptimizeStreamMode(null);
     currentOptimizeJobIdRef.current = null;
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    if (sseReconnectTimerRef.current) {
+      clearTimeout(sseReconnectTimerRef.current);
+      sseReconnectTimerRef.current = null;
+    }
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
       pollIntervalRef.current = null;
     }
+    usePollingOnlyRef.current = false;
+    sseAttemptRef.current = 0;
     if (status.status === 'done' && status.result) {
       setRecommendations(status.result.recommendations ?? []);
       setSimResult(null);
       if (status.result.duration_ms != null) setLastOptimizeDurationMs(status.result.duration_ms);
     } else if (status.status === 'error') {
-      setError(status.error ?? 'Optimization failed');
+      const detail = status.error?.trim() || 'Unknown error';
+      setError(`Optimization failed: ${detail}`);
     }
     setLoadingOptimize(false);
     setOptimizeProgress(null);
@@ -261,9 +288,160 @@ export function useWorkspace() {
     setOptimizePreview(status.progress_preview ?? null);
   };
 
+  /** Subscribe to job progress (SSE with reconnect + backoff, then polling). */
+  const beginOptimizeTracking = (jobId: string) => {
+    currentOptimizeJobIdRef.current = jobId;
+    persistOptimizeJob(jobId, activeProfileId);
+    sseAttemptRef.current = 0;
+    usePollingOnlyRef.current = false;
+    if (sseReconnectTimerRef.current) {
+      clearTimeout(sseReconnectTimerRef.current);
+      sseReconnectTimerRef.current = null;
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+
+    const poll = () => {
+      getOptimizeStatus(jobId)
+        .then((status) => {
+          applyRunningOptimizeStatus(status);
+          if (status.status === 'done' || status.status === 'error') {
+            applyOptimizeDone(status);
+          }
+        })
+        .catch((e) => {
+          clearPersistedOptimizeJob();
+          currentOptimizeJobIdRef.current = null;
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          if (sseReconnectTimerRef.current) {
+            clearTimeout(sseReconnectTimerRef.current);
+            sseReconnectTimerRef.current = null;
+          }
+          setError(
+            `Could not read optimization status (${formatApiError(e)}). The job may still be running on the server — refresh the page to reconnect, or start a new optimization.`,
+          );
+          setLoadingOptimize(false);
+          setOptimizeStreamMode(null);
+          setOptimizeProgress(null);
+          setOptimizeCrewsDone(null);
+          setOptimizeTotalCrews(null);
+          setOptimizePhase(null);
+          setOptimizeEtaSeconds(null);
+          setOptimizeThroughput(null);
+          setOptimizePreview(null);
+        });
+    };
+
+    const startPollingOnly = () => {
+      if (pollIntervalRef.current) return;
+      usePollingOnlyRef.current = true;
+      setOptimizeStreamMode('polling');
+      poll();
+      pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+    };
+
+    const openSse = () => {
+      if (usePollingOnlyRef.current || currentOptimizeJobIdRef.current !== jobId) return;
+      if (typeof EventSource === 'undefined') {
+        startPollingOnly();
+        return;
+      }
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      const streamUrl = getOptimizeStreamUrl(jobId);
+      const es = new EventSource(streamUrl);
+      eventSourceRef.current = es;
+      es.onmessage = (event) => {
+        sseAttemptRef.current = 0;
+        setOptimizeStreamMode('sse');
+        try {
+          const status = JSON.parse(event.data) as OptimizeStatusResponse;
+          applyRunningOptimizeStatus(status);
+          if (status.status === 'done' || status.status === 'error') {
+            es.close();
+            eventSourceRef.current = null;
+            applyOptimizeDone(status);
+          }
+        } catch {
+          /* ignore malformed chunk */
+        }
+      };
+      es.onerror = () => {
+        es.close();
+        eventSourceRef.current = null;
+        if (usePollingOnlyRef.current || currentOptimizeJobIdRef.current !== jobId) return;
+        sseAttemptRef.current += 1;
+        const attempt = sseAttemptRef.current;
+        if (attempt > MAX_SSE_RECONNECT_ATTEMPTS) {
+          startPollingOnly();
+          return;
+        }
+        setOptimizeStreamMode('reconnecting');
+        const delayMs = Math.min(
+          SSE_BACKOFF_CAP_MS,
+          SSE_BACKOFF_BASE_MS * 2 ** (attempt - 1),
+        );
+        sseReconnectTimerRef.current = setTimeout(() => {
+          sseReconnectTimerRef.current = null;
+          if (currentOptimizeJobIdRef.current !== jobId || usePollingOnlyRef.current) return;
+          openSse();
+        }, delayMs);
+      };
+    };
+
+    openSse();
+  };
+
+  // Resume in-flight job after refresh (same tab session + matching profile).
+  useEffect(() => {
+    const persisted = readPersistedOptimizeJob();
+    if (!persisted || !profileMatchesPersisted(activeProfileId, persisted.profileId)) {
+      return;
+    }
+    if (currentOptimizeJobIdRef.current === persisted.jobId) {
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const status = await getOptimizeStatus(persisted.jobId);
+        if (cancelled) return;
+        if (status.status === 'done' || status.status === 'error') {
+          clearPersistedOptimizeJob();
+          applyRunningOptimizeStatus(status);
+          applyOptimizeDone(status);
+          return;
+        }
+        setLoadingOptimize(true);
+        applyRunningOptimizeStatus(status);
+        beginOptimizeTracking(persisted.jobId);
+      } catch {
+        if (!cancelled) clearPersistedOptimizeJob();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // Re-check when profile id stabilizes after load (persisted job is per-profile).
+  }, [activeProfileId]);
+
   // Handle running optimization
   const handleRunOptimize = async () => {
     setError(null);
+    setWorkspaceInfo(null);
     setLoadingOptimize(true);
     setLastOptimizeDurationMs(null);
     setOptimizeProgress(0);
@@ -273,6 +451,7 @@ export function useWorkspace() {
     setOptimizeEtaSeconds(null);
     setOptimizeThroughput(null);
     setOptimizePreview(null);
+    setOptimizeStreamMode(null);
     try {
       const { job_id } = await optimizeStart(
         buildWorkspaceOptimizeStartBody({
@@ -298,63 +477,12 @@ export function useWorkspace() {
         }),
         activeProfileId,
       );
-      currentOptimizeJobIdRef.current = job_id;
-      const poll = () => {
-        getOptimizeStatus(job_id)
-          .then((status) => {
-            applyRunningOptimizeStatus(status);
-            if (status.status === 'done' || status.status === 'error') {
-              applyOptimizeDone(status);
-            }
-          })
-          .catch((e) => {
-            currentOptimizeJobIdRef.current = null;
-            if (pollIntervalRef.current) {
-              clearInterval(pollIntervalRef.current);
-              pollIntervalRef.current = null;
-            }
-            setError(formatApiError(e));
-            setLoadingOptimize(false);
-            setOptimizeProgress(null);
-            setOptimizeCrewsDone(null);
-            setOptimizeTotalCrews(null);
-            setOptimizePhase(null);
-            setOptimizeEtaSeconds(null);
-            setOptimizeThroughput(null);
-            setOptimizePreview(null);
-          });
-      };
-
-      if (typeof EventSource !== 'undefined') {
-        const streamUrl = getOptimizeStreamUrl(job_id);
-        const eventSource = new EventSource(streamUrl);
-        eventSourceRef.current = eventSource;
-        eventSource.onmessage = (event) => {
-          try {
-            const status = JSON.parse(event.data) as OptimizeStatusResponse;
-            applyRunningOptimizeStatus(status);
-            if (status.status === 'done' || status.status === 'error') {
-              eventSource.close();
-              eventSourceRef.current = null;
-              applyOptimizeDone(status);
-            }
-          } catch {
-            // ignore parse errors; keep stream open
-          }
-        };
-        eventSource.onerror = () => {
-          eventSource.close();
-          eventSourceRef.current = null;
-          poll();
-          pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
-        };
-      } else {
-        poll();
-        pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
-      }
+      beginOptimizeTracking(job_id);
     } catch (e) {
+      clearPersistedOptimizeJob();
       setError(formatApiError(e));
       setLoadingOptimize(false);
+      setOptimizeStreamMode(null);
       setOptimizeProgress(null);
       setOptimizeCrewsDone(null);
       setOptimizeTotalCrews(null);
@@ -367,19 +495,30 @@ export function useWorkspace() {
 
   const handleCancelOptimize = () => {
     const jobId = currentOptimizeJobIdRef.current;
+    clearPersistedOptimizeJob();
     currentOptimizeJobIdRef.current = null;
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
+    if (sseReconnectTimerRef.current) {
+      clearTimeout(sseReconnectTimerRef.current);
+      sseReconnectTimerRef.current = null;
+    }
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
       pollIntervalRef.current = null;
     }
+    usePollingOnlyRef.current = false;
+    sseAttemptRef.current = 0;
     if (jobId) {
       cancelOptimizeJob(jobId).catch(() => {});
     }
+    setWorkspaceInfo(
+      'Optimization cancelled. The server may still finish this job in the background; wait a moment before starting another run on the same scenario if you see odd results.',
+    );
     setLoadingOptimize(false);
+    setOptimizeStreamMode(null);
     setOptimizeProgress(null);
     setOptimizeCrewsDone(null);
     setOptimizeTotalCrews(null);
@@ -392,6 +531,7 @@ export function useWorkspace() {
   // Handle saving a preset
   const handleSavePreset = async () => {
     setError(null);
+    setWorkspaceInfo(null);
     setSavingPreset(true);
     try {
       await savePreset(
@@ -490,6 +630,9 @@ export function useWorkspace() {
     setRightPanelCollapsed,
     error,
     setError,
+    workspaceInfo,
+    setWorkspaceInfo,
+    optimizeStreamMode,
     activeProfileId,
   };
 }

@@ -230,7 +230,11 @@ kobayashi/
 
 The server uses **Tokio + Axum 0.7**: an async multi-threaded runtime with an Axum router in `src/server/routes.rs`. CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking`, keeping the runtime responsive to concurrent requests. The API is **REST only**; there is no WebSocket support. The **frontend is not embedded** in the binary: the SPA is built with `npm run build` in `frontend/` and served from the filesystem (`frontend/dist`) when the server is run from the project root. Run the server from the project root so it can find `frontend/dist` and `data/`.
 
+**Ops:** `GET /api/health` returns JSON with `build` (crate version, optional `git_sha_short` when built from git), `server` (`started_at_utc`, effective `max_concurrent_cpu_jobs`, whether `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS` was set), and `data` (officer count, ship/hostile index `data_version` strings when present, load flags).
+
 The UI is served from the same origin as the API by default. For custom deployments (e.g. API behind a reverse proxy), set **`VITE_API_BASE`** at build time so API requests use that base URL: `VITE_API_BASE=/api npm run build` in `frontend/`.
+
+**Security:** `X-Profile-Id` / `?profile=` select a profile but are not authentication. For LAN/internet exposure, read [docs/DEPLOYMENT_SECURITY.md](docs/DEPLOYMENT_SECURITY.md) (optional `KOBAYASHI_API_KEY`, loopback trust, sync tokens).
 
 ---
 
