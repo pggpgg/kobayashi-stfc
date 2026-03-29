@@ -3,7 +3,7 @@
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use tokio::sync::OwnedSemaphorePermit;
@@ -15,8 +15,7 @@ use crate::data::heuristics::{
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{resolve_below_decks_slots, CrewCandidate};
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel_with_registry,
-    scenario::build_shared_scenario_data_from_registry,
+    run_monte_carlo_parallel_with_registry, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
@@ -86,7 +85,9 @@ fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
     }
 }
 
-fn summarize_constraints(con: Option<&CrewSearchConstraints>) -> Option<OptimizeConstraintsSummary> {
+fn summarize_constraints(
+    con: Option<&CrewSearchConstraints>,
+) -> Option<OptimizeConstraintsSummary> {
     let c = con?;
     if c.is_empty() {
         return None;
@@ -191,11 +192,10 @@ impl OptimizeProgressSink {
         let Self::Job { job_id, .. } = self else {
             return;
         };
-        if let Ok(mut map) = optimize_jobs().lock() {
-            if let Some(state) = map.get_mut(job_id) {
-                state.total_crews = h_total;
-                state.phase = Some("heuristics".to_string());
-            }
+        let mut map = lock_jobs();
+        if let Some(state) = map.get_mut(job_id) {
+            state.total_crews = h_total;
+            state.phase = Some("heuristics".to_string());
         }
     }
 
@@ -208,19 +208,18 @@ impl OptimizeProgressSink {
         let Self::Job { job_id, .. } = self else {
             return;
         };
-        if let Ok(mut map) = optimize_jobs().lock() {
-            if let Some(state) = map.get_mut(job_id) {
-                state.crews_done = h_total;
-                state.progress = if heuristics_only { 100 } else { 10 };
-                let ranked = rank_results(results.to_vec());
-                state.progress_preview = Some(
-                    ranked
-                        .iter()
-                        .take(5)
-                        .map(crew_recommendation_from_ranked)
-                        .collect(),
-                );
-            }
+        let mut map = lock_jobs();
+        if let Some(state) = map.get_mut(job_id) {
+            state.crews_done = h_total;
+            state.progress = if heuristics_only { 100 } else { 10 };
+            let ranked = rank_results(results.to_vec());
+            state.progress_preview = Some(
+                ranked
+                    .iter()
+                    .take(5)
+                    .map(crew_recommendation_from_ranked)
+                    .collect(),
+            );
         }
     }
 
@@ -246,25 +245,24 @@ impl OptimizeProgressSink {
                 let progress = if total_crews == 0 {
                     base_progress
                 } else {
-                    let pct = (crews_done as f64 / total_crews as f64)
-                        * (100.0 - base_progress as f64);
+                    let pct =
+                        (crews_done as f64 / total_crews as f64) * (100.0 - base_progress as f64);
                     (base_progress as f64 + pct).round().min(100.0) as u8
                 };
-                if let Ok(mut map) = optimize_jobs().lock() {
-                    if let Some(state) = map.get_mut(job_id) {
-                        state.progress = progress;
-                        state.crews_done = crews_done;
-                        state.total_crews = total_crews;
-                        state.phase = Some(tick.phase.to_string());
-                        if let Some(partial) = tick.partial_top.as_ref() {
-                            state.progress_preview = Some(
-                                partial
-                                    .iter()
-                                    .take(5)
-                                    .map(crew_recommendation_from_ranked)
-                                    .collect(),
-                            );
-                        }
+                let mut map = lock_jobs();
+                if let Some(state) = map.get_mut(job_id) {
+                    state.progress = progress;
+                    state.crews_done = crews_done;
+                    state.total_crews = total_crews;
+                    state.phase = Some(tick.phase.to_string());
+                    if let Some(partial) = tick.partial_top.as_ref() {
+                        state.progress_preview = Some(
+                            partial
+                                .iter()
+                                .take(5)
+                                .map(crew_recommendation_from_ranked)
+                                .collect(),
+                        );
                     }
                 }
                 true
@@ -330,8 +328,7 @@ fn gather_optimize_simulation_results(
     if let Some(ref c) = crew_constraints {
         h_candidates = filter_candidates(h_candidates, c);
     }
-    let is_seeded_genetic =
-        strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
+    let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
 
     if let OptimizeProgressSink::Job {
         is_seeded_genetic: sink_sg,
@@ -351,26 +348,26 @@ fn gather_optimize_simulation_results(
     )
     .using_placeholder_combatants;
 
-    let mut all_results: Vec<SimulationResult> =
-        if heuristics_seeds_nonempty && !is_seeded_genetic {
-            let h_total = h_candidates.len() as u32;
-            sink.on_heuristics_start(h_total);
-            let (results, _) = run_monte_carlo_parallel_with_registry(
-                registry,
-                &request.ship,
-                &request.hostile,
-                request.ship_tier,
-                request.ship_level,
-                &h_candidates,
-                sims as usize,
-                seed,
-                profile_id,
-            );
-            sink.on_heuristics_complete(heuristics_only, h_total, &results);
-            results
-        } else {
-            Vec::new()
-        };
+    let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty && !is_seeded_genetic
+    {
+        let h_total = h_candidates.len() as u32;
+        sink.on_heuristics_start(h_total);
+        let (results, _) = run_monte_carlo_parallel_with_registry(
+            registry,
+            &request.ship,
+            &request.hostile,
+            request.ship_tier,
+            request.ship_level,
+            &h_candidates,
+            sims as usize,
+            seed,
+            profile_id,
+        );
+        sink.on_heuristics_complete(heuristics_only, h_total, &results);
+        results
+    } else {
+        Vec::new()
+    };
 
     let analytical_prefilter = if !heuristics_only {
         let scenario = OptimizationScenario {
@@ -391,17 +388,13 @@ fn gather_optimize_simulation_results(
             profile_id,
             tiered_scout_sims: None,
             tiered_top_k: None,
-            analytical_prefilter_keep: request
-                .analytical_prefilter_keep
-                .map(|n| n as usize),
+            analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
             below_decks_slots,
             constraints: crew_constraints.clone(),
         };
-        let outcome = optimize_scenario_with_progress_with_registry(
-            registry,
-            &scenario,
-            |tick| sink.on_optimize_tick(tick),
-        );
+        let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
+            sink.on_optimize_tick(tick)
+        });
         if sink.job_cancelled() {
             return Err(());
         }
@@ -467,7 +460,9 @@ fn build_optimize_response(
         approximate_notes.push(format!(
             "Approximate analytical pre-filter (closed-form expected hull damage to defender, not win rate) kept {kept} of {generated} crews before Monte Carlo."
         ));
-    } else if request.analytical_prefilter_keep.is_some() && matches!(meta.strategy, OptimizerStrategy::Genetic) {
+    } else if request.analytical_prefilter_keep.is_some()
+        && matches!(meta.strategy, OptimizerStrategy::Genetic)
+    {
         approximate_notes.push(
             "analytical_prefilter_keep was ignored because the genetic strategy builds its own population."
                 .to_string(),
@@ -493,12 +488,8 @@ fn build_optimize_response(
             below_decks_slots: meta.below_decks_slots as u32,
             optimize_constraints: meta.optimize_constraints.clone(),
             analytical_prefilter_keep: request.analytical_prefilter_keep,
-            analytical_prefilter_from: meta
-                .analytical_prefilter
-                .map(|(g, _)| g as u32),
-            analytical_prefilter_kept: meta
-                .analytical_prefilter
-                .map(|(_, k)| k as u32),
+            analytical_prefilter_from: meta.analytical_prefilter.map(|(g, _)| g as u32),
+            analytical_prefilter_kept: meta.analytical_prefilter.map(|(_, k)| k as u32),
         },
         recommendations: ranked_results
             .into_iter()
@@ -542,7 +533,12 @@ pub fn run_optimize(
         gather_optimize_simulation_results(registry, request, profile_id, &mut sink)
             .expect("sync optimize does not cancel");
     let duration_ms = start.elapsed().as_millis() as u64;
-    Ok(build_optimize_response(request, all_results, duration_ms, &meta))
+    Ok(build_optimize_response(
+        request,
+        all_results,
+        duration_ms,
+        &meta,
+    ))
 }
 
 // --- Optimize job store (for progress polling) ---
@@ -609,6 +605,19 @@ fn optimize_jobs() -> &'static Mutex<HashMap<String, OptimizeJobState>> {
 
 fn optimize_cancel_flags() -> &'static Mutex<HashMap<String, Arc<AtomicBool>>> {
     OPTIMIZE_CANCEL_FLAGS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// Lock the optimize job map. On a poisoned mutex (peer thread panicked while holding the lock),
+/// recover the guard with `PoisonError::into_inner` so API handlers keep working instead of
+/// panicking the process.
+fn lock_jobs() -> MutexGuard<'static, HashMap<String, OptimizeJobState>> {
+    optimize_jobs().lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn lock_cancel_flags() -> MutexGuard<'static, HashMap<String, Arc<AtomicBool>>> {
+    optimize_cancel_flags()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
 }
 
 fn next_job_id() -> String {
@@ -690,7 +699,7 @@ pub fn start_optimize_job(
         .map_or(false, |s| !s.is_empty());
 
     {
-        let mut map = optimize_jobs().lock().unwrap();
+        let mut map = lock_jobs();
         map.insert(
             job_id.clone(),
             OptimizeJobState {
@@ -704,7 +713,7 @@ pub fn start_optimize_job(
                 error: None,
             },
         );
-        let mut cancel_flags = optimize_cancel_flags().lock().unwrap();
+        let mut cancel_flags = lock_cancel_flags();
         cancel_flags.insert(job_id.clone(), cancel_flag.clone());
         prune_completed_optimize_jobs_over_cap(
             &mut map,
@@ -736,36 +745,31 @@ pub fn start_optimize_job(
             Ok((all_results, meta)) => {
                 let duration_ms = start.elapsed().as_millis() as u64;
                 let response = build_optimize_response(&request, all_results, duration_ms, &meta);
-                if let Ok(mut map) = optimize_jobs().lock() {
-                    if let Some(state) = map.get_mut(&job_id_thread) {
-                        state.status = OptimizeJobStatus::Done;
-                        state.progress = 100;
-                        state.phase = None;
-                        state.progress_preview = None;
-                        state.result = Some(response);
-                    }
+                let mut map = lock_jobs();
+                if let Some(state) = map.get_mut(&job_id_thread) {
+                    state.status = OptimizeJobStatus::Done;
+                    state.progress = 100;
+                    state.phase = None;
+                    state.progress_preview = None;
+                    state.result = Some(response);
                 }
             }
             Err(()) => {
-                if let Ok(mut map) = optimize_jobs().lock() {
-                    if let Some(state) = map.get_mut(&job_id_thread) {
-                        state.status = OptimizeJobStatus::Error;
-                        state.error = Some("Cancelled".to_string());
-                    }
+                let mut map = lock_jobs();
+                if let Some(state) = map.get_mut(&job_id_thread) {
+                    state.status = OptimizeJobStatus::Error;
+                    state.error = Some("Cancelled".to_string());
                 }
             }
         }
-        optimize_cancel_flags()
-            .lock()
-            .unwrap()
-            .remove(&job_id_thread);
+        lock_cancel_flags().remove(&job_id_thread);
     });
 
     Ok(OptimizeStartResponse { job_id })
 }
 
 pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeStatusError> {
-    let map = optimize_jobs().lock().unwrap();
+    let map = lock_jobs();
     let state = map.get(job_id).ok_or(OptimizeStatusError::NotFound)?;
     let status = match &state.status {
         OptimizeJobStatus::Running => "running",
@@ -818,8 +822,11 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
 
 pub fn cancel_job(job_id: &str) -> Result<(), OptimizeStatusError> {
     let flag = {
-        let flags = optimize_cancel_flags().lock().unwrap();
-        flags.get(job_id).cloned().ok_or(OptimizeStatusError::NotFound)?
+        let flags = lock_cancel_flags();
+        flags
+            .get(job_id)
+            .cloned()
+            .ok_or(OptimizeStatusError::NotFound)?
     };
     flag.store(true, Ordering::Relaxed);
     Ok(())
@@ -844,7 +851,10 @@ mod optimize_job_store_tests {
 
     #[test]
     fn parse_job_timestamp_reads_opt_prefix() {
-        assert_eq!(parse_optimize_job_timestamp_ms("opt_1700000000123_0"), 1700000000123);
+        assert_eq!(
+            parse_optimize_job_timestamp_ms("opt_1700000000123_0"),
+            1700000000123
+        );
         assert_eq!(parse_optimize_job_timestamp_ms("opt_99_7"), 99);
         assert_eq!(parse_optimize_job_timestamp_ms("bad"), 0);
     }
