@@ -294,6 +294,8 @@ pub struct CrewConfiguration {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActiveAbilityEffect {
     pub ability_name: String,
+    /// Canonical officer id when this row comes from an officer seat (for trace attribution).
+    pub officer_id: Option<String>,
     pub effect: AbilityEffect,
     pub boosted: bool,
     pub condition: Option<AbilityCondition>,
@@ -326,6 +328,7 @@ pub fn active_effects_for_timing(
         })
         .map(|seat_context| ActiveAbilityEffect {
             ability_name: seat_context.ability.name.clone(),
+            officer_id: seat_context.officer_id.clone(),
             effect: seat_context.ability.effect,
             boosted: seat_context.boosted,
             condition: seat_context.ability.condition.clone(),

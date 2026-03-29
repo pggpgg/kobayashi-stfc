@@ -19,6 +19,9 @@ pub(crate) struct EffectAccumulator {
     crit_chance_bonus: f64,
     /// Product of timed [`AbilityEffect::CritDamageMultiplier`] for the current shot stack.
     crit_damage_multiplier: f64,
+    /// When true, each applied effect appends a row to [`Self::contribution_lines`] for `stack_resolution` traces.
+    trace_contributions: bool,
+    contribution_lines: Vec<Value>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -39,7 +42,7 @@ pub(crate) enum EffectStatKey {
 }
 
 impl EffectStatKey {
-    fn as_trace_key(self) -> &'static str {
+    pub(crate) fn as_trace_key(self) -> &'static str {
         match self {
             EffectStatKey::PreAttackPierceBonus => "pre_attack_pierce_bonus",
             EffectStatKey::DefenseMitigationBonus => "defense_mitigation_bonus",
@@ -94,11 +97,179 @@ impl Default for EffectAccumulator {
             round_end_modifier_sum: 0.0,
             crit_chance_bonus: 0.0,
             crit_damage_multiplier: 1.0,
+            trace_contributions: false,
+            contribution_lines: Vec::new(),
         }
     }
 }
 
+fn timing_trace_id(timing: TimingWindow) -> &'static str {
+    match timing {
+        TimingWindow::CombatBegin => "combat_begin",
+        TimingWindow::RoundStart => "round_start",
+        TimingWindow::AttackPhase => "attack_phase",
+        TimingWindow::AfterSubround => "after_subround",
+        TimingWindow::DefensePhase => "defense_phase",
+        TimingWindow::RoundEnd => "round_end",
+        TimingWindow::ShieldBreak => "shield_break",
+        TimingWindow::Kill => "kill",
+        TimingWindow::HullBreach => "hull_breach",
+        TimingWindow::ReceiveDamage => "receive_damage",
+        TimingWindow::CombatEnd => "combat_end",
+    }
+}
+
 impl EffectAccumulator {
+    pub(crate) fn set_trace_contributions(&mut self, on: bool) {
+        self.trace_contributions = on;
+    }
+
+    fn push_contribution_line(
+        &mut self,
+        ability: &str,
+        officer_id: Option<&str>,
+        timing: TimingWindow,
+        effect_kind: &'static str,
+        target: &str,
+        value: f64,
+    ) {
+        if !self.trace_contributions {
+            return;
+        }
+        let mut m = Map::new();
+        m.insert("ability".to_string(), Value::String(ability.to_string()));
+        if let Some(o) = officer_id {
+            m.insert("officer_id".to_string(), Value::String(o.to_string()));
+        }
+        m.insert(
+            "timing".to_string(),
+            Value::String(timing_trace_id(timing).to_string()),
+        );
+        m.insert(
+            "effect".to_string(),
+            Value::String(effect_kind.to_string()),
+        );
+        m.insert("target".to_string(), Value::String(target.to_string()));
+        m.insert("value".to_string(), Value::from(round_f64(value)));
+        self.contribution_lines.push(Value::Object(m));
+    }
+
+    fn add_stack_flat_traced(
+        &mut self,
+        key: EffectStatKey,
+        flat_value: f64,
+        timing: TimingWindow,
+        source: Option<(&str, Option<&str>)>,
+        effect_kind: &'static str,
+    ) {
+        self.stacks
+            .add(StackContribution::flat(key, flat_value));
+        if self.trace_contributions {
+            if let Some((ab, oid)) = source {
+                let target = format!("stack:{}:flat", key.as_trace_key());
+                self.push_contribution_line(ab, oid, timing, effect_kind, &target, flat_value);
+            }
+        }
+    }
+
+    fn trace_add_pre_mod(
+        &mut self,
+        source: Option<(&str, Option<&str>)>,
+        timing: TimingWindow,
+        effect_kind: &'static str,
+        delta: f64,
+    ) {
+        self.pre_attack_modifier_sum += delta;
+        if self.trace_contributions {
+            if let Some((ab, oid)) = source {
+                self.push_contribution_line(
+                    ab,
+                    oid,
+                    timing,
+                    effect_kind,
+                    "pre_attack_modifier_sum",
+                    delta,
+                );
+            }
+        }
+    }
+
+    fn trace_add_attack_phase_mod(
+        &mut self,
+        source: Option<(&str, Option<&str>)>,
+        timing: TimingWindow,
+        effect_kind: &'static str,
+        delta: f64,
+    ) {
+        self.attack_phase_damage_modifier_sum += delta;
+        if self.trace_contributions {
+            if let Some((ab, oid)) = source {
+                self.push_contribution_line(
+                    ab,
+                    oid,
+                    timing,
+                    effect_kind,
+                    "attack_phase_damage_modifier_sum",
+                    delta,
+                );
+            }
+        }
+    }
+
+    fn trace_add_round_end_mod(
+        &mut self,
+        source: Option<(&str, Option<&str>)>,
+        timing: TimingWindow,
+        effect_kind: &'static str,
+        delta: f64,
+    ) {
+        self.round_end_modifier_sum += delta;
+        if self.trace_contributions {
+            if let Some((ab, oid)) = source {
+                self.push_contribution_line(
+                    ab,
+                    oid,
+                    timing,
+                    effect_kind,
+                    "round_end_modifier_sum",
+                    delta,
+                );
+            }
+        }
+    }
+
+    fn trace_crit_chance(&mut self, source: Option<(&str, Option<&str>)>, timing: TimingWindow, v: f64) {
+        self.crit_chance_bonus += v;
+        if self.trace_contributions {
+            if let Some((ab, oid)) = source {
+                self.push_contribution_line(ab, oid, timing, "CritChanceBonus", "crit_chance_bonus", v);
+            }
+        }
+    }
+
+    fn trace_crit_damage_mult(
+        &mut self,
+        source: Option<(&str, Option<&str>)>,
+        timing: TimingWindow,
+        factor: f64,
+    ) {
+        if factor.is_finite() && factor > 0.0 {
+            self.crit_damage_multiplier *= factor;
+            if self.trace_contributions {
+                if let Some((ab, oid)) = source {
+                    self.push_contribution_line(
+                        ab,
+                        oid,
+                        timing,
+                        "CritDamageMultiplier",
+                        "crit_damage_multiplier",
+                        factor,
+                    );
+                }
+            }
+        }
+    }
+
     pub(crate) fn pre_attack_multiplier(&self) -> f64 {
         (1.0 + self.pre_attack_modifier_sum).max(0.0)
     }
@@ -216,6 +387,7 @@ impl EffectAccumulator {
         self.round_end_modifier_sum = 0.0;
         self.crit_chance_bonus = 0.0;
         self.crit_damage_multiplier = 1.0;
+        self.contribution_lines.clear();
     }
 
     pub(crate) fn merge_from(&mut self, other: &EffectAccumulator) {
@@ -225,6 +397,10 @@ impl EffectAccumulator {
         self.round_end_modifier_sum = other.round_end_modifier_sum;
         self.crit_chance_bonus += other.crit_chance_bonus;
         self.crit_damage_multiplier *= other.crit_damage_multiplier;
+        if self.trace_contributions {
+            self.contribution_lines
+                .extend(other.contribution_lines.iter().cloned());
+        }
     }
 
     /// Additive merge for cross-sub-round carry (AfterSubround → next weapon) without overwriting round base sums.
@@ -235,6 +411,10 @@ impl EffectAccumulator {
         self.round_end_modifier_sum += carry.round_end_modifier_sum;
         self.crit_chance_bonus += carry.crit_chance_bonus;
         self.crit_damage_multiplier *= carry.crit_damage_multiplier;
+        if self.trace_contributions {
+            self.contribution_lines
+                .extend(carry.contribution_lines.iter().cloned());
+        }
     }
 
     /// JSON-friendly base / modifier / flat decomposition for trace (`stack_resolution` event).
@@ -288,6 +468,12 @@ impl EffectAccumulator {
         if !stacks_obj.is_empty() {
             out.insert("stacks".to_string(), Value::Object(stacks_obj));
         }
+        if !self.contribution_lines.is_empty() {
+            out.insert(
+                "effect_contributions".to_string(),
+                Value::Array(self.contribution_lines.clone()),
+            );
+        }
         out
     }
 
@@ -300,12 +486,12 @@ impl EffectAccumulator {
         round_index: u32,
     ) {
         for effect in effects {
-            self.add_effect(
-                timing,
-                scale_effect(effect.effect, assimilated_active),
-                base_attack,
-                round_index,
-            );
+            let scaled = scale_effect(effect.effect, assimilated_active);
+            let src = Some((
+                effect.ability_name.as_str(),
+                effect.officer_id.as_deref(),
+            ));
+            self.add_effect(timing, scaled, base_attack, round_index, src);
         }
     }
 
@@ -315,6 +501,7 @@ impl EffectAccumulator {
         effect: AbilityEffect,
         base_attack: f64,
         round_index: u32,
+        source: Option<(&str, Option<&str>)>,
     ) {
         if matches!(
             timing,
@@ -324,30 +511,30 @@ impl EffectAccumulator {
                 | TimingWindow::AfterSubround
                 | TimingWindow::DefensePhase
         ) {
-            match &effect {
-                AbilityEffect::CritChanceBonus(v) => {
-                    self.crit_chance_bonus += *v;
-                    return;
-                }
-                AbilityEffect::CritDamageMultiplier(m) => {
-                    if m.is_finite() && *m > 0.0 {
-                        self.crit_damage_multiplier *= *m;
-                    }
-                    return;
-                }
-                _ => {}
+            if let AbilityEffect::CritChanceBonus(v) = &effect {
+                self.trace_crit_chance(source, timing, *v);
+                return;
+            }
+            if let AbilityEffect::CritDamageMultiplier(m) = &effect {
+                self.trace_crit_damage_mult(source, timing, *m);
+                return;
             }
         }
 
         match timing {
             TimingWindow::CombatBegin | TimingWindow::RoundStart => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
-                    self.pre_attack_modifier_sum += modifier;
+                    self.trace_add_pre_mod(source, timing, "AttackMultiplier", modifier);
                 }
-                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
-                    EffectStatKey::PreAttackPierceBonus,
-                    value,
-                )),
+                AbilityEffect::PierceBonus(value) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::PreAttackPierceBonus,
+                        value,
+                        timing,
+                        source,
+                        "PierceBonus",
+                    );
+                }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
@@ -358,28 +545,58 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexShredBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexShredBonus",
+                    );
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexBarrierBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexBarrierBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDamageBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDamageBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDefenseBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDefenseBonus",
+                    );
                 }
                 AbilityEffect::IsolyticCascadeDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::IsolyticCascadeDamageBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "IsolyticCascadeDamageBonus",
+                    );
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::ShieldMitigationBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "ShieldMitigationBonus",
+                    );
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
@@ -392,7 +609,12 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial - r * decay_per_round).max(floor);
-                    self.pre_attack_modifier_sum += value - 1.0;
+                    self.trace_add_pre_mod(
+                        source,
+                        timing,
+                        "DecayingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
                 AbilityEffect::AccumulatingAttackMultiplier {
                     initial,
@@ -401,17 +623,28 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial + r * growth_per_round).min(ceiling);
-                    self.pre_attack_modifier_sum += value - 1.0;
+                    self.trace_add_pre_mod(
+                        source,
+                        timing,
+                        "AccumulatingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
             },
             TimingWindow::AttackPhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
-                    self.attack_phase_damage_modifier_sum += modifier;
+                    self.trace_add_attack_phase_mod(source, timing, "AttackMultiplier", modifier);
                 }
-                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
-                    EffectStatKey::AttackPhaseDamage,
-                    value * base_attack * 0.5,
-                )),
+                AbilityEffect::PierceBonus(value) => {
+                    let flat = value * base_attack * 0.5;
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackPhaseDamage,
+                        flat,
+                        timing,
+                        source,
+                        "PierceBonus",
+                    );
+                }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
@@ -422,28 +655,58 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexShredBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexShredBonus",
+                    );
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexBarrierBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexBarrierBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDamageBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDamageBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDefenseBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDefenseBonus",
+                    );
                 }
                 AbilityEffect::IsolyticCascadeDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::IsolyticCascadeDamageBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "IsolyticCascadeDamageBonus",
+                    );
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::ShieldMitigationBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "ShieldMitigationBonus",
+                    );
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
@@ -456,7 +719,12 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial - r * decay_per_round).max(floor);
-                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                    self.trace_add_attack_phase_mod(
+                        source,
+                        timing,
+                        "DecayingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
                 AbilityEffect::AccumulatingAttackMultiplier {
                     initial,
@@ -465,18 +733,29 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial + r * growth_per_round).min(ceiling);
-                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                    self.trace_add_attack_phase_mod(
+                        source,
+                        timing,
+                        "AccumulatingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
             },
             // Same stacking rules as AttackPhase; evaluated once per sub-round end for carry into later weapons.
             TimingWindow::AfterSubround => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
-                    self.attack_phase_damage_modifier_sum += modifier;
+                    self.trace_add_attack_phase_mod(source, timing, "AttackMultiplier", modifier);
                 }
-                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
-                    EffectStatKey::AttackPhaseDamage,
-                    value * base_attack * 0.5,
-                )),
+                AbilityEffect::PierceBonus(value) => {
+                    let flat = value * base_attack * 0.5;
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackPhaseDamage,
+                        flat,
+                        timing,
+                        source,
+                        "PierceBonus",
+                    );
+                }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
@@ -487,28 +766,58 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexShredBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexShredBonus",
+                    );
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexBarrierBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexBarrierBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDamageBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDamageBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDefenseBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDefenseBonus",
+                    );
                 }
                 AbilityEffect::IsolyticCascadeDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::IsolyticCascadeDamageBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "IsolyticCascadeDamageBonus",
+                    );
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::ShieldMitigationBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "ShieldMitigationBonus",
+                    );
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
@@ -521,7 +830,12 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial - r * decay_per_round).max(floor);
-                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                    self.trace_add_attack_phase_mod(
+                        source,
+                        timing,
+                        "DecayingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
                 AbilityEffect::AccumulatingAttackMultiplier {
                     initial,
@@ -530,17 +844,33 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial + r * growth_per_round).min(ceiling);
-                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                    self.trace_add_attack_phase_mod(
+                        source,
+                        timing,
+                        "AccumulatingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
             },
             TimingWindow::DefensePhase => match effect {
-                AbilityEffect::AttackMultiplier(modifier) => self.stacks.add(
-                    StackContribution::flat(EffectStatKey::DefenseMitigationBonus, modifier),
-                ),
-                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
-                    EffectStatKey::DefenseMitigationBonus,
-                    value,
-                )),
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::DefenseMitigationBonus,
+                        modifier,
+                        timing,
+                        source,
+                        "AttackMultiplier",
+                    );
+                }
+                AbilityEffect::PierceBonus(value) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::DefenseMitigationBonus,
+                        value,
+                        timing,
+                        source,
+                        "PierceBonus",
+                    );
+                }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
@@ -551,28 +881,58 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexShredBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexShredBonus",
+                    );
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexBarrierBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexBarrierBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDamageBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDamageBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDefenseBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDefenseBonus",
+                    );
                 }
                 AbilityEffect::IsolyticCascadeDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::IsolyticCascadeDamageBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "IsolyticCascadeDamageBonus",
+                    );
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::ShieldMitigationBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "ShieldMitigationBonus",
+                    );
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
@@ -585,12 +945,17 @@ impl EffectAccumulator {
             // (`engine.rs`: RoundEnd is merged into `phase_effects_round` post-weapon-loop).
             TimingWindow::RoundEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
-                    self.round_end_modifier_sum += modifier;
+                    self.trace_add_round_end_mod(source, timing, "AttackMultiplier", modifier);
                 }
-                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
-                    EffectStatKey::RoundEndDamage,
-                    value,
-                )),
+                AbilityEffect::PierceBonus(value) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::RoundEndDamage,
+                        value,
+                        timing,
+                        source,
+                        "PierceBonus",
+                    );
+                }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
@@ -599,34 +964,76 @@ impl EffectAccumulator {
                 AbilityEffect::Burning { .. } => {}
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldRegen, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ShieldRegen,
+                        v,
+                        timing,
+                        source,
+                        "ShieldRegen",
+                    );
                 }
                 AbilityEffect::HullRegen(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::HullRegen, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::HullRegen,
+                        v,
+                        timing,
+                        source,
+                        "HullRegen",
+                    );
                 }
                 AbilityEffect::ApexShredBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexShredBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexShredBonus",
+                    );
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexBarrierBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexBarrierBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDamageBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDamageBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDefenseBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDefenseBonus",
+                    );
                 }
                 AbilityEffect::IsolyticCascadeDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::IsolyticCascadeDamageBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "IsolyticCascadeDamageBonus",
+                    );
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::ShieldMitigationBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "ShieldMitigationBonus",
+                    );
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
@@ -639,7 +1046,12 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial - r * decay_per_round).max(floor);
-                    self.round_end_modifier_sum += value - 1.0;
+                    self.trace_add_round_end_mod(
+                        source,
+                        timing,
+                        "DecayingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
                 AbilityEffect::AccumulatingAttackMultiplier {
                     initial,
@@ -648,7 +1060,12 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial + r * growth_per_round).min(ceiling);
-                    self.round_end_modifier_sum += value - 1.0;
+                    self.trace_add_round_end_mod(
+                        source,
+                        timing,
+                        "AccumulatingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
             },
             TimingWindow::ShieldBreak
@@ -657,12 +1074,17 @@ impl EffectAccumulator {
             | TimingWindow::ReceiveDamage
             | TimingWindow::CombatEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
-                    self.pre_attack_modifier_sum += modifier;
+                    self.trace_add_pre_mod(source, timing, "AttackMultiplier", modifier);
                 }
-                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
-                    EffectStatKey::PreAttackPierceBonus,
-                    value,
-                )),
+                AbilityEffect::PierceBonus(value) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::PreAttackPierceBonus,
+                        value,
+                        timing,
+                        source,
+                        "PierceBonus",
+                    );
+                }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
                 AbilityEffect::Morale(_) => {}
@@ -671,34 +1093,76 @@ impl EffectAccumulator {
                 AbilityEffect::Burning { .. } => {}
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ShieldRegen, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ShieldRegen,
+                        v,
+                        timing,
+                        source,
+                        "ShieldRegen",
+                    );
                 }
                 AbilityEffect::HullRegen(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::HullRegen, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::HullRegen,
+                        v,
+                        timing,
+                        source,
+                        "HullRegen",
+                    );
                 }
                 AbilityEffect::ApexShredBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexShredBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexShredBonus",
+                    );
                 }
                 AbilityEffect::ApexBarrierBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ApexBarrierBonus,
+                        v,
+                        timing,
+                        source,
+                        "ApexBarrierBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDamageBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDamageBonus",
+                    );
                 }
                 AbilityEffect::IsolyticDefenseBonus(v) => {
-                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                    self.add_stack_flat_traced(
+                        EffectStatKey::IsolyticDefenseBonus,
+                        v,
+                        timing,
+                        source,
+                        "IsolyticDefenseBonus",
+                    );
                 }
                 AbilityEffect::IsolyticCascadeDamageBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::IsolyticCascadeDamageBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "IsolyticCascadeDamageBonus",
+                    );
                 }
                 AbilityEffect::ShieldMitigationBonus(v) => {
-                    self.stacks.add(StackContribution::flat(
+                    self.add_stack_flat_traced(
                         EffectStatKey::ShieldMitigationBonus,
                         v,
-                    ));
+                        timing,
+                        source,
+                        "ShieldMitigationBonus",
+                    );
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
@@ -711,7 +1175,12 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial - r * decay_per_round).max(floor);
-                    self.pre_attack_modifier_sum += value - 1.0;
+                    self.trace_add_pre_mod(
+                        source,
+                        timing,
+                        "DecayingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
                 AbilityEffect::AccumulatingAttackMultiplier {
                     initial,
@@ -720,7 +1189,12 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial + r * growth_per_round).min(ceiling);
-                    self.pre_attack_modifier_sum += value - 1.0;
+                    self.trace_add_pre_mod(
+                        source,
+                        timing,
+                        "AccumulatingAttackMultiplier",
+                        value - 1.0,
+                    );
                 }
             },
         }

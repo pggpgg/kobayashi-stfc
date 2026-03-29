@@ -507,8 +507,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         let weapon_round_base = phase_effects_round.clone();
         let mut phase_effects = EffectAccumulator::default();
         let mut after_subround_carry = EffectAccumulator::default();
+        after_subround_carry.set_trace_contributions(trace.is_enabled());
         for weapon_index in 0..num_sub_rounds {
             phase_effects.clear();
+            phase_effects.set_trace_contributions(trace.is_enabled());
             phase_effects.merge_from(&weapon_round_base);
             phase_effects.merge_carry_additive(&after_subround_carry);
             let weapon_base = attacker.weapon_attack(weapon_index).unwrap_or(attacker.attack);
@@ -943,6 +945,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
         // Build defender-side effect accumulator for this weapon base.
         let mut defender_phase_effects = EffectAccumulator::default();
+        defender_phase_effects.set_trace_contributions(trace.is_enabled());
         let defender_ctx = CombatContext {
             round_index,
             defender_hull_pct: combat_ctx.defender_hull_pct,
@@ -1026,12 +1029,14 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             AbilityEffect::AttackMultiplier(proc_pre_attack_multiplier - 1.0),
             defender_weapon_attack,
             round_index,
+            None,
         );
         defender_phase_effects.add_effect(
             TimingWindow::CombatBegin,
             AbilityEffect::PierceBonus(proc_pre_attack_pierce_bonus),
             defender_weapon_attack,
             round_index,
+            None,
         );
 
         let counter_damage_through = compute_damage_through_factor(

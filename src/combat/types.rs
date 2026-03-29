@@ -430,6 +430,11 @@ impl TraceCollector {
         }
     }
 
+    #[inline]
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
     pub fn events(self) -> Vec<CombatEvent> {
         self.events
     }

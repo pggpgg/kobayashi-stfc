@@ -4371,4 +4371,31 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         stacks.contains_key("pre_attack_damage"),
         "pre_attack_damage stack should be present for a weapon shot: {stacks:?}"
     );
+
+    let contrib = e
+        .values
+        .get("effect_contributions")
+        .and_then(|v| v.as_array())
+        .expect("effect_contributions array");
+    let row = contrib
+        .iter()
+        .find(|row| {
+            row.get("ability").and_then(|a| a.as_str()) == Some("attack_phase_amp")
+                && row.get("effect").and_then(|x| x.as_str()) == Some("AttackMultiplier")
+        })
+        .expect("per-effect row for attack_phase_amp AttackMultiplier");
+    assert_eq!(
+        row.get("target").and_then(|t| t.as_str()),
+        Some("attack_phase_damage_modifier_sum")
+    );
+    assert_eq!(
+        row.get("timing").and_then(|t| t.as_str()),
+        Some("attack_phase")
+    );
+    approx_eq(
+        row.get("value").and_then(|v| v.as_f64()).expect("value"),
+        0.25,
+        1e-9,
+    );
+    assert!(row.get("officer_id").is_none());
 }
