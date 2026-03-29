@@ -99,6 +99,16 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     assert!(first["below_decks"].as_array().is_some(), "below_decks should be an array");
     assert!(first["win_rate"].as_f64().is_some());
     assert!(first["avg_hull_remaining"].as_f64().is_some());
+    let wr = first["win_rate"].as_f64().expect("win_rate");
+    let wr_lo = first["win_rate_ci_low"].as_f64().expect("win_rate_ci_low");
+    let wr_hi = first["win_rate_ci_high"].as_f64().expect("win_rate_ci_high");
+    const CI_EPS: f64 = 1e-5;
+    assert!(
+        wr_lo - CI_EPS <= wr && wr <= wr_hi + CI_EPS,
+        "win rate {wr} should lie in Wilson CI [{wr_lo}, {wr_hi}]"
+    );
+    assert!(first["r1_kill_rate"].as_f64().is_some());
+    assert!(first["r1_kill_rate_ci_low"].as_f64().is_some());
 
     let mut prior_score: Option<f64> = None;
     let mut saw_non_trivial_metric = false;

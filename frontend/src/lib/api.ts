@@ -261,9 +261,21 @@ export interface CrewRecommendation {
   /** API returns string[]; we accept string for backward compatibility. */
   below_decks: string | string[];
   win_rate: number;
+  win_rate_ci_low: number;
+  win_rate_ci_high: number;
   stall_rate: number;
+  stall_rate_ci_low: number;
+  stall_rate_ci_high: number;
   loss_rate: number;
+  loss_rate_ci_low: number;
+  loss_rate_ci_high: number;
+  /** Win on round 1 (not a round-limit stall). */
+  r1_kill_rate: number;
+  r1_kill_rate_ci_low: number;
+  r1_kill_rate_ci_high: number;
   avg_hull_remaining: number;
+  avg_hull_remaining_ci_low: number;
+  avg_hull_remaining_ci_high: number;
 }
 
 export interface OptimizeResponse {

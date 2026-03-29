@@ -21,9 +21,23 @@ use super::scenario::{
 pub struct SimulationResult {
     pub candidate: CrewCandidate,
     pub win_rate: f64,
+    /// Wilson 95% interval lower bound (inclusive), clamped to [0, 1].
+    pub win_rate_ci_low: f64,
+    pub win_rate_ci_high: f64,
     pub stall_rate: f64,
+    pub stall_rate_ci_low: f64,
+    pub stall_rate_ci_high: f64,
     pub loss_rate: f64,
+    pub loss_rate_ci_low: f64,
+    pub loss_rate_ci_high: f64,
+    /// Fraction of trials where the attacker won on round 1 (no round-limit stall).
+    pub r1_kill_rate: f64,
+    pub r1_kill_rate_ci_low: f64,
+    pub r1_kill_rate_ci_high: f64,
     pub avg_hull_remaining: f64,
+    /// Normal-approx 95% CI for the per-trial mean (hull fraction on wins, 0 on losses).
+    pub avg_hull_remaining_ci_low: f64,
+    pub avg_hull_remaining_ci_high: f64,
 }
 
 /// Stable hash for deduplicating identical crews in GA populations (same process = deterministic).
@@ -39,20 +53,27 @@ pub fn crew_candidate_stable_hash(c: &CrewCandidate) -> u64 {
     h.finish()
 }
 
-/// Wilson score upper bound (approx. 95% interval) for binomial win proportion.
-/// Used to drop scout iterations for crews that are very unlikely to rank in the top K.
-fn win_rate_upper_wilson_95(wins: usize, trials: usize) -> f64 {
+/// Wilson score 95% two-sided interval for a binomial proportion.
+fn wilson_95_interval(successes: usize, trials: usize) -> (f64, f64) {
     if trials == 0 {
-        return 1.0;
+        return (0.0, 1.0);
     }
     const Z: f64 = 1.96;
     let n = trials as f64;
-    let p = wins as f64 / n;
+    let p = successes as f64 / n;
     let z2 = Z * Z;
     let denom = 1.0 + z2 / n;
-    let center = p + z2 / (2.0 * n);
-    let rad = Z * ((p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt());
-    ((center + rad) / denom).clamp(0.0, 1.0)
+    let center = (p + z2 / (2.0 * n)) / denom;
+    let rad = Z / denom * ((p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt());
+    let lo = (center - rad).clamp(0.0, 1.0);
+    let hi = (center + rad).clamp(0.0, 1.0);
+    (lo, hi)
+}
+
+/// Wilson score upper bound (approx. 95% interval) for binomial win proportion.
+/// Used to drop scout iterations for crews that are very unlikely to rank in the top K.
+fn win_rate_upper_wilson_95(wins: usize, trials: usize) -> f64 {
+    wilson_95_interval(wins, trials).1
 }
 
 #[derive(Clone, Copy)]
@@ -85,7 +106,10 @@ fn run_candidate_monte_carlo(
     let mut wins = 0usize;
     let mut stalls = 0usize;
     let mut losses = 0usize;
+    let mut r1_kills = 0usize;
     let mut surviving_hull_sum = 0.0f64;
+    let mut hull_mean = 0.0f64;
+    let mut hull_m2 = 0.0f64;
 
     let mut combat_config = SimulationConfig {
         rounds: input.rounds,
@@ -120,13 +144,28 @@ fn run_candidate_monte_carlo(
             losses += 1;
         }
 
-        if result.attacker_won {
+        let hull_draw = if result.attacker_won {
             let remaining = if result.winner_by_round_limit {
                 (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0)).clamp(0.0, 1.0)
             } else {
                 ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
             };
             surviving_hull_sum += remaining;
+            remaining
+        } else {
+            0.0
+        };
+        let i = n_done + 1;
+        let delta = hull_draw - hull_mean;
+        hull_mean += delta / i as f64;
+        let delta2 = hull_draw - hull_mean;
+        hull_m2 += delta * delta2;
+
+        if result.attacker_won
+            && !result.winner_by_round_limit
+            && result.rounds_simulated == 1
+        {
+            r1_kills += 1;
         }
 
         n_done += 1;
@@ -147,18 +186,53 @@ fn run_candidate_monte_carlo(
     let win_rate = if n_done == 0 { 0.0 } else { wins as f64 / n };
     let stall_rate = if n_done == 0 { 0.0 } else { stalls as f64 / n };
     let loss_rate = if n_done == 0 { 0.0 } else { losses as f64 / n };
+    let r1_kill_rate = if n_done == 0 {
+        0.0
+    } else {
+        r1_kills as f64 / n
+    };
     let avg_hull_remaining = if n_done == 0 {
         0.0
     } else {
         surviving_hull_sum / n
     };
 
+    let (win_rate_ci_low, win_rate_ci_high) = wilson_95_interval(wins, n_done);
+    let (stall_rate_ci_low, stall_rate_ci_high) = wilson_95_interval(stalls, n_done);
+    let (loss_rate_ci_low, loss_rate_ci_high) = wilson_95_interval(losses, n_done);
+    let (r1_kill_rate_ci_low, r1_kill_rate_ci_high) = wilson_95_interval(r1_kills, n_done);
+
+    let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if n_done == 0 {
+        (0.0, 0.0)
+    } else if n_done == 1 {
+        (avg_hull_remaining, avg_hull_remaining)
+    } else {
+        let var = hull_m2 / (n_done as f64 - 1.0);
+        let se = (var / n_done as f64).sqrt().max(0.0);
+        const Z: f64 = 1.96;
+        (
+            (avg_hull_remaining - Z * se).clamp(0.0, 1.0),
+            (avg_hull_remaining + Z * se).clamp(0.0, 1.0),
+        )
+    };
+
     SimulationResult {
         candidate: candidate.clone(),
         win_rate,
+        win_rate_ci_low,
+        win_rate_ci_high,
         stall_rate,
+        stall_rate_ci_low,
+        stall_rate_ci_high,
         loss_rate,
+        loss_rate_ci_low,
+        loss_rate_ci_high,
+        r1_kill_rate,
+        r1_kill_rate_ci_low,
+        r1_kill_rate_ci_high,
         avg_hull_remaining,
+        avg_hull_remaining_ci_low,
+        avg_hull_remaining_ci_high,
     }
 }
 
@@ -243,9 +317,20 @@ pub fn run_monte_carlo_parallel_deduped(
             SimulationResult {
                 candidate: c.clone(),
                 win_rate: r.win_rate,
+                win_rate_ci_low: r.win_rate_ci_low,
+                win_rate_ci_high: r.win_rate_ci_high,
                 stall_rate: r.stall_rate,
+                stall_rate_ci_low: r.stall_rate_ci_low,
+                stall_rate_ci_high: r.stall_rate_ci_high,
                 loss_rate: r.loss_rate,
+                loss_rate_ci_low: r.loss_rate_ci_low,
+                loss_rate_ci_high: r.loss_rate_ci_high,
+                r1_kill_rate: r.r1_kill_rate,
+                r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+                r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
                 avg_hull_remaining: r.avg_hull_remaining,
+                avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+                avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
             },
         );
     }
@@ -501,6 +586,14 @@ mod tests {
         let u50 = super::win_rate_upper_wilson_95(0, 50);
         let u200 = super::win_rate_upper_wilson_95(0, 200);
         assert!(u200 < u50, "more data should tighten upper bound: {u50} vs {u200}");
+    }
+
+    #[test]
+    fn wilson_interval_brackets_sample_proportion() {
+        let (lo, hi) = super::wilson_95_interval(50, 100);
+        assert!(lo <= 0.5 && 0.5 <= hi, "p=0.5 should lie in [{lo}, {hi}]");
+        let (lo0, hi0) = super::wilson_95_interval(0, 50);
+        assert!(lo0 <= 0.0 && 0.0 <= hi0);
     }
 
     #[test]

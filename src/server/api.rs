@@ -440,9 +440,20 @@ pub fn simulate_payload(
             below_decks,
         },
         win_rate: 0.0,
+        win_rate_ci_low: 0.0,
+        win_rate_ci_high: 0.0,
         stall_rate: 0.0,
+        stall_rate_ci_low: 0.0,
+        stall_rate_ci_high: 0.0,
         loss_rate: 0.0,
+        loss_rate_ci_low: 0.0,
+        loss_rate_ci_high: 0.0,
+        r1_kill_rate: 0.0,
+        r1_kill_rate_ci_low: 0.0,
+        r1_kill_rate_ci_high: 0.0,
         avg_hull_remaining: 0.0,
+        avg_hull_remaining_ci_low: 0.0,
+        avg_hull_remaining_ci_high: 0.0,
     });
 
     let wins = (result.win_rate * num_sims as f64).round() as u32;

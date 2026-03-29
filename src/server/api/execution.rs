@@ -34,9 +34,20 @@ pub struct CrewRecommendation {
     pub bridge: Vec<String>,
     pub below_decks: Vec<String>,
     pub win_rate: f64,
+    pub win_rate_ci_low: f64,
+    pub win_rate_ci_high: f64,
     pub stall_rate: f64,
+    pub stall_rate_ci_low: f64,
+    pub stall_rate_ci_high: f64,
     pub loss_rate: f64,
+    pub loss_rate_ci_low: f64,
+    pub loss_rate_ci_high: f64,
+    pub r1_kill_rate: f64,
+    pub r1_kill_rate_ci_low: f64,
+    pub r1_kill_rate_ci_high: f64,
     pub avg_hull_remaining: f64,
+    pub avg_hull_remaining_ci_low: f64,
+    pub avg_hull_remaining_ci_high: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -193,9 +204,20 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
             below_decks: r.below_decks,
         },
         win_rate: r.win_rate,
+        win_rate_ci_low: r.win_rate_ci_low,
+        win_rate_ci_high: r.win_rate_ci_high,
         stall_rate: r.stall_rate,
+        stall_rate_ci_low: r.stall_rate_ci_low,
+        stall_rate_ci_high: r.stall_rate_ci_high,
         loss_rate: r.loss_rate,
+        loss_rate_ci_low: r.loss_rate_ci_low,
+        loss_rate_ci_high: r.loss_rate_ci_high,
+        r1_kill_rate: r.r1_kill_rate,
+        r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+        r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
         avg_hull_remaining: r.avg_hull_remaining,
+        avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+        avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
     }
 }
 
@@ -337,8 +359,10 @@ fn build_optimize_response(
             OptimizerStrategy::Tiered => "tiered",
         }
     };
-    let mut notes =
-        vec!["Results are deterministic for the same ship, hostile, simulation count, and seed."];
+    let mut notes = vec![
+        "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+        "Per-crew 95% intervals: Wilson score for win/stall/loss/R1-kill rates; normal approximation for mean hull score per trial (hull fraction on wins, 0 on losses).",
+    ];
     if meta.is_seeded_genetic {
         notes.insert(0, "GA population seeded with heuristics crews.");
     } else if meta.heuristics_seeds_nonempty {
@@ -388,9 +412,20 @@ fn build_optimize_response(
                 bridge: result.bridge,
                 below_decks: result.below_decks,
                 win_rate: result.win_rate,
+                win_rate_ci_low: result.win_rate_ci_low,
+                win_rate_ci_high: result.win_rate_ci_high,
                 stall_rate: result.stall_rate,
+                stall_rate_ci_low: result.stall_rate_ci_low,
+                stall_rate_ci_high: result.stall_rate_ci_high,
                 loss_rate: result.loss_rate,
+                loss_rate_ci_low: result.loss_rate_ci_low,
+                loss_rate_ci_high: result.loss_rate_ci_high,
+                r1_kill_rate: result.r1_kill_rate,
+                r1_kill_rate_ci_low: result.r1_kill_rate_ci_low,
+                r1_kill_rate_ci_high: result.r1_kill_rate_ci_high,
                 avg_hull_remaining: result.avg_hull_remaining,
+                avg_hull_remaining_ci_low: result.avg_hull_remaining_ci_low,
+                avg_hull_remaining_ci_high: result.avg_hull_remaining_ci_high,
             })
             .collect(),
         duration_ms: Some(duration_ms),
