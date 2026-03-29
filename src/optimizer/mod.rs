@@ -84,6 +84,16 @@ pub struct OptimizeRunOutcome {
     pub analytical_prefilter: Option<(usize, usize)>,
 }
 
+/// Progress update for async optimize jobs (SSE / polling): phase label, counts, optional partial top crews.
+#[derive(Debug, Clone)]
+pub struct OptimizeProgressTick {
+    pub crews_done: u32,
+    pub total_crews: u32,
+    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_confirm`.
+    pub phase: &'static str,
+    pub partial_top: Option<Vec<RankedCrewResult>>,
+}
+
 /// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, or tiered (scout → confirm).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptimizerStrategy {
@@ -210,7 +220,7 @@ fn optimize_scenario_tiered_with_registry(
         top_k,
         scenario.seed,
         scenario.profile_id,
-        |_, _| true,
+        |_| true,
     )
 }
 
@@ -341,14 +351,15 @@ where
     )
 }
 
-/// Like [optimize_scenario] but runs in batches and invokes `on_progress(done, total)`.
+/// Like [optimize_scenario] but runs in batches and invokes `on_progress` with phase and optional partial top-N.
 /// For exhaustive: done/total = crews. For genetic: done/total = generations. Tiered requires registry.
+/// Returning `false` from `on_progress` aborts between batches (sync callers typically always return `true`).
 pub fn optimize_scenario_with_progress<F>(
     scenario: &OptimizationScenario<'_>,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
-    F: FnMut(u32, u32),
+    F: FnMut(OptimizeProgressTick) -> bool,
 {
     match scenario.strategy {
         OptimizerStrategy::Tiered => {
@@ -399,8 +410,14 @@ where
             if total == 0 {
                 return Vec::new();
             }
-            // Report total immediately so UI shows "0 / total" while first batch runs.
-            on_progress(0, total as u32);
+            if !on_progress(OptimizeProgressTick {
+                crews_done: 0,
+                total_crews: total as u32,
+                phase: "monte_carlo",
+                partial_top: None,
+            }) {
+                return Vec::new();
+            }
 
             let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
             let ranges = batch_ranges(total, num_batches);
@@ -417,15 +434,30 @@ where
                     scenario.seed,
                 );
                 all_results.extend(batch_results);
-                on_progress(end as u32, total as u32);
+                let partial_top = rank_results(all_results.clone())
+                    .into_iter()
+                    .take(5)
+                    .collect::<Vec<_>>();
+                if !on_progress(OptimizeProgressTick {
+                    crews_done: end as u32,
+                    total_crews: total as u32,
+                    phase: "monte_carlo",
+                    partial_top: Some(partial_top),
+                }) {
+                    break;
+                }
             }
 
             rank_results(all_results)
         }
         OptimizerStrategy::Genetic => {
             optimize_scenario_genetic(scenario, |gen, max_gen, _| {
-                on_progress(gen as u32, max_gen as u32);
-                true
+                on_progress(OptimizeProgressTick {
+                    crews_done: gen as u32,
+                    total_crews: max_gen.max(1) as u32,
+                    phase: "genetic",
+                    partial_top: None,
+                })
             })
         }
     }
@@ -439,7 +471,7 @@ pub fn optimize_scenario_with_progress_with_registry<F>(
     mut on_progress: F,
 ) -> OptimizeRunOutcome
 where
-    F: FnMut(u32, u32) -> bool,
+    F: FnMut(OptimizeProgressTick) -> bool,
 {
     match scenario.strategy {
         OptimizerStrategy::Tiered => {
@@ -483,7 +515,7 @@ where
                 top_k,
                 scenario.seed,
                 scenario.profile_id,
-                &mut on_progress,
+                |tick| on_progress(tick),
             );
             OptimizeRunOutcome {
                 ranked,
@@ -528,7 +560,12 @@ where
                     analytical_prefilter,
                 };
             }
-            if !on_progress(0, total as u32) {
+            if !on_progress(OptimizeProgressTick {
+                crews_done: 0,
+                total_crews: total as u32,
+                phase: "monte_carlo",
+                partial_top: None,
+            }) {
                 return OptimizeRunOutcome {
                     ranked: Vec::new(),
                     analytical_prefilter,
@@ -554,7 +591,16 @@ where
                     scenario.profile_id,
                 );
                 all_results.extend(batch_results);
-                if !on_progress(end as u32, total as u32) {
+                let partial_top = rank_results(all_results.clone())
+                    .into_iter()
+                    .take(5)
+                    .collect::<Vec<_>>();
+                if !on_progress(OptimizeProgressTick {
+                    crews_done: end as u32,
+                    total_crews: total as u32,
+                    phase: "monte_carlo",
+                    partial_top: Some(partial_top),
+                }) {
                     break;
                 }
             }
@@ -566,8 +612,12 @@ where
         }
         OptimizerStrategy::Genetic => OptimizeRunOutcome {
             ranked: optimize_scenario_genetic(scenario, |gen, max_gen, _| {
-                on_progress(gen as u32, max_gen as u32);
-                true
+                on_progress(OptimizeProgressTick {
+                    crews_done: gen as u32,
+                    total_crews: max_gen.max(1) as u32,
+                    phase: "genetic",
+                    partial_top: None,
+                })
             }),
             analytical_prefilter: None,
         },
@@ -660,7 +710,7 @@ mod tests {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
         };
-        let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_, _| true);
+        let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true);
         assert!(
             out.ranked.len() <= 4,
             "expected at most 4 ranked crews, got {}",

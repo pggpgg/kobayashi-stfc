@@ -138,6 +138,6 @@ describe('OptimizePanel', () => {
         optimizeTotalCrews={200}
       />,
     );
-    expect(screen.getByText('Live status: 50 / 200 crews')).toBeTruthy();
+    expect(screen.getByText(/Live: units 50 \/ 200/)).toBeTruthy();
   });
 });

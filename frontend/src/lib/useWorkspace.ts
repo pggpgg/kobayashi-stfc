@@ -56,6 +56,10 @@ export function useWorkspace() {
   const [optimizeProgress, setOptimizeProgress] = useState<number | null>(null);
   const [optimizeCrewsDone, setOptimizeCrewsDone] = useState<number | null>(null);
   const [optimizeTotalCrews, setOptimizeTotalCrews] = useState<number | null>(null);
+  const [optimizePhase, setOptimizePhase] = useState<string | null>(null);
+  const [optimizeEtaSeconds, setOptimizeEtaSeconds] = useState<number | null>(null);
+  const [optimizeThroughput, setOptimizeThroughput] = useState<number | null>(null);
+  const [optimizePreview, setOptimizePreview] = useState<CrewRecommendation[] | null>(null);
   const [estimate, setEstimate] = useState<OptimizeEstimate | null>(null);
   const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<number | null>(null);
 
@@ -232,6 +236,29 @@ export function useWorkspace() {
     setOptimizeProgress(null);
     setOptimizeCrewsDone(null);
     setOptimizeTotalCrews(null);
+    setOptimizePhase(null);
+    setOptimizeEtaSeconds(null);
+    setOptimizeThroughput(null);
+    setOptimizePreview(null);
+  };
+
+  const applyRunningOptimizeStatus = (status: OptimizeStatusResponse) => {
+    if (status.progress != null) setOptimizeProgress(status.progress);
+    if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
+    if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
+    setOptimizePhase(status.phase ?? null);
+    setOptimizeEtaSeconds(
+      status.eta_seconds !== undefined && status.eta_seconds !== null
+        ? status.eta_seconds
+        : null,
+    );
+    setOptimizeThroughput(
+      status.throughput_crews_per_sec !== undefined &&
+        status.throughput_crews_per_sec !== null
+        ? status.throughput_crews_per_sec
+        : null,
+    );
+    setOptimizePreview(status.progress_preview ?? null);
   };
 
   // Handle running optimization
@@ -242,6 +269,10 @@ export function useWorkspace() {
     setOptimizeProgress(0);
     setOptimizeCrewsDone(0);
     setOptimizeTotalCrews(null);
+    setOptimizePhase(null);
+    setOptimizeEtaSeconds(null);
+    setOptimizeThroughput(null);
+    setOptimizePreview(null);
     try {
       const { job_id } = await optimizeStart(
         buildWorkspaceOptimizeStartBody({
@@ -271,9 +302,7 @@ export function useWorkspace() {
       const poll = () => {
         getOptimizeStatus(job_id)
           .then((status) => {
-            if (status.progress != null) setOptimizeProgress(status.progress);
-            if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
-            if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
+            applyRunningOptimizeStatus(status);
             if (status.status === 'done' || status.status === 'error') {
               applyOptimizeDone(status);
             }
@@ -289,6 +318,10 @@ export function useWorkspace() {
             setOptimizeProgress(null);
             setOptimizeCrewsDone(null);
             setOptimizeTotalCrews(null);
+            setOptimizePhase(null);
+            setOptimizeEtaSeconds(null);
+            setOptimizeThroughput(null);
+            setOptimizePreview(null);
           });
       };
 
@@ -299,9 +332,7 @@ export function useWorkspace() {
         eventSource.onmessage = (event) => {
           try {
             const status = JSON.parse(event.data) as OptimizeStatusResponse;
-            if (status.progress != null) setOptimizeProgress(status.progress);
-            if (status.crews_done != null) setOptimizeCrewsDone(status.crews_done);
-            if (status.total_crews != null) setOptimizeTotalCrews(status.total_crews);
+            applyRunningOptimizeStatus(status);
             if (status.status === 'done' || status.status === 'error') {
               eventSource.close();
               eventSourceRef.current = null;
@@ -327,6 +358,10 @@ export function useWorkspace() {
       setOptimizeProgress(null);
       setOptimizeCrewsDone(null);
       setOptimizeTotalCrews(null);
+      setOptimizePhase(null);
+      setOptimizeEtaSeconds(null);
+      setOptimizeThroughput(null);
+      setOptimizePreview(null);
     }
   };
 
@@ -348,6 +383,10 @@ export function useWorkspace() {
     setOptimizeProgress(null);
     setOptimizeCrewsDone(null);
     setOptimizeTotalCrews(null);
+    setOptimizePhase(null);
+    setOptimizeEtaSeconds(null);
+    setOptimizeThroughput(null);
+    setOptimizePreview(null);
   };
 
   // Handle saving a preset
@@ -404,6 +443,10 @@ export function useWorkspace() {
     optimizeProgress,
     optimizeCrewsDone,
     optimizeTotalCrews,
+    optimizePhase,
+    optimizeEtaSeconds,
+    optimizeThroughput,
+    optimizePreview,
     estimate,
     lastOptimizeDurationMs,
     // Optimization parameters

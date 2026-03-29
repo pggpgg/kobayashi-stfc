@@ -472,8 +472,26 @@ export interface OptimizeStatusResponse {
   progress?: number;
   crews_done?: number;
   total_crews?: number;
+  /** Server phase: heuristics, monte_carlo, genetic, tiered_scout, tiered_confirm */
+  phase?: string;
+  throughput_crews_per_sec?: number;
+  eta_seconds?: number;
+  progress_preview?: CrewRecommendation[];
   result?: OptimizeResponse;
   error?: string;
+}
+
+/** Human-readable label for optimize job `phase` (status / SSE). */
+export function formatOptimizePhaseLabel(phase: string | null | undefined): string {
+  if (!phase) return '';
+  const map: Record<string, string> = {
+    heuristics: 'Heuristics',
+    monte_carlo: 'Monte Carlo',
+    genetic: 'Genetic search',
+    tiered_scout: 'Tiered (scout)',
+    tiered_confirm: 'Tiered (confirm)',
+  };
+  return map[phase] ?? phase.replace(/_/g, ' ');
 }
 
 export async function fetchHeuristics(): Promise<string[]> {

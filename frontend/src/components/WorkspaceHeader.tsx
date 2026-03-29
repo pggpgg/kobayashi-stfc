@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
-import { fetchShips, fetchHostiles, getShipTiersLevels, formatApiError } from '../lib/api';
+import {
+  fetchShips,
+  fetchHostiles,
+  getShipTiersLevels,
+  formatApiError,
+  formatOptimizePhaseLabel,
+} from '../lib/api';
 import type { ShipListItem, HostileListItem, OptimizeEstimate } from '../lib/api';
 import type { CrewState } from '../lib/types';
 import { useProfile } from '../contexts/ProfileContext';
@@ -39,6 +45,8 @@ interface WorkspaceHeaderProps {
   optimizeProgress: number | null;
   optimizeCrewsDone: number | null;
   optimizeTotalCrews: number | null;
+  optimizePhase?: string | null;
+  optimizeEtaSeconds?: number | null;
 }
 
 export default function WorkspaceHeader({
@@ -63,6 +71,8 @@ export default function WorkspaceHeader({
   optimizeProgress,
   optimizeCrewsDone,
   optimizeTotalCrews,
+  optimizePhase = null,
+  optimizeEtaSeconds = null,
 }: WorkspaceHeaderProps) {
   const { activeProfileId } = useProfile();
   const { ownedOnly } = useWorkspaceMode();
@@ -299,10 +309,34 @@ export default function WorkspaceHeader({
                 />
               </div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                {optimizeTotalCrews != null && optimizeCrewsDone != null && optimizeTotalCrews > 0
-                  ? `${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
-                  : `${optimizeProgress}%`}
+                {optimizePhase === 'genetic' &&
+                optimizeTotalCrews != null &&
+                optimizeCrewsDone != null &&
+                optimizeTotalCrews > 0
+                  ? `gen ${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
+                  : optimizeTotalCrews != null && optimizeCrewsDone != null && optimizeTotalCrews > 0
+                    ? `${optimizeCrewsDone}/${optimizeTotalCrews} (${optimizeProgress}%)`
+                    : `${optimizeProgress}%`}
               </span>
+              {(formatOptimizePhaseLabel(optimizePhase) || optimizeEtaSeconds != null) && (
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    color: 'var(--text-muted)',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 200,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={
+                    formatOptimizePhaseLabel(optimizePhase) +
+                    (optimizeEtaSeconds != null ? ` · ETA ~${optimizeEtaSeconds}s` : '')
+                  }
+                >
+                  {formatOptimizePhaseLabel(optimizePhase)}
+                  {optimizeEtaSeconds != null ? ` · ~${optimizeEtaSeconds}s` : ''}
+                </span>
+              )}
             </div>
           )}
           <button

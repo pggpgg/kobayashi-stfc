@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { formatOptimizePhaseLabel } from '../lib/api';
 
 interface OptimizePanelProps {
   collapsed: boolean;
@@ -7,6 +8,9 @@ interface OptimizePanelProps {
   loadingOptimize: boolean;
   optimizeCrewsDone: number | null;
   optimizeTotalCrews: number | null;
+  optimizePhase?: string | null;
+  optimizeEtaSeconds?: number | null;
+  optimizeThroughput?: number | null;
   maxCandidates: number | null;
   onMaxCandidatesChange: (value: number | null) => void;
   prioritizeBelowDecksAbility: boolean;
@@ -59,6 +63,9 @@ export default function OptimizePanel({
   loadingOptimize,
   optimizeCrewsDone,
   optimizeTotalCrews,
+  optimizePhase = null,
+  optimizeEtaSeconds = null,
+  optimizeThroughput = null,
   maxCandidates,
   onMaxCandidatesChange,
   prioritizeBelowDecksAbility,
@@ -404,8 +411,16 @@ export default function OptimizePanel({
         optimizeCrewsDone != null &&
         optimizeTotalCrews != null &&
         optimizeTotalCrews > 0
-          ? `Live status: ${optimizeCrewsDone} / ${optimizeTotalCrews} crews`
-          : 'Live status: — sims, — sims/sec'}
+          ? `Live: ${optimizePhase === 'genetic' ? 'gen' : 'units'} ${optimizeCrewsDone} / ${optimizeTotalCrews}${
+              formatOptimizePhaseLabel(optimizePhase)
+                ? ` · ${formatOptimizePhaseLabel(optimizePhase)}`
+                : ''
+            }${
+              optimizeThroughput != null && optimizePhase !== 'genetic'
+                ? ` · ~${optimizeThroughput.toFixed(1)}/s`
+                : ''
+            }${optimizeEtaSeconds != null ? ` · ETA ~${optimizeEtaSeconds}s` : ''}`
+          : 'Live status: — (run optimize to see phase, ETA, preview)'}
       </p>
     </aside>
   );

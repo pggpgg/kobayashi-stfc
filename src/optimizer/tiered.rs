@@ -8,6 +8,7 @@ use crate::optimizer::monte_carlo::{
     run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
+use crate::optimizer::OptimizeProgressTick;
 use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
 /// Default sims per crew for the scouting pass.
@@ -16,8 +17,8 @@ pub const DEFAULT_SCOUT_SIMS: usize = 500;
 pub const DEFAULT_TOP_K: usize = 20;
 
 /// Runs tiered optimization with registry: scouting pass then full MC on top K.
-/// Progress callback: (crews_done, total_crews) where total_crews = num_candidates + top_k;
-/// during scouting, crews_done is 0..num_candidates; during confirmation, crews_done is num_candidates + 0..confirmed.
+/// Progress: `total_crews` = num_candidates + top_k; during scouting, `crews_done` is 0..num_candidates;
+/// after confirmation, `crews_done` reaches `total_crews`. Phases: `tiered_scout`, `tiered_confirm`.
 /// Returns false to abort.
 pub fn run_tiered_with_registry_with_progress<F>(
     registry: &DataRegistry,
@@ -32,7 +33,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
-    F: FnMut(u32, u32) -> bool,
+    F: FnMut(OptimizeProgressTick) -> bool,
 {
     let total_candidates = candidates.len();
     if total_candidates == 0 {
@@ -41,7 +42,12 @@ where
 
     let k = top_k.min(total_candidates);
     let total_work = total_candidates + k;
-    if !on_progress(0, total_work as u32) {
+    if !on_progress(OptimizeProgressTick {
+        crews_done: 0,
+        total_crews: total_work as u32,
+        phase: "tiered_scout",
+        partial_top: None,
+    }) {
         return Vec::new();
     }
 
@@ -71,7 +77,16 @@ where
             true,
         );
         scout_results.extend(batch_results);
-        if !on_progress(end as u32, total_work as u32) {
+        let partial_top = rank_results(scout_results.clone())
+            .into_iter()
+            .take(5)
+            .collect::<Vec<_>>();
+        if !on_progress(OptimizeProgressTick {
+            crews_done: end as u32,
+            total_crews: total_work as u32,
+            phase: "tiered_scout",
+            partial_top: Some(partial_top),
+        }) {
             return Vec::new();
         }
     }
@@ -98,7 +113,16 @@ where
         true,
     );
 
-    if !on_progress(total_work as u32, total_work as u32) {
+    let partial_top = rank_results(confirmation_results.clone())
+        .into_iter()
+        .take(5)
+        .collect::<Vec<_>>();
+    if !on_progress(OptimizeProgressTick {
+        crews_done: total_work as u32,
+        total_crews: total_work as u32,
+        phase: "tiered_confirm",
+        partial_top: Some(partial_top),
+    }) {
         return Vec::new();
     }
 

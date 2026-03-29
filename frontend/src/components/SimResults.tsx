@@ -3,6 +3,7 @@ import {
   compareCrewsDistributions,
   crewRecommendationToSimulateCrew,
   formatApiError,
+  formatOptimizePhaseLabel,
   type CompareCrewDistribution,
   type CrewRecommendation,
   type SimulateStats,
@@ -100,6 +101,10 @@ interface SimResultsProps {
   optimizeProgress: number | null;
   optimizeCrewsDone: number | null;
   optimizeTotalCrews: number | null;
+  optimizePhase?: string | null;
+  optimizeEtaSeconds?: number | null;
+  optimizeThroughput?: number | null;
+  optimizePreview?: CrewRecommendation[] | null;
   compareWorkspace?: CompareWorkspaceParams | null;
 }
 
@@ -111,6 +116,10 @@ export default function SimResults({
   optimizeProgress,
   optimizeCrewsDone,
   optimizeTotalCrews,
+  optimizePhase = null,
+  optimizeEtaSeconds = null,
+  optimizeThroughput = null,
+  optimizePreview = null,
   compareWorkspace = null,
 }: SimResultsProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -227,10 +236,75 @@ export default function SimResults({
                 />
               </div>
               <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                {optimizeTotalCrews != null && optimizeCrewsDone != null
-                  ? `${optimizeCrewsDone} / ${optimizeTotalCrews} crews (${optimizeProgress}%)`
-                  : `${optimizeProgress}%`}
+                {optimizePhase === 'genetic' &&
+                optimizeTotalCrews != null &&
+                optimizeCrewsDone != null
+                  ? `Generation ${optimizeCrewsDone} / ${optimizeTotalCrews} (${optimizeProgress}%)`
+                  : optimizeTotalCrews != null && optimizeCrewsDone != null
+                    ? `${optimizeCrewsDone} / ${optimizeTotalCrews} units (${optimizeProgress}%)`
+                    : `${optimizeProgress}%`}
               </p>
+              {(optimizePhase ||
+                optimizeThroughput != null ||
+                optimizeEtaSeconds != null) && (
+                <p
+                  style={{
+                    margin: '6px 0 0',
+                    fontSize: '0.75rem',
+                    color: 'var(--text-muted)',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {formatOptimizePhaseLabel(optimizePhase) && (
+                    <span>{formatOptimizePhaseLabel(optimizePhase)}</span>
+                  )}
+                  {optimizeThroughput != null &&
+                    optimizePhase !== 'genetic' && (
+                      <>
+                        {formatOptimizePhaseLabel(optimizePhase) ? ' · ' : ''}
+                        ~{optimizeThroughput.toFixed(1)} crews/s
+                      </>
+                    )}
+                  {optimizeEtaSeconds != null && (
+                    <>
+                      {(formatOptimizePhaseLabel(optimizePhase) ||
+                        (optimizeThroughput != null && optimizePhase !== 'genetic'))
+                        ? ' · '
+                        : ''}
+                      ETA ~{optimizeEtaSeconds}s
+                    </>
+                  )}
+                </p>
+              )}
+              {optimizePreview != null && optimizePreview.length > 0 && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: 8,
+                    background: 'var(--bg)',
+                    borderRadius: 6,
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--text-muted)' }}>
+                    Top crews so far (preview)
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      {optimizePreview.map((r, i) => (
+                        <tr key={i}>
+                          <td style={{ padding: '2px 8px 2px 0', verticalAlign: 'top' }}>
+                            {r.captain}
+                          </td>
+                          <td style={{ padding: '2px 0', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                            {(r.win_rate * 100).toFixed(1)}% win
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

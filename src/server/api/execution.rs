@@ -21,7 +21,8 @@ use crate::optimizer::monte_carlo::{
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::{
-    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizerStrategy,
+    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeProgressTick,
+    OptimizerStrategy,
 };
 
 use super::requests::{
@@ -60,6 +61,29 @@ pub struct OptimizeConstraintsSummary {
     pub captain_must_be: bool,
     pub bridge_must_include: usize,
     pub below_decks_must_include: usize,
+}
+
+fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
+    CrewRecommendation {
+        captain: r.captain.clone(),
+        bridge: r.bridge.clone(),
+        below_decks: r.below_decks.clone(),
+        win_rate: r.win_rate,
+        win_rate_ci_low: r.win_rate_ci_low,
+        win_rate_ci_high: r.win_rate_ci_high,
+        stall_rate: r.stall_rate,
+        stall_rate_ci_low: r.stall_rate_ci_low,
+        stall_rate_ci_high: r.stall_rate_ci_high,
+        loss_rate: r.loss_rate,
+        loss_rate_ci_low: r.loss_rate_ci_low,
+        loss_rate_ci_high: r.loss_rate_ci_high,
+        r1_kill_rate: r.r1_kill_rate,
+        r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+        r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
+        avg_hull_remaining: r.avg_hull_remaining,
+        avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+        avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+    }
 }
 
 fn summarize_constraints(con: Option<&CrewSearchConstraints>) -> Option<OptimizeConstraintsSummary> {
@@ -170,11 +194,17 @@ impl OptimizeProgressSink {
         if let Ok(mut map) = optimize_jobs().lock() {
             if let Some(state) = map.get_mut(job_id) {
                 state.total_crews = h_total;
+                state.phase = Some("heuristics".to_string());
             }
         }
     }
 
-    fn on_heuristics_complete(&self, heuristics_only: bool, h_total: u32) {
+    fn on_heuristics_complete(
+        &self,
+        heuristics_only: bool,
+        h_total: u32,
+        results: &[SimulationResult],
+    ) {
         let Self::Job { job_id, .. } = self else {
             return;
         };
@@ -182,11 +212,19 @@ impl OptimizeProgressSink {
             if let Some(state) = map.get_mut(job_id) {
                 state.crews_done = h_total;
                 state.progress = if heuristics_only { 100 } else { 10 };
+                let ranked = rank_results(results.to_vec());
+                state.progress_preview = Some(
+                    ranked
+                        .iter()
+                        .take(5)
+                        .map(crew_recommendation_from_ranked)
+                        .collect(),
+                );
             }
         }
     }
 
-    fn on_optimize_progress(&mut self, crews_done: u32, total_crews: u32) -> bool {
+    fn on_optimize_tick(&mut self, tick: OptimizeProgressTick) -> bool {
         match self {
             Self::None => true,
             Self::Job {
@@ -203,6 +241,8 @@ impl OptimizeProgressSink {
                 } else {
                     0u8
                 };
+                let crews_done = tick.crews_done;
+                let total_crews = tick.total_crews;
                 let progress = if total_crews == 0 {
                     base_progress
                 } else {
@@ -215,6 +255,16 @@ impl OptimizeProgressSink {
                         state.progress = progress;
                         state.crews_done = crews_done;
                         state.total_crews = total_crews;
+                        state.phase = Some(tick.phase.to_string());
+                        if let Some(partial) = tick.partial_top.as_ref() {
+                            state.progress_preview = Some(
+                                partial
+                                    .iter()
+                                    .take(5)
+                                    .map(crew_recommendation_from_ranked)
+                                    .collect(),
+                            );
+                        }
                     }
                 }
                 true
@@ -316,7 +366,7 @@ fn gather_optimize_simulation_results(
                 seed,
                 profile_id,
             );
-            sink.on_heuristics_complete(heuristics_only, h_total);
+            sink.on_heuristics_complete(heuristics_only, h_total, &results);
             results
         } else {
             Vec::new()
@@ -350,7 +400,7 @@ fn gather_optimize_simulation_results(
         let outcome = optimize_scenario_with_progress_with_registry(
             registry,
             &scenario,
-            |crews_done, total_crews| sink.on_optimize_progress(crews_done, total_crews),
+            |tick| sink.on_optimize_tick(tick),
         );
         if sink.job_cancelled() {
             return Err(());
@@ -510,6 +560,8 @@ pub struct OptimizeJobState {
     pub progress: u8,
     pub crews_done: u32,
     pub total_crews: u32,
+    pub phase: Option<String>,
+    pub progress_preview: Option<Vec<CrewRecommendation>>,
     pub result: Option<OptimizeResponse>,
     pub error: Option<String>,
 }
@@ -528,6 +580,15 @@ pub struct OptimizeStatusResponse {
     pub crews_done: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub total_crews: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub phase: Option<String>,
+    /// Best-effort crews/sec for phases where `crews_done` / `total_crews` are crew counts (not generations).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub throughput_crews_per_sec: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eta_seconds: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub progress_preview: Option<Vec<CrewRecommendation>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<OptimizeResponse>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -637,6 +698,8 @@ pub fn start_optimize_job(
                 progress: 0,
                 crews_done: 0,
                 total_crews: 0,
+                phase: None,
+                progress_preview: None,
                 result: None,
                 error: None,
             },
@@ -677,6 +740,8 @@ pub fn start_optimize_job(
                     if let Some(state) = map.get_mut(&job_id_thread) {
                         state.status = OptimizeJobStatus::Done;
                         state.progress = 100;
+                        state.phase = None;
+                        state.progress_preview = None;
                         state.result = Some(response);
                     }
                 }
@@ -707,11 +772,45 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
         OptimizeJobStatus::Done => "done",
         OptimizeJobStatus::Error => "error",
     };
+    let now_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u128;
+    let started_ms = parse_optimize_job_timestamp_ms(job_id);
+    let elapsed_s = ((now_ms.saturating_sub(started_ms)) as f64) / 1000.0;
+    let crew_like_phase = state.phase.as_deref().map_or(true, |p| {
+        matches!(
+            p,
+            "heuristics" | "monte_carlo" | "tiered_scout" | "tiered_confirm"
+        )
+    });
+    let (throughput_crews_per_sec, eta_seconds) =
+        if matches!(state.status, OptimizeJobStatus::Running)
+            && crew_like_phase
+            && elapsed_s > 0.05
+            && state.crews_done > 0
+            && state.total_crews > state.crews_done
+        {
+            let tp = state.crews_done as f64 / elapsed_s;
+            let remaining = (state.total_crews - state.crews_done) as f64;
+            let eta = if tp > 1e-6 {
+                Some((remaining / tp).ceil().max(0.0) as u64)
+            } else {
+                None
+            };
+            (Some(tp), eta)
+        } else {
+            (None, None)
+        };
     Ok(OptimizeStatusResponse {
         status: status.to_string(),
         progress: Some(state.progress),
         crews_done: Some(state.crews_done),
         total_crews: Some(state.total_crews),
+        phase: state.phase.clone(),
+        throughput_crews_per_sec,
+        eta_seconds,
+        progress_preview: state.progress_preview.clone(),
         result: state.result.clone(),
         error: state.error.clone(),
     })
@@ -736,6 +835,8 @@ mod optimize_job_store_tests {
             progress: 100,
             crews_done: 1,
             total_crews: 1,
+            phase: None,
+            progress_preview: None,
             result: None,
             error: None,
         }
@@ -762,6 +863,8 @@ mod optimize_job_store_tests {
                 progress: 0,
                 crews_done: 0,
                 total_crews: 0,
+                phase: None,
+                progress_preview: None,
                 result: None,
                 error: None,
             },

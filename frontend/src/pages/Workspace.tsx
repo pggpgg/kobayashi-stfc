@@ -45,6 +45,8 @@ export default function Workspace() {
         optimizeProgress={ws.optimizeProgress}
         optimizeCrewsDone={ws.optimizeCrewsDone}
         optimizeTotalCrews={ws.optimizeTotalCrews}
+        optimizePhase={ws.optimizePhase}
+        optimizeEtaSeconds={ws.optimizeEtaSeconds}
       />
       {ws.showSavePreset && (
         <div
@@ -160,6 +162,10 @@ export default function Workspace() {
               optimizeProgress={ws.optimizeProgress}
               optimizeCrewsDone={ws.optimizeCrewsDone}
               optimizeTotalCrews={ws.optimizeTotalCrews}
+              optimizePhase={ws.optimizePhase}
+              optimizeEtaSeconds={ws.optimizeEtaSeconds}
+              optimizeThroughput={ws.optimizeThroughput}
+              optimizePreview={ws.optimizePreview}
               compareWorkspace={compareWorkspace}
             />
           </div>
@@ -171,6 +177,9 @@ export default function Workspace() {
           loadingOptimize={ws.loadingOptimize}
           optimizeCrewsDone={ws.optimizeCrewsDone}
           optimizeTotalCrews={ws.optimizeTotalCrews}
+          optimizePhase={ws.optimizePhase}
+          optimizeEtaSeconds={ws.optimizeEtaSeconds}
+          optimizeThroughput={ws.optimizeThroughput}
           maxCandidates={ws.maxCandidates}
           onMaxCandidatesChange={ws.setMaxCandidates}
           prioritizeBelowDecksAbility={ws.prioritizeBelowDecksAbility}

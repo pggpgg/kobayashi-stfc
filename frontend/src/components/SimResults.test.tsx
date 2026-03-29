@@ -72,7 +72,7 @@ describe('SimResults', () => {
         optimizeTotalCrews={200}
       />,
     );
-    expect(screen.getByText(/90 \/ 200 crews/)).toBeTruthy();
+    expect(screen.getByText(/90 \/ 200 units/)).toBeTruthy();
     expect(screen.getByText(/45%/)).toBeTruthy();
   });
 
