@@ -14,6 +14,8 @@ pub enum TimingWindow {
     CombatBegin,
     RoundStart,
     AttackPhase,
+    /// After each weapon sub-round (outbound shots for that weapon and defender counter); stacks carry into later weapons this round only.
+    AfterSubround,
     DefensePhase,
     RoundEnd,
     /// When target's shields reach 0 (on_shield_break).

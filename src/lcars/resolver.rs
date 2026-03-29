@@ -152,6 +152,10 @@ fn trigger_to_timing(trigger: Option<&str>) -> Option<TimingWindow> {
         Some("roundstart") | Some("on_round_start") => Some(TimingWindow::RoundStart),
         Some("criticalshotfired") | Some("enemytakeshit") | Some("on_attack")
         | Some("on_hit") | Some("on_critical") => Some(TimingWindow::AttackPhase),
+        Some("after_shot") | Some("on_after_shot") | Some("subround_end")
+        | Some("on_subround_end") | Some("after_weapon") | Some("on_after_weapon") => {
+            Some(TimingWindow::AfterSubround)
+        }
         Some("hittaken") | Some("on_defense") => Some(TimingWindow::DefensePhase),
         Some("roundend") | Some("on_round_end") => Some(TimingWindow::RoundEnd),
         Some("shieldsdepleted") | Some("targetshieldsdepleted") | Some("on_shield_break") => {

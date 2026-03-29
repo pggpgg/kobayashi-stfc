@@ -2835,6 +2835,59 @@ fn burning_triggers_on_kill() {
 }
 
 #[test]
+fn burning_triggers_on_after_subround() {
+    let attacker = Combatant {
+        id: "a".to_string(),
+        attack: 50.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "d".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let r = simulate_combat(
+        &attacker,
+        &defender,
+        SimulationConfig {
+            rounds: 1,
+            seed: 31,
+            trace_mode: TraceMode::Events,
+        },
+        &burning_only_crew(TimingWindow::AfterSubround),
+    );
+    assert_burning_phase(&r.events, "after_subround");
+}
+
+#[test]
 fn emits_ability_activation_for_each_timing_window() {
     let attacker = Combatant {
         id: "nero".to_string(),
@@ -2947,6 +3000,20 @@ fn emits_ability_activation_for_each_timing_window() {
                 officer_id: None,
                 contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
             },
+            CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: "after_sub_alpha".to_string(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::AfterSubround,
+                    boostable: false,
+                    effect: AbilityEffect::AttackMultiplier(0.01),
+                    condition: None,
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
         ],
     };
 
@@ -2973,6 +3040,7 @@ fn emits_ability_activation_for_each_timing_window() {
     assert!(phases.contains(&"attack"));
     assert!(phases.contains(&"defense"));
     assert!(phases.contains(&"round_end"));
+    assert!(phases.contains(&"after_subround"));
 }
 
 #[test]

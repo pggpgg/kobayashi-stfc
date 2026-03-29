@@ -110,6 +110,86 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
     );
 }
 
+#[test]
+fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
+    let attacker = Combatant {
+        id: "dual".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+            },
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+            },
+        ],
+    };
+    let defender = Combatant {
+        id: "target".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 101,
+        trace_mode: TraceMode::Off,
+    };
+    let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let after_sub = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "chain".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::AfterSubround,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let boosted = simulate_combat(&attacker, &defender, config, &after_sub);
+    assert!(
+        boosted.total_damage > baseline.total_damage + 50.0,
+        "second weapon should roughly double from +100% carry: base={}, boosted={}",
+        baseline.total_damage,
+        boosted.total_damage
+    );
+}
+
 /// Hostile return fire uses the same damage-through, isolytic, apex, and shield-split helpers as outbound shots.
 #[test]
 fn defender_counter_attack_matches_helper_pipeline() {

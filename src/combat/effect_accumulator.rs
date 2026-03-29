@@ -227,6 +227,16 @@ impl EffectAccumulator {
         self.crit_damage_multiplier *= other.crit_damage_multiplier;
     }
 
+    /// Additive merge for cross-sub-round carry (AfterSubround → next weapon) without overwriting round base sums.
+    pub(crate) fn merge_carry_additive(&mut self, carry: &EffectAccumulator) {
+        self.stacks.merge_from(&carry.stacks);
+        self.pre_attack_modifier_sum += carry.pre_attack_modifier_sum;
+        self.attack_phase_damage_modifier_sum += carry.attack_phase_damage_modifier_sum;
+        self.round_end_modifier_sum += carry.round_end_modifier_sum;
+        self.crit_chance_bonus += carry.crit_chance_bonus;
+        self.crit_damage_multiplier *= carry.crit_damage_multiplier;
+    }
+
     /// JSON-friendly base / modifier / flat decomposition for trace (`stack_resolution` event).
     pub(crate) fn stack_resolution_values(&self) -> Map<String, Value> {
         const EPS: f64 = 1e-12;
@@ -311,6 +321,7 @@ impl EffectAccumulator {
             TimingWindow::CombatBegin
                 | TimingWindow::RoundStart
                 | TimingWindow::AttackPhase
+                | TimingWindow::AfterSubround
                 | TimingWindow::DefensePhase
         ) {
             match &effect {
@@ -394,6 +405,71 @@ impl EffectAccumulator {
                 }
             },
             TimingWindow::AttackPhase => match effect {
+                AbilityEffect::AttackMultiplier(modifier) => {
+                    self.attack_phase_damage_modifier_sum += modifier;
+                }
+                AbilityEffect::PierceBonus(value) => self.stacks.add(StackContribution::flat(
+                    EffectStatKey::AttackPhaseDamage,
+                    value * base_attack * 0.5,
+                )),
+                AbilityEffect::ProcAttackMultiplier { .. } => {}
+                AbilityEffect::ProcPierceBonus { .. } => {}
+                AbilityEffect::Morale(_) => {}
+                AbilityEffect::Assimilated { .. } => {}
+                AbilityEffect::HullBreach { .. } => {}
+                AbilityEffect::Burning { .. } => {}
+                AbilityEffect::ShotsBonus { .. } => {}
+                AbilityEffect::ShieldRegen(_) => {}
+                AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::ApexShredBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexShredBonus, v));
+                }
+                AbilityEffect::ApexBarrierBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::ApexBarrierBonus, v));
+                }
+                AbilityEffect::IsolyticDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDamageBonus, v));
+                }
+                AbilityEffect::IsolyticDefenseBonus(v) => {
+                    self.stacks.add(StackContribution::flat(EffectStatKey::IsolyticDefenseBonus, v));
+                }
+                AbilityEffect::IsolyticCascadeDamageBonus(v) => {
+                    self.stacks.add(StackContribution::flat(
+                        EffectStatKey::IsolyticCascadeDamageBonus,
+                        v,
+                    ));
+                }
+                AbilityEffect::ShieldMitigationBonus(v) => {
+                    self.stacks.add(StackContribution::flat(
+                        EffectStatKey::ShieldMitigationBonus,
+                        v,
+                    ));
+                }
+                AbilityEffect::OnKillHullRegen(_) => {}
+                AbilityEffect::HostileCritDamageReduction { .. } => {}
+                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritDamageMultiplier(_) => {}
+                AbilityEffect::DecayingAttackMultiplier {
+                    initial,
+                    decay_per_round,
+                    floor,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial - r * decay_per_round).max(floor);
+                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                }
+                AbilityEffect::AccumulatingAttackMultiplier {
+                    initial,
+                    growth_per_round,
+                    ceiling,
+                } => {
+                    let r = round_index as f64;
+                    let value = (initial + r * growth_per_round).min(ceiling);
+                    self.attack_phase_damage_modifier_sum += value - 1.0;
+                }
+            },
+            // Same stacking rules as AttackPhase; evaluated once per sub-round end for carry into later weapons.
+            TimingWindow::AfterSubround => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.attack_phase_damage_modifier_sum += modifier;
                 }

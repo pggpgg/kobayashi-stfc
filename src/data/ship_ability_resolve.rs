@@ -59,6 +59,8 @@ pub fn parse_ship_ability_timing(s: &str) -> Option<TimingWindow> {
         "round_start" | "roundstart" | "on_round_start" => Some(TimingWindow::RoundStart),
         "attack_phase" | "on_attack" | "on_hit" | "on_critical" | "criticalshotfired"
         | "enemytakeshit" => Some(TimingWindow::AttackPhase),
+        "after_shot" | "on_after_shot" | "subround_end" | "on_subround_end" | "after_weapon"
+        | "on_after_weapon" => Some(TimingWindow::AfterSubround),
         "defense_phase" | "on_defense" | "hittaken" => Some(TimingWindow::DefensePhase),
         "round_end" | "roundend" | "on_round_end" => Some(TimingWindow::RoundEnd),
         "shield_break" | "on_shield_break" | "shieldsdepleted" | "targetshieldsdepleted" => {

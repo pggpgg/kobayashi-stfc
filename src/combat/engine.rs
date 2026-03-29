@@ -176,6 +176,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let defense_phase_effects =
         active_effects_for_timing(&attacker_crew, TimingWindow::DefensePhase);
     let round_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundEnd);
+    let after_subround_effects = active_effects_for_timing(&attacker_crew, TimingWindow::AfterSubround);
 
     // Defender-side effects for return fire.
     let defender_combat_begin_effects =
@@ -510,9 +511,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
         let weapon_round_base = phase_effects_round.clone();
         let mut phase_effects = EffectAccumulator::default();
+        let mut after_subround_carry = EffectAccumulator::default();
         for weapon_index in 0..num_sub_rounds {
             phase_effects.clear();
             phase_effects.merge_from(&weapon_round_base);
+            phase_effects.merge_carry_additive(&after_subround_carry);
             let weapon_base = attacker.weapon_attack(weapon_index).unwrap_or(attacker.attack);
             phase_effects.add_effects(
                 TimingWindow::AttackPhase,
@@ -1127,6 +1130,56 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             );
         }
             }
+
+        let ctx_after_subround = CombatContext {
+            round_index,
+            defender_hull_pct: 1.0
+                - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: 1.0
+                - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+            attacker_morale_active: combat_ctx.attacker_morale_active,
+            defender_burning_active: burning_rounds_remaining > 0,
+            defender_hull_breach_active: hull_breach_rounds_remaining > 0,
+            defender_faction,
+        };
+        let after_subround_filtered =
+            filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "after_subround",
+            attacker,
+            &after_subround_filtered,
+            attack_phase_assimilated,
+        );
+        roll_burning_triggers(
+            &after_subround_filtered,
+            attack_phase_assimilated,
+            &mut rng,
+            &mut trace,
+            round_index,
+            "after_subround",
+            &attacker.id,
+            None,
+            &mut burning_rounds_remaining,
+        );
+        after_subround_carry.add_effects(
+            TimingWindow::AfterSubround,
+            &after_subround_filtered,
+            weapon_base,
+            attack_phase_assimilated,
+            round_index,
+        );
         }
 
         phase_effects_round.add_effects(
