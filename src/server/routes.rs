@@ -25,6 +25,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;
 use tokio_stream::wrappers::ReceiverStream;
+use tower_http::compression::CompressionLayer;
 
 use crate::data::data_registry::DataRegistry;
 use crate::mechanics::coverage::mechanics_coverage_json;
@@ -201,14 +202,14 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     //
     // When dist exists:
     //   - Requests for files that exist on disk (JS bundles, CSS, images, etc.)
-    //     are served directly by tower-http's ServeDir.
+    //     are served by `serve_spa_static_fallback` with cache headers; gzip/br via CompressionLayer.
     //   - All other non-API paths fall back to index.html so that React Router
     //     deep-links (e.g. /ships, /optimize) work when navigated to directly.
     //
     // When dist does not exist:
     //   - "/" serves the legacy API console HTML.
     //   - All other paths return 404.
-    match locate_dist_dir() {
+    let app = match locate_dist_dir() {
         Some(_dir) => {
             // Fallback handler: serve static files from dist; if the path doesn't
             // exist, serve index.html (200) so React Router deep-links work.
@@ -219,7 +220,11 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
             // everywhere else.
             api_routes.fallback(handle_no_spa_fallback)
         }
-    }
+    };
+
+    // Gzip/Brotli for compressible responses (audit task 13). Default predicate skips
+    // SSE (`text/event-stream`), images, and tiny bodies.
+    app.layer(CompressionLayer::new())
 }
 
 fn locate_dist_dir() -> Option<std::path::PathBuf> {
@@ -233,17 +238,28 @@ fn locate_dist_dir() -> Option<std::path::PathBuf> {
 // SPA static fallback (when dist exists): serve files from dist or index.html
 // ---------------------------------------------------------------------------
 
+/// `Cache-Control` for files under `frontend/dist` (Vite hashes live under `assets/`).
+fn spa_asset_cache_control(rel: &str) -> &'static str {
+    if rel.is_empty() || rel.eq_ignore_ascii_case("index.html") {
+        "no-cache"
+    } else if rel.starts_with("assets/") {
+        "public, max-age=31536000, immutable"
+    } else {
+        "public, max-age=86400"
+    }
+}
+
 async fn serve_spa_static_fallback(OriginalUri(uri): OriginalUri) -> Response {
     let dir = match locate_dist_dir() {
         Some(d) => d,
         None => return error_json(StatusCode::NOT_FOUND, "Not found").into_response(),
     };
     let path = uri.path();
-    let path = path.trim_start_matches('/');
-    if path.is_empty() {
+    let rel = path.trim_start_matches('/');
+    if rel.is_empty() {
         return serve_index_html(&dir);
     }
-    let path = PathBuf::from(path);
+    let path = PathBuf::from(rel);
     if path
         .components()
         .any(|c| matches!(c, std::path::Component::ParentDir))
@@ -255,7 +271,16 @@ async fn serve_spa_static_fallback(OriginalUri(uri): OriginalUri) -> Response {
         Ok(meta) if meta.is_file() => match tokio::fs::read(&full).await {
             Ok(body) => {
                 let ct = content_type_for_path(path.as_path());
-                (StatusCode::OK, [(header::CONTENT_TYPE, ct)], body).into_response()
+                let cc = spa_asset_cache_control(rel);
+                (
+                    StatusCode::OK,
+                    [
+                        (header::CONTENT_TYPE, HeaderValue::from_static(ct)),
+                        (header::CACHE_CONTROL, HeaderValue::from_static(cc)),
+                    ],
+                    body,
+                )
+                    .into_response()
             }
             Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "Read error").into_response(),
         },
@@ -268,7 +293,13 @@ fn serve_index_html(dir: &std::path::Path) -> Response {
     match std::fs::read(&index) {
         Ok(body) => (
             StatusCode::OK,
-            [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+            [
+                (
+                    header::CONTENT_TYPE,
+                    HeaderValue::from_static("text/html; charset=utf-8"),
+                ),
+                (header::CACHE_CONTROL, HeaderValue::from_static("no-cache")),
+            ],
             body,
         )
             .into_response(),
@@ -292,6 +323,35 @@ fn content_type_for_path(path: &std::path::Path) -> &'static str {
         Some("woff2") => "font/woff2",
         Some("woff") => "font/woff",
         _ => "application/octet-stream",
+    }
+}
+
+#[cfg(test)]
+mod spa_cache_control_tests {
+    use super::spa_asset_cache_control;
+
+    #[test]
+    fn index_and_root_are_no_cache() {
+        assert_eq!(spa_asset_cache_control(""), "no-cache");
+        assert_eq!(spa_asset_cache_control("index.html"), "no-cache");
+        assert_eq!(spa_asset_cache_control("INDEX.HTML"), "no-cache");
+    }
+
+    #[test]
+    fn vite_assets_are_immutable_long_cache() {
+        assert_eq!(
+            spa_asset_cache_control("assets/index-abc123.js"),
+            "public, max-age=31536000, immutable"
+        );
+        assert_eq!(
+            spa_asset_cache_control("assets/index-abc123.css"),
+            "public, max-age=31536000, immutable"
+        );
+    }
+
+    #[test]
+    fn other_root_files_short_cache() {
+        assert_eq!(spa_asset_cache_control("vite.svg"), "public, max-age=86400");
     }
 }
 

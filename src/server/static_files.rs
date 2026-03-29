@@ -1,7 +1,8 @@
 //! Utility for detecting whether the built frontend SPA is available.
 //!
-//! Actual static file serving is handled by `tower_http::services::ServeDir`
-//! wired in `routes::build_router`.
+//! The SPA is served from `frontend/dist` by `routes::serve_spa_static_fallback` (not `ServeDir`).
+//! Responses use `Cache-Control` (immutable for `assets/*`, `no-cache` for `index.html`) and
+//! `tower_http::compression::CompressionLayer` (gzip/br) on the router.
 
 /// Returns true if `frontend/dist` (or `dist`) exists in the current working
 /// directory so the SPA can be served.
