@@ -5,6 +5,9 @@
 # CI quality (audit task 8):
 # - Rust: `cargo fmt --check` (requires rustfmt).
 # - Frontend: Biome (`npm run lint`); TypeScript same policy as local builds (`npm run typecheck` = `tsc -b`; see frontend/tsconfig.json strict options).
+#
+# API contracts (audit task 7):
+# - OpenAPI 3.0 YAML in `docs/openapi/kobayashi-heavy-payloads.yaml`; served at GET /api/openapi.yaml and /api/openapi.json; contract tests in `tests/openapi_contract_test.rs`.
 
 name: CI
 

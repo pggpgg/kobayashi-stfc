@@ -30,6 +30,7 @@ use crate::data::data_registry::DataRegistry;
 use crate::mechanics::coverage::mechanics_coverage_json;
 use crate::server::api;
 use crate::server::api_key;
+use crate::server::openapi;
 use crate::server::sync;
 
 /// Application state shared by all handlers.
@@ -119,6 +120,8 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     };
 
     let api_read = Router::new()
+        .route("/api/openapi.yaml", get(handle_openapi_yaml))
+        .route("/api/openapi.json", get(handle_openapi_json))
         .route("/api/health", get(handle_health))
         .route("/api/mechanics/coverage", get(handle_mechanics_coverage))
         .route("/api/officers", get(handle_officers))
@@ -166,7 +169,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/simulate", post(handle_simulate))
         .route("/api/compare/crews", post(handle_compare_crews))
         .route("/api/optimize", post(handle_optimize))
-        .route("/api/optimize/replay-seed", post(handle_optimize_replay_seed))
+        .route(
+            "/api/optimize/replay-seed",
+            post(handle_optimize_replay_seed),
+        )
         .route("/api/optimize/start", post(handle_optimize_start))
         .layer(DefaultBodyLimit::max(BODY_LIMIT_CPU_JSON))
         .with_state(state.clone());
@@ -309,6 +315,32 @@ async fn handle_no_spa_fallback(OriginalUri(uri): OriginalUri) -> Response {
 // ---------------------------------------------------------------------------
 // API handler implementations
 // ---------------------------------------------------------------------------
+
+async fn handle_openapi_yaml() -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("application/yaml; charset=utf-8"),
+        )],
+        openapi::OPENAPI_YAML,
+    )
+}
+
+async fn handle_openapi_json() -> impl IntoResponse {
+    match openapi::openapi_json_string() {
+        Ok(s) => (
+            StatusCode::OK,
+            [(
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("application/json; charset=utf-8"),
+            )],
+            s,
+        )
+            .into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e).into_response(),
+    }
+}
 
 async fn handle_health(State(state): State<AppState>) -> impl IntoResponse {
     match api::health_payload(state.registry.as_ref(), state.started_at_utc) {

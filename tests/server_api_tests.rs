@@ -79,6 +79,31 @@ async fn health_endpoint_returns_ok_json() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn openapi_yaml_and_json_served() {
+    let yaml = route_request("GET", "/api/openapi.yaml", "").await;
+    assert_eq!(yaml.status_code, 200);
+    assert!(
+        yaml.content_type.contains("yaml"),
+        "unexpected content-type: {}",
+        yaml.content_type
+    );
+    assert!(yaml.body.contains("openapi: 3.0.3"));
+    assert!(yaml.body.contains("/api/simulate:"));
+
+    let json = route_request("GET", "/api/openapi.json", "").await;
+    assert_eq!(json.status_code, 200);
+    assert!(
+        json.content_type.contains("json"),
+        "unexpected content-type: {}",
+        json.content_type
+    );
+    let p: serde_json::Value = serde_json::from_str(&json.body).expect("openapi json");
+    assert_eq!(p["openapi"], "3.0.3");
+    assert!(p["paths"].is_object());
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn mechanics_coverage_returns_tier_counts() {
     let response = route_request("GET", "/api/mechanics/coverage", "").await;
     assert_eq!(response.status_code, 200, "{}", response.body);

@@ -1,5 +1,6 @@
 pub mod api;
 pub mod api_key;
+pub mod openapi;
 pub mod routes;
 pub mod static_files;
 pub mod sync;
