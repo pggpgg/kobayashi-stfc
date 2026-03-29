@@ -1,6 +1,6 @@
 use axum::body::Body;
 use axum::extract::connect_info::ConnectInfo;
-use axum::http::{Method, Request};
+use axum::http::{Method, Request, StatusCode};
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::server::routes::build_router;
 use std::net::SocketAddr;
@@ -52,7 +52,11 @@ async fn route_request_ex(
         .await
         .unwrap();
     let body = String::from_utf8_lossy(&body_bytes).into_owned();
-    TestResponse { status_code, content_type, body }
+    TestResponse {
+        status_code,
+        content_type,
+        body,
+    }
 }
 
 #[serial_test::serial]
@@ -111,8 +115,28 @@ async fn profile_research_summary_returns_json() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn simulate_rejects_body_over_cpu_json_limit_with_413() {
+    const LIMIT: usize = 2 * 1024 * 1024;
+    let registry = DataRegistry::load().expect("data registry required for server tests");
+    let app = build_router(registry);
+    let oversized = vec![b'{'; LIMIT + 1];
+    let mut req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/simulate")
+        .header("content-type", "application/json")
+        .body(Body::from(oversized))
+        .unwrap();
+    let addr: SocketAddr = "127.0.0.1:12345".parse().expect("loopback");
+    req.extensions_mut().insert(ConnectInfo(addr));
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn optimize_endpoint_returns_ranked_recommendations() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+    let body =
+        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
     let response = route_request("POST", "/api/optimize", body).await;
 
     assert_eq!(response.status_code, 200);
@@ -136,13 +160,21 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
 
     let first = &recommendations[0];
     assert!(first["captain"].as_str().is_some());
-    assert!(first["bridge"].as_array().is_some(), "bridge should be an array");
-    assert!(first["below_decks"].as_array().is_some(), "below_decks should be an array");
+    assert!(
+        first["bridge"].as_array().is_some(),
+        "bridge should be an array"
+    );
+    assert!(
+        first["below_decks"].as_array().is_some(),
+        "below_decks should be an array"
+    );
     assert!(first["win_rate"].as_f64().is_some());
     assert!(first["avg_hull_remaining"].as_f64().is_some());
     let wr = first["win_rate"].as_f64().expect("win_rate");
     let wr_lo = first["win_rate_ci_low"].as_f64().expect("win_rate_ci_low");
-    let wr_hi = first["win_rate_ci_high"].as_f64().expect("win_rate_ci_high");
+    let wr_hi = first["win_rate_ci_high"]
+        .as_f64()
+        .expect("win_rate_ci_high");
     const CI_EPS: f64 = 1e-5;
     assert!(
         wr_lo - CI_EPS <= wr && wr <= wr_hi + CI_EPS,
@@ -201,7 +233,8 @@ async fn optimize_endpoint_changes_with_seed() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":77,"max_candidates":64}"#;
+    let body =
+        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":77,"max_candidates":64}"#;
 
     let response_a = route_request("POST", "/api/optimize", body).await;
     let response_b = route_request("POST", "/api/optimize", body).await;
@@ -356,7 +389,9 @@ async fn optimize_endpoint_rejects_zero_analytical_prefilter_keep() {
         .as_array()
         .expect("errors should be array");
     assert!(
-        errors.iter().any(|e| e["field"] == "analytical_prefilter_keep"),
+        errors
+            .iter()
+            .any(|e| e["field"] == "analytical_prefilter_keep"),
         "analytical_prefilter_keep validation error should be present"
     );
 }
@@ -372,7 +407,12 @@ async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
         serde_json::from_str(&response.body).expect("response should be valid json");
     assert_eq!(payload["scenario"]["analytical_prefilter_keep"], 4);
     assert_eq!(payload["scenario"]["analytical_prefilter_kept"], 4);
-    assert!(payload["scenario"]["analytical_prefilter_from"].as_u64().unwrap_or(0) > 4);
+    assert!(
+        payload["scenario"]["analytical_prefilter_from"]
+            .as_u64()
+            .unwrap_or(0)
+            > 4
+    );
     let notes = payload["approximate_notes"]
         .as_array()
         .expect("approximate_notes should be an array");
@@ -424,26 +464,19 @@ async fn optimize_validation_error_has_expected_schema() {
 #[serial_test::serial]
 #[tokio::test]
 async fn async_optimize_start_poll_completes_with_recommendations() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":42,"max_candidates":16}"#;
+    let body =
+        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":42,"max_candidates":16}"#;
     let start = route_request("POST", "/api/optimize/start", body).await;
     assert_eq!(start.status_code, 200, "body: {}", start.body);
     let payload: serde_json::Value =
         serde_json::from_str(&start.body).expect("start response json");
-    let job_id = payload["job_id"]
-        .as_str()
-        .expect("job_id string");
+    let job_id = payload["job_id"].as_str().expect("job_id string");
 
     for _ in 0..400 {
         tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
-        let status = route_request(
-            "GET",
-            &format!("/api/optimize/status/{job_id}"),
-            "",
-        )
-        .await;
+        let status = route_request("GET", &format!("/api/optimize/status/{job_id}"), "").await;
         assert_eq!(status.status_code, 200, "status body: {}", status.body);
-        let s: serde_json::Value =
-            serde_json::from_str(&status.body).expect("status json");
+        let s: serde_json::Value = serde_json::from_str(&status.body).expect("status json");
         if s["status"] == "done" {
             let result = s["result"].as_object().expect("result object");
             let recs = result["recommendations"]
@@ -467,36 +500,25 @@ async fn async_optimize_start_poll_completes_with_recommendations() {
 #[serial_test::serial]
 #[tokio::test]
 async fn async_optimize_cancel_unknown_job_returns_404() {
-    let response = route_request(
-        "POST",
-        "/api/optimize/jobs/opt_nonexistent_0/cancel",
-        "",
-    )
-    .await;
+    let response = route_request("POST", "/api/optimize/jobs/opt_nonexistent_0/cancel", "").await;
     assert_eq!(response.status_code, 404);
 }
 
 #[serial_test::serial]
 #[tokio::test]
 async fn async_optimize_cancel_after_done_is_idempotent_ok() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":8}"#;
+    let body =
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":8}"#;
     let start = route_request("POST", "/api/optimize/start", body).await;
     assert_eq!(start.status_code, 200);
-    let payload: serde_json::Value =
-        serde_json::from_str(&start.body).expect("start json");
+    let payload: serde_json::Value = serde_json::from_str(&start.body).expect("start json");
     let job_id = payload["job_id"].as_str().expect("job_id");
 
     let mut finished = false;
     for _ in 0..400 {
         tokio::time::sleep(tokio::time::Duration::from_millis(40)).await;
-        let status = route_request(
-            "GET",
-            &format!("/api/optimize/status/{job_id}"),
-            "",
-        )
-        .await;
-        let s: serde_json::Value =
-            serde_json::from_str(&status.body).expect("status json");
+        let status = route_request("GET", &format!("/api/optimize/status/{job_id}"), "").await;
+        let s: serde_json::Value = serde_json::from_str(&status.body).expect("status json");
         if s["status"] == "done" {
             finished = true;
             break;
@@ -505,15 +527,9 @@ async fn async_optimize_cancel_after_done_is_idempotent_ok() {
     }
     assert!(finished, "job should complete");
 
-    let cancel = route_request(
-        "POST",
-        &format!("/api/optimize/jobs/{job_id}/cancel"),
-        "",
-    )
-    .await;
+    let cancel = route_request("POST", &format!("/api/optimize/jobs/{job_id}/cancel"), "").await;
     assert_eq!(cancel.status_code, 200, "{}", cancel.body);
-    let c: serde_json::Value =
-        serde_json::from_str(&cancel.body).expect("cancel json");
+    let c: serde_json::Value = serde_json::from_str(&cancel.body).expect("cancel json");
     assert_eq!(c["status"], "ok");
     assert!(
         c["message"]
@@ -571,7 +587,9 @@ async fn compare_crews_returns_distribution_payload() {
         assert_eq!(c["trials"], 400);
         let rh = c["rounds_histogram"].as_array().expect("rounds_histogram");
         assert_eq!(rh.len(), 20);
-        let hb = c["hull_remaining_bins"].as_array().expect("hull_remaining_bins");
+        let hb = c["hull_remaining_bins"]
+            .as_array()
+            .expect("hull_remaining_bins");
         assert_eq!(hb.len(), 10);
     }
 }
@@ -581,7 +599,8 @@ async fn compare_crews_returns_distribution_payload() {
 async fn api_key_required_for_non_loopback_when_configured() {
     std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
     std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+    let body =
+        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
     let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
     let response = route_request_ex("POST", "/api/optimize", body, Some(lan), &[]).await;
     assert_eq!(response.status_code, 401, "{}", response.body);
@@ -594,7 +613,8 @@ async fn api_key_required_for_non_loopback_when_configured() {
 async fn api_key_bearer_allows_non_loopback_when_configured() {
     std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
     std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+    let body =
+        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
     let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
     let response = route_request_ex(
         "POST",

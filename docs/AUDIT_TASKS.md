@@ -4,7 +4,7 @@ Checklist derived from a codebase audit (not from existing roadmaps or `POTENTIA
 
 ## Security, reliability, and operations
 
-- [ ] **1. HTTP body size limits** — Add Axum/tower limits on large POST routes (`/api/sync/ingress`, `/api/optimize`, `/api/simulate`, imports) to reduce DoS and memory exhaustion risk.
+- [x] **1. HTTP body size limits** — Add Axum/tower limits on large POST routes (`/api/sync/ingress`, `/api/optimize`, `/api/simulate`, imports) to reduce DoS and memory exhaustion risk.
 - [x] **2. Optimize job store robustness** — Harden `Mutex` usage in `src/server/api/execution.rs` (async optimize jobs); avoid assumptions that locks never fail.
 - [x] **3. React error boundary** — Add a top-level boundary (Shell or `App`) with recovery UI so render failures don’t blank the whole app.
 - [x] **4. Structured logging** — Introduce `tracing` (or similar) with env filtering; replace ad-hoc `eprintln!` on critical server/sync/CPU paths.

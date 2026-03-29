@@ -8,14 +8,15 @@
 //! (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`, default 1).
 
 use axum::{
-    Router,
+    extract::DefaultBodyLimit,
     extract::OriginalUri,
     extract::{Path, Query, State},
-    http::{HeaderMap, HeaderValue, StatusCode, header},
+    http::{header, HeaderMap, HeaderValue, StatusCode},
     middleware,
     response::sse::{Event, Sse},
     response::{IntoResponse, Response},
     routing::{delete, get, post, put},
+    Router,
 };
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -62,7 +63,10 @@ impl IntoResponse for JsonResponse {
 }
 
 fn ok_json(body: String) -> JsonResponse {
-    JsonResponse { status: StatusCode::OK, body }
+    JsonResponse {
+        status: StatusCode::OK,
+        body,
+    }
 }
 
 fn error_json(status: StatusCode, message: &str) -> JsonResponse {
@@ -96,31 +100,35 @@ fn validation_json(payload: api::ValidationErrorResponse) -> JsonResponse {
 // Router construction
 // ---------------------------------------------------------------------------
 
+/// Large mod/game sync batches and roster / Spock’s JSON imports.
+const BODY_LIMIT_LARGE_INGEST: usize = 16 * 1024 * 1024;
+/// Full `PlayerProfile` JSON on PUT.
+const BODY_LIMIT_PROFILE_PUT: usize = 8 * 1024 * 1024;
+/// Optimize / simulate / compare / replay / async-start JSON payloads.
+const BODY_LIMIT_CPU_JSON: usize = 2 * 1024 * 1024;
+/// Preset create, profile create, optimize cancel, and other small JSON bodies.
+const BODY_LIMIT_SMALL_JSON: usize = 512 * 1024;
+
 pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     let state = AppState {
         registry,
-        cpu_jobs: Arc::new(Semaphore::new(crate::server::max_concurrent_cpu_jobs_from_env())),
+        cpu_jobs: Arc::new(Semaphore::new(
+            crate::server::max_concurrent_cpu_jobs_from_env(),
+        )),
         started_at_utc: chrono::Utc::now(),
     };
 
-    let api_routes = Router::new()
-        // Health
+    let api_read = Router::new()
         .route("/api/health", get(handle_health))
         .route("/api/mechanics/coverage", get(handle_mechanics_coverage))
-        // Officers
         .route("/api/officers", get(handle_officers))
-        .route("/api/officers/import", post(handle_officers_import))
         .route("/api/officers/:id/resolved", get(handle_officer_resolved))
-        // Ships / hostiles
         .route("/api/ships", get(handle_ships))
         .route("/api/ships/:id/tiers-levels", get(handle_ship_tiers_levels))
         .route("/api/hostiles", get(handle_hostiles))
-        // Data version
         .route("/api/data/version", get(handle_data_version))
         .route("/api/forbidden-tech", get(handle_forbidden_tech))
-        // Profile
         .route("/api/profile", get(handle_profile_get))
-        .route("/api/profile", put(handle_profile_put))
         .route(
             "/api/profile/buildings-summary",
             get(handle_profile_buildings_summary),
@@ -129,32 +137,56 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
             "/api/profile/research-summary",
             get(handle_profile_research_summary),
         )
-        // Profiles (multi-account)
         .route("/api/profiles", get(handle_profiles_list))
-        .route("/api/profiles", post(handle_profiles_create))
         .route("/api/profiles/:id", delete(handle_profiles_delete))
-        // Presets
         .route("/api/presets", get(handle_presets_list))
-        .route("/api/presets", post(handle_preset_post))
         .route("/api/presets/:id", get(handle_preset_get))
-        // Simulate (CPU-bound, blocking pool)
+        .route("/api/heuristics", get(handle_heuristics))
+        .route("/api/optimize/estimate", get(handle_optimize_estimate))
+        .route("/api/optimize/status/:job_id", get(handle_optimize_status))
+        .route(
+            "/api/optimize/jobs/:job_id/stream",
+            get(handle_optimize_job_stream),
+        )
+        .route("/api/sync/status", get(handle_sync_status))
+        .with_state(state.clone());
+
+    let api_large_ingest = Router::new()
+        .route("/api/sync/ingress", post(handle_sync_ingress))
+        .route("/api/officers/import", post(handle_officers_import))
+        .layer(DefaultBodyLimit::max(BODY_LIMIT_LARGE_INGEST))
+        .with_state(state.clone());
+
+    let api_profile_put = Router::new()
+        .route("/api/profile", put(handle_profile_put))
+        .layer(DefaultBodyLimit::max(BODY_LIMIT_PROFILE_PUT))
+        .with_state(state.clone());
+
+    let api_cpu_json = Router::new()
         .route("/api/simulate", post(handle_simulate))
         .route("/api/compare/crews", post(handle_compare_crews))
-        // Optimize synchronous (long-running, blocking pool)
         .route("/api/optimize", post(handle_optimize))
         .route("/api/optimize/replay-seed", post(handle_optimize_replay_seed))
-        // Heuristics seed list
-        .route("/api/heuristics", get(handle_heuristics))
-        // Optimize estimate (lightweight GET with query params)
-        .route("/api/optimize/estimate", get(handle_optimize_estimate))
-        // Optimize async job
         .route("/api/optimize/start", post(handle_optimize_start))
-        .route("/api/optimize/status/:job_id", get(handle_optimize_status))
-        .route("/api/optimize/jobs/:job_id/stream", get(handle_optimize_job_stream))
-        .route("/api/optimize/jobs/:job_id/cancel", post(handle_optimize_job_cancel))
-        // Sync ingress
-        .route("/api/sync/status", get(handle_sync_status))
-        .route("/api/sync/ingress", post(handle_sync_ingress))
+        .layer(DefaultBodyLimit::max(BODY_LIMIT_CPU_JSON))
+        .with_state(state.clone());
+
+    let api_small_json = Router::new()
+        .route("/api/presets", post(handle_preset_post))
+        .route("/api/profiles", post(handle_profiles_create))
+        .route(
+            "/api/optimize/jobs/:job_id/cancel",
+            post(handle_optimize_job_cancel),
+        )
+        .layer(DefaultBodyLimit::max(BODY_LIMIT_SMALL_JSON))
+        .with_state(state.clone());
+
+    let api_routes = Router::new()
+        .merge(api_read)
+        .merge(api_large_ingest)
+        .merge(api_profile_put)
+        .merge(api_cpu_json)
+        .merge(api_small_json)
         .layer(middleware::from_fn(api_key::middleware))
         .with_state(state);
 
@@ -206,25 +238,21 @@ async fn serve_spa_static_fallback(OriginalUri(uri): OriginalUri) -> Response {
         return serve_index_html(&dir);
     }
     let path = PathBuf::from(path);
-    if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+    if path
+        .components()
+        .any(|c| matches!(c, std::path::Component::ParentDir))
+    {
         return error_json(StatusCode::BAD_REQUEST, "Invalid path").into_response();
     }
     let full = dir.join(&path);
     match tokio::fs::metadata(&full).await {
-        Ok(meta) if meta.is_file() => {
-            match tokio::fs::read(&full).await {
-                Ok(body) => {
-                    let ct = content_type_for_path(path.as_path());
-                    (
-                        StatusCode::OK,
-                        [(header::CONTENT_TYPE, ct)],
-                        body,
-                    )
-                        .into_response()
-                }
-                Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "Read error").into_response(),
+        Ok(meta) if meta.is_file() => match tokio::fs::read(&full).await {
+            Ok(body) => {
+                let ct = content_type_for_path(path.as_path());
+                (StatusCode::OK, [(header::CONTENT_TYPE, ct)], body).into_response()
             }
-        }
+            Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "Read error").into_response(),
+        },
         _ => serve_index_html(&dir),
     }
 }
@@ -238,7 +266,9 @@ fn serve_index_html(dir: &std::path::Path) -> Response {
             body,
         )
             .into_response(),
-        Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "index.html not found").into_response(),
+        Err(_) => {
+            error_json(StatusCode::INTERNAL_SERVER_ERROR, "index.html not found").into_response()
+        }
     }
 }
 
@@ -323,11 +353,7 @@ async fn handle_ships(
         .map(|s| s == "1" || s.eq_ignore_ascii_case("true"))
         .unwrap_or(false);
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::ships_payload(
-        state.registry.as_ref(),
-        owned_only,
-        profile_id.as_deref(),
-    ) {
+    match api::ships_payload(state.registry.as_ref(), owned_only, profile_id.as_deref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
@@ -521,13 +547,15 @@ async fn handle_simulate(
     let result = tokio::task::spawn_blocking(move || {
         let _permit = permit;
         api::simulate_payload(registry.as_ref(), &body, profile_id.as_deref())
-    }).await;
+    })
+    .await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
-        Ok(Err(api::SimulateError::Parse(e))) => {
-            error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))
-                .into_response()
-        }
+        Ok(Err(api::SimulateError::Parse(e))) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
         Ok(Err(api::SimulateError::Validation(msg))) => {
             error_json(StatusCode::BAD_REQUEST, &msg).into_response()
         }
@@ -565,10 +593,11 @@ async fn handle_compare_crews(
     .await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
-        Ok(Err(api::CompareCrewsError::Parse(e))) => {
-            error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))
-                .into_response()
-        }
+        Ok(Err(api::CompareCrewsError::Parse(e))) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
         Ok(Err(api::CompareCrewsError::Validation(msg))) => {
             error_json(StatusCode::BAD_REQUEST, &msg).into_response()
         }
@@ -602,13 +631,15 @@ async fn handle_optimize(
     let result = tokio::task::spawn_blocking(move || {
         let _permit = permit;
         api::optimize_payload(registry.as_ref(), &body, profile_id.as_deref())
-    }).await;
+    })
+    .await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
-        Ok(Err(api::OptimizePayloadError::Parse(e))) => {
-            error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))
-                .into_response()
-        }
+        Ok(Err(api::OptimizePayloadError::Parse(e))) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
         Ok(Err(api::OptimizePayloadError::Validation(v))) => validation_json(v).into_response(),
         Err(e) => error_json(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -644,10 +675,11 @@ async fn handle_optimize_replay_seed(
     .await;
     match result {
         Ok(Ok(payload)) => ok_json(payload).into_response(),
-        Ok(Err(api::ReplaySeedError::Parse(e))) => {
-            error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))
-                .into_response()
-        }
+        Ok(Err(api::ReplaySeedError::Parse(e))) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
         Ok(Err(api::ReplaySeedError::Validation(msg))) => {
             error_json(StatusCode::BAD_REQUEST, &msg).into_response()
         }
@@ -699,17 +731,14 @@ async fn handle_optimize_start(
         }
     };
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::optimize_start_payload(
-        permit,
-        state.registry.clone(),
-        &body,
-        profile_id.as_deref(),
-    ) {
+    match api::optimize_start_payload(permit, state.registry.clone(), &body, profile_id.as_deref())
+    {
         Ok(payload) => ok_json(payload).into_response(),
-        Err(api::OptimizePayloadError::Parse(e)) => {
-            error_json(StatusCode::BAD_REQUEST, &format!("Invalid request body: {e}"))
-                .into_response()
-        }
+        Err(api::OptimizePayloadError::Parse(e)) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
         Err(api::OptimizePayloadError::Validation(v)) => validation_json(v).into_response(),
     }
 }
@@ -762,8 +791,8 @@ async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResp
                     }
                 }
                 Ok(Err(api::OptimizeStatusError::NotFound)) => {
-                    let event = Event::default()
-                        .data(r#"{"status":"error","error":"Job not found"}"#);
+                    let event =
+                        Event::default().data(r#"{"status":"error","error":"Job not found"}"#);
                     let _ = tx.send(Ok(event)).await;
                     break;
                 }
@@ -810,7 +839,11 @@ async fn handle_sync_ingress(headers: HeaderMap, body: String) -> impl IntoRespo
         .and_then(|v| v.to_str().ok())
         .map(str::to_string);
     let (status, response_body) = sync::ingress_payload(&body, token.as_deref());
-    JsonResponse { status, body: response_body }.into_response()
+    JsonResponse {
+        status,
+        body: response_body,
+    }
+    .into_response()
 }
 
 // ---------------------------------------------------------------------------
