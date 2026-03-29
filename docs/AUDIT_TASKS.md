@@ -31,7 +31,7 @@ Checklist derived from a codebase audit (not from existing roadmaps or `POTENTIA
 
 ## UX, hygiene, and long-term
 
-- [ ] **16. Accessibility pass** — Modal focus traps, visible focus, keyboard flows for run sim/optimize beyond existing `aria-*` usage.
+- [x] **16. Accessibility pass** — Modal focus traps, visible focus, keyboard flows for run sim/optimize beyond existing `aria-*` usage.
 - [x] **17. Supply-chain checks** — `cargo audit` / `npm audit` in CI with an explicit fail vs warn policy.
 - [ ] **18. Profile backup/restore UX** — Export/import or zip flow for `profiles/` so users can recover from disk mistakes.
 - [ ] **19. Single data-refresh entrypoint** — One orchestrated script (Make/Just/npm) that chains import steps in the documented order.

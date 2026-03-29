@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useId, type CSSProperties } from 'react';
+import { useState, useEffect, useRef, useId, useMemo, type CSSProperties, type KeyboardEvent } from 'react';
 import { type HostileListItem, hostileSortLabel } from '../lib/api';
 
 const LIST_LIMIT = 200;
@@ -26,6 +26,7 @@ export default function HostilePicker({
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selected = hostiles.find((h) => h.id === value);
@@ -33,13 +34,14 @@ export default function HostilePicker({
   const displayValue = open ? query : selectedLabel;
 
   const q = query.trim().toLowerCase();
-  const filtered = q
-    ? hostiles.filter((h) => {
-        const row = hostileRowLabel(h).toLowerCase();
-        return row.includes(q) || h.id.toLowerCase().includes(q);
-      })
-    : hostiles;
-  const limited = filtered.slice(0, LIST_LIMIT);
+  const filtered = useMemo(() => {
+    if (!q) return hostiles;
+    return hostiles.filter((h) => {
+      const row = hostileRowLabel(h).toLowerCase();
+      return row.includes(q) || h.id.toLowerCase().includes(q);
+    });
+  }, [hostiles, q]);
+  const limited = useMemo(() => filtered.slice(0, LIST_LIMIT), [filtered]);
 
   useEffect(() => {
     if (!open) setQuery('');
@@ -48,6 +50,28 @@ export default function HostilePicker({
   useEffect(() => {
     if (open && inputRef.current) inputRef.current.focus();
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (q) {
+      setHighlightedIndex(0);
+      return;
+    }
+    const idx = limited.findIndex((h) => h.id === value);
+    setHighlightedIndex(idx >= 0 ? idx : limited.length > 0 ? 0 : 0);
+  }, [open, q, limited, value]);
+
+  useEffect(() => {
+    if (!open || limited.length === 0) return;
+    setHighlightedIndex((i) => Math.min(Math.max(0, i), limited.length - 1));
+  }, [limited.length, open]);
+
+  useEffect(() => {
+    if (!open || highlightedIndex < 0 || highlightedIndex >= limited.length) return;
+    const h = limited[highlightedIndex];
+    if (!h) return;
+    document.getElementById(`${listId}-opt-${h.id}`)?.scrollIntoView({ block: 'nearest' });
+  }, [highlightedIndex, open, limited, listId]);
 
   const handleBlur = () => {
     setTimeout(() => setOpen(false), 150);
@@ -59,7 +83,41 @@ export default function HostilePicker({
     setQuery('');
   };
 
+  const activeOptionId =
+    open && limited.length > 0 && highlightedIndex >= 0 && highlightedIndex < limited.length
+      ? `${listId}-opt-${limited[highlightedIndex]!.id}`
+      : undefined;
+
   const loading = !disabled && hostiles.length === 0;
+
+  const onInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (disabled || loading) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+      setQuery('');
+      return;
+    }
+    if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault();
+      setOpen(true);
+      return;
+    }
+    if (!open) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (limited.length === 0) return;
+      setHighlightedIndex((i) => (i + 1) % limited.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (limited.length === 0) return;
+      setHighlightedIndex((i) => (i - 1 + limited.length) % limited.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const h = limited[highlightedIndex];
+      if (h) handleSelect(h.id);
+    }
+  };
 
   return (
     <div
@@ -73,6 +131,7 @@ export default function HostilePicker({
       <input
         ref={inputRef}
         type="text"
+        role="combobox"
         value={loading ? '' : displayValue}
         readOnly={loading || disabled}
         onChange={(e) => {
@@ -83,11 +142,13 @@ export default function HostilePicker({
           if (!loading && !disabled) setOpen(true);
         }}
         onBlur={handleBlur}
+        onKeyDown={onInputKeyDown}
         placeholder={loading ? 'Loading…' : 'Search scenario…'}
         aria-label="Scenario"
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={listId}
+        aria-activedescendant={activeOptionId}
         disabled={disabled}
         style={{
           width: '100%',
@@ -98,7 +159,6 @@ export default function HostilePicker({
           borderRadius: 6,
           color: 'var(--text)',
           fontSize: '0.9rem',
-          outline: 'none',
         }}
       />
       {open && !loading && !disabled && (
@@ -125,22 +185,26 @@ export default function HostilePicker({
               No match
             </div>
           )}
-          {limited.map((h) => (
+          {limited.map((h, i) => (
             <button
               key={h.id}
+              id={`${listId}-opt-${h.id}`}
               type="button"
               role="option"
               aria-selected={h.id === value}
+              tabIndex={-1}
               style={{
                 display: 'block',
                 width: '100%',
                 padding: '0.4rem 0.6rem',
                 textAlign: 'left',
-                background: h.id === value ? 'var(--border)' : 'transparent',
+                background:
+                  i === highlightedIndex ? 'var(--accent-dim)' : h.id === value ? 'var(--border)' : 'transparent',
                 border: 'none',
                 color: 'var(--text)',
                 fontSize: '0.85rem',
               }}
+              onMouseEnter={() => setHighlightedIndex(i)}
               onMouseDown={(e) => {
                 e.preventDefault();
                 handleSelect(h.id);

@@ -1,4 +1,5 @@
 import WorkspaceHeader from '../components/WorkspaceHeader';
+import SavePresetModal from '../components/SavePresetModal';
 import CrewBuilder from '../components/CrewBuilder';
 import OptimizePanel from '../components/OptimizePanel';
 import SimResults from '../components/SimResults';
@@ -49,80 +50,14 @@ export default function Workspace() {
         optimizeEtaSeconds={ws.optimizeEtaSeconds}
         optimizeStreamMode={ws.optimizeStreamMode}
       />
-      {ws.showSavePreset && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => !ws.savingPreset && ws.setShowSavePreset(false)}
-        >
-          <div
-            style={{
-              background: 'var(--surface)',
-              padding: '1.5rem',
-              borderRadius: 8,
-              border: '1px solid var(--border)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <label style={{ display: 'block', marginBottom: 8 }}>
-              Preset name
-              <input
-                type="text"
-                value={ws.savePresetName}
-                onChange={(e) => ws.setSavePresetName(e.target.value)}
-                placeholder="Unnamed"
-                style={{
-                  display: 'block',
-                  marginTop: 4,
-                  padding: '0.5rem',
-                  width: 240,
-                  background: 'var(--bg)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 4,
-                  color: 'var(--text)',
-                }}
-              />
-            </label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button
-                type="button"
-                onClick={ws.handleSavePreset}
-                disabled={ws.savingPreset}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: 'var(--accent)',
-                  border: 'none',
-                  borderRadius: 6,
-                  color: 'var(--bg)',
-                }}
-              >
-                {ws.savingPreset ? 'Saving…' : 'Save'}
-              </button>
-              <button
-                type="button"
-                onClick={() => ws.setShowSavePreset(false)}
-                disabled={ws.savingPreset}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: 'var(--border)',
-                  border: 'none',
-                  borderRadius: 6,
-                  color: 'var(--text)',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SavePresetModal
+        open={ws.showSavePreset}
+        savePresetName={ws.savePresetName}
+        onSavePresetNameChange={ws.setSavePresetName}
+        savingPreset={ws.savingPreset}
+        onSave={ws.handleSavePreset}
+        onClose={() => ws.setShowSavePreset(false)}
+      />
       {ws.workspaceInfo && (
         <div
           style={{

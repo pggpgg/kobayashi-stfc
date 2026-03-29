@@ -263,6 +263,7 @@ export default function WorkspaceHeader({
           <button
             key={n}
             type="button"
+            aria-label={`Set fight iterations to ${n.toLocaleString()}`}
             onClick={() => onSimsPerCrewChange(n)}
             style={{
               padding: '0.35rem 0.5rem',
@@ -289,10 +290,15 @@ export default function WorkspaceHeader({
         </span>
       )}
       {loadingOptimize && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} role="status" aria-live="polite">
           {optimizeProgress != null && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
               <div
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(optimizeProgress)}
+                aria-label="Optimization progress"
                 style={{
                   flex: 1,
                   height: 6,
@@ -397,6 +403,8 @@ export default function WorkspaceHeader({
         type="button"
         onClick={onRunSim}
         disabled={loadingSim || loadingOptimize}
+        aria-busy={loadingSim}
+        aria-label={loadingSim ? 'Running simulation' : 'Run simulation'}
         style={{
           padding: '0.5rem 1rem',
           background: 'var(--accent-dim)',
@@ -411,6 +419,14 @@ export default function WorkspaceHeader({
         type="button"
         onClick={onRunOptimize}
         disabled={loadingSim || loadingOptimize}
+        aria-busy={loadingOptimize}
+        aria-label={
+          loadingOptimize
+            ? optimizeProgress != null
+              ? `Optimizing, ${Math.round(optimizeProgress)} percent complete`
+              : 'Running optimization'
+            : 'Run optimization'
+        }
         style={{
           padding: '0.5rem 1rem',
           background: 'var(--accent)',

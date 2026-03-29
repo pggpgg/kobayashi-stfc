@@ -41,6 +41,17 @@ a {
   color: var(--accent);
 }
 
+/* Keyboard focus visibility (skip mouse clicks) */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="option"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* LCARS-inspired rail */
 .rail {
   border-radius: 0 8px 8px 0;
