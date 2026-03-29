@@ -15,7 +15,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 ### Optimizer / Monte Carlo (performance + output quality)
 
 - [ ] 8. Add confidence intervals/error bars to optimize outputs (win rate, hull remaining, R1 kill rate) and surface them in the UI.
-- [ ] 9. Implement an analytical pre-filter stage used by optimize strategies to prune obviously bad crews before Monte Carlo (explicitly labeled approximate).
+- [x] 9. Implement an analytical pre-filter stage used by optimize strategies to prune obviously bad crews before Monte Carlo (explicitly labeled approximate).
 - [ ] 10. Add optimize constraints (must-include, exclude, group count, seating rules) exposed in API and UI.
 - [ ] 11. Make below-decks slot count a first-class scenario parameter (ship-aware defaults) and update candidate generation accordingly.
 - [x] 12. Add a deterministic “replay one seed” endpoint that returns a compact trace + summary for a chosen seed from an optimize result.

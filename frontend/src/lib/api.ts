@@ -268,9 +268,21 @@ export interface CrewRecommendation {
 
 export interface OptimizeResponse {
   status: string;
-  scenario: { ship: string; hostile: string; sims: number; seed: number };
+  engine?: string;
+  scenario: {
+    ship: string;
+    hostile: string;
+    sims: number;
+    seed: number;
+    analytical_prefilter_keep?: number;
+    analytical_prefilter_from?: number;
+    analytical_prefilter_kept?: number;
+  };
   recommendations: CrewRecommendation[];
   duration_ms?: number;
+  notes?: string[];
+  approximate_notes?: string[];
+  warnings?: string[];
 }
 
 export interface OptimizeEstimate {

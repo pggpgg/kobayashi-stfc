@@ -9,6 +9,8 @@ use crate::optimizer::OptimizerStrategy;
 pub const DEFAULT_SIMS: u32 = 5000;
 pub const MAX_SIMS: u32 = 100_000;
 pub const MAX_CANDIDATES: u32 = 2_000_000;
+/// Upper bound for `analytical_prefilter_keep` when set (must be ≥ 1 to truncate).
+pub const MAX_ANALYTICAL_PREFILTER_KEEP: u32 = 500_000;
 
 /// Same JSON shape as simulate `crew` — duplicated so `requests` stays independent of `api`.
 #[derive(Debug, Clone, Deserialize)]
@@ -50,6 +52,8 @@ pub struct OptimizeRequest {
     pub heuristics_seeds: Option<Vec<String>>,
     pub heuristics_only: Option<bool>,
     pub below_decks_strategy: Option<String>,
+    /// Keep only this many crews after approximate analytical ranking (closed-form expected hull damage) before Monte Carlo. Omitted = evaluate all generated candidates. Ignored for genetic strategy.
+    pub analytical_prefilter_keep: Option<u32>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -114,6 +118,20 @@ pub fn validate_request(
             errors.push(ValidationIssue {
                 field: "max_candidates",
                 messages: vec![format!("must be at most {MAX_CANDIDATES}")],
+            });
+        }
+    }
+
+    if let Some(k) = request.analytical_prefilter_keep {
+        if k == 0 {
+            errors.push(ValidationIssue {
+                field: "analytical_prefilter_keep",
+                messages: vec!["if set, must be at least 1".to_string()],
+            });
+        } else if k > MAX_ANALYTICAL_PREFILTER_KEEP {
+            errors.push(ValidationIssue {
+                field: "analytical_prefilter_keep",
+                messages: vec![format!("must be at most {MAX_ANALYTICAL_PREFILTER_KEEP}")],
             });
         }
     }

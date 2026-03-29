@@ -45,6 +45,15 @@ pub struct ScenarioSummary {
     pub hostile: String,
     pub sims: u32,
     pub seed: u64,
+    /// Requested cap on crews after analytical ranking (if any).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_keep: Option<u32>,
+    /// Crew count before analytical truncation (only when truncation ran).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_from: Option<u32>,
+    /// Crew count after analytical truncation (only when truncation ran).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_kept: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -56,6 +65,9 @@ pub struct OptimizeResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration_ms: Option<u64>,
     pub notes: Vec<&'static str>,
+    /// Extra human-readable notes (e.g. approximate pre-filter semantics).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub approximate_notes: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
 }
@@ -82,13 +94,15 @@ pub fn load_heuristics_candidates(
 }
 
 /// Metadata from the shared optimize gather path (sync + async jobs).
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct OptimizeGatherMeta {
     strategy: OptimizerStrategy,
     is_seeded_genetic: bool,
     heuristics_only: bool,
     heuristics_seeds_nonempty: bool,
     using_placeholder_combatants: bool,
+    /// `Some((generated, kept))` when analytical pre-filter truncated the candidate list.
+    analytical_prefilter: Option<(usize, usize)>,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -226,14 +240,6 @@ fn gather_optimize_simulation_results(
     )
     .using_placeholder_combatants;
 
-    let meta = OptimizeGatherMeta {
-        strategy,
-        is_seeded_genetic,
-        heuristics_only,
-        heuristics_seeds_nonempty,
-        using_placeholder_combatants,
-    };
-
     let mut all_results: Vec<SimulationResult> =
         if heuristics_seeds_nonempty && !is_seeded_genetic {
             let h_total = h_candidates.len() as u32;
@@ -255,7 +261,7 @@ fn gather_optimize_simulation_results(
             Vec::new()
         };
 
-    if !heuristics_only {
+    let analytical_prefilter = if !heuristics_only {
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: &request.hostile,
@@ -274,8 +280,11 @@ fn gather_optimize_simulation_results(
             profile_id,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            analytical_prefilter_keep: request
+                .analytical_prefilter_keep
+                .map(|n| n as usize),
         };
-        let normal_results = optimize_scenario_with_progress_with_registry(
+        let outcome = optimize_scenario_with_progress_with_registry(
             registry,
             &scenario,
             |crews_done, total_crews| sink.on_optimize_progress(crews_done, total_crews),
@@ -283,12 +292,26 @@ fn gather_optimize_simulation_results(
         if sink.job_cancelled() {
             return Err(());
         }
+        let pf = outcome.analytical_prefilter;
         all_results.extend(
-            normal_results
+            outcome
+                .ranked
                 .into_iter()
                 .map(ranked_crew_to_simulation_result),
         );
-    }
+        pf
+    } else {
+        None
+    };
+
+    let meta = OptimizeGatherMeta {
+        strategy,
+        is_seeded_genetic,
+        heuristics_only,
+        heuristics_seeds_nonempty,
+        using_placeholder_combatants,
+        analytical_prefilter,
+    };
 
     Ok((all_results, meta))
 }
@@ -322,6 +345,18 @@ fn build_optimize_response(
         notes.insert(0, "Heuristics crews were evaluated first.");
     }
 
+    let mut approximate_notes = Vec::new();
+    if let Some((generated, kept)) = meta.analytical_prefilter {
+        approximate_notes.push(format!(
+            "Approximate analytical pre-filter (closed-form expected hull damage to defender, not win rate) kept {kept} of {generated} crews before Monte Carlo."
+        ));
+    } else if request.analytical_prefilter_keep.is_some() && matches!(meta.strategy, OptimizerStrategy::Genetic) {
+        approximate_notes.push(
+            "analytical_prefilter_keep was ignored because the genetic strategy builds its own population."
+                .to_string(),
+        );
+    }
+
     let mut warnings = Vec::new();
     if meta.using_placeholder_combatants {
         warnings.push(
@@ -338,6 +373,13 @@ fn build_optimize_response(
             hostile: request.hostile.clone(),
             sims,
             seed,
+            analytical_prefilter_keep: request.analytical_prefilter_keep,
+            analytical_prefilter_from: meta
+                .analytical_prefilter
+                .map(|(g, _)| g as u32),
+            analytical_prefilter_kept: meta
+                .analytical_prefilter
+                .map(|(_, k)| k as u32),
         },
         recommendations: ranked_results
             .into_iter()
@@ -353,6 +395,7 @@ fn build_optimize_response(
             .collect(),
         duration_ms: Some(duration_ms),
         notes,
+        approximate_notes,
         warnings,
     }
 }

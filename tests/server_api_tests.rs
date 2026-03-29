@@ -288,6 +288,52 @@ async fn optimize_endpoint_rejects_excessive_max_candidates() {
 }
 
 #[tokio::test]
+async fn optimize_endpoint_rejects_zero_analytical_prefilter_keep() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"2918121098","sims":100,"analytical_prefilter_keep":0}"#,
+        None,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 400);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(
+        errors.iter().any(|e| e["field"] == "analytical_prefilter_keep"),
+        "analytical_prefilter_keep validation error should be present"
+    );
+}
+
+#[tokio::test]
+async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":800,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
+    let response = route_request("POST", "/api/optimize", body, None).await;
+    assert_eq!(response.status_code, 200, "body: {}", response.body);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["scenario"]["analytical_prefilter_keep"], 4);
+    assert_eq!(payload["scenario"]["analytical_prefilter_kept"], 4);
+    assert!(payload["scenario"]["analytical_prefilter_from"].as_u64().unwrap_or(0) > 4);
+    let notes = payload["approximate_notes"]
+        .as_array()
+        .expect("approximate_notes should be an array");
+    assert!(
+        notes.iter().any(|n| {
+            n.as_str()
+                .is_some_and(|s| s.contains("pre-filter") && s.contains("Monte Carlo"))
+        }),
+        "approximate_notes should describe analytical pre-filter: {:?}",
+        notes
+    );
+}
+
+#[tokio::test]
 async fn optimize_validation_error_has_expected_schema() {
     let response = route_request(
         "POST",

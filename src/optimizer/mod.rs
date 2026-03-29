@@ -41,6 +41,35 @@ fn sort_candidates_by_analytical_expected_damage(
     indexed.into_iter().map(|(_, c)| c).collect()
 }
 
+/// After analytical ranking, optionally keep only the top `keep` crews (approximate proxy; full MC still determines win rate).
+/// Returns `(candidates, Some((generated, kept)))` when truncation happened.
+pub(crate) fn sort_and_analytical_prefilter(
+    shared: &SharedScenarioData,
+    candidates: Vec<CrewCandidate>,
+    seed: u64,
+    keep: Option<usize>,
+) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
+    let generated = candidates.len();
+    let mut sorted = sort_candidates_by_analytical_expected_damage(shared, candidates, seed);
+    let Some(k) = keep.filter(|n| *n > 0) else {
+        return (sorted, None);
+    };
+    if sorted.len() > k {
+        sorted.truncate(k);
+        (sorted, Some((generated, k)))
+    } else {
+        (sorted, None)
+    }
+}
+
+/// Result of [`optimize_scenario_with_progress_with_registry`] including optional analytical pre-filter stats.
+#[derive(Debug, Clone)]
+pub struct OptimizeRunOutcome {
+    pub ranked: Vec<RankedCrewResult>,
+    /// `Some((generated, kept))` when crews were truncated after analytical ranking before Monte Carlo.
+    pub analytical_prefilter: Option<(usize, usize)>,
+}
+
 /// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, or tiered (scout → confirm).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptimizerStrategy {
@@ -83,6 +112,8 @@ pub struct OptimizationScenario<'a> {
     pub tiered_scout_sims: Option<usize>,
     /// Tiered only: number of top crews to run full confirmation. None = use default (20).
     pub tiered_top_k: Option<usize>,
+    /// When set, keep only this many crews after analytical expected-hull-damage ranking before Monte Carlo. Genetic ignores this.
+    pub analytical_prefilter_keep: Option<usize>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -101,6 +132,7 @@ impl Default for OptimizationScenario<'_> {
             profile_id: None,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            analytical_prefilter_keep: None,
         }
     }
 }
@@ -138,8 +170,12 @@ fn optimize_scenario_tiered_with_registry(
         None,
         scenario.profile_id,
     );
-    let candidates =
-        sort_candidates_by_analytical_expected_damage(&shared_tiered, candidates, scenario.seed);
+    let (candidates, _) = sort_and_analytical_prefilter(
+        &shared_tiered,
+        candidates,
+        scenario.seed,
+        scenario.analytical_prefilter_keep,
+    );
     let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
     let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
     run_tiered_with_registry_with_progress(
@@ -193,8 +229,12 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.ship_level,
         scenario.profile_id,
     );
-    let candidates =
-        sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
+    let (candidates, _) = sort_and_analytical_prefilter(
+        &shared_ex,
+        candidates,
+        scenario.seed,
+        scenario.analytical_prefilter_keep,
+    );
     let (simulation_results, _) = run_monte_carlo_parallel_with_registry(
         registry,
         scenario.ship,
@@ -221,8 +261,12 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario.ship,
         scenario.hostile,
     );
-    let candidates =
-        sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
+    let (candidates, _) = sort_and_analytical_prefilter(
+        &shared,
+        candidates,
+        scenario.seed,
+        scenario.analytical_prefilter_keep,
+    );
     let simulation_results = run_monte_carlo_parallel(
         scenario.ship,
         scenario.hostile,
@@ -289,6 +333,7 @@ where
                 profile_id: scenario.profile_id,
                 tiered_scout_sims: scenario.tiered_scout_sims,
                 tiered_top_k: scenario.tiered_top_k,
+                analytical_prefilter_keep: scenario.analytical_prefilter_keep,
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -306,8 +351,12 @@ where
                 scenario.ship,
                 scenario.hostile,
             );
-            let candidates =
-                sort_candidates_by_analytical_expected_damage(&shared, candidates, scenario.seed);
+            let (candidates, _) = sort_and_analytical_prefilter(
+                &shared,
+                candidates,
+                scenario.seed,
+                scenario.analytical_prefilter_keep,
+            );
             let total = candidates.len();
             if total == 0 {
                 return Vec::new();
@@ -350,7 +399,7 @@ pub fn optimize_scenario_with_progress_with_registry<F>(
     registry: &DataRegistry,
     scenario: &OptimizationScenario<'_>,
     mut on_progress: F,
-) -> Vec<RankedCrewResult>
+) -> OptimizeRunOutcome
 where
     F: FnMut(u32, u32) -> bool,
 {
@@ -368,9 +417,23 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let shared = build_shared_scenario_data_from_registry(
+                registry,
+                scenario.ship,
+                scenario.hostile,
+                scenario.ship_tier,
+                scenario.ship_level,
+                scenario.profile_id,
+            );
+            let (candidates, analytical_prefilter) = sort_and_analytical_prefilter(
+                &shared,
+                candidates,
+                scenario.seed,
+                scenario.analytical_prefilter_keep,
+            );
             let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
             let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
-            run_tiered_with_registry_with_progress(
+            let ranked = run_tiered_with_registry_with_progress(
                 registry,
                 scenario.ship,
                 scenario.hostile,
@@ -381,7 +444,11 @@ where
                 scenario.seed,
                 scenario.profile_id,
                 &mut on_progress,
-            )
+            );
+            OptimizeRunOutcome {
+                ranked,
+                analytical_prefilter,
+            }
         }
         OptimizerStrategy::Exhaustive => {
             let generator = CrewGenerator::with_strategy(
@@ -406,14 +473,24 @@ where
                 scenario.ship_level,
                 scenario.profile_id,
             );
-            let candidates =
-                sort_candidates_by_analytical_expected_damage(&shared_ex, candidates, scenario.seed);
+            let (candidates, analytical_prefilter) = sort_and_analytical_prefilter(
+                &shared_ex,
+                candidates,
+                scenario.seed,
+                scenario.analytical_prefilter_keep,
+            );
             let total = candidates.len();
             if total == 0 {
-                return Vec::new();
+                return OptimizeRunOutcome {
+                    ranked: Vec::new(),
+                    analytical_prefilter,
+                };
             }
             if !on_progress(0, total as u32) {
-                return Vec::new();
+                return OptimizeRunOutcome {
+                    ranked: Vec::new(),
+                    analytical_prefilter,
+                };
             }
 
             let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
@@ -440,14 +517,18 @@ where
                 }
             }
 
-            rank_results(all_results)
+            OptimizeRunOutcome {
+                ranked: rank_results(all_results),
+                analytical_prefilter,
+            }
         }
-        OptimizerStrategy::Genetic => {
-            optimize_scenario_genetic(scenario, |gen, max_gen, _| {
+        OptimizerStrategy::Genetic => OptimizeRunOutcome {
+            ranked: optimize_scenario_genetic(scenario, |gen, max_gen, _| {
                 on_progress(gen as u32, max_gen as u32);
                 true
-            })
-        }
+            }),
+            analytical_prefilter: None,
+        },
     }
 }
 
@@ -471,12 +552,16 @@ pub fn optimize_crew(
         profile_id,
         tiered_scout_sims: None,
         tiered_top_k: None,
+        analytical_prefilter_keep: None,
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{OptimizationScenario, OptimizerStrategy};
+    use super::{
+        optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizerStrategy,
+    };
+    use crate::data::data_registry::DataRegistry;
 
     #[test]
     fn genetic_strategy_returns_ranked_results_shape() {
@@ -494,11 +579,42 @@ mod tests {
             profile_id: None,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            analytical_prefilter_keep: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
             assert_eq!(r.bridge.len(), 2, "each result must have 2 bridge");
             assert_eq!(r.below_decks.len(), 3, "each result must have 3 below_decks");
         }
+    }
+
+    #[test]
+    fn analytical_prefilter_truncates_before_monte_carlo() {
+        let registry = DataRegistry::load().expect("data registry");
+        let scenario = OptimizationScenario {
+            ship: "saladin",
+            hostile: "2918121098",
+            ship_tier: None,
+            ship_level: None,
+            simulation_count: 15,
+            seed: 11,
+            max_candidates: Some(80),
+            strategy: OptimizerStrategy::Exhaustive,
+            only_below_decks_with_ability: false,
+            seed_population: Vec::new(),
+            profile_id: None,
+            tiered_scout_sims: None,
+            tiered_top_k: None,
+            analytical_prefilter_keep: Some(4),
+        };
+        let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_, _| true);
+        assert!(
+            out.ranked.len() <= 4,
+            "expected at most 4 ranked crews, got {}",
+            out.ranked.len()
+        );
+        let (g, k) = out.analytical_prefilter.expect("truncation should be recorded");
+        assert!(g > k, "generated {g} should exceed kept {k}");
+        assert_eq!(k, 4);
     }
 }
