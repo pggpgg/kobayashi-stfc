@@ -26,7 +26,7 @@ use crate::data::profile_index::{
 };
 use crate::data::import::load_imported_ships;
 use crate::optimizer::crew_generator::{
-    CandidateStrategy, CrewCandidate, CrewGenerator, BELOW_DECKS_SLOTS, BRIDGE_SLOTS,
+    resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
     replay_optimize_iteration_with_registry, run_monte_carlo_with_registry, SimulationResult,
@@ -289,6 +289,8 @@ pub struct SimulateRequest {
     pub crew: SimulateCrew,
     pub num_sims: Option<u32>,
     pub seed: Option<u64>,
+    /// Below-decks slot count for padding crew (2–5). Omitted = tier default.
+    pub below_decks_slots: Option<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -334,6 +336,7 @@ fn crew_candidate_from_officer_fields(
     bridge: Option<&[Option<String>]>,
     below_deck: Option<&[Option<String>]>,
     officers: &[(String, String)],
+    below_decks_slots: usize,
 ) -> Result<CrewCandidate, String> {
     let captain = captain
         .map(|s| officer_id_to_name(s, officers))
@@ -354,7 +357,7 @@ fn crew_candidate_from_officer_fields(
     let below_names: Vec<String> = below_deck
         .map(|v| {
             v.iter()
-                .take(BELOW_DECKS_SLOTS)
+                .take(below_decks_slots)
                 .map(|s| {
                     s.as_ref()
                         .map(|id| officer_id_to_name(id, officers))
@@ -364,7 +367,7 @@ fn crew_candidate_from_officer_fields(
         })
         .unwrap_or_default();
     let bridge = pad_to_len(bridge_names, BRIDGE_SLOTS);
-    let below_decks = pad_to_len(below_names, BELOW_DECKS_SLOTS);
+    let below_decks = pad_to_len(below_names, below_decks_slots);
     Ok(CrewCandidate {
         captain,
         bridge,
@@ -401,6 +404,16 @@ pub fn simulate_payload(
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
     let num_sims = req.num_sims.unwrap_or(5000).min(100_000).max(1);
     let seed = req.seed.unwrap_or(0);
+    if let Some(n) = req.below_decks_slots {
+        let lo = crate::optimizer::crew_generator::MIN_BELOW_DECKS_SLOTS as u32;
+        let hi = crate::optimizer::crew_generator::MAX_BELOW_DECKS_SLOTS as u32;
+        if !(lo..=hi).contains(&n) {
+            return Err(SimulateError::Validation(format!(
+                "below_decks_slots must be between {lo} and {hi}"
+            )));
+        }
+    }
+    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, req.below_decks_slots);
 
     let officers: Vec<(String, String)> = registry
         .officers()
@@ -413,6 +426,7 @@ pub fn simulate_payload(
         req.crew.bridge.as_ref().map(|v| v.as_slice()),
         req.crew.below_deck.as_ref().map(|v| v.as_slice()),
         &officers,
+        below_decks_slots,
     )
     .map_err(SimulateError::Validation)?;
 
@@ -543,11 +557,13 @@ pub fn replay_optimize_seed_payload(
         .map(|o| (o.id.clone(), o.name.clone()))
         .collect();
 
+    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, None);
     let candidate = crew_candidate_from_officer_fields(
         req.crew.captain.as_deref(),
         req.crew.bridge.as_ref().map(|v| v.as_slice()),
         req.crew.below_deck.as_ref().map(|v| v.as_slice()),
         &officers,
+        below_decks_slots,
     )
     .map_err(ReplaySeedError::Validation)?;
 
@@ -1074,6 +1090,8 @@ pub fn optimize_estimate_payload(
         sims,
         max_candidates,
         prioritize_below_decks_ability,
+        ship_tier,
+        bd_explicit,
     ) = requests::parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
@@ -1086,11 +1104,13 @@ pub fn optimize_estimate_payload(
             }],
         }));
     }
+    let below_decks_slots = resolve_below_decks_slots(ship_tier, bd_explicit);
     let estimated_candidates = match max_candidates {
         Some(cap) if cap <= MAX_CANDIDATES => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 max_candidates: Some(cap as usize),
                 only_below_decks_with_ability: prioritize_below_decks_ability,
+                below_decks_slots,
                 ..CandidateStrategy::default()
             });
             generator
@@ -1110,6 +1130,7 @@ pub fn optimize_estimate_payload(
         None => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 only_below_decks_with_ability: prioritize_below_decks_ability,
+                below_decks_slots,
                 ..CandidateStrategy::default()
             });
             generator.count_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)

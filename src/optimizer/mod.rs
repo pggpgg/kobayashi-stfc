@@ -7,7 +7,9 @@ pub mod tiered;
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::analytical::expected_damage;
-use crate::optimizer::crew_generator::{CandidateStrategy, CrewCandidate, CrewGenerator};
+use crate::optimizer::crew_generator::{
+    CandidateStrategy, CrewCandidate, CrewGenerator, DEFAULT_BELOW_DECKS_SLOTS,
+};
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry, SimulationResult,
@@ -114,6 +116,8 @@ pub struct OptimizationScenario<'a> {
     pub tiered_top_k: Option<usize>,
     /// When set, keep only this many crews after analytical expected-hull-damage ranking before Monte Carlo. Genetic ignores this.
     pub analytical_prefilter_keep: Option<usize>,
+    /// Below-decks slot count for candidate generation (resolved from API / tier defaults upstream).
+    pub below_decks_slots: usize,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -133,6 +137,7 @@ impl Default for OptimizationScenario<'_> {
             tiered_scout_sims: None,
             tiered_top_k: None,
             analytical_prefilter_keep: None,
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         }
     }
 }
@@ -153,6 +158,7 @@ fn optimize_scenario_tiered_with_registry(
     let generator = CrewGenerator::with_strategy(CandidateStrategy {
         max_candidates: scenario.max_candidates,
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        below_decks_slots: scenario.below_decks_slots,
         ..CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates_from_registry(
@@ -212,6 +218,7 @@ fn optimize_scenario_exhaustive_with_registry(
     let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
         max_candidates: scenario.max_candidates,
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        below_decks_slots: scenario.below_decks_slots,
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates_from_registry(
@@ -254,6 +261,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
     let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
         max_candidates: scenario.max_candidates,
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        below_decks_slots: scenario.below_decks_slots,
         ..crate::optimizer::crew_generator::CandidateStrategy::default()
     });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
@@ -334,6 +342,7 @@ where
                 tiered_scout_sims: scenario.tiered_scout_sims,
                 tiered_top_k: scenario.tiered_top_k,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
+                below_decks_slots: scenario.below_decks_slots,
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -342,6 +351,7 @@ where
                 crate::optimizer::crew_generator::CandidateStrategy {
                     max_candidates: scenario.max_candidates,
                     only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                    below_decks_slots: scenario.below_decks_slots,
                     ..crate::optimizer::crew_generator::CandidateStrategy::default()
                 },
             );
@@ -408,6 +418,7 @@ where
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 max_candidates: scenario.max_candidates,
                 only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                below_decks_slots: scenario.below_decks_slots,
                 ..CandidateStrategy::default()
             });
             let candidates = generator.generate_candidates_from_registry(
@@ -455,6 +466,7 @@ where
                 crate::optimizer::crew_generator::CandidateStrategy {
                     max_candidates: scenario.max_candidates,
                     only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                    below_decks_slots: scenario.below_decks_slots,
                     ..crate::optimizer::crew_generator::CandidateStrategy::default()
                 },
             );
@@ -553,6 +565,7 @@ pub fn optimize_crew(
         tiered_scout_sims: None,
         tiered_top_k: None,
         analytical_prefilter_keep: None,
+        below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
     })
 }
 
@@ -562,6 +575,7 @@ mod tests {
         optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizerStrategy,
     };
     use crate::data::data_registry::DataRegistry;
+    use crate::optimizer::crew_generator::DEFAULT_BELOW_DECKS_SLOTS;
 
     #[test]
     fn genetic_strategy_returns_ranked_results_shape() {
@@ -580,11 +594,16 @@ mod tests {
             tiered_scout_sims: None,
             tiered_top_k: None,
             analytical_prefilter_keep: None,
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
             assert_eq!(r.bridge.len(), 2, "each result must have 2 bridge");
-            assert_eq!(r.below_decks.len(), 3, "each result must have 3 below_decks");
+            assert_eq!(
+                r.below_decks.len(),
+                DEFAULT_BELOW_DECKS_SLOTS,
+                "each result must match scenario below_decks_slots"
+            );
         }
     }
 
@@ -606,6 +625,7 @@ mod tests {
             tiered_scout_sims: None,
             tiered_top_k: None,
             analytical_prefilter_keep: Some(4),
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         };
         let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_, _| true);
         assert!(

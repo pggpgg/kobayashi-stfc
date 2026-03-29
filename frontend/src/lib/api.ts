@@ -286,6 +286,8 @@ export interface OptimizeResponse {
     hostile: string;
     sims: number;
     seed: number;
+    /** Resolved below-decks slot count used for candidate generation. */
+    below_decks_slots: number;
     analytical_prefilter_keep?: number;
     analytical_prefilter_from?: number;
     analytical_prefilter_kept?: number;
@@ -310,6 +312,8 @@ export async function getOptimizeEstimate(
     sims?: number;
     max_candidates?: number | null;
     prioritize_below_decks_ability?: boolean;
+    ship_tier?: number | null;
+    below_decks_slots?: number | null;
   },
   profileId?: string | null,
 ): Promise<OptimizeEstimate> {
@@ -325,6 +329,12 @@ export async function getOptimizeEstimate(
   if (params.prioritize_below_decks_ability === true) {
     search.set('prioritize_below_decks_ability', 'true');
   }
+  if (params.ship_tier != null && params.ship_tier > 0) {
+    search.set('ship_tier', String(params.ship_tier));
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+    search.set('below_decks_slots', String(params.below_decks_slots));
+  }
   if (profileId) search.set('profile', profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
   const res = await fetch(url);
@@ -339,6 +349,9 @@ export async function optimize(
     sims?: number;
     seed?: number;
     max_candidates?: number | null;
+    ship_tier?: number | null;
+    ship_level?: number | null;
+    below_decks_slots?: number | null;
   },
   profileId?: string | null,
 ): Promise<OptimizeResponse> {
@@ -350,6 +363,15 @@ export async function optimize(
   };
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;
+  }
+  if (params.ship_tier != null && params.ship_tier > 0) {
+    body.ship_tier = params.ship_tier;
+  }
+  if (params.ship_level != null && params.ship_level > 0) {
+    body.ship_level = params.ship_level;
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+    body.below_decks_slots = params.below_decks_slots;
   }
   const res = await fetch(`${API_BASE}/api/optimize`, {
     method: 'POST',
@@ -428,6 +450,9 @@ export async function optimizeStart(
   }
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+    body.below_decks_slots = params.below_decks_slots;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: 'POST',

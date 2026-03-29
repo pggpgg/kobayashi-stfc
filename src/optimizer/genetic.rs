@@ -13,7 +13,7 @@
 
 use crate::combat::rng::Rng;
 use crate::optimizer::crew_generator::{
-    build_officer_pools, OfficerPools, CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS,
+    build_officer_pools, OfficerPools, CrewCandidate, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_deduped, SimulationResult,
@@ -39,6 +39,9 @@ pub struct GeneticConfig {
     pub stagnation_limit: Option<usize>,
     /// When true, below-decks pool only includes officers that have a below-decks ability.
     pub only_below_decks_with_ability: bool,
+
+    /// Below-decks slot count for random init, crossover, repair, and mutate.
+    pub below_decks_slots: usize,
 
     /// Pre-built crew candidates to seed the initial population.
     /// When non-empty, these replace random initialization; remaining slots filled randomly.
@@ -66,6 +69,7 @@ impl Default for GeneticConfig {
             elitism_count: 2,
             stagnation_limit: Some(10),
             only_below_decks_with_ability: false,
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             seed_population: Vec::new(),
             adaptive_mutation: true,
             mutation_rate_floor: 0.05,
@@ -116,10 +120,14 @@ impl RngExt for Rng {
 }
 
 /// Build one random valid crew from pools with distinct officers in every seat.
-fn random_crew(rng: &mut Rng, pools: &OfficerPools) -> Option<CrewCandidate> {
+fn random_crew(
+    rng: &mut Rng,
+    pools: &OfficerPools,
+    below_decks_slots: usize,
+) -> Option<CrewCandidate> {
     if pools.captains.is_empty()
         || pools.bridge.len() < BRIDGE_SLOTS
-        || pools.below_decks.len() < BELOW_DECKS_SLOTS
+        || pools.below_decks.len() < below_decks_slots
     {
         return None;
     }
@@ -139,8 +147,8 @@ fn random_crew(rng: &mut Rng, pools: &OfficerPools) -> Option<CrewCandidate> {
         used.insert(name);
     }
 
-    let mut below_decks = Vec::with_capacity(BELOW_DECKS_SLOTS);
-    for _ in 0..BELOW_DECKS_SLOTS {
+    let mut below_decks = Vec::with_capacity(below_decks_slots);
+    for _ in 0..below_decks_slots {
         let available: Vec<&String> = pools
             .below_decks
             .iter()
@@ -168,6 +176,7 @@ fn init_population_seeded(
     population_size: usize,
     seed_candidates: &[CrewCandidate],
     seed: u64,
+    below_decks_slots: usize,
 ) -> Vec<CrewCandidate> {
     let mut pop = Vec::with_capacity(population_size);
 
@@ -181,7 +190,7 @@ fn init_population_seeded(
     let mut attempts = 0;
     const MAX_ATTEMPTS: usize = 50_000;
     while pop.len() < population_size && attempts < MAX_ATTEMPTS {
-        if let Some(crew) = random_crew(&mut rng, pools) {
+        if let Some(crew) = random_crew(&mut rng, pools, below_decks_slots) {
             pop.push(crew);
         }
         attempts += 1;
@@ -218,6 +227,7 @@ fn crossover(
     b: &CrewCandidate,
     pools: &OfficerPools,
     rng: &mut Rng,
+    below_decks_slots: usize,
 ) -> CrewCandidate {
     let captain = if rng.next_f64() < 0.5 { &a.captain } else { &b.captain };
     let captain = captain.clone();
@@ -258,7 +268,7 @@ fn crossover(
         .collect();
     let below_set: HashSet<String> = below_union.into_iter().collect();
     let mut below_vec: Vec<String> = below_set.into_iter().collect();
-    while below_vec.len() < BELOW_DECKS_SLOTS {
+    while below_vec.len() < below_decks_slots {
         let available: Vec<&String> = pools
             .below_decks
             .iter()
@@ -271,8 +281,8 @@ fn crossover(
         below_vec.push(pick.clone());
         used.insert(pick);
     }
-    if below_vec.len() > BELOW_DECKS_SLOTS {
-        below_vec.truncate(BELOW_DECKS_SLOTS);
+    if below_vec.len() > below_decks_slots {
+        below_vec.truncate(below_decks_slots);
     }
 
     CrewCandidate {
@@ -282,8 +292,13 @@ fn crossover(
     }
 }
 
-/// Ensure crew has exactly BRIDGE_SLOTS and BELOW_DECKS_SLOTS. Fills from pools; enforces distinct officers.
-fn repair_crew(crew: &mut CrewCandidate, pools: &OfficerPools, rng: &mut Rng) {
+/// Ensure crew has exactly `BRIDGE_SLOTS` bridge and `below_decks_slots` below-deck officers.
+fn repair_crew(
+    crew: &mut CrewCandidate,
+    pools: &OfficerPools,
+    rng: &mut Rng,
+    below_decks_slots: usize,
+) {
     let mut used: HashSet<String> = HashSet::new();
     used.insert(crew.captain.clone());
     for s in crew.bridge.iter() {
@@ -304,7 +319,7 @@ fn repair_crew(crew: &mut CrewCandidate, pools: &OfficerPools, rng: &mut Rng) {
     }
     crew.bridge.truncate(BRIDGE_SLOTS);
 
-    while crew.below_decks.len() < BELOW_DECKS_SLOTS {
+    while crew.below_decks.len() < below_decks_slots {
         let available: Vec<&String> = pools
             .below_decks
             .iter()
@@ -317,7 +332,7 @@ fn repair_crew(crew: &mut CrewCandidate, pools: &OfficerPools, rng: &mut Rng) {
         crew.below_decks.push(pick.clone());
         used.insert(pick.clone());
     }
-    crew.below_decks.truncate(BELOW_DECKS_SLOTS);
+    crew.below_decks.truncate(below_decks_slots);
 }
 
 /// Mutate one slot: replace with random officer from the appropriate pool.
@@ -326,11 +341,13 @@ fn mutate(
     pools: &OfficerPools,
     rate: f64,
     rng: &mut Rng,
+    below_decks_slots: usize,
 ) {
     if rng.next_f64() >= rate {
         return;
     }
-    let slot = rng.index(6);
+    let total_slots = (1 + BRIDGE_SLOTS + below_decks_slots).max(1);
+    let slot = rng.index(total_slots);
     let mut used: HashSet<&str> = HashSet::new();
     used.insert(crew.captain.as_str());
     for s in crew.bridge.iter() {
@@ -359,20 +376,20 @@ fn mutate(
                 crew.bridge[1] = available[rng.index(available.len())].clone();
             }
         }
-        3..=5 => {
-            let di = slot - 3;
+        s if s >= 3 => {
+            let di = s - 3;
             let available: Vec<&String> = pools
                 .below_decks
                 .iter()
                 .filter(|s| !used.contains(s.as_str()))
                 .collect();
-            if !available.is_empty() && di < crew.below_decks.len() {
+            if !available.is_empty() && di < crew.below_decks.len() && di < below_decks_slots {
                 crew.below_decks[di] = available[rng.index(available.len())].clone();
             }
         }
         _ => {}
     }
-    repair_crew(crew, pools, rng);
+    repair_crew(crew, pools, rng, below_decks_slots);
 }
 
 /// Run genetic optimization. Returns top individuals for final ranking.
@@ -384,7 +401,8 @@ pub fn run_genetic_optimizer(
     seed: u64,
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
 ) -> Vec<CrewCandidate> {
-    let pools = match build_officer_pools(config.only_below_decks_with_ability) {
+    let bd_slots = config.below_decks_slots;
+    let pools = match build_officer_pools(config.only_below_decks_with_ability, bd_slots) {
         Some(p) => p,
         None => return Vec::new(),
     };
@@ -394,6 +412,7 @@ pub fn run_genetic_optimizer(
         config.population_size,
         &config.seed_population,
         seed,
+        bd_slots,
     );
     if population.is_empty() {
         return Vec::new();
@@ -468,17 +487,20 @@ pub fn run_genetic_optimizer(
                 &population[pb],
                 &pools,
                 &mut rng,
+                bd_slots,
             );
             repair_crew(
                 &mut child,
                 &pools,
                 &mut rng,
+                bd_slots,
             );
             mutate(
                 &mut child,
                 &pools,
                 current_mutation_rate,
                 &mut rng,
+                bd_slots,
             );
             next_pop.push(child);
         }
@@ -517,7 +539,7 @@ pub fn run_genetic_optimizer_ranked(
 mod tests {
     use super::{crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig};
     use crate::combat::rng::Rng;
-    use crate::optimizer::crew_generator::{CrewCandidate, OfficerPools};
+    use crate::optimizer::crew_generator::{CrewCandidate, OfficerPools, DEFAULT_BELOW_DECKS_SLOTS};
 
     fn small_pools() -> OfficerPools {
         OfficerPools {
@@ -542,7 +564,7 @@ mod tests {
                 return false;
             }
         }
-        c.bridge.len() == 2 && c.below_decks.len() == 3
+        c.bridge.len() == 2 && c.below_decks.len() == DEFAULT_BELOW_DECKS_SLOTS
     }
 
     fn make_crew(cap: &str, b: &[&str], bd: &[&str]) -> CrewCandidate {
@@ -558,7 +580,7 @@ mod tests {
         let pools = small_pools();
         let mut rng = Rng::new(42);
         for _ in 0..20 {
-            let crew = random_crew(&mut rng, &pools).unwrap();
+            let crew = random_crew(&mut rng, &pools, DEFAULT_BELOW_DECKS_SLOTS).unwrap();
             assert!(valid_crew(&crew), "crew should be valid: {:?}", crew);
         }
     }
@@ -570,7 +592,7 @@ mod tests {
         let b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
         let mut rng = Rng::new(99);
         for _ in 0..10 {
-            let child = crossover(&a, &b, &pools, &mut rng);
+            let child = crossover(&a, &b, &pools, &mut rng, DEFAULT_BELOW_DECKS_SLOTS);
             assert!(valid_crew(&child), "child should be valid: {:?}", child);
         }
     }
@@ -581,8 +603,14 @@ mod tests {
         let mut crew = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
         let mut rng = Rng::new(77);
         for _ in 0..20 {
-            mutate(&mut crew, &pools, 1.0, &mut rng);
-            repair_crew(&mut crew, &pools, &mut rng);
+            mutate(
+                &mut crew,
+                &pools,
+                1.0,
+                &mut rng,
+                DEFAULT_BELOW_DECKS_SLOTS,
+            );
+            repair_crew(&mut crew, &pools, &mut rng, DEFAULT_BELOW_DECKS_SLOTS);
             assert!(valid_crew(&crew), "crew should remain valid: {:?}", crew);
         }
     }
@@ -628,7 +656,7 @@ mod tests {
         let seed_b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
         let seeds = vec![seed_a.clone(), seed_b.clone()];
 
-        let pop = init_population_seeded(&pools, 6, &seeds, 42);
+        let pop = init_population_seeded(&pools, 6, &seeds, 42, DEFAULT_BELOW_DECKS_SLOTS);
         assert_eq!(pop.len(), 6, "population should be full");
         // First two should be our seeds.
         assert_eq!(pop[0].captain, seed_a.captain);
@@ -645,14 +673,14 @@ mod tests {
         let seeds: Vec<CrewCandidate> = (0..10)
             .map(|i| make_crew(if i % 2 == 0 { "CapA" } else { "CapB" }, &["B1", "B2"], &["D1", "D2", "D3"]))
             .collect();
-        let pop = init_population_seeded(&pools, 4, &seeds, 99);
+        let pop = init_population_seeded(&pools, 4, &seeds, 99, DEFAULT_BELOW_DECKS_SLOTS);
         assert_eq!(pop.len(), 4, "population should be capped at population_size");
     }
 
     #[test]
     fn init_population_seeded_empty_is_random() {
         let pools = small_pools();
-        let pop_seeded = init_population_seeded(&pools, 8, &[], 42);
+        let pop_seeded = init_population_seeded(&pools, 8, &[], 42, DEFAULT_BELOW_DECKS_SLOTS);
         assert_eq!(pop_seeded.len(), 8);
         for crew in &pop_seeded {
             assert!(valid_crew(crew));

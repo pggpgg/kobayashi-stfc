@@ -12,7 +12,7 @@ use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
-use crate::optimizer::crew_generator::{CrewCandidate, BELOW_DECKS_SLOTS};
+use crate::optimizer::crew_generator::{resolve_below_decks_slots, CrewCandidate};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry,
     scenario::build_shared_scenario_data_from_registry,
@@ -56,6 +56,8 @@ pub struct ScenarioSummary {
     pub hostile: String,
     pub sims: u32,
     pub seed: u64,
+    /// Resolved below-decks slot count used for candidate generation.
+    pub below_decks_slots: u32,
     /// Requested cap on crews after analytical ranking (if any).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analytical_prefilter_keep: Option<u32>,
@@ -88,13 +90,14 @@ pub fn load_heuristics_candidates(
     registry: &DataRegistry,
     seed_names: &[String],
     bd_strategy: BelowDecksStrategy,
+    below_decks_slots: usize,
 ) -> Vec<CrewCandidate> {
     let canonical_names: Vec<String> = registry.officers().iter().map(|o| o.name.clone()).collect();
     seed_names
         .iter()
         .flat_map(|name| {
             let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
-            let candidates = expand_crews(parsed, BELOW_DECKS_SLOTS, bd_strategy);
+            let candidates = expand_crews(parsed, below_decks_slots, bd_strategy);
             candidates.into_iter().map(|c| CrewCandidate {
                 captain: c.captain,
                 bridge: c.bridge,
@@ -114,6 +117,7 @@ struct OptimizeGatherMeta {
     using_placeholder_combatants: bool,
     /// `Some((generated, kept))` when analytical pre-filter truncated the candidate list.
     analytical_prefilter: Option<(usize, usize)>,
+    below_decks_slots: usize,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -235,9 +239,10 @@ fn gather_optimize_simulation_results(
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
     let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
+    let below_decks_slots = resolve_below_decks_slots(request.ship_tier, request.below_decks_slots);
 
     let h_candidates = if heuristics_seeds_nonempty {
-        load_heuristics_candidates(registry, heuristics_seeds, bd_strategy)
+        load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
     } else {
         Vec::new()
     };
@@ -305,6 +310,7 @@ fn gather_optimize_simulation_results(
             analytical_prefilter_keep: request
                 .analytical_prefilter_keep
                 .map(|n| n as usize),
+            below_decks_slots,
         };
         let outcome = optimize_scenario_with_progress_with_registry(
             registry,
@@ -333,6 +339,7 @@ fn gather_optimize_simulation_results(
         heuristics_seeds_nonempty,
         using_placeholder_combatants,
         analytical_prefilter,
+        below_decks_slots,
     };
 
     Ok((all_results, meta))
@@ -397,6 +404,7 @@ fn build_optimize_response(
             hostile: request.hostile.clone(),
             sims,
             seed,
+            below_decks_slots: meta.below_decks_slots as u32,
             analytical_prefilter_keep: request.analytical_prefilter_keep,
             analytical_prefilter_from: meta
                 .analytical_prefilter

@@ -7,7 +7,7 @@ use crate::combat::{
     TimingWindow,
 };
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
-use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS, BELOW_DECKS_SLOTS};
+use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS};
 
 /// Build a [CrewConfiguration] from officer names (e.g. from a fight export).
 /// Convention: captain = Officer One, bridge = Officer Two then Officer Three, below_decks = [].
@@ -44,7 +44,8 @@ pub(crate) fn build_crew_seats(
     candidate: &CrewCandidate,
     officers_by_name: &HashMap<String, Officer>,
 ) -> Vec<CrewSeatContext> {
-    let mut seats = Vec::with_capacity(1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS);
+    let bd = candidate.below_decks.len();
+    let mut seats = Vec::with_capacity(1 + BRIDGE_SLOTS + bd);
     let mut next_batch: u32 = 0;
 
     let cap_batch = next_batch;
@@ -90,7 +91,7 @@ pub(crate) fn build_crew_seats(
             b,
         ));
     }
-    for i in 0..BELOW_DECKS_SLOTS {
+    for i in 0..bd {
         let name = candidate
             .below_decks
             .get(i)

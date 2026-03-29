@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::data::data_registry::DataRegistry;
 use crate::perf_log;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
@@ -6,8 +8,29 @@ use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_O
 
 /// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
 pub const BRIDGE_SLOTS: usize = 2;
-/// Number of below-decks officer slots. Assumed fixed for now; will be configurable by ship level later.
-pub const BELOW_DECKS_SLOTS: usize = 3;
+/// Default below-decks slots when not overridden (matches mid/high-tier STFC ships).
+pub const DEFAULT_BELOW_DECKS_SLOTS: usize = 3;
+/// Backwards-compatible alias for [`DEFAULT_BELOW_DECKS_SLOTS`].
+pub const BELOW_DECKS_SLOTS: usize = DEFAULT_BELOW_DECKS_SLOTS;
+pub const MIN_BELOW_DECKS_SLOTS: usize = 2;
+pub const MAX_BELOW_DECKS_SLOTS: usize = 5;
+
+/// Tier-aware default: early ships often have 2 below-decks slots; tier 2+ uses 3 in this heuristic.
+pub fn default_below_decks_slots_for_tier(ship_tier: Option<u32>) -> usize {
+    match ship_tier {
+        Some(1) => MIN_BELOW_DECKS_SLOTS,
+        _ => DEFAULT_BELOW_DECKS_SLOTS,
+    }
+}
+
+/// Resolve slot count from explicit API value or ship tier default.
+pub fn resolve_below_decks_slots(ship_tier: Option<u32>, explicit: Option<u32>) -> usize {
+    if let Some(n) = explicit {
+        let n = n as usize;
+        return n.clamp(MIN_BELOW_DECKS_SLOTS, MAX_BELOW_DECKS_SLOTS);
+    }
+    default_below_decks_slots_for_tier(ship_tier)
+}
 
 /// Officer pools by slot, as names. Shared by crew generator and genetic optimizer.
 #[derive(Debug, Clone)]
@@ -30,6 +53,7 @@ pub fn build_officer_pools_from_registry(
     registry: &DataRegistry,
     only_below_decks_with_ability: bool,
     profile_id: Option<&str>,
+    below_decks_slots: usize,
 ) -> Option<OfficerPools> {
     let officers: Vec<Officer> = registry
         .officers()
@@ -38,13 +62,13 @@ pub fn build_officer_pools_from_registry(
         .cloned()
         .collect();
 
-    const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
+    let min_officers = 1 + BRIDGE_SLOTS + below_decks_slots;
     let mut officers = officers;
     let roster_path = profile_path(&resolve_profile_id_for_api(profile_id), ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
     if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(&roster_path) {
-        if roster_ids.len() >= MIN_OFFICERS {
+        if roster_ids.len() >= min_officers {
             officers.retain(|officer| roster_ids.contains(&officer.id));
         }
     }
@@ -89,7 +113,7 @@ pub fn build_officer_pools_from_registry(
         bridge = officers.iter().map(|o| o.name.clone()).collect();
     }
 
-    if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < BELOW_DECKS_SLOTS {
+    if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < below_decks_slots {
         return None;
     }
 
@@ -104,7 +128,10 @@ pub fn build_officer_pools_from_registry(
 /// When `only_below_decks_with_ability` is true, the below-decks pool is restricted to officers
 /// that have a below-decks ability; no fallback to all officers is applied in that case.
 /// Returns `None` if there are not enough officers to form any valid crew.
-pub fn build_officer_pools(only_below_decks_with_ability: bool) -> Option<OfficerPools> {
+pub fn build_officer_pools(
+    only_below_decks_with_ability: bool,
+    below_decks_slots: usize,
+) -> Option<OfficerPools> {
     let mut officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .map(|loaded| {
             loaded
@@ -114,12 +141,12 @@ pub fn build_officer_pools(only_below_decks_with_ability: bool) -> Option<Office
         })
         .unwrap_or_default();
 
-    const MIN_OFFICERS: usize = 1 + BRIDGE_SLOTS + BELOW_DECKS_SLOTS;
+    let min_officers = 1 + BRIDGE_SLOTS + below_decks_slots;
     let roster_path = profile_path(&resolve_profile_id_for_api(None), ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
     if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(&roster_path) {
-        if roster_ids.len() >= MIN_OFFICERS {
+        if roster_ids.len() >= min_officers {
             officers.retain(|officer| roster_ids.contains(&officer.id));
         }
     }
@@ -165,7 +192,7 @@ pub fn build_officer_pools(only_below_decks_with_ability: bool) -> Option<Office
         bridge = officers.iter().map(|o| o.name.clone()).collect();
     }
 
-    if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < BELOW_DECKS_SLOTS {
+    if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < below_decks_slots {
         return None;
     }
 
@@ -193,6 +220,8 @@ pub struct CandidateStrategy {
     pub use_seeded_shuffle: bool,
     /// When true, below-decks pool only includes officers that have a below-decks ability.
     pub only_below_decks_with_ability: bool,
+    /// Number of below-decks slots per generated crew (2–5).
+    pub below_decks_slots: usize,
 }
 
 impl Default for CandidateStrategy {
@@ -204,6 +233,7 @@ impl Default for CandidateStrategy {
             large_pool_bridge_limit: 12,
             use_seeded_shuffle: true,
             only_below_decks_with_ability: false,
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         }
     }
 }
@@ -225,7 +255,10 @@ impl CrewGenerator {
     }
 
     pub fn generate_candidates(&self, ship: &str, hostile: &str, seed: u64) -> Vec<CrewCandidate> {
-        let mut pools = match build_officer_pools(self.strategy.only_below_decks_with_ability) {
+        let mut pools = match build_officer_pools(
+            self.strategy.only_below_decks_with_ability,
+            self.strategy.below_decks_slots,
+        ) {
             Some(p) => p,
             None => return Vec::new(),
         };
@@ -245,6 +278,7 @@ impl CrewGenerator {
             registry,
             self.strategy.only_below_decks_with_ability,
             profile_id,
+            self.strategy.below_decks_slots,
         ) {
             Some(p) => p,
             None => return Vec::new(),
@@ -272,12 +306,14 @@ impl CrewGenerator {
             .len()
             .min(pools.bridge.len())
             .min(pools.below_decks.len());
+        let k = self.strategy.below_decks_slots;
         let out = if min_pool <= self.strategy.exhaustive_pool_threshold {
             exhaustive_candidates(
                 &pools.captains,
                 &pools.bridge,
                 &pools.below_decks,
                 self.strategy.max_candidates,
+                k,
             )
         } else {
             sampled_candidates(
@@ -286,6 +322,7 @@ impl CrewGenerator {
                 &pools.below_decks,
                 &self.strategy,
                 mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
+                k,
             )
         };
         perf_log::log_duration("crew_generator.generate_candidates_from_pools", t0);
@@ -295,7 +332,10 @@ impl CrewGenerator {
     /// Returns the number of crew combinations without allocating candidates.
     /// Used for estimate when no cap is set. Uses same exhaustive/sampled branch as generate_candidates.
     pub fn count_candidates(&self, ship: &str, hostile: &str, seed: u64) -> usize {
-        let mut pools = match build_officer_pools(self.strategy.only_below_decks_with_ability) {
+        let mut pools = match build_officer_pools(
+            self.strategy.only_below_decks_with_ability,
+            self.strategy.below_decks_slots,
+        ) {
             Some(p) => p,
             None => return 0,
         };
@@ -315,6 +355,7 @@ impl CrewGenerator {
             registry,
             self.strategy.only_below_decks_with_ability,
             profile_id,
+            self.strategy.below_decks_slots,
         ) {
             Some(p) => p,
             None => return 0,
@@ -341,12 +382,14 @@ impl CrewGenerator {
             .len()
             .min(pools.bridge.len())
             .min(pools.below_decks.len());
+        let k = self.strategy.below_decks_slots;
         if min_pool <= self.strategy.exhaustive_pool_threshold {
             exhaustive_count(
                 &pools.captains,
                 &pools.bridge,
                 &pools.below_decks,
                 None,
+                k,
             )
         } else {
             sampled_count(
@@ -356,6 +399,7 @@ impl CrewGenerator {
                 &self.strategy,
                 mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
                 None,
+                k,
             )
         }
     }
@@ -380,17 +424,45 @@ fn name_conflicts_bridge_captain(name: &str, captain: &str, b1: &str, b2: &str) 
     name == captain || name == b1 || name == b2
 }
 
-/// True if `d3` is already used in captain, bridge, or first two below-decks picks.
 #[inline]
-fn below_third_conflicts(
-    d3: &str,
-    captain: &str,
-    b1: &str,
-    b2: &str,
-    d1: &str,
-    d2: &str,
-) -> bool {
-    d3 == captain || d3 == b1 || d3 == b2 || d3 == d1 || d3 == d2
+fn below_tuple_ok(names: &[String], captain: &str, b1: &str, b2: &str) -> bool {
+    let mut seen = HashSet::with_capacity(names.len());
+    for n in names {
+        if name_conflicts_bridge_captain(n, captain, b1, b2) || !seen.insert(n.as_str()) {
+            return false;
+        }
+    }
+    true
+}
+
+/// All k-combinations of indices in `0..n` (strictly increasing index tuples).
+fn for_each_combination_indices(n: usize, k: usize, mut visit: impl FnMut(&[usize])) {
+    if k == 0 {
+        visit(&[]);
+        return;
+    }
+    if k > n {
+        return;
+    }
+    let mut cur = Vec::with_capacity(k);
+    fn rec(
+        n: usize,
+        k: usize,
+        start: usize,
+        cur: &mut Vec<usize>,
+        visit: &mut impl FnMut(&[usize]),
+    ) {
+        if cur.len() == k {
+            visit(cur);
+            return;
+        }
+        for i in start..n {
+            cur.push(i);
+            rec(n, k, i + 1, cur, visit);
+            cur.pop();
+        }
+    }
+    rec(n, k, 0, &mut cur, &mut visit);
 }
 
 fn can_fill_position(officer: &Officer, position: Position) -> bool {
@@ -411,44 +483,51 @@ fn exhaustive_candidates(
     bridge: &[String],
     below_decks: &[String],
     max_candidates: Option<usize>,
+    below_decks_slots: usize,
 ) -> Vec<CrewCandidate> {
     let reserve = max_candidates.unwrap_or(256).min(4096);
     let mut candidates = Vec::with_capacity(reserve);
+    let n_bd = below_decks.len();
+    if below_decks_slots > n_bd {
+        return candidates;
+    }
 
+    let mut stop = false;
     for captain in captains {
+        if stop {
+            break;
+        }
         for (i, b1) in bridge.iter().enumerate() {
+            if stop {
+                break;
+            }
             if b1 == captain {
                 continue;
             }
             for b2 in bridge.iter().skip(i + 1) {
+                if stop {
+                    break;
+                }
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
-                for (di, d1) in below_decks.iter().enumerate() {
-                    if name_conflicts_bridge_captain(d1, captain, b1, b2) {
-                        continue;
+                for_each_combination_indices(n_bd, below_decks_slots, |idxs| {
+                    if stop {
+                        return;
                     }
-                    for (dj, d2) in below_decks.iter().enumerate().skip(di + 1) {
-                        if name_conflicts_bridge_captain(d2, captain, b1, b2) || d2 == d1 {
-                            continue;
-                        }
-                        for d3 in below_decks.iter().skip(dj + 1) {
-                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
-                                continue;
-                            }
-                            candidates.push(CrewCandidate {
-                                captain: captain.clone(),
-                                bridge: vec![b1.clone(), b2.clone()],
-                                below_decks: vec![d1.clone(), d2.clone(), d3.clone()],
-                            });
-                            if let Some(cap) = max_candidates {
-                                if candidates.len() >= cap {
-                                    return candidates;
-                                }
-                            }
-                        }
+                    let bd: Vec<String> = idxs.iter().map(|&i| below_decks[i].clone()).collect();
+                    if !below_tuple_ok(&bd, captain, b1, b2) {
+                        return;
                     }
-                }
+                    candidates.push(CrewCandidate {
+                        captain: captain.clone(),
+                        bridge: vec![b1.clone(), b2.clone()],
+                        below_decks: bd,
+                    });
+                    if max_candidates.is_some_and(|c| candidates.len() >= c) {
+                        stop = true;
+                    }
+                });
             }
         }
     }
@@ -461,9 +540,14 @@ fn exhaustive_count(
     bridge: &[String],
     below_decks: &[String],
     max_count: Option<usize>,
+    below_decks_slots: usize,
 ) -> usize {
     const ESTIMATE_CAP: usize = 2_000_000;
     let mut count = 0_usize;
+    let n_bd = below_decks.len();
+    if below_decks_slots > n_bd {
+        return 0;
+    }
 
     for captain in captains {
         for (i, b1) in bridge.iter().enumerate() {
@@ -474,29 +558,20 @@ fn exhaustive_count(
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
-                for (di, d1) in below_decks.iter().enumerate() {
-                    if name_conflicts_bridge_captain(d1, captain, b1, b2) {
-                        continue;
+                for_each_combination_indices(n_bd, below_decks_slots, |idxs| {
+                    let bd: Vec<String> = idxs.iter().map(|&i| below_decks[i].clone()).collect();
+                    if !below_tuple_ok(&bd, captain, b1, b2) {
+                        return;
                     }
-                    for (dj, d2) in below_decks.iter().enumerate().skip(di + 1) {
-                        if name_conflicts_bridge_captain(d2, captain, b1, b2) || d2 == d1 {
-                            continue;
-                        }
-                        for d3 in below_decks.iter().skip(dj + 1) {
-                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
-                                continue;
-                            }
-                            count += 1;
-                            if let Some(cap) = max_count {
-                                if count >= cap {
-                                    return count;
-                                }
-                            }
-                            if count >= ESTIMATE_CAP {
-                                return ESTIMATE_CAP;
-                            }
-                        }
+                    count += 1;
+                });
+                if let Some(cap) = max_count {
+                    if count >= cap {
+                        return count;
                     }
+                }
+                if count >= ESTIMATE_CAP {
+                    return ESTIMATE_CAP;
                 }
             }
         }
@@ -511,6 +586,7 @@ fn sampled_candidates(
     below_decks: &[String],
     strategy: &CandidateStrategy,
     seed: u64,
+    below_decks_slots: usize,
 ) -> Vec<CrewCandidate> {
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
     let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
@@ -533,30 +609,33 @@ fn sampled_candidates(
                         !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
                     })
                     .collect();
-                for (ii, &di) in below_indices.iter().enumerate() {
-                    let d1 = &below_decks[di];
-                    for &dj in below_indices.iter().skip(ii + 1) {
-                        let d2 = &below_decks[dj];
-                        if d2 == d1 || name_conflicts_bridge_captain(d2, captain, b1, b2) {
-                            continue;
-                        }
-                        for &dk in below_indices.iter().skip(ii + 2) {
-                            let d3 = &below_decks[dk];
-                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
-                                continue;
-                            }
-                            candidates.push(CrewCandidate {
-                                captain: captain.clone(),
-                                bridge: vec![b1.clone(), b2.clone()],
-                                below_decks: vec![d1.clone(), d2.clone(), d3.clone()],
-                            });
-                            if let Some(cap) = strategy.max_candidates {
-                                if candidates.len() >= cap {
-                                    return candidates;
-                                }
-                            }
-                        }
+                let m = below_indices.len();
+                if below_decks_slots > m {
+                    continue;
+                }
+                let mut stop = false;
+                for_each_combination_indices(m, below_decks_slots, |pos| {
+                    if stop {
+                        return;
                     }
+                    let bd: Vec<String> = pos
+                        .iter()
+                        .map(|&pi| below_decks[below_indices[pi]].clone())
+                        .collect();
+                    if !below_tuple_ok(&bd, captain, b1, b2) {
+                        return;
+                    }
+                    candidates.push(CrewCandidate {
+                        captain: captain.clone(),
+                        bridge: vec![b1.clone(), b2.clone()],
+                        below_decks: bd,
+                    });
+                    if strategy.max_candidates.is_some_and(|c| candidates.len() >= c) {
+                        stop = true;
+                    }
+                });
+                if stop {
+                    return candidates;
                 }
             }
         }
@@ -572,6 +651,7 @@ fn sampled_count(
     strategy: &CandidateStrategy,
     seed: u64,
     max_count: Option<usize>,
+    below_decks_slots: usize,
 ) -> usize {
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
     let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
@@ -594,29 +674,27 @@ fn sampled_count(
                         !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
                     })
                     .collect();
-                for (ii, &di) in below_indices.iter().enumerate() {
-                    let d1 = &below_decks[di];
-                    for &dj in below_indices.iter().skip(ii + 1) {
-                        let d2 = &below_decks[dj];
-                        if d2 == d1 || name_conflicts_bridge_captain(d2, captain, b1, b2) {
-                            continue;
-                        }
-                        for &dk in below_indices.iter().skip(ii + 2) {
-                            let d3 = &below_decks[dk];
-                            if below_third_conflicts(d3, captain, b1, b2, d1, d2) {
-                                continue;
-                            }
-                            count += 1;
-                            if let Some(cap) = max_count {
-                                if count >= cap {
-                                    return count;
-                                }
-                            }
-                            if count >= ESTIMATE_CAP {
-                                return ESTIMATE_CAP;
-                            }
-                        }
+                let m = below_indices.len();
+                if below_decks_slots > m {
+                    continue;
+                }
+                for_each_combination_indices(m, below_decks_slots, |pos| {
+                    let bd: Vec<String> = pos
+                        .iter()
+                        .map(|&pi| below_decks[below_indices[pi]].clone())
+                        .collect();
+                    if !below_tuple_ok(&bd, captain, b1, b2) {
+                        return;
                     }
+                    count += 1;
+                });
+                if let Some(cap) = max_count {
+                    if count >= cap {
+                        return count;
+                    }
+                }
+                if count >= ESTIMATE_CAP {
+                    return ESTIMATE_CAP;
                 }
             }
         }
@@ -653,7 +731,20 @@ fn mix_seed(seed: u64, ship: &str, hostile: &str) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{CandidateStrategy, CrewGenerator};
+    use super::{
+        resolve_below_decks_slots, CandidateStrategy, CrewGenerator, MAX_BELOW_DECKS_SLOTS,
+        MIN_BELOW_DECKS_SLOTS,
+    };
+
+    #[test]
+    fn resolve_below_decks_uses_explicit_or_tier_default() {
+        assert_eq!(resolve_below_decks_slots(None, Some(4)), 4);
+        assert_eq!(resolve_below_decks_slots(Some(1), None), MIN_BELOW_DECKS_SLOTS);
+        assert_eq!(resolve_below_decks_slots(Some(2), None), 3);
+        assert_eq!(resolve_below_decks_slots(None, None), 3);
+        assert_eq!(resolve_below_decks_slots(None, Some(99)), MAX_BELOW_DECKS_SLOTS);
+        assert_eq!(resolve_below_decks_slots(None, Some(1)), MIN_BELOW_DECKS_SLOTS);
+    }
 
     #[test]
     fn generation_is_deterministic_for_same_seed() {
@@ -684,5 +775,19 @@ mod tests {
             "expected at least 10 candidates, got {}",
             candidates.len()
         );
+    }
+
+    #[test]
+    fn generation_respects_below_decks_slot_count() {
+        let generator = CrewGenerator::with_strategy(CandidateStrategy {
+            below_decks_slots: 2,
+            max_candidates: Some(24),
+            ..CandidateStrategy::default()
+        });
+        let candidates = generator.generate_candidates("defiant", "romulan", 11);
+        assert!(!candidates.is_empty());
+        for c in &candidates {
+            assert_eq!(c.below_decks.len(), 2, "{c:?}");
+        }
     }
 }

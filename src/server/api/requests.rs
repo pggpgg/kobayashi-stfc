@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::fmt;
 
 use crate::data::heuristics::BelowDecksStrategy;
+use crate::optimizer::crew_generator::{MAX_BELOW_DECKS_SLOTS, MIN_BELOW_DECKS_SLOTS};
 use crate::optimizer::OptimizerStrategy;
 
 pub const DEFAULT_SIMS: u32 = 5000;
@@ -54,6 +55,8 @@ pub struct OptimizeRequest {
     pub below_decks_strategy: Option<String>,
     /// Keep only this many crews after approximate analytical ranking (closed-form expected hull damage) before Monte Carlo. Omitted = evaluate all generated candidates. Ignored for genetic strategy.
     pub analytical_prefilter_keep: Option<u32>,
+    /// Below-decks slot count (2–5). Omitted = tier default (tier 1 → 2, else 3).
+    pub below_decks_slots: Option<u32>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -136,6 +139,17 @@ pub fn validate_request(
         }
     }
 
+    if let Some(n) = request.below_decks_slots {
+        let lo = MIN_BELOW_DECKS_SLOTS as u32;
+        let hi = MAX_BELOW_DECKS_SLOTS as u32;
+        if !(lo..=hi).contains(&n) {
+            errors.push(ValidationIssue {
+                field: "below_decks_slots",
+                messages: vec![format!("if set, must be between {lo} and {hi}")],
+            });
+        }
+    }
+
     if errors.is_empty() {
         return Ok(());
     }
@@ -163,15 +177,25 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 }
 
 /// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates,
-/// optional prioritize_below_decks_ability.
+/// optional prioritize_below_decks_ability, optional ship_tier and below_decks_slots.
 pub fn parse_optimize_estimate_query(
     query: &str,
-) -> (String, String, u32, Option<u32>, bool) {
+) -> (
+    String,
+    String,
+    u32,
+    Option<u32>,
+    bool,
+    Option<u32>,
+    Option<u32>,
+) {
     let mut ship = String::new();
     let mut hostile = String::new();
     let mut sims = DEFAULT_SIMS;
     let mut max_candidates: Option<u32> = None;
     let mut prioritize_below_decks_ability = false;
+    let mut ship_tier: Option<u32> = None;
+    let mut below_decks_slots: Option<u32> = None;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
             let key = key.trim();
@@ -185,6 +209,8 @@ pub fn parse_optimize_estimate_query(
                     prioritize_below_decks_ability =
                         value.eq_ignore_ascii_case("true") || value == "1"
                 }
+                "ship_tier" => ship_tier = value.parse().ok(),
+                "below_decks_slots" => below_decks_slots = value.parse().ok(),
                 _ => {}
             }
         }
@@ -195,5 +221,7 @@ pub fn parse_optimize_estimate_query(
         sims,
         max_candidates,
         prioritize_below_decks_ability,
+        ship_tier,
+        below_decks_slots,
     )
 }
