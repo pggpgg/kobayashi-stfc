@@ -29,6 +29,16 @@ This module implements the first combat-engine task from [IMPLEMENTATION_PLAN_CO
 
 - Golden vectors are asserted with <= `0.1%` relative tolerance (`pytest.approx(..., rel=1e-3)`).
 
+### Tests
+
+From the repository root (after `pip install -r tools/combat_engine/requirements-test.txt`):
+
+```bash
+python -m pytest tools/combat_engine/tests/ -v
+```
+
+These tests also run on every push/PR in GitHub Actions (`combat_engine_python` job in `.github/workflows/ci.yml`).
+
 ### Dev CLI
 
 ```bash

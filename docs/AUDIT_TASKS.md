@@ -20,7 +20,7 @@ Checklist derived from a codebase audit (not from existing roadmaps or `POTENTIA
 
 ## Tooling and combat fidelity
 
-- [ ] **11. Python combat validation in CI** — Run `tools/combat_engine/` tests (or scheduled job) so mechanics checks don’t only run manually.
+- [x] **11. Python combat validation in CI** — Run `tools/combat_engine/` tests (or scheduled job) so mechanics checks don’t only run manually.
 - [ ] **12. Mechanics coverage as backlog** — Use `/api/mechanics/coverage` to drive an ordered combat/LCARs gap list (single source of truth for fidelity work).
 
 ## Performance and repo structure

@@ -1,0 +1,2 @@
+# Used by CI and local runs: pytest tools/combat_engine/tests/
+pytest>=8,<9
