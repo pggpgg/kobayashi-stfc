@@ -1,0 +1,36 @@
+{
+  "id": "drift_interceptor_dual_weapon",
+  "description": "Two-weapon attacker vs single-hull defender; exercises sub-round ordering.",
+  "attacker": {
+    "id": "int_dual_a",
+    "attack": 100,
+    "mitigation": 0.0,
+    "pierce": 0.1,
+    "hull_health": 1500,
+    "shield_health": 0,
+    "weapons": [
+      { "attack": 72, "shots": 2 },
+      { "attack": 55, "shots": 1 }
+    ]
+  },
+  "defender": {
+    "id": "int_dual_d",
+    "attack": 0,
+    "mitigation": 0.22,
+    "hull_health": 650,
+    "shield_health": 150,
+    "shield_mitigation": 0.8
+  },
+  "simulation": {
+    "rounds": 15,
+    "seed": 2026
+  },
+  "bands": {
+    "total_damage": [300, 4000],
+    "rounds_simulated": [1, 15],
+    "defender_hull_remaining": [0, 650],
+    "defender_shield_remaining": [0, 150],
+    "attacker_hull_remaining": [800, 1500]
+  },
+  "expect_attacker_won": true
+}

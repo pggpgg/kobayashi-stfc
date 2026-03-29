@@ -1,5 +1,6 @@
 //! Calibration tests: run simulator with recorded-fight scenario and assert outcome within tolerance.
 //! Fixtures live in tests/fixtures/recorded_fights/ (see docs/combat_log_format.md).
+//! Additional JSON drift scenarios: `drift_*.json` in the same folder — see `tests/calibration_drift_tests.rs` and `kobayashi::calibration`.
 //! Game CSV exports live in fight samples/ at repo root.
 
 use std::path::Path;

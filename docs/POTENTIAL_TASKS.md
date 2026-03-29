@@ -34,7 +34,7 @@ This file tracks a curated set of candidate tasks (features, improvements, refac
 
 ### Testing / regression protection
 
-- [ ] 19. Add more recorded-fight calibration fixtures and a drift summary harness (what got closer/farther) to spot regressions.
+- [x] 19. Add more recorded-fight calibration fixtures and a drift summary harness (what got closer/farther) to spot regressions.
 - [ ] 20. Refactor `simulate_combat_with_defender_faction`/combat loop into smaller testable units while preserving deterministic RNG consumption order.
 
 ### Suggested execution order
