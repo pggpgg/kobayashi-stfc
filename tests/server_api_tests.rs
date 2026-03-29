@@ -87,6 +87,21 @@ async fn mechanics_coverage_returns_tier_counts() {
     assert!(p["lcars_effects"]["implemented"].as_u64().is_some());
     assert!(p["ship_hull_abilities"].is_object());
     assert!(p["hostile_catalog_entries"].is_object());
+    let backlog = p["fidelity_backlog"]
+        .as_array()
+        .expect("fidelity_backlog array");
+    assert!(
+        !backlog.is_empty(),
+        "expected non-empty fidelity_backlog from bundled data"
+    );
+    let mut last_rank = 0u64;
+    for row in backlog {
+        let rank = row["rank"].as_u64().expect("backlog rank");
+        assert!(rank > last_rank, "ranks should increase");
+        last_rank = rank;
+        assert!(row["area"].as_str().is_some());
+        assert!(row["summary"].as_str().is_some());
+    }
 }
 
 #[serial_test::serial]

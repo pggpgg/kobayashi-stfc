@@ -12,9 +12,12 @@ use crate::data::hostile_ability_resolve::{
     DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
 };
 use crate::data::ship::{load_extended_ship_record, ExtendedShipIndex, ShipAbility};
-use crate::data::ship_ability_resolve::{parse_ship_ability_timing, ship_ability_effect_from_catalog};
+use crate::data::ship_ability_resolve::{
+    parse_ship_ability_timing, ship_ability_effect_from_catalog,
+};
 use crate::lcars::{
-    lcars_effect_coverage, load_lcars_dir, LcarsEffectCoverage, MechanicCoverageTier, ResolveOptions,
+    lcars_effect_coverage, load_lcars_dir, LcarsEffectCoverage, MechanicCoverageTier,
+    ResolveOptions,
 };
 
 const DEFAULT_LCARS_DIR: &str = "data/officers";
@@ -35,6 +38,25 @@ impl TierCounts {
             MechanicCoverageTier::Ignored => self.ignored += 1,
         }
     }
+
+    fn gap_total(&self) -> u32 {
+        self.ignored + self.partial
+    }
+}
+
+/// One row in the ordered fidelity backlog (from [`build_fidelity_backlog`]).
+#[derive(Debug, Clone, Serialize)]
+pub struct FidelityBacklogItem {
+    /// 1-based priority: lower = higher impact gaps first (more ignored, then more partial).
+    pub rank: u32,
+    /// `lcars`, `ship_hull_abilities`, or `hostile_ability_catalog`.
+    pub area: &'static str,
+    /// LCARS `effect_type` (lowercased) or `_aggregate` for rolled-up areas.
+    pub key: String,
+    pub ignored: u32,
+    pub partial: u32,
+    pub implemented: u32,
+    pub summary: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -50,6 +72,8 @@ pub struct MechanicsCoverageReport {
     pub lcars_by_effect_type: HashMap<String, TierCounts>,
     /// Sample of ignored LCARS pathways (capped) for debugging.
     pub lcars_ignored_samples: Vec<String>,
+    /// Ordered combat / LCARS gap list for fidelity work (same data as above; sortable backlog).
+    pub fidelity_backlog: Vec<FidelityBacklogItem>,
     pub notes: Vec<String>,
 }
 
@@ -58,9 +82,7 @@ fn root_dir() -> &'static Path {
 }
 
 fn bump(map: &mut HashMap<String, TierCounts>, key: &str, tier: MechanicCoverageTier) {
-    map.entry(key.to_string())
-        .or_default()
-        .add_tier(tier);
+    map.entry(key.to_string()).or_default().add_tier(tier);
 }
 
 fn classify_ship_hull_ability(a: &ShipAbility) -> LcarsEffectCoverage {
@@ -151,6 +173,88 @@ fn classify_hostile_catalog_entry(entry: &HostileAbilityCatalogEntry) -> LcarsEf
     }
 }
 
+fn area_sort_key(area: &str) -> u8 {
+    match area {
+        "lcars" => 0,
+        "ship_hull_abilities" => 1,
+        "hostile_ability_catalog" => 2,
+        _ => 3,
+    }
+}
+
+/// Build a single ordered backlog: LCARS effect types with gaps first (by ignored, then partial),
+/// then aggregate rows for ship hull and hostile catalogs when they have partial/ignored entries.
+pub fn build_fidelity_backlog(
+    lcars_by_effect_type: &HashMap<String, TierCounts>,
+    ship_hull: &TierCounts,
+    ships_with_abilities_scanned: u32,
+    hostile: &TierCounts,
+) -> Vec<FidelityBacklogItem> {
+    let mut rows: Vec<FidelityBacklogItem> = Vec::new();
+
+    for (key, c) in lcars_by_effect_type {
+        if c.gap_total() == 0 {
+            continue;
+        }
+        rows.push(FidelityBacklogItem {
+            rank: 0,
+            area: "lcars",
+            key: key.clone(),
+            ignored: c.ignored,
+            partial: c.partial,
+            implemented: c.implemented,
+            summary: format!(
+                "LCARS officer effects (effect_type={key}): {} ignored, {} partial, {} implemented",
+                c.ignored, c.partial, c.implemented
+            ),
+        });
+    }
+
+    if ship_hull.gap_total() > 0 {
+        rows.push(FidelityBacklogItem {
+            rank: 0,
+            area: "ship_hull_abilities",
+            key: "_aggregate".to_string(),
+            ignored: ship_hull.ignored,
+            partial: ship_hull.partial,
+            implemented: ship_hull.implemented,
+            summary: format!(
+                "Extended ship hull abilities (aggregate, {ships_with_abilities_scanned} ships with abilities): {} ignored, {} partial, {} implemented",
+                ship_hull.ignored, ship_hull.partial, ship_hull.implemented
+            ),
+        });
+    }
+
+    if hostile.gap_total() > 0 {
+        rows.push(FidelityBacklogItem {
+            rank: 0,
+            area: "hostile_ability_catalog",
+            key: "_aggregate".to_string(),
+            ignored: hostile.ignored,
+            partial: hostile.partial,
+            implemented: hostile.implemented,
+            summary: format!(
+                "Hostile ability catalog (aggregate): {} ignored, {} partial, {} implemented",
+                hostile.ignored, hostile.partial, hostile.implemented
+            ),
+        });
+    }
+
+    rows.sort_by(|a, b| {
+        b.ignored
+            .cmp(&a.ignored)
+            .then_with(|| b.partial.cmp(&a.partial))
+            .then_with(|| area_sort_key(a.area).cmp(&area_sort_key(b.area)))
+            .then_with(|| a.key.cmp(&b.key))
+    });
+
+    for (i, row) in rows.iter_mut().enumerate() {
+        row.rank = (i + 1) as u32;
+    }
+
+    rows
+}
+
 fn scan_ship_abilities(index: &ExtendedShipIndex, out: &mut TierCounts) -> u32 {
     let dir = root_dir().join(DEFAULT_SHIPS_EXTENDED_DIR);
     let mut ships_with = 0u32;
@@ -158,7 +262,9 @@ fn scan_ship_abilities(index: &ExtendedShipIndex, out: &mut TierCounts) -> u32 {
         let Some(ext) = load_extended_ship_record(&dir, &e.id) else {
             continue;
         };
-        let Some(ref abs) = ext.abilities else { continue };
+        let Some(ref abs) = ext.abilities else {
+            continue;
+        };
         if abs.is_empty() {
             continue;
         }
@@ -227,7 +333,9 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
         .map(|idx| scan_ship_abilities(idx, &mut ship_hull))
         .unwrap_or(0);
     if registry.ship_index.is_none() {
-        notes.push("Ship extended index not loaded; ship_hull_abilities counts are empty.".to_string());
+        notes.push(
+            "Ship extended index not loaded; ship_hull_abilities counts are empty.".to_string(),
+        );
     }
 
     let mut hostile_counts = TierCounts::default();
@@ -249,6 +357,13 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
         ));
     }
 
+    let fidelity_backlog = build_fidelity_backlog(
+        &lcars_by_effect_type,
+        &ship_hull,
+        ships_scanned,
+        &hostile_counts,
+    );
+
     MechanicsCoverageReport {
         status: "ok",
         lcars_officers_files,
@@ -259,10 +374,45 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
         hostile_catalog_entry_count: hostile_entry_count,
         lcars_by_effect_type,
         lcars_ignored_samples,
+        fidelity_backlog,
         notes,
     }
 }
 
 pub fn mechanics_coverage_json(registry: &DataRegistry) -> Result<String, serde_json::Error> {
     serde_json::to_string_pretty(&build_mechanics_coverage_report(registry))
+}
+
+#[cfg(test)]
+mod fidelity_backlog_tests {
+    use super::*;
+
+    #[test]
+    fn backlog_sorts_by_ignored_then_partial_then_area_and_key() {
+        let mut map = HashMap::new();
+        map.insert(
+            "zzz".to_string(),
+            TierCounts {
+                implemented: 1,
+                partial: 9,
+                ignored: 0,
+            },
+        );
+        map.insert(
+            "aaa".to_string(),
+            TierCounts {
+                implemented: 0,
+                partial: 1,
+                ignored: 2,
+            },
+        );
+        let ship = TierCounts::default();
+        let hostile = TierCounts::default();
+        let b = build_fidelity_backlog(&map, &ship, 0, &hostile);
+        assert_eq!(b.len(), 2);
+        assert_eq!(b[0].key, "aaa");
+        assert_eq!(b[0].rank, 1);
+        assert_eq!(b[1].key, "zzz");
+        assert_eq!(b[1].rank, 2);
+    }
 }
