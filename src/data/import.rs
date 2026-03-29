@@ -90,6 +90,12 @@ pub struct UnresolvedEntry {
     pub input_name: String,
     pub normalized_name: String,
     pub reason: String,
+    /// Closest canonical display names (typos / alternate spellings).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub suggested_matches: Vec<String>,
+    /// Actionable next step for the user or data maintainer.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hint: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -107,6 +113,18 @@ pub struct ConflictEntry {
     pub conflicting_state: RosterEntry,
 }
 
+/// Non-blocking import issues (tier/level sanity). Rows are still written when matched.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct RosterImportDiagnostic {
+    pub record_index: usize,
+    pub input_name: String,
+    pub severity: String,
+    pub code: String,
+    pub message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hint: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ImportReport {
     pub source_path: String,
@@ -122,6 +140,8 @@ pub struct ImportReport {
     pub unresolved: Vec<UnresolvedEntry>,
     pub duplicates: Vec<DuplicateEntry>,
     pub conflicts: Vec<ConflictEntry>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub diagnostics: Vec<RosterImportDiagnostic>,
 }
 
 impl ImportReport {
@@ -177,7 +197,10 @@ fn parse_tier_cell(s: &str) -> Option<u8> {
         .or_else(|| s.strip_prefix("T "))
         .or_else(|| s.strip_prefix("t "))
         .unwrap_or(s);
-    s.trim().parse::<u8>().ok().filter(|&t| t >= 1)
+    s.trim()
+        .parse::<u8>()
+        .ok()
+        .filter(|&t| (1..=MAX_OFFICER_TIER).contains(&t))
 }
 
 /// Parses a level cell: "lvl 20", "LVL20", "20", etc. Returns None if empty or invalid.
@@ -264,6 +287,134 @@ struct SpocksOfficerRef {
 /// Raw record before name resolution: (raw_name, rank, tier, level).
 type RawRosterRecord = (String, Option<u8>, Option<u8>, Option<u16>);
 
+fn unique_canonical_display_names(canonical_by_name: &HashMap<String, Vec<CanonicalOfficer>>) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut out = Vec::new();
+    for officers in canonical_by_name.values() {
+        for o in officers {
+            let k = normalize_key(&o.name);
+            if seen.insert(k) {
+                out.push(o.name.clone());
+            }
+        }
+    }
+    out.sort_by(|a, b| a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase()));
+    out
+}
+
+/// Character edit distance for fuzzy officer-name suggestions.
+fn levenshtein_str(a: &str, b: &str) -> usize {
+    let a: Vec<char> = a.chars().collect();
+    let b: Vec<char> = b.chars().collect();
+    let n = a.len();
+    let m = b.len();
+    if n == 0 {
+        return m;
+    }
+    if m == 0 {
+        return n;
+    }
+    let mut prev: Vec<usize> = (0..=m).collect();
+    let mut curr = vec![0usize; m + 1];
+    for i in 1..=n {
+        curr[0] = i;
+        for j in 1..=m {
+            let cost = usize::from(a[i - 1] != b[j - 1]);
+            curr[j] = (prev[j] + 1)
+                .min(curr[j - 1] + 1)
+                .min(prev[j - 1] + cost);
+        }
+        std::mem::swap(&mut prev, &mut curr);
+    }
+    prev[m]
+}
+
+fn suggest_officer_names(needle_norm: &str, display_names: &[String], limit: usize) -> Vec<String> {
+    if needle_norm.is_empty() || display_names.is_empty() {
+        return Vec::new();
+    }
+    let needle_len = needle_norm.chars().count();
+    let max_dist = (needle_len / 2).saturating_add(4).min(12);
+    let mut scored: Vec<(usize, usize)> = display_names
+        .iter()
+        .enumerate()
+        .map(|(i, display)| {
+            let key = normalize_key(display);
+            let d = levenshtein_str(needle_norm, &key);
+            (d, i)
+        })
+        .collect();
+    scored.sort_by_key(|&(d, i)| (d, i));
+    scored
+        .into_iter()
+        .filter(|(d, _)| *d <= max_dist)
+        .take(limit)
+        .map(|(_, i)| display_names[i].clone())
+        .collect()
+}
+
+fn roster_tier_level_diagnostics(
+    record_index: usize,
+    input_name: &str,
+    tier: Option<u8>,
+    level: Option<u16>,
+) -> Vec<RosterImportDiagnostic> {
+    let mut v = Vec::new();
+    if let Some(t) = tier {
+        if !(1..=MAX_OFFICER_TIER).contains(&t) {
+            v.push(RosterImportDiagnostic {
+                record_index,
+                input_name: input_name.to_string(),
+                severity: "warning".to_string(),
+                code: "tier_out_of_range".to_string(),
+                message: format!(
+                    "tier {t} is outside the supported officer tier range (1–{MAX_OFFICER_TIER})"
+                ),
+                hint: Some(
+                    "Use tier 1–3 from the game (cadet / mid / max). Fix the source row or JSON export."
+                        .to_string(),
+                ),
+            });
+        }
+    }
+    if let (Some(t), Some(l)) = (tier, level) {
+        if (1..=MAX_OFFICER_TIER).contains(&t) {
+            let cap = max_level_for_tier(t);
+            if l > cap {
+                v.push(RosterImportDiagnostic {
+                    record_index,
+                    input_name: input_name.to_string(),
+                    severity: "warning".to_string(),
+                    code: "level_above_tier_cap".to_string(),
+                    message: format!(
+                        "level {l} exceeds max level {cap} for tier {t} in this simulator"
+                    ),
+                    hint: Some(format!(
+                        "Cap level at {cap} for tier {t}, or verify tier/level columns are not swapped."
+                    )),
+                });
+            }
+        }
+    }
+    if let Some(l) = level {
+        let cap_all = max_level_for_tier(MAX_OFFICER_TIER);
+        if l > cap_all {
+            v.push(RosterImportDiagnostic {
+                record_index,
+                input_name: input_name.to_string(),
+                severity: "warning".to_string(),
+                code: "level_above_global_cap".to_string(),
+                message: format!("level {l} is above the usual STFC cap ({cap_all} at max tier)"),
+                hint: Some(
+                    "If unexpected, check that tier and level were not swapped in the export."
+                        .to_string(),
+                ),
+            });
+        }
+    }
+    v
+}
+
 fn resolve_and_write_roster_to(
     source_path: &str,
     raw_records: &[RawRosterRecord],
@@ -278,12 +429,21 @@ fn resolve_and_write_roster_to(
     let mut unresolved = Vec::new();
     let mut matched_records = 0usize;
     let mut ambiguous_records = 0usize;
+    let mut diagnostics: Vec<RosterImportDiagnostic> = Vec::new();
+    let suggestion_pool = unique_canonical_display_names(&canonical_by_name);
 
     for (index, (raw_name, rank, tier, level)) in raw_records.iter().enumerate() {
         let raw_name = raw_name.trim();
         if raw_name.is_empty() {
             continue;
         }
+
+        diagnostics.extend(roster_tier_level_diagnostics(
+            index,
+            raw_name,
+            *tier,
+            *level,
+        ));
 
         let normalized_input = normalize_key(raw_name);
         let canonical_name = alias_map
@@ -293,11 +453,25 @@ fn resolve_and_write_roster_to(
         let normalized_name = normalize_key(&canonical_name);
 
         let Some(candidates) = canonical_by_name.get(&normalized_name) else {
+            let suggested_matches = suggest_officer_names(&normalized_name, &suggestion_pool, 5);
+            let hint = if suggested_matches.is_empty() {
+                Some(
+                    "Check spelling against officers in data/officers/officers.canonical.json, or add data/officers/name_aliases.json (alias → canonical name)."
+                        .to_string(),
+                )
+            } else {
+                Some(
+                    "Use a name from suggested_matches, or add name_aliases.json if your client labels officers differently."
+                        .to_string(),
+                )
+            };
             unresolved.push(UnresolvedEntry {
                 record_index: index,
                 input_name: raw_name.to_string(),
                 normalized_name,
                 reason: "no canonical officer match".to_string(),
+                suggested_matches,
+                hint,
             });
             continue;
         };
@@ -309,6 +483,11 @@ fn resolve_and_write_roster_to(
                 input_name: raw_name.to_string(),
                 normalized_name,
                 reason: format!("ambiguous canonical mapping ({} matches)", candidates.len()),
+                suggested_matches: Vec::new(),
+                hint: Some(
+                    "Several officers normalize to the same name in the catalog; prefer an export with stable officer ids, or dedupe canonical data."
+                        .to_string(),
+                ),
             });
             continue;
         }
@@ -393,6 +572,7 @@ fn resolve_and_write_roster_to(
         unresolved,
         duplicates,
         conflicts,
+        diagnostics,
     })
 }
 
@@ -472,8 +652,8 @@ fn parse_roster_csv_content(content: &str) -> Result<Vec<RawRosterRecord>, Impor
         }
         skip_next_if_header = false;
 
-        let mut tier = parse_tier_cell(record.get(1).unwrap_or(""));
-        let mut level = parse_level_cell(record.get(2).unwrap_or(""));
+        let mut tier = parse_optional_tier_cell(record.get(1).unwrap_or(""), line_num)?;
+        let mut level = parse_optional_level_cell(record.get(2).unwrap_or(""), line_num)?;
 
         if tier.is_none() && level.is_none() {
             tier = Some(MAX_OFFICER_TIER);
@@ -488,6 +668,37 @@ fn parse_roster_csv_content(content: &str) -> Result<Vec<RawRosterRecord>, Impor
     }
 
     Ok(raw_records)
+}
+
+fn parse_optional_tier_cell(field: &str, line: usize) -> Result<Option<u8>, ImportError> {
+    let field = field.trim();
+    if field.is_empty() {
+        return Ok(None);
+    }
+    match parse_tier_cell(field) {
+        Some(t) => Ok(Some(t)),
+        None => Err(ImportError::ParseLine {
+            line,
+            message: format!(
+                "invalid tier {:?}: use 1–{MAX_OFFICER_TIER} (e.g. 2, T2, Tier 2)",
+                field
+            ),
+        }),
+    }
+}
+
+fn parse_optional_level_cell(field: &str, line: usize) -> Result<Option<u16>, ImportError> {
+    let field = field.trim();
+    if field.is_empty() {
+        return Ok(None);
+    }
+    match parse_level_cell(field) {
+        Some(l) => Ok(Some(l)),
+        None => Err(ImportError::ParseLine {
+            line,
+            message: format!("invalid level {:?}: expected a non-negative integer", field),
+        }),
+    }
 }
 
 fn flatten_export(export: SpocksExport) -> Vec<SpocksOfficerRecord> {
@@ -652,4 +863,35 @@ pub fn load_imported_forbidden_tech(path: &str) -> Option<Vec<ForbiddenTechEntry
     let raw = fs::read_to_string(path).ok()?;
     let payload: ImportedForbiddenTechFile = serde_json::from_str(&raw).ok()?;
     Some(payload.forbidden_tech)
+}
+
+#[cfg(test)]
+mod roster_import_diag_tests {
+    use super::*;
+
+    #[test]
+    fn csv_invalid_tier_returns_parse_line() {
+        let err = parse_roster_csv_content("name,tier,level\nBob,5,1\n").unwrap_err();
+        match err {
+            ImportError::ParseLine { line, .. } => assert_eq!(line, 2),
+            _ => panic!("expected ParseLine"),
+        }
+    }
+
+    #[test]
+    fn suggest_officer_names_typo() {
+        let pool = vec!["James T. Kirk".to_string(), "Spock".to_string()];
+        let needle = normalize_key("James T. Kirrk");
+        let s = suggest_officer_names(&needle, &pool, 3);
+        assert!(
+            s.iter().any(|n| n.contains("Kirk")),
+            "expected Kirk suggestion, got {s:?}"
+        );
+    }
+
+    #[test]
+    fn tier_level_diagnostic_level_above_tier_cap() {
+        let d = roster_tier_level_diagnostics(0, "Test", Some(1), Some(99));
+        assert!(d.iter().any(|x| x.code == "level_above_tier_cap"));
+    }
 }

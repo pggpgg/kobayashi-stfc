@@ -580,14 +580,39 @@ export async function cancelOptimizeJob(jobId: string): Promise<void> {
   await checkOk(res);
 }
 
+export interface ImportUnresolvedRow {
+  record_index: number;
+  input_name: string;
+  normalized_name?: string;
+  reason: string;
+  suggested_matches?: string[];
+  hint?: string | null;
+}
+
+export interface RosterImportDiagnostic {
+  record_index: number;
+  input_name: string;
+  severity: string;
+  code: string;
+  message: string;
+  hint?: string | null;
+}
+
 export interface ImportReport {
   source_path: string;
   output_path: string;
   total_records: number;
   matched_records: number;
   unmatched_records: number;
+  ambiguous_records?: number;
+  duplicate_records?: number;
+  conflict_records?: number;
+  critical_failures?: number;
   roster_entries_written: number;
-  unresolved?: { record_index: number; input_name: string; reason: string }[];
+  unresolved?: ImportUnresolvedRow[];
+  duplicates?: { canonical_officer_id: string; record_indices: number[] }[];
+  conflicts?: unknown[];
+  diagnostics?: RosterImportDiagnostic[];
 }
 
 export async function importRoster(
