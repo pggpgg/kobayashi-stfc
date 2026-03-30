@@ -6,7 +6,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-use kobayashi::lcars::{LcarsAbility, LcarsDuration, LcarsEffect, LcarsFile, LcarsOfficer, LcarsScaling};
+use kobayashi::lcars::{
+    LcarsAbility, LcarsDuration, LcarsEffect, LcarsFile, LcarsOfficer, LcarsScaling,
+};
 use serde::Deserialize;
 
 const DEFAULT_INPUT: &str = "data/officers/officers.canonical.json";
@@ -95,7 +97,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let file = LcarsFile { officers };
         let yaml = serde_yaml::to_string(&file)?;
         fs::write(&out_path, yaml)?;
-        println!("Wrote {} ({} officers)", out_path.display(), file.officers.len());
+        println!(
+            "Wrote {} ({} officers)",
+            out_path.display(),
+            file.officers.len()
+        );
     }
 
     println!("Done.");
@@ -114,21 +120,17 @@ fn faction_to_filename(faction: &str) -> String {
     }
 }
 
-fn convert_officers_to_lcars(officers: Vec<CanonicalOfficer>) -> HashMap<String, Vec<LcarsOfficer>> {
+fn convert_officers_to_lcars(
+    officers: Vec<CanonicalOfficer>,
+) -> HashMap<String, Vec<LcarsOfficer>> {
     let mut by_faction: HashMap<String, Vec<LcarsOfficer>> = HashMap::new();
 
     for officer in officers {
-        let faction_key = officer
-            .faction
-            .as_deref()
-            .unwrap_or("Unknown");
+        let faction_key = officer.faction.as_deref().unwrap_or("Unknown");
         let faction_key = faction_to_filename(faction_key);
 
         let lcars = convert_officer(officer);
-        by_faction
-            .entry(faction_key)
-            .or_default()
-            .push(lcars);
+        by_faction.entry(faction_key).or_default().push(lcars);
     }
 
     by_faction
@@ -187,10 +189,7 @@ fn convert_officer(o: CanonicalOfficer) -> LcarsOfficer {
     }
 }
 
-fn convert_ability_to_effect(
-    a: &CanonicalAbility,
-    _officer_name: &str,
-) -> Option<LcarsEffect> {
+fn convert_ability_to_effect(a: &CanonicalAbility, _officer_name: &str) -> Option<LcarsEffect> {
     let modifier = a.modifier.as_deref().unwrap_or("");
     let trigger = map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"));
     let mapped = map_modifier(modifier, a)?;
@@ -286,7 +285,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             };
             MappedEffect::StatModify("weapon_damage".into(), op_str.into(), v)
         }
-        "ShipArmor" | "OfficerStatDefense" => MappedEffect::StatModify("armor".into(), "add".into(), val),
+        "ShipArmor" | "OfficerStatDefense" => {
+            MappedEffect::StatModify("armor".into(), "add".into(), val)
+        }
         "AllDefenses" => {
             if op.eq_ignore_ascii_case("MultiplySub") {
                 MappedEffect::StatModify("shield_mitigation".into(), "add".into(), -val)
@@ -294,7 +295,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 MappedEffect::StatModify("armor".into(), "add".into(), val)
             }
         }
-        "ArmorPiercing" | "AllPiercing" => MappedEffect::StatModify("shield_pierce".into(), "add".into(), val),
+        "ArmorPiercing" | "AllPiercing" => {
+            MappedEffect::StatModify("shield_pierce".into(), "add".into(), val)
+        }
         "ShieldHPMax" => MappedEffect::StatModify("shield_hp".into(), "multiply".into(), 1.0 + val),
         "HullHPMax" => MappedEffect::StatModify("hull_hp".into(), "multiply".into(), 1.0 + val),
         "ApexShred" => MappedEffect::StatModify("apex_shred".into(), "add".into(), val),
@@ -304,8 +307,12 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "IsolyticCascade" | "IsolyticCascadeDamage" => {
             MappedEffect::StatModify("isolytic_cascade_damage".into(), "add".into(), val)
         }
-        "ShieldHPRepair" | "ShieldRegen" => MappedEffect::StatModify("shield_regen".into(), "add".into(), val),
-        "HullHPRepair" | "HullRegen" => MappedEffect::StatModify("hull_hp_repair".into(), "add".into(), val),
+        "ShieldHPRepair" | "ShieldRegen" => {
+            MappedEffect::StatModify("shield_regen".into(), "add".into(), val)
+        }
+        "HullHPRepair" | "HullRegen" => {
+            MappedEffect::StatModify("hull_hp_repair".into(), "add".into(), val)
+        }
         "AddState" => {
             let attrs = a.attributes.as_deref().unwrap_or("").to_lowercase();
             if attrs.contains("state8") || attrs.contains("morale") {
@@ -320,9 +327,14 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 MappedEffect::Tag(format!("add_state:{}", modifier.to_lowercase()))
             }
         }
-        "MiningRate" | "CargoCapacity" | "FactionPointsGain"
-        | "PveChestLootMultiplierLimitedResources" | "HostileLoot" | "CombatScavenger"
-        | "SkillCloakingDuration" | "OffAbilityEffect" => {
+        "MiningRate"
+        | "CargoCapacity"
+        | "FactionPointsGain"
+        | "PveChestLootMultiplierLimitedResources"
+        | "HostileLoot"
+        | "CombatScavenger"
+        | "SkillCloakingDuration"
+        | "OffAbilityEffect" => {
             MappedEffect::Tag(format!("{}:non_combat", modifier.to_lowercase()))
         }
         _ => MappedEffect::Tag(format!("{}:unmapped", modifier.to_lowercase())),
@@ -344,18 +356,13 @@ fn map_trigger(canonical: &str) -> &'static str {
 }
 
 fn map_target(a: &CanonicalAbility) -> &'static str {
-    let t = a
-        .target
-        .as_deref()
-        .unwrap_or("")
-        .to_lowercase();
+    let t = a.target.as_deref().unwrap_or("").to_lowercase();
     if t.contains("enemy") {
         "enemy"
     } else {
         "self"
     }
 }
-
 
 fn scaling_from_ranks(
     value_by_rank: &[f64],

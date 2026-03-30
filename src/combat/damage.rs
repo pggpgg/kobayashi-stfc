@@ -34,12 +34,8 @@ pub(crate) fn compute_crit_multiplier(
 
 /// Apex damage factor: 10000 / (10000 + effective_barrier), where barrier is adjusted by shred.
 #[inline]
-pub fn compute_apex_damage_factor(
-    effective_apex_shred: f64,
-    effective_apex_barrier: f64,
-) -> f64 {
-    let effective_barrier =
-        effective_apex_barrier / (1.0 + effective_apex_shred).max(EPSILON);
+pub fn compute_apex_damage_factor(effective_apex_shred: f64, effective_apex_barrier: f64) -> f64 {
+    let effective_barrier = effective_apex_barrier / (1.0 + effective_apex_shred).max(EPSILON);
     10000.0 / (10000.0 + effective_barrier)
 }
 
@@ -51,8 +47,11 @@ pub fn compute_isolytic_taken(
     effective_isolytic_defense: f64,
     effective_isolytic_cascade: f64,
 ) -> f64 {
-    let isolytic_component =
-        isolytic_damage(damage, effective_isolytic_damage, effective_isolytic_cascade);
+    let isolytic_component = isolytic_damage(
+        damage,
+        effective_isolytic_damage,
+        effective_isolytic_cascade,
+    );
     isolytic_component / (1.0 + effective_isolytic_defense)
 }
 

@@ -88,7 +88,10 @@ fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCon
         "defender_hull_breach" | "target_hull_breach" | "hull_breach_active" => {
             AbilityCondition::DefenderHullBreach
         }
-        "defender_faction_is" | "defender_faction" | "opponent_faction_is" | "opponent_faction"
+        "defender_faction_is"
+        | "defender_faction"
+        | "opponent_faction_is"
+        | "opponent_faction"
         | "faction_is" => {
             let slug = c.faction.as_deref().or_else(|| c.tag.as_deref())?;
             AbilityCondition::DefenderFactionIs(OpponentFactionTag::from_data_slug(slug)?)
@@ -151,12 +154,17 @@ fn trigger_to_timing(trigger: Option<&str>) -> Option<TimingWindow> {
         Some("passive") => Some(TimingWindow::CombatBegin),
         Some("combatstart") | Some("on_combat_start") => Some(TimingWindow::CombatBegin),
         Some("roundstart") | Some("on_round_start") => Some(TimingWindow::RoundStart),
-        Some("criticalshotfired") | Some("enemytakeshit") | Some("on_attack")
-        | Some("on_hit") | Some("on_critical") => Some(TimingWindow::AttackPhase),
-        Some("after_shot") | Some("on_after_shot") | Some("subround_end")
-        | Some("on_subround_end") | Some("after_weapon") | Some("on_after_weapon") => {
-            Some(TimingWindow::AfterSubround)
-        }
+        Some("criticalshotfired")
+        | Some("enemytakeshit")
+        | Some("on_attack")
+        | Some("on_hit")
+        | Some("on_critical") => Some(TimingWindow::AttackPhase),
+        Some("after_shot")
+        | Some("on_after_shot")
+        | Some("subround_end")
+        | Some("on_subround_end")
+        | Some("after_weapon")
+        | Some("on_after_weapon") => Some(TimingWindow::AfterSubround),
         Some("hittaken") | Some("on_defense") => Some(TimingWindow::DefensePhase),
         Some("roundend") | Some("on_round_end") => Some(TimingWindow::RoundEnd),
         Some("shieldsdepleted") | Some("targetshieldsdepleted") | Some("on_shield_break") => {
@@ -198,7 +206,9 @@ fn resolve_effect(
 
     match effect.effect_type.as_str() {
         "stat_modify" => {
-            let value = effect.value.or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(tier)))?;
+            let value = effect
+                .value
+                .or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(tier)))?;
             let stat = effect.stat.as_deref().unwrap_or("");
             let op = normalize_operator(effect.operator.as_deref());
 
@@ -279,7 +289,9 @@ fn resolve_effect(
                 }
                 "apex_shred" => Some((timing, AbilityEffect::ApexShredBonus(value))),
                 "apex_barrier" => Some((timing, AbilityEffect::ApexBarrierBonus(value))),
-                "shield_regen" | "shield_hp_repair" => Some((timing, AbilityEffect::ShieldRegen(value))),
+                "shield_regen" | "shield_hp_repair" => {
+                    Some((timing, AbilityEffect::ShieldRegen(value)))
+                }
                 "hull_repair" | "hull_hp_repair" => {
                     if timing == TimingWindow::Kill {
                         Some((timing, AbilityEffect::OnKillHullRegen(value)))
@@ -352,33 +364,54 @@ fn resolve_effect(
             None
         }
         "morale" => {
-            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            let chance = effect
+                .chance
+                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
+                .unwrap_or(0.0);
             Some((timing, AbilityEffect::Morale(chance)))
         }
         "assimilated" => {
-            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            let chance = effect
+                .chance
+                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
+                .unwrap_or(0.0);
             let duration_rounds = duration_rounds_or_default(effect, 1);
-            Some((timing, AbilityEffect::Assimilated {
-                chance,
-                duration_rounds,
-            }))
+            Some((
+                timing,
+                AbilityEffect::Assimilated {
+                    chance,
+                    duration_rounds,
+                },
+            ))
         }
         "hull_breach" => {
-            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            let chance = effect
+                .chance
+                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
+                .unwrap_or(0.0);
             let duration_rounds = duration_rounds_or_default(effect, 1);
-            Some((timing, AbilityEffect::HullBreach {
-                chance,
-                duration_rounds,
-                requires_critical: false,
-            }))
+            Some((
+                timing,
+                AbilityEffect::HullBreach {
+                    chance,
+                    duration_rounds,
+                    requires_critical: false,
+                },
+            ))
         }
         "burning" => {
-            let chance = effect.chance.or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier))).unwrap_or(0.0);
+            let chance = effect
+                .chance
+                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
+                .unwrap_or(0.0);
             let duration_rounds = duration_rounds_or_default(effect, 1);
-            Some((timing, AbilityEffect::Burning {
-                chance,
-                duration_rounds,
-            }))
+            Some((
+                timing,
+                AbilityEffect::Burning {
+                    chance,
+                    duration_rounds,
+                },
+            ))
         }
         "tag" => None, // Non-combat; skip.
         _ => None,
@@ -429,7 +462,8 @@ pub fn lcars_effect_coverage(
     if effect.effect_type == "stat_modify" {
         let stat = effect.stat.as_deref().unwrap_or("").trim();
         if stat.eq_ignore_ascii_case("accuracy") {
-            let pathway = if trigger_to_timing(effect.trigger.as_deref()) == Some(TimingWindow::CombatBegin)
+            let pathway = if trigger_to_timing(effect.trigger.as_deref())
+                == Some(TimingWindow::CombatBegin)
             {
                 "combat_begin_accuracy_static"
             } else {
@@ -490,7 +524,9 @@ pub fn resolve_officer_ability(
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
     for effect in &ability.effects {
-        if let Some((timing, effect_effect)) = resolve_effect(effect, &ability.name, options, &officer.id) {
+        if let Some((timing, effect_effect)) =
+            resolve_effect(effect, &ability.name, options, &officer.id)
+        {
             let condition = effect
                 .condition
                 .as_ref()
@@ -547,11 +583,19 @@ pub fn resolve_crew_to_buff_set(
         for effect in &ability.effects {
             if effect.effect_type != "stat_modify"
                 || effect.trigger.as_deref().map(str::trim) != Some("passive")
-                || effect.duration.as_ref().map_or(false, |d| !d.is_permanent())
+                || effect
+                    .duration
+                    .as_ref()
+                    .map_or(false, |d| !d.is_permanent())
             {
                 continue;
             }
-            let value = effect.value.or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(officer_tier)));
+            let value = effect.value.or_else(|| {
+                effect
+                    .scaling
+                    .as_ref()
+                    .map(|s| s.value_at_rank(officer_tier))
+            });
             if let (Some(stat), Some(v)) = (effect.stat.as_deref(), value) {
                 if effect.operator.as_deref() == Some("multiply") {
                     static_buffs
@@ -579,10 +623,12 @@ pub fn resolve_crew_to_buff_set(
             if !stat.eq_ignore_ascii_case("accuracy") {
                 continue;
             }
-            let Some(value) = effect
-                .value
-                .or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(officer_tier)))
-            else {
+            let Some(value) = effect.value.or_else(|| {
+                effect
+                    .scaling
+                    .as_ref()
+                    .map(|s| s.value_at_rank(officer_tier))
+            }) else {
                 continue;
             };
             let op = normalize_operator(effect.operator.as_deref());
@@ -656,7 +702,12 @@ pub fn resolve_crew_to_buff_set(
             if effect.effect_type == "extra_attack" {
                 let chance = effect
                     .chance
-                    .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(officer_tier)))
+                    .or_else(|| {
+                        effect
+                            .scaling
+                            .as_ref()
+                            .map(|s| s.chance_at_rank(officer_tier))
+                    })
                     .unwrap_or(0.0)
                     .clamp(0.0, 1.0);
                 let mult = effect.multiplier.unwrap_or(2.0).max(1.0);
@@ -869,7 +920,9 @@ mod tests {
         );
         assert_eq!(
             contexts[3].ability.condition,
-            Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon))
+            Some(AbilityCondition::DefenderFactionIs(
+                OpponentFactionTag::Klingon
+            ))
         );
         let and_cond = contexts[4].ability.condition.clone().unwrap();
         let ctx_ok = CombatContext {
@@ -901,11 +954,19 @@ mod tests {
             group: None,
             captain_ability: Some(LcarsAbility {
                 name: "Cap".to_string(),
-                effects: vec![lcars_effect_stat_modify("isolytic_damage", 0.11, "on_round_start")],
+                effects: vec![lcars_effect_stat_modify(
+                    "isolytic_damage",
+                    0.11,
+                    "on_round_start",
+                )],
             }),
             bridge_ability: Some(LcarsAbility {
                 name: "Bridge".to_string(),
-                effects: vec![lcars_effect_stat_modify("isolytic_cascade_damage", 0.22, "on_combat_start")],
+                effects: vec![lcars_effect_stat_modify(
+                    "isolytic_cascade_damage",
+                    0.22,
+                    "on_combat_start",
+                )],
             }),
             below_decks_ability: None,
         };
@@ -945,7 +1006,8 @@ mod tests {
             tier: Some(5),
             ..Default::default()
         };
-        let buff = resolve_crew_to_buff_set("", &[], &["bd_only_bridge".to_string()], &officers, &opts);
+        let buff =
+            resolve_crew_to_buff_set("", &[], &["bd_only_bridge".to_string()], &officers, &opts);
         assert!(buff.crew.seats.is_empty());
     }
 
@@ -968,7 +1030,11 @@ mod tests {
         };
         let ability_iso = LcarsAbility {
             name: "iso".to_string(),
-            effects: vec![lcars_effect_stat_modify("isolytic_damage", 0.15, "on_round_start")],
+            effects: vec![lcars_effect_stat_modify(
+                "isolytic_damage",
+                0.15,
+                "on_round_start",
+            )],
         };
         let contexts = resolve_officer_ability(
             &officer,
@@ -979,11 +1045,17 @@ mod tests {
             0,
         );
         assert_eq!(contexts.len(), 1);
-        assert!(matches!(contexts[0].ability.effect, AbilityEffect::IsolyticDamageBonus(v) if (v - 0.15).abs() < 1e-12));
+        assert!(
+            matches!(contexts[0].ability.effect, AbilityEffect::IsolyticDamageBonus(v) if (v - 0.15).abs() < 1e-12)
+        );
 
         let ability_def = LcarsAbility {
             name: "def".to_string(),
-            effects: vec![lcars_effect_stat_modify("isolytic_defense", 20.0, "on_round_start")],
+            effects: vec![lcars_effect_stat_modify(
+                "isolytic_defense",
+                20.0,
+                "on_round_start",
+            )],
         };
         let contexts_def = resolve_officer_ability(
             &officer,
@@ -994,11 +1066,17 @@ mod tests {
             0,
         );
         assert_eq!(contexts_def.len(), 1);
-        assert!(matches!(contexts_def[0].ability.effect, AbilityEffect::IsolyticDefenseBonus(v) if (v - 20.0).abs() < 1e-12));
+        assert!(
+            matches!(contexts_def[0].ability.effect, AbilityEffect::IsolyticDefenseBonus(v) if (v - 20.0).abs() < 1e-12)
+        );
 
         let ability_shield = LcarsAbility {
             name: "shield".to_string(),
-            effects: vec![lcars_effect_stat_modify("shield_mitigation", 0.05, "on_combat_start")],
+            effects: vec![lcars_effect_stat_modify(
+                "shield_mitigation",
+                0.05,
+                "on_combat_start",
+            )],
         };
         let contexts_shield = resolve_officer_ability(
             &officer,
@@ -1009,11 +1087,17 @@ mod tests {
             0,
         );
         assert_eq!(contexts_shield.len(), 1);
-        assert!(matches!(contexts_shield[0].ability.effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.05).abs() < 1e-12));
+        assert!(
+            matches!(contexts_shield[0].ability.effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.05).abs() < 1e-12)
+        );
 
         let ability_cascade = LcarsAbility {
             name: "cascade".to_string(),
-            effects: vec![lcars_effect_stat_modify("isolytic_cascade_damage", 0.2, "on_round_start")],
+            effects: vec![lcars_effect_stat_modify(
+                "isolytic_cascade_damage",
+                0.2,
+                "on_round_start",
+            )],
         };
         let contexts_cascade = resolve_officer_ability(
             &officer,
@@ -1024,7 +1108,9 @@ mod tests {
             0,
         );
         assert_eq!(contexts_cascade.len(), 1);
-        assert!(matches!(contexts_cascade[0].ability.effect, AbilityEffect::IsolyticCascadeDamageBonus(v) if (v - 0.2).abs() < 1e-12));
+        assert!(
+            matches!(contexts_cascade[0].ability.effect, AbilityEffect::IsolyticCascadeDamageBonus(v) if (v - 0.2).abs() < 1e-12)
+        );
     }
 
     #[test]
@@ -1134,22 +1220,20 @@ mod tests {
             officer_tiers: Some([("tiered_officer".to_string(), 5u8)].into_iter().collect()),
             ..Default::default()
         };
-        let buff_tier1 = resolve_crew_to_buff_set(
-            "tiered_officer",
-            &[],
-            &[],
-            &officers,
-            &options_tier1,
-        );
-        let buff_tier5 = resolve_crew_to_buff_set(
-            "tiered_officer",
-            &[],
-            &[],
-            &officers,
-            &options_tier5,
-        );
-        let v1 = buff_tier1.static_buffs.get("weapon_damage").copied().unwrap_or(0.0);
-        let v5 = buff_tier5.static_buffs.get("weapon_damage").copied().unwrap_or(0.0);
+        let buff_tier1 =
+            resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier1);
+        let buff_tier5 =
+            resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier5);
+        let v1 = buff_tier1
+            .static_buffs
+            .get("weapon_damage")
+            .copied()
+            .unwrap_or(0.0);
+        let v5 = buff_tier5
+            .static_buffs
+            .get("weapon_damage")
+            .copied()
+            .unwrap_or(0.0);
         assert!(
             (v5 - v1).abs() > 1e-6,
             "per-officer tier should change resolved static_buffs: tier1={v1}, tier5={v5}"

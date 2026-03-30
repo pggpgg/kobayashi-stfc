@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { useProfile } from "../contexts/ProfileContext";
-import { createProfile, deleteProfile } from "../lib/api";
+import {
+  createProfile,
+  deleteProfile,
+  exportProfilesBackup,
+  formatApiError,
+  importProfilesBackup,
+} from "../lib/api";
 
 /** Derive initials from profile name (e.g. "Main" -> "M", "Alt Account" -> "AA"). */
 function initials(name: string): string {
@@ -23,6 +29,10 @@ export default function ProfileSwitcher() {
     name: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [exportingBackup, setExportingBackup] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
@@ -57,6 +67,52 @@ export default function ProfileSwitcher() {
       );
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleExportBackup = async () => {
+    setCreateError(null);
+    setExportingBackup(true);
+    try {
+      const blob = await exportProfilesBackup();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `kobayashi-profiles-${new Date().toISOString().slice(0, 19).replace(/[:-]/g, "")}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setOpen(false);
+    } catch (e) {
+      setCreateError(formatApiError(e));
+    } finally {
+      setExportingBackup(false);
+    }
+  };
+
+  const handleRestorePicked = () => {
+    setCreateError(null);
+    fileInputRef.current?.click();
+  };
+
+  const handleRestoreFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (f) setRestoreFile(f);
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!restoreFile) return;
+    setRestoring(true);
+    setCreateError(null);
+    try {
+      await importProfilesBackup(restoreFile);
+      await refreshProfiles();
+      setRestoreFile(null);
+      setOpen(false);
+    } catch (e) {
+      setCreateError(formatApiError(e));
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -273,6 +329,166 @@ export default function ProfileSwitcher() {
               + Add profile
             </button>
           )}
+
+          <div
+            style={{
+              borderTop: "1px solid var(--border)",
+              marginTop: 8,
+              paddingTop: 8,
+            }}
+          >
+            <div
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--text-muted)",
+                marginBottom: 6,
+                paddingLeft: 4,
+              }}
+            >
+              Backup
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".zip,application/zip"
+              style={{ display: "none" }}
+              aria-hidden
+              onChange={handleRestoreFileChange}
+            />
+            <button
+              type="button"
+              onClick={handleExportBackup}
+              disabled={exportingBackup}
+              title="Download a zip of all profiles (roster, research, presets, …)"
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "0.45rem 0.75rem",
+                textAlign: "left",
+                background: "transparent",
+                color: "var(--text)",
+                border: "none",
+                borderRadius: 4,
+                cursor: exportingBackup ? "not-allowed" : "pointer",
+                fontSize: "0.85rem",
+              }}
+            >
+              {exportingBackup ? "Exporting…" : "Export backup (zip)…"}
+            </button>
+            <button
+              type="button"
+              onClick={handleRestorePicked}
+              disabled={restoring}
+              title="Replace all profiles from a zip made by Export backup"
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "0.45rem 0.75rem",
+                textAlign: "left",
+                background: "transparent",
+                color: "var(--text)",
+                border: "none",
+                borderRadius: 4,
+                cursor: restoring ? "not-allowed" : "pointer",
+                fontSize: "0.85rem",
+              }}
+            >
+              Restore from backup…
+            </button>
+          </div>
+          {createError && !showAdd && (
+            <div
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--error)",
+                marginTop: 8,
+                padding: "4px 8px",
+              }}
+            >
+              {createError}
+            </div>
+          )}
+        </div>
+      )}
+
+      {restoreFile && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+          }}
+          onClick={() => !restoring && setRestoreFile(null)}
+        >
+          <div
+            style={{
+              background: "var(--surface)",
+              padding: "1.5rem",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              minWidth: 300,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ margin: "0 0 1rem", fontWeight: 600 }}>
+              Restore from backup?
+            </p>
+            <p
+              style={{
+                margin: "0 0 1rem",
+                fontSize: "0.9rem",
+                color: "var(--text-muted)",
+              }}
+            >
+              This replaces every profile on disk with{" "}
+              <strong>{restoreFile.name}</strong>. The current{" "}
+              <code style={{ fontSize: "0.85em" }}>profiles</code> folder is
+              renamed to{" "}
+              <code style={{ fontSize: "0.85em" }}>
+                profiles.before_restore
+              </code>{" "}
+              when possible. Run the server from the project root so paths
+              resolve correctly.
+            </p>
+            <div
+              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
+            >
+              <button
+                type="button"
+                onClick={() => setRestoreFile(null)}
+                disabled={restoring}
+                style={{
+                  padding: "0.5rem 1rem",
+                  background: "var(--border)",
+                  border: "none",
+                  borderRadius: 6,
+                  color: "var(--text)",
+                  cursor: restoring ? "not-allowed" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRestore}
+                disabled={restoring}
+                style={{
+                  padding: "0.5rem 1rem",
+                  background: "var(--error)",
+                  border: "none",
+                  borderRadius: 6,
+                  color: "white",
+                  cursor: restoring ? "not-allowed" : "pointer",
+                }}
+              >
+                {restoring ? "Restoring…" : "Restore"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

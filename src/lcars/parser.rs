@@ -172,7 +172,9 @@ pub struct LcarsCondition {
 }
 
 /// Load a single `.lcars.yaml` file.
-pub fn load_lcars_file(path: impl AsRef<Path>) -> Result<LcarsFile, Box<dyn std::error::Error + Send + Sync>> {
+pub fn load_lcars_file(
+    path: impl AsRef<Path>,
+) -> Result<LcarsFile, Box<dyn std::error::Error + Send + Sync>> {
     let raw = fs::read_to_string(path)?;
     let parsed: LcarsFile = serde_yaml::from_str(&raw)?;
     Ok(parsed)
@@ -180,7 +182,9 @@ pub fn load_lcars_file(path: impl AsRef<Path>) -> Result<LcarsFile, Box<dyn std:
 
 /// Load all `*.lcars.yaml` and `*.lcars.yml` files from a directory and merge officers.
 /// Only filenames matching these patterns are loaded; other YAML files in the directory are ignored.
-pub fn load_lcars_dir(dir: impl AsRef<Path>) -> Result<Vec<LcarsOfficer>, Box<dyn std::error::Error + Send + Sync>> {
+pub fn load_lcars_dir(
+    dir: impl AsRef<Path>,
+) -> Result<Vec<LcarsOfficer>, Box<dyn std::error::Error + Send + Sync>> {
     let mut officers = Vec::new();
     let dir = dir.as_ref();
     if !dir.is_dir() {
@@ -191,7 +195,9 @@ pub fn load_lcars_dir(dir: impl AsRef<Path>) -> Result<Vec<LcarsOfficer>, Box<dy
         let path = entry.path();
         if path.is_file() {
             let name = path.file_name().and_then(|n| n.to_str());
-            let is_lcars = name.map_or(false, |n| n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml"));
+            let is_lcars = name.map_or(false, |n| {
+                n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml")
+            });
             if is_lcars {
                 if let Ok(file) = load_lcars_file(&path) {
                     officers.extend(file.officers);

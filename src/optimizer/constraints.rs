@@ -172,9 +172,21 @@ mod tests {
             below_decks_must_include: vec!["Data".into()],
             ..Default::default()
         };
-        assert!(c.satisfies(&crew("Picard", &["Riker", "Troi"], &["Data", "La Forge", "Crusher"])));
-        assert!(!c.satisfies(&crew("Riker", &["Picard", "Troi"], &["Data", "La Forge", "Crusher"])));
-        assert!(!c.satisfies(&crew("Picard", &["Troi", "Worf"], &["Data", "La Forge", "Crusher"])));
+        assert!(c.satisfies(&crew(
+            "Picard",
+            &["Riker", "Troi"],
+            &["Data", "La Forge", "Crusher"]
+        )));
+        assert!(!c.satisfies(&crew(
+            "Riker",
+            &["Picard", "Troi"],
+            &["Data", "La Forge", "Crusher"]
+        )));
+        assert!(!c.satisfies(&crew(
+            "Picard",
+            &["Troi", "Worf"],
+            &["Data", "La Forge", "Crusher"]
+        )));
     }
 
     #[test]

@@ -7,7 +7,8 @@ use std::path::Path;
 use serde::Deserialize;
 
 const TRANSLATIONS_SHIPS: &str = "data/upstream/data-stfc-space/translations-ships.json";
-const TRANSLATIONS_OFFICER_NAMES: &str = "data/upstream/data-stfc-space/translations-officer_names.json";
+const TRANSLATIONS_OFFICER_NAMES: &str =
+    "data/upstream/data-stfc-space/translations-officer_names.json";
 
 #[derive(Debug, Deserialize)]
 struct TranslationRow {
@@ -40,7 +41,11 @@ pub fn strip_stfc_color_tags(s: &str) -> String {
         }
     }
     s = s.replace("</color>", "");
-    s.split_whitespace().collect::<Vec<_>>().join(" ").trim().to_string()
+    s.split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .trim()
+        .to_string()
 }
 
 /// Build loca_id → best display name from bundled upstream translation files.

@@ -8,6 +8,7 @@
 //! (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`, default 1).
 
 use axum::{
+    body::Bytes,
     extract::DefaultBodyLimit,
     extract::OriginalUri,
     extract::{Path, Query, State},
@@ -32,6 +33,7 @@ use crate::mechanics::coverage::mechanics_coverage_json;
 use crate::server::api;
 use crate::server::api_key;
 use crate::server::openapi;
+use crate::server::profile_backup;
 use crate::server::sync;
 
 /// Application state shared by all handlers.
@@ -110,6 +112,8 @@ const BODY_LIMIT_PROFILE_PUT: usize = 8 * 1024 * 1024;
 const BODY_LIMIT_CPU_JSON: usize = 2 * 1024 * 1024;
 /// Preset create, profile create, optimize cancel, and other small JSON bodies.
 const BODY_LIMIT_SMALL_JSON: usize = 512 * 1024;
+/// Full `profiles/` tree as a zip (backup restore).
+const BODY_LIMIT_PROFILE_BACKUP: usize = 32 * 1024 * 1024;
 
 pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     let state = AppState {
@@ -142,6 +146,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
             get(handle_profile_research_summary),
         )
         .route("/api/profiles", get(handle_profiles_list))
+        .route("/api/profiles/export", get(handle_profiles_export))
         .route("/api/profiles/:id", delete(handle_profiles_delete))
         .route("/api/presets", get(handle_presets_list))
         .route("/api/presets/:id", get(handle_preset_get))
@@ -188,12 +193,18 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .layer(DefaultBodyLimit::max(BODY_LIMIT_SMALL_JSON))
         .with_state(state.clone());
 
+    let api_profile_backup = Router::new()
+        .route("/api/profiles/import", post(handle_profiles_import))
+        .layer(DefaultBodyLimit::max(BODY_LIMIT_PROFILE_BACKUP))
+        .with_state(state.clone());
+
     let api_routes = Router::new()
         .merge(api_read)
         .merge(api_large_ingest)
         .merge(api_profile_put)
         .merge(api_cpu_json)
         .merge(api_small_json)
+        .merge(api_profile_backup)
         .layer(middleware::from_fn(api_key::middleware))
         .with_state(state);
 
@@ -550,6 +561,38 @@ async fn handle_profiles_delete(Path(id): Path<String>) -> impl IntoResponse {
     match api::profiles_delete_payload(&id) {
         Ok(()) => ok_json(serde_json::json!({ "status": "ok" }).to_string()).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e).into_response(),
+    }
+}
+
+async fn handle_profiles_export() -> impl IntoResponse {
+    match tokio::task::spawn_blocking(|| profile_backup::export_profiles_zip()).await {
+        Ok(Ok(bytes)) => {
+            let filename = format!(
+                "kobayashi-profiles-{}.zip",
+                chrono::Utc::now().format("%Y%m%dT%H%M%SZ")
+            );
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("application/zip"),
+            );
+            if let Ok(cd) = HeaderValue::try_from(format!("attachment; filename=\"{}\"", filename))
+            {
+                headers.insert(header::CONTENT_DISPOSITION, cd);
+            }
+            (StatusCode::OK, headers, bytes).into_response()
+        }
+        Ok(Err(e)) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e).into_response(),
+        Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "export failed").into_response(),
+    }
+}
+
+async fn handle_profiles_import(body: Bytes) -> impl IntoResponse {
+    let body = body.to_vec();
+    match tokio::task::spawn_blocking(move || profile_backup::import_profiles_zip(&body)).await {
+        Ok(Ok(())) => ok_json(serde_json::json!({ "status": "ok" }).to_string()).into_response(),
+        Ok(Err(e)) => error_json(StatusCode::BAD_REQUEST, &e).into_response(),
+        Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "import failed").into_response(),
     }
 }
 

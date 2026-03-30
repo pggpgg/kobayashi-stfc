@@ -238,6 +238,8 @@ The UI is served from the same origin as the API by default. For custom deployme
 
 **Security:** `X-Profile-Id` / `?profile=` select a profile but are not authentication. For LAN/internet exposure, read [docs/DEPLOYMENT_SECURITY.md](docs/DEPLOYMENT_SECURITY.md) (optional `KOBAYASHI_API_KEY`, loopback trust, sync tokens).
 
+**Profiles:** Only the bundled `profiles/demo/` sample is meant for public sharing; your `index.json` (tokens, names, other profile dirs) stays local—see [profiles/README.md](profiles/README.md). A fresh clone gets a generated index on first server start.
+
 ---
 
 ## Contributing

@@ -3,8 +3,8 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    parse_combat_log_json, parity_within_tolerance, ingested_to_comparable,
-    ingested_events_to_combat_events, IngestedCombatLog,
+    ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
+    parse_combat_log_json, IngestedCombatLog,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -42,7 +42,10 @@ fn parse_combat_log_assert_event_count_and_round_count() {
     assert!(log.rounds_simulated >= 1, "at least one round");
     let round_indices: Vec<u32> = log.events.iter().map(|e| e.round_index).collect();
     let max_round = round_indices.iter().copied().max().unwrap_or(0);
-    assert_eq!(max_round, log.rounds_simulated, "max event round matches rounds_simulated");
+    assert_eq!(
+        max_round, log.rounds_simulated,
+        "max event round matches rounds_simulated"
+    );
 }
 
 #[test]

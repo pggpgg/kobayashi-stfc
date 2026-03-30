@@ -7,9 +7,10 @@ use kobayashi::data::research::ResearchCatalog;
 
 #[test]
 fn merge_research_applies_fixture_catalog_weapon_damage() {
-    let catalog: ResearchCatalog =
-        serde_json::from_str(include_str!("fixtures/research/research_catalog_fixture.json"))
-            .expect("parse fixture research catalog");
+    let catalog: ResearchCatalog = serde_json::from_str(include_str!(
+        "fixtures/research/research_catalog_fixture.json"
+    ))
+    .expect("parse fixture research catalog");
 
     let imported = vec![ResearchEntry {
         rid: 99000001,
@@ -27,9 +28,10 @@ fn merge_research_applies_fixture_catalog_weapon_damage() {
 
 #[test]
 fn merge_research_skips_unknown_rid_in_fixture_catalog() {
-    let catalog: ResearchCatalog =
-        serde_json::from_str(include_str!("fixtures/research/research_catalog_fixture.json"))
-            .expect("parse fixture research catalog");
+    let catalog: ResearchCatalog = serde_json::from_str(include_str!(
+        "fixtures/research/research_catalog_fixture.json"
+    ))
+    .expect("parse fixture research catalog");
 
     let imported = vec![ResearchEntry {
         rid: 99999999,

@@ -28,7 +28,11 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let file = LcarsFile { officers: merged };
     let yaml = serde_yaml::to_string(&file)?;
     fs::write(&out_path, yaml)?;
-    println!("Wrote {} ({} officers)", out_path.display(), file.officers.len());
+    println!(
+        "Wrote {} ({} officers)",
+        out_path.display(),
+        file.officers.len()
+    );
 
     // Remove other .yaml/.yml files in the directory (keep only officers.lcars.yaml).
     for entry in fs::read_dir(dir)? {

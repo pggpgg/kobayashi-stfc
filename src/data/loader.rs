@@ -15,7 +15,13 @@ use crate::data::ship::{
 fn normalize_lookup(s: &str) -> String {
     s.to_lowercase()
         .chars()
-        .map(|c| if c.is_whitespace() || c == '_' { ' ' } else { c })
+        .map(|c| {
+            if c.is_whitespace() || c == '_' {
+                ' '
+            } else {
+                c
+            }
+        })
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()
@@ -30,7 +36,11 @@ pub fn resolve_hostile_with_index(
 ) -> Option<HostileRecord> {
     let normalized = normalize_lookup(name_or_id);
 
-    if let Some(entry) = index.hostiles.iter().find(|e| normalize_lookup(&e.id) == normalized) {
+    if let Some(entry) = index
+        .hostiles
+        .iter()
+        .find(|e| normalize_lookup(&e.id) == normalized)
+    {
         return load_hostile_record(data_dir, &entry.id);
     }
     for entry in &index.hostiles {
@@ -84,7 +94,9 @@ pub fn resolve_ship_with_tier_level(
     let id = ext_index
         .ships
         .iter()
-        .find(|e| normalize_lookup(&e.id) == normalized || normalize_lookup(&e.ship_name) == normalized)
+        .find(|e| {
+            normalize_lookup(&e.id) == normalized || normalize_lookup(&e.ship_name) == normalized
+        })
         .map(|e| e.id.as_str())?;
     let extended = load_extended_ship_record(extended_dir, id)?;
     extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))
@@ -102,7 +114,9 @@ pub fn ship_tiers_levels(name_or_id: &str) -> Option<(Vec<u32>, Vec<u32>)> {
     let id = ext_index
         .ships
         .iter()
-        .find(|e| normalize_lookup(&e.id) == normalized || normalize_lookup(&e.ship_name) == normalized)
+        .find(|e| {
+            normalize_lookup(&e.id) == normalized || normalize_lookup(&e.ship_name) == normalized
+        })
         .map(|e| e.id.as_str())?;
     let extended = load_extended_ship_record(extended_dir, id)?;
     let tiers: Vec<u32> = extended.tiers.iter().map(|t| t.tier).collect();

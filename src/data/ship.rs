@@ -278,7 +278,8 @@ pub struct ShipIdRegistryEntry {
     pub ship_class: String,
 }
 
-pub const DEFAULT_SHIP_ID_REGISTRY_PATH: &str = "data/upstream/data-stfc-space/ship_id_registry.json";
+pub const DEFAULT_SHIP_ID_REGISTRY_PATH: &str =
+    "data/upstream/data-stfc-space/ship_id_registry.json";
 
 /// Load ship id registry from data/upstream/data-stfc-space/ship_id_registry.json.
 pub fn load_ship_id_registry(path: &str) -> Option<ShipIdRegistry> {

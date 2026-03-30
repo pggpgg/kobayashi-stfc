@@ -45,7 +45,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ok += 1;
     }
 
-    println!("Validated {} datasets, {} ok, {} errors", registry.len(), ok, err);
+    println!(
+        "Validated {} datasets, {} ok, {} errors",
+        registry.len(),
+        ok,
+        err
+    );
     if err > 0 {
         std::process::exit(1);
     }

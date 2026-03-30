@@ -142,9 +142,18 @@ pub struct CombatContext {
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AbilityCondition {
-    StatBelow { stat: String, threshold_pct: f64 },
-    StatAbove { stat: String, threshold_pct: f64 },
-    RoundRange { min: u32, max: u32 },
+    StatBelow {
+        stat: String,
+        threshold_pct: f64,
+    },
+    StatAbove {
+        stat: String,
+        threshold_pct: f64,
+    },
+    RoundRange {
+        min: u32,
+        max: u32,
+    },
     /// True when the attacker succeeded on the primary round-start [AbilityEffect::Morale] roll this round.
     MoraleActive,
     /// True when [CombatContext::defender_burning_active] (opponent has burning state).
@@ -160,7 +169,10 @@ pub enum AbilityCondition {
 impl AbilityCondition {
     pub fn evaluate(&self, ctx: &CombatContext) -> bool {
         match self {
-            Self::StatBelow { stat, threshold_pct } => {
+            Self::StatBelow {
+                stat,
+                threshold_pct,
+            } => {
                 let pct = match stat.as_str() {
                     "shield_hp" | "shield" => ctx.defender_shield_pct,
                     "hull_hp" | "hull" => ctx.defender_hull_pct,
@@ -170,7 +182,10 @@ impl AbilityCondition {
                 };
                 pct < *threshold_pct
             }
-            Self::StatAbove { stat, threshold_pct } => {
+            Self::StatAbove {
+                stat,
+                threshold_pct,
+            } => {
                 let pct = match stat.as_str() {
                     "shield_hp" | "shield" => ctx.defender_shield_pct,
                     "hull_hp" | "hull" => ctx.defender_hull_pct,
@@ -343,11 +358,7 @@ pub fn filter_effects_by_condition(
 ) -> Vec<ActiveAbilityEffect> {
     effects
         .iter()
-        .filter(|e| {
-            e.condition
-                .as_ref()
-                .map_or(true, |c| c.evaluate(ctx))
-        })
+        .filter(|e| e.condition.as_ref().map_or(true, |c| c.evaluate(ctx)))
         .cloned()
         .collect()
 }

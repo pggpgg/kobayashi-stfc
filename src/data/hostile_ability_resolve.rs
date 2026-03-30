@@ -68,7 +68,10 @@ fn parse_one_upstream_ability(v: &Value) -> Option<ResolvedHostileAbility> {
     let obj = v.as_object()?;
     let id = obj
         .get("id")
-        .and_then(|x| x.as_u64().or_else(|| x.as_i64().filter(|&i| i >= 0).map(|i| i as u64)))?
+        .and_then(|x| {
+            x.as_u64()
+                .or_else(|| x.as_i64().filter(|&i| i >= 0).map(|i| i as u64))
+        })?
         .to_string();
     let upstream_value_is_percentage = obj.get("value_is_percentage").and_then(|b| b.as_bool());
     let first = obj.get("values")?.as_array()?.first()?;
@@ -129,12 +132,10 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 multiplier: value,
             })
         }
-        "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
-            Some(AbilityEffect::ProcPierceBonus {
-                chance: normalize_probability(chance),
-                bonus: value,
-            })
-        }
+        "pierce_bonus" | "armor_pierce" | "shield_pierce" => Some(AbilityEffect::ProcPierceBonus {
+            chance: normalize_probability(chance),
+            bonus: value,
+        }),
         "hostile_crit_damage_reduction" | "reduce_attacker_crit_damage" => {
             // Defender-side crit reduction doesn't exist; but we can reuse HostileCritDamageReduction
             // to apply to attacker crits only if engine threads it. Out of scope for task 2.
@@ -170,14 +171,14 @@ pub fn hostile_abilities_to_defender_crew(
         let Some(timing) = parse_ship_ability_timing(&entry.timing) else {
             continue;
         };
-        let normalized_value = entry
-            .value_override
-            .unwrap_or_else(|| normalize_catalog_value(
+        let normalized_value = entry.value_override.unwrap_or_else(|| {
+            normalize_catalog_value(
                 entry.value_is_percentage,
                 entry.ignore_upstream_value_is_percentage,
                 parsed.upstream_value_is_percentage,
                 parsed.value,
-            ));
+            )
+        });
         let chance = parsed.chance;
         let Some(effect) = hostile_ability_effect_from_catalog(
             &entry.effect_type,
@@ -242,4 +243,3 @@ mod tests {
         assert_eq!(crew.seats[0].ability.name, "123");
     }
 }
-

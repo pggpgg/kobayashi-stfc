@@ -188,8 +188,7 @@ mod tests {
         );
         let expect_pierce = pierce_damage_through_bonus(defender, attacker, ShipType::Battleship);
         let expect_mult = (1.0 - expect_mit).max(0.0);
-        let expect_dtf =
-            compute_damage_through_factor(expect_mult, expect_pierce, 0.0);
+        let expect_dtf = compute_damage_through_factor(expect_mult, expect_pierce, 0.0);
         assert!((row.mitigation - expect_mit).abs() < 1e-9);
         assert!((row.pierce_additive - expect_pierce).abs() < 1e-9);
         assert!((row.damage_through_factor - expect_dtf).abs() < 1e-9);

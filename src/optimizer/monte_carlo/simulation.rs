@@ -1,8 +1,5 @@
 //! Simulation orchestration: run_monte_carlo* and SimulationResult.
 
-use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher};
 use crate::combat::{
     simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, OpponentFactionTag,
     SimulationConfig, TraceMode,
@@ -10,6 +7,9 @@ use crate::combat::{
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::perf_log;
+use rayon::prelude::*;
+use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 
 use super::crew_resolution::seeded_variance;
 use super::scenario::{
@@ -146,7 +146,8 @@ fn run_candidate_monte_carlo(
 
         let hull_draw = if result.attacker_won {
             let remaining = if result.winner_by_round_limit {
-                (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0)).clamp(0.0, 1.0)
+                (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
+                    .clamp(0.0, 1.0)
             } else {
                 ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
             };
@@ -161,10 +162,7 @@ fn run_candidate_monte_carlo(
         let delta2 = hull_draw - hull_mean;
         hull_m2 += delta * delta2;
 
-        if result.attacker_won
-            && !result.winner_by_round_limit
-            && result.rounds_simulated == 1
-        {
+        if result.attacker_won && !result.winner_by_round_limit && result.rounds_simulated == 1 {
             r1_kills += 1;
         }
 
@@ -243,14 +241,7 @@ pub fn run_monte_carlo(
     iterations: usize,
     seed: u64,
 ) -> Vec<SimulationResult> {
-    run_monte_carlo_with_parallelism(
-        ship,
-        hostile,
-        candidates,
-        iterations,
-        seed,
-        false,
-    )
+    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, false)
 }
 
 /// Like [run_monte_carlo] but distributes candidates across all CPU cores via Rayon.
@@ -262,14 +253,7 @@ pub fn run_monte_carlo_parallel(
     iterations: usize,
     seed: u64,
 ) -> Vec<SimulationResult> {
-    run_monte_carlo_with_parallelism(
-        ship,
-        hostile,
-        candidates,
-        iterations,
-        seed,
-        true,
-    )
+    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, true)
 }
 
 /// Monte Carlo for a population that may contain duplicate crews: simulates each distinct crew once
@@ -299,16 +283,9 @@ pub fn run_monte_carlo_parallel_deduped(
         .map(|&i| candidates[i].clone())
         .collect();
 
-    let uniq_results = run_monte_carlo_parallel(
-        ship,
-        hostile,
-        &uniq,
-        iterations,
-        seed,
-    );
+    let uniq_results = run_monte_carlo_parallel(ship, hostile, &uniq, iterations, seed);
 
-    let mut by_hash: HashMap<u64, SimulationResult> =
-        HashMap::with_capacity(uniq_results.len());
+    let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq_results.len());
     for (j, r) in uniq_results.into_iter().enumerate() {
         let c = &candidates[unique_indices[j]];
         let k = crew_candidate_stable_hash(c);
@@ -360,12 +337,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     profile_id: Option<&str>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
-        registry,
-        ship,
-        hostile,
-        ship_tier,
-        ship_level,
-        profile_id,
+        registry, ship, hostile, ship_tier, ship_level, profile_id,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -388,12 +360,7 @@ pub fn run_monte_carlo_with_registry(
     profile_id: Option<&str>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
-        registry,
-        ship,
-        hostile,
-        ship_tier,
-        ship_level,
-        profile_id,
+        registry, ship, hostile, ship_tier, ship_level, profile_id,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -439,12 +406,7 @@ pub fn replay_optimize_iteration_with_registry(
     max_trace_events: usize,
 ) -> MonteCarloSeedReplay {
     let shared = build_shared_scenario_data_from_registry(
-        registry,
-        ship,
-        hostile,
-        ship_tier,
-        ship_level,
-        profile_id,
+        registry, ship, hostile, ship_tier, ship_level, profile_id,
     );
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
     let iteration_seed = input.base_seed.wrapping_add(sim_index);
@@ -526,14 +488,7 @@ pub(crate) fn run_monte_carlo_with_shared(
     parallel: bool,
 ) -> Vec<SimulationResult> {
     let t0 = perf_log::perf_start();
-    let out = run_monte_carlo_inner(
-        shared,
-        candidates,
-        iterations,
-        seed,
-        parallel,
-        None,
-    );
+    let out = run_monte_carlo_inner(shared, candidates, iterations, seed, parallel, None);
     perf_log::log_duration(
         &format!(
             "monte_carlo.with_shared(candidates={}, iterations={}, parallel={parallel})",
@@ -585,7 +540,10 @@ mod tests {
     fn wilson_upper_at_zero_wins_decreases_with_n() {
         let u50 = super::win_rate_upper_wilson_95(0, 50);
         let u200 = super::win_rate_upper_wilson_95(0, 200);
-        assert!(u200 < u50, "more data should tighten upper bound: {u50} vs {u200}");
+        assert!(
+            u200 < u50,
+            "more data should tighten upper bound: {u50} vs {u200}"
+        );
     }
 
     #[test]
@@ -604,20 +562,8 @@ mod tests {
             below_decks: vec!["D".into(), "E".into(), "F".into()],
         };
         let pop = vec![a.clone(), a.clone()];
-        let full = run_monte_carlo_parallel(
-            "enterprise",
-            "swarm",
-            &pop,
-            8,
-            42,
-        );
-        let deduped = run_monte_carlo_parallel_deduped(
-            "enterprise",
-            "swarm",
-            &pop,
-            8,
-            42,
-        );
+        let full = run_monte_carlo_parallel("enterprise", "swarm", &pop, 8, 42);
+        let deduped = run_monte_carlo_parallel_deduped("enterprise", "swarm", &pop, 8, 42);
         assert_eq!(full.len(), deduped.len());
         assert_eq!(full[0].win_rate, deduped[0].win_rate);
         assert_eq!(full[1].win_rate, deduped[1].win_rate);

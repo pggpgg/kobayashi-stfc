@@ -6,7 +6,7 @@ use crate::combat::abilities::{AbilityEffect, ActiveAbilityEffect, TimingWindow}
 use crate::combat::events::round_f64;
 use crate::combat::stacking::{StackContribution, StatStacking};
 use crate::combat::types::{
-    Combatant, CombatEvent, EventSource, TraceCollector, ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+    CombatEvent, Combatant, EventSource, TraceCollector, ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
 };
 
 #[derive(Debug, Clone)]
@@ -79,16 +79,28 @@ impl Default for EffectAccumulator {
         ));
         stacks.add(StackContribution::base(EffectStatKey::RoundEndDamage, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::ApexShredBonus, 0.0));
-        stacks.add(StackContribution::base(EffectStatKey::ApexBarrierBonus, 0.0));
+        stacks.add(StackContribution::base(
+            EffectStatKey::ApexBarrierBonus,
+            0.0,
+        ));
         stacks.add(StackContribution::base(EffectStatKey::ShieldRegen, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::HullRegen, 0.0));
-        stacks.add(StackContribution::base(EffectStatKey::IsolyticDamageBonus, 0.0));
-        stacks.add(StackContribution::base(EffectStatKey::IsolyticDefenseBonus, 0.0));
+        stacks.add(StackContribution::base(
+            EffectStatKey::IsolyticDamageBonus,
+            0.0,
+        ));
+        stacks.add(StackContribution::base(
+            EffectStatKey::IsolyticDefenseBonus,
+            0.0,
+        ));
         stacks.add(StackContribution::base(
             EffectStatKey::IsolyticCascadeDamageBonus,
             0.0,
         ));
-        stacks.add(StackContribution::base(EffectStatKey::ShieldMitigationBonus, 0.0));
+        stacks.add(StackContribution::base(
+            EffectStatKey::ShieldMitigationBonus,
+            0.0,
+        ));
 
         Self {
             stacks,
@@ -145,10 +157,7 @@ impl EffectAccumulator {
             "timing".to_string(),
             Value::String(timing_trace_id(timing).to_string()),
         );
-        m.insert(
-            "effect".to_string(),
-            Value::String(effect_kind.to_string()),
-        );
+        m.insert("effect".to_string(), Value::String(effect_kind.to_string()));
         m.insert("target".to_string(), Value::String(target.to_string()));
         m.insert("value".to_string(), Value::from(round_f64(value)));
         self.contribution_lines.push(Value::Object(m));
@@ -162,8 +171,7 @@ impl EffectAccumulator {
         source: Option<(&str, Option<&str>)>,
         effect_kind: &'static str,
     ) {
-        self.stacks
-            .add(StackContribution::flat(key, flat_value));
+        self.stacks.add(StackContribution::flat(key, flat_value));
         if self.trace_contributions {
             if let Some((ab, oid)) = source {
                 let target = format!("stack:{}:flat", key.as_trace_key());
@@ -238,11 +246,23 @@ impl EffectAccumulator {
         }
     }
 
-    fn trace_crit_chance(&mut self, source: Option<(&str, Option<&str>)>, timing: TimingWindow, v: f64) {
+    fn trace_crit_chance(
+        &mut self,
+        source: Option<(&str, Option<&str>)>,
+        timing: TimingWindow,
+        v: f64,
+    ) {
         self.crit_chance_bonus += v;
         if self.trace_contributions {
             if let Some((ab, oid)) = source {
-                self.push_contribution_line(ab, oid, timing, "CritChanceBonus", "crit_chance_bonus", v);
+                self.push_contribution_line(
+                    ab,
+                    oid,
+                    timing,
+                    "CritChanceBonus",
+                    "crit_chance_bonus",
+                    v,
+                );
             }
         }
     }
@@ -448,9 +468,7 @@ impl EffectAccumulator {
 
         let mut stacks_obj = Map::new();
         for (&key, totals) in self.stacks.iter_totals() {
-            if totals.base.abs() <= EPS
-                && totals.modifier.abs() <= EPS
-                && totals.flat.abs() <= EPS
+            if totals.base.abs() <= EPS && totals.modifier.abs() <= EPS && totals.flat.abs() <= EPS
             {
                 continue;
             }
@@ -459,7 +477,10 @@ impl EffectAccumulator {
                 key.as_trace_key().to_string(),
                 Value::Object(Map::from_iter([
                     ("base".to_string(), Value::from(round_f64(totals.base))),
-                    ("modifier_sum".to_string(), Value::from(round_f64(totals.modifier))),
+                    (
+                        "modifier_sum".to_string(),
+                        Value::from(round_f64(totals.modifier)),
+                    ),
                     ("flat".to_string(), Value::from(round_f64(totals.flat))),
                     ("composed".to_string(), Value::from(round_f64(composed))),
                 ])),
@@ -487,10 +508,7 @@ impl EffectAccumulator {
     ) {
         for effect in effects {
             let scaled = scale_effect(effect.effect, assimilated_active);
-            let src = Some((
-                effect.ability_name.as_str(),
-                effect.officer_id.as_deref(),
-            ));
+            let src = Some((effect.ability_name.as_str(), effect.officer_id.as_deref()));
             self.add_effect(timing, scaled, base_attack, round_index, src);
         }
     }
@@ -609,12 +627,7 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial - r * decay_per_round).max(floor);
-                    self.trace_add_pre_mod(
-                        source,
-                        timing,
-                        "DecayingAttackMultiplier",
-                        value - 1.0,
-                    );
+                    self.trace_add_pre_mod(source, timing, "DecayingAttackMultiplier", value - 1.0);
                 }
                 AbilityEffect::AccumulatingAttackMultiplier {
                     initial,
@@ -1175,12 +1188,7 @@ impl EffectAccumulator {
                 } => {
                     let r = round_index as f64;
                     let value = (initial - r * decay_per_round).max(floor);
-                    self.trace_add_pre_mod(
-                        source,
-                        timing,
-                        "DecayingAttackMultiplier",
-                        value - 1.0,
-                    );
+                    self.trace_add_pre_mod(source, timing, "DecayingAttackMultiplier", value - 1.0);
                 }
                 AbilityEffect::AccumulatingAttackMultiplier {
                     initial,

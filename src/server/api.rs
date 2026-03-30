@@ -11,20 +11,20 @@ pub use requests::{
     ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
 };
 
+use crate::data::building_summary::building_combat_summary_for_profile;
 use crate::data::data_registry::DataRegistry;
-use crate::data::hostile_loca::resolve_hostile_display_name;
-use crate::data::loader::ship_tiers_levels;
 use crate::data::heuristics::{list_heuristics_seeds, DEFAULT_HEURISTICS_DIR};
+use crate::data::hostile_loca::resolve_hostile_display_name;
+use crate::data::import::load_imported_ships;
 use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
 };
-use crate::data::building_summary::building_combat_summary_for_profile;
-use crate::data::research_summary::research_combat_summary_for_profile;
+use crate::data::loader::ship_tiers_levels;
 use crate::data::profile_index::{
-    create_profile, delete_profile, effective_profile_id, load_profile_index,
-    profile_path, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
+    create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
+    PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
-use crate::data::import::load_imported_ships;
+use crate::data::research_summary::research_combat_summary_for_profile;
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
 };
@@ -34,9 +34,9 @@ use crate::optimizer::monte_carlo::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::fs;
 use std::io::Write;
-use std::fmt;
 use std::sync::Arc;
 
 /// GET `/api/health` — liveness plus build identity, effective CPU concurrency, and loaded data signals.
@@ -81,9 +81,10 @@ pub fn health_payload(
 /// Parse query string for owned_only=1
 fn parse_owned_only(path: &str) -> bool {
     let query = path.split('?').nth(1).unwrap_or("");
-    query
-        .split('&')
-        .any(|p| p.trim().eq_ignore_ascii_case("owned_only=1") || p.trim().eq_ignore_ascii_case("owned_only=true"))
+    query.split('&').any(|p| {
+        p.trim().eq_ignore_ascii_case("owned_only=1")
+            || p.trim().eq_ignore_ascii_case("owned_only=true")
+    })
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -102,7 +103,9 @@ pub fn officers_payload(
     let officers = registry.officers();
     let roster_path = if parse_owned_only(path) {
         let id = resolve_profile_id(profile_id);
-        profile_path(&id, ROSTER_IMPORTED).to_string_lossy().to_string()
+        profile_path(&id, ROSTER_IMPORTED)
+            .to_string_lossy()
+            .to_string()
     } else {
         String::new()
     };
@@ -178,7 +181,9 @@ pub fn ships_payload(
         std::collections::HashMap<String, (u32, u32)>,
     ) = if owned_only {
         let pid = resolve_profile_id(profile_id);
-        let ships_path = profile_path(&pid, SHIPS_IMPORTED).to_string_lossy().to_string();
+        let ships_path = profile_path(&pid, SHIPS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
         let imported = load_imported_ships(&ships_path);
         let hull_registry = load_hull_id_registry();
 
@@ -246,12 +251,8 @@ const DEFAULT_TIERS: &[u32] = &[1];
 const DEFAULT_LEVELS: &[u32] = &[1, 10, 20, 30, 40, 50, 60];
 
 pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Error> {
-    let (mut tiers, mut levels) = ship_tiers_levels(ship_id).unwrap_or_else(|| {
-        (
-            DEFAULT_TIERS.to_vec(),
-            DEFAULT_LEVELS.to_vec(),
-        )
-    });
+    let (mut tiers, mut levels) = ship_tiers_levels(ship_id)
+        .unwrap_or_else(|| (DEFAULT_TIERS.to_vec(), DEFAULT_LEVELS.to_vec()));
     if tiers.is_empty() {
         tiers = DEFAULT_TIERS.to_vec();
     }
@@ -696,7 +697,9 @@ pub fn replay_optimize_seed_payload(
     let req: ReplaySeedRequest = serde_json::from_str(body).map_err(ReplaySeedError::Parse)?;
 
     if req.ship.trim().is_empty() {
-        return Err(ReplaySeedError::Validation("ship must not be empty".to_string()));
+        return Err(ReplaySeedError::Validation(
+            "ship must not be empty".to_string(),
+        ));
     }
     if req.hostile.trim().is_empty() {
         return Err(ReplaySeedError::Validation(
@@ -812,7 +815,10 @@ pub fn profile_get_payload(profile_id: Option<&str>) -> Result<String, serde_jso
     serde_json::to_string_pretty(&profile)
 }
 
-pub fn profile_put_payload(body: &str, profile_id: Option<&str>) -> Result<String, serde_json::Error> {
+pub fn profile_put_payload(
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, serde_json::Error> {
     let _: PlayerProfile = serde_json::from_str(body).map_err(|e| e)?;
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, PROFILE_JSON);
@@ -824,7 +830,9 @@ pub fn profile_put_payload(body: &str, profile_id: Option<&str>) -> Result<Strin
 }
 
 /// GET /api/profile/buildings-summary — synced module levels and building-derived combat bonuses.
-pub fn profile_buildings_summary_payload(profile_id: Option<&str>) -> Result<String, serde_json::Error> {
+pub fn profile_buildings_summary_payload(
+    profile_id: Option<&str>,
+) -> Result<String, serde_json::Error> {
     let id = resolve_profile_id(profile_id);
     let summary = building_combat_summary_for_profile(&id);
     serde_json::to_string_pretty(&summary)
@@ -892,10 +900,15 @@ fn write_temp_import_file(body: &[u8], ext: &str) -> Result<std::path::PathBuf, 
     Ok(path)
 }
 
-pub fn officers_import_payload(body: &str, profile_id: Option<&str>) -> Result<String, ImportError> {
+pub fn officers_import_payload(
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, ImportError> {
     let body = body.trim();
     let id = resolve_profile_id(profile_id);
-    let output_path = profile_path(&id, ROSTER_IMPORTED).to_string_lossy().to_string();
+    let output_path = profile_path(&id, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .to_string();
     let report = if body.starts_with('{') || body.starts_with('[') {
         let p = write_temp_import_file(body.as_bytes(), "json").map_err(ImportError::Io)?;
         let out = import_spocks_export_to(p.to_str().unwrap(), &output_path)?;
@@ -954,7 +967,10 @@ impl fmt::Display for OfficerResolveError {
 
 impl std::error::Error for OfficerResolveError {}
 
-pub fn officer_resolved_payload(registry: &DataRegistry, officer_id: &str) -> Result<String, OfficerResolveError> {
+pub fn officer_resolved_payload(
+    registry: &DataRegistry,
+    officer_id: &str,
+) -> Result<String, OfficerResolveError> {
     // Get LCARS officers from registry
     let lcars_officers = registry
         .lcars_officers()
@@ -991,7 +1007,7 @@ pub fn officer_resolved_payload(registry: &DataRegistry, officer_id: &str) -> Re
         id: String,
         name: String,
         static_buffs: std::collections::HashMap<String, f64>,
-        crew_config: String,  // Debug format since CrewConfiguration doesn't impl Serialize
+        crew_config: String, // Debug format since CrewConfiguration doesn't impl Serialize
         proc_chance: f64,
         proc_multiplier: f64,
     }
@@ -1258,14 +1274,38 @@ pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_jso
     let hostile_index = registry.hostile_index();
     let ship_index = registry.ship_index();
     let mechanics = vec![
-        MechanicStatus { name: "Mitigation".to_string(), status: "implemented".to_string() },
-        MechanicStatus { name: "Piercing".to_string(), status: "implemented".to_string() },
-        MechanicStatus { name: "Armor".to_string(), status: "implemented".to_string() },
-        MechanicStatus { name: "Critical".to_string(), status: "implemented".to_string() },
-        MechanicStatus { name: "Burn".to_string(), status: "implemented".to_string() },
-        MechanicStatus { name: "Regeneration".to_string(), status: "partial".to_string() },
-        MechanicStatus { name: "Isolytic".to_string(), status: "planned".to_string() },
-        MechanicStatus { name: "Apex".to_string(), status: "planned".to_string() },
+        MechanicStatus {
+            name: "Mitigation".to_string(),
+            status: "implemented".to_string(),
+        },
+        MechanicStatus {
+            name: "Piercing".to_string(),
+            status: "implemented".to_string(),
+        },
+        MechanicStatus {
+            name: "Armor".to_string(),
+            status: "implemented".to_string(),
+        },
+        MechanicStatus {
+            name: "Critical".to_string(),
+            status: "implemented".to_string(),
+        },
+        MechanicStatus {
+            name: "Burn".to_string(),
+            status: "implemented".to_string(),
+        },
+        MechanicStatus {
+            name: "Regeneration".to_string(),
+            status: "partial".to_string(),
+        },
+        MechanicStatus {
+            name: "Isolytic".to_string(),
+            status: "planned".to_string(),
+        },
+        MechanicStatus {
+            name: "Apex".to_string(),
+            status: "planned".to_string(),
+        },
     ];
     let response = DataVersionResponse {
         officer_version: Some("canonical".to_string()),
@@ -1282,7 +1322,9 @@ pub fn heuristics_list_payload() -> Result<String, serde_json::Error> {
 }
 
 /// GET /api/forbidden-tech: returns the forbidden/chaos tech catalog for UI dropdown.
-pub fn forbidden_tech_catalog_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
+pub fn forbidden_tech_catalog_payload(
+    registry: &DataRegistry,
+) -> Result<String, serde_json::Error> {
     let body = match registry.forbidden_chaos_catalog() {
         Some(c) => serde_json::to_string_pretty(&serde_json::json!({ "items": c.items }))?,
         None => serde_json::to_string_pretty(&serde_json::json!({ "items": [] }))?,
@@ -1316,8 +1358,7 @@ pub fn optimize_start_payload(
         serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
-    let start_response =
-        execution::start_optimize_job(registry, request, profile_id, cpu_permit)?;
+    let start_response = execution::start_optimize_job(registry, request, profile_id, cpu_permit)?;
     serde_json::to_string_pretty(&start_response).map_err(OptimizePayloadError::Parse)
 }
 
@@ -1398,7 +1439,8 @@ pub fn optimize_estimate_payload(
             generator.count_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)
         }
     };
-    let estimated_seconds = (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;
+    let estimated_seconds =
+        (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;
     let estimated_seconds = estimated_seconds.max(0.1).min(3600.0); // clamp to 0.1s–1h for display
     let payload = serde_json::json!({
         "estimated_candidates": estimated_candidates,
@@ -1422,10 +1464,9 @@ mod preset_schema_tests {
 
     #[test]
     fn enrich_legacy_adds_inferred_provenance_and_schema_v1() {
-        let p: Preset = serde_json::from_str(
-            r#"{"id":"x","name":"n","ship":"s","scenario":"h","crew":{}}"#,
-        )
-        .unwrap();
+        let p: Preset =
+            serde_json::from_str(r#"{"id":"x","name":"n","ship":"s","scenario":"h","crew":{}}"#)
+                .unwrap();
         let tmp = std::env::temp_dir().join(format!(
             "kobayashi_preset_legacy_{}.json",
             std::process::id()
@@ -1447,10 +1488,8 @@ mod preset_schema_tests {
         )
         .unwrap();
         assert!(p.provenance.is_none());
-        let tmp = std::env::temp_dir().join(format!(
-            "kobayashi_preset_v2_{}.json",
-            std::process::id()
-        ));
+        let tmp =
+            std::env::temp_dir().join(format!("kobayashi_preset_v2_{}.json", std::process::id()));
         std::fs::write(&tmp, "{}").unwrap();
         let out = enrich_preset_on_read(&tmp, p);
         assert_eq!(out.schema_version, Some(2));

@@ -153,11 +153,8 @@ fn import_command_imports_json_file() {
 #[test]
 fn import_command_imports_txt_roster() {
     let path = unique_temp_txt_path("roster");
-    fs::write(
-        &path,
-        "name,tier,level\nKirk,3,45\nSpock,T2,",
-    )
-    .expect("roster fixture should be written");
+    fs::write(&path, "name,tier,level\nKirk,3,45\nSpock,T2,")
+        .expect("roster fixture should be written");
 
     let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let output = Command::new(bin())

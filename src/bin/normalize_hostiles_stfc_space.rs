@@ -115,7 +115,11 @@ fn shield_mitigation_from_components(components: &[Value]) -> Option<f64> {
             .and_then(|d| d.get("tag"))
             .and_then(|t| t.as_str());
         if tag == Some("Shield") {
-            if let Some(m) = c.get("data").and_then(|d| d.get("mitigation")).and_then(|x| x.as_f64()) {
+            if let Some(m) = c
+                .get("data")
+                .and_then(|d| d.get("mitigation"))
+                .and_then(|x| x.as_f64())
+            {
                 return Some(m);
             }
         }
@@ -193,7 +197,10 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     }
 }
 
-fn merge_registry_hostiles(repo: &Path, data_version: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn merge_registry_hostiles(
+    repo: &Path,
+    data_version: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     let reg_path = repo.join("data/registry.json");
     let mut reg: Registry = if reg_path.is_file() {
         let s = fs::read_to_string(&reg_path)?;
@@ -224,13 +231,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = repo.join(OUT_HOSTILES_SUFFIX);
 
     if !upstream.is_dir() {
-        eprintln!("error: upstream hostiles directory not found: {}", upstream.display());
+        eprintln!(
+            "error: upstream hostiles directory not found: {}",
+            upstream.display()
+        );
         std::process::exit(1);
     }
 
-    let data_version = std::env::var("STFCSPACE_HOSTILES_VERSION")
-        .unwrap_or_else(|_| format!("stfcspace-hostiles-{}", chrono::Utc::now().format("%Y-%m-%d")));
-    let source_note = std::env::var("STFCSPACE_HOSTILES_SOURCE_NOTE").unwrap_or_else(|_| DEFAULT_SOURCE_NOTE.to_string());
+    let data_version = std::env::var("STFCSPACE_HOSTILES_VERSION").unwrap_or_else(|_| {
+        format!(
+            "stfcspace-hostiles-{}",
+            chrono::Utc::now().format("%Y-%m-%d")
+        )
+    });
+    let source_note = std::env::var("STFCSPACE_HOSTILES_SOURCE_NOTE")
+        .unwrap_or_else(|_| DEFAULT_SOURCE_NOTE.to_string());
 
     fs::create_dir_all(&out_dir)?;
 
@@ -294,7 +309,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         source_note: Some(source_note.clone()),
         hostiles: index_entries,
     };
-    fs::write(out_dir.join("index.json"), serde_json::to_string_pretty(&index)?)?;
+    fs::write(
+        out_dir.join("index.json"),
+        serde_json::to_string_pretty(&index)?,
+    )?;
 
     merge_registry_hostiles(&repo, &data_version)?;
 

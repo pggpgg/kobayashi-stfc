@@ -78,7 +78,11 @@ fn simulate_trial(
     )
 }
 
-fn hull_fraction_on_win(input: &CombatSimulationInput, result: &CombatSimResult, iteration_seed: u64) -> f64 {
+fn hull_fraction_on_win(
+    input: &CombatSimulationInput,
+    result: &CombatSimResult,
+    iteration_seed: u64,
+) -> f64 {
     let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
     if result.winner_by_round_limit {
         (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0)).clamp(0.0, 1.0)
@@ -109,13 +113,10 @@ fn collect_proc_counts(
     let input_template = scenario_to_combat_input_from_shared(shared, candidate, base_seed);
     let n = proc_trials as f64;
     for t in 0..proc_trials {
-        let iteration_seed = base_seed.wrapping_add(10_000_000).wrapping_add(u64::from(t));
-        let result = simulate_trial(
-            shared,
-            &input_template,
-            iteration_seed,
-            TraceMode::Events,
-        );
+        let iteration_seed = base_seed
+            .wrapping_add(10_000_000)
+            .wrapping_add(u64::from(t));
+        let result = simulate_trial(shared, &input_template, iteration_seed, TraceMode::Events);
         let mut seen: HashMap<String, u32> = HashMap::new();
         for e in &result.events {
             if PROC_LABELS.contains(&e.event_type.as_str()) {
@@ -146,12 +147,7 @@ fn distribution_for_crew(
 
     for n_done in 0..iterations {
         let iteration_seed = input_template.base_seed.wrapping_add(n_done as u64);
-        let result = simulate_trial(
-            shared,
-            &input_template,
-            iteration_seed,
-            TraceMode::Off,
-        );
+        let result = simulate_trial(shared, &input_template, iteration_seed, TraceMode::Off);
         if result.winner_by_round_limit {
             stalls += 1;
         } else if result.attacker_won {
@@ -206,12 +202,7 @@ pub fn compare_crews_monte_carlo_with_registry(
     proc_sample_trials: u32,
 ) -> CompareCrewsOutcome {
     let shared = build_shared_scenario_data_from_registry(
-        registry,
-        ship,
-        hostile,
-        ship_tier,
-        ship_level,
-        profile_id,
+        registry, ship, hostile, ship_tier, ship_level, profile_id,
     );
     let placeholder = shared.using_placeholder_combatants;
     let crews: Vec<CompareCrewDistribution> = candidates
@@ -219,13 +210,7 @@ pub fn compare_crews_monte_carlo_with_registry(
         .enumerate()
         .map(|(i, c)| {
             let seed_i = base_seed.wrapping_add(i as u64 * 1_000_003);
-            distribution_for_crew(
-                &shared,
-                c,
-                iterations,
-                seed_i,
-                proc_sample_trials,
-            )
+            distribution_for_crew(&shared, c, iterations, seed_i, proc_sample_trials)
         })
         .collect();
 

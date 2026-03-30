@@ -305,9 +305,11 @@ fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
     if !attack.is_finite() || attack <= 0.0 {
         return None;
     }
-    let shots = obj
-        .get("shots")
-        .and_then(|v| v.as_u64().map(|u| u as u32).or_else(|| v.as_i64().map(|i| i.max(0) as u32)));
+    let shots = obj.get("shots").and_then(|v| {
+        v.as_u64()
+            .map(|u| u as u32)
+            .or_else(|| v.as_i64().map(|i| i.max(0) as u32))
+    });
     let ap = obj.get("armor_piercing").and_then(json_f64).unwrap_or(0.0);
     let sp = obj.get("shield_piercing").and_then(json_f64).unwrap_or(0.0);
     let pierce = if ap > 0.0 || sp > 0.0 {

@@ -37,7 +37,10 @@ pub fn load_faction_reputation_index(path: &str) -> Option<FactionReputationInde
     serde_json::from_str(&data).ok()
 }
 
-pub fn load_faction_reputation_record(data_dir: &Path, faction: &str) -> Option<FactionReputationRecord> {
+pub fn load_faction_reputation_record(
+    data_dir: &Path,
+    faction: &str,
+) -> Option<FactionReputationRecord> {
     let path = data_dir.join(format!("{}.json", faction));
     let data = fs::read_to_string(path).ok()?;
     serde_json::from_str(&data).ok()

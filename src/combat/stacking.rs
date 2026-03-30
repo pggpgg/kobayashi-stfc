@@ -129,10 +129,7 @@ impl<K: Ord> StatStacking<K> {
         K: Clone,
     {
         for (key, totals) in &other.totals {
-            self.totals
-                .entry(key.clone())
-                .or_default()
-                .add_from(totals);
+            self.totals.entry(key.clone()).or_default().add_from(totals);
         }
     }
 }

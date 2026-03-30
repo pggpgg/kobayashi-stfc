@@ -60,11 +60,7 @@ pub fn run_simulation_batches(
 ) -> Vec<crate::optimizer::monte_carlo::SimulationResult> {
     pool.install(|| {
         crate::optimizer::monte_carlo::run_monte_carlo_parallel(
-            ship,
-            hostile,
-            candidates,
-            iterations,
-            seed,
+            ship, hostile, candidates, iterations, seed,
         )
     })
 }

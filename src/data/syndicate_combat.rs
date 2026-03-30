@@ -63,7 +63,10 @@ fn syndicate_stat_to_engine_keys(stat: &str) -> Option<&'static [&'static str]> 
     }
     // Only the main "Combat > Damage" column is in-game weapon damage (e.g. +35% at 17, +50% at 23, +80% at 25).
     // Do not fold Defense_Platform_Damage or Damage_to_Stations into weapon_damage.
-    if s.contains("Combat_>_Damage_>") && !s.contains("Defense_Platform") && !s.contains("Damage_to_Stations") {
+    if s.contains("Combat_>_Damage_>")
+        && !s.contains("Defense_Platform")
+        && !s.contains("Damage_to_Stations")
+    {
         return Some(&["weapon_damage"]);
     }
     if s.contains("Combat_>_Defense_Platform_Damage") {

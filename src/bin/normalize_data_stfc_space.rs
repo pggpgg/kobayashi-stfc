@@ -48,7 +48,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = repo_root.join("data/ships_extended");
 
     if !upstream_ships.is_dir() {
-        eprintln!("error: upstream ships directory not found: {}", upstream_ships.display());
+        eprintln!(
+            "error: upstream ships directory not found: {}",
+            upstream_ships.display()
+        );
         std::process::exit(1);
     }
 
@@ -59,18 +62,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let ability_catalog: Option<std::collections::HashMap<String, AbilityCatalogEntry>> =
-        fs::read_to_string(&catalog_path)
-            .ok()
-            .and_then(|s| {
-                let root: Value = serde_json::from_str(&s).ok()?;
-                let entries = root.get("entries")?.as_object()?;
-                let mut map = std::collections::HashMap::new();
-                for (k, v) in entries {
-                    let entry: AbilityCatalogEntry = serde_json::from_value(v.clone()).ok()?;
-                    map.insert(k.clone(), entry);
-                }
-                Some(map)
-            });
+        fs::read_to_string(&catalog_path).ok().and_then(|s| {
+            let root: Value = serde_json::from_str(&s).ok()?;
+            let entries = root.get("entries")?.as_object()?;
+            let mut map = std::collections::HashMap::new();
+            for (k, v) in entries {
+                let entry: AbilityCatalogEntry = serde_json::from_value(v.clone()).ok()?;
+                map.insert(k.clone(), entry);
+            }
+            Some(map)
+        });
 
     let id_by_numeric: std::collections::HashMap<u64, &ShipIdRegistryEntry> =
         registry.ships.iter().map(|e| (e.numeric_id, e)).collect();
@@ -93,14 +94,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let reg = match id_by_numeric.get(&numeric_id) {
             Some(r) => r,
             None => {
-                eprintln!("skip {}: no registry entry for numeric_id {}", path.display(), numeric_id);
+                eprintln!(
+                    "skip {}: no registry entry for numeric_id {}",
+                    path.display(),
+                    numeric_id
+                );
                 continue;
             }
         };
 
         let content = fs::read_to_string(&path)?;
         let raw: Value = serde_json::from_str(&content)?;
-        let extended = raw_to_extended(&raw, &reg.id, &reg.ship_name, &reg.ship_class, ability_catalog.as_ref())?;
+        let extended = raw_to_extended(
+            &raw,
+            &reg.id,
+            &reg.ship_name,
+            &reg.ship_class,
+            ability_catalog.as_ref(),
+        )?;
         index_entries.push(kobayashi::data::ship::ExtendedShipIndexEntry {
             id: extended.id.clone(),
             ship_name: extended.ship_name.clone(),
@@ -122,7 +133,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::to_string_pretty(&extended_index)?,
     )?;
 
-    println!("Normalized {} ships from data-stfc.space -> {}", count, out_dir.display());
+    println!(
+        "Normalized {} ships from data-stfc.space -> {}",
+        count,
+        out_dir.display()
+    );
     Ok(())
 }
 
@@ -150,8 +165,18 @@ fn raw_to_extended(
             .and_then(Value::as_array)
             .map(|v| v.as_slice())
             .unwrap_or(&[]);
-        let (armor_piercing, shield_piercing, accuracy, attack, crit_chance, crit_damage, hull_health, shield_health, shield_mitigation, weapons) =
-            extract_tier_combat(components)?;
+        let (
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+            attack,
+            crit_chance,
+            crit_damage,
+            hull_health,
+            shield_health,
+            shield_mitigation,
+            weapons,
+        ) = extract_tier_combat(components)?;
         tiers.push(TierStats {
             tier: tier_num,
             armor_piercing,
@@ -172,7 +197,11 @@ fn raw_to_extended(
         let level = l.get("level").and_then(Value::as_u64).unwrap_or(0) as u32;
         let shield = l.get("shield").and_then(Value::as_f64).unwrap_or(0.0);
         let health = l.get("health").and_then(Value::as_f64).unwrap_or(0.0);
-        levels.push(LevelBonus { level, shield, health });
+        levels.push(LevelBonus {
+            level,
+            shield,
+            health,
+        });
     }
 
     let abilities = ability_catalog.and_then(|catalog| {
@@ -309,11 +338,23 @@ fn extract_tier_combat(
     let mut first_weapon = true;
 
     for (_, data) in weapon_components {
-        let penetration = data.get("penetration").and_then(Value::as_f64).unwrap_or(0.0);
-        let modulation = data.get("modulation").and_then(Value::as_f64).unwrap_or(0.0);
+        let penetration = data
+            .get("penetration")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
+        let modulation = data
+            .get("modulation")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
         let accuracy = data.get("accuracy").and_then(Value::as_f64).unwrap_or(0.0);
-        let min_d = data.get("minimum_damage").and_then(Value::as_f64).unwrap_or(0.0);
-        let max_d = data.get("maximum_damage").and_then(Value::as_f64).unwrap_or(0.0);
+        let min_d = data
+            .get("minimum_damage")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
+        let max_d = data
+            .get("maximum_damage")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
         let shots_u = data.get("shots").and_then(Value::as_u64).unwrap_or(1);
         let shots = shots_u.max(1) as u32;
 
@@ -346,7 +387,11 @@ fn extract_tier_combat(
     let armor_piercing = armor_piercing_sum / weapon_count as f64;
     let shield_piercing = shield_piercing_sum / weapon_count as f64;
     let accuracy = accuracy_sum / weapon_count as f64;
-    let attack = if attack_total <= 0.0 { 100.0 } else { attack_total };
+    let attack = if attack_total <= 0.0 {
+        100.0
+    } else {
+        attack_total
+    };
     if shield_health <= 0.0 {
         shield_health = 1000.0;
     }

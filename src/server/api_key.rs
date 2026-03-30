@@ -19,11 +19,7 @@ fn configured_key() -> Option<String> {
 
 fn trust_loopback() -> bool {
     std::env::var("KOBAYASHI_API_KEY_TRUST_LOOPBACK")
-        .map(|v| {
-            v == "1"
-                || v.eq_ignore_ascii_case("true")
-                || v.eq_ignore_ascii_case("yes")
-        })
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes"))
         .unwrap_or(true)
 }
 
