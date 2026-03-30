@@ -14,7 +14,7 @@
 use crate::combat::rng::Rng;
 use crate::optimizer::constraints::CrewSearchConstraints;
 use crate::optimizer::crew_generator::{
-    build_officer_pools, OfficerPools, CrewCandidate, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
+    build_officer_pools, CrewCandidate, OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_deduped, SimulationResult,
@@ -215,12 +215,8 @@ fn init_population_seeded(
     let mut attempts = 0;
     const MAX_ATTEMPTS: usize = 50_000;
     while pop.len() < population_size && attempts < MAX_ATTEMPTS {
-        if let Some(crew) = random_crew_constrained(
-            &mut rng,
-            pools,
-            below_decks_slots,
-            constraints,
-        ) {
+        if let Some(crew) = random_crew_constrained(&mut rng, pools, below_decks_slots, constraints)
+        {
             pop.push(crew);
         }
         attempts += 1;
@@ -259,7 +255,11 @@ fn crossover(
     rng: &mut Rng,
     below_decks_slots: usize,
 ) -> CrewCandidate {
-    let captain = if rng.next_f64() < 0.5 { &a.captain } else { &b.captain };
+    let captain = if rng.next_f64() < 0.5 {
+        &a.captain
+    } else {
+        &b.captain
+    };
     let captain = captain.clone();
     let mut used: HashSet<String> = HashSet::new();
     used.insert(captain.clone());
@@ -389,19 +389,31 @@ fn mutate(
 
     match slot {
         0 => {
-            let available: Vec<&String> = pools.captains.iter().filter(|s| !used.contains(s.as_str())).collect();
+            let available: Vec<&String> = pools
+                .captains
+                .iter()
+                .filter(|s| !used.contains(s.as_str()))
+                .collect();
             if !available.is_empty() {
                 crew.captain = available[rng.index(available.len())].clone();
             }
         }
         1 => {
-            let available: Vec<&String> = pools.bridge.iter().filter(|s| !used.contains(s.as_str())).collect();
+            let available: Vec<&String> = pools
+                .bridge
+                .iter()
+                .filter(|s| !used.contains(s.as_str()))
+                .collect();
             if !available.is_empty() && !crew.bridge.is_empty() {
                 crew.bridge[0] = available[rng.index(available.len())].clone();
             }
         }
         2 => {
-            let available: Vec<&String> = pools.bridge.iter().filter(|s| !used.contains(s.as_str())).collect();
+            let available: Vec<&String> = pools
+                .bridge
+                .iter()
+                .filter(|s| !used.contains(s.as_str()))
+                .collect();
             if !available.is_empty() && crew.bridge.len() > 1 {
                 crew.bridge[1] = available[rng.index(available.len())].clone();
             }
@@ -488,8 +500,7 @@ pub fn run_genetic_optimizer(
 
         // Adaptive mutation: bump rate by 1.5× every 3 stagnant generations.
         if config.adaptive_mutation && stagnation > 0 && stagnation % 3 == 0 {
-            current_mutation_rate =
-                (current_mutation_rate * 1.5).min(config.mutation_rate_ceiling);
+            current_mutation_rate = (current_mutation_rate * 1.5).min(config.mutation_rate_ceiling);
         }
 
         if !on_progress(generation + 1, config.generations, best_fitness) {
@@ -502,7 +513,10 @@ pub fn run_genetic_optimizer(
             }
         }
 
-        let mut rng = Rng::new(seed.wrapping_add(0x1234_5678).wrapping_add((generation as u64) << 32));
+        let mut rng = Rng::new(
+            seed.wrapping_add(0x1234_5678)
+                .wrapping_add((generation as u64) << 32),
+        );
 
         let mut next_pop = Vec::with_capacity(config.population_size);
         for i in 0..config.elitism_count {
@@ -513,19 +527,8 @@ pub fn run_genetic_optimizer(
         while next_pop.len() < config.population_size {
             let pa = tournament_select(&population, &fitness, config.tournament_size, &mut rng);
             let pb = tournament_select(&population, &fitness, config.tournament_size, &mut rng);
-            let mut child = crossover(
-                &population[pa],
-                &population[pb],
-                &pools,
-                &mut rng,
-                bd_slots,
-            );
-            repair_crew(
-                &mut child,
-                &pools,
-                &mut rng,
-                bd_slots,
-            );
+            let mut child = crossover(&population[pa], &population[pb], &pools, &mut rng, bd_slots);
+            repair_crew(&mut child, &pools, &mut rng, bd_slots);
             mutate(
                 &mut child,
                 &pools,
@@ -562,27 +565,31 @@ pub fn run_genetic_optimizer_ranked(
     if top.is_empty() {
         return Vec::new();
     }
-    let final_results = run_monte_carlo_parallel(
-        ship,
-        hostile,
-        &top,
-        final_sims.max(1),
-        seed,
-    );
+    let final_results = run_monte_carlo_parallel(ship, hostile, &top, final_sims.max(1), seed);
     rank_results(final_results)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig};
+    use super::{
+        crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig,
+    };
     use crate::combat::rng::Rng;
-    use crate::optimizer::crew_generator::{CrewCandidate, OfficerPools, DEFAULT_BELOW_DECKS_SLOTS};
+    use crate::optimizer::crew_generator::{
+        CrewCandidate, OfficerPools, DEFAULT_BELOW_DECKS_SLOTS,
+    };
 
     fn small_pools() -> OfficerPools {
         OfficerPools {
             captains: vec!["CapA".into(), "CapB".into()],
             bridge: vec!["B1".into(), "B2".into(), "B3".into(), "B4".into()],
-            below_decks: vec!["D1".into(), "D2".into(), "D3".into(), "D4".into(), "D5".into()],
+            below_decks: vec![
+                "D1".into(),
+                "D2".into(),
+                "D3".into(),
+                "D4".into(),
+                "D5".into(),
+            ],
         }
     }
 
@@ -640,13 +647,7 @@ mod tests {
         let mut crew = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
         let mut rng = Rng::new(77);
         for _ in 0..20 {
-            mutate(
-                &mut crew,
-                &pools,
-                1.0,
-                &mut rng,
-                DEFAULT_BELOW_DECKS_SLOTS,
-            );
+            mutate(&mut crew, &pools, 1.0, &mut rng, DEFAULT_BELOW_DECKS_SLOTS);
             repair_crew(&mut crew, &pools, &mut rng, DEFAULT_BELOW_DECKS_SLOTS);
             assert!(valid_crew(&crew), "crew should remain valid: {:?}", crew);
         }
@@ -693,14 +694,7 @@ mod tests {
         let seed_b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
         let seeds = vec![seed_a.clone(), seed_b.clone()];
 
-        let pop = init_population_seeded(
-            &pools,
-            6,
-            &seeds,
-            42,
-            DEFAULT_BELOW_DECKS_SLOTS,
-            None,
-        );
+        let pop = init_population_seeded(&pools, 6, &seeds, 42, DEFAULT_BELOW_DECKS_SLOTS, None);
         assert_eq!(pop.len(), 6, "population should be full");
         // First two should be our seeds.
         assert_eq!(pop[0].captain, seed_a.captain);
@@ -715,16 +709,27 @@ mod tests {
     fn init_population_seeded_truncates_excess() {
         let pools = small_pools();
         let seeds: Vec<CrewCandidate> = (0..10)
-            .map(|i| make_crew(if i % 2 == 0 { "CapA" } else { "CapB" }, &["B1", "B2"], &["D1", "D2", "D3"]))
+            .map(|i| {
+                make_crew(
+                    if i % 2 == 0 { "CapA" } else { "CapB" },
+                    &["B1", "B2"],
+                    &["D1", "D2", "D3"],
+                )
+            })
             .collect();
         let pop = init_population_seeded(&pools, 4, &seeds, 99, DEFAULT_BELOW_DECKS_SLOTS, None);
-        assert_eq!(pop.len(), 4, "population should be capped at population_size");
+        assert_eq!(
+            pop.len(),
+            4,
+            "population should be capped at population_size"
+        );
     }
 
     #[test]
     fn init_population_seeded_empty_is_random() {
         let pools = small_pools();
-        let pop_seeded = init_population_seeded(&pools, 8, &[], 42, DEFAULT_BELOW_DECKS_SLOTS, None);
+        let pop_seeded =
+            init_population_seeded(&pools, 8, &[], 42, DEFAULT_BELOW_DECKS_SLOTS, None);
         assert_eq!(pop_seeded.len(), 8);
         for crew in &pop_seeded {
             assert!(valid_crew(crew));
@@ -739,24 +744,16 @@ mod tests {
             sims_per_eval: 10,
             ..GeneticConfig::default()
         };
-        let a = super::run_genetic_optimizer(
-            "enterprise",
-            "swarm",
-            &config,
-            12345,
-            |_, _, _| true,
-        );
-        let b = super::run_genetic_optimizer(
-            "enterprise",
-            "swarm",
-            &config,
-            12345,
-            |_, _, _| true,
-        );
+        let a = super::run_genetic_optimizer("enterprise", "swarm", &config, 12345, |_, _, _| true);
+        let b = super::run_genetic_optimizer("enterprise", "swarm", &config, 12345, |_, _, _| true);
         if a.is_empty() && b.is_empty() {
             return;
         }
-        assert_eq!(a.len(), b.len(), "same seed should yield same number of results");
+        assert_eq!(
+            a.len(),
+            b.len(),
+            "same seed should yield same number of results"
+        );
         assert_eq!(a[0].captain, b[0].captain);
         assert_eq!(a[0].bridge, b[0].bridge);
         assert_eq!(a[0].below_decks, b[0].below_decks);

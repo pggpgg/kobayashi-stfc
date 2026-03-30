@@ -92,7 +92,10 @@ pub fn save_profile_index(index: &ProfileIndex) -> std::io::Result<()> {
     if let Some(parent) = Path::new(PROFILE_INDEX_PATH).parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::write(PROFILE_INDEX_PATH, serde_json::to_string_pretty(index).unwrap())
+    fs::write(
+        PROFILE_INDEX_PATH,
+        serde_json::to_string_pretty(index).unwrap(),
+    )
 }
 
 /// Get the effective profile id to use (from index default or fallback).
@@ -127,7 +130,11 @@ pub fn sync_token_to_profile_id(index: &ProfileIndex) -> HashMap<String, String>
 }
 
 /// Ensure a profile exists in the index and on disk. Creates with new sync token if missing.
-pub fn ensure_profile(index: &mut ProfileIndex, id: &str, name: Option<&str>) -> std::io::Result<()> {
+pub fn ensure_profile(
+    index: &mut ProfileIndex,
+    id: &str,
+    name: Option<&str>,
+) -> std::io::Result<()> {
     if index.profiles.iter().any(|p| p.id == id) {
         return Ok(());
     }

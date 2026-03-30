@@ -1,13 +1,13 @@
 //! Regression tests for combat phase ordering (round-end vs weapon sub-rounds).
 
 use kobayashi::combat::{
+    apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
+    compute_isolytic_taken,
+};
+use kobayashi::combat::{
     simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
     CrewSeatContext, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
-};
-use kobayashi::combat::{
-    apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
-    compute_isolytic_taken,
 };
 
 fn approx_eq(a: f64, b: f64, tol: f64) {

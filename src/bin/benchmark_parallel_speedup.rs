@@ -50,26 +50,53 @@ fn main() {
     let results_seq = run_monte_carlo(ship, hostile, &candidates, iterations, seed);
     let elapsed_seq = t0.elapsed();
     let seq_ms = elapsed_seq.as_secs_f64() * 1000.0;
-    println!("Sequential:  {:.2} ms  ({:.1} sims/s)", seq_ms, (n * iterations) as f64 / elapsed_seq.as_secs_f64());
+    println!(
+        "Sequential:  {:.2} ms  ({:.1} sims/s)",
+        seq_ms,
+        (n * iterations) as f64 / elapsed_seq.as_secs_f64()
+    );
 
     // Parallel
     let t0 = Instant::now();
     let results_par = run_monte_carlo_parallel(ship, hostile, &candidates, iterations, seed);
     let elapsed_par = t0.elapsed();
     let par_ms = elapsed_par.as_secs_f64() * 1000.0;
-    println!("Parallel:    {:.2} ms  ({:.1} sims/s)", par_ms, (n * iterations) as f64 / elapsed_par.as_secs_f64());
+    println!(
+        "Parallel:    {:.2} ms  ({:.1} sims/s)",
+        par_ms,
+        (n * iterations) as f64 / elapsed_par.as_secs_f64()
+    );
 
     let speedup = seq_ms / par_ms;
     println!();
-    println!("Speedup:     {:.2}x faster (parallel vs sequential)", speedup);
+    println!(
+        "Speedup:     {:.2}x faster (parallel vs sequential)",
+        speedup
+    );
 
     assert_eq!(results_seq.len(), results_par.len());
     // Sanity: same number of results
     for (i, (a, b)) in results_seq.iter().zip(results_par.iter()).enumerate() {
-        assert!((a.win_rate - b.win_rate).abs() < 1e-9, "result {} win_rate mismatch", i);
-        assert!((a.stall_rate - b.stall_rate).abs() < 1e-9, "result {} stall_rate mismatch", i);
-        assert!((a.loss_rate - b.loss_rate).abs() < 1e-9, "result {} loss_rate mismatch", i);
-        assert!((a.avg_hull_remaining - b.avg_hull_remaining).abs() < 1e-9, "result {} avg_hull_remaining mismatch", i);
+        assert!(
+            (a.win_rate - b.win_rate).abs() < 1e-9,
+            "result {} win_rate mismatch",
+            i
+        );
+        assert!(
+            (a.stall_rate - b.stall_rate).abs() < 1e-9,
+            "result {} stall_rate mismatch",
+            i
+        );
+        assert!(
+            (a.loss_rate - b.loss_rate).abs() < 1e-9,
+            "result {} loss_rate mismatch",
+            i
+        );
+        assert!(
+            (a.avg_hull_remaining - b.avg_hull_remaining).abs() < 1e-9,
+            "result {} avg_hull_remaining mismatch",
+            i
+        );
     }
     println!("(Results match sequential vs parallel)");
 }

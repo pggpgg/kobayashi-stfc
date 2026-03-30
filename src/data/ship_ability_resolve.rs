@@ -17,8 +17,8 @@
 //! (not a crew seat). Other timings are not modeled yet.
 
 use crate::combat::abilities::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
+    TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::types::{OpponentFactionTag, EPSILON, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
@@ -106,9 +106,13 @@ pub fn ship_ability_effect_from_catalog(
                 duration_rounds: duration_rounds.unwrap_or(5).max(1),
             })
         }
-        "pierce_bonus" | "armor_pierce" | "shield_pierce" => Some(AbilityEffect::PierceBonus(value)),
+        "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
+            Some(AbilityEffect::PierceBonus(value))
+        }
 
-        "attack_multiplier" | "weapon_damage" | "attack" => Some(AbilityEffect::AttackMultiplier(value)),
+        "attack_multiplier" | "weapon_damage" | "attack" => {
+            Some(AbilityEffect::AttackMultiplier(value))
+        }
 
         // Per-round cumulative weapon damage (round n → additive modifier n * value on pre-attack multiplier).
         "accumulating_attack_multiplier" | "cumulative_weapon_damage" => {
@@ -122,10 +126,12 @@ pub fn ship_ability_effect_from_catalog(
                 growth_per_round: growth,
                 ceiling,
             })
-        },
+        }
 
         "crit_chance" => Some(AbilityEffect::CritChanceBonus(normalize_probability(value))),
-        "crit_damage" => Some(AbilityEffect::CritDamageMultiplier((1.0 + value).max(EPSILON))),
+        "crit_damage" => Some(AbilityEffect::CritDamageMultiplier(
+            (1.0 + value).max(EPSILON),
+        )),
 
         "apex_shred" => Some(AbilityEffect::ApexShredBonus(value)),
         "apex_barrier" => Some(AbilityEffect::ApexBarrierBonus(value)),
@@ -262,35 +268,28 @@ mod tests {
 
     #[test]
     fn hull_repair_on_kill_maps_to_on_kill_hull_regen() {
-        let e = ship_ability_effect_from_catalog(
-            "hull_repair",
-            TimingWindow::Kill,
-            500.0,
-            None,
-        )
-        .unwrap();
+        let e = ship_ability_effect_from_catalog("hull_repair", TimingWindow::Kill, 500.0, None)
+            .unwrap();
         assert!(matches!(e, AbilityEffect::OnKillHullRegen(500.0)));
     }
 
     #[test]
     fn hull_repair_not_kill_maps_to_hull_regen() {
-        let e = ship_ability_effect_from_catalog(
-            "hull_repair",
-            TimingWindow::RoundEnd,
-            100.0,
-            None,
-        )
-        .unwrap();
+        let e =
+            ship_ability_effect_from_catalog("hull_repair", TimingWindow::RoundEnd, 100.0, None)
+                .unwrap();
         assert!(matches!(e, AbilityEffect::HullRegen(100.0)));
     }
 
     #[test]
     fn crit_stats_map_to_typed_effects_not_attack_multiplier() {
-        let cc = ship_ability_effect_from_catalog("crit_chance", TimingWindow::RoundStart, 0.15, None)
-            .expect("crit_chance");
+        let cc =
+            ship_ability_effect_from_catalog("crit_chance", TimingWindow::RoundStart, 0.15, None)
+                .expect("crit_chance");
         assert!(matches!(cc, AbilityEffect::CritChanceBonus(v) if (v - 0.15).abs() < 1e-12));
-        let cd = ship_ability_effect_from_catalog("crit_damage", TimingWindow::RoundStart, 0.2, None)
-            .expect("crit_damage");
+        let cd =
+            ship_ability_effect_from_catalog("crit_damage", TimingWindow::RoundStart, 0.2, None)
+                .expect("crit_damage");
         assert!(matches!(cd, AbilityEffect::CritDamageMultiplier(m) if (m - 1.2).abs() < 1e-12));
     }
 
@@ -328,8 +327,20 @@ mod tests {
 
     #[test]
     fn shots_bonus_requires_round_start_or_combat_begin() {
-        assert!(ship_ability_effect_from_catalog("shots_bonus", TimingWindow::RoundStart, 0.2, None).is_some());
-        assert!(ship_ability_effect_from_catalog("shots_bonus", TimingWindow::AttackPhase, 0.2, None).is_none());
+        assert!(ship_ability_effect_from_catalog(
+            "shots_bonus",
+            TimingWindow::RoundStart,
+            0.2,
+            None
+        )
+        .is_some());
+        assert!(ship_ability_effect_from_catalog(
+            "shots_bonus",
+            TimingWindow::AttackPhase,
+            0.2,
+            None
+        )
+        .is_none());
     }
 
     #[test]

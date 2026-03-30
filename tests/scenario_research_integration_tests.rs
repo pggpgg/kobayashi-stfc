@@ -57,7 +57,9 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
     let (rid, stat, expected_value) = match (chosen_rid, chosen_stat, chosen_value) {
         (Some(rid), Some(stat), Some(value)) => (rid, stat, value),
         _ => {
-            eprintln!("skipping scenario_research test: no research record with bonuses at level 1");
+            eprintln!(
+                "skipping scenario_research test: no research record with bonuses at level 1"
+            );
             return;
         }
     };
@@ -81,8 +83,11 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
     if let Some(parent) = std::path::Path::new(&research_path).parent() {
         fs::create_dir_all(parent).expect("create research.imported.json parent dir");
     }
-    fs::write(&research_path, serde_json::to_string_pretty(&payload).unwrap())
-        .expect("write research.imported.json for scenario research test");
+    fs::write(
+        &research_path,
+        serde_json::to_string_pretty(&payload).unwrap(),
+    )
+    .expect("write research.imported.json for scenario research test");
 
     // Build SharedScenarioData using this profile and confirm the research bonus is present.
     let profile_json = kobayashi::data::profile_index::profile_path(
@@ -118,4 +123,3 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
     let mut index = load_profile_index();
     let _ = delete_profile(&mut index, &profile_id);
 }
-

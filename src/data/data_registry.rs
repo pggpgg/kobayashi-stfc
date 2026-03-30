@@ -8,13 +8,15 @@ use std::sync::Arc;
 use crate::data::forbidden_chaos::{
     load_forbidden_chaos, ForbiddenChaosList, DEFAULT_FORBIDDEN_CHAOS_PATH,
 };
-use crate::data::research::{
-    load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
+use crate::data::hostile::{
+    load_hostile_index, HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH,
 };
-use crate::data::hostile::{load_hostile_index, HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::hostile_loca::load_hostile_loca_display_names;
 use crate::data::loader::{resolve_hostile_with_index, resolve_ship_with_tier_level};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::research::{
+    load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
+};
 use crate::data::ship::{
     load_extended_ship_index, ExtendedShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
@@ -44,10 +46,7 @@ impl OfficerCache {
             .iter()
             .map(|o| (normalize_officer_lookup_key(&o.name), o.clone()))
             .collect();
-        OfficerCache {
-            officers,
-            by_name,
-        }
+        OfficerCache { officers, by_name }
     }
 }
 
@@ -82,7 +81,8 @@ impl DataRegistry {
             .then(|| load_extended_ship_index(Path::new(DEFAULT_SHIPS_EXTENDED_DIR)))
             .flatten();
         let hostile_index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH);
-        let hostile_loca_display = load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")));
+        let hostile_loca_display =
+            load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")));
 
         let lcars_officers = if Self::use_lcars_officer_source() {
             load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR)).ok()

@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
 use crate::data::data_registry::DataRegistry;
-use crate::perf_log;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
-use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
+use crate::perf_log;
 
 /// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
 pub const BRIDGE_SLOTS: usize = 2;
@@ -97,8 +97,7 @@ pub fn build_officer_pools_from_registry(
         below_decks = officers
             .iter()
             .filter(|officer| {
-                can_fill_position(officer, Position::BelowDecks)
-                    && has_below_decks_ability(officer)
+                can_fill_position(officer, Position::BelowDecks) && has_below_decks_ability(officer)
             })
             .map(|o| o.name.clone())
             .collect();
@@ -175,8 +174,7 @@ pub fn build_officer_pools(
         below_decks = officers
             .iter()
             .filter(|officer| {
-                can_fill_position(officer, Position::BelowDecks)
-                    && has_below_decks_ability(officer)
+                can_fill_position(officer, Position::BelowDecks) && has_below_decks_ability(officer)
             })
             .map(|o| o.name.clone())
             .collect();
@@ -384,13 +382,7 @@ impl CrewGenerator {
             .min(pools.below_decks.len());
         let k = self.strategy.below_decks_slots;
         if min_pool <= self.strategy.exhaustive_pool_threshold {
-            exhaustive_count(
-                &pools.captains,
-                &pools.bridge,
-                &pools.below_decks,
-                None,
-                k,
-            )
+            exhaustive_count(&pools.captains, &pools.bridge, &pools.below_decks, None, k)
         } else {
             sampled_count(
                 &pools.captains,
@@ -630,7 +622,10 @@ fn sampled_candidates(
                         bridge: vec![b1.clone(), b2.clone()],
                         below_decks: bd,
                     });
-                    if strategy.max_candidates.is_some_and(|c| candidates.len() >= c) {
+                    if strategy
+                        .max_candidates
+                        .is_some_and(|c| candidates.len() >= c)
+                    {
                         stop = true;
                     }
                 });
@@ -739,11 +734,20 @@ mod tests {
     #[test]
     fn resolve_below_decks_uses_explicit_or_tier_default() {
         assert_eq!(resolve_below_decks_slots(None, Some(4)), 4);
-        assert_eq!(resolve_below_decks_slots(Some(1), None), MIN_BELOW_DECKS_SLOTS);
+        assert_eq!(
+            resolve_below_decks_slots(Some(1), None),
+            MIN_BELOW_DECKS_SLOTS
+        );
         assert_eq!(resolve_below_decks_slots(Some(2), None), 3);
         assert_eq!(resolve_below_decks_slots(None, None), 3);
-        assert_eq!(resolve_below_decks_slots(None, Some(99)), MAX_BELOW_DECKS_SLOTS);
-        assert_eq!(resolve_below_decks_slots(None, Some(1)), MIN_BELOW_DECKS_SLOTS);
+        assert_eq!(
+            resolve_below_decks_slots(None, Some(99)),
+            MAX_BELOW_DECKS_SLOTS
+        );
+        assert_eq!(
+            resolve_below_decks_slots(None, Some(1)),
+            MIN_BELOW_DECKS_SLOTS
+        );
     }
 
     #[test]

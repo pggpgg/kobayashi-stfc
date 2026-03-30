@@ -20,7 +20,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let path = std::path::Path::new(&manifest_dir).join("data/syndicate_reputation.json");
     let path_str = path.to_string_lossy();
     let data = kobayashi::data::syndicate_reputation::load_syndicate_reputation(&path_str)
-        .ok_or_else(|| format!("Load {} (run import_syndicate_reputation first)", path.display()))?;
+        .ok_or_else(|| {
+            format!(
+                "Load {} (run import_syndicate_reputation first)",
+                path.display()
+            )
+        })?;
 
     if combat_only {
         let ops = ops_level.ok_or("--combat-only requires ops_level (e.g. 42 51 --combat-only)")?;
@@ -44,11 +49,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let band = ops_level.map(|o| kobayashi::data::syndicate_combat::ops_level_to_band(o).to_string());
+    let band =
+        ops_level.map(|o| kobayashi::data::syndicate_combat::ops_level_to_band(o).to_string());
 
     // Cumulative: sum all bonuses from level 1..=syndicate_level
     let mut cumulative: BTreeMap<String, f64> = BTreeMap::new();
-    for entry in data.levels.iter().filter(|e| e.level >= 1 && e.level <= syndicate_level) {
+    for entry in data
+        .levels
+        .iter()
+        .filter(|e| e.level >= 1 && e.level <= syndicate_level)
+    {
         for b in &entry.bonuses {
             let stat = b.stat.as_str();
             if let Some(ref band_str) = band {

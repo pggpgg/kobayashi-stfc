@@ -2,11 +2,11 @@ use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
     mitigation, mitigation_with_morale, pierce_damage_through_bonus, round_half_even,
     serialize_events_json, simulate_combat, simulate_combat_with_defender_faction,
-    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass, AbilityCondition,
-    AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
-    DefenderStats, EventSource, OpponentFactionTag, ShipType, SimulationConfig, StackContribution,
-    StatStacking, TimingWindow,
-    TraceCollector, TraceMode, WeaponStats, EPSILON, PIERCE_CAP, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass,
+    AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration,
+    CrewSeat, CrewSeatContext, DefenderStats, EventSource, OpponentFactionTag, ShipType,
+    SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode,
+    WeaponStats, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
 };
 use serde_json::{Map, Value};
 
@@ -470,7 +470,12 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         isolytic_defense: 0.0,
         weapons: vec![],
     };
-    let with_shred = simulate_combat(&attacker_100_pct_shred, &defender_10k_barrier, config, &crew);
+    let with_shred = simulate_combat(
+        &attacker_100_pct_shred,
+        &defender_10k_barrier,
+        config,
+        &crew,
+    );
     // Effective barrier = 10000/(1+1) = 5000, factor = 10000/(10000+5000) = 2/3. Engine rounds total_damage.
     approx_eq(with_shred.total_damage, 200.0 * (10000.0 / 15000.0), 0.01);
 }
@@ -706,7 +711,11 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         with_ability.total_damage > without.total_damage,
         "officer Apex Shred should increase damage through barrier"
     );
-    approx_eq(with_ability.total_damage, 200.0 * (10000.0 / (10000.0 + 10_000.0 / 1.15)), 0.5);
+    approx_eq(
+        with_ability.total_damage,
+        200.0 * (10000.0 / (10000.0 + 10_000.0 / 1.15)),
+        0.5,
+    );
 }
 
 #[test]
@@ -773,7 +782,12 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
     };
 
     let without = simulate_combat(&attacker, &defender_no_bonus, config, &crew_no_apex);
-    let with_ability = simulate_combat(&attacker, &defender_no_bonus, config, &crew_with_apex_barrier);
+    let with_ability = simulate_combat(
+        &attacker,
+        &defender_no_bonus,
+        config,
+        &crew_with_apex_barrier,
+    );
     // Defender has 5k base barrier; officer adds 5k â†’ effective 10k. Without officer: factor = 10000/15000 = 2/3 â†’ 133.33. With officer: factor = 10000/20000 = 0.5 â†’ 100.
     assert!(
         with_ability.total_damage < without.total_damage,
@@ -914,7 +928,9 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
                 boostable: false,
                 // `AttackMultiplier` is additive on the pre-attack sum: effective mult = 1 + sum(modifiers).
                 effect: AbilityEffect::AttackMultiplier(1.0),
-                condition: Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon)),
+                condition: Some(AbilityCondition::DefenderFactionIs(
+                    OpponentFactionTag::Klingon,
+                )),
             },
             boosted: false,
             officer_id: None,
@@ -1235,43 +1251,41 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         weapons: vec![],
     };
 
-    let crew_with_morale_chance = |chance: f64| {
-        CrewConfiguration {
-            seats: vec![
-                CrewSeatContext {
-                    seat: CrewSeat::BelowDeck,
-                    ability: Ability {
-                        name: "morale_src".to_string(),
-                        class: AbilityClass::BelowDeck,
-                        timing: TimingWindow::RoundStart,
-                        boostable: false,
-                        effect: AbilityEffect::Morale(chance),
-                        condition: None,
-                    },
-                    boosted: false,
-                    officer_id: None,
-                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    let crew_with_morale_chance = |chance: f64| CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::BelowDeck,
+                ability: Ability {
+                    name: "morale_src".to_string(),
+                    class: AbilityClass::BelowDeck,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::Morale(chance),
+                    condition: None,
                 },
-                CrewSeatContext {
-                    seat: CrewSeat::Ship,
-                    ability: Ability {
-                        name: "morale_gated_accum".to_string(),
-                        class: AbilityClass::ShipAbility,
-                        timing: TimingWindow::RoundStart,
-                        boostable: false,
-                        effect: AbilityEffect::AccumulatingAttackMultiplier {
-                            initial: 1.0,
-                            growth_per_round: 0.15,
-                            ceiling: 10.0,
-                        },
-                        condition: Some(AbilityCondition::MoraleActive),
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: "morale_gated_accum".to_string(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::AccumulatingAttackMultiplier {
+                        initial: 1.0,
+                        growth_per_round: 0.15,
+                        ceiling: 10.0,
                     },
-                    boosted: false,
-                    officer_id: None,
-                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                    condition: Some(AbilityCondition::MoraleActive),
                 },
-            ],
-        }
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
+        ],
     };
 
     let config = SimulationConfig {
@@ -1280,18 +1294,9 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         trace_mode: TraceMode::Off,
     };
 
-    let never_morale = simulate_combat(
-        &attacker,
-        &defender,
-        config,
-        &crew_with_morale_chance(0.0),
-    );
-    let always_morale = simulate_combat(
-        &attacker,
-        &defender,
-        config,
-        &crew_with_morale_chance(1.0),
-    );
+    let never_morale = simulate_combat(&attacker, &defender, config, &crew_with_morale_chance(0.0));
+    let always_morale =
+        simulate_combat(&attacker, &defender, config, &crew_with_morale_chance(1.0));
 
     assert!(
         always_morale.total_damage > never_morale.total_damage,
@@ -1915,8 +1920,12 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     // Seed 7 (SplitMix64) produces deterministic rolls; exact values depend on RNG implementation.
     let round_one_crit = &first.events[4];
     let round_one_proc = &first.events[5];
-    let round_one_crit_roll = round_one_crit.values["roll"].as_f64().expect("crit roll as f64");
-    let round_one_proc_roll = round_one_proc.values["roll"].as_f64().expect("proc roll as f64");
+    let round_one_crit_roll = round_one_crit.values["roll"]
+        .as_f64()
+        .expect("crit roll as f64");
+    let round_one_proc_roll = round_one_proc.values["roll"]
+        .as_f64()
+        .expect("proc roll as f64");
     assert!(round_one_crit_roll >= 0.0 && round_one_crit_roll <= 1.0);
     assert!(round_one_proc_roll >= 0.0 && round_one_proc_roll <= 1.0);
     assert_eq!(
@@ -1930,8 +1939,12 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
 
     let round_two_crit = &first.events[13];
     let round_two_proc = &first.events[14];
-    let round_two_crit_roll = round_two_crit.values["roll"].as_f64().expect("crit roll as f64");
-    let round_two_proc_roll = round_two_proc.values["roll"].as_f64().expect("proc roll as f64");
+    let round_two_crit_roll = round_two_crit.values["roll"]
+        .as_f64()
+        .expect("crit roll as f64");
+    let round_two_proc_roll = round_two_proc.values["roll"]
+        .as_f64()
+        .expect("proc roll as f64");
     assert!(round_two_crit_roll >= 0.0 && round_two_crit_roll <= 1.0);
     assert!(round_two_proc_roll >= 0.0 && round_two_proc_roll <= 1.0);
     assert_eq!(
@@ -2106,17 +2119,17 @@ fn crew_slot_gating_matrix_controls_activation() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: captain_ability.clone(),
-            boosted: false,
-            officer_id: None,
-            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
-        },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: bridge_ability.clone(),
-            boosted: false,
-            officer_id: None,
-            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
-        },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
         ],
     };
     let wrong_seat_crew = CrewConfiguration {
@@ -3814,12 +3827,21 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         .iter()
         .filter(|e| e.event_type == "damage_application")
         .collect();
-    assert_eq!(damage_events.len(), 2, "two weapons => two damage_application events per round");
+    assert_eq!(
+        damage_events.len(),
+        2,
+        "two weapons => two damage_application events per round"
+    );
     assert_eq!(damage_events[0].weapon_index, Some(0));
     assert_eq!(damage_events[1].weapon_index, Some(1));
     let total_from_events: f64 = damage_events
         .iter()
-        .map(|e| e.values.get("hull_damage").and_then(|v| v.as_f64()).unwrap_or(0.0))
+        .map(|e| {
+            e.values
+                .get("hull_damage")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0)
+        })
         .sum();
     approx_eq(total_from_events, result.total_damage, 0.01);
 }
@@ -3955,26 +3977,24 @@ fn shots_bonus_increases_damage() {
     let no_bonus = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
 
     let crew_with_shots_bonus = CrewConfiguration {
-        seats: vec![
-            CrewSeatContext {
-                seat: CrewSeat::Captain,
-                ability: Ability {
-                    name: "ShotsCaptain".to_string(),
-                    class: AbilityClass::CaptainManeuver,
-                    timing: TimingWindow::RoundStart,
-                    boostable: false,
-                    effect: AbilityEffect::ShotsBonus {
-                        chance: 1.0,
-                        bonus_pct: 0.5,
-                        duration_rounds: 3,
-                    },
-                    condition: None,
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Captain,
+            ability: Ability {
+                name: "ShotsCaptain".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::ShotsBonus {
+                    chance: 1.0,
+                    bonus_pct: 0.5,
+                    duration_rounds: 3,
                 },
-                boosted: false,
-                officer_id: None,
-                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                condition: None,
             },
-        ],
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
     };
     let with_bonus = simulate_combat(&attacker, &defender, config, &crew_with_shots_bonus);
 
@@ -4221,7 +4241,10 @@ fn combat_end_window_respects_condition_filtering() {
                     timing: TimingWindow::CombatEnd,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.1),
-                    condition: Some(kobayashi::combat::AbilityCondition::RoundRange { min: 1, max: 10 }),
+                    condition: Some(kobayashi::combat::AbilityCondition::RoundRange {
+                        min: 1,
+                        max: 10,
+                    }),
                 },
                 boosted: false,
                 officer_id: None,
@@ -4235,7 +4258,10 @@ fn combat_end_window_respects_condition_filtering() {
                     timing: TimingWindow::CombatEnd,
                     boostable: true,
                     effect: AbilityEffect::AttackMultiplier(0.1),
-                    condition: Some(kobayashi::combat::AbilityCondition::RoundRange { min: 999, max: 1000 }),
+                    condition: Some(kobayashi::combat::AbilityCondition::RoundRange {
+                        min: 999,
+                        max: 1000,
+                    }),
                 },
                 boosted: false,
                 officer_id: None,

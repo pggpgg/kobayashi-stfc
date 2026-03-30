@@ -126,10 +126,7 @@ impl FixtureCombatant {
             })
             .collect();
         Combatant {
-            id: self
-                .id
-                .clone()
-                .unwrap_or_else(|| default_id.to_string()),
+            id: self.id.clone().unwrap_or_else(|| default_id.to_string()),
             attack: self.attack,
             mitigation: self.mitigation,
             pierce: self.pierce,
@@ -228,7 +225,10 @@ fn push_band(
 }
 
 /// Compare simulation output to fixture bands; build a drift report (numeric + optional win flag).
-pub fn drift_report(spec: &DriftFixtureFile, result: &crate::combat::SimulationResult) -> DriftRunReport {
+pub fn drift_report(
+    spec: &DriftFixtureFile,
+    result: &crate::combat::SimulationResult,
+) -> DriftRunReport {
     let id = spec.id.clone();
     let mut rows = Vec::new();
 
@@ -289,7 +289,9 @@ pub fn drift_report(spec: &DriftFixtureFile, result: &crate::combat::SimulationR
 }
 
 /// Load, run, and report in one step.
-pub fn run_drift_fixture_path(path: &Path) -> Result<(DriftRunReport, crate::combat::SimulationResult), String> {
+pub fn run_drift_fixture_path(
+    path: &Path,
+) -> Result<(DriftRunReport, crate::combat::SimulationResult), String> {
     let spec = load_drift_fixture(path)?;
     let result = simulate_drift_fixture(&spec);
     let report = drift_report(&spec, &result);

@@ -39,6 +39,11 @@
       "id": "scenario_research_2d7d02cd4e9c4942809fa1923e02716d",
       "name": "Scenario research integration",
       "sync_token": "ab585a85-0d0c-4e9d-ae42-301b0a766be9"
+    },
+    {
+      "id": "scenario_research_40dc33c475da4c1bafe558f3eaa9327c",
+      "name": "Scenario research integration",
+      "sync_token": "d101ebba-2f9d-46b6-8f99-c860c436b213"
     }
   ],
   "default_id": "demo"

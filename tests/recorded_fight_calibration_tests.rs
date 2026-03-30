@@ -154,7 +154,9 @@ fn calibration_scenario_fixture_file_exists() {
 
 /// Fight sample path: game export CSV in repo root "fight samples/".
 fn fight_sample_path(name: &str) -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("fight samples").join(name)
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fight samples")
+        .join(name)
 }
 
 /// Calibration from real game export: Realta vs Takret Militia 10.
@@ -169,7 +171,10 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
     assert_eq!(export.rounds, 1);
     assert_eq!(export.defender_hull_remaining, 0.0);
     assert_eq!(export.defender_shield_remaining, 0.0);
-    assert!((export.total_damage - 830.0).abs() < 1.0, "total damage to defender (360+470)");
+    assert!(
+        (export.total_damage - 830.0).abs() < 1.0,
+        "total damage to defender (360+470)"
+    );
     assert_eq!(export.player_ship_name.as_deref(), Some("REALTA"));
     assert_eq!(export.attacker_ship_type, ShipType::Explorer);
     assert_eq!(export.player_officer_one.as_deref(), Some("Livis"));
@@ -279,7 +284,10 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
     let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let with_regen = simulate_combat(&attacker, &defender, config, &with_kill_regen);
 
-    assert!(with_regen.attacker_won, "attacker should still win this calibration slice");
+    assert!(
+        with_regen.attacker_won,
+        "attacker should still win this calibration slice"
+    );
     assert!(
         with_regen.attacker_hull_remaining > baseline.attacker_hull_remaining,
         "on_kill regen should improve attacker survivability"

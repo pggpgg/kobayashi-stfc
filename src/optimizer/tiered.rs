@@ -52,14 +52,8 @@ where
     }
 
     // Build scenario once per phase; avoids reloading officers/profile for every batch.
-    let shared = build_shared_scenario_data_from_registry(
-        registry,
-        ship,
-        hostile,
-        None,
-        None,
-        profile_id,
-    );
+    let shared =
+        build_shared_scenario_data_from_registry(registry, ship, hostile, None, None, profile_id);
 
     // Phase 1: scouting with few sims (Wilson early-stop may reduce per-crew iterations).
     let scout_sims = scout_sims.max(1);
@@ -69,13 +63,8 @@ where
 
     for (start, end) in ranges {
         let batch = &candidates[start..end];
-        let batch_results = run_monte_carlo_scout_phase_with_shared(
-            shared.clone(),
-            batch,
-            scout_sims,
-            seed,
-            true,
-        );
+        let batch_results =
+            run_monte_carlo_scout_phase_with_shared(shared.clone(), batch, scout_sims, seed, true);
         scout_results.extend(batch_results);
         let partial_top = rank_results(scout_results.clone())
             .into_iter()

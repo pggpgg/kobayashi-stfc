@@ -5,7 +5,9 @@ use std::collections::HashSet;
 use std::fmt;
 
 use crate::data::heuristics::BelowDecksStrategy;
-use crate::optimizer::constraints::{normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint};
+use crate::optimizer::constraints::{
+    normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
+};
 use crate::optimizer::crew_generator::{MAX_BELOW_DECKS_SLOTS, MIN_BELOW_DECKS_SLOTS};
 use crate::optimizer::OptimizerStrategy;
 
@@ -120,10 +122,7 @@ impl fmt::Display for OptimizePayloadError {
 
 impl std::error::Error for OptimizePayloadError {}
 
-pub fn validate_request(
-    request: &OptimizeRequest,
-    sims: u32,
-) -> Result<(), OptimizePayloadError> {
+pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), OptimizePayloadError> {
     let mut errors: Vec<ValidationIssue> = Vec::new();
 
     if request.ship.trim().is_empty() {
@@ -213,7 +212,10 @@ fn validate_optimize_constraints(request: &OptimizeRequest, errors: &mut Vec<Val
     check_list("constraints.must_include", &dto.must_include);
     check_list("constraints.exclude", &dto.exclude);
     check_list("constraints.bridge_must_include", &dto.bridge_must_include);
-    check_list("constraints.below_decks_must_include", &dto.below_decks_must_include);
+    check_list(
+        "constraints.below_decks_must_include",
+        &dto.below_decks_must_include,
+    );
 
     if dto.groups.len() > MAX_OPTIMIZE_CONSTRAINT_GROUPS {
         errors.push(ValidationIssue {
@@ -238,11 +240,7 @@ fn validate_optimize_constraints(request: &OptimizeRequest, errors: &mut Vec<Val
                 messages: vec![format!("group {gi}: min_count must be at least 1")],
             });
         }
-        let usable = g
-            .officers
-            .iter()
-            .filter(|s| !s.trim().is_empty())
-            .count();
+        let usable = g.officers.iter().filter(|s| !s.trim().is_empty()).count();
         if (g.min_count as usize) > usable {
             errors.push(ValidationIssue {
                 field,
@@ -273,7 +271,9 @@ fn validate_optimize_constraints(request: &OptimizeRequest, errors: &mut Vec<Val
         if exclude_n.contains(n) {
             errors.push(ValidationIssue {
                 field: "constraints",
-                messages: vec!["must_include and exclude both reference the same officer".to_string()],
+                messages: vec![
+                    "must_include and exclude both reference the same officer".to_string()
+                ],
             });
             break;
         }
@@ -305,7 +305,9 @@ fn validate_optimize_constraints(request: &OptimizeRequest, errors: &mut Vec<Val
         if !n.is_empty() && exclude_n.contains(&n) {
             errors.push(ValidationIssue {
                 field: "constraints.below_decks_must_include",
-                messages: vec!["below_decks_must_include cannot include an excluded officer".to_string()],
+                messages: vec![
+                    "below_decks_must_include cannot include an excluded officer".to_string(),
+                ],
             });
             break;
         }

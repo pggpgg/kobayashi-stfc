@@ -287,7 +287,9 @@ struct SpocksOfficerRef {
 /// Raw record before name resolution: (raw_name, rank, tier, level).
 type RawRosterRecord = (String, Option<u8>, Option<u8>, Option<u16>);
 
-fn unique_canonical_display_names(canonical_by_name: &HashMap<String, Vec<CanonicalOfficer>>) -> Vec<String> {
+fn unique_canonical_display_names(
+    canonical_by_name: &HashMap<String, Vec<CanonicalOfficer>>,
+) -> Vec<String> {
     let mut seen = HashSet::new();
     let mut out = Vec::new();
     for officers in canonical_by_name.values() {
@@ -320,9 +322,7 @@ fn levenshtein_str(a: &str, b: &str) -> usize {
         curr[0] = i;
         for j in 1..=m {
             let cost = usize::from(a[i - 1] != b[j - 1]);
-            curr[j] = (prev[j] + 1)
-                .min(curr[j - 1] + 1)
-                .min(prev[j - 1] + cost);
+            curr[j] = (prev[j] + 1).min(curr[j - 1] + 1).min(prev[j - 1] + cost);
         }
         std::mem::swap(&mut prev, &mut curr);
     }
@@ -439,10 +439,7 @@ fn resolve_and_write_roster_to(
         }
 
         diagnostics.extend(roster_tier_level_diagnostics(
-            index,
-            raw_name,
-            *tier,
-            *level,
+            index, raw_name, *tier, *level,
         ));
 
         let normalized_input = normalize_key(raw_name);
@@ -581,7 +578,10 @@ pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
 }
 
 /// Like [import_spocks_export] but writes to the given output path.
-pub fn import_spocks_export_to(source_path: &str, output_path: &str) -> Result<ImportReport, ImportError> {
+pub fn import_spocks_export_to(
+    source_path: &str,
+    output_path: &str,
+) -> Result<ImportReport, ImportError> {
     let raw = fs::read_to_string(source_path).map_err(ImportError::Read)?;
     let export: SpocksExport = serde_json::from_str(&raw).map_err(ImportError::Parse)?;
     let records = flatten_export(export);
@@ -612,7 +612,10 @@ pub fn import_roster_csv(path: &str) -> Result<ImportReport, ImportError> {
 }
 
 /// Like [import_roster_csv] but writes to the given output path.
-pub fn import_roster_csv_to(source_path: &str, output_path: &str) -> Result<ImportReport, ImportError> {
+pub fn import_roster_csv_to(
+    source_path: &str,
+    output_path: &str,
+) -> Result<ImportReport, ImportError> {
     let content = fs::read_to_string(source_path).map_err(ImportError::Read)?;
     let raw_records = parse_roster_csv_content(&content)?;
     resolve_and_write_roster_to(source_path, &raw_records, output_path)

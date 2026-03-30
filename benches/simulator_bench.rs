@@ -60,68 +60,56 @@ fn bench_simulator(c: &mut Criterion) {
 
     // Short combat (3 rounds) – typical for quick sims
     let rounds_short = 3u32;
-    group.bench_with_input(
-        "combat_3_rounds",
-        &rounds_short,
-        |b, &rounds| {
-            let attacker = default_attacker();
-            let defender = default_defender();
-            let config = SimulationConfig {
-                rounds,
-                seed: 7,
-                trace_mode: TraceMode::Off,
-            };
-            b.iter_batched(
-                || (attacker.clone(), defender.clone()),
-                |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
-                BatchSize::SmallInput,
-            );
-        },
-    );
+    group.bench_with_input("combat_3_rounds", &rounds_short, |b, &rounds| {
+        let attacker = default_attacker();
+        let defender = default_defender();
+        let config = SimulationConfig {
+            rounds,
+            seed: 7,
+            trace_mode: TraceMode::Off,
+        };
+        b.iter_batched(
+            || (attacker.clone(), defender.clone()),
+            |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
+            BatchSize::SmallInput,
+        );
+    });
     group.throughput(Throughput::Elements(1));
 
     // Medium (20 rounds)
     let rounds_medium = 20u32;
-    group.bench_with_input(
-        "combat_20_rounds",
-        &rounds_medium,
-        |b, &rounds| {
-            let attacker = default_attacker();
-            let defender = default_defender();
-            let config = SimulationConfig {
-                rounds,
-                seed: 7,
-                trace_mode: TraceMode::Off,
-            };
-            b.iter_batched(
-                || (attacker.clone(), defender.clone()),
-                |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
-                BatchSize::SmallInput,
-            );
-        },
-    );
+    group.bench_with_input("combat_20_rounds", &rounds_medium, |b, &rounds| {
+        let attacker = default_attacker();
+        let defender = default_defender();
+        let config = SimulationConfig {
+            rounds,
+            seed: 7,
+            trace_mode: TraceMode::Off,
+        };
+        b.iter_batched(
+            || (attacker.clone(), defender.clone()),
+            |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
+            BatchSize::SmallInput,
+        );
+    });
     group.throughput(Throughput::Elements(1));
 
     // Full combat (100 rounds max)
     let rounds_full = 100u32;
-    group.bench_with_input(
-        "combat_100_rounds",
-        &rounds_full,
-        |b, &rounds| {
-            let attacker = default_attacker();
-            let defender = default_defender();
-            let config = SimulationConfig {
-                rounds,
-                seed: 7,
-                trace_mode: TraceMode::Off,
-            };
-            b.iter_batched(
-                || (attacker.clone(), defender.clone()),
-                |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
-                BatchSize::SmallInput,
-            );
-        },
-    );
+    group.bench_with_input("combat_100_rounds", &rounds_full, |b, &rounds| {
+        let attacker = default_attacker();
+        let defender = default_defender();
+        let config = SimulationConfig {
+            rounds,
+            seed: 7,
+            trace_mode: TraceMode::Off,
+        };
+        b.iter_batched(
+            || (attacker.clone(), defender.clone()),
+            |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
+            BatchSize::SmallInput,
+        );
+    });
     group.throughput(Throughput::Elements(1));
 
     group.finish();

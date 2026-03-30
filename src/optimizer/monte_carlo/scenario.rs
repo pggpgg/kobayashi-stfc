@@ -16,32 +16,35 @@ use crate::data::building_bid_resolver::{
 };
 use crate::data::forbidden_chaos;
 use crate::data::hostile::HostileRecord;
+use crate::data::hostile_ability_resolve::{
+    hostile_abilities_to_defender_crew, load_hostile_ability_catalog,
+    DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
+};
 use crate::data::import;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
     apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
-    apply_static_buffs_to_combatant, forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
-    merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
+    apply_static_buffs_to_combatant, forbidden_tech_level_tier_scaling_enabled_from_env,
+    load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
     merge_tech_fids_into_profile, merge_tech_fids_into_profile_with_level_tier,
     resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
-    self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON, RESEARCH_IMPORTED,
-    ROSTER_IMPORTED,
+    self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
+    RESEARCH_IMPORTED, ROSTER_IMPORTED,
 };
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
-use crate::data::hostile_ability_resolve::{
-    hostile_abilities_to_defender_crew, load_hostile_ability_catalog,
-    DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
+use crate::lcars::{
+    index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
 };
-use crate::lcars::{index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::CrewCandidate;
 use std::path::Path;
 
 use super::crew_resolution::{
-    build_crew_seats, hash_identifier, index_officers_by_name, normalize_lookup_key, split_name_and_tier,
+    build_crew_seats, hash_identifier, index_officers_by_name, normalize_lookup_key,
+    split_name_and_tier,
 };
 
 const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
@@ -49,7 +52,10 @@ const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
 /// Append the ship [`ShipRecord`]'s optional `abilities` as [`CrewSeatContext`] rows
 /// (supported timing/`effect_type` only; see [`crate::data::ship_ability_resolve`]).
 /// Called after officer seats so hull abilities use the same engine phases as DESIGN.md §3.6.
-fn extend_crew_with_ship_abilities(seats: &mut Vec<CrewSeatContext>, ship_rec: Option<&ShipRecord>) {
+fn extend_crew_with_ship_abilities(
+    seats: &mut Vec<CrewSeatContext>,
+    ship_rec: Option<&ShipRecord>,
+) {
     let Some(rec) = ship_rec else {
         return;
     };
@@ -63,7 +69,11 @@ fn extend_crew_with_morale_gated_profile_bonuses(
     seats: &mut Vec<CrewSeatContext>,
     profile: &PlayerProfile,
 ) {
-    let v = profile.bonuses.get("isolytic_damage_morale").copied().unwrap_or(0.0);
+    let v = profile
+        .bonuses
+        .get("isolytic_damage_morale")
+        .copied()
+        .unwrap_or(0.0);
     if v == 0.0 {
         return;
     }
@@ -237,7 +247,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &shared.resolve_options,
     );
 
-    let hostile_ability_catalog = load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
+    let hostile_ability_catalog =
+        load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
     let defender_crew = shared
         .hostile_rec
         .as_ref()
@@ -263,7 +274,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             })
             .unwrap_or_else(|| {
                 (
-                    shared.cached_defender_mitigation.unwrap_or(cached_defender.mitigation),
+                    shared
+                        .cached_defender_mitigation
+                        .unwrap_or(cached_defender.mitigation),
                     shared.cached_pierce.unwrap_or(0.0),
                 )
             });
@@ -460,17 +473,16 @@ pub(crate) fn scenario_to_combat_input(
     );
 
     let resolve_opts = ResolveOptions::default();
-    let (crew_seats, static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
-        candidate,
-        officers_by_name,
-        lcars_data,
-        &resolve_opts,
-    );
+    let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
+        build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
-        let hostile_ability_catalog = load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
-        let defender_crew =
-            hostile_abilities_to_defender_crew(&hostile_rec.ability, hostile_ability_catalog.as_ref());
+        let hostile_ability_catalog =
+            load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
+        let defender_crew = hostile_abilities_to_defender_crew(
+            &hostile_rec.ability,
+            hostile_ability_catalog.as_ref(),
+        );
         let (defender_mitigation, pierce) = mitigation_and_pierce_for_player_vs_hostile(
             &ship_rec,
             &hostile_rec,
@@ -652,7 +664,10 @@ pub(crate) fn stable_seed(
 
 /// Build scenario data for `(ship, hostile)` without a [DataRegistry] — same sources as legacy
 /// [super::simulation::run_monte_carlo_parallel] (canonical officers, profile JSON, optional LCARS).
-pub(crate) fn build_shared_scenario_data_standalone(ship: &str, hostile: &str) -> SharedScenarioData {
+pub(crate) fn build_shared_scenario_data_standalone(
+    ship: &str,
+    hostile: &str,
+) -> SharedScenarioData {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
         .map(index_officers_by_name)
@@ -800,8 +815,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     if let Some(catalog) = registry.forbidden_chaos_catalog() {
         let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, catalog);
         if !effective_fids.is_empty() {
-            let scale_by_level_tier =
-                forbidden_tech_level_tier_scaling_enabled_from_env();
+            let scale_by_level_tier = forbidden_tech_level_tier_scaling_enabled_from_env();
             merge_tech_fids_into_profile_with_level_tier(
                 &mut profile,
                 &effective_fids,
@@ -826,9 +840,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                     &building_index,
                 ) {
                     let building_context = BuildingBonusContext {
-                        ops_level: profile.ops_level.or_else(|| {
-                            infer_ops_level(&imported_buildings, &bid_to_id)
-                        }),
+                        ops_level: profile
+                            .ops_level
+                            .or_else(|| infer_ops_level(&imported_buildings, &bid_to_id)),
                         mode: BuildingMode::ShipCombat,
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
@@ -994,12 +1008,7 @@ mod tests {
             !w.is_empty(),
             "expected data.stfc.space style hostile to yield per-weapon stats from components"
         );
-        let d = defender_combatant_from_hostile_record(
-            "2918121098",
-            &rec,
-            0.5,
-            ShipType::Explorer,
-        );
+        let d = defender_combatant_from_hostile_record("2918121098", &rec, 0.5, ShipType::Explorer);
         assert!(!d.weapons.is_empty());
         assert!(d.pierce > 0.0, "counter pierce-through should be positive");
     }

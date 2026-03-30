@@ -51,7 +51,7 @@ fn forbidden_tech_loca_id_to_fid_maps(
     summary_path: &Path,
 ) -> Result<
     (
-        HashMap<i64, i64>,             // loca_id -> fid
+        HashMap<i64, i64>,                               // loca_id -> fid
         HashMap<i64, UpstreamForbiddenTechSummaryEntry>, // fid -> entry
     ),
     Box<dyn std::error::Error>,
@@ -101,12 +101,13 @@ fn forbidden_tech_translation_name_to_loca_id_map(
         }
     }
 
-    Ok(best.into_iter().map(|(k, (loca_id, _))| (k, loca_id)).collect())
+    Ok(best
+        .into_iter()
+        .map(|(k, (loca_id, _))| (k, loca_id))
+        .collect())
 }
 
-fn expected_catalog_tech_type_from_upstream(
-    upstream_tech_type: u32,
-) -> Option<&'static str> {
+fn expected_catalog_tech_type_from_upstream(upstream_tech_type: u32) -> Option<&'static str> {
     match upstream_tech_type {
         // Verified from `Ablative Armor` in upstream summary:
         //   summary tech_type=0 => CSV tech_type="forbidden"
@@ -130,11 +131,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     })?;
 
     let mut reader = csv::Reader::from_reader(csv_content.as_bytes());
-    let mut by_name: HashMap<String, kobayashi::data::forbidden_chaos::ForbiddenChaosRecord> = HashMap::new();
+    let mut by_name: HashMap<String, kobayashi::data::forbidden_chaos::ForbiddenChaosRecord> =
+        HashMap::new();
 
     for (i, result) in reader.records().enumerate() {
         let record = result?;
-        if i == 0 && record.get(0).map(|s| s.eq_ignore_ascii_case("name")).unwrap_or(false) {
+        if i == 0
+            && record
+                .get(0)
+                .map(|s| s.eq_ignore_ascii_case("name"))
+                .unwrap_or(false)
+        {
             continue;
         }
         let row = CsvRow::from_record(&record)?;
@@ -146,10 +153,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             stat: row.stat.trim().to_string(),
             value: row.value,
             operator: if row.operator.trim().is_empty() {
-            "add".to_string()
-        } else {
-            row.operator.trim().to_string()
-        },
+                "add".to_string()
+            } else {
+                row.operator.trim().to_string()
+            },
         };
         let record = by_name.entry(name.clone()).or_insert_with(|| {
             kobayashi::data::forbidden_chaos::ForbiddenChaosRecord {
@@ -174,27 +181,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // without forcing the CSV to manually maintain `fid` values.
     let upstream_summary_path =
         Path::new(&manifest_dir).join("data/upstream/data-stfc-space/summary-forbidden_tech.json");
-    let upstream_translations_path =
-        Path::new(&manifest_dir).join("data/upstream/data-stfc-space/translations-forbidden_tech.json");
+    let upstream_translations_path = Path::new(&manifest_dir)
+        .join("data/upstream/data-stfc-space/translations-forbidden_tech.json");
     if upstream_summary_path.is_file() && upstream_translations_path.is_file() {
-        let (loca_id_to_fid, upstream_by_fid) = match forbidden_tech_loca_id_to_fid_maps(&upstream_summary_path) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!(
-                    "[import_forbidden_chaos] warning: failed loading upstream summary: {e}"
-                );
-                (HashMap::new(), HashMap::new())
-            }
-        };
-        let name_to_loca_id = match forbidden_tech_translation_name_to_loca_id_map(&upstream_translations_path) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!(
+        let (loca_id_to_fid, upstream_by_fid) =
+            match forbidden_tech_loca_id_to_fid_maps(&upstream_summary_path) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "[import_forbidden_chaos] warning: failed loading upstream summary: {e}"
+                    );
+                    (HashMap::new(), HashMap::new())
+                }
+            };
+        let name_to_loca_id =
+            match forbidden_tech_translation_name_to_loca_id_map(&upstream_translations_path) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
                     "[import_forbidden_chaos] warning: failed loading upstream translations: {e}"
                 );
-                HashMap::new()
-            }
-        };
+                    HashMap::new()
+                }
+            };
 
         for record in by_name.values_mut() {
             if record.fid.is_some() {
@@ -239,7 +248,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         fs::create_dir_all(parent)?;
     }
     fs::write(&output_path, serde_json::to_string_pretty(&list)?)?;
-    println!("Wrote {} items to {}", list.items.len(), output_path.display());
+    println!(
+        "Wrote {} items to {}",
+        list.items.len(),
+        output_path.display()
+    );
     Ok(())
 }
 
@@ -289,4 +302,3 @@ impl CsvRow {
         })
     }
 }
-

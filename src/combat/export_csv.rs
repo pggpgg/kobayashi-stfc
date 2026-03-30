@@ -114,7 +114,9 @@ fn find_event_columns(header: &[String]) -> EventColumns {
 }
 
 fn get_event_cell(row: &[String], col: Option<usize>) -> Option<&str> {
-    col.and_then(|i| row.get(i)).map(String::as_str).map(str::trim)
+    col.and_then(|i| row.get(i))
+        .map(String::as_str)
+        .map(str::trim)
 }
 
 fn get_event_f64(row: &[String], col: Option<usize>) -> f64 {
@@ -139,7 +141,11 @@ fn get_event_u32(row: &[String], col: Option<usize>) -> Option<u32> {
 
 /// Parse a full fight export string (tab-separated, multi-section).
 pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
-    let lines: Vec<&str> = input.lines().map(str::trim).filter(|s| !s.is_empty()).collect();
+    let lines: Vec<&str> = input
+        .lines()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .collect();
     if lines.is_empty() {
         return Err("empty input".to_string());
     }
@@ -179,8 +185,10 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
             let player_map = row_to_map(&header, &player_row);
             let enemy_map = row_to_map(&header, &enemy_row);
             attacker_won = player_map.get("Outcome").map(|s| s.as_str()) == Some("VICTORY");
-            defender_hull_remaining =
-                enemy_map.get("Hull Health Remaining").and_then(|s| s.parse().ok()).unwrap_or(0.0);
+            defender_hull_remaining = enemy_map
+                .get("Hull Health Remaining")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0.0);
             defender_shield_remaining = enemy_map
                 .get("Shield Health Remaining")
                 .and_then(|s| s.parse().ok())
@@ -424,9 +432,7 @@ pub fn export_to_crew(export: &FightExport) -> CrewConfiguration {
 }
 
 /// Full combat input from export: (attacker, defender, crew). Use for simulation with same crew as recorded fight.
-pub fn export_to_combat_input(
-    export: &FightExport,
-) -> (Combatant, Combatant, CrewConfiguration) {
+pub fn export_to_combat_input(export: &FightExport) -> (Combatant, Combatant, CrewConfiguration) {
     let (attacker, defender) = export_to_combatants(export);
     let crew = export_to_crew(export);
     (attacker, defender, crew)

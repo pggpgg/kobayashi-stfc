@@ -13,16 +13,16 @@ use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, DEFAULT_BELOW_DECKS_SLOTS,
 };
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
+use crate::optimizer::monte_carlo::scenario::{
+    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
+    scenario_to_combat_input_from_shared, SharedScenarioData,
+};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
     run_tiered_with_registry_with_progress, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
-};
-use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    scenario_to_combat_input_from_shared, SharedScenarioData,
 };
 use crate::parallel::batch_ranges;
 
@@ -230,7 +230,9 @@ pub fn optimize_scenario_with_registry(
     scenario: &OptimizationScenario<'_>,
 ) -> Vec<RankedCrewResult> {
     match scenario.strategy {
-        OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive_with_registry(registry, scenario),
+        OptimizerStrategy::Exhaustive => {
+            optimize_scenario_exhaustive_with_registry(registry, scenario)
+        }
         OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true),
         OptimizerStrategy::Tiered => optimize_scenario_tiered_with_registry(registry, scenario),
     }
@@ -241,12 +243,13 @@ fn optimize_scenario_exhaustive_with_registry(
     registry: &DataRegistry,
     scenario: &OptimizationScenario<'_>,
 ) -> Vec<RankedCrewResult> {
-    let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
-        max_candidates: scenario.max_candidates,
-        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-        below_decks_slots: scenario.below_decks_slots,
-        ..crate::optimizer::crew_generator::CandidateStrategy::default()
-    });
+    let generator =
+        CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
+            max_candidates: scenario.max_candidates,
+            only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+            below_decks_slots: scenario.below_decks_slots,
+            ..crate::optimizer::crew_generator::CandidateStrategy::default()
+        });
     let candidates = generator.generate_candidates_from_registry(
         registry,
         scenario.ship,
@@ -284,18 +287,16 @@ fn optimize_scenario_exhaustive_with_registry(
 
 /// Exhaustive/sampled path: generator → Monte Carlo → rank.
 fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
-    let generator = CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
-        max_candidates: scenario.max_candidates,
-        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-        below_decks_slots: scenario.below_decks_slots,
-        ..crate::optimizer::crew_generator::CandidateStrategy::default()
-    });
+    let generator =
+        CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
+            max_candidates: scenario.max_candidates,
+            only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+            below_decks_slots: scenario.below_decks_slots,
+            ..crate::optimizer::crew_generator::CandidateStrategy::default()
+        });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
     let candidates = apply_crew_constraints(candidates, scenario);
-    let shared = build_shared_scenario_data_standalone(
-        scenario.ship,
-        scenario.hostile,
-    );
+    let shared = build_shared_scenario_data_standalone(scenario.ship, scenario.hostile);
     let (candidates, _) = sort_and_analytical_prefilter(
         &shared,
         candidates,
@@ -322,10 +323,8 @@ pub fn optimize_scenario_genetic<F>(
 where
     F: FnMut(usize, usize, f32) -> bool,
 {
-    let filtered_seeds: Vec<CrewCandidate> = apply_crew_constraints(
-        scenario.seed_population.clone(),
-        scenario,
-    );
+    let filtered_seeds: Vec<CrewCandidate> =
+        apply_crew_constraints(scenario.seed_population.clone(), scenario);
 
     let config = if filtered_seeds.is_empty() {
         GeneticConfig {
@@ -385,21 +384,17 @@ where
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
         OptimizerStrategy::Exhaustive => {
-            let generator = CrewGenerator::with_strategy(
-                crate::optimizer::crew_generator::CandidateStrategy {
+            let generator =
+                CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
                     max_candidates: scenario.max_candidates,
                     only_below_decks_with_ability: scenario.only_below_decks_with_ability,
                     below_decks_slots: scenario.below_decks_slots,
                     ..crate::optimizer::crew_generator::CandidateStrategy::default()
-                },
-            );
+                });
             let candidates =
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
             let candidates = apply_crew_constraints(candidates, scenario);
-            let shared = build_shared_scenario_data_standalone(
-                scenario.ship,
-                scenario.hostile,
-            );
+            let shared = build_shared_scenario_data_standalone(scenario.ship, scenario.hostile);
             let (candidates, _) = sort_and_analytical_prefilter(
                 &shared,
                 candidates,
@@ -450,16 +445,14 @@ where
 
             rank_results(all_results)
         }
-        OptimizerStrategy::Genetic => {
-            optimize_scenario_genetic(scenario, |gen, max_gen, _| {
-                on_progress(OptimizeProgressTick {
-                    crews_done: gen as u32,
-                    total_crews: max_gen.max(1) as u32,
-                    phase: "genetic",
-                    partial_top: None,
-                })
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |gen, max_gen, _| {
+            on_progress(OptimizeProgressTick {
+                crews_done: gen as u32,
+                total_crews: max_gen.max(1) as u32,
+                phase: "genetic",
+                partial_top: None,
             })
-        }
+        }),
     }
 }
 
@@ -523,14 +516,13 @@ where
             }
         }
         OptimizerStrategy::Exhaustive => {
-            let generator = CrewGenerator::with_strategy(
-                crate::optimizer::crew_generator::CandidateStrategy {
+            let generator =
+                CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
                     max_candidates: scenario.max_candidates,
                     only_below_decks_with_ability: scenario.only_below_decks_with_ability,
                     below_decks_slots: scenario.below_decks_slots,
                     ..crate::optimizer::crew_generator::CandidateStrategy::default()
-                },
-            );
+                });
             let candidates = generator.generate_candidates_from_registry(
                 registry,
                 scenario.ship,
@@ -716,7 +708,9 @@ mod tests {
             "expected at most 4 ranked crews, got {}",
             out.ranked.len()
         );
-        let (g, k) = out.analytical_prefilter.expect("truncation should be recorded");
+        let (g, k) = out
+            .analytical_prefilter
+            .expect("truncation should be recorded");
         assert!(g > k, "generated {g} should exceed kept {k}");
         assert_eq!(k, 4);
     }

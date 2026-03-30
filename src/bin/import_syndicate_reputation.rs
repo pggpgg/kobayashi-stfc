@@ -33,10 +33,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut levels: Vec<_> = by_level
         .into_iter()
-        .map(|(level, bonuses)| kobayashi::data::syndicate_reputation::SyndicateLevelEntry {
-            level,
-            bonuses,
-        })
+        .map(
+            |(level, bonuses)| kobayashi::data::syndicate_reputation::SyndicateLevelEntry {
+                level,
+                bonuses,
+            },
+        )
         .collect();
     levels.sort_by_key(|e| e.level);
 
@@ -97,7 +99,12 @@ fn read_from_csv(
 
     for (i, result) in reader.records().enumerate() {
         let record = result?;
-        if i == 0 && record.get(0).map(|s| s.eq_ignore_ascii_case("level")).unwrap_or(false) {
+        if i == 0
+            && record
+                .get(0)
+                .map(|s| s.eq_ignore_ascii_case("level"))
+                .unwrap_or(false)
+        {
             continue;
         }
         let row = CsvRow::from_record(&record)?;
@@ -208,7 +215,11 @@ fn read_from_xlsx(
                     format!("col_{}", j)
                 } else {
                     // Normalize: spaces -> underscores for machine-friendly keys
-                    joined.replace(' ', "_").replace('\n', " ").trim().to_string()
+                    joined
+                        .replace(' ', "_")
+                        .replace('\n', " ")
+                        .trim()
+                        .to_string()
                 }
             })
             .collect();
@@ -286,7 +297,9 @@ struct CsvRow {
 impl CsvRow {
     fn from_record(record: &csv::StringRecord) -> Result<Self, Box<dyn std::error::Error>> {
         if record.len() < 3 {
-            return Err("CSV row needs at least 3 columns: level, stat, value (operator optional)".into());
+            return Err(
+                "CSV row needs at least 3 columns: level, stat, value (operator optional)".into(),
+            );
         }
         let level = record.get(0).unwrap_or("0").trim().parse().unwrap_or(0);
         let stat = record.get(1).unwrap_or("").to_string();

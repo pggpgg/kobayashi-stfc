@@ -183,7 +183,10 @@ mod tests {
         let cat = tiny_catalog();
         let imported = vec![
             ResearchEntry { rid: 42, level: 1 },
-            ResearchEntry { rid: 99999, level: 5 },
+            ResearchEntry {
+                rid: 99999,
+                level: 5,
+            },
         ];
         let mut scratch = PlayerProfile::default();
         merge_research_bonuses_into_profile(&mut scratch, &imported, &cat);

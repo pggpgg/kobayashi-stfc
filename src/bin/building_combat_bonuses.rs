@@ -55,12 +55,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(pid) = &profile_id {
         let buildings_path = kobayashi::data::profile_index::profile_data_dir(pid)
             .join(kobayashi::data::profile_index::BUILDINGS_IMPORTED);
-        let imported = kobayashi::data::import::load_imported_buildings(
-            buildings_path.to_str().unwrap(),
-        )
-        .unwrap_or_default();
+        let imported =
+            kobayashi::data::import::load_imported_buildings(buildings_path.to_str().unwrap())
+                .unwrap_or_default();
         if imported.is_empty() {
-            eprintln!("No buildings in profile {} ({}); showing all at max.", pid, buildings_path.display());
+            eprintln!(
+                "No buildings in profile {} ({}); showing all at max.",
+                pid,
+                buildings_path.display()
+            );
             let mut recs = Vec::new();
             let mut levels = HashMap::new();
             for entry in &index.buildings {
@@ -84,7 +87,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 *combat.entry(key).or_insert(0.0) += value;
             }
-            println!("All {} buildings at max (profile has no buildings):", recs.len());
+            println!(
+                "All {} buildings at max (profile has no buildings):",
+                recs.len()
+            );
             println!();
             for key in COMBAT_KEYS {
                 let v = combat.get(*key).copied().unwrap_or(0.0);
@@ -159,7 +165,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             levels_by_id.insert(rec.id.clone(), max_lvl);
             records.push(rec);
         }
-        let bonuses = kobayashi::data::building::cumulative_building_bonuses(&records, &levels_by_id);
+        let bonuses =
+            kobayashi::data::building::cumulative_building_bonuses(&records, &levels_by_id);
         let mut combat: HashMap<String, f64> = HashMap::new();
         for (stat, value) in bonuses {
             let key: String = if stat == "armor_pierce" || stat == "shield_pierce" {

@@ -88,7 +88,8 @@ pub fn building_combat_summary_for_profile(profile_id: &str) -> BuildingCombatSu
         .to_string();
     let imported = import::load_imported_buildings(&buildings_path).unwrap_or_default();
 
-    let Some(building_index) = building::load_building_index(building::DEFAULT_BUILDINGS_INDEX_PATH)
+    let Some(building_index) =
+        building::load_building_index(building::DEFAULT_BUILDINGS_INDEX_PATH)
     else {
         return BuildingCombatSummary {
             profile_id: profile_id.to_string(),
@@ -106,10 +107,9 @@ pub fn building_combat_summary_for_profile(profile_id: &str) -> BuildingCombatSu
         };
     };
 
-    let Some(bid_to_id) = load_bid_to_building_id(
-        DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
-        &building_index,
-    ) else {
+    let Some(bid_to_id) =
+        load_bid_to_building_id(DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH, &building_index)
+    else {
         return BuildingCombatSummary {
             profile_id: profile_id.to_string(),
             error: Some(format!(

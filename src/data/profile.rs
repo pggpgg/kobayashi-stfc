@@ -38,7 +38,12 @@ pub struct PlayerProfile {
 pub const DEFAULT_PROFILE_PATH: &str = "data/profile.json";
 
 /// Applies one bonus to profile (add or mult). Mult: (1+current)*(1+value)-1; else additive.
-fn accumulate_forbidden_tech_bonus(out: &mut HashMap<String, f64>, stat: &str, operator: &str, value: f64) {
+fn accumulate_forbidden_tech_bonus(
+    out: &mut HashMap<String, f64>,
+    stat: &str,
+    operator: &str,
+    value: f64,
+) {
     let current = out.get(stat).copied().unwrap_or(0.0);
     let is_mult = operator.eq_ignore_ascii_case("mult")
         || operator.eq_ignore_ascii_case("multiply")
@@ -223,10 +228,8 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
         .collect();
 
     // We need imported tier/level to scale bonuses when enabled.
-    let imported_by_fid: HashMap<i64, &crate::data::import::ForbiddenTechEntry> = imported_ft
-        .iter()
-        .map(|e| (e.fid, e))
-        .collect();
+    let imported_by_fid: HashMap<i64, &crate::data::import::ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
 
     for &fid in fids {
         let Some(record) = by_fid.get(&fid) else {
@@ -479,7 +482,8 @@ pub fn apply_static_buffs_to_combatant(
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
         shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add).clamp(0.0, 1.0),
-        mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add).clamp(0.0, 1.0),
+        mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add)
+            .clamp(0.0, 1.0),
         ..combatant
     }
 }
@@ -487,7 +491,10 @@ pub fn apply_static_buffs_to_combatant(
 /// Scales ship-derived [`AttackerStats::accuracy`] by profile research/building/FT bonuses.
 /// `profile.bonuses["accuracy"]` is a **fractional** increase (catalog convention: `0.1` ⇒ ×1.1), aligned with
 /// `weapon_damage` semantics. Officer flat accuracy in `scenario_to_combat_input` is applied **after** this.
-pub fn apply_profile_accuracy_to_attacker_stats(stats: &mut AttackerStats, profile: &PlayerProfile) {
+pub fn apply_profile_accuracy_to_attacker_stats(
+    stats: &mut AttackerStats,
+    profile: &PlayerProfile,
+) {
     let b = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
     if b != 0.0 {
         stats.accuracy *= 1.0 + b.max(-0.999);
@@ -537,9 +544,9 @@ mod tests {
     use crate::data::building::{
         BuildingBonusContext, BuildingIndex, BuildingIndexEntry, BuildingMode,
     };
+    use crate::data::forbidden_chaos::{BonusEntry, ForbiddenChaosList, ForbiddenChaosRecord};
     use crate::data::import::BuildingEntry;
     use crate::data::import::ForbiddenTechEntry;
-    use crate::data::forbidden_chaos::{BonusEntry, ForbiddenChaosList, ForbiddenChaosRecord};
 
     use super::*;
 
@@ -680,7 +687,10 @@ mod tests {
         use crate::data::research::{ResearchCatalog, ResearchRecord};
 
         let mut profile = PlayerProfile::default();
-        let imported_research = vec![ResearchEntry { rid: 99999, level: 5 }];
+        let imported_research = vec![ResearchEntry {
+            rid: 99999,
+            level: 5,
+        }];
         let catalog = ResearchCatalog {
             source: None,
             last_updated: None,
@@ -815,13 +825,7 @@ mod tests {
             shard_count: 0,
         }];
 
-        merge_tech_fids_into_profile_with_level_tier(
-            &mut profile,
-            &[1],
-            &imported,
-            &catalog,
-            true,
-        );
+        merge_tech_fids_into_profile_with_level_tier(&mut profile, &[1], &imported, &catalog, true);
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
     }
@@ -891,13 +895,7 @@ mod tests {
             shard_count: 0,
         }];
 
-        merge_tech_fids_into_profile_with_level_tier(
-            &mut profile,
-            &[1],
-            &imported,
-            &catalog,
-            true,
-        );
+        merge_tech_fids_into_profile_with_level_tier(&mut profile, &[1], &imported, &catalog, true);
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.1));
     }

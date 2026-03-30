@@ -187,10 +187,7 @@ impl OfficerAbility {
             .and_then(|t| t.checked_sub(1))
             .map(usize::from)
             .unwrap_or(0);
-        self.value_by_rank
-            .get(index)
-            .copied()
-            .unwrap_or(first)
+        self.value_by_rank.get(index).copied().unwrap_or(first)
     }
 }
 

@@ -188,7 +188,8 @@ struct RawFactionReputation {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let data_version = std::env::var("STFC_DATA_VERSION").unwrap_or_else(|_| "stfccommunity-main".to_string());
+    let data_version =
+        std::env::var("STFC_DATA_VERSION").unwrap_or_else(|_| "stfccommunity-main".to_string());
 
     let hostiles_dir = repo_data_path(UPSTREAM_HOSTILES_SUFFIX);
     let buildings_dir = repo_data_path(UPSTREAM_BUILDINGS_SUFFIX);
@@ -214,17 +215,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let entry = entry?;
             let path = entry.path();
             if path.extension().map_or(false, |e| e == "json") {
-                let id = path.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                let id = path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("")
+                    .to_string();
                 let content = fs::read_to_string(&path)?;
-                let raw: RawHostile = serde_json::from_str(&content).unwrap_or_else(|_| RawHostile {
-                    hostile_name: id.clone(),
-                    level: 0,
-                    ship_class: String::new(),
-                    stats: RawHostileStats {
-                        defense: RawHostileStatsDefense { armor: 0.0, dodge: 0.0, shield_deflect: 0.0 },
-                        health: RawHostileStatsHealth { hull_health: 0.0, shield_health: 0.0 },
-                    },
-                });
+                let raw: RawHostile =
+                    serde_json::from_str(&content).unwrap_or_else(|_| RawHostile {
+                        hostile_name: id.clone(),
+                        level: 0,
+                        ship_class: String::new(),
+                        stats: RawHostileStats {
+                            defense: RawHostileStatsDefense {
+                                armor: 0.0,
+                                dodge: 0.0,
+                                shield_deflect: 0.0,
+                            },
+                            health: RawHostileStatsHealth {
+                                hull_health: 0.0,
+                                shield_health: 0.0,
+                            },
+                        },
+                    });
                 let rec = kobayashi::data::hostile::HostileRecord {
                     id: id.clone(),
                     hostile_name: raw.hostile_name.clone(),
@@ -283,7 +296,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if hostile_index_entries.is_empty() {
-        eprintln!("warning: no hostile JSON files found in {}", hostiles_dir.display());
+        eprintln!(
+            "warning: no hostile JSON files found in {}",
+            hostiles_dir.display()
+        );
     }
 
     let hostile_index = kobayashi::data::hostile::HostileIndex {
@@ -306,13 +322,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let entry = entry?;
             let path = entry.path();
             if path.extension().map_or(false, |e| e == "json") {
-                let id = path.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                let id = path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("")
+                    .to_string();
                 let content = fs::read_to_string(&path)?;
-                let raw: RawBuilding = serde_json::from_str(&content).unwrap_or_else(|_| RawBuilding {
-                    building_name: id.clone(),
-                    bonuses: std::collections::HashMap::new(),
-                    levels: Vec::new(),
-                });
+                let raw: RawBuilding =
+                    serde_json::from_str(&content).unwrap_or_else(|_| RawBuilding {
+                        building_name: id.clone(),
+                        bonuses: std::collections::HashMap::new(),
+                        levels: Vec::new(),
+                    });
                 let rec = raw_to_building_record(&id, &raw);
                 building_index_entries.push(kobayashi::data::building::BuildingIndexEntry {
                     id: rec.id.clone(),
@@ -343,10 +364,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let path = entry.path();
             if path.extension().map_or(false, |e| e == "json") {
                 let content = fs::read_to_string(&path)?;
-                let raw: RawFactionReputation = serde_json::from_str(&content).unwrap_or_else(|_| RawFactionReputation {
-                    faction: String::new(),
-                    reputation: Vec::new(),
-                });
+                let raw: RawFactionReputation =
+                    serde_json::from_str(&content).unwrap_or_else(|_| RawFactionReputation {
+                        faction: String::new(),
+                        reputation: Vec::new(),
+                    });
                 let rec = kobayashi::data::faction_reputation::FactionReputationRecord {
                     faction: raw.faction.clone(),
                     reputation: raw
@@ -418,8 +440,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Validation: re-load index and one record each to ensure schema is loadable (only if we have data)
     if !hostile_index.hostiles.is_empty() {
         let hostile_index_path = out_hostiles.join("index.json");
-        let re_hostile_index = kobayashi::data::hostile::load_hostile_index(hostile_index_path.to_str().unwrap())
-            .ok_or("Failed to re-load hostile index")?;
+        let re_hostile_index =
+            kobayashi::data::hostile::load_hostile_index(hostile_index_path.to_str().unwrap())
+                .ok_or("Failed to re-load hostile index")?;
         if let Some(first) = re_hostile_index.hostiles.first() {
             kobayashi::data::hostile::load_hostile_record(&out_hostiles, &first.id)
                 .ok_or("Failed to re-load a hostile record")?;
@@ -478,7 +501,13 @@ fn bonus_name_to_stat(name: &str) -> String {
     // still have deterministic keys.
     name.to_lowercase()
         .chars()
-        .map(|c| if c.is_alphabetic() || c.is_numeric() { c } else { '_' })
+        .map(|c| {
+            if c.is_alphabetic() || c.is_numeric() {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect::<String>()
         .split('_')
         .filter(|s| !s.is_empty())
@@ -486,7 +515,10 @@ fn bonus_name_to_stat(name: &str) -> String {
         .join("_")
 }
 
-fn raw_to_building_record(id: &str, raw: &RawBuilding) -> kobayashi::data::building::BuildingRecord {
+fn raw_to_building_record(
+    id: &str,
+    raw: &RawBuilding,
+) -> kobayashi::data::building::BuildingRecord {
     let levels: Vec<kobayashi::data::building::BuildingLevel> = raw
         .levels
         .iter()
