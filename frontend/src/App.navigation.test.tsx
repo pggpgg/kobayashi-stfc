@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -43,19 +43,27 @@ describe("App navigation", () => {
     expect(screen.getByText("WorkspacePageMarker")).toBeTruthy();
   });
 
-  it("navigates to Results Library, Roster, and Data via shell links", () => {
+  it("navigates to Results Library, Roster, and Data via shell links", async () => {
     renderApp("/");
 
     fireEvent.click(screen.getByRole("link", { name: "Results Library" }));
-    expect(screen.getByText("ResultsLibraryPageMarker")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("ResultsLibraryPageMarker")).toBeTruthy();
+    });
 
     fireEvent.click(screen.getByRole("link", { name: "Roster & Profile" }));
-    expect(screen.getByText("RosterProfilePageMarker")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("RosterProfilePageMarker")).toBeTruthy();
+    });
 
     fireEvent.click(screen.getByRole("link", { name: "Data & Mechanics" }));
-    expect(screen.getByText("DataMechanicsPageMarker")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("DataMechanicsPageMarker")).toBeTruthy();
+    });
 
     fireEvent.click(screen.getByRole("link", { name: "Workspace" }));
-    expect(screen.getByText("WorkspacePageMarker")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("WorkspacePageMarker")).toBeTruthy();
+    });
   });
 });

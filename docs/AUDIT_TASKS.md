@@ -26,7 +26,7 @@ Checklist derived from a codebase audit (not from existing roadmaps or `POTENTIA
 ## Performance and repo structure
 
 - [x] **13. Static asset compression and caching** — Compression for `frontend/dist`; cache-control for hashed Vite assets.
-- [ ] **14. Route-level code splitting** — `React.lazy` + `Suspense` for secondary routes (`/results`, `/roster`, `/data`).
+- [x] **14. Route-level code splitting** — `React.lazy` + `Suspense` for secondary routes (`/results`, `/roster`, `/data`).
 - [x] **15. Duplicate tree (`gpu-accel-wt/`)** — Merge, subtree, archive, or exclude from active work to avoid drift and double maintenance.
 
 ## UX, hygiene, and long-term
