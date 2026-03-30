@@ -5,6 +5,9 @@ Regenerate data/upstream/data-stfc-space/ship_ability_catalog.json (one entry pe
 Uses each ability row's `loca_id` when present, else the ship-level `loca_id`, with
 translations-ship_buffs `ship_ability_desc`.
 
+After classification, merges data/upstream/data-stfc-space/ship_ability_catalog_overrides.json
+(entries dict) so hand-tuned rows survive regeneration. See docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md.
+
 Optional catalog fields (omit when false):
   condition_morale, condition_defender_burning, condition_defender_hull_breach,
   condition_opponent_faction (slug matching OpponentFactionTag serde names, e.g. klingon)
@@ -23,6 +26,8 @@ UPSTREAM = REPO / "data/upstream/data-stfc-space"
 SHIPS_DIR = UPSTREAM / "ships"
 TRANS = UPSTREAM / "translations-ship_buffs.json"
 OUT = UPSTREAM / "ship_ability_catalog.json"
+# Optional: full entry replacement per ability id after heuristics (hand-tuned rows survive regen).
+CATALOG_OVERRIDES_JSON = UPSTREAM / "ship_ability_catalog_overrides.json"
 
 NOOP = {
     "timing": "combat_begin",
@@ -44,6 +49,25 @@ def load_desc_by_loca() -> dict[int, str]:
     for r in rows:
         if r.get("key") == "ship_ability_desc" and r.get("id") is not None:
             out[int(r["id"])] = r.get("text") or ""
+    return out
+
+
+def load_post_classify_overrides() -> dict[str, dict]:
+    """Entries merged after classify_single_ability; keys are ability id strings."""
+    if not CATALOG_OVERRIDES_JSON.is_file():
+        return {}
+    with open(CATALOG_OVERRIDES_JSON, encoding="utf-8") as f:
+        root = json.load(f)
+    raw = root.get("entries")
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, dict] = {}
+    for k, v in raw.items():
+        if isinstance(v, dict):
+            try:
+                out[str(int(str(k).strip()))] = v
+            except (TypeError, ValueError):
+                continue
     return out
 
 
@@ -368,6 +392,55 @@ def classify_single_ability(_loca: int, text: str) -> dict:
                 condition_opponent_faction=slug,
             )
 
+    # Faction-tagged base damage without the literal phrase "weapon damage" (resolver uses same attack multiplier).
+    if (
+        "if the opponent" not in p
+        and "increas" in p
+        and "damage" in p
+        and "if the opponent's ship is" not in p
+    ):
+        if "mirror universe" in p or "against mirror" in p:
+            slug = opponent_faction_slug_from_against_clause(p) or "mirror_universe"
+            return modeled(
+                "combat_begin",
+                "attack_multiplier",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                condition_opponent_faction=slug,
+            )
+        if "borg hostiles" in p or "against borg" in p:
+            return modeled(
+                "combat_begin",
+                "attack_multiplier",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                condition_opponent_faction="borg",
+            )
+        if ("swarm ships" in p or "swarm hostiles" in p) and "armada" not in p:
+            return modeled(
+                "combat_begin",
+                "attack_multiplier",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                condition_opponent_faction="swarm",
+            )
+        if "actian" in p and "mantis" in p:
+            return modeled(
+                "combat_begin",
+                "attack_multiplier",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                condition_opponent_faction="actian",
+            )
+        if "xindi-aquatic" in p or ("xindi" in p and "aquatic" in p):
+            return modeled(
+                "combat_begin",
+                "attack_multiplier",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                condition_opponent_faction="xindi",
+            )
+
     # Opponent class / tag / role (sim does not branch)
     if "if the opponent" in p or "if the opponent's ship is" in p:
         return dict(NOOP)
@@ -410,10 +483,15 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             ignore_upstream_value_is_percentage=True,
         )
 
-    # Combat start — pierce, shield bypass, or weapon damage (accuracy unmodeled)
+    # Combat start — pierce, shield bypass, weapon damage, or accuracy (folded in scenario, not a crew seat).
     if "combat start" in p or "start of combat" in p or "on combat start" in p or "at combat start" in p:
         if "accuracy" in p or "true aim" in p:
-            return dict(NOOP)
+            return modeled(
+                "combat_begin",
+                "accuracy",
+                value_is_percentage=True,
+                ignore_upstream_value_is_percentage=False,
+            )
         if "ignor" in p and "shield" in p:
             return modeled(
                 "combat_begin",
@@ -464,14 +542,18 @@ def main() -> None:
             text = by_loca.get(int(loca), "")
             entries[aid_str] = classify_single_ability(int(loca), text)
 
+    for oid, row in load_post_classify_overrides().items():
+        entries[oid] = row
+
     root = {
         "description": (
             "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. "
             "Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. "
+            "Optional overrides (merged last): ship_ability_catalog_overrides.json. "
             "Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; "
             "optional condition_morale, condition_defender_burning, condition_defender_hull_breach, "
             "condition_opponent_faction. "
-            "combat_noop: catalogued only. See src/data/ship_ability_resolve.rs."
+            "combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md."
         ),
         "entries": dict(sorted(entries.items(), key=lambda kv: int(kv[0]))),
     }

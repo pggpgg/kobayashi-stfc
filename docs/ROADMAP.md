@@ -16,16 +16,15 @@ After research sync/catalog merge work, the **next major combat-engine focus** i
 
 - **Ship ability implementation** — Implement ship abilities from the data.stfc.space `ability` array (e.g. "when hit, increase armor piercing / shield piercing / accuracy"). These are distinct from officer abilities and affect combat when the ship takes damage or performs actions. Requires extending the combat engine to evaluate ship-specific effects per round.
 
-### Future task: audit `combat_noop`
+### Audit `combat_noop` (done — maintain over time)
 
-Many ability ids still map to `effect_type: combat_noop` in [data/upstream/data-stfc-space/ship_ability_catalog.json](../data/upstream/data-stfc-space/ship_ability_catalog.json). **Planned audit:**
+Many ability ids still map to `effect_type: combat_noop` in [data/upstream/data-stfc-space/ship_ability_catalog.json](../data/upstream/data-stfc-space/ship_ability_catalog.json). The structured audit and bucket decisions live in [docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md). Ongoing workflow:
 
-1. **Inventory** — List every noop id with its translated description (`translations-ship_buffs.json`, key `ship_ability_desc`, per-row `loca_id` when present).
-2. **Bucket** — For each row, label why it is noop today: economy / progression, accuracy or other missing engine stat, opponent class or faction / Delta Quadrant tags, armada or defending scope, hostile-only debuffs, shield-depletion or other state gates not modeled, multi-step proc chains (e.g. hull breach + crit + cumulative), or intentional global approximation rejected (too uncertain).
-3. **Decide** — For each bucket: keep noop, add a **documented** mapping in [scripts/generate_full_ship_ability_catalog.py](../scripts/generate_full_ship_ability_catalog.py) (regenerate JSON), extend [src/data/ship_ability_resolve.rs](../src/data/ship_ability_resolve.rs) / combat engine, or add scenario/hostile context so conditional text can be honored.
-4. **Drift** — After `python3 scripts/generate_full_ship_ability_catalog.py`, diff the catalog against any **hand-tuned** entries; fold durable overrides into the script so regeneration does not erase them.
+1. **Inventory** — When changing the catalog, list noop ids and descriptions (`translations-ship_buffs.json`, `ship_ability_desc`, `loca_id` from ships).
+2. **Bucket / decide** — Update the audit doc if new patterns appear (economy, scope, opponent class, proc chains, etc.).
+3. **Drift** — Regenerate with `python3 scripts/generate_full_ship_ability_catalog.py`; merge durable hand edits via [ship_ability_catalog_overrides.json](../data/upstream/data-stfc-space/ship_ability_catalog_overrides.json) or extend the classifier.
 
-Approximations already used for modeled rows are summarized in [DESIGN.md](DESIGN.md) §3.6 (ship hull abilities — catalog approximations).
+Approximations for modeled rows are summarized in [DESIGN.md](DESIGN.md) §3.6 (ship hull abilities — catalog approximations).
 
 ---
 
