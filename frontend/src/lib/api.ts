@@ -106,6 +106,23 @@ export async function deleteProfile(id: string): Promise<void> {
   await checkOk(res);
 }
 
+/** Download a zip of the entire `profiles/` tree (backup). */
+export async function exportProfilesBackup(): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/profiles/export`);
+  await checkOk(res);
+  return res.blob();
+}
+
+/** Replace `profiles/` on the server with the contents of a Kobayashi export zip. Destructive. */
+export async function importProfilesBackup(zip: Blob): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/profiles/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/zip" },
+    body: zip,
+  });
+  await checkOk(res);
+}
+
 export interface OfficerListItem {
   id: string;
   name: string;
