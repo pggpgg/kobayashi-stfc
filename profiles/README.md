@@ -1,5 +1,11 @@
 # Local player profiles
 
+## What is OK to share publicly
+
+Only the bundled **`demo/`** tree (sample `profile.json`, roster, etc.) is meant for the public repo. **Do not** publish your real **`index.json`**, other profile directories (e.g. named accounts), or backups containing real sync tokens or player-chosen names.
+
+## Private data
+
 - **`index.json`** — Lists profile ids, display names, and **per-profile sync tokens** (`stfc-sync-token` for the STFC Community Mod). Treat tokens like secrets: **do not commit** `profiles/index.json` to a public repository.
 
 - **Fresh clone** — There is no `index.json` in git. On first `kobayashi serve`, migration creates it automatically:
