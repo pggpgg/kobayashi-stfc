@@ -49,8 +49,8 @@ Work in **phases** so foundations and correctness land before large feature work
 - [x] **6. Complete forbidden tech `fid` mapping**  
   **Done:** Documented upstream + CSV workflow in [data/README.md](../data/README.md) § Forbidden tech (`summary-forbidden_tech.json` + `translations-forbidden_tech.json` → `import_forbidden_chaos` name→`fid` join; manual CSV `fid` fallback). **CI:** `repo_forbidden_chaos_catalog_items_have_fid_for_sync_match` requires every committed catalog row to have `fid` (existing duplicate-`fid` test retained). Remaining game rows still require maintainer CSV/upstream refresh as new tech ships—not a code gap.
 
-- [ ] **7. Hostile → faction resolution**  
-  Extend `HostileRecord::opponent_faction_tag()` and related data so upstream faction ids map to [`OpponentFactionTag`](src/combat/types.rs) where possible; document intentional `Unknown` cases ([HUMAN_INTERVENTION_TASKS.md](HUMAN_INTERVENTION_TASKS.md)). Unlocks correct faction-gated hull/ability behavior when hostiles are known.
+- [x] **7. Hostile → faction resolution**  
+  Extended `opponent_faction_from_upstream_id` / `opponent_faction_from_faction_loca_id` for bundled `summary-hostile` ids (Texas-class, Borg alt, Card, V’Ger, loca 26/27/84001/86001). **Bugfix:** `356485724` was incorrectly grouped with Borg — it is Maverick (loca 88002) → `Unknown`. Documented intentional `Unknown` factions and maintenance note in [`HUMAN_INTERVENTION_TASKS.md`](HUMAN_INTERVENTION_TASKS.md) and [`data/README.md`](../data/README.md).
 
 ---
 

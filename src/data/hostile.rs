@@ -3,6 +3,14 @@
 //!
 //! **Display names:** `normalize_hostiles_stfc_space` sets `hostile_name` to `Hostile {id}` until a
 //! `loca_id` → string map (e.g. `translations-hostiles` from data.stfc.space) is wired into that tool.
+//!
+//! **Defender faction tag (`opponent_faction_tag`):** Maps `faction.id` (from `summary-hostile`) and
+//! `faction.loca_id` (aligns with `translations-factions.json` `faction_name` rows) to
+//! [`crate::combat::OpponentFactionTag`] for ship abilities that gate on defender faction.
+//! High-volume ids/locas are listed in [`opponent_faction_from_upstream_id`] and
+//! [`opponent_faction_from_faction_loca_id`]. Factions without a combat tag (e.g. Q-Continuum, Exiles,
+//! Node, Orion, Eclipse, Maverick, Krenim, Apex Raiders, Transogen, Aggregation) intentionally resolve
+//! to [`OpponentFactionTag::Unknown`] (faction-gated abilities do not fire).
 
 use std::fs;
 use std::path::Path;
@@ -242,7 +250,8 @@ fn opponent_faction_from_upstream_id(id: i64) -> Option<OpponentFactionTag> {
         2064723306 => Some(OpponentFactionTag::Federation),
         4153667145 => Some(OpponentFactionTag::Klingon),
         669838839 => Some(OpponentFactionTag::Romulan),
-        2706737293 | 2943562711 | 356485724 => Some(OpponentFactionTag::Borg),
+        // Note: `356485724` is Maverick (loca 88002), not Borg — do not map here (→ Unknown).
+        2706737293 | 2943562711 => Some(OpponentFactionTag::Borg),
         3536012672 => Some(OpponentFactionTag::Cardassian),
         2504833658 | 1645257079 => Some(OpponentFactionTag::MirrorUniverse),
         1742105784 => Some(OpponentFactionTag::Actian),
@@ -253,6 +262,11 @@ fn opponent_faction_from_upstream_id(id: i64) -> Option<OpponentFactionTag> {
         2352723133 | 2745774076 | 505966333 => Some(OpponentFactionTag::Xindi),
         2489857622 => Some(OpponentFactionTag::Swarm),
         1125688202 => Some(OpponentFactionTag::Breen),
+        // Additional `summary-hostile` faction.id values (correlate with `faction.loca_id` / translations-factions).
+        2796195869 => Some(OpponentFactionTag::Federation), // Texas-class
+        2385047502 => Some(OpponentFactionTag::Borg), // Borg (paired loca 26 in bundled hostiles)
+        880952928 => Some(OpponentFactionTag::Cardassian), // UI "Card" (loca 84001)
+        2334280262 | 4281411789 => Some(OpponentFactionTag::Borg), // V'Ger Clone
         _ => None,
     }
 }
@@ -274,6 +288,11 @@ fn opponent_faction_from_faction_loca_id(loca: u64) -> Option<OpponentFactionTag
         34 | 36 => Some(OpponentFactionTag::MirrorUniverse),
         84003 => Some(OpponentFactionTag::Borg),
         80004 => Some(OpponentFactionTag::Breen),
+        // Extra `translations-factions.json` `faction_name` loca ids (bundled hostiles).
+        26 => Some(OpponentFactionTag::Borg), // alternate Borg loca (see faction.id 2385047502)
+        27 => Some(OpponentFactionTag::Federation), // Texas-class
+        84001 => Some(OpponentFactionTag::Cardassian), // "Card" (short label)
+        86001 => Some(OpponentFactionTag::Borg), // V'Ger Clone
         _ => None,
     }
 }
@@ -410,6 +429,80 @@ mod tests {
         }"#;
         let r2: HostileRecord = serde_json::from_str(j2).unwrap();
         assert_eq!(r2.opponent_faction_tag(), OpponentFactionTag::Federation);
+    }
+
+    #[test]
+    fn opponent_faction_tag_maps_summary_hostile_faction_ids() {
+        // Texas-class, Borg alt, Card, V'Ger clone (see `opponent_faction_from_upstream_id`).
+        for (id, expected) in [
+            (2796195869i64, OpponentFactionTag::Federation),
+            (2385047502i64, OpponentFactionTag::Borg),
+            (880952928i64, OpponentFactionTag::Cardassian),
+            (2334280262i64, OpponentFactionTag::Borg),
+        ] {
+            let j = format!(
+                r#"{{
+                "id":"x","hostile_name":"X","level":1,"ship_class":"battleship",
+                "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+                "faction":{{"id":{id},"loca_id":null}}
+            }}"#
+            );
+            let r: HostileRecord = serde_json::from_str(&j).unwrap();
+            assert_eq!(
+                r.opponent_faction_tag(),
+                expected,
+                "faction.id {id}"
+            );
+        }
+    }
+
+    #[test]
+    fn opponent_faction_tag_maverick_is_unknown() {
+        let j = r#"{
+            "id":"m","hostile_name":"M","level":1,"ship_class":"survey",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":356485724,"loca_id":88002}
+        }"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        assert_eq!(r.opponent_faction_tag(), OpponentFactionTag::Unknown);
+    }
+
+    #[test]
+    fn opponent_faction_tag_unknown_for_q_continuum_and_node() {
+        let q = r#"{
+            "id":"q","hostile_name":"Q","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":4145760809,"loca_id":72000}
+        }"#;
+        let r: HostileRecord = serde_json::from_str(q).unwrap();
+        assert_eq!(r.opponent_faction_tag(), OpponentFactionTag::Unknown);
+
+        let node = r#"{
+            "id":"n","hostile_name":"N","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":4269128921,"loca_id":84002}
+        }"#;
+        let r2: HostileRecord = serde_json::from_str(node).unwrap();
+        assert_eq!(r2.opponent_faction_tag(), OpponentFactionTag::Unknown);
+    }
+
+    #[test]
+    fn opponent_faction_tag_loca_only_cardassian_and_borg_extras() {
+        let j = r#"{
+            "id":"c","hostile_name":"C","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":-1,"loca_id":84001}
+        }"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        assert_eq!(r.opponent_faction_tag(), OpponentFactionTag::Cardassian);
+
+        let j2 = r#"{
+            "id":"v","hostile_name":"V","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":-1,"loca_id":86001}
+        }"#;
+        let r2: HostileRecord = serde_json::from_str(j2).unwrap();
+        assert_eq!(r2.opponent_faction_tag(), OpponentFactionTag::Borg);
     }
 
     #[test]
