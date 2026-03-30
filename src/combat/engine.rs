@@ -122,6 +122,8 @@ pub fn simulate_combat_with_defender_faction(
         config,
         attacker_crew,
         defender_faction,
+        ShipType::Battleship,
+        ShipType::Battleship,
         &CrewConfiguration { seats: Vec::new() },
     )
 }
@@ -132,6 +134,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     config: SimulationConfig,
     attacker_crew: &CrewConfiguration,
     defender_faction: OpponentFactionTag,
+    defender_ship_type: ShipType,
+    attacker_ship_type: ShipType,
     defender_crew: &CrewConfiguration,
 ) -> SimulationResult {
     let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
@@ -162,6 +166,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_burning_active: false,
         defender_hull_breach_active: false,
         defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
@@ -242,6 +248,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_burning_active: burning_rounds_remaining > 0,
             defender_hull_breach_active: hull_breach_rounds_remaining > 0,
             defender_faction,
+            defender_ship_type,
+            attacker_ship_type,
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -1018,6 +1026,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     defender_burning_active: false,
                     defender_hull_breach_active: false,
                     defender_faction,
+                    defender_ship_type,
+                    attacker_ship_type,
                 };
                 let defender_combat_begin_filtered =
                     filter_effects_by_condition(&defender_combat_begin_effects, &defender_ctx);
@@ -1182,8 +1192,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
                 total_attacker_hull_damage += att_hull_damage_this_round;
 
-                let attacker_own_shields_broke = att_shield_before_counter > 0.0
-                    && attacker_shield_remaining <= 0.0;
+                let attacker_own_shields_broke =
+                    att_shield_before_counter > 0.0 && attacker_shield_remaining <= 0.0;
                 if attacker_own_shields_broke {
                     let mut ctx_self_sb = combat_ctx.clone();
                     ctx_self_sb.attacker_shield_pct = if attacker.shield_health > 0.0 {
@@ -1191,8 +1201,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     } else {
                         0.0
                     };
-                    ctx_self_sb.attacker_hull_pct = 1.0
-                        - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+                    ctx_self_sb.attacker_hull_pct =
+                        1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
                     let self_sb_filtered =
                         filter_effects_by_condition(&self_shield_break_effects, &ctx_self_sb);
                     record_ability_activations(
@@ -1298,6 +1308,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 defender_burning_active: burning_rounds_remaining > 0,
                 defender_hull_breach_active: hull_breach_rounds_remaining > 0,
                 defender_faction,
+                defender_ship_type,
+                attacker_ship_type,
             };
             let after_subround_filtered =
                 filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
@@ -1367,6 +1379,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_burning_active: combat_ctx.defender_burning_active,
             defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
             defender_faction,
+            defender_ship_type,
+            attacker_ship_type,
         };
         let round_end_burn_filtered =
             filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
@@ -1459,6 +1473,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 defender_burning_active: combat_ctx.defender_burning_active,
                 defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
                 defender_faction,
+                defender_ship_type,
+                attacker_ship_type,
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
@@ -1511,6 +1527,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_burning_active: false,
         defender_hull_breach_active: false,
         defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
     };
     let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(

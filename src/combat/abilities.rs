@@ -1,4 +1,4 @@
-use crate::combat::types::OpponentFactionTag;
+use crate::combat::types::{OpponentFactionTag, ShipType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AbilityClass {
@@ -141,6 +141,10 @@ pub struct CombatContext {
     pub defender_hull_breach_active: bool,
     /// Faction of the defending ship (hostile) in PvE; used for "against Klingon" style abilities.
     pub defender_faction: OpponentFactionTag,
+    /// Hull class of the defending [`crate::combat::Combatant`] (hostile in PvE).
+    pub defender_ship_type: ShipType,
+    /// Hull class of the attacking [`crate::combat::Combatant`] (player ship in PvE).
+    pub attacker_ship_type: ShipType,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -166,6 +170,10 @@ pub enum AbilityCondition {
     DefenderHullBreach,
     /// True when the defending hostile’s faction matches (see [`CombatContext::defender_faction`]).
     DefenderFactionIs(OpponentFactionTag),
+    /// True when the defending ship’s hull class matches (player hull abilities vs a hostile of that class).
+    DefenderShipTypeIs(ShipType),
+    /// True when the attacking ship’s hull class matches (e.g. hostile hull abilities vs the player’s class).
+    AttackerShipTypeIs(ShipType),
     And(Vec<AbilityCondition>),
     Or(Vec<AbilityCondition>),
 }
@@ -204,6 +212,8 @@ impl AbilityCondition {
             Self::DefenderBurning => ctx.defender_burning_active,
             Self::DefenderHullBreach => ctx.defender_hull_breach_active,
             Self::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
+            Self::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
+            Self::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
             Self::And(conds) => conds.iter().all(|c| c.evaluate(ctx)),
             Self::Or(conds) => conds.iter().any(|c| c.evaluate(ctx)),
         }

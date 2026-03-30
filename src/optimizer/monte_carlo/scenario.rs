@@ -15,7 +15,7 @@ use crate::data::building_bid_resolver::{
     load_bid_to_building_id, DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
 };
 use crate::data::forbidden_chaos;
-use crate::data::hostile::HostileRecord;
+use crate::data::hostile::{ship_class_to_type, HostileRecord};
 use crate::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, load_hostile_ability_catalog,
     DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
@@ -100,12 +100,14 @@ pub(crate) fn effective_attacker_stats_for_mitigation(
     ship_rec: &ShipRecord,
     profile: &PlayerProfile,
     static_buffs: &HashMap<String, f64>,
+    defender_ship_type: ShipType,
 ) -> AttackerStats {
     let mut s = ship_rec.to_attacker_stats();
     apply_profile_accuracy_to_attacker_stats(&mut s, profile);
     s.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
     s.accuracy += crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
         ship_rec.abilities.as_deref().unwrap_or(&[]),
+        defender_ship_type,
     );
     let cbm = static_buffs.get("accuracy_cb_mult").copied().unwrap_or(1.0);
     if cbm.is_finite() && cbm > 0.0 {
@@ -120,9 +122,10 @@ pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
     profile: &PlayerProfile,
     static_buffs: &HashMap<String, f64>,
 ) -> (f64, f64) {
-    let attacker_stats = effective_attacker_stats_for_mitigation(ship_rec, profile, static_buffs);
-    let defender_stats = hostile_rec.to_defender_stats();
     let ship_type = hostile_rec.ship_type();
+    let attacker_stats =
+        effective_attacker_stats_for_mitigation(ship_rec, profile, static_buffs, ship_type);
+    let defender_stats = hostile_rec.to_defender_stats();
     let defender_mitigation = mitigation_for_hostile(
         defender_stats,
         attacker_stats,
@@ -210,6 +213,24 @@ pub(crate) struct SharedScenarioData {
     /// True when ship or hostile did not resolve from data and [`scenario_to_combat_input_from_shared`]
     /// uses hashed placeholder combatants instead of registry-backed stats.
     pub using_placeholder_combatants: bool,
+}
+
+impl SharedScenarioData {
+    /// Hostile hull class for ability conditions and mitigation (defaults when no hostile record).
+    pub(crate) fn defender_ship_type_for_combat(&self) -> ShipType {
+        self.hostile_rec
+            .as_ref()
+            .map(|h| h.ship_type())
+            .unwrap_or(ShipType::Battleship)
+    }
+
+    /// Player hull class for hostile-side ability conditions (defaults when no ship record).
+    pub(crate) fn attacker_ship_type_for_combat(&self) -> ShipType {
+        self.ship_rec
+            .as_ref()
+            .map(|s| ship_class_to_type(&s.ship_class))
+            .unwrap_or(ShipType::Battleship)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -1017,7 +1038,9 @@ mod tests {
     fn research_merged_accuracy_multiplies_ship_base_in_effective_attacker_stats() {
         use crate::data::import::ResearchEntry;
         use crate::data::profile::merge_research_bonuses_into_profile;
-        use crate::data::research::{ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord};
+        use crate::data::research::{
+            ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+        };
 
         let catalog = ResearchCatalog {
             source: Some("test".into()),
@@ -1062,7 +1085,12 @@ mod tests {
             weapons: None,
             abilities: None,
         };
-        let stats = effective_attacker_stats_for_mitigation(&ship_rec, &profile, &HashMap::new());
+        let stats = effective_attacker_stats_for_mitigation(
+            &ship_rec,
+            &profile,
+            &HashMap::new(),
+            ShipType::Battleship,
+        );
         assert!(
             (stats.accuracy - 420.0).abs() < 1e-6,
             "expected 400 * (1 + 0.05) research accuracy bonus, got {}",
@@ -1101,18 +1129,85 @@ mod tests {
                 condition_defender_burning: false,
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
+                condition_opponent_ship_class: None,
+                round_cap: None,
             }]),
         };
         let mut static_buffs = HashMap::new();
         static_buffs.insert("accuracy".to_string(), 10.0);
         static_buffs.insert("accuracy_cb_mult".to_string(), 1.2);
 
-        let stats = effective_attacker_stats_for_mitigation(&ship_rec, &profile, &static_buffs);
+        let stats = effective_attacker_stats_for_mitigation(
+            &ship_rec,
+            &profile,
+            &static_buffs,
+            ShipType::Battleship,
+        );
         // 100 * 1.25 = 125; +10 officer static = 135; +20 hull combat_begin = 155; *1.2 = 186
         assert!(
             (stats.accuracy - 186.0).abs() < 1e-6,
             "got {}",
             stats.accuracy
+        );
+
+        let ship_rec_vs_interceptor_only = ShipRecord {
+            abilities: Some(vec![ShipAbility {
+                id: "cb2".into(),
+                timing: "combat_begin".into(),
+                effect_type: "accuracy".into(),
+                value: 99.0,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+                condition_opponent_ship_class: Some("interceptor".into()),
+                round_cap: None,
+            }]),
+            ..ship_rec.clone()
+        };
+        let stats_mismatch = effective_attacker_stats_for_mitigation(
+            &ship_rec_vs_interceptor_only,
+            &profile,
+            &static_buffs,
+            ShipType::Battleship,
+        );
+        let stats_match = effective_attacker_stats_for_mitigation(
+            &ship_rec_vs_interceptor_only,
+            &profile,
+            &static_buffs,
+            ShipType::Interceptor,
+        );
+        assert!(
+            (stats_match.accuracy - stats_mismatch.accuracy - 99.0 * 1.2).abs() < 1e-6,
+            "hull accuracy with interceptor gate should apply only vs interceptors"
+        );
+
+        let ship_rec_round_capped = ShipRecord {
+            abilities: Some(vec![ShipAbility {
+                id: "cb3".into(),
+                timing: "combat_begin".into(),
+                effect_type: "accuracy".into(),
+                value: 77.0,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+                condition_opponent_ship_class: None,
+                round_cap: Some(3),
+            }]),
+            ..ship_rec.clone()
+        };
+        let stats_capped = effective_attacker_stats_for_mitigation(
+            &ship_rec_round_capped,
+            &profile,
+            &static_buffs,
+            ShipType::Battleship,
+        );
+        assert!(
+            (stats_capped.accuracy - 135.0 * 1.2).abs() < 1e-6,
+            "round-capped combat_begin hull accuracy must not fold into static mitigation accuracy"
         );
     }
 
@@ -1195,6 +1290,8 @@ mod tests {
                 condition_defender_burning: false,
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
+                condition_opponent_ship_class: None,
+                round_cap: None,
             }]),
         };
 

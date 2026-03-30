@@ -41,10 +41,11 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if path.is_file() {
             let ext = path.extension();
             if ext.is_some_and(|e| e == "yaml" || e == "yml")
-                && path.file_name().is_none_or(|n| n != OUTPUT_FILE) {
-                    fs::remove_file(&path)?;
-                    println!("Removed {}", path.display());
-                }
+                && path.file_name().is_none_or(|n| n != OUTPUT_FILE)
+            {
+                fs::remove_file(&path)?;
+                println!("Removed {}", path.display());
+            }
         }
     }
 

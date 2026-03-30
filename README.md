@@ -262,10 +262,14 @@ To add or update officers:
 To regenerate LCARS from the canonical spreadsheet export:
 
 ```bash
-kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers]
+kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers] \
+  [--summary data/upstream/data-stfc-space/summary-officer.json] \
+  [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
 ```
 
-See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) for the modifier mapping reference and validation details.
+By default, `generate_lcars` loads `summary-officer.json` and `translations-officer_buffs.json` (when present under `data/upstream/data-stfc-space/`) and fills **`captain_ability` / `bridge_ability` / `below_decks_ability` `name:`** from `officer_ability_name` rows (`loca_id` ↔ `ability_id`). Use `--no-ability-names` for legacy placeholder names like `{Officer} (Captain)`.
+
+See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) and [docs/OFFICER_TRANSLATIONS_MAPPING.md](docs/OFFICER_TRANSLATIONS_MAPPING.md) for the modifier mapping and translation join model.
 
 ### Validating against real fights
 

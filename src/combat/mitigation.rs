@@ -51,12 +51,11 @@ pub fn mitigation_with_mystery(
     let f_dodge = component_mitigation(defender.dodge, attacker.accuracy);
 
     let one_minus_x = (1.0 - mystery_mitigation_factor).max(0.0);
-    
-    1.0
-        - one_minus_x
-            * (1.0 - c_armor * f_armor)
-            * (1.0 - c_shield * f_shield)
-            * (1.0 - c_dodge * f_dodge)
+
+    1.0 - one_minus_x
+        * (1.0 - c_armor * f_armor)
+        * (1.0 - c_shield * f_shield)
+        * (1.0 - c_dodge * f_dodge)
 }
 
 /// Mitigation for hostile defenders: applies mystery factor X then clamps to [floor, ceiling].

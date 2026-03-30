@@ -37,11 +37,8 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
     crate::data::validate::validate_all_startup_data()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
-    crate::data::profile_index::migrate_from_legacy_if_needed().map_err(|e| {
-        std::io::Error::other(
-            format!("Profile migration failed: {e}"),
-        )
-    })?;
+    crate::data::profile_index::migrate_from_legacy_if_needed()
+        .map_err(|e| std::io::Error::other(format!("Profile migration failed: {e}")))?;
 
     let registry = crate::data::data_registry::DataRegistry::load().map_err(|e| {
         std::io::Error::other(

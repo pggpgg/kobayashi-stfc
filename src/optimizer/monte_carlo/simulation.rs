@@ -126,12 +126,16 @@ fn run_candidate_monte_carlo(
             .as_ref()
             .map(|h| h.opponent_faction_tag())
             .unwrap_or(OpponentFactionTag::Unknown);
+        let defender_ship_type = shared.defender_ship_type_for_combat();
+        let attacker_ship_type = shared.attacker_ship_type_for_combat();
         let result = simulate_combat_with_defender_faction_and_defender_crew(
             &input.attacker,
             &input.defender,
             combat_config,
             &input.crew,
             defender_faction,
+            defender_ship_type,
+            attacker_ship_type,
             &input.defender_crew,
         );
         let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
@@ -420,6 +424,8 @@ pub fn replay_optimize_iteration_with_registry(
         .as_ref()
         .map(|h| h.opponent_faction_tag())
         .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_ship_type = shared.defender_ship_type_for_combat();
+    let attacker_ship_type = shared.attacker_ship_type_for_combat();
 
     let combat_config = SimulationConfig {
         rounds: input.rounds,
@@ -433,6 +439,8 @@ pub fn replay_optimize_iteration_with_registry(
         combat_config,
         &input.crew,
         defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
         &input.defender_crew,
     );
 

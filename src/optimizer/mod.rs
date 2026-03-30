@@ -95,8 +95,7 @@ pub struct OptimizeProgressTick {
 }
 
 /// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, or tiered (scout → confirm).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OptimizerStrategy {
     /// Current path: CrewGenerator then Monte Carlo then rank.
     #[default]
@@ -106,7 +105,6 @@ pub enum OptimizerStrategy {
     /// Two-pass: cheap scouting sims then full MC on top K.
     Tiered,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct OptimizationScenario<'a> {

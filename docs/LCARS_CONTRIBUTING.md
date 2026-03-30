@@ -6,6 +6,10 @@ This guide explains how to add or update officer definitions in KOBAYASHI's LCAR
 
 LCARS (Language for Combat Ability Resolution & Simulation) is the declarative YAML format for officer abilities. All officer definitions live in a single file: `data/officers/officers.lcars.yaml`.
 
+**Game-accurate ability names** (e.g. “Chirurgical Precision”) live in upstream `translations-officer_buffs.json` and are keyed by **`loca_id`** from `summary-officer.json`, not by LCARS alone. See [OFFICER_TRANSLATIONS_MAPPING.md](OFFICER_TRANSLATIONS_MAPPING.md) for the join model and Ahvix as a worked example.
+
+When you run `cargo run --bin generate_lcars` (or `kobayashi generate-lcars`), ability **`name:`** fields are filled from those files by default; pass **`--no-ability-names`** if you want legacy `{Officer} (Captain)` placeholders. Optional **`--summary`** and **`--translations`** override the paths under `data/upstream/data-stfc-space/`.
+
 ## File Organization
 
 - **Naming:** Only files matching `*.lcars.yaml` or `*.lcars.yml` are loaded when the app reads an officers directory. Other YAML files (e.g. config) in the same folder are ignored. Use this naming for any LCARS officer file.

@@ -448,11 +448,7 @@ mod tests {
             }}"#
             );
             let r: HostileRecord = serde_json::from_str(&j).unwrap();
-            assert_eq!(
-                r.opponent_faction_tag(),
-                expected,
-                "faction.id {id}"
-            );
+            assert_eq!(r.opponent_faction_tag(), expected, "faction.id {id}");
         }
     }
 

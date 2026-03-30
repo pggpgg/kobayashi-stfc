@@ -1,6 +1,11 @@
 //! Generate LCARS YAML files from officers.canonical.json.
 //! Run: cargo run --bin generate_lcars [-- path/to/officers.canonical.json] [--output data/officers]
+//!   [--summary data/upstream/data-stfc-space/summary-officer.json]
+//!   [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
 //! Output: data/officers/<faction>.lcars.yaml files grouped by faction.
+//!
+//! When `--summary` and `--translations` point at data-stfc-space exports, ability block names are
+//! resolved from `officer_ability_name` rows (`loca_id` in summary matches `id` in translations).
 
 use std::collections::HashMap;
 use std::fs;
@@ -13,6 +18,8 @@ use serde::Deserialize;
 
 const DEFAULT_INPUT: &str = "data/officers/officers.canonical.json";
 const DEFAULT_OUTPUT_DIR: &str = "data/officers";
+const DEFAULT_SUMMARY: &str = "data/upstream/data-stfc-space/summary-officer.json";
+const DEFAULT_TRANSLATIONS: &str = "data/upstream/data-stfc-space/translations-officer_buffs.json";
 
 #[derive(Debug, Deserialize)]
 struct CanonicalFile {
@@ -32,11 +39,15 @@ struct CanonicalOfficer {
     #[serde(default, rename = "slot")]
     _slot: Option<String>,
     #[serde(default)]
+    source_officer_id: Option<String>,
+    #[serde(default)]
     abilities: Vec<CanonicalAbility>,
 }
 
 #[derive(Debug, Deserialize)]
 struct CanonicalAbility {
+    #[serde(default)]
+    ability_id: Option<String>,
     #[serde(default)]
     slot: String,
     #[serde(default)]
@@ -57,6 +68,35 @@ struct CanonicalAbility {
     value_by_rank: Vec<f64>,
 }
 
+#[derive(Debug, Deserialize)]
+struct SummaryOfficer {
+    id: u64,
+    #[serde(default)]
+    captain_ability: Option<SummaryAbility>,
+    #[serde(default)]
+    ability: Option<SummaryAbility>,
+    #[serde(default)]
+    below_decks_ability: Option<SummaryAbility>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SummaryAbility {
+    id: u64,
+    loca_id: u64,
+}
+
+#[derive(Debug, Deserialize)]
+struct TranslationRow {
+    id: Option<u64>,
+    key: String,
+    text: String,
+}
+
+struct NameResolveContext {
+    summary_by_officer: HashMap<u64, SummaryOfficer>,
+    name_by_loca: HashMap<u64, String>,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     let base = Path::new(&manifest_dir);
@@ -64,12 +104,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     let mut input_path = base.join(DEFAULT_INPUT);
     let mut output_dir = base.join(DEFAULT_OUTPUT_DIR);
+    let mut summary_path = base.join(DEFAULT_SUMMARY);
+    let mut translations_path = base.join(DEFAULT_TRANSLATIONS);
+    let mut skip_names = false;
 
     let mut i = 1;
     while i < args.len() {
         if args[i] == "--output" && i + 1 < args.len() {
             output_dir = base.join(&args[i + 1]);
             i += 2;
+        } else if args[i] == "--summary" && i + 1 < args.len() {
+            summary_path = Path::new(&args[i + 1]).to_path_buf();
+            if !summary_path.is_absolute() {
+                summary_path = base.join(&summary_path);
+            }
+            i += 2;
+        } else if args[i] == "--translations" && i + 1 < args.len() {
+            translations_path = Path::new(&args[i + 1]).to_path_buf();
+            if !translations_path.is_absolute() {
+                translations_path = base.join(&translations_path);
+            }
+            i += 2;
+        } else if args[i] == "--no-ability-names" {
+            skip_names = true;
+            i += 1;
         } else if !args[i].starts_with("--") {
             input_path = Path::new(&args[i]).to_path_buf();
             if !input_path.is_absolute() {
@@ -84,7 +142,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let raw = fs::read_to_string(&input_path)?;
     let parsed: CanonicalFile = serde_json::from_str(&raw)?;
 
-    let officers_by_faction = convert_officers_to_lcars(parsed.officers);
+    let name_ctx = if skip_names {
+        NameResolveContext {
+            summary_by_officer: HashMap::new(),
+            name_by_loca: HashMap::new(),
+        }
+    } else {
+        load_name_resolve_context(&summary_path, &translations_path)?
+    };
+
+    let (officers_by_faction, names_resolved) =
+        convert_officers_to_lcars(parsed.officers, &name_ctx);
 
     fs::create_dir_all(&output_dir)?;
 
@@ -104,8 +172,54 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    println!("Done.");
+    println!(
+        "Done. Ability names resolved from translations: {names_resolved} blocks (use --no-ability-names to skip).",
+    );
     Ok(())
+}
+
+fn load_name_resolve_context(
+    summary_path: &Path,
+    translations_path: &Path,
+) -> Result<NameResolveContext, Box<dyn std::error::Error>> {
+    let mut summary_by_officer: HashMap<u64, SummaryOfficer> = HashMap::new();
+    if summary_path.is_file() {
+        let raw = fs::read_to_string(summary_path)?;
+        let list: Vec<SummaryOfficer> = serde_json::from_str(&raw)?;
+        for o in list {
+            summary_by_officer.insert(o.id, o);
+        }
+    } else {
+        eprintln!(
+            "Warning: summary not found at {} — ability names will use placeholders.",
+            summary_path.display()
+        );
+    }
+
+    let mut name_by_loca: HashMap<u64, String> = HashMap::new();
+    if translations_path.is_file() {
+        let raw = fs::read_to_string(translations_path)?;
+        let rows: Vec<TranslationRow> = serde_json::from_str(&raw)?;
+        for row in rows {
+            if row.key != "officer_ability_name" {
+                continue;
+            }
+            let Some(id) = row.id else {
+                continue;
+            };
+            name_by_loca.entry(id).or_insert_with(|| row.text.trim().to_string());
+        }
+    } else {
+        eprintln!(
+            "Warning: translations not found at {} — ability names will use placeholders.",
+            translations_path.display()
+        );
+    }
+
+    Ok(NameResolveContext {
+        summary_by_officer,
+        name_by_loca,
+    })
 }
 
 fn faction_to_filename(faction: &str) -> String {
@@ -121,71 +235,167 @@ fn faction_to_filename(faction: &str) -> String {
 
 fn convert_officers_to_lcars(
     officers: Vec<CanonicalOfficer>,
-) -> HashMap<String, Vec<LcarsOfficer>> {
+    ctx: &NameResolveContext,
+) -> (HashMap<String, Vec<LcarsOfficer>>, u64) {
     let mut by_faction: HashMap<String, Vec<LcarsOfficer>> = HashMap::new();
+    let mut names_resolved: u64 = 0;
 
     for officer in officers {
         let faction_key = officer.faction.as_deref().unwrap_or("Unknown");
         let faction_key = faction_to_filename(faction_key);
 
-        let lcars = convert_officer(officer);
+        let (lcars, n) = convert_officer(officer, ctx);
+        names_resolved += n;
         by_faction.entry(faction_key).or_default().push(lcars);
     }
 
-    by_faction
+    (by_faction, names_resolved)
 }
 
-fn convert_officer(o: CanonicalOfficer) -> LcarsOfficer {
-    let mut captain_ability = None;
-    let mut bridge_ability = None;
-    let mut below_decks_ability = None;
+fn parse_numeric_id(s: &str) -> Option<u64> {
+    let s = s.trim();
+    if let Ok(v) = s.parse::<u64>() {
+        return Some(v);
+    }
+    if let Ok(f) = s.parse::<f64>() {
+        let u = f as u64;
+        if f >= 0.0 && (f - u as f64).abs() < 1.0 {
+            return Some(u);
+        }
+    }
+    None
+}
 
-    let mut captain_effects = Vec::new();
-    let mut bridge_effects = Vec::new();
-    let mut below_effects = Vec::new();
+fn loca_for_game_ability(summary: &SummaryOfficer, game_ability_id: u64) -> Option<u64> {
+    if let Some(a) = &summary.captain_ability {
+        if a.id == game_ability_id {
+            return Some(a.loca_id);
+        }
+    }
+    if let Some(a) = &summary.ability {
+        if a.id == game_ability_id {
+            return Some(a.loca_id);
+        }
+    }
+    if let Some(a) = &summary.below_decks_ability {
+        if a.id == game_ability_id {
+            return Some(a.loca_id);
+        }
+    }
+    None
+}
+
+fn resolve_ability_display_name(
+    ability: &CanonicalAbility,
+    summary: Option<&SummaryOfficer>,
+    ctx: &NameResolveContext,
+) -> Option<String> {
+    let aid = ability.ability_id.as_deref()?;
+    let game_id = parse_numeric_id(aid)?;
+    let so = summary?;
+    let loca = loca_for_game_ability(so, game_id)?;
+    let name = ctx.name_by_loca.get(&loca).cloned()?;
+    if name.is_empty() {
+        return None;
+    }
+    Some(name)
+}
+
+fn ability_block_name(
+    seat_label: &str,
+    abilities: &[CanonicalAbility],
+    summary: Option<&SummaryOfficer>,
+    ctx: &NameResolveContext,
+    officer_name: &str,
+) -> (String, bool) {
+    for a in abilities {
+        if let Some(n) = resolve_ability_display_name(a, summary, ctx) {
+            return (n, true);
+        }
+    }
+    (
+        format!("{} ({})", officer_name, seat_label),
+        false,
+    )
+}
+
+fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOfficer, u64) {
+    let summary = o
+        .source_officer_id
+        .as_deref()
+        .and_then(parse_numeric_id)
+        .and_then(|id| ctx.summary_by_officer.get(&id));
+
+    let mut captain_abs: Vec<CanonicalAbility> = Vec::new();
+    let mut bridge_abs: Vec<CanonicalAbility> = Vec::new();
+    let mut below_abs: Vec<CanonicalAbility> = Vec::new();
 
     for ability in o.abilities {
-        let effects = match ability.slot.to_lowercase().as_str() {
-            "captain" => &mut captain_effects,
-            "officer" => &mut bridge_effects,
-            "below" | "below_decks" => &mut below_effects,
-            _ => &mut bridge_effects,
-        };
-
-        if let Some(effect) = convert_ability_to_effect(&ability, &o.name) {
-            effects.push(effect);
+        match ability.slot.to_lowercase().as_str() {
+            "captain" => captain_abs.push(ability),
+            "officer" => bridge_abs.push(ability),
+            "below" | "below_decks" => below_abs.push(ability),
+            _ => bridge_abs.push(ability),
         }
     }
 
-    if !captain_effects.is_empty() {
-        captain_ability = Some(LcarsAbility {
-            name: format!("{} (Captain)", o.name),
-            effects: captain_effects,
-        });
-    }
-    if !bridge_effects.is_empty() {
-        bridge_ability = Some(LcarsAbility {
-            name: format!("{} (Bridge)", o.name),
-            effects: bridge_effects,
-        });
-    }
-    if !below_effects.is_empty() {
-        below_decks_ability = Some(LcarsAbility {
-            name: format!("{} (Below Decks)", o.name),
-            effects: below_effects,
-        });
-    }
+    let mut names_resolved: u64 = 0;
 
-    LcarsOfficer {
-        id: o.id,
-        name: o.name,
-        faction: o.faction,
-        rarity: o.rarity,
-        group: o.group,
-        captain_ability,
-        bridge_ability,
-        below_decks_ability,
-    }
+    let captain_ability = if !captain_abs.is_empty() {
+        let effects: Vec<LcarsEffect> = captain_abs
+            .iter()
+            .filter_map(|a| convert_ability_to_effect(a, &o.name))
+            .collect();
+        let (name, ok) = ability_block_name("Captain", &captain_abs, summary, ctx, &o.name);
+        if ok {
+            names_resolved += 1;
+        }
+        Some(LcarsAbility { name, effects })
+    } else {
+        None
+    };
+
+    let bridge_ability = if !bridge_abs.is_empty() {
+        let effects: Vec<LcarsEffect> = bridge_abs
+            .iter()
+            .filter_map(|a| convert_ability_to_effect(a, &o.name))
+            .collect();
+        let (name, ok) = ability_block_name("Bridge", &bridge_abs, summary, ctx, &o.name);
+        if ok {
+            names_resolved += 1;
+        }
+        Some(LcarsAbility { name, effects })
+    } else {
+        None
+    };
+
+    let below_decks_ability = if !below_abs.is_empty() {
+        let effects: Vec<LcarsEffect> = below_abs
+            .iter()
+            .filter_map(|a| convert_ability_to_effect(a, &o.name))
+            .collect();
+        let (name, ok) = ability_block_name("Below Decks", &below_abs, summary, ctx, &o.name);
+        if ok {
+            names_resolved += 1;
+        }
+        Some(LcarsAbility { name, effects })
+    } else {
+        None
+    };
+
+    (
+        LcarsOfficer {
+            id: o.id,
+            name: o.name,
+            faction: o.faction,
+            rarity: o.rarity,
+            group: o.group,
+            captain_ability,
+            bridge_ability,
+            below_decks_ability,
+        },
+        names_resolved,
+    )
 }
 
 fn convert_ability_to_effect(a: &CanonicalAbility, _officer_name: &str) -> Option<LcarsEffect> {

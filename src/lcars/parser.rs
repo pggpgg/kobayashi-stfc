@@ -164,6 +164,9 @@ pub struct LcarsCondition {
     pub min_members: Option<u32>,
     #[serde(default)]
     pub tag: Option<String>,
+    /// Hull class slug for `defender_ship_type_is` (`battleship`, `explorer`, `interceptor`, …).
+    #[serde(default)]
+    pub ship_type: Option<String>,
     #[serde(default)]
     pub conditions: Option<Vec<LcarsCondition>>,
 }
@@ -192,9 +195,8 @@ pub fn load_lcars_dir(
         let path = entry.path();
         if path.is_file() {
             let name = path.file_name().and_then(|n| n.to_str());
-            let is_lcars = name.is_some_and(|n| {
-                n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml")
-            });
+            let is_lcars =
+                name.is_some_and(|n| n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml"));
             if is_lcars {
                 if let Ok(file) = load_lcars_file(&path) {
                     officers.extend(file.officers);

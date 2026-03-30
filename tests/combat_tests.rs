@@ -284,6 +284,8 @@ fn defender_crew_can_modify_counter_fire_damage() {
         cfg,
         &attacker_crew,
         OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
         &CrewConfiguration { seats: vec![] },
     );
     let boosted = simulate_combat_with_defender_faction_and_defender_crew(
@@ -292,6 +294,8 @@ fn defender_crew_can_modify_counter_fire_damage() {
         cfg,
         &attacker_crew,
         OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
         &defender_crew,
     );
 
@@ -381,6 +385,8 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         cfg,
         &attacker_crew,
         OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
         &CrewConfiguration { seats: vec![] },
     );
     let with_sb = simulate_combat_with_defender_faction_and_defender_crew(
@@ -389,6 +395,8 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         cfg,
         &attacker_crew,
         OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
         &defender_crew_sb,
     );
 
@@ -463,7 +471,12 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         seed: 3,
         trace_mode: TraceMode::Off,
     };
-    let baseline = simulate_combat(&attacker, &defender, cfg, &CrewConfiguration { seats: vec![] });
+    let baseline = simulate_combat(
+        &attacker,
+        &defender,
+        cfg,
+        &CrewConfiguration { seats: vec![] },
+    );
     let crew_sb = CrewConfiguration {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
@@ -1144,6 +1157,205 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         "faction-gated attack multiplier should apply only for matching defender faction"
     );
     approx_eq(romulan.total_damage, klingon.total_damage / 2.0, 1.0);
+}
+
+#[test]
+fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 11,
+        trace_mode: TraceMode::Off,
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "vs_battleship".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: Some(AbilityCondition::DefenderShipTypeIs(ShipType::Battleship)),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let explorer = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Explorer,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let battleship = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    assert!(
+        battleship.total_damage > explorer.total_damage,
+        "hull-class–gated attack multiplier should apply only when defender ship type matches"
+    );
+    approx_eq(explorer.total_damage, battleship.total_damage / 2.0, 1.0);
+}
+
+#[test]
+fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 5,
+        seed: 2,
+        trace_mode: TraceMode::Off,
+    };
+    let uncapped = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "full_mult".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let capped = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "two_round_mult".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: Some(AbilityCondition::RoundRange { min: 1, max: 2 }),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let r_uncapped = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &uncapped,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let r_capped = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &capped,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    assert!(
+        r_uncapped.total_damage > r_capped.total_damage,
+        "round-limited combat_begin multiplier should deal less total damage over long fights"
+    );
 }
 
 #[test]

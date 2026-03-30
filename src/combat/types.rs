@@ -441,6 +441,19 @@ impl TraceCollector {
 }
 
 impl ShipType {
+    /// Parse slug from ship catalogs, hull ability conditions, or LCARS (`battleship`, `explorer`, …).
+    pub fn from_data_slug(s: &str) -> Option<Self> {
+        let k = s.trim().to_lowercase().replace('-', "_");
+        match k.as_str() {
+            "battleship" => Some(Self::Battleship),
+            "explorer" => Some(Self::Explorer),
+            "interceptor" => Some(Self::Interceptor),
+            "survey" => Some(Self::Survey),
+            "armada" => Some(Self::Armada),
+            _ => None,
+        }
+    }
+
     pub const fn coefficients(self) -> (f64, f64, f64) {
         match self {
             Self::Survey => SURVEY_COEFFICIENTS,

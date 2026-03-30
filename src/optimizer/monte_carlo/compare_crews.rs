@@ -67,6 +67,8 @@ fn simulate_trial(
         .as_ref()
         .map(|h| h.opponent_faction_tag())
         .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_ship_type = shared.defender_ship_type_for_combat();
+    let attacker_ship_type = shared.attacker_ship_type_for_combat();
     combat_config.seed = iteration_seed;
     simulate_combat_with_defender_faction_and_defender_crew(
         &input.attacker,
@@ -74,6 +76,8 @@ fn simulate_trial(
         combat_config,
         &input.crew,
         defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
         &input.defender_crew,
     )
 }

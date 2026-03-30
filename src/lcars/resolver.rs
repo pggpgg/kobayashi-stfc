@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, OpponentFactionTag, TimingWindow,
+    CrewSeatContext, OpponentFactionTag, ShipType, TimingWindow,
 };
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
@@ -18,7 +18,6 @@ pub struct ResolveOptions {
     /// Per-officer tier (canonical_officer_id → tier). When set, each officer uses their tier for scaling (base + per_rank, chance_at_rank).
     pub officer_tiers: Option<HashMap<String, u8>>,
 }
-
 
 impl ResolveOptions {
     /// Tier to use for the given officer: per-officer tier if available, else fallback [ResolveOptions::tier].
@@ -87,6 +86,13 @@ fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCon
         | "faction_is" => {
             let slug = c.faction.as_deref().or(c.tag.as_deref())?;
             AbilityCondition::DefenderFactionIs(OpponentFactionTag::from_data_slug(slug)?)
+        }
+        "defender_ship_type_is"
+        | "defender_ship_class_is"
+        | "opponent_ship_type_is"
+        | "opponent_ship_class_is" => {
+            let slug = c.ship_type.as_deref().or(c.stat.as_deref())?;
+            AbilityCondition::DefenderShipTypeIs(ShipType::from_data_slug(slug)?)
         }
         "and" => {
             let conds: Vec<AbilityCondition> = c
@@ -170,16 +176,10 @@ pub(crate) fn effect_trigger_timing(effect: &LcarsEffect) -> Option<TimingWindow
         "passive" => Some(TimingWindow::CombatBegin),
         "combatstart" | "on_combat_start" => Some(TimingWindow::CombatBegin),
         "roundstart" | "on_round_start" => Some(TimingWindow::RoundStart),
-        "criticalshotfired"
-        | "enemytakeshit"
-        | "on_attack"
-        | "on_hit"
-        | "on_critical" => Some(TimingWindow::AttackPhase),
-        "after_shot"
-        | "on_after_shot"
-        | "subround_end"
-        | "on_subround_end"
-        | "after_weapon"
+        "criticalshotfired" | "enemytakeshit" | "on_attack" | "on_hit" | "on_critical" => {
+            Some(TimingWindow::AttackPhase)
+        }
+        "after_shot" | "on_after_shot" | "subround_end" | "on_subround_end" | "after_weapon"
         | "on_after_weapon" => Some(TimingWindow::AfterSubround),
         "hittaken" | "on_defense" => Some(TimingWindow::DefensePhase),
         "roundend" | "on_round_end" => Some(TimingWindow::RoundEnd),
@@ -475,8 +475,7 @@ pub fn lcars_effect_coverage(
     if effect.effect_type == "stat_modify" {
         let stat = effect.stat.as_deref().unwrap_or("").trim();
         if stat.eq_ignore_ascii_case("accuracy") {
-            let pathway = if effect_trigger_timing(effect) == Some(TimingWindow::CombatBegin)
-            {
+            let pathway = if effect_trigger_timing(effect) == Some(TimingWindow::CombatBegin) {
                 "combat_begin_accuracy_static"
             } else {
                 "accuracy_non_combat_begin_skipped"
@@ -595,10 +594,7 @@ pub fn resolve_crew_to_buff_set(
         for effect in &ability.effects {
             if effect.effect_type != "stat_modify"
                 || effect.trigger.as_deref().map(str::trim) != Some("passive")
-                || effect
-                    .duration
-                    .as_ref()
-                    .is_some_and(|d| !d.is_permanent())
+                || effect.duration.as_ref().is_some_and(|d| !d.is_permanent())
             {
                 continue;
             }
@@ -822,6 +818,7 @@ mod tests {
             group: None,
             min_members: None,
             tag: None,
+            ship_type: None,
             conditions: None,
         }
     }
@@ -874,6 +871,7 @@ mod tests {
             group: None,
             min_members: None,
             tag: None,
+            ship_type: None,
             conditions: Some(vec![lcars_condition("morale_active"), fc.clone()]),
         };
         let ability = LcarsAbility {
@@ -949,6 +947,8 @@ mod tests {
             defender_burning_active: false,
             defender_hull_breach_active: false,
             defender_faction: OpponentFactionTag::Klingon,
+            defender_ship_type: ShipType::Battleship,
+            attacker_ship_type: ShipType::Explorer,
         };
         assert!(and_cond.evaluate(&ctx_ok));
         let ctx_no_morale = CombatContext {
@@ -956,6 +956,25 @@ mod tests {
             ..ctx_ok
         };
         assert!(!and_cond.evaluate(&ctx_no_morale));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_defender_ship_type() {
+        let c = LcarsCondition {
+            condition_type: "defender_ship_type_is".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: Some("explorer".to_string()),
+            conditions: None,
+        };
+        let ac = lcars_condition_to_ability_condition(&c).expect("maps");
+        assert_eq!(ac, AbilityCondition::DefenderShipTypeIs(ShipType::Explorer));
     }
 
     #[test]

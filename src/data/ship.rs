@@ -58,6 +58,13 @@ pub struct ShipAbility {
     /// Gated on defending hostile faction slug (`klingon`, `romulan`, …); matches [`crate::combat::OpponentFactionTag`] serde names.
     #[serde(default)]
     pub condition_opponent_faction: Option<String>,
+    /// Gated on defending ship hull class (`battleship`, `explorer`, `interceptor`, …); matches [`crate::combat::ShipType`] serde names.
+    #[serde(default)]
+    pub condition_opponent_ship_class: Option<String>,
+    /// When set, the hull ability’s combat effects only apply for combat rounds `1..=round_cap` (inclusive).
+    /// Combat-begin accuracy folded into static attacker stats ignores this field (see [`crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities`]).
+    #[serde(default)]
+    pub round_cap: Option<u32>,
 }
 
 #[derive(Debug, Clone)]

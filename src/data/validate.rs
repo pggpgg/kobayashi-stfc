@@ -557,9 +557,7 @@ fn is_non_combat_key(key: &str) -> bool {
 }
 
 fn normalize_building_condition(raw: &str) -> String {
-    raw.trim()
-        .to_ascii_lowercase()
-        .replace(['-', ' '], "_")
+    raw.trim().to_ascii_lowercase().replace(['-', ' '], "_")
 }
 
 fn is_known_building_condition(raw: &str) -> bool {
