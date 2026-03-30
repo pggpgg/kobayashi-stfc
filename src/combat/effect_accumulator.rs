@@ -124,6 +124,7 @@ fn timing_trace_id(timing: TimingWindow) -> &'static str {
         TimingWindow::DefensePhase => "defense_phase",
         TimingWindow::RoundEnd => "round_end",
         TimingWindow::ShieldBreak => "shield_break",
+        TimingWindow::SelfShieldBreak => "self_shield_break",
         TimingWindow::Kill => "kill",
         TimingWindow::HullBreach => "hull_breach",
         TimingWindow::ReceiveDamage => "receive_damage",
@@ -1082,6 +1083,7 @@ impl EffectAccumulator {
                 }
             },
             TimingWindow::ShieldBreak
+            | TimingWindow::SelfShieldBreak
             | TimingWindow::Kill
             | TimingWindow::HullBreach
             | TimingWindow::ReceiveDamage

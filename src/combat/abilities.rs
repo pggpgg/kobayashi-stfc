@@ -18,8 +18,12 @@ pub enum TimingWindow {
     AfterSubround,
     DefensePhase,
     RoundEnd,
-    /// When target's shields reach 0 (on_shield_break).
+    /// When the **defender's** (enemy's) shields reach 0 — e.g. `on_enemy_shield_break`, or legacy
+    /// `on_shield_break` with LCARS `target: enemy` (Yan'Agh-style).
     ShieldBreak,
+    /// When **this crew's ship** (the attacker in PvE) loses shields — counter-fire and similar.
+    /// LCARS: `on_own_shield_break` / `on_shield_break` with `target: self` (Mudd, Vemet, …).
+    SelfShieldBreak,
     /// When this ship destroys a target (on_kill).
     Kill,
     /// When target's hull drops below threshold (on_hull_breach).

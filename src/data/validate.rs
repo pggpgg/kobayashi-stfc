@@ -102,6 +102,8 @@ const TRIGGER_ENUM: &[&str] = &[
     "on_round_end",
     "on_round_start",
     "on_shield_break",
+    "on_own_shield_break",
+    "on_enemy_shield_break",
 ];
 
 const OPERATOR_ENUM: &[&str] = &[

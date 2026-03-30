@@ -56,8 +56,8 @@ Work in **phases** so foundations and correctness land before large feature work
 
 ### Phase 3 — Combat engine (major)
 
-- [ ] **8. Implement ship abilities in combat**  
-  Roadmap “next pillar”: evaluate `ability` arrays from ship data during combat (distinct from officers), including common “on hit / on shield break” style effects. Touches [`ship_ability_resolve.rs`](../src/data/ship_ability_resolve.rs), engine round loop, and tests.
+- [x] **8. Implement ship abilities in combat**  
+  Player hull abilities are merged into attacker crew in [`scenario.rs`](../src/optimizer/monte_carlo/scenario.rs) (`extend_crew_with_ship_abilities` → [`ship_ability_resolve.rs`](../src/data/ship_ability_resolve.rs)). The engine evaluates timed effects per [`TimingWindow`](../src/combat/abilities.rs). **Completed in this pass:** defender crew `ShieldBreak` effects when the **defender’s** shields are depleted (activations, immediate `ShieldRegen`/`HullRegen` on the defender, and remaining effects merged into that sub-round’s counter-attack); **fix:** return fire now includes [`EffectAccumulator::pre_attack_pierce_bonus`](../src/combat/effect_accumulator.rs) in `compute_damage_through_factor` so pierce from shield-break (and other stacked pierce) affects counter damage. Tests: [`defender_crew_shield_break_effects_apply_to_counter_fire`](../tests/combat_tests.rs).
 
 - [ ] **9. Structured audit of `combat_noop` ship abilities**  
   Follow the four-step plan in [ROADMAP.md](ROADMAP.md): inventory noop ids, bucket reasons, decide per bucket (keep noop, extend resolver, or document), and make regeneration via `scripts/generate_full_ship_ability_catalog.py` safe for hand-tuned rows.

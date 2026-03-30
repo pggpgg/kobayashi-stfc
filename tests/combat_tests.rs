@@ -302,6 +302,194 @@ fn defender_crew_can_modify_counter_fire_damage() {
 }
 
 #[test]
+fn defender_crew_shield_break_effects_apply_to_counter_fire() {
+    // When the defender's shields are depleted, `TimingWindow::ShieldBreak` effects on the
+    // defender crew (e.g. hostile ship abilities) must apply to that sub-round's counter-attack.
+    let attacker = Combatant {
+        id: "att".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 500.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "def".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 2000.0,
+        shield_health: 100.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let attacker_crew = CrewConfiguration { seats: vec![] };
+    let defender_crew_sb = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "def_sb_pierce".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::ShieldBreak,
+                boostable: false,
+                effect: AbilityEffect::PierceBonus(0.5),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+
+    let baseline = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        cfg,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let with_sb = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        cfg,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        &defender_crew_sb,
+    );
+
+    assert!(
+        with_sb.attacker_hull_remaining < baseline.attacker_hull_remaining,
+        "defender ShieldBreak pierce should increase counter damage: baseline={}, with_sb={}",
+        baseline.attacker_hull_remaining,
+        with_sb.attacker_hull_remaining
+    );
+}
+
+#[test]
+fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_round() {
+    // Counter strips the player's shields; `TimingWindow::SelfShieldBreak` effects stack on the
+    // round accumulator (same path as enemy `ShieldBreak` pierce): `pre_attack_pierce_bonus` is read
+    // each sub-round; AttackMultiplier from that window is not folded into per-shot pre_attack yet.
+    let attacker = Combatant {
+        id: "plyr".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 100.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![
+            WeaponStats {
+                attack: 50.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+        ],
+    };
+    let defender = Combatant {
+        id: "npc".to_string(),
+        attack: 0.0,
+        mitigation: 0.35,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 400.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 3,
+        trace_mode: TraceMode::Off,
+    };
+    let baseline = simulate_combat(&attacker, &defender, cfg, &CrewConfiguration { seats: vec![] });
+    let crew_sb = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "own_sb_damage".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::SelfShieldBreak,
+                boostable: true,
+                effect: AbilityEffect::PierceBonus(0.6),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let boosted = simulate_combat(&attacker, &defender, cfg, &crew_sb);
+    assert!(
+        boosted.total_damage > baseline.total_damage,
+        "SelfShieldBreak pierce should buff weapon 2 after counter breaks shields: baseline={}, boosted={}",
+        baseline.total_damage,
+        boosted.total_damage
+    );
+}
+
+#[test]
 fn mitigation_with_morale_applies_primary_piercing_bonus_when_active() {
     let defender = DefenderStats {
         armor: 100.0,

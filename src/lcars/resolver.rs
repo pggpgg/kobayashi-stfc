@@ -140,32 +140,53 @@ fn duration_rounds_or_default(effect: &LcarsEffect, fallback: u32) -> u32 {
         .max(1)
 }
 
-/// Map LCARS trigger string to engine timing window. Unknown triggers return None (effect skipped).
-fn trigger_to_timing(trigger: Option<&str>) -> Option<TimingWindow> {
-    match trigger.map(normalize_trigger).as_deref() {
-        Some("passive") => Some(TimingWindow::CombatBegin),
-        Some("combatstart") | Some("on_combat_start") => Some(TimingWindow::CombatBegin),
-        Some("roundstart") | Some("on_round_start") => Some(TimingWindow::RoundStart),
-        Some("criticalshotfired")
-        | Some("enemytakeshit")
-        | Some("on_attack")
-        | Some("on_hit")
-        | Some("on_critical") => Some(TimingWindow::AttackPhase),
-        Some("after_shot")
-        | Some("on_after_shot")
-        | Some("subround_end")
-        | Some("on_subround_end")
-        | Some("after_weapon")
-        | Some("on_after_weapon") => Some(TimingWindow::AfterSubround),
-        Some("hittaken") | Some("on_defense") => Some(TimingWindow::DefensePhase),
-        Some("roundend") | Some("on_round_end") => Some(TimingWindow::RoundEnd),
-        Some("shieldsdepleted") | Some("targetshieldsdepleted") | Some("on_shield_break") => {
-            Some(TimingWindow::ShieldBreak)
+/// Map LCARS `trigger` (+ `target` for legacy `on_shield_break`) to engine timing. Unknown → None.
+///
+/// Shield semantics: **enemy** shields down → [`TimingWindow::ShieldBreak`]; **your** shields down
+/// → [`TimingWindow::SelfShieldBreak`]. Prefer explicit `on_enemy_shield_break` / `on_own_shield_break`;
+/// legacy `on_shield_break` uses `target: enemy` vs `target: self` (default `self` if omitted).
+pub(crate) fn effect_trigger_timing(effect: &LcarsEffect) -> Option<TimingWindow> {
+    let t = effect.trigger.as_deref().map(normalize_trigger)?;
+    match t.as_str() {
+        "on_own_shield_break" | "self_shields_depleted" | "own_shields_depleted" => {
+            Some(TimingWindow::SelfShieldBreak)
         }
-        Some("battlewon") | Some("on_kill") => Some(TimingWindow::Kill),
-        Some("hulldamagetaken") | Some("on_hull_breach") => Some(TimingWindow::HullBreach),
-        Some("shielddamagetaken") | Some("on_receive_damage") => Some(TimingWindow::ReceiveDamage),
-        Some("on_combat_end") => Some(TimingWindow::CombatEnd),
+        "on_enemy_shield_break"
+        | "enemy_shields_depleted"
+        | "target_shields_depleted"
+        | "targetshieldsdepleted" => Some(TimingWindow::ShieldBreak),
+        "shieldsdepleted" | "on_shield_break" => {
+            let who = effect
+                .target
+                .as_deref()
+                .map(|s| s.trim().to_ascii_lowercase())
+                .unwrap_or_else(|| "self".to_string());
+            if who == "enemy" {
+                Some(TimingWindow::ShieldBreak)
+            } else {
+                Some(TimingWindow::SelfShieldBreak)
+            }
+        }
+        "passive" => Some(TimingWindow::CombatBegin),
+        "combatstart" | "on_combat_start" => Some(TimingWindow::CombatBegin),
+        "roundstart" | "on_round_start" => Some(TimingWindow::RoundStart),
+        "criticalshotfired"
+        | "enemytakeshit"
+        | "on_attack"
+        | "on_hit"
+        | "on_critical" => Some(TimingWindow::AttackPhase),
+        "after_shot"
+        | "on_after_shot"
+        | "subround_end"
+        | "on_subround_end"
+        | "after_weapon"
+        | "on_after_weapon" => Some(TimingWindow::AfterSubround),
+        "hittaken" | "on_defense" => Some(TimingWindow::DefensePhase),
+        "roundend" | "on_round_end" => Some(TimingWindow::RoundEnd),
+        "battlewon" | "on_kill" => Some(TimingWindow::Kill),
+        "hulldamagetaken" | "on_hull_breach" => Some(TimingWindow::HullBreach),
+        "shielddamagetaken" | "on_receive_damage" => Some(TimingWindow::ReceiveDamage),
+        "on_combat_end" => Some(TimingWindow::CombatEnd),
         _ => None,
     }
 }
@@ -194,7 +215,7 @@ fn resolve_effect(
         return None;
     }
     let tier = options.tier_for(officer_id);
-    let timing = trigger_to_timing(effect.trigger.as_deref())?;
+    let timing = effect_trigger_timing(effect)?;
 
     match effect.effect_type.as_str() {
         "stat_modify" => {
@@ -454,8 +475,7 @@ pub fn lcars_effect_coverage(
     if effect.effect_type == "stat_modify" {
         let stat = effect.stat.as_deref().unwrap_or("").trim();
         if stat.eq_ignore_ascii_case("accuracy") {
-            let pathway = if trigger_to_timing(effect.trigger.as_deref())
-                == Some(TimingWindow::CombatBegin)
+            let pathway = if effect_trigger_timing(effect) == Some(TimingWindow::CombatBegin)
             {
                 "combat_begin_accuracy_static"
             } else {
@@ -472,7 +492,7 @@ pub fn lcars_effect_coverage(
         }
     }
 
-    if trigger_to_timing(effect.trigger.as_deref()).is_none() {
+    if effect_trigger_timing(effect).is_none() {
         let tr = effect
             .trigger
             .as_deref()
@@ -608,7 +628,7 @@ pub fn resolve_crew_to_buff_set(
             if effect.effect_type != "stat_modify" {
                 continue;
             }
-            if trigger_to_timing(effect.trigger.as_deref()) != Some(TimingWindow::CombatBegin) {
+            if effect_trigger_timing(effect) != Some(TimingWindow::CombatBegin) {
                 continue;
             }
             let stat = effect.stat.as_deref().unwrap_or("").trim();
@@ -763,7 +783,9 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 mod tests {
     use super::*;
     use crate::combat::abilities::CombatContext;
-    use crate::combat::{AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag};
+    use crate::combat::{
+        AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag, TimingWindow,
+    };
     use crate::lcars::parser::{
         load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect, LcarsOfficer,
         LcarsScaling,
@@ -1374,5 +1396,33 @@ mod tests {
                 ..
             } if (bonus_pct - 0.5).abs() < 1e-12
         ));
+    }
+
+    #[test]
+    fn effect_trigger_timing_on_shield_break_targets_self_vs_enemy() {
+        let mut e = lcars_effect_stat_modify("weapon_damage", 0.1, "on_shield_break");
+        e.target = Some("self".to_string());
+        assert_eq!(
+            effect_trigger_timing(&e),
+            Some(TimingWindow::SelfShieldBreak)
+        );
+        e.target = Some("enemy".to_string());
+        assert_eq!(effect_trigger_timing(&e), Some(TimingWindow::ShieldBreak));
+        e.target = None;
+        assert_eq!(
+            effect_trigger_timing(&e),
+            Some(TimingWindow::SelfShieldBreak)
+        );
+    }
+
+    #[test]
+    fn effect_trigger_timing_explicit_own_and_enemy_shield_triggers() {
+        let mut e = lcars_effect_stat_modify("weapon_damage", 0.1, "on_own_shield_break");
+        assert_eq!(
+            effect_trigger_timing(&e),
+            Some(TimingWindow::SelfShieldBreak)
+        );
+        e.trigger = Some("on_enemy_shield_break".to_string());
+        assert_eq!(effect_trigger_timing(&e), Some(TimingWindow::ShieldBreak));
     }
 }

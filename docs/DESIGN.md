@@ -142,7 +142,9 @@ The simulator tracks implementation status per combat mechanic. LCARS validation
 | `on_attack` | Each time this ship attacks |
 | `on_hit` | Each time an attack lands |
 | `on_critical` | Each time a critical hit lands |
-| `on_shield_break` | When target's shields reach 0 |
+| `on_shield_break` | Legacy: **whose** shields is inferred from `target` — `target: self` → your shields depleted ([`TimingWindow::SelfShieldBreak`](../src/combat/abilities.rs)); `target: enemy` → enemy shields depleted ([`ShieldBreak`](../src/combat/abilities.rs)). If `target` is omitted, **self** is assumed. Prefer explicit `on_own_shield_break` / `on_enemy_shield_break`. |
+| `on_own_shield_break` | When **your** ship's shields reach 0 (counter-fire, etc.) |
+| `on_enemy_shield_break` | When the **opponent's** shields reach 0 (Yan'Agh-style) |
 | `on_hull_breach` | When target's hull drops below threshold |
 | `on_kill` | When this ship destroys a target |
 | `on_receive_damage` | When this ship takes damage |
@@ -338,7 +340,7 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 2. **Normalizer:** `cargo run --bin normalize_data_stfc_space` reads `data/upstream/data-stfc-space/ships/<numeric_id>.json`, applies the catalog, and writes [data/ships_extended/](../data/ships_extended/) `<kobayashi_id>.json` with optional top-level `abilities`: `{ id, timing, effect_type, value }` (first `values[].value` only; per-tier ability curves are not modeled yet).
 3. **Load / resolve:** [src/data/ship.rs](../src/data/ship.rs) (`ExtendedShipRecord`, `ShipRecord`) deserializes `abilities`; `ExtendedShipRecord::to_ship_record` copies them onto the flat record for the chosen tier/level.
 4. **Scenario:** [src/optimizer/monte_carlo/scenario.rs](../src/optimizer/monte_carlo/scenario.rs) calls `extend_crew_with_ship_abilities`, which appends [src/data/ship_ability_resolve.rs](../src/data/ship_ability_resolve.rs) `ship_abilities_to_crew_seat_contexts` after officer seats. Each supported ability becomes a `CrewSeatContext` with `CrewSeat::Ship` and `AbilityClass::ShipAbility`.
-5. **Combat loop:** The hot path treats these like other timed crew effects: [src/combat/engine.rs](../src/combat/engine.rs) and [src/combat/effect_accumulator.rs](../src/combat/effect_accumulator.rs) apply the same `TimingWindow` ordering described above (passive, round start, per sub-round attack/defense, round end, shield break, receive_damage, kill, hull breach, combat end).
+5. **Combat loop:** The hot path treats these like other timed crew effects: [src/combat/engine.rs](../src/combat/engine.rs) and [src/combat/effect_accumulator.rs](../src/combat/effect_accumulator.rs) apply the same `TimingWindow` ordering described above (passive, round start, per sub-round attack/defense, round end, shield break, receive_damage, kill, hull breach, combat end). When the **defender’s** shields are depleted, defender-side `ShieldBreak` effects (e.g. from hostile ship abilities in `defender_crew`) are evaluated too: immediate shield/hull regen on the defender where applicable, and other effects feed that sub-round’s counter-attack; return fire’s damage-through uses weapon pierce plus the accumulator’s `pre_attack_pierce_bonus` (same stacking model as outbound fire).
 
 **Manual / test data:** You can set `abilities` on `ships_extended/<id>.json` directly (same JSON shape as normalizer output). Fixture coverage for catalog effect types: [tests/fixtures/ship_abilities/catalog_effect_coverage.json](../tests/fixtures/ship_abilities/catalog_effect_coverage.json).
 

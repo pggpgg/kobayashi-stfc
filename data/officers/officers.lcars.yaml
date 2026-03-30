@@ -3488,7 +3488,7 @@ officers:
       target: enemy
       operator: null
       value: 1.0
-      trigger: on_shield_break
+      trigger: on_own_shield_break
       duration: permanent
       scaling: null
       condition: null
@@ -7439,14 +7439,15 @@ officers:
   rarity: uncommon
   group: BLOOD & HONOR
   captain_ability:
-    name: Yan'Agh (Captain)
+    # Klingon Tactics (loca 69): enemy shields depleted → weapon damage; canonical rank values 0.1/0.05/0.1 → flat 0.1 in LCARS scaling.
+    name: Klingon Tactics
     effects:
     - type: stat_modify
       stat: weapon_damage
       target: self
-      operator: multiply
-      value: 1.1
-      trigger: passive
+      operator: add
+      value: 0.1
+      trigger: on_enemy_shield_break
       duration: permanent
       scaling:
         base: 0.1
@@ -7460,7 +7461,8 @@ officers:
       accumulate: null
       decay: null
   bridge_ability:
-    name: Yan'Agh (Bridge)
+    # Wolf among the ships (loca 70): vs Romulans; % of crew health → weapon_damage add (see Yuki bridge for rank-1→5 linear curve).
+    name: Wolf among the ships
     effects:
     - type: stat_modify
       stat: weapon_damage
@@ -7474,7 +7476,9 @@ officers:
         per_rank: 1.1875
         max_rank: 5
         base_chance: null
-      condition: null
+      condition:
+        type: defender_faction_is
+        faction: romulan
       chance: null
       multiplier: null
       tag: null
