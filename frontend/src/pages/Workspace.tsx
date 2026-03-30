@@ -56,6 +56,8 @@ export default function Workspace() {
         optimizePhase={ws.optimizePhase}
         optimizeEtaSeconds={ws.optimizeEtaSeconds}
         optimizeStreamMode={ws.optimizeStreamMode}
+        selectedSupportBuffs={ws.selectedSupportBuffs}
+        onSelectedSupportBuffsChange={ws.setSelectedSupportBuffs}
       />
       <SavePresetModal
         open={ws.showSavePreset}

@@ -30,6 +30,7 @@ import {
   createEmptyPins,
   type PinsState,
 } from "./types";
+import type { SupportBuffId } from "./supportBuffs";
 import {
   buildWorkspaceOptimizeStartBody,
   buildWorkspaceSimulateParams,
@@ -98,6 +99,11 @@ export function useWorkspace() {
   // Optimizer strategy
   const [optimizerStrategy, setOptimizerStrategy] =
     useState<import("./api").OptimizerStrategyType>("exhaustive");
+
+  // Alliance / ship support buffs (UI + request payload; combat application TBD)
+  const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
+    SupportBuffId[]
+  >([]);
 
   // Heuristics state
   const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
@@ -245,6 +251,7 @@ export function useWorkspace() {
       simsPerCrew,
       shipTier,
       shipLevel,
+      supportBuffs: selectedSupportBuffs,
     });
     if (!simParams) {
       setError("Select a captain first");
@@ -513,6 +520,7 @@ export function useWorkspace() {
           belowDecksStrategy,
           shipTier,
           shipLevel,
+          supportBuffs: selectedSupportBuffs,
           optimizeConstraints: {
             mustIncludeComma: optimizeMustInclude,
             excludeComma: optimizeExclude,
@@ -643,6 +651,8 @@ export function useWorkspace() {
     setMaxCandidates,
     prioritizeBelowDecksAbility,
     setPrioritizeBelowDecksAbility,
+    selectedSupportBuffs,
+    setSelectedSupportBuffs,
     // Heuristics
     availableSeeds,
     selectedSeeds,

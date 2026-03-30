@@ -59,6 +59,13 @@ textarea:focus-visible,
   outline-offset: 2px;
 }
 
+.support-buff-select > summary {
+  list-style: none;
+}
+.support-buff-select > summary::-webkit-details-marker {
+  display: none;
+}
+
 /* LCARS-inspired rail */
 .rail {
   border-radius: 0 8px 8px 0;

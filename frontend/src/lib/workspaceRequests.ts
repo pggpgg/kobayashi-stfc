@@ -1,4 +1,5 @@
 import type { OptimizeCrewConstraintsBody, OptimizerStrategyType } from "./api";
+import type { SupportBuffId } from "./supportBuffs";
 import type { CrewState } from "./types";
 
 /** Params for POST /api/simulate from workspace UI (single-crew Monte Carlo). */
@@ -9,6 +10,7 @@ export function buildWorkspaceSimulateParams(args: {
   simsPerCrew: number;
   shipTier: number;
   shipLevel: number;
+  supportBuffs?: SupportBuffId[];
 }): {
   ship: string;
   hostile: string;
@@ -20,8 +22,13 @@ export function buildWorkspaceSimulateParams(args: {
   num_sims: number;
   ship_tier: number;
   ship_level: number;
+  support_buffs?: string[];
 } | null {
   if (!args.crew.captain) return null;
+  const support_buffs =
+    args.supportBuffs && args.supportBuffs.length > 0
+      ? [...args.supportBuffs]
+      : undefined;
   return {
     ship: args.shipId || "Saladin",
     hostile: args.scenarioId || "2918121098",
@@ -33,6 +40,7 @@ export function buildWorkspaceSimulateParams(args: {
     num_sims: args.simsPerCrew,
     ship_tier: args.shipTier,
     ship_level: args.shipLevel,
+    ...(support_buffs ? { support_buffs } : {}),
   };
 }
 
@@ -124,6 +132,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
   belowDecksStrategy: "ordered" | "exploration";
   shipTier: number;
   shipLevel: number;
+  supportBuffs?: SupportBuffId[];
   optimizeConstraints?: {
     mustIncludeComma: string;
     excludeComma: string;
@@ -136,6 +145,11 @@ export function buildWorkspaceOptimizeStartBody(args: {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
     : undefined;
+
+  const support_buffs =
+    args.supportBuffs && args.supportBuffs.length > 0
+      ? [...args.supportBuffs]
+      : undefined;
 
   return {
     ship: args.shipId || "Saladin",
@@ -154,6 +168,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
         : undefined,
     ship_tier: args.shipTier,
     ship_level: args.shipLevel,
+    ...(support_buffs ? { support_buffs } : {}),
     ...(constraints ? { constraints } : {}),
   };
 }
