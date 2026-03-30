@@ -1,0 +1,10 @@
+{
+  "profiles": [
+    {
+      "id": "demo",
+      "name": "Demo",
+      "sync_token": "00000000-0000-4000-8000-000000000001"
+    }
+  ],
+  "default_id": "demo"
+}

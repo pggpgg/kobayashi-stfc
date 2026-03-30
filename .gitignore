@@ -33,8 +33,9 @@ benchmark_log.csv
 # Sync ingress log (append-only when POST /api/sync/ingress is received)
 sync.log
 
-# User profiles (keep only demo for repo)
+# User profiles (keep only demo for repo). index.json holds sync tokens — never commit.
 profiles/*
-!profiles/index.json
+!profiles/README.md
+!profiles/index.json.example
 !profiles/demo/
 !profiles/demo/**

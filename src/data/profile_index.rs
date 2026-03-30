@@ -12,6 +12,8 @@ use uuid::Uuid;
 pub const PROFILES_DIR: &str = "profiles";
 pub const PROFILE_INDEX_PATH: &str = "profiles/index.json";
 pub const DEFAULT_PROFILE_ID: &str = "default";
+/// Bundled sample profile directory in the repo (`profiles/demo/`). Not secret; index entries are local.
+pub const DEMO_PROFILE_ID: &str = "demo";
 
 /// One profile entry in the index.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -233,6 +235,9 @@ pub fn create_profile(
 
 /// Migrate from legacy single-profile layout (data/profile.json, rosters/*) to profiles/default/.
 /// Call once at startup; idempotent (skips if profiles/index.json already exists).
+///
+/// When there is no legacy data but the shipped [`DEMO_PROFILE_ID`] tree exists (fresh git clone),
+/// writes a new `profiles/index.json` with a **fresh** sync token so secrets are not read from the repo.
 pub fn migrate_from_legacy_if_needed() -> std::io::Result<()> {
     if Path::new(PROFILE_INDEX_PATH).exists() {
         return Ok(());
@@ -240,7 +245,23 @@ pub fn migrate_from_legacy_if_needed() -> std::io::Result<()> {
     let legacy_profile = Path::new("data/profile.json");
     let legacy_rosters = Path::new("rosters");
     if !legacy_profile.exists() && !legacy_rosters.exists() {
-        // Nothing to migrate; create default profile
+        // Nothing to migrate: bootstrap shipped demo profile if present, else a single "default" profile.
+        let demo_dir = profile_data_dir(DEMO_PROFILE_ID);
+        let demo_profile_json = demo_dir.join(PROFILE_JSON);
+        if demo_dir.is_dir() && demo_profile_json.is_file() {
+            let mut index = ProfileIndex::default();
+            let sync_token = Uuid::new_v4().to_string();
+            index.profiles.push(ProfileEntry {
+                id: DEMO_PROFILE_ID.to_string(),
+                name: "Demo".to_string(),
+                sync_token,
+                is_default: None,
+            });
+            index.default_id = Some(DEMO_PROFILE_ID.to_string());
+            save_profile_index(&index)?;
+            fs::create_dir_all(demo_dir.join(PRESETS_SUBDIR))?;
+            return Ok(());
+        }
         let mut index = ProfileIndex::default();
         ensure_profile(&mut index, DEFAULT_PROFILE_ID, Some("Default"))?;
         return Ok(());
