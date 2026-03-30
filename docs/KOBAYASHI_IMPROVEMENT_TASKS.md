@@ -40,11 +40,11 @@ Workflow triggers are limited to `main`/`master`. If the team uses long-lived br
 
 ### Phase 2 — Data & correctness
 
-**4. Stabilize research integration tests operationally**  
-`tests/scenario_research_integration_tests.rs` depends on a populated `data/research_catalog.json` and upstream fetch workflow ([ROADMAP.md](ROADMAP.md)). Document the refresh path in contributor onboarding and/or add a CI job that fails with a clear message when the catalog is missing or stale relative to a checksum.
+**4. Stabilize research integration tests operationally** — **done**  
+`tests/scenario_research_integration_tests.rs` fails in CI (`CI=true`) if `data/research_catalog.json` is missing or empty, with a message pointing at `scripts/import_stfcspace_research.mjs` and [data/README.md](../data/README.md). [README.md](../README.md) and [scripts/README.md](../scripts/README.md) document the refresh path; local runs still skip when the catalog is absent unless `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1`.
 
-**5. Verify research `accuracy` and conditional scopes**  
-`accuracy` and faction-/mode-scoped research lines are called out as partially verified. Add calibration against combat logs or toolbox expectations; tighten `buff_id_to_stat` / scenario wiring where descriptions were mapped as global bonuses incorrectly.
+**5. Verify research `accuracy` and conditional scopes** — **done (regression + docs)**  
+`accuracy` merge and scaling into `AttackerStats` for mitigation are covered by `tests/research_profile_merge_tests.rs` (fixture rid `99000003`) and `scenario::tests::research_merged_accuracy_multiplies_ship_base_in_effective_attacker_stats`. [data/README.md](../data/README.md) § Research documents that catalog lines are **global** in the engine and that conditional in-game scopes require manual mapping fixes, not automatic gating.
 
 **6. Complete forbidden tech `fid` mapping**  
 Synced FT merges match catalog rows by `fid`; gaps are documented in [ROADMAP.md](ROADMAP.md). Build or import a mapping from game/sync ids to catalog entries so “Use synced” applies the right bonuses for typical profiles.

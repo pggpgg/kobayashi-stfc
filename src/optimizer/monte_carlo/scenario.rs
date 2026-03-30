@@ -1014,6 +1014,63 @@ mod tests {
     }
 
     #[test]
+    fn research_merged_accuracy_multiplies_ship_base_in_effective_attacker_stats() {
+        use crate::data::import::ResearchEntry;
+        use crate::data::profile::merge_research_bonuses_into_profile;
+        use crate::data::research::{ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord};
+
+        let catalog = ResearchCatalog {
+            source: Some("test".into()),
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid: 42_001,
+                name: None,
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "accuracy".into(),
+                        value: 0.05,
+                        operator: "add".into(),
+                    }],
+                }],
+            }],
+        };
+        let imported = vec![ResearchEntry {
+            rid: 42_001,
+            level: 1,
+        }];
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+
+        let ship_rec = ShipRecord {
+            id: "t".into(),
+            ship_name: "T".into(),
+            ship_class: "explorer".into(),
+            armor_piercing: 100.0,
+            shield_piercing: 100.0,
+            accuracy: 400.0,
+            attack: 1.0,
+            crit_chance: 0.0,
+            crit_damage: 1.0,
+            hull_health: 1.0,
+            shield_health: 0.0,
+            shield_mitigation: None,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: None,
+            abilities: None,
+        };
+        let stats = effective_attacker_stats_for_mitigation(&ship_rec, &profile, &HashMap::new());
+        assert!(
+            (stats.accuracy - 420.0).abs() < 1e-6,
+            "expected 400 * (1 + 0.05) research accuracy bonus, got {}",
+            stats.accuracy
+        );
+    }
+
+    #[test]
     fn effective_accuracy_stacks_profile_officer_buffs_hull_combat_begin_and_mult() {
         let mut profile = PlayerProfile::default();
         profile.bonuses.insert("accuracy".to_string(), 0.25);
