@@ -696,7 +696,7 @@ pub fn start_optimize_job(
     let heuristics_seeds_nonempty = request
         .heuristics_seeds
         .as_ref()
-        .map_or(false, |s| !s.is_empty());
+        .is_some_and(|s| !s.is_empty());
 
     {
         let mut map = lock_jobs();
@@ -779,10 +779,10 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
     let now_ms = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
-        .as_millis() as u128;
+        .as_millis();
     let started_ms = parse_optimize_job_timestamp_ms(job_id);
     let elapsed_s = ((now_ms.saturating_sub(started_ms)) as f64) / 1000.0;
-    let crew_like_phase = state.phase.as_deref().map_or(true, |p| {
+    let crew_like_phase = state.phase.as_deref().is_none_or(|p| {
         matches!(
             p,
             "heuristics" | "monte_carlo" | "tiered_scout" | "tiered_confirm"

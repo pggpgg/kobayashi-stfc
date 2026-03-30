@@ -182,8 +182,6 @@ pub fn create_profile(
             .map(|c| {
                 if c.is_ascii_alphanumeric() {
                     c.to_ascii_lowercase()
-                } else if c.is_whitespace() {
-                    '_'
                 } else {
                     '_'
                 }

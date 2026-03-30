@@ -30,8 +30,8 @@ Work in **phases** so foundations and correctness land before large feature work
 **1. Align `npm run verify` with CI**  
 `scripts/verify.mjs` runs `cargo test`, `cargo build --release`, `cargo clippy`, and frontend `test`/`build`, but **does not** mirror `cargo fmt --check`, `cargo audit`, `npm audit`, Biome `lint`, or `tsc` typecheck. Extend the script (or document a two-command workflow) so a pre-push local run matches what GitHub enforces.
 
-**2. Treat Clippy warnings as errors in CI (optional flag)**  
-CI runs `cargo clippy --all-targets` without `-D warnings`. Tighten gradually (fix existing warnings, then add `-- -D warnings` or a workspace `clippy.toml`) so new debt does not accumulate.
+**2. Treat Clippy warnings as errors in CI (optional flag)** — **done**  
+CI and `npm run verify` run `cargo clippy --all-targets -- -D warnings`. Remaining policy exceptions use targeted `#[allow(clippy::…)]` on specific APIs (e.g. many-arg registry entrypoints, complex tuple return types).
 
 **3. Run CI on development branches**  
 Workflow triggers are limited to `main`/`master`. If the team uses long-lived branches (e.g. `cursor/stage-batch`), add `workflow_dispatch` and/or branch patterns so PRs and pushes to those branches get the same checks without manual `verify` runs.

@@ -337,35 +337,6 @@ fn content_type_for_path(path: &std::path::Path) -> &'static str {
     }
 }
 
-#[cfg(test)]
-mod spa_cache_control_tests {
-    use super::spa_asset_cache_control;
-
-    #[test]
-    fn index_and_root_are_no_cache() {
-        assert_eq!(spa_asset_cache_control(""), "no-cache");
-        assert_eq!(spa_asset_cache_control("index.html"), "no-cache");
-        assert_eq!(spa_asset_cache_control("INDEX.HTML"), "no-cache");
-    }
-
-    #[test]
-    fn vite_assets_are_immutable_long_cache() {
-        assert_eq!(
-            spa_asset_cache_control("assets/index-abc123.js"),
-            "public, max-age=31536000, immutable"
-        );
-        assert_eq!(
-            spa_asset_cache_control("assets/index-abc123.css"),
-            "public, max-age=31536000, immutable"
-        );
-    }
-
-    #[test]
-    fn other_root_files_short_cache() {
-        assert_eq!(spa_asset_cache_control("vite.svg"), "public, max-age=86400");
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Fallback when no SPA dist is present
 // ---------------------------------------------------------------------------
@@ -565,7 +536,7 @@ async fn handle_profiles_delete(Path(id): Path<String>) -> impl IntoResponse {
 }
 
 async fn handle_profiles_export() -> impl IntoResponse {
-    match tokio::task::spawn_blocking(|| profile_backup::export_profiles_zip()).await {
+    match tokio::task::spawn_blocking(profile_backup::export_profiles_zip).await {
         Ok(Ok(bytes)) => {
             let filename = format!(
                 "kobayashi-profiles-{}.zip",
@@ -1098,4 +1069,33 @@ fn legacy_console_html() -> String {
 </html>
 "#
     .to_string()
+}
+
+#[cfg(test)]
+mod spa_cache_control_tests {
+    use super::spa_asset_cache_control;
+
+    #[test]
+    fn index_and_root_are_no_cache() {
+        assert_eq!(spa_asset_cache_control(""), "no-cache");
+        assert_eq!(spa_asset_cache_control("index.html"), "no-cache");
+        assert_eq!(spa_asset_cache_control("INDEX.HTML"), "no-cache");
+    }
+
+    #[test]
+    fn vite_assets_are_immutable_long_cache() {
+        assert_eq!(
+            spa_asset_cache_control("assets/index-abc123.js"),
+            "public, max-age=31536000, immutable"
+        );
+        assert_eq!(
+            spa_asset_cache_control("assets/index-abc123.css"),
+            "public, max-age=31536000, immutable"
+        );
+    }
+
+    #[test]
+    fn other_root_files_short_cache() {
+        assert_eq!(spa_asset_cache_control("vite.svg"), "public, max-age=86400");
+    }
 }

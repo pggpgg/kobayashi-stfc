@@ -269,7 +269,7 @@ fn opponent_faction_from_faction_loca_id(loca: u64) -> Option<OpponentFactionTag
         19 => Some(OpponentFactionTag::Cardassian),
         21 => Some(OpponentFactionTag::Dominion),
         24 => Some(OpponentFactionTag::ExBorg),
-        30 | 31 | 32 => Some(OpponentFactionTag::Xindi),
+        30..=32 => Some(OpponentFactionTag::Xindi),
         33 => Some(OpponentFactionTag::GornHuntingPack),
         34 | 36 => Some(OpponentFactionTag::MirrorUniverse),
         84003 => Some(OpponentFactionTag::Borg),

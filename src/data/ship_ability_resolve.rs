@@ -212,9 +212,7 @@ pub fn sum_combat_begin_accuracy_from_ship_abilities(abilities: &[ShipAbility]) 
 /// One ship hull ability → one seat context, or None if unsupported.
 pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSeatContext> {
     if let Some(ref slug) = ability.condition_opponent_faction {
-        if OpponentFactionTag::from_data_slug(slug).is_none() {
-            return None;
-        }
+        OpponentFactionTag::from_data_slug(slug)?;
     }
     let timing = parse_ship_ability_timing(&ability.timing)?;
     let effect = ship_ability_effect_from_catalog(

@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Size: {} rows x {} cols\nFirst 25 rows:", height, width);
 
     for (i, row) in range.rows().take(25).enumerate() {
-        let cells: Vec<String> = row.iter().map(|c| cell_str(c)).collect();
+        let cells: Vec<String> = row.iter().map(cell_str).collect();
         println!("  {}: {}", i, cells.join(" | "));
     }
     Ok(())

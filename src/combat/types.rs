@@ -28,7 +28,7 @@ pub fn round_half_even(x: f64) -> u32 {
         fl_u + 1
     } else {
         // tie: round to nearest even
-        if fl_u % 2 == 0 {
+        if fl_u.is_multiple_of(2) {
             fl_u
         } else {
             fl_u + 1
@@ -104,7 +104,7 @@ impl EnemyTypes {
     }
 
     pub fn contains(&self, tag: EnemyType) -> bool {
-        self.0.iter().any(|&t| t == tag)
+        self.0.contains(&tag)
     }
 
     /// Same tags, adjacent duplicates collapsed, original order kept.

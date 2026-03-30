@@ -68,7 +68,7 @@ try {
 
   run("cargo test");
   run("cargo build --release");
-  run("cargo clippy --all-targets");
+  run("cargo clippy --all-targets -- -D warnings");
 
   if (!truthyEnv("VERIFY_SKIP_CARGO_AUDIT")) {
     run("cargo audit");

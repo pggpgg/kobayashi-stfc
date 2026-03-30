@@ -206,7 +206,7 @@ mod tests {
         let index = minimal_index();
         let map = build_bid_to_building_id_from_json(translations, &index).unwrap();
         assert_eq!(map.get(&50), Some(&"building_50".to_string()));
-        assert!(map.get(&0).is_none());
-        assert!(map.get(&1).is_none());
+        assert!(!map.contains_key(&0));
+        assert!(!map.contains_key(&1));
     }
 }

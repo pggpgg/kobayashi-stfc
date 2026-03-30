@@ -3,7 +3,7 @@
 # - npm: `npm audit --audit-level=high` — FAIL on high/critical only; moderate/low do not fail the job.
 #
 # CI quality (audit task 8):
-# - Rust: `cargo fmt --check` (requires rustfmt).
+# - Rust: `cargo fmt --check` (requires rustfmt); `cargo clippy --all-targets -- -D warnings`.
 # - Frontend: Biome (`npm run lint`); TypeScript same policy as local builds (`npm run typecheck` = `tsc -b`; see frontend/tsconfig.json strict options).
 #
 # API contracts (audit task 7):
@@ -53,7 +53,7 @@ jobs:
         run: cargo build --release
 
       - name: cargo clippy
-        run: cargo clippy --all-targets
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Install cargo-audit
         uses: taiki-e/install-action@v2

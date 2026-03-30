@@ -128,7 +128,7 @@ fn shield_mitigation_from_components(components: &[Value]) -> Option<f64> {
 }
 
 fn systems_from_values(vals: &[Value]) -> Vec<u64> {
-    vals.iter().filter_map(|v| value_to_u64(v)).collect()
+    vals.iter().filter_map(value_to_u64).collect()
 }
 
 fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
@@ -256,7 +256,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for entry in fs::read_dir(&upstream)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().map_or(true, |e| e != "json") {
+        if path.extension().is_none_or(|e| e != "json") {
             continue;
         }
         let content = match fs::read_to_string(&path) {

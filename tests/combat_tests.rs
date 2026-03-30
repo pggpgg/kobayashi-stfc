@@ -145,7 +145,7 @@ fn pierce_damage_through_bonus_derived_from_mitigation() {
         let mit = mitigation(defender, attacker, ship_type);
         let pierce = pierce_damage_through_bonus(defender, attacker, ship_type);
         approx_eq(pierce, PIERCE_CAP * (1.0 - mit), 1e-12);
-        assert!(pierce >= 0.0 && pierce <= PIERCE_CAP);
+        assert!((0.0..=PIERCE_CAP).contains(&pierce));
     }
 }
 
@@ -1926,8 +1926,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     let round_one_proc_roll = round_one_proc.values["roll"]
         .as_f64()
         .expect("proc roll as f64");
-    assert!(round_one_crit_roll >= 0.0 && round_one_crit_roll <= 1.0);
-    assert!(round_one_proc_roll >= 0.0 && round_one_proc_roll <= 1.0);
+    assert!((0.0..=1.0).contains(&round_one_crit_roll));
+    assert!((0.0..=1.0).contains(&round_one_proc_roll));
     assert_eq!(
         round_one_crit.values["is_crit"],
         Value::Bool(round_one_crit_roll < 0.5)
@@ -1945,8 +1945,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     let round_two_proc_roll = round_two_proc.values["roll"]
         .as_f64()
         .expect("proc roll as f64");
-    assert!(round_two_crit_roll >= 0.0 && round_two_crit_roll <= 1.0);
-    assert!(round_two_proc_roll >= 0.0 && round_two_proc_roll <= 1.0);
+    assert!((0.0..=1.0).contains(&round_two_crit_roll));
+    assert!((0.0..=1.0).contains(&round_two_proc_roll));
     assert_eq!(
         round_two_crit.values["is_crit"],
         Value::Bool(round_two_crit_roll < 0.5)
@@ -2435,7 +2435,7 @@ fn burning_deals_one_percent_hull_per_round() {
         .events
         .iter()
         .filter(|event| event.event_type == "end_of_round_effects")
-        .filter(|event| event.values["burning_damage"] == Value::from(5.0))
+        .filter(|event| event.values["burning_damage"] == 5.0)
         .count();
     assert_eq!(burning_ticks, 3);
 }

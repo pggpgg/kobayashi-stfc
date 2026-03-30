@@ -300,7 +300,7 @@ fn unique_canonical_display_names(
             }
         }
     }
-    out.sort_by(|a, b| a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase()));
+    out.sort_by_key(|a| a.to_ascii_lowercase());
     out
 }
 

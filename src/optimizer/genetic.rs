@@ -184,7 +184,7 @@ fn random_crew_constrained(
     const MAX_TRIES: usize = 25_000;
     for _ in 0..MAX_TRIES {
         let c = random_crew(rng, pools, below_decks_slots)?;
-        if constraints.map_or(true, |co| co.satisfies(&c)) {
+        if constraints.is_none_or(|co| co.satisfies(&c)) {
             return Some(c);
         }
     }
@@ -205,7 +205,7 @@ fn init_population_seeded(
 
     // Inject seed candidates (up to population_size, preserving order = author priority).
     for candidate in seed_candidates.iter().take(population_size) {
-        if constraints.map_or(true, |co| co.satisfies(candidate)) {
+        if constraints.is_none_or(|co| co.satisfies(candidate)) {
             pop.push(candidate.clone());
         }
     }
@@ -499,7 +499,7 @@ pub fn run_genetic_optimizer(
         }
 
         // Adaptive mutation: bump rate by 1.5× every 3 stagnant generations.
-        if config.adaptive_mutation && stagnation > 0 && stagnation % 3 == 0 {
+        if config.adaptive_mutation && stagnation > 0 && stagnation.is_multiple_of(3) {
             current_mutation_rate = (current_mutation_rate * 1.5).min(config.mutation_rate_ceiling);
         }
 
@@ -539,7 +539,7 @@ pub fn run_genetic_optimizer(
             if let Some(co) = config.constraints.as_ref() {
                 if !co.satisfies(&child) {
                     child = random_crew_constrained(&mut rng, &pools, bd_slots, Some(co))
-                        .unwrap_or_else(|| child);
+                        .unwrap_or(child);
                 }
             }
             next_pop.push(child);

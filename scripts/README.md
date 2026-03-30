@@ -42,7 +42,7 @@ This mirrors [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) in order:
 
 | Stage | Commands |
 |-------|----------|
-| **Rust** | `cargo fmt --all -- --check` → `cargo test` → `cargo build --release` → `cargo clippy --all-targets` → `cargo audit` |
+| **Rust** | `cargo fmt --all -- --check` → `cargo test` → `cargo build --release` → `cargo clippy --all-targets -- -D warnings` → `cargo audit` |
 | **Frontend** | `npm ci` → `npm audit --audit-level=high` → `npm run lint` → `npm run typecheck` → `npm run test` → `npm run build` (all in `frontend/`) |
 | **Python** | `python -m pip install -r tools/combat_engine/requirements-test.txt` → `python -m pytest tools/combat_engine/tests/ -v` |
 

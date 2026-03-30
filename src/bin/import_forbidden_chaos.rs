@@ -47,6 +47,7 @@ fn normalize_tech_name(s: &str) -> String {
     out.trim().to_string()
 }
 
+#[allow(clippy::type_complexity)]
 fn forbidden_tech_loca_id_to_fid_maps(
     summary_path: &Path,
 ) -> Result<

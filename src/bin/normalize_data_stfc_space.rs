@@ -83,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for entry in fs::read_dir(&upstream_ships)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().map_or(true, |e| e != "json") {
+        if path.extension().is_none_or(|e| e != "json") {
             continue;
         }
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
@@ -273,6 +273,7 @@ fn raw_to_extended(
 /// Order value used when component has no order or order is -1 (sort after valid weapons).
 const WEAPON_ORDER_LAST: i64 = 999;
 
+#[allow(clippy::type_complexity)]
 fn extract_tier_combat(
     components: &[Value],
 ) -> Result<

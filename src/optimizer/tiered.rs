@@ -20,6 +20,7 @@ pub const DEFAULT_TOP_K: usize = 20;
 /// Progress: `total_crews` = num_candidates + top_k; during scouting, `crews_done` is 0..num_candidates;
 /// after confirmation, `crews_done` reaches `total_crews`. Phases: `tiered_scout`, `tiered_confirm`.
 /// Returns false to abort.
+#[allow(clippy::too_many_arguments)]
 pub fn run_tiered_with_registry_with_progress<F>(
     registry: &DataRegistry,
     ship: &str,

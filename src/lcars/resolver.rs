@@ -11,7 +11,7 @@ use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOffic
 use serde::Serialize;
 
 /// Options when resolving officer abilities (e.g. officer tier for scaling).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ResolveOptions {
     /// Fallback officer tier (1-based) when per-officer tier is not set.
     pub tier: Option<u8>,
@@ -19,14 +19,6 @@ pub struct ResolveOptions {
     pub officer_tiers: Option<HashMap<String, u8>>,
 }
 
-impl Default for ResolveOptions {
-    fn default() -> Self {
-        Self {
-            tier: None,
-            officer_tiers: None,
-        }
-    }
-}
 
 impl ResolveOptions {
     /// Tier to use for the given officer: per-officer tier if available, else fallback [ResolveOptions::tier].
@@ -93,7 +85,7 @@ fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCon
         | "opponent_faction_is"
         | "opponent_faction"
         | "faction_is" => {
-            let slug = c.faction.as_deref().or_else(|| c.tag.as_deref())?;
+            let slug = c.faction.as_deref().or(c.tag.as_deref())?;
             AbilityCondition::DefenderFactionIs(OpponentFactionTag::from_data_slug(slug)?)
         }
         "and" => {
@@ -586,7 +578,7 @@ pub fn resolve_crew_to_buff_set(
                 || effect
                     .duration
                     .as_ref()
-                    .map_or(false, |d| !d.is_permanent())
+                    .is_some_and(|d| !d.is_permanent())
             {
                 continue;
             }
@@ -1026,7 +1018,6 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
-            ..Default::default()
         };
         let ability_iso = LcarsAbility {
             name: "iso".to_string(),
@@ -1124,7 +1115,6 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
-            ..Default::default()
         };
         // Same officer cannot appear in multiple seats; exercise Khan's blocks on separate minimal crews.
         let buff_cap_bridge = resolve_crew_to_buff_set("khan", &[], &[], &officers, &options);
@@ -1157,7 +1147,6 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(3),
             officer_tiers: Some(officer_tiers),
-            ..Default::default()
         };
         assert_eq!(options.tier_for("officer_a"), Some(1));
         assert_eq!(options.tier_for("officer_b"), Some(5));
@@ -1165,7 +1154,6 @@ mod tests {
         let options_no_fallback = ResolveOptions {
             tier: None,
             officer_tiers: Some([("x".to_string(), 2u8)].into_iter().collect()),
-            ..Default::default()
         };
         assert_eq!(options_no_fallback.tier_for("x"), Some(2));
         assert_eq!(options_no_fallback.tier_for("y"), None);
@@ -1213,12 +1201,10 @@ mod tests {
         let options_tier1 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 1u8)].into_iter().collect()),
-            ..Default::default()
         };
         let options_tier5 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 5u8)].into_iter().collect()),
-            ..Default::default()
         };
         let buff_tier1 =
             resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier1);

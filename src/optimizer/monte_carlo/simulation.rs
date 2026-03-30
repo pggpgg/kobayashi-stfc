@@ -172,7 +172,7 @@ fn run_candidate_monte_carlo(
             if n_done >= cfg.min_trials
                 && n_done < max_iterations
                 && cfg.check_every > 0
-                && (n_done % cfg.check_every == 0)
+                && n_done.is_multiple_of(cfg.check_every)
                 && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
             {
                 break;
@@ -325,6 +325,7 @@ pub fn run_monte_carlo_parallel_deduped(
 
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_parallel_with_registry(
     registry: &DataRegistry,
     ship: &str,
@@ -348,6 +349,7 @@ pub fn run_monte_carlo_parallel_with_registry(
 
 /// Like [run_monte_carlo] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_with_registry(
     registry: &DataRegistry,
     ship: &str,
@@ -393,6 +395,7 @@ pub struct MonteCarloSeedReplay {
 }
 
 /// Replay a single iteration from an optimize/simulate Monte Carlo run (`scenario_seed` matches the request seed).
+#[allow(clippy::too_many_arguments)]
 pub fn replay_optimize_iteration_with_registry(
     registry: &DataRegistry,
     ship: &str,

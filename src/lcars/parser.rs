@@ -107,10 +107,7 @@ pub enum LcarsDuration {
 
 impl LcarsDuration {
     pub fn is_permanent(&self) -> bool {
-        match self {
-            LcarsDuration::Permanent(_) => true,
-            _ => false,
-        }
+        matches!(self, LcarsDuration::Permanent(_))
     }
 }
 
@@ -131,7 +128,7 @@ impl LcarsScaling {
     pub fn value_at_rank(&self, rank: Option<u8>) -> f64 {
         let base = self.base.unwrap_or(0.0);
         let per = self.per_rank.unwrap_or(0.0);
-        let max = self.max_rank.unwrap_or(5).max(1) as u8;
+        let max = self.max_rank.unwrap_or(5).max(1);
         let r = rank.map(|r| r.min(max)).unwrap_or(1);
         let index = (r.saturating_sub(1)).min(max.saturating_sub(1));
         base + per * (index as f64)
@@ -140,7 +137,7 @@ impl LcarsScaling {
     pub fn chance_at_rank(&self, rank: Option<u8>) -> f64 {
         let base = self.base_chance.unwrap_or(self.base.unwrap_or(0.0));
         let per = self.per_rank.unwrap_or(0.0);
-        let max = self.max_rank.unwrap_or(5).max(1) as u8;
+        let max = self.max_rank.unwrap_or(5).max(1);
         let r = rank.map(|r| r.min(max)).unwrap_or(1);
         let index = (r.saturating_sub(1)).min(max.saturating_sub(1));
         base + per * (index as f64)
@@ -195,7 +192,7 @@ pub fn load_lcars_dir(
         let path = entry.path();
         if path.is_file() {
             let name = path.file_name().and_then(|n| n.to_str());
-            let is_lcars = name.map_or(false, |n| {
+            let is_lcars = name.is_some_and(|n| {
                 n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml")
             });
             if is_lcars {

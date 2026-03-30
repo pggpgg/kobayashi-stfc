@@ -358,7 +358,7 @@ pub fn filter_effects_by_condition(
 ) -> Vec<ActiveAbilityEffect> {
     effects
         .iter()
-        .filter(|e| e.condition.as_ref().map_or(true, |c| c.evaluate(ctx)))
+        .filter(|e| e.condition.as_ref().is_none_or(|c| c.evaluate(ctx)))
         .cloned()
         .collect()
 }

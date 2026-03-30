@@ -590,7 +590,7 @@ mod tests {
         );
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
-        assert!(profile.bonuses.get("buff_123").is_none());
+        assert!(!profile.bonuses.contains_key("buff_123"));
     }
 
     #[test]
@@ -679,7 +679,7 @@ mod tests {
         };
         merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
-        assert!(profile.bonuses.get("buff_unknown").is_none());
+        assert!(!profile.bonuses.contains_key("buff_unknown"));
     }
 
     #[test]

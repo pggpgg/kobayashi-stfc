@@ -96,8 +96,10 @@ pub struct OptimizeProgressTick {
 
 /// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, or tiered (scout → confirm).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default)]
 pub enum OptimizerStrategy {
     /// Current path: CrewGenerator then Monte Carlo then rank.
+    #[default]
     Exhaustive,
     /// Genetic algorithm for large search spaces.
     Genetic,
@@ -105,11 +107,6 @@ pub enum OptimizerStrategy {
     Tiered,
 }
 
-impl Default for OptimizerStrategy {
-    fn default() -> Self {
-        Self::Exhaustive
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct OptimizationScenario<'a> {
@@ -508,7 +505,7 @@ where
                 top_k,
                 scenario.seed,
                 scenario.profile_id,
-                |tick| on_progress(tick),
+                &mut on_progress,
             );
             OptimizeRunOutcome {
                 ranked,

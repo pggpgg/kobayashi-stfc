@@ -209,7 +209,7 @@ fn seat_from_officer(
         (timing, effect)
     } else if let Some(chance) = morale_chance {
         (TimingWindow::RoundStart, AbilityEffect::Morale(chance))
-    } else if hash % 2 == 0 {
+    } else if hash.is_multiple_of(2) {
         (
             TimingWindow::AttackPhase,
             AbilityEffect::AttackMultiplier(0.05 + ((hash >> 8) % 12) as f64 / 100.0),
@@ -235,7 +235,7 @@ fn seat_from_officer(
             effect,
             condition: None,
         },
-        boosted: hash % 5 == 0,
+        boosted: hash.is_multiple_of(5),
         officer_id,
         contribution_batch,
     }
@@ -292,7 +292,7 @@ pub(crate) fn seeded_variance(seed: u64) -> f64 {
 }
 
 fn trigger_to_timing_window(trigger: Option<&str>) -> Option<TimingWindow> {
-    match trigger.as_ref().and_then(|t| Some(t.trim())) {
+    match trigger.as_ref().map(|t| t.trim()) {
         Some("CombatStart") => Some(TimingWindow::CombatBegin),
         Some("RoundStart") => Some(TimingWindow::RoundStart),
         _ => None,

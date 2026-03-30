@@ -189,6 +189,7 @@ fn distribution_for_crew(
 }
 
 /// Run Monte Carlo for 2–5 crews and return histograms for rounds (clean wins), hull remaining (clean wins), and optional proc rates from traced subsample.
+#[allow(clippy::too_many_arguments)] // registry-driven MC entry; options are scenario + sampling knobs
 pub fn compare_crews_monte_carlo_with_registry(
     registry: &DataRegistry,
     ship: &str,

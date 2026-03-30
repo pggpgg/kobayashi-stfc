@@ -46,6 +46,7 @@ fn roll_proc(chance: f64, rng: &mut Rng) -> bool {
 /// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
 /// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach threshold;
 /// receive_damage (hull); round_end (before burn tick); kill when defender dies.
+#[allow(clippy::too_many_arguments)] // engine-internal; splitting would obscure round-phase contract
 fn roll_burning_triggers(
     effects: &[ActiveAbilityEffect],
     assimilated_active: bool,
@@ -1305,15 +1306,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             (attacker_shield_remaining + shield_regen).min(attacker.shield_health.max(0.0));
         total_attacker_hull_damage = (total_attacker_hull_damage - hull_regen).max(0.0);
 
-        if burning_rounds_remaining > 0 {
-            burning_rounds_remaining -= 1;
-        }
-        if hull_breach_rounds_remaining > 0 {
-            hull_breach_rounds_remaining -= 1;
-        }
-        if assimilated_rounds_remaining > 0 {
-            assimilated_rounds_remaining -= 1;
-        }
+        burning_rounds_remaining = burning_rounds_remaining.saturating_sub(1);
+        hull_breach_rounds_remaining = hull_breach_rounds_remaining.saturating_sub(1);
+        assimilated_rounds_remaining = assimilated_rounds_remaining.saturating_sub(1);
 
         trace.record_if(|| CombatEvent {
             event_type: "end_of_round_effects".to_string(),

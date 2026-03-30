@@ -381,14 +381,14 @@ pub fn build_crew_search_constraints(request: &OptimizeRequest) -> Option<CrewSe
 }
 
 pub fn parse_below_decks_strategy(s: Option<&String>) -> BelowDecksStrategy {
-    match s.as_deref() {
+    match s {
         Some(v) if v.trim().eq_ignore_ascii_case("exploration") => BelowDecksStrategy::Exploration,
         _ => BelowDecksStrategy::Ordered,
     }
 }
 
 pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
-    match s.as_deref() {
+    match s {
         Some(v) if v.trim().eq_ignore_ascii_case("genetic") => OptimizerStrategy::Genetic,
         Some(v) if v.trim().eq_ignore_ascii_case("tiered") => OptimizerStrategy::Tiered,
         _ => OptimizerStrategy::Exhaustive,
