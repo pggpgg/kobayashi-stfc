@@ -120,6 +120,8 @@ KOBAYASHI's core is a fast, deterministic combat simulator written in Rust. Each
 - On-kill triggers (e.g., Mudd's hull repair)
 - Player profile bonuses applied as a pre-combat modifier layer
 
+**Python reference (`tools/combat_engine`):** A small Python package mirrors core mitigation, pierce-through, apex, and isolytic math for experiments and CI checks against the Rust implementation. See [tools/combat_engine/README.md](tools/combat_engine/README.md). Run `python -m pytest tools/combat_engine/tests/ -v` (also executed via `npm run verify` and the `combat_engine_python` CI job).
+
 ### The Optimizer
 
 Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. For large search spaces, use `strategy: "genetic"` in the API to run the genetic optimizer instead. You can also select a **tiered approach** (scouting pass → confirmation on top candidates) via `strategy: "tiered"` (requires the optimizer's registry/candidate context).

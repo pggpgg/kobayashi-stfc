@@ -511,7 +511,7 @@ The engine applies these as a pre-combat modifier layer. This gets ~90% accuracy
 
 ### 5.4 Advanced Mode (research, buildings, forbidden tech)
 
-Research is implemented via a **research catalog** and merge into the profile. Synced research levels (`profiles/{id}/research.imported.json`, by `rid` and `level`) are looked up in `data/research_catalog.json`. For each research project, bonuses for levels 1..=level are summed (cumulative); only combat stats (weapon_damage, hull_hp, shield_hp, etc.) are merged into `profile.bonuses`. Merge order: forbidden tech → buildings → research. See `data/README.md` for catalog schema and import pipeline.
+Research is implemented via a **research catalog** and merge into the profile. Synced research levels (`profiles/{id}/research.imported.json`, by `rid` and `level`) are looked up in `data/research_catalog.json`. For each research project, bonuses for levels 1..=level are summed (cumulative); only combat stats (weapon_damage, hull_hp, shield_hp, isolytic_damage, isolytic_defense, apex_shred, apex_barrier, etc.) are merged into `profile.bonuses`. Merge order: forbidden tech → buildings → research. Apex research bonuses stack additively onto the player combatant with ship base apex values when building the scenario attacker. See `data/README.md` for catalog schema and import pipeline.
 
 Itemized sources (conceptual; research/building/forbidden-tech are implemented as above):
 

@@ -14,6 +14,9 @@ from enum import Enum
 
 EPSILON = 1e-9
 
+# Maximum pierce damage-through bonus (additive to (1 - mitigation)); matches Rust `combat::mitigation::PIERCE_CAP`.
+PIERCE_CAP = 0.25
+
 # Default hostile clamp (game developers use 16% floor, 72% ceiling for most hostiles).
 MITIGATION_FLOOR = 0.16
 MITIGATION_CEILING = 0.72
@@ -89,6 +92,17 @@ def mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: Ship
     """Compute total mitigation using weighted multiplicative composition. Clamped to [0, 1]."""
     total = mitigation_with_mystery(defender, attacker, ship_type, 0.0)
     return max(0.0, min(1.0, total))
+
+
+def pierce_damage_through_bonus(
+    defender: DefenderStats, attacker: AttackerStats, ship_type: ShipType
+) -> float:
+    """Pierce damage-through bonus: PIERCE_CAP * (1 - mitigation), clamped to [0, PIERCE_CAP].
+
+    Matches `src/combat/mitigation.rs` `pierce_damage_through_bonus`.
+    """
+    mit = mitigation(defender, attacker, ship_type)
+    return min(PIERCE_CAP, max(0.0, PIERCE_CAP * (1.0 - mit)))
 
 
 def mitigation_for_hostile(
