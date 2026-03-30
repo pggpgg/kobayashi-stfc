@@ -43,6 +43,8 @@ pub struct ReplaySeedRequest {
     /// Cap on returned trace events (tail of the fight). Default 500, max 2000.
     pub max_trace_events: Option<u32>,
     pub crew: ReplaySeedCrew,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -68,6 +70,8 @@ pub struct OptimizeRequest {
     /// Optional crew search constraints (must-include, exclude, groups, seating).
     #[serde(default)]
     pub constraints: Option<OptimizeConstraintsDto>,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 /// JSON body for `OptimizeRequest.constraints`.

@@ -353,6 +353,8 @@ export async function compareCrewsDistributions(
     ship_level?: number | null;
     below_decks_slots?: number | null;
     proc_sample_trials?: number;
+    /** Same ids as simulate/optimize (`data/support_buffs.json`). */
+    support_buffs?: string[];
   },
   profileId?: string | null,
 ): Promise<CompareCrewsResponse> {
@@ -372,6 +374,9 @@ export async function compareCrewsDistributions(
   }
   if (params.proc_sample_trials != null && params.proc_sample_trials > 0) {
     body.proc_sample_trials = params.proc_sample_trials;
+  }
+  if (params.support_buffs && params.support_buffs.length > 0) {
+    body.support_buffs = params.support_buffs;
   }
   const res = await fetch(`${API_BASE}/api/compare/crews`, {
     method: "POST",

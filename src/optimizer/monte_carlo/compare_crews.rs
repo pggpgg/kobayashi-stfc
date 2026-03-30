@@ -205,9 +205,16 @@ pub fn compare_crews_monte_carlo_with_registry(
     base_seed: u64,
     profile_id: Option<&str>,
     proc_sample_trials: u32,
+    support_buffs: Option<&[String]>,
 ) -> CompareCrewsOutcome {
     let shared = build_shared_scenario_data_from_registry(
-        registry, ship, hostile, ship_tier, ship_level, profile_id,
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        support_buffs,
     );
     let placeholder = shared.using_placeholder_combatants;
     let crews: Vec<CompareCrewDistribution> = candidates

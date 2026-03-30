@@ -345,6 +345,7 @@ fn gather_optimize_simulation_results(
         request.ship_tier,
         request.ship_level,
         profile_id,
+        request.support_buffs.as_deref(),
     )
     .using_placeholder_combatants;
 
@@ -362,6 +363,7 @@ fn gather_optimize_simulation_results(
             sims as usize,
             seed,
             profile_id,
+            request.support_buffs.as_deref(),
         );
         sink.on_heuristics_complete(heuristics_only, h_total, &results);
         results
@@ -391,6 +393,7 @@ fn gather_optimize_simulation_results(
             analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
             below_decks_slots,
             constraints: crew_constraints.clone(),
+            support_buffs: request.support_buffs.clone().unwrap_or_default(),
         };
         let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
             sink.on_optimize_tick(tick)

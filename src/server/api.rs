@@ -25,6 +25,7 @@ use crate::data::profile_index::{
     PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research_summary::research_combat_summary_for_profile;
+use crate::data::support_buffs;
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
 };
@@ -325,6 +326,9 @@ pub struct SimulateRequest {
     pub seed: Option<u64>,
     /// Below-decks slot count for padding crew (2–5). Omitted = tier default.
     pub below_decks_slots: Option<u32>,
+    /// Optional alliance/ship support buff ids (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -372,6 +376,8 @@ pub struct CompareCrewsRequest {
     /// Traced trials per crew (capped) to estimate proc-like event rates; 0 = skip.
     #[serde(default)]
     pub proc_sample_trials: Option<u32>,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -525,6 +531,7 @@ pub fn simulate_payload(
         num_sims as usize,
         seed,
         profile_id,
+        req.support_buffs.as_deref(),
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {
@@ -553,6 +560,22 @@ pub fn simulate_payload(
     let ci = binomial_95_ci(wins, num_sims);
 
     let mut warnings = Vec::new();
+    if let Some(v) = &req.support_buffs {
+        if v.len() > support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST {
+            warnings.push(format!(
+                "support_buffs: only the first {} entries are applied",
+                support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST
+            ));
+        }
+    }
+    if let Some(sb) = req.support_buffs.as_deref() {
+        if let Some(cat) = registry.support_buffs_catalog() {
+            let (_, unk) = support_buffs::resolve_selected_support_buff_ids(cat, sb);
+            for u in unk {
+                warnings.push(format!("Unknown support_buff id: {u}"));
+            }
+        }
+    }
     if using_placeholder_combatants {
         warnings.push(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats. Results do not reflect real ship/hostile values."
@@ -632,9 +655,26 @@ pub fn compare_crews_payload(
         seed,
         profile_id,
         proc_sample,
+        req.support_buffs.as_deref(),
     );
 
     let mut warnings = Vec::new();
+    if let Some(v) = &req.support_buffs {
+        if v.len() > support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST {
+            warnings.push(format!(
+                "support_buffs: only the first {} entries are applied",
+                support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST
+            ));
+        }
+    }
+    if let Some(sb) = req.support_buffs.as_deref() {
+        if let Some(cat) = registry.support_buffs_catalog() {
+            let (_, unk) = support_buffs::resolve_selected_support_buff_ids(cat, sb);
+            for u in unk {
+                warnings.push(format!("Unknown support_buff id: {u}"));
+            }
+        }
+    }
     if outcome.using_placeholder_combatants {
         warnings.push(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
@@ -741,6 +781,7 @@ pub fn replay_optimize_seed_payload(
         req.sim_index,
         profile_id,
         max_trace,
+        req.support_buffs.as_deref(),
     );
 
     let mut warnings = Vec::new();

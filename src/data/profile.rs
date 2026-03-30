@@ -979,4 +979,175 @@ mod tests {
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.1));
     }
+
+    fn tiny_catalog(items: Vec<ForbiddenChaosRecord>) -> ForbiddenChaosList {
+        ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items,
+        }
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_merges_forbidden_then_chaos_from_sync() {
+        let catalog = tiny_catalog(vec![
+            ForbiddenChaosRecord {
+                fid: Some(10),
+                name: "F".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+            ForbiddenChaosRecord {
+                fid: Some(20),
+                name: "C".into(),
+                tech_type: "chaos".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+        ]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 10,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 20,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let profile = PlayerProfile::default();
+        let fids = resolve_effective_tech_fids(&profile, &imported, &catalog);
+        assert_eq!(fids, vec![10, 20]);
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_skips_imported_fids_missing_from_catalog() {
+        let catalog = tiny_catalog(vec![ForbiddenChaosRecord {
+            fid: Some(1),
+            name: "Only".into(),
+            tech_type: "forbidden".into(),
+            tier: None,
+            bonuses: vec![],
+        }]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 1,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 999,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let profile = PlayerProfile::default();
+        assert_eq!(resolve_effective_tech_fids(&profile, &imported, &catalog), vec![1]);
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_empty_tech_type_is_forbidden() {
+        let catalog = tiny_catalog(vec![ForbiddenChaosRecord {
+            fid: Some(3),
+            name: "Legacy".into(),
+            tech_type: "".into(),
+            tier: None,
+            bonuses: vec![],
+        }]);
+        let imported = vec![ForbiddenTechEntry {
+            fid: 3,
+            tier: 1,
+            level: 1,
+            shard_count: 0,
+        }];
+        let profile = PlayerProfile::default();
+        assert_eq!(resolve_effective_tech_fids(&profile, &imported, &catalog), vec![3]);
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_forbidden_override_replaces_sync_forbidden_only() {
+        let catalog = tiny_catalog(vec![
+            ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "F".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+            ForbiddenChaosRecord {
+                fid: Some(2),
+                name: "C".into(),
+                tech_type: "chaos".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+        ]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 1,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 2,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let mut profile = PlayerProfile::default();
+        profile.forbidden_tech_override = Some(vec![100]);
+        assert_eq!(
+            resolve_effective_tech_fids(&profile, &imported, &catalog),
+            vec![100, 2]
+        );
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_chaos_override_replaces_sync_chaos_only() {
+        let catalog = tiny_catalog(vec![
+            ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "F".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+            ForbiddenChaosRecord {
+                fid: Some(2),
+                name: "C".into(),
+                tech_type: "chaos".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+        ]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 1,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 2,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let mut profile = PlayerProfile::default();
+        profile.chaos_tech_override = Some(vec![200]);
+        assert_eq!(
+            resolve_effective_tech_fids(&profile, &imported, &catalog),
+            vec![1, 200]
+        );
+    }
 }

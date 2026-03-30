@@ -40,10 +40,11 @@ Many ability ids still map to `effect_type: combat_noop` (economy, mining, armad
 
 ## Combat buffs support
 
-- **Cerritos buff**
-- **Titan-A buffs**
-- **Defiant bugg**
-- **Mantis debuff**
+- **Data:** [`data/support_buffs.json`](../data/support_buffs.json) defines selectable ids (aligned with the workspace UI). Each entry may include `research_levels` (`rid` + `level`) merged in-memory via the same path as synced research, and optional `static_bonuses` (engine keys consumed by `apply_static_buffs_to_combatant` / mitigation). `exclusive_group` + `priority` resolve overlapping picks (e.g. Titan-A fort vs max).
+- **API:** Optional `support_buffs: string[]` on simulate, optimize, compare crews, and replay-seed; capped length with unknown-id warnings in JSON responses.
+- **Titan-A fort / max (alliance buff):** Static slice from in-game text: Fort → `crit_damage` 1.25 (+25% critical hit damage). Max → same plus `weapon_damage` 3.5 (+250% base weapon damage as 100% + 250% = 3.5× attack). Text also references bonuses scaling with the **recipient’s** Titan-A research; that portion is expected from the synced profile merge, not duplicated in `research_levels` here unless we later add explicit synthetic RIDs.
+- **Cerritos / Defiant:** Tune `static_bonuses` / optional `research_levels` when authoritative values are available.
+- **Mantis debuff:** Defender-side; not modeled here (see fidelity backlog).
 
 ---
 
@@ -90,14 +91,16 @@ Forbidden tech is **partially implemented**. The following is in place; remainin
 - **Catalog:** `data/forbidden_chaos_tech.json` (from `data/import/forbidden_chaos_tech.csv` via `cargo run --bin import_forbidden_chaos`). Optional `fid` column in CSV for sync match.
 - **Merge:** `merge_forbidden_tech_bonuses_into_profile` matches synced entries by `fid`, applies bonuses; supports both additive and multiplicative (`operator`: add / mult).
 - **Profile override:** `PlayerProfile.forbidden_tech_override` (optional list of fids). When set and non-empty, used instead of the synced file for the FT set. Enables “Use synced” / “None” / “Custom” in the UI.
+- **Chaos tech:** Same catalog file and sync path as forbidden tech; `tech_type: chaos` in CSV/JSON. `PlayerProfile.chaos_tech_override` mirrors forbidden overrides. UI: separate “Chaos tech” controls on Roster & Profile → Profile.
 - **API:** `GET /api/forbidden-tech` returns the catalog for the UI.
 - **UI:** Roster & Profile → Profile tab → “Forbidden tech” dropdown (Use synced | None | Custom) and, for Custom, multi-select of catalog items that have a `fid`.
 
 ### Partially implemented / gaps
 
-- **Catalog `fid`:** Sync-based merge only matches catalog entries that have a `fid`. The mapping from game `fid` (e.g. 919296) to catalog names is not in-repo; it requires a community/game source (e.g. data.stfc.space or stfc-mod) or manual mapping. Until catalog items have the correct `fid`, synced FT may not apply.
-- **Level/tier:** `ForbiddenTechEntry` includes `level` and `tier`. The merge can optionally scale catalog bonuses by `tier`/`level` when `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` is set (linear scaling within a tier; conservative behavior when catalog tier disagrees with synced tier). The exact in-game scaling is still uncertain, so scaling remains opt-in until confirmed.
-- **Combat timing:** DESIGN and [COMBAT_FEATURES_FROM_STFC_TOOLBOX.md](COMBAT_FEATURES_FROM_STFC_TOOLBOX.md) describe “forbidden tech + chaos tech buffs” as applying **per sub-round**. Current code applies FT only at **profile merge** (pre-combat). A per-sub-round FT phase would be a separate engine change; left as future unless we have evidence the game does it that way.
+- **Catalog `fid`:** CI requires every committed catalog item to have a unique `fid` (`forbidden_chaos::sync_readiness_tests`). Rows without a `fid` never apply for synced players. Maintenance: upstream `summary-forbidden_tech.json` + `translations-forbidden_tech.json`, manual CSV `fid`, or `scripts/build_chaos_tech_csv_rows.mjs` (chaos rows from live `data.stfc.space/forbidden_tech/{id}.json`). See [data/README.md](../data/README.md) § Forbidden tech.
+- **Level/tier:** `ForbiddenTechEntry` includes `level` and `tier`. The merge can optionally scale catalog bonuses by `tier`/`level` when `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` is set (linear scaling within a tier; conservative behavior when catalog tier disagrees with synced tier). `build_shared_scenario_data_standalone` and the registry path both use the same merge helper and env flag. The exact in-game scaling is still uncertain, so scaling remains opt-in until confirmed.
+- **Combat timing:** DESIGN documents the intentional approximation: forbidden/chaos bonuses are applied at **profile merge**, not as a separate per-sub-round phase. A per-sub-round FT phase would require new evidence and engine work. See [DESIGN.md](DESIGN.md) §3.6 Notes.
+- **Chaos data fidelity:** Bulk chaos rows are generated with heuristics (PvP-only / armada / proc lines approximated or skipped). Review `data/import/forbidden_chaos_tech.csv` when balancing matters; re-run `node scripts/build_chaos_tech_csv_rows.mjs` after adjusting the script.
 
 ---
 

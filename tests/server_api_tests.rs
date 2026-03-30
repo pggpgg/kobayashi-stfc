@@ -636,6 +636,58 @@ async fn compare_crews_returns_distribution_payload() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn simulate_unknown_support_buff_emits_warning() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":100,"seed":1,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},"support_buffs":["not_a_real_support_buff_id"]}"#;
+    let response = route_request("POST", "/api/simulate", body).await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+    let p: serde_json::Value = serde_json::from_str(&response.body).expect("simulate json");
+    let w = p["warnings"].as_array().expect("warnings array");
+    assert!(
+        w.iter().any(|x| {
+            x.as_str()
+                .is_some_and(|s| s.contains("not_a_real_support_buff_id"))
+        }),
+        "expected unknown support_buff warning, got {:?}",
+        w
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn simulate_support_buff_static_bonus_changes_win_rate_vs_baseline() {
+    let base = r#"{"ship":"saladin","hostile":"2918121098","num_sims":8000,"seed":9001,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}}"#;
+    let with_buff = r#"{"ship":"saladin","hostile":"2918121098","num_sims":8000,"seed":9001,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},"support_buffs":["cerritos_support"]}"#;
+    let a = route_request("POST", "/api/simulate", base).await;
+    let b = route_request("POST", "/api/simulate", with_buff).await;
+    assert_eq!(a.status_code, 200, "{}", a.body);
+    assert_eq!(b.status_code, 200, "{}", b.body);
+    let pa: serde_json::Value = serde_json::from_str(&a.body).expect("baseline json");
+    let pb: serde_json::Value = serde_json::from_str(&b.body).expect("buffed json");
+    let wr_a = pa["stats"]["win_rate"].as_f64().expect("win_rate");
+    let wr_b = pb["stats"]["win_rate"].as_f64().expect("win_rate");
+    assert!(
+        (wr_b - wr_a).abs() > 1e-6,
+        "expected different win_rate with cerritos_support static weapon_damage (baseline {wr_a}, buffed {wr_b})"
+    );
+    assert!(
+        wr_b >= wr_a - 1e-9,
+        "damage buff should not reduce mean win rate (baseline {wr_a}, buffed {wr_b})"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn compare_crews_accepts_support_buffs() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":200,"seed":5,"support_buffs":["cerritos_support"],"crews":[
+        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},
+        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}
+    ]}"#;
+    let response = route_request("POST", "/api/compare/crews", body).await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn api_key_required_for_non_loopback_when_configured() {
     std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
     std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");

@@ -49,6 +49,7 @@ Buildings are fully modeled for ship combat; optional and backlog items (station
 ## Forbidden tech: catalog and partial status
 
 - **Catalog:** `data/forbidden_chaos_tech.json` (source: `data/import/forbidden_chaos_tech.csv`). Import with `cargo run --bin import_forbidden_chaos`. CSV columns: name, tech_type, tier, fid, stat, value, operator.
+- **Chaos tech bulk rows:** `summary-forbidden_tech.json` uses `tech_type: 1` for chaos. To regenerate chaos lines from live detail JSON (`https://data.stfc.space/forbidden_tech/{id}.json`), run `node scripts/build_chaos_tech_csv_rows.mjs` and merge stdout into the CSV (then re-run the Rust importer). Values default to index **45** in each buff’s `values[]` (level-46-style calibration, same spirit as S31 in `data/import/README.md`).
 - **`fid` mapping (sync match):** Merge uses **game `fid`** from the catalog row to match `profiles/{id}/forbidden_tech.imported.json` from stfc-mod. Rows **without** `fid` never apply for synced players. Maintenance workflow:
   1. Prefer **automatic fill:** place `data/upstream/data-stfc-space/summary-forbidden_tech.json` and `translations-forbidden_tech.json` (same names the stfc.space pipeline uses), then run `cargo run --bin import_forbidden_chaos`. The binary joins normalized CSV **name** → translation text → `loca_id` → summary **`id` (fid)** when the CSV `fid` column is empty.
   2. Otherwise set **`fid` manually** in the CSV (from game/mod payloads or community lists), then re-run the importer.

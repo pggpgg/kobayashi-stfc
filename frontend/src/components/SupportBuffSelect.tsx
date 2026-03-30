@@ -71,7 +71,11 @@ export default function SupportBuffSelect({
       <summary style={summaryStyle}>{label}</summary>
       <div style={panelStyle} role="group" aria-label="Support buffs">
         {SUPPORT_BUFF_OPTIONS.map((opt) => (
-          <label key={opt.id} style={rowStyle}>
+          <label
+            key={opt.id}
+            style={rowStyle}
+            title={"description" in opt ? opt.description : opt.label}
+          >
             <input
               type="checkbox"
               checked={selected.includes(opt.id)}

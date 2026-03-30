@@ -18,6 +18,7 @@ pub mod research;
 pub mod research_summary;
 pub mod ship;
 pub mod ship_ability_resolve;
+pub mod support_buffs;
 pub mod syndicate_combat;
 pub mod syndicate_reputation;
 pub mod synergy;

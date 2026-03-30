@@ -47,7 +47,7 @@ fn main() {
 
     // Sequential
     let t0 = Instant::now();
-    let results_seq = run_monte_carlo(ship, hostile, &candidates, iterations, seed);
+    let results_seq = run_monte_carlo(ship, hostile, &candidates, iterations, seed, None);
     let elapsed_seq = t0.elapsed();
     let seq_ms = elapsed_seq.as_secs_f64() * 1000.0;
     println!(
@@ -58,7 +58,7 @@ fn main() {
 
     // Parallel
     let t0 = Instant::now();
-    let results_par = run_monte_carlo_parallel(ship, hostile, &candidates, iterations, seed);
+    let results_par = run_monte_carlo_parallel(ship, hostile, &candidates, iterations, seed, None);
     let elapsed_par = t0.elapsed();
     let par_ms = elapsed_par.as_secs_f64() * 1000.0;
     println!(

@@ -329,6 +329,7 @@ Per round, the engine processes effects in this order:
 6. Check `on_kill`, `on_shield_break`, `on_hull_breach`, and round cap (100)
 
 Notes:
+- **Forbidden tech and chaos tech (implementation):** bonuses are merged into `profile.bonuses` at scenario build time (same static stack as research/buildings for combat math), not re-applied as a separate sub-round phase. The numbered list above still reflects toolbox/client ordering for officer/ship abilities and weapons; treat FT/chaos there as *conceptual* unless we add a dedicated engine phase with evidence.
 - UI logs can collapse duplicate ability/forbidden-tech lines even when multiple ships apply the same source.
 - Ordering details for per-ship buff application are currently treated as implementation targets inferred from raw logs and should remain test-backed as fixtures expand.
 

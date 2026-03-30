@@ -7,3 +7,46 @@ S31 Torpedo Pods,forbidden,12,473132032,dodge,0.08,add
 S31 Torpedo Pods,forbidden,12,473132032,hull_hp,0.12,add
 S31 Torpedo Pods,forbidden,12,473132032,pierce,0.06,add
 S31 Torpedo Pods,forbidden,12,473132032,weapon_damage,0.155,add
+Q Cannon,chaos,12,704754072,weapon_damage,0.07,add
+Temporal Conduit,chaos,12,258464522,apex_barrier,23000,add
+Thought Maker,chaos,4,1024185972,apex_barrier,100,add
+Electromagnetic Lute,chaos,12,1212779022,isolytic_damage,0.07,add
+Electromagnetic Lute,chaos,12,1212779022,apex_barrier,4600,add
+Interphasic Mirror,chaos,6,2820752375,isolytic_damage,0.3,add
+Soran's Trilithium,chaos,12,3266867064,apex_barrier,5000,add
+Soran's Trilithium,chaos,12,3266867064,shield_hp,0.037,add
+Enaran Execution Post,chaos,12,3838074426,isolytic_damage,0.55,add
+Unimatrix Shielding,chaos,12,2810835688,isolytic_defense,1.1,add
+Unimatrix Shielding,chaos,12,2810835688,weapon_damage,0.042,add
+Multiphasic Chamber,chaos,6,3388471847,weapon_damage,0.05,add
+Chronophage,chaos,12,1747080465,hull_hp,0.026,add
+Chronophage,chaos,12,1747080465,hull_hp,0.0026,add
+Chrono Deflector,chaos,12,3440676742,apex_barrier,1750,add
+Chrono Deflector,chaos,12,3440676742,crit_damage,0.026,add
+The Godsend,chaos,12,3643189775,weapon_damage,0.1,add
+The Godsend,chaos,12,3643189775,apex_barrier,1300,add
+Control,chaos,6,4283494851,weapon_damage,0.016,add
+Tothian Mines,chaos,12,2325864718,isolytic_defense,0.35,add
+Tothian Mines,chaos,12,2325864718,crit_damage,0.65,add
+Echo Papa 607,chaos,12,3992201594,weapon_damage,0.223,add
+Echo Papa 607,chaos,12,3992201594,isolytic_defense,0.3,add
+Echo Papa 607,chaos,12,3992201594,apex_shred,0.22,add
+Morphogenic Virus,chaos,12,4081411215,isolytic_damage,0.4,add
+Genesis Device,chaos,12,587246835,crit_damage,0.165,add
+Genesis Device,chaos,12,587246835,shield_hp,0.081,add
+C-12 Stasis Globe,chaos,12,1240927405,weapon_damage,0.135,add
+Omega Molecule,chaos,12,2278545156,apex_barrier,8800,add
+Omega Molecule,chaos,12,2278545156,crit_damage,0.92,add
+Ceti Eel,chaos,6,2766262625,weapon_damage,0.06,add
+Ceti Eel,chaos,6,2766262625,weapon_damage,0.04,add
+Bio-mimetic Gel,chaos,12,3616515003,isolytic_defense,0.022,add
+Bio-mimetic Gel,chaos,12,3616515003,apex_barrier,13950,add
+Particle Synthesis,chaos,12,2509613550,weapon_damage,0.047,add
+Mark VI Photon Torpedo,chaos,12,4017333545,hull_hp,0.0925,add
+Portable Transwarp Beaming Device,chaos,12,3498200313,apex_shred,0.19,add
+Portable Transwarp Beaming Device,chaos,12,3498200313,apex_barrier,17500,add
+Portable Transwarp Beaming Device,chaos,12,3498200313,crit_chance,0.093,add
+Cardassian Torture Actuator,chaos,12,3671752041,isolytic_damage,1.5,add
+Cardassian Torture Actuator,chaos,12,3671752041,apex_barrier,9100,add
+Tan Ru,chaos,12,3019166168,weapon_damage,0.36,add
+Tan Ru,chaos,12,3019166168,crit_damage,0.03,add

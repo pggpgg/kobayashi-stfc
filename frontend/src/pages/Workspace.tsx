@@ -18,6 +18,9 @@ export default function Workspace() {
           numSims: ws.simsPerCrew,
           belowDecksSlots: belowDeckSlotCount(ws.shipLevel),
           profileId: ws.activeProfileId,
+          ...(ws.selectedSupportBuffs.length > 0
+            ? { supportBuffs: ws.selectedSupportBuffs }
+            : {}),
         }
       : null;
 

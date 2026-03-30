@@ -27,7 +27,7 @@ use crate::data::profile::{
     apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
     apply_static_buffs_to_combatant, forbidden_tech_level_tier_scaling_enabled_from_env,
     load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    merge_tech_fids_into_profile, merge_tech_fids_into_profile_with_level_tier,
+    merge_tech_fids_into_profile_with_level_tier,
     resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
@@ -36,6 +36,8 @@ use crate::data::profile_index::{
 };
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
+use crate::data::support_buffs::{self, SupportBuffCatalog};
+use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use crate::lcars::{
     index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
 };
@@ -213,6 +215,14 @@ pub(crate) struct SharedScenarioData {
     /// True when ship or hostile did not resolve from data and [`scenario_to_combat_input_from_shared`]
     /// uses hashed placeholder combatants instead of registry-backed stats.
     pub using_placeholder_combatants: bool,
+    /// Resolved support buff ids (after exclusive-group rules).
+    #[allow(dead_code)]
+    pub resolved_support_buffs: Vec<String>,
+    /// Static combat keys from support buff definitions; merged with crew LCARS static buffs in combat input.
+    pub support_static_buffs: HashMap<String, f64>,
+    /// Request ids not present in the support buff catalog (for API warnings).
+    #[allow(dead_code)]
+    pub unknown_support_buff_ids: Vec<String>,
 }
 
 impl SharedScenarioData {
@@ -267,6 +277,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared.lcars_data.as_ref(),
         &shared.resolve_options,
     );
+    let merged_static = support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
 
     let hostile_ability_catalog =
         load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
@@ -290,7 +301,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                     ship_rec,
                     h,
                     &shared.profile,
-                    &static_buffs,
+                    &merged_static,
                 )
             })
             .unwrap_or_else(|| {
@@ -326,8 +337,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             },
             &shared.profile,
         );
-        if !static_buffs.is_empty() {
-            attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
+        if !merged_static.is_empty() {
+            attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
         }
         let mut seats = crew_seats.clone();
         extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
@@ -370,8 +381,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         },
         &shared.profile,
     );
-    if !static_buffs.is_empty() {
-        attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
+    if !merged_static.is_empty() {
+        attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
     }
 
     let mut seats = crew_seats.clone();
@@ -688,6 +699,7 @@ pub(crate) fn stable_seed(
 pub(crate) fn build_shared_scenario_data_standalone(
     ship: &str,
     hostile: &str,
+    support_buffs_request: Option<&[String]>,
 ) -> SharedScenarioData {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
@@ -707,9 +719,32 @@ pub(crate) fn build_shared_scenario_data_standalone(
     {
         let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, &catalog);
         if !effective_fids.is_empty() {
-            merge_tech_fids_into_profile(&mut profile, &effective_fids, &catalog);
+            let scale_by_level_tier = forbidden_tech_level_tier_scaling_enabled_from_env();
+            merge_tech_fids_into_profile_with_level_tier(
+                &mut profile,
+                &effective_fids,
+                &ft_entries,
+                &catalog,
+                scale_by_level_tier,
+            );
         }
     }
+
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let support_cat =
+        SupportBuffCatalog::load(manifest.join(support_buffs::DEFAULT_SUPPORT_BUFFS_PATH)).ok();
+    let research_for_buffs = if support_buffs_request.is_some_and(|s| !s.is_empty()) {
+        load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH)
+    } else {
+        None
+    };
+    let (resolved_support_buffs, support_static_buffs, unknown_support_buff_ids) =
+        support_buffs::apply_support_buffs_for_request(
+            &mut profile,
+            support_cat.as_ref(),
+            research_for_buffs.as_ref(),
+            support_buffs_request,
+        );
 
     let lcars_data = if use_lcars_officer_source_standalone() {
         load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
@@ -806,6 +841,9 @@ pub(crate) fn build_shared_scenario_data_standalone(
         cached_pierce,
         cached_defender_mitigation,
         using_placeholder_combatants,
+        resolved_support_buffs,
+        support_static_buffs,
+        unknown_support_buff_ids,
     }
 }
 
@@ -817,6 +855,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     ship_tier: Option<u32>,
     ship_level: Option<u32>,
     profile_id: Option<&str>,
+    support_buffs_request: Option<&[String]>,
 ) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
 
@@ -891,6 +930,14 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
         }
     }
+
+    let (resolved_support_buffs, support_static_buffs, unknown_support_buff_ids) =
+        support_buffs::apply_support_buffs_for_request(
+            &mut profile,
+            registry.support_buffs_catalog(),
+            registry.research_catalog(),
+            support_buffs_request,
+        );
 
     let lcars_data = registry.lcars_officers().map(|officers| {
         let officers_vec = officers.to_vec();
@@ -979,6 +1026,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         cached_pierce,
         cached_defender_mitigation,
         using_placeholder_combatants,
+        resolved_support_buffs,
+        support_static_buffs,
+        unknown_support_buff_ids,
     }
 }
 
@@ -1313,6 +1363,9 @@ mod tests {
             cached_pierce: None,
             cached_defender_mitigation: None,
             using_placeholder_combatants: true,
+            resolved_support_buffs: vec![],
+            support_static_buffs: HashMap::new(),
+            unknown_support_buff_ids: vec![],
         };
 
         let candidate = CrewCandidate {
@@ -1473,6 +1526,7 @@ mod tests {
             None,
             None,
             Some(&entry.id),
+            None,
         );
 
         // Catalog rid 2232304457: weapon_damage +0.05 at L1, +0.07 at L2 → cumulative 0.12

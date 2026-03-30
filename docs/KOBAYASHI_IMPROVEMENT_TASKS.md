@@ -66,8 +66,8 @@ Work in **phases** so foundations and correctness land before large feature work
 
 ### Phase 4 — Profile & sync
 
-- [ ] **10. Optional: forbidden tech timing**  
-  Today FT applies at profile merge (pre-combat). If evidence shows in-game per-sub-round application, design a minimal engine phase; otherwise document the approximation and close the gap intentionally.
+- [x] **10. Optional: forbidden tech timing**  
+  **Done:** Documented the intentional approximation in [DESIGN.md](DESIGN.md) §3.6 Notes (forbidden/chaos merged at scenario profile build, not a separate sub-round phase). Per-sub-round FT remains out of scope unless combat-log evidence justifies a new engine phase.
 
 - [ ] **11. Persist high-value sync payloads from stfc-mod**  
   [ROADMAP.md](ROADMAP.md) lists traits, slots, buffs, and others as accepted but not stored. Prioritize one or two that improve sim fidelity or UX (e.g. roster completeness), with schema + API + profile merge tests.
