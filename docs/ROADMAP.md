@@ -29,6 +29,15 @@ Approximations already used for modeled rows are summarized in [DESIGN.md](DESIG
 
 ---
 
+## Combat buffs support
+
+- **Cerritos buff**
+- **Titan-A buffs**
+- **Defiant bugg**
+- **Mantis debuff**
+
+---
+
 ## Sync (STFC Community Mod)
 
 - **Persisted today:** officer, research, buildings, ships, and **forbidden tech (`type: "ft"`)** — see [SYNC.md](SYNC.md). Research is written to `profiles/{id}/research.imported.json` and merged into the player profile when a research catalog is present. FT is written to `profiles/{id}/forbidden_tech.imported.json` and merged into the player profile (bonuses from `data/forbidden_chaos_tech.json`).
