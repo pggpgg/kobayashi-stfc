@@ -2,6 +2,10 @@
 
 Planned features and priorities for Kobayashi.
 
+## Backlog / hygiene
+
+- **i18n scaffolding** — String extraction / message catalog if non-English UI is planned.
+
 ## Next pillar (chosen)
 
 After research sync/catalog merge work, the **next major combat-engine focus** is **ship abilities** (data.stfc.space `ability` on ships, distinct from officers). Maverick faction support remains a parallel content track; see [MAVERICK.md](MAVERICK.md).

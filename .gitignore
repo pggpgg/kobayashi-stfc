@@ -3,6 +3,9 @@
 # Node dependencies (run npm install in frontend/ after clone)
 node_modules/
 
+# Vite build output (hashed chunks); index.html may remain tracked for deploy snapshots
+frontend/dist/assets/
+
 # Fetched upstream (scripts/fetch_stfc_data.ps1) — ignore generated subdirs, not the whole folder
 data/upstream/stfccommunity-data/
 # Research detail JSON cache (scripts/fetch_stfcspace_research.mjs); summary/translations stay tracked
