@@ -428,8 +428,8 @@ fn handle_resolve(args: &[String]) -> i32 {
             let opts = crate::lcars::ResolveOptions::default();
             let buff_set = crate::lcars::resolve_crew_to_buff_set(
                 &o.id,
-                &[o.id.clone()],
-                &[o.id.clone()],
+                std::slice::from_ref(&o.id),
+                std::slice::from_ref(&o.id),
                 &by_id,
                 &opts,
             );

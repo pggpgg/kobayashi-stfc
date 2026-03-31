@@ -31,6 +31,10 @@ struct AbilityCatalogEntry {
     condition_defender_hull_breach: bool,
     #[serde(default)]
     condition_opponent_faction: Option<String>,
+    #[serde(default)]
+    condition_opponent_ship_class: Option<String>,
+    #[serde(default)]
+    round_cap: Option<u32>,
 }
 
 use kobayashi::data::ship::{
@@ -83,7 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for entry in fs::read_dir(&upstream_ships)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().map_or(true, |e| e != "json") {
+        if path.extension().is_none_or(|e| e != "json") {
             continue;
         }
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
@@ -251,6 +255,8 @@ fn raw_to_extended(
                 condition_defender_burning: entry.condition_defender_burning,
                 condition_defender_hull_breach: entry.condition_defender_hull_breach,
                 condition_opponent_faction: entry.condition_opponent_faction.clone(),
+                condition_opponent_ship_class: entry.condition_opponent_ship_class.clone(),
+                round_cap: entry.round_cap,
             });
         }
         if out.is_empty() {
@@ -273,6 +279,7 @@ fn raw_to_extended(
 /// Order value used when component has no order or order is -1 (sort after valid weapons).
 const WEAPON_ORDER_LAST: i64 = 999;
 
+#[allow(clippy::type_complexity)]
 fn extract_tier_combat(
     components: &[Value],
 ) -> Result<

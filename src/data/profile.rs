@@ -1,6 +1,6 @@
 //! Player profile: effective_bonuses applied as pre-combat modifier layer (DESIGN §5).
 //! Keys match engine/LCARS stats: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce,
-//! accuracy (scales ship AttackerStats for dodge mitigation), etc.
+//! accuracy (scales ship AttackerStats for dodge mitigation), apex_shred, apex_barrier, isolytic_*, etc.
 //! Bonuses from synced forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
 //! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
 //! Bonuses from synced research (by rid) are merged in when [merge_research_bonuses_into_profile] is used.
@@ -275,6 +275,9 @@ fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
         // Morale-gated isolytic (research NS Morale Isolytic Damage, rid 4133019450): scenario injects a round-start seat.
         "isolytic_damage_morale" => Some("isolytic_damage_morale"),
         "isolytic_defense" => Some("isolytic_defense"),
+        // Apex: same units as Combatant / engine (shred decimal; barrier pool vs hostile barrier formula).
+        "apex_shred" => Some("apex_shred"),
+        "apex_barrier" => Some("apex_barrier"),
         "crit_chance" => Some("crit_chance"),
         "crit_damage" => Some("crit_damage"),
         "pierce" | "armor_pierce" | "shield_pierce" => Some("pierce"),
@@ -444,6 +447,7 @@ fn get_bonus(profile: &PlayerProfile, key: &str) -> f64 {
 /// Apply LCARS/officer static buffs to a Combatant (e.g. from [BuffSet::static_buffs]).
 /// Intended for use when building a Combatant from ship/hostile + crew where crew is resolved via
 /// [crate::lcars::resolve_crew_to_buff_set]. Keys applied: isolytic_damage, isolytic_defense,
+/// apex_shred, apex_barrier,
 /// shield_mitigation (additive; shield_mitigation clamped to [0, 1]), weapon_damage (mult to attack),
 /// hull_hp, shield_hp (mult), shield_pierce/armor_pierce (add to pierce), crit_chance (add), crit_damage (mult).
 /// `accuracy` is **not** applied here: it is folded into [`AttackerStats`] when computing hostile
@@ -457,6 +461,8 @@ pub fn apply_static_buffs_to_combatant(
     }
     let isolytic_damage_add = static_buffs.get("isolytic_damage").copied().unwrap_or(0.0);
     let isolytic_defense_add = static_buffs.get("isolytic_defense").copied().unwrap_or(0.0);
+    let apex_shred_add = static_buffs.get("apex_shred").copied().unwrap_or(0.0);
+    let apex_barrier_add = static_buffs.get("apex_barrier").copied().unwrap_or(0.0);
     let shield_mitigation_add = static_buffs
         .get("shield_mitigation")
         .copied()
@@ -481,6 +487,8 @@ pub fn apply_static_buffs_to_combatant(
         crit_multiplier: (combatant.crit_multiplier * crit_damage_mult).max(0.0),
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
+        apex_shred: (combatant.apex_shred + apex_shred_add).max(0.0),
+        apex_barrier: (combatant.apex_barrier + apex_barrier_add).max(0.0),
         shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add).clamp(0.0, 1.0),
         mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add)
             .clamp(0.0, 1.0),
@@ -503,7 +511,8 @@ pub fn apply_profile_accuracy_to_attacker_stats(
 
 /// Apply effective_bonuses to attacker Combatant (multipliers and additive bonuses).
 /// Keys: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce (additive),
-/// shield_mitigation (additive to base), armor/dodge/damage_reduction (additive to mitigation).
+/// shield_mitigation (additive to base), armor/dodge/damage_reduction (additive to mitigation),
+/// isolytic_damage / isolytic_defense, apex_shred / apex_barrier (additive; counter-attack uses player apex_barrier).
 pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -> Combatant {
     if profile.bonuses.is_empty() {
         return attacker;
@@ -513,6 +522,8 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
     let shield_hp = 1.0 + get_bonus(profile, "shield_hp");
     let isolytic_damage_add = get_bonus(profile, "isolytic_damage");
     let isolytic_defense_add = get_bonus(profile, "isolytic_defense");
+    let apex_shred_add = get_bonus(profile, "apex_shred");
+    let apex_barrier_add = get_bonus(profile, "apex_barrier");
     let crit_chance_add = get_bonus(profile, "crit_chance");
     let crit_damage_mult = 1.0 + get_bonus(profile, "crit_damage");
     let pierce_add = get_bonus(profile, "pierce");
@@ -532,6 +543,8 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
         shield_mitigation: (attacker.shield_mitigation + shield_mit_add).clamp(0.0, 1.0),
         isolytic_damage: (attacker.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (attacker.isolytic_defense + isolytic_defense_add).max(0.0),
+        apex_shred: (attacker.apex_shred + apex_shred_add).max(0.0),
+        apex_barrier: (attacker.apex_barrier + apex_barrier_add).max(0.0),
         ..attacker
     }
 }
@@ -590,7 +603,7 @@ mod tests {
         );
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
-        assert!(profile.bonuses.get("buff_123").is_none());
+        assert!(!profile.bonuses.contains_key("buff_123"));
     }
 
     #[test]
@@ -679,7 +692,45 @@ mod tests {
         };
         merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
-        assert!(profile.bonuses.get("buff_unknown").is_none());
+        assert!(!profile.bonuses.contains_key("buff_unknown"));
+    }
+
+    #[test]
+    fn merge_research_bonuses_into_profile_merges_apex_stats() {
+        use crate::data::research::{
+            ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+        };
+
+        let mut profile = PlayerProfile::default();
+        let imported_research = vec![ResearchEntry { rid: 42, level: 1 }];
+        let catalog = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid: 42,
+                name: Some("Apex lab".to_string()),
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![
+                        ResearchBonusEntry {
+                            stat: "apex_shred".to_string(),
+                            value: 0.25,
+                            operator: "add".to_string(),
+                        },
+                        ResearchBonusEntry {
+                            stat: "apex_barrier".to_string(),
+                            value: 500.0,
+                            operator: "add".to_string(),
+                        },
+                    ],
+                }],
+            }],
+        };
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        assert_eq!(profile.bonuses.get("apex_shred"), Some(&0.25));
+        assert_eq!(profile.bonuses.get("apex_barrier"), Some(&500.0));
     }
 
     #[test]
@@ -752,6 +803,35 @@ mod tests {
             out2.shield_mitigation, 1.0,
             "shield_mitigation should clamp to 1.0"
         );
+    }
+
+    #[test]
+    fn apply_profile_to_attacker_adds_apex_from_profile() {
+        let attacker = Combatant {
+            id: "test".to_string(),
+            attack: 100.0,
+            mitigation: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.8,
+            apex_barrier: 100.0,
+            apex_shred: 0.1,
+            weapons: vec![],
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+        };
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.insert("apex_shred".to_string(), 0.15);
+        profile.bonuses.insert("apex_barrier".to_string(), 200.0);
+        let out = apply_profile_to_attacker(attacker, &profile);
+        assert!((out.apex_shred - 0.25).abs() < 1e-9);
+        assert!((out.apex_barrier - 300.0).abs() < 1e-9);
     }
 
     #[test]
@@ -898,5 +978,176 @@ mod tests {
         merge_tech_fids_into_profile_with_level_tier(&mut profile, &[1], &imported, &catalog, true);
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.1));
+    }
+
+    fn tiny_catalog(items: Vec<ForbiddenChaosRecord>) -> ForbiddenChaosList {
+        ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items,
+        }
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_merges_forbidden_then_chaos_from_sync() {
+        let catalog = tiny_catalog(vec![
+            ForbiddenChaosRecord {
+                fid: Some(10),
+                name: "F".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+            ForbiddenChaosRecord {
+                fid: Some(20),
+                name: "C".into(),
+                tech_type: "chaos".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+        ]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 10,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 20,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let profile = PlayerProfile::default();
+        let fids = resolve_effective_tech_fids(&profile, &imported, &catalog);
+        assert_eq!(fids, vec![10, 20]);
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_skips_imported_fids_missing_from_catalog() {
+        let catalog = tiny_catalog(vec![ForbiddenChaosRecord {
+            fid: Some(1),
+            name: "Only".into(),
+            tech_type: "forbidden".into(),
+            tier: None,
+            bonuses: vec![],
+        }]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 1,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 999,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let profile = PlayerProfile::default();
+        assert_eq!(resolve_effective_tech_fids(&profile, &imported, &catalog), vec![1]);
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_empty_tech_type_is_forbidden() {
+        let catalog = tiny_catalog(vec![ForbiddenChaosRecord {
+            fid: Some(3),
+            name: "Legacy".into(),
+            tech_type: "".into(),
+            tier: None,
+            bonuses: vec![],
+        }]);
+        let imported = vec![ForbiddenTechEntry {
+            fid: 3,
+            tier: 1,
+            level: 1,
+            shard_count: 0,
+        }];
+        let profile = PlayerProfile::default();
+        assert_eq!(resolve_effective_tech_fids(&profile, &imported, &catalog), vec![3]);
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_forbidden_override_replaces_sync_forbidden_only() {
+        let catalog = tiny_catalog(vec![
+            ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "F".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+            ForbiddenChaosRecord {
+                fid: Some(2),
+                name: "C".into(),
+                tech_type: "chaos".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+        ]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 1,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 2,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let mut profile = PlayerProfile::default();
+        profile.forbidden_tech_override = Some(vec![100]);
+        assert_eq!(
+            resolve_effective_tech_fids(&profile, &imported, &catalog),
+            vec![100, 2]
+        );
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_chaos_override_replaces_sync_chaos_only() {
+        let catalog = tiny_catalog(vec![
+            ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "F".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+            ForbiddenChaosRecord {
+                fid: Some(2),
+                name: "C".into(),
+                tech_type: "chaos".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+        ]);
+        let imported = vec![
+            ForbiddenTechEntry {
+                fid: 1,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+            ForbiddenTechEntry {
+                fid: 2,
+                tier: 1,
+                level: 1,
+                shard_count: 0,
+            },
+        ];
+        let mut profile = PlayerProfile::default();
+        profile.chaos_tech_override = Some(vec![200]);
+        assert_eq!(
+            resolve_effective_tech_fids(&profile, &imported, &catalog),
+            vec![1, 200]
+        );
     }
 }

@@ -102,6 +102,8 @@ const TRIGGER_ENUM: &[&str] = &[
     "on_round_end",
     "on_round_start",
     "on_shield_break",
+    "on_own_shield_break",
+    "on_enemy_shield_break",
 ];
 
 const OPERATOR_ENUM: &[&str] = &[
@@ -146,13 +148,13 @@ pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
         if officer.id.trim().is_empty() {
             report.push(
                 ValidationSeverity::Error,
-                format!("{base_context}"),
+                base_context.to_string(),
                 "missing non-empty 'id'",
             );
         } else if !seen_ids.insert(officer.id.clone()) {
             report.push(
                 ValidationSeverity::Error,
-                format!("{base_context}"),
+                base_context.to_string(),
                 format!("duplicate id '{}'", officer.id),
             );
         }
@@ -160,7 +162,7 @@ pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
         if officer.name.trim().is_empty() {
             report.push(
                 ValidationSeverity::Error,
-                format!("{base_context}"),
+                base_context.to_string(),
                 "missing non-empty 'name'",
             );
         }
@@ -171,7 +173,7 @@ pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
         {
             report.push(
                 ValidationSeverity::Warning,
-                format!("{base_context}"),
+                base_context.to_string(),
                 "officer has no abilities defined",
             );
         }
@@ -555,10 +557,7 @@ fn is_non_combat_key(key: &str) -> bool {
 }
 
 fn normalize_building_condition(raw: &str) -> String {
-    raw.trim()
-        .to_ascii_lowercase()
-        .replace('-', "_")
-        .replace(' ', "_")
+    raw.trim().to_ascii_lowercase().replace(['-', ' '], "_")
 }
 
 fn is_known_building_condition(raw: &str) -> bool {

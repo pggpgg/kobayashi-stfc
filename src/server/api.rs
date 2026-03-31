@@ -25,6 +25,7 @@ use crate::data::profile_index::{
     PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research_summary::research_combat_summary_for_profile;
+use crate::data::support_buffs;
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
 };
@@ -116,7 +117,7 @@ pub fn officers_payload(
     };
     let list: Vec<OfficerListItem> = officers
         .iter()
-        .filter(|o| owned_ids.as_ref().map_or(true, |ids| ids.contains(&o.id)))
+        .filter(|o| owned_ids.as_ref().is_none_or(|ids| ids.contains(&o.id)))
         .map(|o| OfficerListItem {
             id: o.id.clone(),
             name: o.name.clone(),
@@ -164,6 +165,7 @@ fn load_hull_id_registry() -> HashMap<i64, String> {
     out
 }
 
+#[allow(clippy::type_complexity)] // owned roster + tier/level map for ship list response
 pub fn ships_payload(
     registry: &DataRegistry,
     owned_only: bool,
@@ -225,7 +227,7 @@ pub fn ships_payload(
         .filter(|e| {
             owned_ship_ids
                 .as_ref()
-                .map_or(true, |ids| ids.contains(&e.id))
+                .is_none_or(|ids| ids.contains(&e.id))
         })
         .map(|e| {
             let (tier, level) = roster_tier_level
@@ -324,6 +326,9 @@ pub struct SimulateRequest {
     pub seed: Option<u64>,
     /// Below-decks slot count for padding crew (2–5). Omitted = tier default.
     pub below_decks_slots: Option<u32>,
+    /// Optional alliance/ship support buff ids (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -371,6 +376,8 @@ pub struct CompareCrewsRequest {
     /// Traced trials per crew (capped) to estimate proc-like event rates; 0 = skip.
     #[serde(default)]
     pub proc_sample_trials: Option<u32>,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -480,7 +487,7 @@ pub fn simulate_payload(
     profile_id: Option<&str>,
 ) -> Result<String, SimulateError> {
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
-    let num_sims = req.num_sims.unwrap_or(5000).min(100_000).max(1);
+    let num_sims = req.num_sims.unwrap_or(5000).clamp(1, 100_000);
     let seed = req.seed.unwrap_or(0);
     if let Some(n) = req.below_decks_slots {
         let lo = crate::optimizer::crew_generator::MIN_BELOW_DECKS_SLOTS as u32;
@@ -501,8 +508,8 @@ pub fn simulate_payload(
 
     let candidate = crew_candidate_from_officer_fields(
         req.crew.captain.as_deref(),
-        req.crew.bridge.as_ref().map(|v| v.as_slice()),
-        req.crew.below_deck.as_ref().map(|v| v.as_slice()),
+        req.crew.bridge.as_deref(),
+        req.crew.below_deck.as_deref(),
         &officers,
         below_decks_slots,
     )
@@ -524,6 +531,7 @@ pub fn simulate_payload(
         num_sims as usize,
         seed,
         profile_id,
+        req.support_buffs.as_deref(),
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {
@@ -552,6 +560,22 @@ pub fn simulate_payload(
     let ci = binomial_95_ci(wins, num_sims);
 
     let mut warnings = Vec::new();
+    if let Some(v) = &req.support_buffs {
+        if v.len() > support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST {
+            warnings.push(format!(
+                "support_buffs: only the first {} entries are applied",
+                support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST
+            ));
+        }
+    }
+    if let Some(sb) = req.support_buffs.as_deref() {
+        if let Some(cat) = registry.support_buffs_catalog() {
+            let (_, unk) = support_buffs::resolve_selected_support_buff_ids(cat, sb);
+            for u in unk {
+                warnings.push(format!("Unknown support_buff id: {u}"));
+            }
+        }
+    }
     if using_placeholder_combatants {
         warnings.push(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats. Results do not reflect real ship/hostile values."
@@ -587,7 +611,7 @@ pub fn compare_crews_payload(
             "crews must contain between 2 and 5 entries".to_string(),
         ));
     }
-    let num_sims = req.num_sims.unwrap_or(3000).min(20_000).max(200);
+    let num_sims = req.num_sims.unwrap_or(3000).clamp(200, 20_000);
     let seed = req.seed.unwrap_or(0);
     if let Some(n) = req.below_decks_slots {
         let lo = crate::optimizer::crew_generator::MIN_BELOW_DECKS_SLOTS as u32;
@@ -611,8 +635,8 @@ pub fn compare_crews_payload(
     for c in &req.crews {
         let cand = crew_candidate_from_officer_fields(
             c.captain.as_deref(),
-            c.bridge.as_ref().map(|v| v.as_slice()),
-            c.below_deck.as_ref().map(|v| v.as_slice()),
+            c.bridge.as_deref(),
+            c.below_deck.as_deref(),
             &officers,
             below_decks_slots,
         )
@@ -631,9 +655,26 @@ pub fn compare_crews_payload(
         seed,
         profile_id,
         proc_sample,
+        req.support_buffs.as_deref(),
     );
 
     let mut warnings = Vec::new();
+    if let Some(v) = &req.support_buffs {
+        if v.len() > support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST {
+            warnings.push(format!(
+                "support_buffs: only the first {} entries are applied",
+                support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST
+            ));
+        }
+    }
+    if let Some(sb) = req.support_buffs.as_deref() {
+        if let Some(cat) = registry.support_buffs_catalog() {
+            let (_, unk) = support_buffs::resolve_selected_support_buff_ids(cat, sb);
+            for u in unk {
+                warnings.push(format!("Unknown support_buff id: {u}"));
+            }
+        }
+    }
     if outcome.using_placeholder_combatants {
         warnings.push(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
@@ -716,8 +757,8 @@ pub fn replay_optimize_seed_payload(
     let below_decks_slots = resolve_below_decks_slots(req.ship_tier, None);
     let candidate = crew_candidate_from_officer_fields(
         req.crew.captain.as_deref(),
-        req.crew.bridge.as_ref().map(|v| v.as_slice()),
-        req.crew.below_deck.as_ref().map(|v| v.as_slice()),
+        req.crew.bridge.as_deref(),
+        req.crew.below_deck.as_deref(),
         &officers,
         below_decks_slots,
     )
@@ -740,6 +781,7 @@ pub fn replay_optimize_seed_payload(
         req.sim_index,
         profile_id,
         max_trace,
+        req.support_buffs.as_deref(),
     );
 
     let mut warnings = Vec::new();
@@ -819,7 +861,7 @@ pub fn profile_put_payload(
     body: &str,
     profile_id: Option<&str>,
 ) -> Result<String, serde_json::Error> {
-    let _: PlayerProfile = serde_json::from_str(body).map_err(|e| e)?;
+    let _: PlayerProfile = serde_json::from_str(body)?;
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, PROFILE_JSON);
     if let Some(parent) = path.parent() {
@@ -995,8 +1037,8 @@ pub fn officer_resolved_payload(
     let opts = crate::lcars::ResolveOptions::default();
     let buff_set = crate::lcars::resolve_crew_to_buff_set(
         &officer.id,
-        &[officer.id.clone()],
-        &[officer.id.clone()],
+        std::slice::from_ref(&officer.id),
+        std::slice::from_ref(&officer.id),
         &by_id,
         &opts,
     );
@@ -1177,7 +1219,7 @@ pub fn presets_list_payload(profile_id: Option<&str>) -> Result<String, serde_js
     let dir = fs::read_dir(&dir_path).map_err(serde_json::Error::io)?;
     for entry in dir.flatten() {
         let path = entry.path();
-        if path.extension().map_or(false, |e| e == "json") {
+        if path.extension().is_some_and(|e| e == "json") {
             if let Ok(raw) = fs::read_to_string(&path) {
                 if let Ok(p) = serde_json::from_str::<Preset>(&raw) {
                     list.push(PresetSummary {
@@ -1441,7 +1483,7 @@ pub fn optimize_estimate_payload(
     };
     let estimated_seconds =
         (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;
-    let estimated_seconds = estimated_seconds.max(0.1).min(3600.0); // clamp to 0.1s–1h for display
+    let estimated_seconds = estimated_seconds.clamp(0.1, 3600.0); // clamp to 0.1s–1h for display
     let payload = serde_json::json!({
         "estimated_candidates": estimated_candidates,
         "sims_per_crew": sims,

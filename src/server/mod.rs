@@ -37,16 +37,11 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
     crate::data::validate::validate_all_startup_data()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
-    crate::data::profile_index::migrate_from_legacy_if_needed().map_err(|e| {
-        std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Profile migration failed: {e}"),
-        )
-    })?;
+    crate::data::profile_index::migrate_from_legacy_if_needed()
+        .map_err(|e| std::io::Error::other(format!("Profile migration failed: {e}")))?;
 
     let registry = crate::data::data_registry::DataRegistry::load().map_err(|e| {
-        std::io::Error::new(
-            std::io::ErrorKind::Other,
+        std::io::Error::other(
             format!("Failed to load data registry: {e}. Ensure data/officers/officers.canonical.json exists."),
         )
     })?;
@@ -89,6 +84,6 @@ pub fn run_server(bind_addr: &str) -> std::io::Result<()> {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?
+        .map_err(std::io::Error::other)?
         .block_on(run_server_async(bind_addr))
 }

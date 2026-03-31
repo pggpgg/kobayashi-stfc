@@ -33,6 +33,22 @@
           ]
         }
       ]
+    },
+    {
+      "rid": 99000003,
+      "name": "Fixture accuracy (mitigation dodge leg)",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "accuracy",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -45,6 +45,8 @@ Multiple rows with the same name are merged into one record with multiple bonuse
 
 **S31 Torpedo Pods (`fid` 473132032):** When [`../upstream/data-stfc-space/forbidden_tech/473132032.json`](../upstream/data-stfc-space/forbidden_tech/473132032.json) is present, rebaseline the six `S31 Torpedo Pods` rows from that file: for each non-empty `buffs[].buffs[]` with `value_is_percentage: true`, take `values[level - 1].value` (1-based tech level) and write `value` as **decimal** (e.g. `8` → `0.08`). The current CSV matches **level 46** (`values[45]`) for loca `56568`–`56571` mapped to `armor` / `shield_mitigation` / `dodge` (same %), `hull_hp`, `pierce`, and `weapon_damage`. Upstream copy still describes Battleship; Kobayashi applies generic combat keys.
 
+**Chaos tech (`tech_type: chaos`):** Maintainer script [`../../scripts/build_chaos_tech_csv_rows.mjs`](../../scripts/build_chaos_tech_csv_rows.mjs) fetches per-fid JSON from data.stfc.space and emits CSV rows (heuristic stat mapping from `translations-forbidden_tech.json`). Merge output into `forbidden_chaos_tech.csv`, then `cargo run --bin import_forbidden_chaos`.
+
 **Forbidden tech scaling env (see also `src/data/profile.rs`):**
 
 - `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` — scale catalog bonuses by synced forbidden-tech tier/level (opt-in; formula is approximate).

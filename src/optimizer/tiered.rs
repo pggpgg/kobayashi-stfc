@@ -20,6 +20,7 @@ pub const DEFAULT_TOP_K: usize = 20;
 /// Progress: `total_crews` = num_candidates + top_k; during scouting, `crews_done` is 0..num_candidates;
 /// after confirmation, `crews_done` reaches `total_crews`. Phases: `tiered_scout`, `tiered_confirm`.
 /// Returns false to abort.
+#[allow(clippy::too_many_arguments)]
 pub fn run_tiered_with_registry_with_progress<F>(
     registry: &DataRegistry,
     ship: &str,
@@ -30,6 +31,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     top_k: usize,
     seed: u64,
     profile_id: Option<&str>,
+    support_buffs: Option<&[String]>,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
@@ -52,8 +54,15 @@ where
     }
 
     // Build scenario once per phase; avoids reloading officers/profile for every batch.
-    let shared =
-        build_shared_scenario_data_from_registry(registry, ship, hostile, None, None, profile_id);
+    let shared = build_shared_scenario_data_from_registry(
+        registry,
+        ship,
+        hostile,
+        None,
+        None,
+        profile_id,
+        support_buffs,
+    );
 
     // Phase 1: scouting with few sims (Wilson early-stop may reduce per-crew iterations).
     let scout_sims = scout_sims.max(1);

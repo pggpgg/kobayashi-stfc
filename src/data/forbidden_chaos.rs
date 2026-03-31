@@ -119,4 +119,23 @@ mod sync_readiness_tests {
             DEFAULT_FORBIDDEN_CHAOS_PATH
         );
     }
+
+    /// Every catalog row must have `fid` so stfc-mod sync (`forbidden_tech.imported.json`) can merge bonuses.
+    #[test]
+    fn repo_forbidden_chaos_catalog_items_have_fid_for_sync_match() {
+        let Some(list) = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH) else {
+            return;
+        };
+        let issues: Vec<_> = forbidden_chaos_sync_readiness_issues(&list)
+            .into_iter()
+            .filter(|s| s.contains("missing fid"))
+            .collect();
+        assert!(
+            issues.is_empty(),
+            "catalog rows missing fid (sync cannot match) in {}: {issues:?}\n\
+             Fix: set `fid` in data/import/forbidden_chaos_tech.csv or run `cargo run --bin import_forbidden_chaos` \
+             with data/upstream/data-stfc-space/summary-forbidden_tech.json + translations-forbidden_tech.json present.",
+            DEFAULT_FORBIDDEN_CHAOS_PATH
+        );
+    }
 }

@@ -60,7 +60,12 @@ pub fn run_simulation_batches(
 ) -> Vec<crate::optimizer::monte_carlo::SimulationResult> {
     pool.install(|| {
         crate::optimizer::monte_carlo::run_monte_carlo_parallel(
-            ship, hostile, candidates, iterations, seed,
+            ship,
+            hostile,
+            candidates,
+            iterations,
+            seed,
+            None,
         )
     })
 }
@@ -98,6 +103,6 @@ mod tests {
     fn monte_carlo_batch_count_nonzero_for_work() {
         assert_eq!(super::monte_carlo_batch_count_for_candidates(0), 0);
         let n = super::monte_carlo_batch_count_for_candidates(500);
-        assert!(n >= 1 && n <= 40);
+        assert!((1..=40).contains(&n));
     }
 }

@@ -4,28 +4,19 @@ use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, OpponentFactionTag, TimingWindow,
+    CrewSeatContext, OpponentFactionTag, ShipType, TimingWindow,
 };
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
 use serde::Serialize;
 
 /// Options when resolving officer abilities (e.g. officer tier for scaling).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ResolveOptions {
     /// Fallback officer tier (1-based) when per-officer tier is not set.
     pub tier: Option<u8>,
     /// Per-officer tier (canonical_officer_id → tier). When set, each officer uses their tier for scaling (base + per_rank, chance_at_rank).
     pub officer_tiers: Option<HashMap<String, u8>>,
-}
-
-impl Default for ResolveOptions {
-    fn default() -> Self {
-        Self {
-            tier: None,
-            officer_tiers: None,
-        }
-    }
 }
 
 impl ResolveOptions {
@@ -93,8 +84,15 @@ fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCon
         | "opponent_faction_is"
         | "opponent_faction"
         | "faction_is" => {
-            let slug = c.faction.as_deref().or_else(|| c.tag.as_deref())?;
+            let slug = c.faction.as_deref().or(c.tag.as_deref())?;
             AbilityCondition::DefenderFactionIs(OpponentFactionTag::from_data_slug(slug)?)
+        }
+        "defender_ship_type_is"
+        | "defender_ship_class_is"
+        | "opponent_ship_type_is"
+        | "opponent_ship_class_is" => {
+            let slug = c.ship_type.as_deref().or(c.stat.as_deref())?;
+            AbilityCondition::DefenderShipTypeIs(ShipType::from_data_slug(slug)?)
         }
         "and" => {
             let conds: Vec<AbilityCondition> = c
@@ -148,32 +146,47 @@ fn duration_rounds_or_default(effect: &LcarsEffect, fallback: u32) -> u32 {
         .max(1)
 }
 
-/// Map LCARS trigger string to engine timing window. Unknown triggers return None (effect skipped).
-fn trigger_to_timing(trigger: Option<&str>) -> Option<TimingWindow> {
-    match trigger.map(normalize_trigger).as_deref() {
-        Some("passive") => Some(TimingWindow::CombatBegin),
-        Some("combatstart") | Some("on_combat_start") => Some(TimingWindow::CombatBegin),
-        Some("roundstart") | Some("on_round_start") => Some(TimingWindow::RoundStart),
-        Some("criticalshotfired")
-        | Some("enemytakeshit")
-        | Some("on_attack")
-        | Some("on_hit")
-        | Some("on_critical") => Some(TimingWindow::AttackPhase),
-        Some("after_shot")
-        | Some("on_after_shot")
-        | Some("subround_end")
-        | Some("on_subround_end")
-        | Some("after_weapon")
-        | Some("on_after_weapon") => Some(TimingWindow::AfterSubround),
-        Some("hittaken") | Some("on_defense") => Some(TimingWindow::DefensePhase),
-        Some("roundend") | Some("on_round_end") => Some(TimingWindow::RoundEnd),
-        Some("shieldsdepleted") | Some("targetshieldsdepleted") | Some("on_shield_break") => {
-            Some(TimingWindow::ShieldBreak)
+/// Map LCARS `trigger` (+ `target` for legacy `on_shield_break`) to engine timing. Unknown → None.
+///
+/// Shield semantics: **enemy** shields down → [`TimingWindow::ShieldBreak`]; **your** shields down
+/// → [`TimingWindow::SelfShieldBreak`]. Prefer explicit `on_enemy_shield_break` / `on_own_shield_break`;
+/// legacy `on_shield_break` uses `target: enemy` vs `target: self` (default `self` if omitted).
+pub(crate) fn effect_trigger_timing(effect: &LcarsEffect) -> Option<TimingWindow> {
+    let t = effect.trigger.as_deref().map(normalize_trigger)?;
+    match t.as_str() {
+        "on_own_shield_break" | "self_shields_depleted" | "own_shields_depleted" => {
+            Some(TimingWindow::SelfShieldBreak)
         }
-        Some("battlewon") | Some("on_kill") => Some(TimingWindow::Kill),
-        Some("hulldamagetaken") | Some("on_hull_breach") => Some(TimingWindow::HullBreach),
-        Some("shielddamagetaken") | Some("on_receive_damage") => Some(TimingWindow::ReceiveDamage),
-        Some("on_combat_end") => Some(TimingWindow::CombatEnd),
+        "on_enemy_shield_break"
+        | "enemy_shields_depleted"
+        | "target_shields_depleted"
+        | "targetshieldsdepleted" => Some(TimingWindow::ShieldBreak),
+        "shieldsdepleted" | "on_shield_break" => {
+            let who = effect
+                .target
+                .as_deref()
+                .map(|s| s.trim().to_ascii_lowercase())
+                .unwrap_or_else(|| "self".to_string());
+            if who == "enemy" {
+                Some(TimingWindow::ShieldBreak)
+            } else {
+                Some(TimingWindow::SelfShieldBreak)
+            }
+        }
+        "passive" => Some(TimingWindow::CombatBegin),
+        "combatstart" | "on_combat_start" => Some(TimingWindow::CombatBegin),
+        "roundstart" | "on_round_start" => Some(TimingWindow::RoundStart),
+        "criticalshotfired" | "enemytakeshit" | "on_attack" | "on_hit" | "on_critical" => {
+            Some(TimingWindow::AttackPhase)
+        }
+        "after_shot" | "on_after_shot" | "subround_end" | "on_subround_end" | "after_weapon"
+        | "on_after_weapon" => Some(TimingWindow::AfterSubround),
+        "hittaken" | "on_defense" => Some(TimingWindow::DefensePhase),
+        "roundend" | "on_round_end" => Some(TimingWindow::RoundEnd),
+        "battlewon" | "on_kill" => Some(TimingWindow::Kill),
+        "hulldamagetaken" | "on_hull_breach" => Some(TimingWindow::HullBreach),
+        "shielddamagetaken" | "on_receive_damage" => Some(TimingWindow::ReceiveDamage),
+        "on_combat_end" => Some(TimingWindow::CombatEnd),
         _ => None,
     }
 }
@@ -202,7 +215,7 @@ fn resolve_effect(
         return None;
     }
     let tier = options.tier_for(officer_id);
-    let timing = trigger_to_timing(effect.trigger.as_deref())?;
+    let timing = effect_trigger_timing(effect)?;
 
     match effect.effect_type.as_str() {
         "stat_modify" => {
@@ -462,9 +475,7 @@ pub fn lcars_effect_coverage(
     if effect.effect_type == "stat_modify" {
         let stat = effect.stat.as_deref().unwrap_or("").trim();
         if stat.eq_ignore_ascii_case("accuracy") {
-            let pathway = if trigger_to_timing(effect.trigger.as_deref())
-                == Some(TimingWindow::CombatBegin)
-            {
+            let pathway = if effect_trigger_timing(effect) == Some(TimingWindow::CombatBegin) {
                 "combat_begin_accuracy_static"
             } else {
                 "accuracy_non_combat_begin_skipped"
@@ -480,7 +491,7 @@ pub fn lcars_effect_coverage(
         }
     }
 
-    if trigger_to_timing(effect.trigger.as_deref()).is_none() {
+    if effect_trigger_timing(effect).is_none() {
         let tr = effect
             .trigger
             .as_deref()
@@ -583,10 +594,7 @@ pub fn resolve_crew_to_buff_set(
         for effect in &ability.effects {
             if effect.effect_type != "stat_modify"
                 || effect.trigger.as_deref().map(str::trim) != Some("passive")
-                || effect
-                    .duration
-                    .as_ref()
-                    .map_or(false, |d| !d.is_permanent())
+                || effect.duration.as_ref().is_some_and(|d| !d.is_permanent())
             {
                 continue;
             }
@@ -616,7 +624,7 @@ pub fn resolve_crew_to_buff_set(
             if effect.effect_type != "stat_modify" {
                 continue;
             }
-            if trigger_to_timing(effect.trigger.as_deref()) != Some(TimingWindow::CombatBegin) {
+            if effect_trigger_timing(effect) != Some(TimingWindow::CombatBegin) {
                 continue;
             }
             let stat = effect.stat.as_deref().unwrap_or("").trim();
@@ -771,7 +779,9 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 mod tests {
     use super::*;
     use crate::combat::abilities::CombatContext;
-    use crate::combat::{AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag};
+    use crate::combat::{
+        AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag, TimingWindow,
+    };
     use crate::lcars::parser::{
         load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect, LcarsOfficer,
         LcarsScaling,
@@ -808,6 +818,7 @@ mod tests {
             group: None,
             min_members: None,
             tag: None,
+            ship_type: None,
             conditions: None,
         }
     }
@@ -860,6 +871,7 @@ mod tests {
             group: None,
             min_members: None,
             tag: None,
+            ship_type: None,
             conditions: Some(vec![lcars_condition("morale_active"), fc.clone()]),
         };
         let ability = LcarsAbility {
@@ -935,6 +947,8 @@ mod tests {
             defender_burning_active: false,
             defender_hull_breach_active: false,
             defender_faction: OpponentFactionTag::Klingon,
+            defender_ship_type: ShipType::Battleship,
+            attacker_ship_type: ShipType::Explorer,
         };
         assert!(and_cond.evaluate(&ctx_ok));
         let ctx_no_morale = CombatContext {
@@ -942,6 +956,25 @@ mod tests {
             ..ctx_ok
         };
         assert!(!and_cond.evaluate(&ctx_no_morale));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_defender_ship_type() {
+        let c = LcarsCondition {
+            condition_type: "defender_ship_type_is".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: Some("explorer".to_string()),
+            conditions: None,
+        };
+        let ac = lcars_condition_to_ability_condition(&c).expect("maps");
+        assert_eq!(ac, AbilityCondition::DefenderShipTypeIs(ShipType::Explorer));
     }
 
     #[test]
@@ -1026,7 +1059,6 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
-            ..Default::default()
         };
         let ability_iso = LcarsAbility {
             name: "iso".to_string(),
@@ -1124,7 +1156,6 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
-            ..Default::default()
         };
         // Same officer cannot appear in multiple seats; exercise Khan's blocks on separate minimal crews.
         let buff_cap_bridge = resolve_crew_to_buff_set("khan", &[], &[], &officers, &options);
@@ -1157,7 +1188,6 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(3),
             officer_tiers: Some(officer_tiers),
-            ..Default::default()
         };
         assert_eq!(options.tier_for("officer_a"), Some(1));
         assert_eq!(options.tier_for("officer_b"), Some(5));
@@ -1165,7 +1195,6 @@ mod tests {
         let options_no_fallback = ResolveOptions {
             tier: None,
             officer_tiers: Some([("x".to_string(), 2u8)].into_iter().collect()),
-            ..Default::default()
         };
         assert_eq!(options_no_fallback.tier_for("x"), Some(2));
         assert_eq!(options_no_fallback.tier_for("y"), None);
@@ -1213,12 +1242,10 @@ mod tests {
         let options_tier1 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 1u8)].into_iter().collect()),
-            ..Default::default()
         };
         let options_tier5 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 5u8)].into_iter().collect()),
-            ..Default::default()
         };
         let buff_tier1 =
             resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier1);
@@ -1388,5 +1415,33 @@ mod tests {
                 ..
             } if (bonus_pct - 0.5).abs() < 1e-12
         ));
+    }
+
+    #[test]
+    fn effect_trigger_timing_on_shield_break_targets_self_vs_enemy() {
+        let mut e = lcars_effect_stat_modify("weapon_damage", 0.1, "on_shield_break");
+        e.target = Some("self".to_string());
+        assert_eq!(
+            effect_trigger_timing(&e),
+            Some(TimingWindow::SelfShieldBreak)
+        );
+        e.target = Some("enemy".to_string());
+        assert_eq!(effect_trigger_timing(&e), Some(TimingWindow::ShieldBreak));
+        e.target = None;
+        assert_eq!(
+            effect_trigger_timing(&e),
+            Some(TimingWindow::SelfShieldBreak)
+        );
+    }
+
+    #[test]
+    fn effect_trigger_timing_explicit_own_and_enemy_shield_triggers() {
+        let mut e = lcars_effect_stat_modify("weapon_damage", 0.1, "on_own_shield_break");
+        assert_eq!(
+            effect_trigger_timing(&e),
+            Some(TimingWindow::SelfShieldBreak)
+        );
+        e.trigger = Some("on_enemy_shield_break".to_string());
+        assert_eq!(effect_trigger_timing(&e), Some(TimingWindow::ShieldBreak));
     }
 }

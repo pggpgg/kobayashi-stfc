@@ -28,7 +28,7 @@ pub fn round_half_even(x: f64) -> u32 {
         fl_u + 1
     } else {
         // tie: round to nearest even
-        if fl_u % 2 == 0 {
+        if fl_u.is_multiple_of(2) {
             fl_u
         } else {
             fl_u + 1
@@ -104,7 +104,7 @@ impl EnemyTypes {
     }
 
     pub fn contains(&self, tag: EnemyType) -> bool {
-        self.0.iter().any(|&t| t == tag)
+        self.0.contains(&tag)
     }
 
     /// Same tags, adjacent duplicates collapsed, original order kept.
@@ -441,6 +441,19 @@ impl TraceCollector {
 }
 
 impl ShipType {
+    /// Parse slug from ship catalogs, hull ability conditions, or LCARS (`battleship`, `explorer`, …).
+    pub fn from_data_slug(s: &str) -> Option<Self> {
+        let k = s.trim().to_lowercase().replace('-', "_");
+        match k.as_str() {
+            "battleship" => Some(Self::Battleship),
+            "explorer" => Some(Self::Explorer),
+            "interceptor" => Some(Self::Interceptor),
+            "survey" => Some(Self::Survey),
+            "armada" => Some(Self::Armada),
+            _ => None,
+        }
+    }
+
     pub const fn coefficients(self) -> (f64, f64, f64) {
         match self {
             Self::Survey => SURVEY_COEFFICIENTS,

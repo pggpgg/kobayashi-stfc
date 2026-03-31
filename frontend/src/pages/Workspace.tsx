@@ -18,6 +18,9 @@ export default function Workspace() {
           numSims: ws.simsPerCrew,
           belowDecksSlots: belowDeckSlotCount(ws.shipLevel),
           profileId: ws.activeProfileId,
+          ...(ws.selectedSupportBuffs.length > 0
+            ? { supportBuffs: ws.selectedSupportBuffs }
+            : {}),
         }
       : null;
 
@@ -56,6 +59,8 @@ export default function Workspace() {
         optimizePhase={ws.optimizePhase}
         optimizeEtaSeconds={ws.optimizeEtaSeconds}
         optimizeStreamMode={ws.optimizeStreamMode}
+        selectedSupportBuffs={ws.selectedSupportBuffs}
+        onSelectedSupportBuffsChange={ws.setSelectedSupportBuffs}
       />
       <SavePresetModal
         open={ws.showSavePreset}

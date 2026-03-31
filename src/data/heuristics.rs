@@ -61,7 +61,7 @@ pub fn list_heuristics_seeds(dir: &str) -> Vec<String> {
         .flatten()
         .filter_map(|e| {
             let p = e.path();
-            if p.extension().map_or(false, |ext| ext == "txt") {
+            if p.extension().is_some_and(|ext| ext == "txt") {
                 p.file_stem()
                     .and_then(|s| s.to_str())
                     .map(|s| s.to_string())

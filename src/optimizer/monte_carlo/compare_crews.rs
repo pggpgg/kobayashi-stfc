@@ -67,6 +67,8 @@ fn simulate_trial(
         .as_ref()
         .map(|h| h.opponent_faction_tag())
         .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_ship_type = shared.defender_ship_type_for_combat();
+    let attacker_ship_type = shared.attacker_ship_type_for_combat();
     combat_config.seed = iteration_seed;
     simulate_combat_with_defender_faction_and_defender_crew(
         &input.attacker,
@@ -74,6 +76,8 @@ fn simulate_trial(
         combat_config,
         &input.crew,
         defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
         &input.defender_crew,
     )
 }
@@ -189,6 +193,7 @@ fn distribution_for_crew(
 }
 
 /// Run Monte Carlo for 2–5 crews and return histograms for rounds (clean wins), hull remaining (clean wins), and optional proc rates from traced subsample.
+#[allow(clippy::too_many_arguments)] // registry-driven MC entry; options are scenario + sampling knobs
 pub fn compare_crews_monte_carlo_with_registry(
     registry: &DataRegistry,
     ship: &str,
@@ -200,9 +205,16 @@ pub fn compare_crews_monte_carlo_with_registry(
     base_seed: u64,
     profile_id: Option<&str>,
     proc_sample_trials: u32,
+    support_buffs: Option<&[String]>,
 ) -> CompareCrewsOutcome {
     let shared = build_shared_scenario_data_from_registry(
-        registry, ship, hostile, ship_tier, ship_level, profile_id,
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        support_buffs,
     );
     let placeholder = shared.using_placeholder_combatants;
     let crews: Vec<CompareCrewDistribution> = candidates

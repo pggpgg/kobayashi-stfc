@@ -126,12 +126,16 @@ fn run_candidate_monte_carlo(
             .as_ref()
             .map(|h| h.opponent_faction_tag())
             .unwrap_or(OpponentFactionTag::Unknown);
+        let defender_ship_type = shared.defender_ship_type_for_combat();
+        let attacker_ship_type = shared.attacker_ship_type_for_combat();
         let result = simulate_combat_with_defender_faction_and_defender_crew(
             &input.attacker,
             &input.defender,
             combat_config,
             &input.crew,
             defender_faction,
+            defender_ship_type,
+            attacker_ship_type,
             &input.defender_crew,
         );
         let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
@@ -172,7 +176,7 @@ fn run_candidate_monte_carlo(
             if n_done >= cfg.min_trials
                 && n_done < max_iterations
                 && cfg.check_every > 0
-                && (n_done % cfg.check_every == 0)
+                && n_done.is_multiple_of(cfg.check_every)
                 && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
             {
                 break;
@@ -240,8 +244,17 @@ pub fn run_monte_carlo(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
+    support_buffs: Option<&[String]>,
 ) -> Vec<SimulationResult> {
-    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, false)
+    run_monte_carlo_with_parallelism(
+        ship,
+        hostile,
+        candidates,
+        iterations,
+        seed,
+        false,
+        support_buffs,
+    )
 }
 
 /// Like [run_monte_carlo] but distributes candidates across all CPU cores via Rayon.
@@ -252,8 +265,17 @@ pub fn run_monte_carlo_parallel(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
+    support_buffs: Option<&[String]>,
 ) -> Vec<SimulationResult> {
-    run_monte_carlo_with_parallelism(ship, hostile, candidates, iterations, seed, true)
+    run_monte_carlo_with_parallelism(
+        ship,
+        hostile,
+        candidates,
+        iterations,
+        seed,
+        true,
+        support_buffs,
+    )
 }
 
 /// Monte Carlo for a population that may contain duplicate crews: simulates each distinct crew once
@@ -264,6 +286,7 @@ pub fn run_monte_carlo_parallel_deduped(
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
+    support_buffs: Option<&[String]>,
 ) -> Vec<SimulationResult> {
     if candidates.is_empty() {
         return Vec::new();
@@ -283,7 +306,7 @@ pub fn run_monte_carlo_parallel_deduped(
         .map(|&i| candidates[i].clone())
         .collect();
 
-    let uniq_results = run_monte_carlo_parallel(ship, hostile, &uniq, iterations, seed);
+    let uniq_results = run_monte_carlo_parallel(ship, hostile, &uniq, iterations, seed, support_buffs);
 
     let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq_results.len());
     for (j, r) in uniq_results.into_iter().enumerate() {
@@ -325,6 +348,7 @@ pub fn run_monte_carlo_parallel_deduped(
 
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_parallel_with_registry(
     registry: &DataRegistry,
     ship: &str,
@@ -335,9 +359,16 @@ pub fn run_monte_carlo_parallel_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
+    support_buffs: Option<&[String]>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
-        registry, ship, hostile, ship_tier, ship_level, profile_id,
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        support_buffs,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -348,6 +379,7 @@ pub fn run_monte_carlo_parallel_with_registry(
 
 /// Like [run_monte_carlo] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_with_registry(
     registry: &DataRegistry,
     ship: &str,
@@ -358,9 +390,16 @@ pub fn run_monte_carlo_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
+    support_buffs: Option<&[String]>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
-        registry, ship, hostile, ship_tier, ship_level, profile_id,
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        support_buffs,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -393,6 +432,7 @@ pub struct MonteCarloSeedReplay {
 }
 
 /// Replay a single iteration from an optimize/simulate Monte Carlo run (`scenario_seed` matches the request seed).
+#[allow(clippy::too_many_arguments)]
 pub fn replay_optimize_iteration_with_registry(
     registry: &DataRegistry,
     ship: &str,
@@ -404,9 +444,16 @@ pub fn replay_optimize_iteration_with_registry(
     sim_index: u64,
     profile_id: Option<&str>,
     max_trace_events: usize,
+    support_buffs: Option<&[String]>,
 ) -> MonteCarloSeedReplay {
     let shared = build_shared_scenario_data_from_registry(
-        registry, ship, hostile, ship_tier, ship_level, profile_id,
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        support_buffs,
     );
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
     let iteration_seed = input.base_seed.wrapping_add(sim_index);
@@ -417,6 +464,8 @@ pub fn replay_optimize_iteration_with_registry(
         .as_ref()
         .map(|h| h.opponent_faction_tag())
         .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_ship_type = shared.defender_ship_type_for_combat();
+    let attacker_ship_type = shared.attacker_ship_type_for_combat();
 
     let combat_config = SimulationConfig {
         rounds: input.rounds,
@@ -430,6 +479,8 @@ pub fn replay_optimize_iteration_with_registry(
         combat_config,
         &input.crew,
         defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
         &input.defender_crew,
     );
 
@@ -474,8 +525,9 @@ fn run_monte_carlo_with_parallelism(
     iterations: usize,
     seed: u64,
     parallel: bool,
+    support_buffs: Option<&[String]>,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_standalone(ship, hostile);
+    let shared = build_shared_scenario_data_standalone(ship, hostile, support_buffs);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel)
 }
 
@@ -562,8 +614,8 @@ mod tests {
             below_decks: vec!["D".into(), "E".into(), "F".into()],
         };
         let pop = vec![a.clone(), a.clone()];
-        let full = run_monte_carlo_parallel("enterprise", "swarm", &pop, 8, 42);
-        let deduped = run_monte_carlo_parallel_deduped("enterprise", "swarm", &pop, 8, 42);
+        let full = run_monte_carlo_parallel("enterprise", "swarm", &pop, 8, 42, None);
+        let deduped = run_monte_carlo_parallel_deduped("enterprise", "swarm", &pop, 8, 42, None);
         assert_eq!(full.len(), deduped.len());
         assert_eq!(full[0].win_rate, deduped[0].win_rate);
         assert_eq!(full[1].win_rate, deduped[1].win_rate);

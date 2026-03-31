@@ -96,7 +96,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let v = combat.get(*key).copied().unwrap_or(0.0);
                 println!("  {}: {:.4}  ({:.2}%)", key, v, v * 100.0);
             }
-            return Ok(());
+            Ok(())
         } else {
             let bid_to_id = kobayashi::data::building_bid_resolver::load_bid_to_building_id(
                 kobayashi::data::building_bid_resolver::DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
@@ -149,7 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let v = combat.get(*key).copied().unwrap_or(0.0);
                 println!("  {}: {:.4}  ({:.2}%)", key, v, v * 100.0);
             }
-            return Ok(());
+            Ok(())
         }
     } else {
         let mut records: Vec<kobayashi::data::building::BuildingRecord> = Vec::new();
@@ -189,6 +189,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let v = combat.get(*key).copied().unwrap_or(0.0);
             println!("  {}: {:.4}  ({:.2}%)", key, v, v * 100.0);
         }
-        return Ok(());
+        Ok(())
     }
 }

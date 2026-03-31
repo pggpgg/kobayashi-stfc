@@ -1,4 +1,4 @@
-use crate::combat::types::OpponentFactionTag;
+use crate::combat::types::{OpponentFactionTag, ShipType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AbilityClass {
@@ -18,8 +18,12 @@ pub enum TimingWindow {
     AfterSubround,
     DefensePhase,
     RoundEnd,
-    /// When target's shields reach 0 (on_shield_break).
+    /// When the **defender's** (enemy's) shields reach 0 — e.g. `on_enemy_shield_break`, or legacy
+    /// `on_shield_break` with LCARS `target: enemy` (Yan'Agh-style).
     ShieldBreak,
+    /// When **this crew's ship** (the attacker in PvE) loses shields — counter-fire and similar.
+    /// LCARS: `on_own_shield_break` / `on_shield_break` with `target: self` (Mudd, Vemet, …).
+    SelfShieldBreak,
     /// When this ship destroys a target (on_kill).
     Kill,
     /// When target's hull drops below threshold (on_hull_breach).
@@ -137,6 +141,10 @@ pub struct CombatContext {
     pub defender_hull_breach_active: bool,
     /// Faction of the defending ship (hostile) in PvE; used for "against Klingon" style abilities.
     pub defender_faction: OpponentFactionTag,
+    /// Hull class of the defending [`crate::combat::Combatant`] (hostile in PvE).
+    pub defender_ship_type: ShipType,
+    /// Hull class of the attacking [`crate::combat::Combatant`] (player ship in PvE).
+    pub attacker_ship_type: ShipType,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -162,6 +170,10 @@ pub enum AbilityCondition {
     DefenderHullBreach,
     /// True when the defending hostile’s faction matches (see [`CombatContext::defender_faction`]).
     DefenderFactionIs(OpponentFactionTag),
+    /// True when the defending ship’s hull class matches (player hull abilities vs a hostile of that class).
+    DefenderShipTypeIs(ShipType),
+    /// True when the attacking ship’s hull class matches (e.g. hostile hull abilities vs the player’s class).
+    AttackerShipTypeIs(ShipType),
     And(Vec<AbilityCondition>),
     Or(Vec<AbilityCondition>),
 }
@@ -200,6 +212,8 @@ impl AbilityCondition {
             Self::DefenderBurning => ctx.defender_burning_active,
             Self::DefenderHullBreach => ctx.defender_hull_breach_active,
             Self::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
+            Self::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
+            Self::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
             Self::And(conds) => conds.iter().all(|c| c.evaluate(ctx)),
             Self::Or(conds) => conds.iter().any(|c| c.evaluate(ctx)),
         }
@@ -358,7 +372,7 @@ pub fn filter_effects_by_condition(
 ) -> Vec<ActiveAbilityEffect> {
     effects
         .iter()
-        .filter(|e| e.condition.as_ref().map_or(true, |c| c.evaluate(ctx)))
+        .filter(|e| e.condition.as_ref().is_none_or(|c| c.evaluate(ctx)))
         .cloned()
         .collect()
 }

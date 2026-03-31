@@ -4,8 +4,8 @@ Work the simulator or data pipeline cannot complete automatically: judgment, ups
 
 ## Factions and hostiles
 
-1. **Mapping of hostiles to factions using `translations-factions.json`**  
-   Correlate upstream hostile `faction.id` / `faction.loca_id` with faction display names and game semantics in `data/upstream/data-stfc-space/translations-factions.json`, then extend `HostileRecord::opponent_faction_tag()` (in `src/data/hostile.rs`) so unmapped ids (e.g. Q-Continuum, Exiles, Card, Node, Texas-class) resolve to the correct [`OpponentFactionTag`](src/combat/types.rs) or stay explicitly `Unknown` with a documented reason.
+1. **Mapping of hostiles to factions using `translations-factions.json`** — **ongoing in code; see `src/data/hostile.rs`**  
+   `HostileRecord::opponent_faction_tag()` maps high-volume `faction.id` values from `summary-hostile` and `faction.loca_id` rows that match `translations-factions.json` `faction_name` (e.g. Texas-class → Federation, “Card” → Cardassian, Borg alt loca, V’Ger Clone → Borg). **Intentionally `Unknown`:** Q-Continuum, Exiles, Node, Maverick, Orion, Eclipse, Krenim, Apex Raiders, Transogen, Aggregation (no `OpponentFactionTag` / not modeled for hull faction gates). When the game adds a new `faction.id`, extend the match arms in `hostile.rs` and add a unit test.
 
 ## Ship ability catalog (heuristic)
 

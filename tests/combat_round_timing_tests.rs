@@ -220,7 +220,6 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
                 crit_multiplier: Some(2.0),
                 proc_chance: Some(1.0),
                 proc_multiplier: Some(3.0),
-                ..Default::default()
             },
             WeaponStats {
                 attack: 100.0,

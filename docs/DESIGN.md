@@ -142,7 +142,9 @@ The simulator tracks implementation status per combat mechanic. LCARS validation
 | `on_attack` | Each time this ship attacks |
 | `on_hit` | Each time an attack lands |
 | `on_critical` | Each time a critical hit lands |
-| `on_shield_break` | When target's shields reach 0 |
+| `on_shield_break` | Legacy: **whose** shields is inferred from `target` — `target: self` → your shields depleted ([`TimingWindow::SelfShieldBreak`](../src/combat/abilities.rs)); `target: enemy` → enemy shields depleted ([`ShieldBreak`](../src/combat/abilities.rs)). If `target` is omitted, **self** is assumed. Prefer explicit `on_own_shield_break` / `on_enemy_shield_break`. |
+| `on_own_shield_break` | When **your** ship's shields reach 0 (counter-fire, etc.) |
+| `on_enemy_shield_break` | When the **opponent's** shields reach 0 (Yan'Agh-style) |
 | `on_hull_breach` | When target's hull drops below threshold |
 | `on_kill` | When this ship destroys a target |
 | `on_receive_damage` | When this ship takes damage |
@@ -327,6 +329,7 @@ Per round, the engine processes effects in this order:
 6. Check `on_kill`, `on_shield_break`, `on_hull_breach`, and round cap (100)
 
 Notes:
+- **Forbidden tech and chaos tech (implementation):** bonuses are merged into `profile.bonuses` at scenario build time (same static stack as research/buildings for combat math), not re-applied as a separate sub-round phase. The numbered list above still reflects toolbox/client ordering for officer/ship abilities and weapons; treat FT/chaos there as *conceptual* unless we add a dedicated engine phase with evidence.
 - UI logs can collapse duplicate ability/forbidden-tech lines even when multiple ships apply the same source.
 - Ordering details for per-ship buff application are currently treated as implementation targets inferred from raw logs and should remain test-backed as fixtures expand.
 
@@ -338,7 +341,7 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 2. **Normalizer:** `cargo run --bin normalize_data_stfc_space` reads `data/upstream/data-stfc-space/ships/<numeric_id>.json`, applies the catalog, and writes [data/ships_extended/](../data/ships_extended/) `<kobayashi_id>.json` with optional top-level `abilities`: `{ id, timing, effect_type, value }` (first `values[].value` only; per-tier ability curves are not modeled yet).
 3. **Load / resolve:** [src/data/ship.rs](../src/data/ship.rs) (`ExtendedShipRecord`, `ShipRecord`) deserializes `abilities`; `ExtendedShipRecord::to_ship_record` copies them onto the flat record for the chosen tier/level.
 4. **Scenario:** [src/optimizer/monte_carlo/scenario.rs](../src/optimizer/monte_carlo/scenario.rs) calls `extend_crew_with_ship_abilities`, which appends [src/data/ship_ability_resolve.rs](../src/data/ship_ability_resolve.rs) `ship_abilities_to_crew_seat_contexts` after officer seats. Each supported ability becomes a `CrewSeatContext` with `CrewSeat::Ship` and `AbilityClass::ShipAbility`.
-5. **Combat loop:** The hot path treats these like other timed crew effects: [src/combat/engine.rs](../src/combat/engine.rs) and [src/combat/effect_accumulator.rs](../src/combat/effect_accumulator.rs) apply the same `TimingWindow` ordering described above (passive, round start, per sub-round attack/defense, round end, shield break, receive_damage, kill, hull breach, combat end).
+5. **Combat loop:** The hot path treats these like other timed crew effects: [src/combat/engine.rs](../src/combat/engine.rs) and [src/combat/effect_accumulator.rs](../src/combat/effect_accumulator.rs) apply the same `TimingWindow` ordering described above (passive, round start, per sub-round attack/defense, round end, shield break, receive_damage, kill, hull breach, combat end). When the **defender’s** shields are depleted, defender-side `ShieldBreak` effects (e.g. from hostile ship abilities in `defender_crew`) are evaluated too: immediate shield/hull regen on the defender where applicable, and other effects feed that sub-round’s counter-attack; return fire’s damage-through uses weapon pierce plus the accumulator’s `pre_attack_pierce_bonus` (same stacking model as outbound fire).
 
 **Manual / test data:** You can set `abilities` on `ships_extended/<id>.json` directly (same JSON shape as normalizer output). Fixture coverage for catalog effect types: [tests/fixtures/ship_abilities/catalog_effect_coverage.json](../tests/fixtures/ship_abilities/catalog_effect_coverage.json).
 
@@ -363,7 +366,7 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 - **Combat start: armor/shield piercing or weapon damage** — Mapped to `combat_begin` + `pierce_bonus` or `attack_multiplier` with percentage flags set from text heuristics. **“Ignore X% of enemy shields” (Breen-style)** — Mapped to percentage `pierce_bonus`; the client may implement this as a distinct bypass layer rather than the same stat as armor piercing.
 - **Upstream `values[]`** — Only the first scalar value is normalized onto the ship; per-tier ability curves are not modeled.
 
-**Gaps:** In-game copy often mentions **accuracy** changes; there is no dedicated `AbilityEffect` for accuracy yet (only pierce, attack multiplier, etc.—see `ship_ability_effect_from_catalog`). Adding accuracy ship abilities would require an engine stat path analogous to pierce stacking. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids should be periodically reviewed; see [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
+**Gaps:** **Accuracy** from ship hull abilities: catalog `effect_type` `accuracy` / `accuracy_bonus` at **`combat_begin` only** is summed by `sum_combat_begin_accuracy_from_ship_abilities` into attacker stats (not a crew `AbilityEffect`; see `ship_ability_resolve`). Other timings or accuracy tied to non-combat-begin windows are not modeled. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids are inventoried in [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md); maintain that list when the catalog changes.
 
 **Combat-begin and pre-combat stats:** Combat_begin effects are applied at the start of each round to a fresh per-round effect accumulator (see engine loop). They are not re-accumulated across rounds, so they behave as permanent pre-combat modifiers. The first round uses the same effective stats as later rounds (same accumulator build: combat_begin → round_start → attack → defense → round_end).
 
@@ -509,7 +512,7 @@ The engine applies these as a pre-combat modifier layer. This gets ~90% accuracy
 
 ### 5.4 Advanced Mode (research, buildings, forbidden tech)
 
-Research is implemented via a **research catalog** and merge into the profile. Synced research levels (`profiles/{id}/research.imported.json`, by `rid` and `level`) are looked up in `data/research_catalog.json`. For each research project, bonuses for levels 1..=level are summed (cumulative); only combat stats (weapon_damage, hull_hp, shield_hp, etc.) are merged into `profile.bonuses`. Merge order: forbidden tech → buildings → research. See `data/README.md` for catalog schema and import pipeline.
+Research is implemented via a **research catalog** and merge into the profile. Synced research levels (`profiles/{id}/research.imported.json`, by `rid` and `level`) are looked up in `data/research_catalog.json`. For each research project, bonuses for levels 1..=level are summed (cumulative); only combat stats (weapon_damage, hull_hp, shield_hp, isolytic_damage, isolytic_defense, apex_shred, apex_barrier, etc.) are merged into `profile.bonuses`. Merge order: forbidden tech → buildings → research. Apex research bonuses stack additively onto the player combatant with ship base apex values when building the scenario attacker. See `data/README.md` for catalog schema and import pipeline.
 
 Itemized sources (conceptual; research/building/forbidden-tech are implemented as above):
 

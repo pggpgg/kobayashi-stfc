@@ -1,0 +1,4 @@
+{
+  "description": "Optional per-ability catalog rows merged after scripts/generate_full_ship_ability_catalog.py heuristics. Keys are upstream ability ids (string or int); values are full entry objects (timing, effect_type, value_is_percentage, etc.). Use this so hand-tuned mappings survive catalog regeneration. See docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md § Drift control.",
+  "entries": {}
+}

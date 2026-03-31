@@ -345,6 +345,7 @@ fn gather_optimize_simulation_results(
         request.ship_tier,
         request.ship_level,
         profile_id,
+        request.support_buffs.as_deref(),
     )
     .using_placeholder_combatants;
 
@@ -362,6 +363,7 @@ fn gather_optimize_simulation_results(
             sims as usize,
             seed,
             profile_id,
+            request.support_buffs.as_deref(),
         );
         sink.on_heuristics_complete(heuristics_only, h_total, &results);
         results
@@ -391,6 +393,7 @@ fn gather_optimize_simulation_results(
             analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
             below_decks_slots,
             constraints: crew_constraints.clone(),
+            support_buffs: request.support_buffs.clone().unwrap_or_default(),
         };
         let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
             sink.on_optimize_tick(tick)
@@ -696,7 +699,7 @@ pub fn start_optimize_job(
     let heuristics_seeds_nonempty = request
         .heuristics_seeds
         .as_ref()
-        .map_or(false, |s| !s.is_empty());
+        .is_some_and(|s| !s.is_empty());
 
     {
         let mut map = lock_jobs();
@@ -779,10 +782,10 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
     let now_ms = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
-        .as_millis() as u128;
+        .as_millis();
     let started_ms = parse_optimize_job_timestamp_ms(job_id);
     let elapsed_s = ((now_ms.saturating_sub(started_ms)) as f64) / 1000.0;
-    let crew_like_phase = state.phase.as_deref().map_or(true, |p| {
+    let crew_like_phase = state.phase.as_deref().is_none_or(|p| {
         matches!(
             p,
             "heuristics" | "monte_carlo" | "tiered_scout" | "tiered_confirm"

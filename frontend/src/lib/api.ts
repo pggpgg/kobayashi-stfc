@@ -269,6 +269,7 @@ export async function simulate(
     num_sims?: number;
     ship_tier?: number | null;
     ship_level?: number | null;
+    support_buffs?: string[];
   },
   profileId?: string | null,
 ): Promise<SimulateResponse> {
@@ -283,6 +284,9 @@ export async function simulate(
   }
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
+  }
+  if (params.support_buffs && params.support_buffs.length > 0) {
+    body.support_buffs = params.support_buffs;
   }
   const res = await fetch(`${API_BASE}/api/simulate`, {
     method: "POST",
@@ -349,6 +353,8 @@ export async function compareCrewsDistributions(
     ship_level?: number | null;
     below_decks_slots?: number | null;
     proc_sample_trials?: number;
+    /** Same ids as simulate/optimize (`data/support_buffs.json`). */
+    support_buffs?: string[];
   },
   profileId?: string | null,
 ): Promise<CompareCrewsResponse> {
@@ -368,6 +374,9 @@ export async function compareCrewsDistributions(
   }
   if (params.proc_sample_trials != null && params.proc_sample_trials > 0) {
     body.proc_sample_trials = params.proc_sample_trials;
+  }
+  if (params.support_buffs && params.support_buffs.length > 0) {
+    body.support_buffs = params.support_buffs;
   }
   const res = await fetch(`${API_BASE}/api/compare/crews`, {
     method: "POST",
@@ -589,6 +598,7 @@ export async function optimizeStart(
     ship_level?: number | null;
     below_decks_slots?: number | null;
     constraints?: OptimizeCrewConstraintsBody;
+    support_buffs?: string[];
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -630,6 +640,9 @@ export async function optimizeStart(
   }
   if (params.constraints && Object.keys(params.constraints).length > 0) {
     body.constraints = params.constraints;
+  }
+  if (params.support_buffs && params.support_buffs.length > 0) {
+    body.support_buffs = params.support_buffs;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: "POST",

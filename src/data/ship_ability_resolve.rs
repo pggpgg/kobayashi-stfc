@@ -13,14 +13,18 @@
 //! roll succeeds that round.
 //!
 //! **Accuracy:** `accuracy` / `accuracy_bonus` at **combat begin** are summed by
-//! [`sum_combat_begin_accuracy_from_ship_abilities`] and folded into pre-mitigation [`AttackerStats`]
-//! (not a crew seat). Other timings are not modeled yet.
+//! [`sum_combat_begin_accuracy_from_ship_abilities`] (using the hostile’s [`crate::combat::ShipType`])
+//! and folded into pre-mitigation [`AttackerStats`] (not a crew seat). Rows with [`crate::data::ship::ShipAbility::round_cap`]
+//! are skipped here (per-round accuracy is not applied in that path). Other timings are not modeled yet.
+//!
+//! **Round cap:** Optional [`crate::data::ship::ShipAbility::round_cap`] adds [`crate::combat::abilities::AbilityCondition::RoundRange`]
+//! `1..=N` so crew-seat effects apply only in the first **N** combat rounds.
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
     TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
-use crate::combat::types::{OpponentFactionTag, EPSILON, MAX_COMBAT_ROUNDS};
+use crate::combat::types::{OpponentFactionTag, ShipType, EPSILON, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
 
 fn normalize_key(s: &str) -> String {
@@ -42,6 +46,15 @@ fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition
         if let Some(tag) = OpponentFactionTag::from_data_slug(slug) {
             parts.push(AbilityCondition::DefenderFactionIs(tag));
         }
+    }
+    if let Some(ref slug) = ability.condition_opponent_ship_class {
+        if let Some(st) = ShipType::from_data_slug(slug) {
+            parts.push(AbilityCondition::DefenderShipTypeIs(st));
+        }
+    }
+    if let Some(n) = ability.round_cap.filter(|&n| n > 0) {
+        let max_r = n.min(MAX_COMBAT_ROUNDS);
+        parts.push(AbilityCondition::RoundRange { min: 1, max: max_r });
     }
     match parts.len() {
         0 => None,
@@ -195,16 +208,30 @@ pub fn ship_ability_effect_from_catalog(
 
 /// Flat accuracy from hull abilities at combat begin, folded into [`crate::combat::AttackerStats`]
 /// before hostile mitigation / pierce-through (see [`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`]).
-pub fn sum_combat_begin_accuracy_from_ship_abilities(abilities: &[ShipAbility]) -> f64 {
+pub fn sum_combat_begin_accuracy_from_ship_abilities(
+    abilities: &[ShipAbility],
+    defender_ship_type: ShipType,
+) -> f64 {
     let mut sum = 0.0;
     for a in abilities {
         if parse_ship_ability_timing(&a.timing) != Some(TimingWindow::CombatBegin) {
             continue;
         }
         match normalize_key(&a.effect_type).as_str() {
-            "accuracy" | "accuracy_bonus" => sum += a.value,
-            _ => {}
+            "accuracy" | "accuracy_bonus" => {}
+            _ => continue,
         }
+        if let Some(ref slug) = a.condition_opponent_ship_class {
+            if let Some(expected) = ShipType::from_data_slug(slug) {
+                if defender_ship_type != expected {
+                    continue;
+                }
+            }
+        }
+        if a.round_cap.is_some() {
+            continue;
+        }
+        sum += a.value;
     }
     sum
 }
@@ -212,9 +239,10 @@ pub fn sum_combat_begin_accuracy_from_ship_abilities(abilities: &[ShipAbility]) 
 /// One ship hull ability → one seat context, or None if unsupported.
 pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSeatContext> {
     if let Some(ref slug) = ability.condition_opponent_faction {
-        if OpponentFactionTag::from_data_slug(slug).is_none() {
-            return None;
-        }
+        OpponentFactionTag::from_data_slug(slug)?;
+    }
+    if let Some(ref slug) = ability.condition_opponent_ship_class {
+        ShipType::from_data_slug(slug)?;
     }
     let timing = parse_ship_ability_timing(&ability.timing)?;
     let effect = ship_ability_effect_from_catalog(
@@ -252,7 +280,7 @@ pub fn ship_abilities_to_crew_seat_contexts(abilities: &[ShipAbility]) -> Vec<Cr
 mod tests {
     use super::*;
     use crate::combat::abilities::{AbilityCondition, AbilityEffect};
-    use crate::combat::types::OpponentFactionTag;
+    use crate::combat::types::{OpponentFactionTag, ShipType};
 
     #[test]
     fn timing_accepts_lcars_style_aliases() {
@@ -306,6 +334,8 @@ mod tests {
                 condition_defender_burning: false,
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
+                condition_opponent_ship_class: None,
+                round_cap: None,
             },
             ShipAbility {
                 id: "rs".into(),
@@ -317,11 +347,56 @@ mod tests {
                 condition_defender_burning: false,
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
+                condition_opponent_ship_class: None,
+                round_cap: None,
             },
         ];
         assert_eq!(
-            sum_combat_begin_accuracy_from_ship_abilities(&abilities),
+            sum_combat_begin_accuracy_from_ship_abilities(&abilities, ShipType::Battleship),
             15.0
+        );
+    }
+
+    #[test]
+    fn sum_combat_begin_accuracy_skips_round_capped_rows() {
+        let abilities = vec![ShipAbility {
+            id: "cb_cap".into(),
+            timing: "combat_begin".into(),
+            effect_type: "accuracy".into(),
+            value: 50.0,
+            duration_rounds: None,
+            condition_morale: false,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+            condition_opponent_faction: None,
+            condition_opponent_ship_class: None,
+            round_cap: Some(5),
+        }];
+        assert_eq!(
+            sum_combat_begin_accuracy_from_ship_abilities(&abilities, ShipType::Battleship),
+            0.0
+        );
+    }
+
+    #[test]
+    fn round_cap_adds_round_range_to_conditions() {
+        let seat = ship_ability_to_crew_seat_context(&ShipAbility {
+            id: "cap".into(),
+            timing: "combat_begin".into(),
+            effect_type: "attack_multiplier".into(),
+            value: 0.1,
+            duration_rounds: None,
+            condition_morale: false,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+            condition_opponent_faction: None,
+            condition_opponent_ship_class: None,
+            round_cap: Some(2),
+        })
+        .expect("seat");
+        assert_eq!(
+            seat.ability.condition,
+            Some(AbilityCondition::RoundRange { min: 1, max: 2 })
         );
     }
 
@@ -390,6 +465,31 @@ mod tests {
     }
 
     #[test]
+    fn opponent_ship_class_slug_merges_into_and_condition() {
+        let seat = ship_ability_to_crew_seat_context(&ShipAbility {
+            id: "test_vs_interceptor".to_string(),
+            timing: "combat_begin".to_string(),
+            effect_type: "attack_multiplier".to_string(),
+            value: 0.12,
+            duration_rounds: None,
+            condition_morale: true,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+            condition_opponent_faction: None,
+            condition_opponent_ship_class: Some("interceptor".to_string()),
+            round_cap: None,
+        })
+        .expect("ship class + morale");
+        assert_eq!(
+            seat.ability.condition,
+            Some(AbilityCondition::And(vec![
+                AbilityCondition::MoraleActive,
+                AbilityCondition::DefenderShipTypeIs(ShipType::Interceptor),
+            ]))
+        );
+    }
+
+    #[test]
     fn opponent_faction_slug_merges_into_and_condition() {
         let seat = ship_ability_to_crew_seat_context(&ShipAbility {
             id: "test_vs_klingon".to_string(),
@@ -401,6 +501,8 @@ mod tests {
             condition_defender_burning: false,
             condition_defender_hull_breach: false,
             condition_opponent_faction: Some("klingon".to_string()),
+            condition_opponent_ship_class: None,
+            round_cap: None,
         })
         .expect("faction + morale");
         assert_eq!(
@@ -424,6 +526,8 @@ mod tests {
             condition_defender_burning: false,
             condition_defender_hull_breach: false,
             condition_opponent_faction: None,
+            condition_opponent_ship_class: None,
+            round_cap: None,
         })
         .expect("Galaxy Class seat");
         assert_eq!(seat.ability.timing, TimingWindow::RoundStart);

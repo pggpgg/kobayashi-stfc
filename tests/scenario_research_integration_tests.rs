@@ -8,15 +8,36 @@ use std::sync::Mutex;
 
 static SCENARIO_RESEARCH_TEST_LOCK: Mutex<()> = Mutex::new(());
 
+/// When true, missing/empty catalog fails the test (used in CI). Locally, the test skips instead.
+fn strict_research_catalog_required() -> bool {
+    matches!(std::env::var("CI").ok().as_deref(), Some("true"))
+        || matches!(
+            std::env::var("KOBAYASHI_REQUIRE_RESEARCH_CATALOG")
+                .ok()
+                .as_deref(),
+            Some("1") | Some("true") | Some("yes")
+        )
+}
+
+const RESEARCH_CATALOG_HELP: &str = "Populate data/research_catalog.json (tracked in git). \
+Regenerate from cached upstream research JSON: \
+node scripts/import_stfcspace_research.mjs --from-upstream --limit 0 \
+(prerequisites: data/upstream/data-stfc-space/research/*.json — see data/README.md § Research and scripts/README.md).";
+
 #[test]
 fn shared_scenario_applies_research_bonuses_from_profile() {
     let _guard = SCENARIO_RESEARCH_TEST_LOCK.lock().unwrap();
 
-    // Load registry and require a non-empty research catalog; skip when absent.
+    // Load registry and require a non-empty research catalog; in CI, fail with a clear message.
     let registry = DataRegistry::load().expect("data registry required for scenario tests");
     let catalog = match registry.research_catalog() {
         Some(c) if !c.items.is_empty() => c,
         _ => {
+            if strict_research_catalog_required() {
+                panic!(
+                    "research catalog missing or empty (data/research_catalog.json). {RESEARCH_CATALOG_HELP}"
+                );
+            }
             eprintln!("skipping scenario_research test: research catalog missing or empty");
             return;
         }

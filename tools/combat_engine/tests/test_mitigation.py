@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from tools.combat_engine.mitigation import (
+    PIERCE_CAP,
     AttackerStats,
     DefenderStats,
     ShipType,
@@ -15,6 +16,7 @@ from tools.combat_engine.mitigation import (
     component_mitigation,
     isolytic_mitigation,
     mitigation,
+    pierce_damage_through_bonus,
 )
 
 
@@ -44,6 +46,40 @@ def test_total_mitigation_golden_vectors(ship_type: ShipType, expected: float) -
     attacker = AttackerStats(armor_piercing=100.0, shield_piercing=60.0, accuracy=200.0)
 
     assert mitigation(defender, attacker, ship_type) == pytest.approx(expected, rel=1e-3)
+
+
+# Same defender/attacker stats and expected floats as
+# `golden_values_match_python_reference_for_each_ship_type` in `tests/combat_tests.rs`.
+# Battleship / Explorer / Interceptor share one value when component f-scores are equal (commutative product).
+def test_mitigation_matches_rust_golden_reference_vectors() -> None:
+    defender = DefenderStats(armor=100.0, shield_deflection=80.0, dodge=60.0)
+    attacker = AttackerStats(armor_piercing=50.0, shield_piercing=40.0, accuracy=30.0)
+
+    assert mitigation(defender, attacker, ShipType.SURVEY) == pytest.approx(
+        0.5489034243492552, rel=1e-12
+    )
+    shared = 0.5914393181871193
+    for ship_type in (
+        ShipType.BATTLESHIP,
+        ShipType.EXPLORER,
+        ShipType.INTERCEPTOR,
+    ):
+        assert mitigation(defender, attacker, ship_type) == pytest.approx(shared, rel=1e-12)
+
+
+def test_pierce_damage_through_bonus_matches_rust() -> None:
+    defender = DefenderStats(armor=100.0, shield_deflection=80.0, dodge=60.0)
+    attacker = AttackerStats(armor_piercing=50.0, shield_piercing=40.0, accuracy=30.0)
+    for ship_type in (
+        ShipType.SURVEY,
+        ShipType.BATTLESHIP,
+        ShipType.EXPLORER,
+        ShipType.INTERCEPTOR,
+    ):
+        mit = mitigation(defender, attacker, ship_type)
+        pierce = pierce_damage_through_bonus(defender, attacker, ship_type)
+        assert pierce == pytest.approx(PIERCE_CAP * (1.0 - mit), rel=1e-12)
+        assert 0.0 <= pierce <= PIERCE_CAP
 
 
 def test_near_zero_piercing_remains_bounded() -> None:

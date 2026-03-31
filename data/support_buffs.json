@@ -1,0 +1,31 @@
+{
+  "buffs": {
+    "titan_a_fortification": {
+      "exclusive_group": "titan_a_fort",
+      "priority": 1,
+      "research_levels": [],
+      "static_bonuses": {
+        "crit_damage": 1.25
+      }
+    },
+    "titan_a_max_fortification": {
+      "exclusive_group": "titan_a_fort",
+      "priority": 2,
+      "research_levels": [],
+      "static_bonuses": {
+        "crit_damage": 1.25,
+        "weapon_damage": 3.5
+      }
+    },
+    "cerritos_support": {
+      "research_levels": [],
+      "static_bonuses": {
+        "weapon_damage": 1.25
+      }
+    },
+    "defiant_reinforce": {
+      "research_levels": [],
+      "static_bonuses": {}
+    }
+  }
+}

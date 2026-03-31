@@ -36,6 +36,8 @@ export interface CompareWorkspaceParams {
   numSims: number;
   belowDecksSlots: number;
   profileId: string | null;
+  /** Parity with simulate/optimize workspace selection. */
+  supportBuffs?: string[];
 }
 
 function SideBySideHistograms({
@@ -200,6 +202,7 @@ export default function SimResults({
           ship_level: compareWorkspace.shipLevel,
           below_decks_slots: compareWorkspace.belowDecksSlots,
           proc_sample_trials: 60,
+          support_buffs: compareWorkspace.supportBuffs,
         },
         compareWorkspace.profileId,
       );

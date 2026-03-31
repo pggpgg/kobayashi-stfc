@@ -145,7 +145,7 @@ fn pierce_damage_through_bonus_derived_from_mitigation() {
         let mit = mitigation(defender, attacker, ship_type);
         let pierce = pierce_damage_through_bonus(defender, attacker, ship_type);
         approx_eq(pierce, PIERCE_CAP * (1.0 - mit), 1e-12);
-        assert!(pierce >= 0.0 && pierce <= PIERCE_CAP);
+        assert!((0.0..=PIERCE_CAP).contains(&pierce));
     }
 }
 
@@ -284,6 +284,8 @@ fn defender_crew_can_modify_counter_fire_damage() {
         cfg,
         &attacker_crew,
         OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
         &CrewConfiguration { seats: vec![] },
     );
     let boosted = simulate_combat_with_defender_faction_and_defender_crew(
@@ -292,12 +294,211 @@ fn defender_crew_can_modify_counter_fire_damage() {
         cfg,
         &attacker_crew,
         OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
         &defender_crew,
     );
 
     assert!(
         boosted.attacker_hull_remaining < baseline.attacker_hull_remaining,
         "defender proc attack multiplier should increase return-fire damage"
+    );
+}
+
+#[test]
+fn defender_crew_shield_break_effects_apply_to_counter_fire() {
+    // When the defender's shields are depleted, `TimingWindow::ShieldBreak` effects on the
+    // defender crew (e.g. hostile ship abilities) must apply to that sub-round's counter-attack.
+    let attacker = Combatant {
+        id: "att".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 500.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "def".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 2000.0,
+        shield_health: 100.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let attacker_crew = CrewConfiguration { seats: vec![] };
+    let defender_crew_sb = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "def_sb_pierce".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::ShieldBreak,
+                boostable: false,
+                effect: AbilityEffect::PierceBonus(0.5),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+    };
+
+    let baseline = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        cfg,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let with_sb = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        cfg,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &defender_crew_sb,
+    );
+
+    assert!(
+        with_sb.attacker_hull_remaining < baseline.attacker_hull_remaining,
+        "defender ShieldBreak pierce should increase counter damage: baseline={}, with_sb={}",
+        baseline.attacker_hull_remaining,
+        with_sb.attacker_hull_remaining
+    );
+}
+
+#[test]
+fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_round() {
+    // Counter strips the player's shields; `TimingWindow::SelfShieldBreak` effects stack on the
+    // round accumulator (same path as enemy `ShieldBreak` pierce): `pre_attack_pierce_bonus` is read
+    // each sub-round; AttackMultiplier from that window is not folded into per-shot pre_attack yet.
+    let attacker = Combatant {
+        id: "plyr".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 100.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![
+            WeaponStats {
+                attack: 50.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+        ],
+    };
+    let defender = Combatant {
+        id: "npc".to_string(),
+        attack: 0.0,
+        mitigation: 0.35,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 400.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 3,
+        trace_mode: TraceMode::Off,
+    };
+    let baseline = simulate_combat(
+        &attacker,
+        &defender,
+        cfg,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let crew_sb = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "own_sb_damage".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::SelfShieldBreak,
+                boostable: true,
+                effect: AbilityEffect::PierceBonus(0.6),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let boosted = simulate_combat(&attacker, &defender, cfg, &crew_sb);
+    assert!(
+        boosted.total_damage > baseline.total_damage,
+        "SelfShieldBreak pierce should buff weapon 2 after counter breaks shields: baseline={}, boosted={}",
+        baseline.total_damage,
+        boosted.total_damage
     );
 }
 
@@ -956,6 +1157,205 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         "faction-gated attack multiplier should apply only for matching defender faction"
     );
     approx_eq(romulan.total_damage, klingon.total_damage / 2.0, 1.0);
+}
+
+#[test]
+fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 11,
+        trace_mode: TraceMode::Off,
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "vs_battleship".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: Some(AbilityCondition::DefenderShipTypeIs(ShipType::Battleship)),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let explorer = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Explorer,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let battleship = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    assert!(
+        battleship.total_damage > explorer.total_damage,
+        "hull-class–gated attack multiplier should apply only when defender ship type matches"
+    );
+    approx_eq(explorer.total_damage, battleship.total_damage / 2.0, 1.0);
+}
+
+#[test]
+fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 5,
+        seed: 2,
+        trace_mode: TraceMode::Off,
+    };
+    let uncapped = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "full_mult".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let capped = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "two_round_mult".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: Some(AbilityCondition::RoundRange { min: 1, max: 2 }),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let r_uncapped = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &uncapped,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let r_capped = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &capped,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    assert!(
+        r_uncapped.total_damage > r_capped.total_damage,
+        "round-limited combat_begin multiplier should deal less total damage over long fights"
+    );
 }
 
 #[test]
@@ -1926,8 +2326,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     let round_one_proc_roll = round_one_proc.values["roll"]
         .as_f64()
         .expect("proc roll as f64");
-    assert!(round_one_crit_roll >= 0.0 && round_one_crit_roll <= 1.0);
-    assert!(round_one_proc_roll >= 0.0 && round_one_proc_roll <= 1.0);
+    assert!((0.0..=1.0).contains(&round_one_crit_roll));
+    assert!((0.0..=1.0).contains(&round_one_proc_roll));
     assert_eq!(
         round_one_crit.values["is_crit"],
         Value::Bool(round_one_crit_roll < 0.5)
@@ -1945,8 +2345,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     let round_two_proc_roll = round_two_proc.values["roll"]
         .as_f64()
         .expect("proc roll as f64");
-    assert!(round_two_crit_roll >= 0.0 && round_two_crit_roll <= 1.0);
-    assert!(round_two_proc_roll >= 0.0 && round_two_proc_roll <= 1.0);
+    assert!((0.0..=1.0).contains(&round_two_crit_roll));
+    assert!((0.0..=1.0).contains(&round_two_proc_roll));
     assert_eq!(
         round_two_crit.values["is_crit"],
         Value::Bool(round_two_crit_roll < 0.5)
@@ -2435,7 +2835,7 @@ fn burning_deals_one_percent_hull_per_round() {
         .events
         .iter()
         .filter(|event| event.event_type == "end_of_round_effects")
-        .filter(|event| event.values["burning_damage"] == Value::from(5.0))
+        .filter(|event| event.values["burning_damage"] == 5.0)
         .count();
     assert_eq!(burning_ticks, 3);
 }

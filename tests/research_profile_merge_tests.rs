@@ -1,4 +1,7 @@
 //! Deterministic tests for research catalog → profile merge (no dependency on `data/research_catalog.json`).
+//!
+//! `accuracy` merges into `profile.bonuses` and scales ship base accuracy for hostile dodge mitigation
+//! (see `effective_attacker_stats_for_mitigation` tests in `src/optimizer/monte_carlo/scenario.rs`).
 
 use kobayashi::data::import::ResearchEntry;
 use kobayashi::data::profile::merge_research_bonuses_into_profile;
@@ -23,6 +26,72 @@ fn merge_research_applies_fixture_catalog_weapon_damage() {
     assert!(
         (w - 0.12).abs() < 1e-9,
         "expected weapon_damage 0.12 from fixture rid, got {w}"
+    );
+}
+
+#[test]
+fn merge_research_accuracy_from_fixture_catalog() {
+    let catalog: ResearchCatalog = serde_json::from_str(include_str!(
+        "fixtures/research/research_catalog_fixture.json"
+    ))
+    .expect("parse fixture research catalog");
+
+    let imported = vec![ResearchEntry {
+        rid: 99000003,
+        level: 1,
+    }];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+
+    let a = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
+    assert!(
+        (a - 0.08).abs() < 1e-9,
+        "expected accuracy bonus 0.08 (fractional mult on ship base in scenario), got {a}"
+    );
+}
+
+#[test]
+fn merge_research_stacks_accuracy_across_two_rids_additively() {
+    let catalog: ResearchCatalog = serde_json::from_str(include_str!(
+        "fixtures/research/research_catalog_fixture.json"
+    ))
+    .expect("parse fixture research catalog");
+
+    // 0.08 (fixture rid 99000003) + 0.02 (inline rid 99000004) → 0.10 additive in profile.bonuses["accuracy"].
+    use kobayashi::data::research::{ResearchBonusEntry, ResearchLevel, ResearchRecord};
+    let mut catalog = catalog;
+    catalog.items.push(ResearchRecord {
+        rid: 99000004,
+        name: Some("Extra accuracy".into()),
+        data_version: None,
+        source_note: None,
+        levels: vec![ResearchLevel {
+            level: 1,
+            bonuses: vec![ResearchBonusEntry {
+                stat: "accuracy".into(),
+                value: 0.02,
+                operator: "add".into(),
+            }],
+        }],
+    });
+
+    let imported = vec![
+        ResearchEntry {
+            rid: 99000003,
+            level: 1,
+        },
+        ResearchEntry {
+            rid: 99000004,
+            level: 1,
+        },
+    ];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+
+    let a = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
+    assert!(
+        (a - 0.10).abs() < 1e-9,
+        "expected stacked accuracy 0.10, got {a}"
     );
 }
 

@@ -1,21 +1,261 @@
 {
   "source": "community_spreadsheet",
-  "last_updated": "2026-03-21",
+  "last_updated": "2026-03-30",
   "items": [
     {
-      "fid": 482782456,
-      "name": "Ablative Armor",
-      "tech_type": "forbidden",
-      "tier": 1,
+      "fid": 3266867064,
+      "name": "Soran's Trilithium",
+      "tech_type": "chaos",
+      "tier": 12,
       "bonuses": [
         {
-          "stat": "hull_hp",
-          "value": 0.05,
+          "stat": "apex_barrier",
+          "value": 5000.0,
           "operator": "add"
         },
         {
           "stat": "shield_hp",
+          "value": 0.037,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 1024185972,
+      "name": "Thought Maker",
+      "tech_type": "chaos",
+      "tier": 4,
+      "bonuses": [
+        {
+          "stat": "apex_barrier",
+          "value": 100.0,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 1747080465,
+      "name": "Chronophage",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "hull_hp",
+          "value": 0.026,
+          "operator": "add"
+        },
+        {
+          "stat": "hull_hp",
+          "value": 0.0026,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3643189775,
+      "name": "The Godsend",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.1,
+          "operator": "add"
+        },
+        {
+          "stat": "apex_barrier",
+          "value": 1300.0,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 2810835688,
+      "name": "Unimatrix Shielding",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "isolytic_defense",
+          "value": 1.1,
+          "operator": "add"
+        },
+        {
+          "stat": "weapon_damage",
+          "value": 0.042,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 1212779022,
+      "name": "Electromagnetic Lute",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "isolytic_damage",
+          "value": 0.07,
+          "operator": "add"
+        },
+        {
+          "stat": "apex_barrier",
+          "value": 4600.0,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 1240927405,
+      "name": "C-12 Stasis Globe",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.135,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3616515003,
+      "name": "Bio-mimetic Gel",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "isolytic_defense",
+          "value": 0.022,
+          "operator": "add"
+        },
+        {
+          "stat": "apex_barrier",
+          "value": 13950.0,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 2509613550,
+      "name": "Particle Synthesis",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.047,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 2278545156,
+      "name": "Omega Molecule",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "apex_barrier",
+          "value": 8800.0,
+          "operator": "add"
+        },
+        {
+          "stat": "crit_damage",
+          "value": 0.92,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3992201594,
+      "name": "Echo Papa 607",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.223,
+          "operator": "add"
+        },
+        {
+          "stat": "isolytic_defense",
+          "value": 0.3,
+          "operator": "add"
+        },
+        {
+          "stat": "apex_shred",
+          "value": 0.22,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3388471847,
+      "name": "Multiphasic Chamber",
+      "tech_type": "chaos",
+      "tier": 6,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
           "value": 0.05,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 4283494851,
+      "name": "Control",
+      "tech_type": "chaos",
+      "tier": 6,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.016,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 587246835,
+      "name": "Genesis Device",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "crit_damage",
+          "value": 0.165,
+          "operator": "add"
+        },
+        {
+          "stat": "shield_hp",
+          "value": 0.081,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 4017333545,
+      "name": "Mark VI Photon Torpedo",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "hull_hp",
+          "value": 0.0925,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 4081411215,
+      "name": "Morphogenic Virus",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "isolytic_damage",
+          "value": 0.4,
           "operator": "add"
         }
       ]
@@ -54,6 +294,189 @@
         {
           "stat": "weapon_damage",
           "value": 0.155,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 2820752375,
+      "name": "Interphasic Mirror",
+      "tech_type": "chaos",
+      "tier": 6,
+      "bonuses": [
+        {
+          "stat": "isolytic_damage",
+          "value": 0.3,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 2325864718,
+      "name": "Tothian Mines",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "isolytic_defense",
+          "value": 0.35,
+          "operator": "add"
+        },
+        {
+          "stat": "crit_damage",
+          "value": 0.65,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 2766262625,
+      "name": "Ceti Eel",
+      "tech_type": "chaos",
+      "tier": 6,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.06,
+          "operator": "add"
+        },
+        {
+          "stat": "weapon_damage",
+          "value": 0.04,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3838074426,
+      "name": "Enaran Execution Post",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "isolytic_damage",
+          "value": 0.55,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 258464522,
+      "name": "Temporal Conduit",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "apex_barrier",
+          "value": 23000.0,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3671752041,
+      "name": "Cardassian Torture Actuator",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "isolytic_damage",
+          "value": 1.5,
+          "operator": "add"
+        },
+        {
+          "stat": "apex_barrier",
+          "value": 9100.0,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3498200313,
+      "name": "Portable Transwarp Beaming Device",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "apex_shred",
+          "value": 0.19,
+          "operator": "add"
+        },
+        {
+          "stat": "apex_barrier",
+          "value": 17500.0,
+          "operator": "add"
+        },
+        {
+          "stat": "crit_chance",
+          "value": 0.093,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 704754072,
+      "name": "Q Cannon",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.07,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 482782456,
+      "name": "Ablative Armor",
+      "tech_type": "forbidden",
+      "tier": 1,
+      "bonuses": [
+        {
+          "stat": "hull_hp",
+          "value": 0.05,
+          "operator": "add"
+        },
+        {
+          "stat": "shield_hp",
+          "value": 0.05,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3019166168,
+      "name": "Tan Ru",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "weapon_damage",
+          "value": 0.36,
+          "operator": "add"
+        },
+        {
+          "stat": "crit_damage",
+          "value": 0.03,
+          "operator": "add"
+        }
+      ]
+    },
+    {
+      "fid": 3440676742,
+      "name": "Chrono Deflector",
+      "tech_type": "chaos",
+      "tier": 12,
+      "bonuses": [
+        {
+          "stat": "apex_barrier",
+          "value": 1750.0,
+          "operator": "add"
+        },
+        {
+          "stat": "crit_damage",
+          "value": 0.026,
           "operator": "add"
         }
       ]

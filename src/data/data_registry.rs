@@ -17,6 +17,9 @@ use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_O
 use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
+use crate::data::support_buffs::{
+    load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
+};
 use crate::data::ship::{
     load_extended_ship_index, ExtendedShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
@@ -65,6 +68,8 @@ pub struct DataRegistry {
     pub forbidden_chaos_catalog: Option<ForbiddenChaosList>,
     /// Research catalog for merging into profile with synced research levels.
     pub research_catalog: Option<ResearchCatalog>,
+    /// Support buff definitions (alliance / ship toggles from API); optional if file missing.
+    pub support_buffs_catalog: Option<Arc<SupportBuffCatalog>>,
 }
 
 impl DataRegistry {
@@ -92,6 +97,10 @@ impl DataRegistry {
 
         let forbidden_chaos_catalog = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH);
         let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
+        let support_buffs_catalog = load_support_buff_catalog(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join(DEFAULT_SUPPORT_BUFFS_PATH),
+        )
+        .or_else(|| load_support_buff_catalog(Path::new(DEFAULT_SUPPORT_BUFFS_PATH)));
 
         Ok(Arc::new(DataRegistry {
             officers,
@@ -101,6 +110,7 @@ impl DataRegistry {
             lcars_officers,
             forbidden_chaos_catalog,
             research_catalog,
+            support_buffs_catalog,
         }))
     }
 
@@ -123,6 +133,11 @@ impl DataRegistry {
     /// Research catalog for merging with synced research levels into profile.
     pub fn research_catalog(&self) -> Option<&ResearchCatalog> {
         self.research_catalog.as_ref()
+    }
+
+    /// Support buff catalog for API-selected alliance/ship buffs.
+    pub fn support_buffs_catalog(&self) -> Option<&SupportBuffCatalog> {
+        self.support_buffs_catalog.as_deref()
     }
 
     /// Officer list for API listing and crew generator pool building.

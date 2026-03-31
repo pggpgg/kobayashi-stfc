@@ -15,6 +15,8 @@ import {
 } from "../lib/api";
 import type { CrewState } from "../lib/types";
 import HostilePicker from "./HostilePicker";
+import SupportBuffSelect from "./SupportBuffSelect";
+import type { SupportBuffId } from "../lib/supportBuffs";
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 
@@ -53,6 +55,8 @@ interface WorkspaceHeaderProps {
   optimizeEtaSeconds?: number | null;
   /** Live stream vs polling while optimizing. */
   optimizeStreamMode?: "sse" | "reconnecting" | "polling" | null;
+  selectedSupportBuffs: SupportBuffId[];
+  onSelectedSupportBuffsChange: (ids: SupportBuffId[]) => void;
 }
 
 export default function WorkspaceHeader({
@@ -80,6 +84,8 @@ export default function WorkspaceHeader({
   optimizePhase = null,
   optimizeEtaSeconds = null,
   optimizeStreamMode = null,
+  selectedSupportBuffs,
+  onSelectedSupportBuffsChange,
 }: WorkspaceHeaderProps) {
   const { activeProfileId } = useProfile();
   const { ownedOnly } = useWorkspaceMode();
@@ -238,6 +244,10 @@ export default function WorkspaceHeader({
         hostiles={hostiles}
         value={scenarioId}
         onChange={onScenarioIdChange}
+      />
+      <SupportBuffSelect
+        selected={selectedSupportBuffs}
+        onChange={onSelectedSupportBuffsChange}
       />
       <select
         aria-label="Preset"

@@ -96,6 +96,8 @@ KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladi
 
 **Refreshing combat/game data:** use the orchestrated importer chain — `npm run data:refresh` (optional flags `--stfcspace`, `--stfccommunity`, `--all`). See [scripts/README.md](scripts/README.md) for order and prerequisites.
 
+**Research catalog (`data/research_catalog.json`):** GitHub Actions sets `CI=true`, so `cargo test` **must** find a non-empty catalog (the `scenario_research_integration` test fails with a short remediation message if it is missing). The committed file in the repo satisfies this. To regenerate after updating upstream research JSON under `data/upstream/data-stfc-space/research/`, run `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` (see [data/README.md](data/README.md) § Research). To match CI behavior locally, run with `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1`.
+
 The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports). You can also sync your roster **quasi real-time** from the game using the [STFC Community Mod](https://github.com/netniV/stfc-mod); see [docs/SYNC.md](docs/SYNC.md) for setup.
 
 For canonical officer data provenance, `officers.canonical.json` uses neutral metadata labels: each officer `source.workbook` value is set to `manual_curation` rather than storing a specific workbook filename.
@@ -117,6 +119,8 @@ KOBAYASHI's core is a fast, deterministic combat simulator written in Rust. Each
 - Decaying and accumulating buffs (e.g., Harrison's first-strike damage)
 - On-kill triggers (e.g., Mudd's hull repair)
 - Player profile bonuses applied as a pre-combat modifier layer
+
+**Python reference (`tools/combat_engine`):** A small Python package mirrors core mitigation, pierce-through, apex, and isolytic math for experiments and CI checks against the Rust implementation. See [tools/combat_engine/README.md](tools/combat_engine/README.md). Run `python -m pytest tools/combat_engine/tests/ -v` (also executed via `npm run verify` and the `combat_engine_python` CI job).
 
 ### The Optimizer
 
@@ -258,10 +262,14 @@ To add or update officers:
 To regenerate LCARS from the canonical spreadsheet export:
 
 ```bash
-kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers]
+kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers] \
+  [--summary data/upstream/data-stfc-space/summary-officer.json] \
+  [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
 ```
 
-See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) for the modifier mapping reference and validation details.
+By default, `generate_lcars` loads `summary-officer.json` and `translations-officer_buffs.json` (when present under `data/upstream/data-stfc-space/`) and fills **`captain_ability` / `bridge_ability` / `below_decks_ability` `name:`** from `officer_ability_name` rows (`loca_id` ↔ `ability_id`). Use `--no-ability-names` for legacy placeholder names like `{Officer} (Captain)`.
+
+See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) and [docs/OFFICER_TRANSLATIONS_MAPPING.md](docs/OFFICER_TRANSLATIONS_MAPPING.md) for the modifier mapping and translation join model.
 
 ### Validating against real fights
 

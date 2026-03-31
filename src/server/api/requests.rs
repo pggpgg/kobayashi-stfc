@@ -43,6 +43,8 @@ pub struct ReplaySeedRequest {
     /// Cap on returned trace events (tail of the fight). Default 500, max 2000.
     pub max_trace_events: Option<u32>,
     pub crew: ReplaySeedCrew,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -68,6 +70,8 @@ pub struct OptimizeRequest {
     /// Optional crew search constraints (must-include, exclude, groups, seating).
     #[serde(default)]
     pub constraints: Option<OptimizeConstraintsDto>,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
 }
 
 /// JSON body for `OptimizeRequest.constraints`.
@@ -381,14 +385,14 @@ pub fn build_crew_search_constraints(request: &OptimizeRequest) -> Option<CrewSe
 }
 
 pub fn parse_below_decks_strategy(s: Option<&String>) -> BelowDecksStrategy {
-    match s.as_deref() {
+    match s {
         Some(v) if v.trim().eq_ignore_ascii_case("exploration") => BelowDecksStrategy::Exploration,
         _ => BelowDecksStrategy::Ordered,
     }
 }
 
 pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
-    match s.as_deref() {
+    match s {
         Some(v) if v.trim().eq_ignore_ascii_case("genetic") => OptimizerStrategy::Genetic,
         Some(v) if v.trim().eq_ignore_ascii_case("tiered") => OptimizerStrategy::Tiered,
         _ => OptimizerStrategy::Exhaustive,

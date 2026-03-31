@@ -137,8 +137,7 @@ fn normalize_condition(condition: &str) -> String {
     condition
         .trim()
         .to_ascii_lowercase()
-        .replace('-', "_")
-        .replace(' ', "_")
+        .replace(['-', ' '], "_")
 }
 
 fn level_matches_context(level: &BuildingLevel, context: &BuildingBonusContext) -> bool {
@@ -364,7 +363,7 @@ mod tests {
             },
         );
         assert_eq!(out.get("weapon_damage"), Some(&0.05));
-        assert!(out.get("shield_hp").is_none());
+        assert!(!out.contains_key("shield_hp"));
     }
 
     #[test]
@@ -380,7 +379,7 @@ mod tests {
         );
         assert_eq!(out.get("shield_hp"), Some(&0.10));
         assert_eq!(out.get("crit_chance"), Some(&0.02));
-        assert!(out.get("crit_damage").is_none());
+        assert!(!out.contains_key("crit_damage"));
     }
 
     #[test]

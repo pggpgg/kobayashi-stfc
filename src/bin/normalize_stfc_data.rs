@@ -214,7 +214,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for entry in fs::read_dir(&hostiles_dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "json") {
+            if path.extension().is_some_and(|e| e == "json") {
                 let id = path
                     .file_stem()
                     .and_then(|s| s.to_str())
@@ -321,7 +321,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for entry in fs::read_dir(&buildings_dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "json") {
+            if path.extension().is_some_and(|e| e == "json") {
                 let id = path
                     .file_stem()
                     .and_then(|s| s.to_str())
@@ -362,7 +362,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for entry in fs::read_dir(&faction_rep_dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "json") {
+            if path.extension().is_some_and(|e| e == "json") {
                 let content = fs::read_to_string(&path)?;
                 let raw: RawFactionReputation =
                     serde_json::from_str(&content).unwrap_or_else(|_| RawFactionReputation {
