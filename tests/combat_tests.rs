@@ -2506,7 +2506,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     assert_eq!(first.total_damage, second.total_damage);
 
     assert_eq!(first.events.len(), 18);
-    let expected_event_types = vec![
+    let expected_event_types = [
         "round_start",
         "attack_roll",
         "mitigation_calc",

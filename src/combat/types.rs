@@ -28,7 +28,7 @@ pub fn round_half_even(x: f64) -> u32 {
         fl_u + 1
     } else {
         // tie: round to nearest even
-        if fl_u.is_multiple_of(2) {
+        if fl_u % 2 == 0 {
             fl_u
         } else {
             fl_u + 1

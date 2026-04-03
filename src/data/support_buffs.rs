@@ -94,7 +94,7 @@ pub fn resolve_selected_support_buff_ids(
     // Exclusive groups: one winner per `exclusive_group` — highest `priority`; tie: later in `known` wins.
     let mut group_members: HashMap<String, Vec<&str>> = HashMap::new();
     for id in &known {
-        let def = catalog.get(*id).unwrap();
+        let def = catalog.get(id).unwrap();
         if let Some(ref g) = def.exclusive_group {
             group_members.entry(g.clone()).or_default().push(*id);
         }

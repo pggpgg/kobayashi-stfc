@@ -163,6 +163,7 @@ fn nc_ack_and_label(total: usize, non_combat: usize, combatish: usize) -> (i32, 
     (0, "combat_tag_gaps".to_string())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process_ability_effects(
     ability: &LcarsAbility,
     officer: &LcarsOfficer,
@@ -360,9 +361,7 @@ fn mean_slot_raw(
     opts: &ResolveOptions,
     pick: fn(&LcarsOfficer) -> Option<&LcarsAbility>,
 ) -> Option<i32> {
-    let Some(ab) = pick(officer) else {
-        return None;
-    };
+    let ab = pick(officer)?;
     let mut scores = Vec::new();
     for eff in &ab.effects {
         if !effect_is_combat_intent(eff) {

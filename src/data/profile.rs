@@ -1109,8 +1109,10 @@ mod tests {
                 shard_count: 0,
             },
         ];
-        let mut profile = PlayerProfile::default();
-        profile.forbidden_tech_override = Some(vec![100]);
+        let profile = PlayerProfile {
+            forbidden_tech_override: Some(vec![100]),
+            ..Default::default()
+        };
         assert_eq!(
             resolve_effective_tech_fids(&profile, &imported, &catalog),
             vec![100, 2]
@@ -1149,8 +1151,10 @@ mod tests {
                 shard_count: 0,
             },
         ];
-        let mut profile = PlayerProfile::default();
-        profile.chaos_tech_override = Some(vec![200]);
+        let profile = PlayerProfile {
+            chaos_tech_override: Some(vec![200]),
+            ..Default::default()
+        };
         assert_eq!(
             resolve_effective_tech_fids(&profile, &imported, &catalog),
             vec![1, 200]
