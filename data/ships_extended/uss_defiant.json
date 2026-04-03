@@ -1,7 +1,7 @@
 {
   "id": "uss_defiant",
   "ship_name": "U.S.S. DEFIANT",
-  "ship_class": "survey",
+  "ship_class": "battleship",
   "tiers": [
     {
       "tier": 1,
@@ -17,15 +17,30 @@
       "weapons": [
         {
           "attack": 14745.0,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 6211.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 50044.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -43,15 +58,30 @@
       "weapons": [
         {
           "attack": 16620.5,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 7001.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 56409.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -69,15 +99,30 @@
       "weapons": [
         {
           "attack": 20371.5,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 8581.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 69139.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -95,15 +140,30 @@
       "weapons": [
         {
           "attack": 24122.0,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 10161.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 81870.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -121,15 +181,30 @@
       "weapons": [
         {
           "attack": 30682.0,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 12924.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 104134.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -147,15 +222,30 @@
       "weapons": [
         {
           "attack": 40051.0,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 16871.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 135933.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -173,15 +263,30 @@
       "weapons": [
         {
           "attack": 50888.0,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 21436.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 172713.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -199,15 +304,30 @@
       "weapons": [
         {
           "attack": 58373.0,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 24589.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 198117.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -225,15 +345,30 @@
       "weapons": [
         {
           "attack": 67436.5,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 28407.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 228878.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -251,15 +386,30 @@
       "weapons": [
         {
           "attack": 80233.5,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 33798.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 272312.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -277,15 +427,30 @@
       "weapons": [
         {
           "attack": 134982.5,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 56860.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 458129.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     },
@@ -303,15 +468,30 @@
       "weapons": [
         {
           "attack": 176934.0,
-          "shots": 4
+          "shots": 4,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 74532.0,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         },
         {
           "attack": 600511.5,
-          "shots": 1
+          "shots": 1,
+          "pierce": null,
+          "crit_chance": null,
+          "crit_multiplier": null,
+          "proc_chance": null,
+          "proc_multiplier": null
         }
       ]
     }
@@ -628,7 +808,9 @@
       "condition_morale": false,
       "condition_defender_burning": false,
       "condition_defender_hull_breach": false,
-      "condition_opponent_faction": null
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "round_cap": null
     }
   ]
 }
