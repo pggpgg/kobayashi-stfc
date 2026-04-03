@@ -1,7 +1,7 @@
 {
   "version": 1,
   "domain": "upstream_catalog",
-  "description": "Catalog of every documented upstream artifact under data/upstream/data-stfc-space. Per-file JSON is listed except bulk directories (ships/*.json, hostiles/*.json, research/*.json), which are described by pattern only.",
+  "description": "Catalog of every documented upstream artifact under data/upstream/data-stfc-space. Per-file JSON is listed except bulk directories (ships/*.json, hostiles/*.json, officers/*.json, research/*.json), which are described by pattern only.",
   "files": [],
   "bulk_patterns_not_individually_documented": [
     {
@@ -23,9 +23,15 @@
       "api_shape": "GET /forbidden_tech/{id}.json (when published)"
     },
     {
+      "glob": "officers/*.json",
+      "count_order": "hundreds",
+      "semantics": "Per-officer detail from data.stfc.space (reference cache; LCARS remains combat source of truth).",
+      "api_shape": "GET /officer/{id}.json"
+    },
+    {
       "glob": "research/*.json",
       "count_order": "~2300",
-      "semantics": "Per-research-project detail: `buffs[]` with `values[]` per level, `levels[]`. Optional local cache for `scripts/import_stfcspace_research.mjs` (gitignored).",
+      "semantics": "Per-research-project detail: `buffs[]` with `values[]` per level, `levels[]`. Tracked cache for `scripts/import_stfcspace_research.mjs`.",
       "api_shape": "GET /research/{id}.json"
     }
   ],
@@ -43,12 +49,17 @@
     {
       "path": "forbidden_tech/",
       "role": "cached_forbidden_tech_details",
-      "note": "Optional per-fid detail JSON; see bulk_patterns_not_individually_documented forbidden_tech/*.json."
+      "note": "Per-fid detail JSON; see bulk_patterns_not_individually_documented forbidden_tech/*.json."
+    },
+    {
+      "path": "officers/",
+      "role": "cached_officer_details",
+      "note": "Bulk; reference only. See bulk_patterns officers/*.json."
     },
     {
       "path": "research/",
       "role": "cached_research_details",
-      "note": "Optional per-rid detail JSON from scripts/fetch_stfcspace_research.mjs; gitignored. See bulk_patterns research/*.json."
+      "note": "Per-rid detail JSON from scripts/fetch_stfcspace_research.mjs; tracked. See bulk_patterns research/*.json."
     },
     {
       "path": "mapping/",

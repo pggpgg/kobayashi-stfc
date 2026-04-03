@@ -111,7 +111,7 @@ cargo run --bin normalize_hostiles_stfc_space
 
 ### Research catalog (data.stfc.space)
 
-Caches per-`rid` JSON under `data/upstream/data-stfc-space/research/` (gitignored), then writes `data/research_catalog.json`.
+Caches per-`rid` JSON under `data/upstream/data-stfc-space/research/` (tracked; refetch with `fetch_stfcspace_research.mjs`), then writes `data/research_catalog.json`.
 
 ```bash
 node scripts/fetch_stfcspace_research.mjs   # default missing-only; --full to refresh all; or supply research/*.json by other means
