@@ -1,0 +1,12 @@
+{
+  "started": "2026-04-03T18:00:15.052Z",
+  "source": "https://data.stfc.space",
+  "segment": "forbidden_tech",
+  "mode": "missing-only",
+  "total": 67,
+  "fetched": 66,
+  "skipped": 1,
+  "failed": 0,
+  "failures": [],
+  "finished": "2026-04-03T18:00:34.007Z"
+}
