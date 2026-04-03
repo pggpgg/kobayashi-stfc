@@ -459,6 +459,13 @@ fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         return None;
     }
 
+    match t {
+        "TargetHasBurning" => return Some(lcars_cond_base("defender_burning")),
+        "TargetHasHullBreach" => return Some(lcars_cond_base("defender_hull_breach")),
+        "SelfHasMorale" => return Some(lcars_cond_base("morale_active")),
+        _ => {}
+    }
+
     if let Some(rest) = t.strip_prefix("Enemy") {
         let slug = match rest {
             "Explorer" => "explorer",
@@ -489,12 +496,7 @@ fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         return Some(c);
     }
 
-    match t {
-        "TargetHasBurning" => Some(lcars_cond_base("defender_burning")),
-        "TargetHasHullBreach" => Some(lcars_cond_base("defender_hull_breach")),
-        "SelfHasMorale" => Some(lcars_cond_base("morale_active")),
-        _ => None,
-    }
+    None
 }
 
 /// Converts canonical `conditions` to a single LCARS condition (`and` when multiple tokens map).
@@ -830,6 +832,13 @@ mod canonical_condition_tests {
     fn target_burning_maps() {
         let c = map_canonical_condition_token("TargetHasBurning").unwrap();
         assert_eq!(c.condition_type, "defender_burning");
+        resolve_lcars_condition(&c).unwrap();
+    }
+
+    #[test]
+    fn self_has_morale_not_swallowed_by_self_hull_prefix() {
+        let c = map_canonical_condition_token("SelfHasMorale").unwrap();
+        assert_eq!(c.condition_type, "morale_active");
         resolve_lcars_condition(&c).unwrap();
     }
 }
