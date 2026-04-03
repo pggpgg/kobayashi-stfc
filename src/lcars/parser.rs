@@ -164,7 +164,8 @@ pub struct LcarsCondition {
     pub min_members: Option<u32>,
     #[serde(default)]
     pub tag: Option<String>,
-    /// Hull class slug for `defender_ship_type_is` (`battleship`, `explorer`, `interceptor`, …).
+    /// Hull class slug for ship-class conditions (`battleship`, `explorer`, `interceptor`, `survey`, `armada`).
+    /// Used with `defender_ship_type_is` / `opponent_ship_class_is` (enemy) or `attacker_ship_type_is` / `self_ship_class_is` (player ship).
     #[serde(default)]
     pub ship_type: Option<String>,
     #[serde(default)]

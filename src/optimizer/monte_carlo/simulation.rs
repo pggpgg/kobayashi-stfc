@@ -306,7 +306,8 @@ pub fn run_monte_carlo_parallel_deduped(
         .map(|&i| candidates[i].clone())
         .collect();
 
-    let uniq_results = run_monte_carlo_parallel(ship, hostile, &uniq, iterations, seed, support_buffs);
+    let uniq_results =
+        run_monte_carlo_parallel(ship, hostile, &uniq, iterations, seed, support_buffs);
 
     let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq_results.len());
     for (j, r) in uniq_results.into_iter().enumerate() {

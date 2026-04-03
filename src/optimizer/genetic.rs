@@ -478,7 +478,8 @@ pub fn run_genetic_optimizer(
     let mut best_individuals: Vec<CrewCandidate> = Vec::new();
     let mut stagnation = 0_usize;
 
-    let support_slice = (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
+    let support_slice =
+        (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
     for generation in 0..config.generations {
         let sim_results = run_monte_carlo_parallel_deduped(
             ship,
@@ -572,15 +573,10 @@ pub fn run_genetic_optimizer_ranked(
     if top.is_empty() {
         return Vec::new();
     }
-    let support_slice = (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
-    let final_results = run_monte_carlo_parallel(
-        ship,
-        hostile,
-        &top,
-        final_sims.max(1),
-        seed,
-        support_slice,
-    );
+    let support_slice =
+        (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
+    let final_results =
+        run_monte_carlo_parallel(ship, hostile, &top, final_sims.max(1), seed, support_slice);
     rank_results(final_results)
 }
 

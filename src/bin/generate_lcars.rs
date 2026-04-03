@@ -207,7 +207,9 @@ fn load_name_resolve_context(
             let Some(id) = row.id else {
                 continue;
             };
-            name_by_loca.entry(id).or_insert_with(|| row.text.trim().to_string());
+            name_by_loca
+                .entry(id)
+                .or_insert_with(|| row.text.trim().to_string());
         }
     } else {
         eprintln!(
@@ -313,10 +315,7 @@ fn ability_block_name(
             return (n, true);
         }
     }
-    (
-        format!("{} ({})", officer_name, seat_label),
-        false,
-    )
+    (format!("{} ({})", officer_name, seat_label), false)
 }
 
 fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOfficer, u64) {

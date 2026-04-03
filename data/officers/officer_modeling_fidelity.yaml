@@ -10,4 +10,4 @@ beverly-crusher-74b2d7: "Captain/bridge use flat stats; game uses officer health
 jean-luc-picard-e0515c: "Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK."
 snw-sam-kirk-0a77f9: "Captain enemy SHP drain modeled as negative shield_regen on attacker crew (wrong target in engine)."
 seska-848b5b: "On-hit crit buff should be timed (4 rds, once/weapon); SHP restore is %-of-max in game, flat here."
-harrison-56cc6c: "Captain missing Explorer + level-70 filters; bridge shield ignore is tag/unmapped."
+harrison-56cc6c: "Captain: Explorer hostile gate modeled in LCARS; level-70 unlock still not a combat condition; bridge shield ignore is tag/unmapped."

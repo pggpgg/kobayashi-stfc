@@ -59,67 +59,118 @@ impl BuffSet {
     }
 }
 
-fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCondition> {
+/// Resolve an LCARS condition tree into an engine [`AbilityCondition`].
+///
+/// Used by [`resolve_officer_ability`] (via [`lcars_condition_to_ability_condition`]) and LCARS validation.
+/// Returns [`Err`] with a short message when the YAML is unsupported or incomplete (unknown `type`,
+/// missing `ship_type` / `faction`, unknown slugs, empty `and`/`or`, or invalid child conditions).
+pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, String> {
     let ty = c.condition_type.trim().to_lowercase().replace('-', "_");
-    Some(match ty.as_str() {
-        "stat_below" => AbilityCondition::StatBelow {
+    match ty.as_str() {
+        "stat_below" => Ok(AbilityCondition::StatBelow {
             stat: c.stat.clone().unwrap_or_else(|| "hull_hp".to_string()),
             threshold_pct: c.threshold_pct.unwrap_or(0.5),
-        },
-        "stat_above" => AbilityCondition::StatAbove {
+        }),
+        "stat_above" => Ok(AbilityCondition::StatAbove {
             stat: c.stat.clone().unwrap_or_else(|| "hull_hp".to_string()),
             threshold_pct: c.threshold_pct.unwrap_or(0.8),
-        },
-        "round_range" => AbilityCondition::RoundRange {
+        }),
+        "round_range" => Ok(AbilityCondition::RoundRange {
             min: c.min.unwrap_or(1),
             max: c.max.unwrap_or(100),
-        },
-        "morale_active" | "attacker_morale" | "morale" => AbilityCondition::MoraleActive,
-        "defender_burning" | "target_burning" | "burning" => AbilityCondition::DefenderBurning,
+        }),
+        "morale_active" | "attacker_morale" | "morale" => Ok(AbilityCondition::MoraleActive),
+        "defender_burning" | "target_burning" | "burning" => Ok(AbilityCondition::DefenderBurning),
         "defender_hull_breach" | "target_hull_breach" | "hull_breach_active" => {
-            AbilityCondition::DefenderHullBreach
+            Ok(AbilityCondition::DefenderHullBreach)
         }
         "defender_faction_is"
         | "defender_faction"
         | "opponent_faction_is"
         | "opponent_faction"
         | "faction_is" => {
-            let slug = c.faction.as_deref().or(c.tag.as_deref())?;
-            AbilityCondition::DefenderFactionIs(OpponentFactionTag::from_data_slug(slug)?)
+            let slug = c
+                .faction
+                .as_deref()
+                .or(c.tag.as_deref())
+                .ok_or_else(|| {
+                    "faction condition requires `faction` or `tag` with a known faction slug".to_string()
+                })?;
+            let tag = OpponentFactionTag::from_data_slug(slug).ok_or_else(|| {
+                format!("unknown faction slug '{slug}' for condition type '{ty}'")
+            })?;
+            Ok(AbilityCondition::DefenderFactionIs(tag))
         }
         "defender_ship_type_is"
         | "defender_ship_class_is"
         | "opponent_ship_type_is"
         | "opponent_ship_class_is" => {
-            let slug = c.ship_type.as_deref().or(c.stat.as_deref())?;
-            AbilityCondition::DefenderShipTypeIs(ShipType::from_data_slug(slug)?)
+            let slug = c
+                .ship_type
+                .as_deref()
+                .or(c.stat.as_deref())
+                .ok_or_else(|| {
+                    "defender/opponent ship class condition requires `ship_type` or `stat` slug"
+                        .to_string()
+                })?;
+            let st = ShipType::from_data_slug(slug).ok_or_else(|| {
+                format!("unknown ship class slug '{slug}' for condition type '{ty}'")
+            })?;
+            Ok(AbilityCondition::DefenderShipTypeIs(st))
+        }
+        "attacker_ship_type_is"
+        | "attacker_ship_class_is"
+        | "self_ship_type_is"
+        | "self_ship_class_is" => {
+            let slug = c
+                .ship_type
+                .as_deref()
+                .or(c.stat.as_deref())
+                .ok_or_else(|| {
+                    "attacker/self ship class condition requires `ship_type` or `stat` slug".to_string()
+                })?;
+            let st = ShipType::from_data_slug(slug).ok_or_else(|| {
+                format!("unknown ship class slug '{slug}' for condition type '{ty}'")
+            })?;
+            Ok(AbilityCondition::AttackerShipTypeIs(st))
         }
         "and" => {
-            let conds: Vec<AbilityCondition> = c
+            let children = c
                 .conditions
-                .as_ref()?
-                .iter()
-                .filter_map(lcars_condition_to_ability_condition)
-                .collect();
-            if conds.is_empty() {
-                return None;
+                .as_ref()
+                .ok_or_else(|| "`and` condition requires non-empty `conditions` array".to_string())?;
+            if children.is_empty() {
+                return Err("`and` condition must include at least one sub-condition".to_string());
             }
-            AbilityCondition::And(conds)
+            let mut conds = Vec::with_capacity(children.len());
+            for child in children {
+                conds.push(resolve_lcars_condition(child)?);
+            }
+            Ok(AbilityCondition::And(conds))
         }
         "or" => {
-            let conds: Vec<AbilityCondition> = c
+            let children = c
                 .conditions
-                .as_ref()?
-                .iter()
-                .filter_map(lcars_condition_to_ability_condition)
-                .collect();
-            if conds.is_empty() {
-                return None;
+                .as_ref()
+                .ok_or_else(|| "`or` condition requires non-empty `conditions` array".to_string())?;
+            if children.is_empty() {
+                return Err("`or` condition must include at least one sub-condition".to_string());
             }
-            AbilityCondition::Or(conds)
+            let mut conds = Vec::with_capacity(children.len());
+            for child in children {
+                conds.push(resolve_lcars_condition(child)?);
+            }
+            Ok(AbilityCondition::Or(conds))
         }
-        _ => return None,
-    })
+        _ => Err(format!(
+            "unknown LCARS condition type '{}'",
+            c.condition_type.trim()
+        )),
+    }
+}
+
+fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCondition> {
+    resolve_lcars_condition(c).ok()
 }
 
 fn normalize_trigger(trigger: &str) -> String {
@@ -973,8 +1024,46 @@ mod tests {
             ship_type: Some("explorer".to_string()),
             conditions: None,
         };
-        let ac = lcars_condition_to_ability_condition(&c).expect("maps");
+        let ac = resolve_lcars_condition(&c).expect("maps");
         assert_eq!(ac, AbilityCondition::DefenderShipTypeIs(ShipType::Explorer));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_attacker_ship_type_and_evaluates() {
+        let c = LcarsCondition {
+            condition_type: "self_ship_class_is".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: Some("battleship".to_string()),
+            conditions: None,
+        };
+        let ac = resolve_lcars_condition(&c).expect("maps");
+        assert_eq!(ac, AbilityCondition::AttackerShipTypeIs(ShipType::Battleship));
+        let ctx_bb = CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: false,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            defender_faction: OpponentFactionTag::Unknown,
+            defender_ship_type: ShipType::Explorer,
+            attacker_ship_type: ShipType::Battleship,
+        };
+        assert!(ac.evaluate(&ctx_bb));
+        let ctx_int = CombatContext {
+            attacker_ship_type: ShipType::Interceptor,
+            ..ctx_bb
+        };
+        assert!(!ac.evaluate(&ctx_int));
     }
 
     #[test]

@@ -27,17 +27,16 @@ use crate::data::profile::{
     apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
     apply_static_buffs_to_combatant, forbidden_tech_level_tier_scaling_enabled_from_env,
     load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    merge_tech_fids_into_profile_with_level_tier,
-    resolve_effective_tech_fids, PlayerProfile,
+    merge_tech_fids_into_profile_with_level_tier, resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
     RESEARCH_IMPORTED, ROSTER_IMPORTED,
 };
+use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use crate::data::support_buffs::{self, SupportBuffCatalog};
-use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use crate::lcars::{
     index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
 };
@@ -277,7 +276,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared.lcars_data.as_ref(),
         &shared.resolve_options,
     );
-    let merged_static = support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
+    let merged_static =
+        support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
 
     let hostile_ability_catalog =
         load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);

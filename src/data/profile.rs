@@ -1049,7 +1049,10 @@ mod tests {
             },
         ];
         let profile = PlayerProfile::default();
-        assert_eq!(resolve_effective_tech_fids(&profile, &imported, &catalog), vec![1]);
+        assert_eq!(
+            resolve_effective_tech_fids(&profile, &imported, &catalog),
+            vec![1]
+        );
     }
 
     #[test]
@@ -1068,7 +1071,10 @@ mod tests {
             shard_count: 0,
         }];
         let profile = PlayerProfile::default();
-        assert_eq!(resolve_effective_tech_fids(&profile, &imported, &catalog), vec![3]);
+        assert_eq!(
+            resolve_effective_tech_fids(&profile, &imported, &catalog),
+            vec![3]
+        );
     }
 
     #[test]

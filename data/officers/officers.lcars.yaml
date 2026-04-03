@@ -9343,7 +9343,9 @@ officers:
         per_rank: 0.0
         max_rank: 3
         base_chance: null
-      condition: null
+      condition:
+        type: defender_ship_type_is
+        ship_type: interceptor
       chance: null
       multiplier: null
       tag: null
@@ -10169,7 +10171,9 @@ officers:
         per_rank: 0.0
         max_rank: 3
         base_chance: null
-      condition: null
+      condition:
+        type: defender_ship_type_is
+        ship_type: battleship
       chance: null
       multiplier: null
       tag: null
@@ -11900,7 +11904,9 @@ officers:
         per_rank: 0.0
         max_rank: 3
         base_chance: null
-      condition: null
+      condition:
+        type: defender_ship_type_is
+        ship_type: explorer
       chance: null
       multiplier: null
       tag: null
@@ -11944,7 +11950,9 @@ officers:
         per_rank: 0.0
         max_rank: 3
         base_chance: null
-      condition: null
+      condition:
+        type: defender_ship_type_is
+        ship_type: explorer
       chance: null
       multiplier: null
       tag: null
@@ -12039,7 +12047,9 @@ officers:
         per_rank: 0.0
         max_rank: 3
         base_chance: null
-      condition: null
+      condition:
+        type: defender_ship_type_is
+        ship_type: battleship
       chance: null
       multiplier: null
       tag: null

@@ -1252,6 +1252,99 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
 }
 
 #[test]
+fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 13,
+        trace_mode: TraceMode::Off,
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "if_battleship".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: Some(AbilityCondition::AttackerShipTypeIs(ShipType::Battleship)),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let same_defender_type = ShipType::Explorer;
+    let with_bb = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        same_defender_type,
+        ShipType::Battleship,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let with_int = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        same_defender_type,
+        ShipType::Interceptor,
+        &CrewConfiguration { seats: vec![] },
+    );
+    assert!(
+        with_bb.total_damage > with_int.total_damage,
+        "attacker hull-class gate should apply only when player ship type matches"
+    );
+    approx_eq(with_int.total_damage, with_bb.total_damage / 2.0, 1.0);
+}
+
+#[test]
 fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
     let attacker = Combatant {
         id: "attacker".to_string(),

@@ -243,12 +243,23 @@ Conditions gate whether an effect activates. They are predicates evaluated by th
 |---|---|---|
 | `stat_below` | stat, threshold_pct | Shields below 50% |
 | `stat_above` | stat, threshold_pct | Hull above 80% |
-| `vs_faction` | faction | Against Romulan hostiles |
+| `defender_faction_is` | `faction` or `tag` (slug) | Against Romulan hostiles (aliases: `opponent_faction_is`, `faction_is`, …) |
+| `defender_ship_type_is` | `ship_type` hull slug | Enemy hull is explorer / battleship / interceptor / survey / armada (aliases: `defender_ship_class_is`, `opponent_ship_type_is`, `opponent_ship_class_is`) |
+| `attacker_ship_type_is` | `ship_type` hull slug | Player’s ship hull matches (aliases: `attacker_ship_class_is`, `self_ship_type_is`, `self_ship_class_is`) |
 | `round_range` | min, max | Only rounds 1–3 |
-| `group_count` | group, min_members | 2+ Botany Bay officers |
-| `has_tag` | tag | Ally has "federation" tag |
+| `morale_active` | — | Attacker succeeded on primary morale roll this round |
+| `defender_burning` | — | Opponent has burning |
+| `defender_hull_breach` | — | Opponent hull breached |
+| `group_count` | group, min_members | *(not implemented in resolver)* |
+| `has_tag` | tag | *(not implemented in resolver)* |
 
-Conditions are composable with `and` / `or` / `not`:
+Hull slugs match [`ShipType::from_data_slug`](src/combat/types.rs): `battleship`, `explorer`, `interceptor`, `survey`, `armada`. In combat, the engine sets **defender** hull class from the hostile and **attacker** hull class from the player ship record.
+
+`kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction`, unknown slug, or empty `and` / `or`).
+
+**Passive + permanent `stat_modify`** is merged into `static_buffs` at resolve time and **does not** evaluate `condition` today. Use ship-class (and other) gates on timed effects (e.g. `on_combat_start`) or extend the resolver/engine before conditioning passive stats such as `armor`.
+
+Conditions are composable with `and` / `or`:
 
 ```yaml
 condition:
@@ -259,6 +270,23 @@ condition:
       threshold_pct: 0.50
     - type: round_range
       min: 3
+      max: 10
+```
+
+Ship-class gate on the opponent (player officers vs hostiles):
+
+```yaml
+condition:
+  type: defender_ship_type_is
+  ship_type: explorer
+```
+
+Ship-class gate on the player ship:
+
+```yaml
+condition:
+  type: self_ship_class_is
+  ship_type: battleship
 ```
 
 ### 3.5 Complete Officer Example
