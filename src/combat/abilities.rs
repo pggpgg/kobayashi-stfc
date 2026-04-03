@@ -89,6 +89,11 @@ pub enum AbilityEffect {
     IsolyticCascadeDamageBonus(f64),
     /// Officer-granted shield mitigation; additive to base (clamped 0..1).
     ShieldMitigationBonus(f64),
+    /// Additive fraction merged into the **player** ship’s mitigation when the hostile returns fire
+    /// (counter-attack path). Used as an LCARS proxy for `armor` / “all defenses” rows that are not
+    /// folded into [`Combatant::mitigation`] at scenario build. Values are **mitigation fractions**
+    /// in `0..1`; the resolver normalizes sheet-style magnitudes (`> 1`) as percent points (`÷ 100`).
+    MitigationAdditive(f64),
     /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
     /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
     CritChanceBonus(f64),
@@ -375,6 +380,18 @@ pub fn filter_effects_by_condition(
         .filter(|e| e.condition.as_ref().is_none_or(|c| c.evaluate(ctx)))
         .cloned()
         .collect()
+}
+
+/// Sum [`AbilityEffect::MitigationAdditive`] from combat-begin (or similar) filtered rows.
+/// Applied on hostile return fire so gated “defense vs survey / …” armor rows affect damage taken.
+pub fn sum_mitigation_additive(effects: &[ActiveAbilityEffect]) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| match e.effect {
+            AbilityEffect::MitigationAdditive(v) => Some(v),
+            _ => None,
+        })
+        .sum()
 }
 
 /// Hostile crit damage reduction from ship hull abilities (e.g. U.S.S. Crozier).

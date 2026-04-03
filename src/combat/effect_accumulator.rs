@@ -617,6 +617,7 @@ impl EffectAccumulator {
                         "ShieldMitigationBonus",
                     );
                 }
+                AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
@@ -722,6 +723,7 @@ impl EffectAccumulator {
                         "ShieldMitigationBonus",
                     );
                 }
+                AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
@@ -833,6 +835,7 @@ impl EffectAccumulator {
                         "ShieldMitigationBonus",
                     );
                 }
+                AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
@@ -953,7 +956,8 @@ impl EffectAccumulator {
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
-                | AbilityEffect::AccumulatingAttackMultiplier { .. } => {}
+                | AbilityEffect::AccumulatingAttackMultiplier { .. }
+                | AbilityEffect::MitigationAdditive(_) => {}
             },
             // Resolved in the engine only after all weapon sub-rounds for the same round
             // (`engine.rs`: RoundEnd is merged into `phase_effects_round` post-weapon-loop).
@@ -1049,6 +1053,7 @@ impl EffectAccumulator {
                         "ShieldMitigationBonus",
                     );
                 }
+                AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
@@ -1179,6 +1184,7 @@ impl EffectAccumulator {
                         "ShieldMitigationBonus",
                     );
                 }
+                AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
@@ -1372,6 +1378,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::CritDamageMultiplier(m) => AbilityEffect::CritDamageMultiplier(
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),
+        AbilityEffect::MitigationAdditive(v) => {
+            AbilityEffect::MitigationAdditive(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
     }
 }

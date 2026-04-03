@@ -75,9 +75,16 @@ cargo run --bin validate_data
 cargo run --bin merge_lcars
 cargo run --bin import_forbidden_chaos
 cargo run --bin import_syndicate_reputation
+cargo run --bin generate_officer_scorecard   # docs/OFFICER_MODELING_SCORECARD.md — edit fidelity in data/officers/officer_modeling_fidelity.yaml
 ```
 
 ### Ship data (data-stfc.space)
+
+Cache per-ship JSON (default: missing-only; `--full` refreshes all ids in `summary-ship.json`):
+
+```bash
+node scripts/fetch_stfcspace_ships.mjs
+```
 
 ```bash
 # 1. Build ship_id_registry from summary-ship + translations (run when upstream ships change)
@@ -89,6 +96,12 @@ cargo run --bin normalize_data_stfc_space
 
 ### Hostile data (data.stfc.space cache)
 
+Populate upstream detail JSON from the API (default: only **missing** files; **`--full`** re-downloads every id in `summary-hostile.json`):
+
+```bash
+node scripts/fetch_stfcspace_hostiles.mjs
+```
+
 Requires `data/upstream/data-stfc-space/hostiles/*.json`. Writes `data/hostiles/` (numeric string ids) and merge-updates `data/registry.json` for the `hostiles` entry only.
 
 ```bash
@@ -98,10 +111,10 @@ cargo run --bin normalize_hostiles_stfc_space
 
 ### Research catalog (data.stfc.space)
 
-Caches per-`rid` JSON under `data/upstream/data-stfc-space/research/` (gitignored), then writes `data/research_catalog.json`.
+Caches per-`rid` JSON under `data/upstream/data-stfc-space/research/` (tracked; refetch with `fetch_stfcspace_research.mjs`), then writes `data/research_catalog.json`.
 
 ```bash
-node scripts/fetch_stfcspace_research.mjs   # or supply research/*.json by other means
+node scripts/fetch_stfcspace_research.mjs   # default missing-only; --full to refresh all; or supply research/*.json by other means
 node scripts/import_stfcspace_research.mjs --from-upstream --limit 0   # reads local research/*.json only
 # Subset: --limit N, --rid a,b  |  Inspect unmapped buff ids: --dump-unmapped
 # Heuristic CSV hints (human review): node scripts/suggest_research_buff_mappings.mjs

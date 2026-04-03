@@ -3,6 +3,8 @@
 Maps numeric data.stfc.space ship id -> canonical id, ship_name, ship_class.
 Run from project root. Output: data/upstream/data-stfc-space/ship_id_registry.json
 """
+from __future__ import annotations
+
 import json
 import re
 import sys

@@ -18,8 +18,8 @@ use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy, filter_effects_by_condition,
-    hostile_crit_damage_reduction_from_crew, AbilityEffect, ActiveAbilityEffect, CombatContext,
-    CrewConfiguration, TimingWindow,
+    hostile_crit_damage_reduction_from_crew, sum_mitigation_additive, AbilityEffect,
+    ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_crit_multiplier,
@@ -171,6 +171,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
+    let attacker_mitigation_additive = sum_mitigation_additive(&combat_begin_filtered);
     let shield_break_effects = active_effects_for_timing(&attacker_crew, TimingWindow::ShieldBreak);
     let self_shield_break_effects =
         active_effects_for_timing(&attacker_crew, TimingWindow::SelfShieldBreak);
@@ -1011,7 +1012,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
                 // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
                 // so the two paths stay in sync.
-                let counter_mitigation_mult = (1.0 - attacker.mitigation).max(0.0);
+                let eff_player_mitigation =
+                    (attacker.mitigation + attacker_mitigation_additive).clamp(0.0, 1.0);
+                let counter_mitigation_mult = (1.0 - eff_player_mitigation).max(0.0);
 
                 // Build defender-side effect accumulator for this weapon base.
                 let mut defender_phase_effects = EffectAccumulator::default();

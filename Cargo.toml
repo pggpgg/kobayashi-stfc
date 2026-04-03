@@ -56,6 +56,10 @@ path = "src/bin/benchmark_parallel_speedup.rs"
 name = "merge_lcars"
 path = "src/bin/merge_lcars.rs"
 
+[[bin]]
+name = "generate_officer_scorecard"
+path = "src/bin/generate_officer_scorecard.rs"
+
 [[bench]]
 name = "simulator"
 harness = false

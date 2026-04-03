@@ -32,6 +32,36 @@ Related docs: [data/README.md](../data/README.md), [docs/STFC_SPACE_DATA_STRATEG
 
 ---
 
+## data.stfc.space: catalog vs per-id detail
+
+**Catalog (summaries + translations)** — refresh when you want the latest index and strings (run often):
+
+```bash
+python3 scripts/fetch_stfcspace_page_upstream.py
+# or: node scripts/fetch_stfcspace_page_upstream.mjs
+```
+
+**Per-id JSON** — large; default is **missing-only** (skip if `data/upstream/data-stfc-space/.../{id}.json` exists). Use **`--full`** (or **`--force`**) to overwrite all cached ids from the summary.
+
+| Script | Cache directory | Normalizer / next step |
+|--------|-----------------|-------------------------|
+| `node scripts/fetch_stfcspace_ships.mjs` | `ships/` | `python3 scripts/build_ship_registry.py` → `cargo run --bin normalize_data_stfc_space` |
+| `node scripts/fetch_stfcspace_hostiles.mjs` | `hostiles/` | `cargo run --bin normalize_hostiles_stfc_space` |
+| `node scripts/fetch_stfcspace_officers.mjs` | `officers/` | Reference only (LCARS remains source of truth for combat) |
+| `node scripts/fetch_stfcspace_research.mjs` | `research/` (tracked) | `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` |
+| `node scripts/fetch_stfcspace_forbidden_tech.mjs` | `forbidden_tech/` | Manual / CSV workflows (see `data/README.md` § Forbidden tech) |
+
+**Orchestrator** (same flags; **`--entities` required** — comma-separated subset):
+
+```bash
+npm run fetch:stfcspace:details -- --entities ships,hostiles --limit 50
+npm run fetch:stfcspace:details -- --entities ships,hostiles,officers,research,forbidden_tech --full
+```
+
+Shared helpers: [scripts/lib/stfcspace_detail_fetch.mjs](lib/stfcspace_detail_fetch.mjs).
+
+---
+
 ## Post-sync verification
 
 After pulling changes from another machine, run:

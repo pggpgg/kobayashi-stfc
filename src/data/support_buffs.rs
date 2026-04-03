@@ -48,8 +48,8 @@ pub struct SupportBuffCatalog {
 impl SupportBuffCatalog {
     pub fn load(path: impl AsRef<Path>) -> Result<Self, std::io::Error> {
         let raw = std::fs::read_to_string(path.as_ref())?;
-        let file: SupportBuffsFile =
-            serde_json::from_str(&raw).map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+        let file: SupportBuffsFile = serde_json::from_str(&raw)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
         Ok(Self { buffs: file.buffs })
     }
 

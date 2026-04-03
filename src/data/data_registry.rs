@@ -17,11 +17,11 @@ use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_O
 use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
-use crate::data::support_buffs::{
-    load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
-};
 use crate::data::ship::{
     load_extended_ship_index, ExtendedShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
+};
+use crate::data::support_buffs::{
+    load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
 };
 use crate::lcars::{load_lcars_dir, LcarsOfficer};
 
