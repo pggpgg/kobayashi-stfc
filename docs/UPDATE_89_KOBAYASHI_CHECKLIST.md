@@ -1,0 +1,43 @@
+# Update 89 — Kobayashi support checklist
+
+Track implementation against **STFC Update 89** (First Contact Part 2). Source: official news posts (patch notes 2026-03-31, Borg Sphere highlight 2026-03-29, Mara Dalen first look 2026-03-24).
+
+---
+
+## Data & catalog
+
+- [ ] Add **Borg Sphere** (G5 Battleship, Ops 55+): extended ship data + combat-relevant passives (Omicron Particle Charge, Apex Dispersion Field, Quantum Nullification Pulse)
+- [ ] Add Borg Sphere refit **Assimilation Protocol** (Assimilate for two rounds at PvP combat start) if/when PvP scenarios are in scope
+- [ ] Add **Conqueror Borg Suppressor** & **Conqueror Borg Obliterator** hostiles (G5–G7) with **Evolutionary Assimilation** scaling
+- [ ] Model **Quantum Resonance Beam** / **Hyperthermic Resonance Beam** + **Hyperthermic Decay** (incl. Borg Sphere 80% case); document assumptions until log-backed
+- [ ] **Crew nullification**: Kathryn Janeway, Enterprise-E Picard, Christopher Pike have **no effect** vs Suppressor/Obliterator
+- [ ] Officer **Mara Dalen** in LCARS: **Right to Protest** (Isolytic Defense vs Group Armadas); **Defy Defeat** (round-start shield repair vs all Armadas)
+- [ ] Reconcile **FCM armada synergy** (FCM Data CM shot stacking, Zefram Cochrane Isolytic Cascade) with blog text vs current LCARS; add tests if needed
+- [ ] Import/map **Borg Operating Table** (Prototype Forbidden Tech) combat-relevant stats
+- [ ] Import/map **Interplexing Beacon** (Chaos Tech): Hyperthermic Stabilizer, crit chance / shield mitigation vs Conqueror Borg
+- [ ] **Epic artifacts** if profile affects sim: Exo-suit Helmet, Interplexion Transducer, Cochrane’s Telescope
+- [ ] **Maverick research**: new Borg Sphere warp-range node (likely non-combat); confirm task-related research if ever modeled
+
+## Combat engine & semantics
+
+- [ ] Hostile-family / tag predicates so Borg Sphere passives apply only vs Conqueror Borg Suppressor & Obliterator (generalizable pattern)
+- [ ] Implement interaction: **Quantum Nullification** disables Suppressor beam; **Hyperthermic Stabilizer** (beacon) counters Obliterator beam — align with stacking order
+- [ ] **Assimilate** (2 rounds) aligned with existing assimilated effectiveness behavior where applicable
+
+## Tests & documentation
+
+- [ ] Tests: nullified captains vs tagged hostiles; Mara round-start shield repair; optional calibration if fixtures exist
+- [ ] Short **assumptions doc** (or section in this file) for instant-kill beams until recorded fights confirm behavior
+
+## Out of scope (reference)
+
+These are game/client or non-combat; skip unless you explicitly expand scope:
+
+- [ ] Mission QoL (170 G3–G4 mission changes)
+- [ ] Research UI search tab
+- [ ] Battle passes, event schedules, promotional content
+- [ ] Client bug fixes from patch notes (chests, Mantis UI, etc.)
+
+---
+
+_Last updated: checklist created for tracking Update 89 work._
