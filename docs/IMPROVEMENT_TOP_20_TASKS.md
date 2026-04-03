@@ -16,13 +16,13 @@ This is an **ordered** list of 20 concrete tasks to improve Kobayashi, optimized
 - [ ] 4. **Stabilize research-catalog operational expectations**
    - Make tests + docs unambiguous about when `data/research_catalog.json` must exist, how to regenerate it, and how to detect drift.
 
-- [ ] 5. **Validate research stat semantics that affect combat math**
+- [x] 5. **Validate research stat semantics that affect combat math**
    - Confirm `accuracy` handling and other “easy to misinterpret” stats; tighten mapping docs and add targeted tests for merge + application.
 
-- [ ] 6. **Complete/maintain forbidden/chaos tech sync matching**
+- [x] 6. **Complete/maintain forbidden/chaos tech sync matching**
    - Ensure every catalog row has a stable `fid` for sync application; improve the importer workflow for new upstream tech.
 
-- [ ] 7. **Improve hostile faction resolution and document unknowns**
+- [x] 7. **Improve hostile faction resolution and document unknowns**
    - Expand mappings for common hostiles and keep intentional `Unknown` cases explicit (avoid silently wrong categorization).
 
 - [ ] 8. **Increase ship-ability catalog coverage (reduce `combat_noop`)**

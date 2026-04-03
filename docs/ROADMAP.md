@@ -81,9 +81,9 @@ Buildings are **fully modeled for ship combat** per the “buildings full modeli
 
 ---
 
-## Forbidden tech (partial)
+## Forbidden tech (implemented; ongoing maintenance)
 
-Forbidden tech is **partially implemented**. The following is in place; remaining gaps and uncertainty are documented so we don’t lose track of what’s missing.
+Forbidden tech is implemented for ship combat; remaining items are maintenance/accuracy work (catalog upkeep, optional tier/level scaling).
 
 ### Implemented
 
@@ -95,18 +95,18 @@ Forbidden tech is **partially implemented**. The following is in place; remainin
 - **API:** `GET /api/forbidden-tech` returns the catalog for the UI.
 - **UI:** Roster & Profile → Profile tab → “Forbidden tech” dropdown (Use synced | None | Custom) and, for Custom, multi-select of catalog items that have a `fid`.
 
-### Partially implemented / gaps
+### Maintenance / gaps
 
-- **Catalog `fid`:** CI requires every committed catalog item to have a unique `fid` (`forbidden_chaos::sync_readiness_tests`). Rows without a `fid` never apply for synced players. Maintenance: upstream `summary-forbidden_tech.json` + `translations-forbidden_tech.json`, manual CSV `fid`, or `scripts/build_chaos_tech_csv_rows.mjs` (chaos rows from live `data.stfc.space/forbidden_tech/{id}.json`). See [data/README.md](../data/README.md) § Forbidden tech.
+- **Catalog `fid` (maintenance):** CI requires every committed catalog item to have a unique `fid` (`forbidden_chaos::sync_readiness_tests`) so stfc-mod sync can match bonuses by `fid`. Rows without a `fid` never apply for synced players. Workflow: upstream `summary-forbidden_tech.json` + `translations-forbidden_tech.json`, manual CSV `fid`, or `scripts/build_chaos_tech_csv_rows.mjs` (chaos rows from live `data.stfc.space/forbidden_tech/{id}.json`). See [data/README.md](../data/README.md) § Forbidden tech.
 - **Level/tier:** `ForbiddenTechEntry` includes `level` and `tier`. The merge can optionally scale catalog bonuses by `tier`/`level` when `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` is set (linear scaling within a tier; conservative behavior when catalog tier disagrees with synced tier). `build_shared_scenario_data_standalone` and the registry path both use the same merge helper and env flag. The exact in-game scaling is still uncertain, so scaling remains opt-in until confirmed.
 - **Combat timing:** DESIGN documents the intentional approximation: forbidden/chaos bonuses are applied at **profile merge**, not as a separate per-sub-round phase. A per-sub-round FT phase would require new evidence and engine work. See [DESIGN.md](DESIGN.md) §3.6 Notes.
 - **Chaos data fidelity:** Bulk chaos rows are generated with heuristics (PvP-only / armada / proc lines approximated or skipped). Review `data/import/forbidden_chaos_tech.csv` when balancing matters; re-run `node scripts/build_chaos_tech_csv_rows.mjs` after adjusting the script.
 
 ---
 
-## Research (partial)
+## Research (implemented; ongoing maintenance)
 
-Research **sync and catalog merge** are implemented for ship-combat stats. Gaps are mainly **stats the engine does not yet fold into the player profile** (e.g. accuracy) and **conditional in-game scopes** that the catalog still treats as unconditional bonuses.
+Research sync + catalog merge are implemented for ship-combat stats; remaining items are catalog-mapping and scope-accuracy maintenance.
 
 ### Implemented
 
@@ -121,7 +121,7 @@ Research **sync and catalog merge** are implemented for ship-combat stats. Gaps 
 
 ### Partially implemented / gaps (roadmap items)
 
-- **Accuracy** — `accuracy` is merged into `profile.bonuses` and scales ship `AttackerStats.accuracy` when computing hostile mitigation / pierce-through (`scenario.rs`). Catalog values are treated as fractional bonuses (×(1 + sum)), same convention as `weapon_damage`; in-game wording may differ—verify with logs/toolbox if fights look off.
+- **Accuracy** — **Done:** `accuracy` merges into `profile.bonuses` and scales ship `AttackerStats.accuracy` for mitigation/pierce-through; catalog values are treated as fractional bonuses (×(1 + sum)), same convention as `weapon_damage`. Remaining risk: in-game wording/scopes may differ, so validate with additional recorded-fight fixtures if mismatches appear.
 - **Other combat stats** — Any future stat keys must be added to `normalize_profile_combat_stat` and wired in `apply_profile_to_attacker` / `apply_static_buffs_to_combatant` (or the mitigation path) before research mappings affect simulation.
 
 - **Apex (shred / barrier)** — **Done:** `apex_shred` and `apex_barrier` are normalized combat keys; research/building merges feed `profile.bonuses`, and `apply_profile_to_attacker` adds them to the player ship combatant (shred on outbound apex math; barrier on counter-attack defense). Import still depends on `import_stfcspace_research.mjs` mapping upstream buffs to those stat names in `research_catalog.json`.
