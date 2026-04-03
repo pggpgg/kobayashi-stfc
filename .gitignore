@@ -37,3 +37,7 @@ profiles/*
 !profiles/index.json.example
 !profiles/demo/
 !profiles/demo/**
+
+# Playwright artifacts
+playwright-report/
+test-results/
