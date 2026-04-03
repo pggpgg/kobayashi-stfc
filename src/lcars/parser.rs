@@ -121,23 +121,64 @@ pub struct LcarsScaling {
     pub max_rank: Option<u8>,
     #[serde(default)]
     pub base_chance: Option<f64>,
+    /// Discrete value per rank (index 0 = rank 1). When non-empty, [value_at_rank] uses this
+    /// instead of `base` + `per_rank`.
+    #[serde(default)]
+    pub values: Option<Vec<f64>>,
+    /// Discrete proc chance per rank (index 0 = rank 1). When non-empty, [chance_at_rank] uses
+    /// this instead of linear `base_chance`/`base` + `per_rank`.
+    #[serde(default)]
+    pub chance_values: Option<Vec<f64>>,
 }
 
 impl LcarsScaling {
-    /// Value at given tier (1-based rank). Falls back to base or 0.0.
+    fn linear_max_rank(&self) -> u8 {
+        self.max_rank.unwrap_or(5).max(1)
+    }
+
+    fn table_clamped_index(rank: Option<u8>, max: u8) -> usize {
+        let r = rank.map(|r| r.min(max)).unwrap_or(1);
+        (r.saturating_sub(1)).min(max.saturating_sub(1)) as usize
+    }
+
+    /// Value at given tier (1-based rank). Prefers [Self::values] when set; else `base` + `(rank-1)*per_rank`.
     pub fn value_at_rank(&self, rank: Option<u8>) -> f64 {
+        if let Some(ref table) = self.values {
+            if !table.is_empty() {
+                let n = table.len().min(u8::MAX as usize) as u8;
+                let max = self
+                    .max_rank
+                    .unwrap_or(n)
+                    .max(1)
+                    .min(n);
+                let idx = Self::table_clamped_index(rank, max);
+                return table[idx];
+            }
+        }
         let base = self.base.unwrap_or(0.0);
         let per = self.per_rank.unwrap_or(0.0);
-        let max = self.max_rank.unwrap_or(5).max(1);
+        let max = self.linear_max_rank();
         let r = rank.map(|r| r.min(max)).unwrap_or(1);
         let index = (r.saturating_sub(1)).min(max.saturating_sub(1));
         base + per * (index as f64)
     }
 
     pub fn chance_at_rank(&self, rank: Option<u8>) -> f64 {
+        if let Some(ref table) = self.chance_values {
+            if !table.is_empty() {
+                let n = table.len().min(u8::MAX as usize) as u8;
+                let max = self
+                    .max_rank
+                    .unwrap_or(n)
+                    .max(1)
+                    .min(n);
+                let idx = Self::table_clamped_index(rank, max);
+                return table[idx];
+            }
+        }
         let base = self.base_chance.unwrap_or(self.base.unwrap_or(0.0));
         let per = self.per_rank.unwrap_or(0.0);
-        let max = self.max_rank.unwrap_or(5).max(1);
+        let max = self.linear_max_rank();
         let r = rank.map(|r| r.min(max)).unwrap_or(1);
         let index = (r.saturating_sub(1)).min(max.saturating_sub(1));
         base + per * (index as f64)

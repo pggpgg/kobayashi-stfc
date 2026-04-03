@@ -200,6 +200,14 @@ Modifies a stat on a target. Supports scaling, decay, accumulation, and conditio
     threshold_pct: 0.50
 ```
 
+**Scaling precedence:** When `scaling.values` is present and non-empty, the effect’s numeric magnitude at officer tier *T* is `values[T-1]` (after clamping *T* to `max_rank` and the index to the table length). Otherwise the linear model `base + (T-1) * per_rank` applies. The same rule applies to proc chances via `scaling.chance_values` versus `base_chance`/`base` + `per_rank`. Game data often uses non-linear rank tables; prefer explicit lists when they differ from a straight line between rank 1 and max rank.
+
+```yaml
+  scaling:
+    values: [0.15, 0.25, 0.35, 0.5, 0.7]   # index 0 = rank 1
+    max_rank: 5
+```
+
 #### `extra_attack` — additional shots
 
 ```yaml
@@ -258,6 +266,8 @@ Hull slugs match [`ShipType::from_data_slug`](src/combat/types.rs): `battleship`
 `kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction`, unknown slug, or empty `and` / `or`).
 
 **Passive + permanent `stat_modify`** is merged into `static_buffs` at resolve time and **does not** evaluate `condition` today. Use ship-class (and other) gates on timed effects (e.g. `on_combat_start`) or extend the resolver/engine before conditioning passive stats such as `armor`.
+
+**Timed `armor` (`on_combat_start` / `on_round_start`):** resolved to [`AbilityEffect::MitigationAdditive`](../src/combat/abilities.rs), summed from combat-begin officer rows and applied when **hostiles return fire** (increases effective player mitigation). LCARS magnitudes `|v| > 1` are treated as percent points (`v / 100`) for the mitigation fraction; this is an approximation of “all defenses” / sheet-style values, not a full armor–deflection–dodge split.
 
 Conditions are composable with `and` / `or`:
 

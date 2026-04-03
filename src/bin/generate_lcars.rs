@@ -6,13 +6,18 @@
 //!
 //! When `--summary` and `--translations` point at data-stfc-space exports, ability block names are
 //! resolved from `officer_ability_name` rows (`loca_id` in summary matches `id` in translations).
+//!
+//! Canonical `conditions` strings are mapped to LCARS when they match resolver-supported mechanics
+//! (enemy/self hull class, `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasMorale`). Unmapped
+//! tokens are skipped with a stderr line; emitted conditions may be weaker than in-game (subset `and`).
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
+use kobayashi::combat::ShipType;
 use kobayashi::lcars::{
-    LcarsAbility, LcarsDuration, LcarsEffect, LcarsFile, LcarsOfficer, LcarsScaling,
+    LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect, LcarsFile, LcarsOfficer, LcarsScaling,
 };
 use serde::Deserialize;
 
@@ -66,6 +71,9 @@ struct CanonicalAbility {
     chance_by_rank: Vec<f64>,
     #[serde(default)]
     value_by_rank: Vec<f64>,
+    /// Game condition tokens (PascalCase strings). Mapped to LCARS where supported.
+    #[serde(default)]
+    conditions: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -397,12 +405,157 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
     )
 }
 
-fn convert_ability_to_effect(a: &CanonicalAbility, _officer_name: &str) -> Option<LcarsEffect> {
+/// Maps one canonical `value_by_rank` sample to the numeric stored in LCARS `value` / `scaling.values`
+/// (same rules as [map_modifier] for [MappedEffect::StatModify]).
+fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64 {
+    match modifier {
+        "CritChance" | "CritDamage" => val,
+        "AllDamage" | "OfficerStatAttack" => {
+            if op.eq_ignore_ascii_case("MultiplyAdd") {
+                1.0 + val
+            } else {
+                val
+            }
+        }
+        "ShipArmor" | "OfficerStatDefense" => val,
+        "AllDefenses" => {
+            if op.eq_ignore_ascii_case("MultiplySub") {
+                -val
+            } else {
+                val
+            }
+        }
+        "ArmorPiercing" | "AllPiercing" => val,
+        "ShieldHPMax" | "HullHPMax" => 1.0 + val,
+        "ApexShred" | "ApexBarrier" => val,
+        "IsolyticDamage" | "IsolyticDefense" => val,
+        "IsolyticCascade" | "IsolyticCascadeDamage" => val,
+        "ShieldHPRepair" | "ShieldRegen" | "HullHPRepair" | "HullRegen" => val,
+        _ => val,
+    }
+}
+
+fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
+    LcarsCondition {
+        condition_type: ty.into(),
+        stat: None,
+        threshold_pct: None,
+        min: None,
+        max: None,
+        faction: None,
+        group: None,
+        min_members: None,
+        tag: None,
+        ship_type: None,
+        conditions: None,
+    }
+}
+
+/// Maps one RawOfficers / canonical condition token to LCARS when the resolver already supports it.
+/// See [`resolve_lcars_condition`](kobayashi::lcars::resolve_lcars_condition).
+fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
+    let t = token.trim();
+    if t.is_empty() {
+        return None;
+    }
+
+    if let Some(rest) = t.strip_prefix("Enemy") {
+        let slug = match rest {
+            "Explorer" => "explorer",
+            "Battleship" => "battleship",
+            "Interceptor" => "interceptor",
+            "Survey" | "Surveyor" => "survey",
+            "Armada" => "armada",
+            _ => return None,
+        };
+        ShipType::from_data_slug(slug)?;
+        let mut c = lcars_cond_base("defender_ship_type_is");
+        c.ship_type = Some(slug.to_string());
+        return Some(c);
+    }
+
+    if let Some(rest) = t.strip_prefix("Self") {
+        let slug = match rest {
+            "Explorer" => "explorer",
+            "Battleship" => "battleship",
+            "Interceptor" => "interceptor",
+            "Surveyor" | "Survey" => "survey",
+            "Armada" => "armada",
+            _ => return None,
+        };
+        ShipType::from_data_slug(slug)?;
+        let mut c = lcars_cond_base("attacker_ship_type_is");
+        c.ship_type = Some(slug.to_string());
+        return Some(c);
+    }
+
+    match t {
+        "TargetHasBurning" => Some(lcars_cond_base("defender_burning")),
+        "TargetHasHullBreach" => Some(lcars_cond_base("defender_hull_breach")),
+        "SelfHasMorale" => Some(lcars_cond_base("morale_active")),
+        _ => None,
+    }
+}
+
+/// Converts canonical `conditions` to a single LCARS condition (`and` when multiple tokens map).
+/// Logs unmapped tokens to stderr. Returns `None` if nothing maps (or the list is empty).
+fn canonical_conditions_to_lcars(
+    conditions: &[String],
+    officer_name: &str,
+    ability_label: &str,
+) -> Option<LcarsCondition> {
+    if conditions.is_empty() {
+        return None;
+    }
+    let mut mapped = Vec::new();
+    for raw in conditions {
+        if let Some(c) = map_canonical_condition_token(raw) {
+            mapped.push(c);
+        } else {
+            let tok = raw.trim();
+            if !tok.is_empty() {
+                eprintln!(
+                    "generate_lcars: skipping unmapped canonical condition {tok:?} \
+                     (officer {officer_name:?}, ability {ability_label:?})"
+                );
+            }
+        }
+    }
+    match mapped.len() {
+        0 => None,
+        1 => Some(mapped.pop().expect("len checked")),
+        _ => Some(LcarsCondition {
+            condition_type: "and".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: Some(mapped),
+        }),
+    }
+}
+
+fn effect_condition_from_canonical(
+    a: &CanonicalAbility,
+    officer_name: &str,
+    ability_label: &str,
+) -> Option<LcarsCondition> {
+    canonical_conditions_to_lcars(&a.conditions, officer_name, ability_label)
+}
+
+fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option<LcarsEffect> {
     let modifier = a.modifier.as_deref().unwrap_or("");
     let trigger = map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"));
     let mapped = map_modifier(modifier, a)?;
-    let scaling = scaling_from_ranks(&a.value_by_rank, &a.chance_by_rank, modifier);
     let target = map_target(a);
+    let op = a.operation.as_deref().unwrap_or("Add");
+    let ability_label = a.ability_id.as_deref().unwrap_or(modifier);
+    let cond = effect_condition_from_canonical(a, officer_name, ability_label);
 
     match mapped {
         MappedEffect::Tag(tag_name) => Some(LcarsEffect {
@@ -414,7 +567,7 @@ fn convert_ability_to_effect(a: &CanonicalAbility, _officer_name: &str) -> Optio
             trigger: Some(trigger.to_string()),
             duration: Some(LcarsDuration::Permanent("permanent".to_string())),
             scaling: None,
-            condition: None,
+            condition: cond.clone(),
             chance: None,
             multiplier: None,
             tag: Some(tag_name),
@@ -428,6 +581,13 @@ fn convert_ability_to_effect(a: &CanonicalAbility, _officer_name: &str) -> Optio
                 StateType::HullBreach => "hull_breach",
                 StateType::Burning => "burning",
             };
+            // Resolver prefers `chance` over `scaling`; omit fixed chance when ranks vary so
+            // `chance_values` / `chance_at_rank` apply.
+            let chance_field = if a.chance_by_rank.len() > 1 {
+                None
+            } else {
+                Some(chance)
+            };
             Some(LcarsEffect {
                 effect_type: effect_type.to_string(),
                 stat: None,
@@ -437,30 +597,44 @@ fn convert_ability_to_effect(a: &CanonicalAbility, _officer_name: &str) -> Optio
                 trigger: Some(trigger.to_string()),
                 duration: Some(LcarsDuration::Permanent("permanent".to_string())),
                 scaling: scaling_from_ranks(&[], &a.chance_by_rank, "AddState"),
-                condition: None,
-                chance: Some(chance),
+                condition: cond.clone(),
+                chance: chance_field,
                 multiplier: None,
                 tag: None,
                 accumulate: None,
                 decay: None,
             })
         }
-        MappedEffect::StatModify(stat, operator, value) => Some(LcarsEffect {
-            effect_type: "stat_modify".to_string(),
-            stat: Some(stat),
-            target: Some(target.to_string()),
-            operator: Some(operator),
-            value: Some(value),
-            trigger: Some(trigger.to_string()),
-            duration: Some(LcarsDuration::Permanent("permanent".to_string())),
-            scaling,
-            condition: None,
-            chance: None,
-            multiplier: None,
-            tag: None,
-            accumulate: None,
-            decay: None,
-        }),
+        MappedEffect::StatModify(stat, operator, value_rank1) => {
+            let lcars_values: Vec<f64> = a
+                .value_by_rank
+                .iter()
+                .copied()
+                .map(|v| transform_canonical_to_lcars_value(modifier, op, v))
+                .collect();
+            let scaling = scaling_from_ranks(&lcars_values, &a.chance_by_rank, modifier);
+            let value_field = if lcars_values.len() > 1 {
+                None
+            } else {
+                Some(lcars_values.first().copied().unwrap_or(value_rank1))
+            };
+            Some(LcarsEffect {
+                effect_type: "stat_modify".to_string(),
+                stat: Some(stat),
+                target: Some(target.to_string()),
+                operator: Some(operator),
+                value: value_field,
+                trigger: Some(trigger.to_string()),
+                duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+                scaling,
+                condition: cond,
+                chance: None,
+                multiplier: None,
+                tag: None,
+                accumulate: None,
+                decay: None,
+            })
+        }
     }
 }
 
@@ -577,43 +751,85 @@ fn scaling_from_ranks(
     chance_by_rank: &[f64],
     modifier: &str,
 ) -> Option<LcarsScaling> {
-    if value_by_rank.len() < 2 && chance_by_rank.len() < 2 {
+    if value_by_rank.is_empty() && chance_by_rank.is_empty() {
         return None;
     }
 
-    let max_rank = (value_by_rank.len().max(chance_by_rank.len())) as u8;
-    if max_rank < 2 {
-        return None;
-    }
+    let max_rank = value_by_rank.len().max(chance_by_rank.len()).max(1) as u8;
+    let is_add_state = modifier.eq_ignore_ascii_case("AddState");
 
-    let base = value_by_rank.first().copied().unwrap_or(0.0);
-    let last = value_by_rank.last().copied().unwrap_or(base);
-    let per_rank = if max_rank > 1 {
-        (last - base) / (max_rank - 1) as f64
+    let values = if !value_by_rank.is_empty() {
+        Some(value_by_rank.to_vec())
     } else {
-        0.0
+        None
     };
 
-    if modifier.eq_ignore_ascii_case("AddState") {
-        let base_chance = chance_by_rank.first().copied().unwrap_or(0.0);
-        let last_chance = chance_by_rank.last().copied().unwrap_or(base_chance);
-        let _per_chance = if max_rank > 1 {
-            (last_chance - base_chance) / (max_rank - 1) as f64
-        } else {
-            0.0
-        };
-        Some(LcarsScaling {
-            base: Some(base),
-            per_rank: Some(per_rank),
-            max_rank: Some(max_rank),
-            base_chance: Some(base_chance),
-        })
+    let chance_values = if is_add_state && !chance_by_rank.is_empty() {
+        Some(chance_by_rank.to_vec())
     } else {
-        Some(LcarsScaling {
-            base: Some(base),
-            per_rank: Some(per_rank),
-            max_rank: Some(max_rank),
-            base_chance: None,
-        })
+        None
+    };
+
+    Some(LcarsScaling {
+        base: None,
+        per_rank: None,
+        max_rank: Some(max_rank),
+        base_chance: None,
+        values,
+        chance_values,
+    })
+}
+
+#[cfg(test)]
+mod canonical_condition_tests {
+    use super::*;
+    use kobayashi::lcars::resolve_lcars_condition;
+
+    #[test]
+    fn maps_enemy_explorer_to_defender_ship_type() {
+        let c = map_canonical_condition_token("EnemyExplorer").expect("maps");
+        assert_eq!(c.condition_type, "defender_ship_type_is");
+        assert_eq!(c.ship_type.as_deref(), Some("explorer"));
+        resolve_lcars_condition(&c).expect("resolver accepts");
+    }
+
+    #[test]
+    fn maps_self_interceptor_to_attacker_ship_type() {
+        let c = map_canonical_condition_token("SelfInterceptor").expect("maps");
+        assert_eq!(c.condition_type, "attacker_ship_type_is");
+        assert_eq!(c.ship_type.as_deref(), Some("interceptor"));
+        resolve_lcars_condition(&c).unwrap();
+    }
+
+    #[test]
+    fn mixed_tokens_drop_unmapped_keep_enemy_explorer() {
+        let raw = vec![
+            "EnemyHostile".to_string(),
+            " TargetNotArmada".to_string(),
+            "EnemyExplorer".to_string(),
+            "SelfOfficerTalNotOnBridge".to_string(),
+        ];
+        let out = canonical_conditions_to_lcars(&raw, "Alok", "test").expect("one maps");
+        assert_eq!(out.condition_type, "defender_ship_type_is");
+        assert_eq!(out.ship_type.as_deref(), Some("explorer"));
+    }
+
+    #[test]
+    fn two_mapped_tokens_become_and() {
+        let raw = vec!["EnemyExplorer".to_string(), "SelfBattleship".to_string()];
+        let out = canonical_conditions_to_lcars(&raw, "x", "y").expect("and");
+        assert_eq!(out.condition_type, "and");
+        let kids = out.conditions.as_ref().expect("children");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "defender_ship_type_is");
+        assert_eq!(kids[1].condition_type, "attacker_ship_type_is");
+        resolve_lcars_condition(&out).unwrap();
+    }
+
+    #[test]
+    fn target_burning_maps() {
+        let c = map_canonical_condition_token("TargetHasBurning").unwrap();
+        assert_eq!(c.condition_type, "defender_burning");
+        resolve_lcars_condition(&c).unwrap();
     }
 }

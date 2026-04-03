@@ -15,7 +15,9 @@ use serde::Serialize;
 pub struct ResolveOptions {
     /// Fallback officer tier (1-based) when per-officer tier is not set.
     pub tier: Option<u8>,
-    /// Per-officer tier (canonical_officer_id → tier). When set, each officer uses their tier for scaling (base + per_rank, chance_at_rank).
+    /// Per-officer tier (canonical_officer_id → tier). When set, each officer uses their tier for
+    /// scaling via [crate::lcars::parser::LcarsScaling::value_at_rank] / `chance_at_rank` (discrete
+    /// `values` / `chance_values` when present, else `base` + `per_rank`).
     pub officer_tiers: Option<HashMap<String, u8>>,
 }
 
@@ -242,6 +244,16 @@ pub(crate) fn effect_trigger_timing(effect: &LcarsEffect) -> Option<TimingWindow
     }
 }
 
+/// LCARS `armor` values often follow sheet “percent of health” magnitudes (e.g. `8`, `25`).
+/// Engine mitigation is a `0..1` fraction; treat `|v| > 1` as percent points (`v / 100`).
+fn mitigation_fraction_from_lcars_armor_value(raw: f64) -> f64 {
+    if raw.abs() > 1.0 {
+        raw / 100.0
+    } else {
+        raw
+    }
+}
+
 /// True if this effect is passive and permanent (should go only into static_buffs, not crew).
 fn is_static_effect(effect: &LcarsEffect) -> bool {
     let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
@@ -394,6 +406,28 @@ fn resolve_effect(
                         _ => value,
                     };
                     Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
+                }
+                "armor" => {
+                    if !matches!(
+                        timing,
+                        TimingWindow::CombatBegin | TimingWindow::RoundStart
+                    ) {
+                        return None;
+                    }
+                    let add = match op.as_str() {
+                        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                        | "multiplybaseadd" => value - 1.0,
+                        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
+                        | "multiplybasesub" => -value,
+                        "set" => return None,
+                        _ => value,
+                    };
+                    Some((
+                        timing,
+                        AbilityEffect::MitigationAdditive(
+                            mitigation_fraction_from_lcars_armor_value(add),
+                        ),
+                    ))
                 }
                 // Combat-begin accuracy is merged in [resolve_crew_to_buff_set]; other timings are not modeled.
                 "accuracy" => None,
@@ -1235,7 +1269,7 @@ mod tests {
     }
 
     #[test]
-    fn resolve_khan_from_lcars_yaml() {
+    fn resolve_bundled_lcars_yaml_discrete_scaling_smoke() {
         let path = Path::new("data/officers/officers.lcars.yaml");
         if !path.exists() {
             return; // skip if data not present (e.g. in minimal checkouts)
@@ -1246,27 +1280,23 @@ mod tests {
             tier: Some(5),
             officer_tiers: None,
         };
-        // Same officer cannot appear in multiple seats; exercise Khan's blocks on separate minimal crews.
-        let buff_cap_bridge = resolve_crew_to_buff_set("khan", &[], &[], &officers, &options);
-        assert!(
-            buff_cap_bridge.static_buffs.contains_key("shield_pierce"),
-            "expected static shield_pierce from captain ability"
-        );
-        assert!(
-            buff_cap_bridge.static_buffs.contains_key("weapon_damage"),
-            "expected static weapon_damage from bridge ability"
-        );
-        let buff_below = resolve_crew_to_buff_set(
-            "odo-04a97d",
-            &[],
-            &["khan".to_string()],
-            &officers,
-            &options,
-        );
-        assert!(
-            buff_below.static_buffs.contains_key("hull_hp"),
-            "expected static hull_hp from below decks ability"
-        );
+        // Khan (Independent): bridge passive crit_chance uses `scaling.values` at officer tier.
+        let khan = resolve_crew_to_buff_set("khan-3f1d1e", &[], &[], &officers, &options);
+        let cc = khan
+            .static_buffs
+            .get("crit_chance")
+            .copied()
+            .expect("expected khan-3f1d1e passive crit_chance from bundled LCARS");
+        assert!((cc - 0.05).abs() < 1e-12);
+
+        // Scotty: passive bridge hull_hp multiplier rank 5 from discrete table.
+        let scotty = resolve_crew_to_buff_set("scotty-a83cb5", &[], &[], &officers, &options);
+        let hull = scotty
+            .static_buffs
+            .get("hull_hp")
+            .copied()
+            .expect("expected scotty-a83cb5 passive hull_hp from bundled LCARS");
+        assert!((hull - 1.2).abs() < 1e-12);
     }
 
     #[test]
@@ -1305,6 +1335,8 @@ mod tests {
                 per_rank: Some(0.05),
                 max_rank: Some(5),
                 base_chance: None,
+                values: None,
+                chance_values: None,
             }),
             condition: None,
             chance: None,
@@ -1353,6 +1385,71 @@ mod tests {
         assert!(
             (v5 - v1).abs() > 1e-6,
             "per-officer tier should change resolved static_buffs: tier1={v1}, tier5={v5}"
+        );
+    }
+
+    #[test]
+    fn per_officer_tier_uses_discrete_scaling_values_not_linear_endpoints() {
+        // Game-style table (e.g. Alok Sahar apex shred): not colinear with base..last linear fit.
+        let table = vec![0.15, 0.25, 0.35, 0.5, 0.7];
+        let linear_rank2: f64 = table[0] + (table[4] - table[0]) / 4.0;
+        assert!(
+            (table[1] - linear_rank2).abs() > 1e-6,
+            "test table rank2 must differ from linear endpoint fit"
+        );
+
+        let scaling_effect = LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some("apex_shred".to_string()),
+            target: None,
+            operator: Some("add".to_string()),
+            value: None,
+            trigger: Some("passive".to_string()),
+            duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+            scaling: Some(LcarsScaling {
+                base: Some(999.0),
+                per_rank: Some(999.0),
+                max_rank: Some(5),
+                base_chance: None,
+                values: Some(table),
+                chance_values: None,
+            }),
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let officer = LcarsOfficer {
+            id: "table_officer".to_string(),
+            name: "Table".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "scaling".to_string(),
+                effects: vec![scaling_effect],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+        };
+        let mut officers = HashMap::new();
+        officers.insert("table_officer".to_string(), officer);
+        let options_tier2 = ResolveOptions {
+            tier: None,
+            officer_tiers: Some([("table_officer".to_string(), 2u8)].into_iter().collect()),
+        };
+        let buff =
+            resolve_crew_to_buff_set("table_officer", &[], &[], &officers, &options_tier2);
+        let v2 = buff
+            .static_buffs
+            .get("apex_shred")
+            .copied()
+            .unwrap_or(0.0);
+        assert!(
+            (v2 - 0.25).abs() < 1e-9,
+            "expected discrete rank-2 value 0.25, got {v2}"
         );
     }
 

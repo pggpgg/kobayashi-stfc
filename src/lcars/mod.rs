@@ -7,8 +7,8 @@ mod parser;
 mod resolver;
 
 pub use parser::{
-    load_lcars_dir, load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsFile,
-    LcarsOfficer, LcarsScaling,
+    load_lcars_dir, load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect,
+    LcarsFile, LcarsOfficer, LcarsScaling,
 };
 pub use resolver::{
     index_lcars_officers_by_id, lcars_effect_coverage, resolve_crew_to_buff_set,
