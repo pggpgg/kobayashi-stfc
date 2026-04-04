@@ -29,6 +29,8 @@ Many ability ids still map to `effect_type: combat_noop` (economy, mining, armad
 2. **Bucket / decide** — Update the audit doc if new patterns appear (economy, scope, opponent class, proc chains, etc.).
 3. **Drift** — Regenerate with `python3 scripts/generate_full_ship_ability_catalog.py`; merge durable hand edits via [ship_ability_catalog_overrides.json](../data/upstream/data-stfc-space/ship_ability_catalog_overrides.json) or extend the classifier.
 
+**Status:** Audit is kept current (latest counts + regen-safe noop id inventory) in `docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md`.
+
 ### Optional / backlog
 
 - **Hostile `ability` vs player** — Upstream hostile `ability` arrays are preserved on `[HostileRecord](../src/data/hostile.rs)` and drive **defender** crew (`defender_crew` / hostile ability catalog) for return fire and shield-break; they are not merged into the player’s own crew resolution.

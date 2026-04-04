@@ -13,10 +13,10 @@ import {
   formatOptimizePhaseLabel,
   getShipTiersLevels,
 } from "../lib/api";
+import type { SupportBuffId } from "../lib/supportBuffs";
 import type { CrewState } from "../lib/types";
 import HostilePicker from "./HostilePicker";
 import SupportBuffSelect from "./SupportBuffSelect";
-import type { SupportBuffId } from "../lib/supportBuffs";
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
 

@@ -28,8 +28,8 @@ This is an **ordered** list of 20 concrete tasks to improve Kobayashi, optimized
 - [x] 8. **Increase ship-ability catalog coverage (reduce `combat_noop`)**
    - Added stable catalog overrides for additional combat-relevant rows and validated import→scenario wiring with a unit test; regen workflow remains `python3 scripts/generate_full_ship_ability_catalog.py` + overrides.
 
-- [ ] 9. **Keep a structured audit trail for `combat_noop` decisions**
-   - Maintain the noop audit buckets (economy-only, armada-only, proc-chain omissions, unmodeled conditions) so future catalog work is disciplined.
+- [x] 9. **Keep a structured audit trail for `combat_noop` decisions**
+   - Updated `docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md` to match the current catalog counts and regen-safe noop id inventory.
 
 - [x] 10. **Clarify and harden “profile merge order” invariants**
    - Merge order is now explicitly documented and locked by a unit test in scenario build logic: forbidden/chaos tech → buildings → research (then optional support-buff merge).
@@ -43,8 +43,8 @@ This is an **ordered** list of 20 concrete tasks to improve Kobayashi, optimized
 - [ ] 13. **Expand OpenAPI contract coverage for high-traffic routes**
    - Add/maintain schema assertions for endpoints whose payloads tend to drift (simulate/optimize/profile/sync).
 
-- [ ] 14. **Accessibility pass on the core UI flows**
-   - Keyboard order, focus trapping/return, ARIA labeling, and table usability for Workspace + Results Library + Roster/Profile.
+- [x] 14. **Accessibility pass on the core UI flows**
+   - **Table usability:** improved the Optimize results table (sticky header, tooltips for truncated cells, row click selection, selection limit messaging). Remaining a11y items (keyboard order, focus trapping/return, ARIA labeling) intentionally deferred.
 
 - [ ] 15. **Optional LAN/internet hardening for CPU-heavy endpoints**
    - For non-loopback binds, document/implement safe defaults (rate limits/concurrency caps) while preserving local-first usage.

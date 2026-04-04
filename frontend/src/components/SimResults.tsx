@@ -12,11 +12,23 @@ import {
 const PER_PAGE_OPTIONS = [50, 100, 200, 500] as const;
 const DEFAULT_PER_PAGE = 50;
 
+const TABLE_CELL_PAD = "0.45rem 0.5rem";
+const TABLE_NUM_PAD = "0.45rem 0.4rem";
+const CREW_CELL_MAX_CH = 42;
+
 /** Normalize captain/bridge/below_decks for display: API may return string[]; join with ", ". */
 function formatCrewCell(value: string | string[] | null | undefined): string {
   if (value == null) return "";
   if (Array.isArray(value)) return value.filter(Boolean).join(", ");
   return String(value);
+}
+
+function truncateMiddle(s: string, max: number): string {
+  const t = s.trim();
+  if (t.length <= max) return t;
+  const left = Math.max(1, Math.floor((max - 1) * 0.6));
+  const right = Math.max(1, max - 1 - left);
+  return `${t.slice(0, left)}…${t.slice(t.length - right)}`;
 }
 
 /** Percent point estimate with 95% CI in parentheses (Wilson/normal per server notes). */
@@ -150,6 +162,7 @@ export default function SimResults({
   const [compareDistErr, setCompareDistErr] = useState<string | null>(null);
   const hasSim = simResult != null;
   const hasRecs = recommendations.length > 0;
+  const totalSelected = selected.size;
 
   const total = recommendations.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
@@ -452,6 +465,9 @@ export default function SimResults({
             <span style={{ color: "var(--text-muted)" }}>
               Showing {start + 1}–{Math.min(start + perPage, total)} of {total}
             </span>
+            <span style={{ color: "var(--text-muted)" }}>
+              Selected {totalSelected}/5
+            </span>
             {totalPages > 1 && (
               <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <button
@@ -500,140 +516,261 @@ export default function SimResults({
               </span>
             )}
           </div>
-          <table
+          <div
             style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "0.9rem",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              overflow: "auto",
+              maxHeight: "62vh",
+              background: "var(--surface)",
             }}
           >
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                <th
-                  style={{ textAlign: "left", padding: "0.4rem", width: 32 }}
-                />
-                <th style={{ textAlign: "left", padding: "0.4rem" }}>#</th>
-                <th style={{ textAlign: "left", padding: "0.4rem" }}>
-                  Captain
-                </th>
-                <th style={{ textAlign: "left", padding: "0.4rem" }}>Bridge</th>
-                <th style={{ textAlign: "left", padding: "0.4rem" }}>
-                  Below Deck
-                </th>
-                <th style={{ textAlign: "right", padding: "0.4rem" }}>Win %</th>
-                <th style={{ textAlign: "right", padding: "0.4rem" }}>
-                  Stall %
-                </th>
-                <th style={{ textAlign: "right", padding: "0.4rem" }}>
-                  Loss %
-                </th>
-                <th style={{ textAlign: "right", padding: "0.4rem" }}>R1 %</th>
-                <th style={{ textAlign: "right", padding: "0.4rem" }}>
-                  Hull %
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageRecs.map((r, i) => {
-                const globalIndex = start + i;
-                return (
-                  <tr
-                    key={globalIndex}
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "separate",
+                borderSpacing: 0,
+                fontSize: "0.9rem",
+              }}
+            >
+              <thead>
+                <tr>
+                  <th
                     style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
+                      background: "var(--surface)",
                       borderBottom: "1px solid var(--border)",
-                      background: selected.has(globalIndex)
-                        ? "rgba(232,149,46,0.1)"
-                        : undefined,
+                      textAlign: "left",
+                      padding: TABLE_NUM_PAD,
+                      width: 34,
+                    }}
+                  />
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
+                      background: "var(--surface)",
+                      borderBottom: "1px solid var(--border)",
+                      textAlign: "left",
+                      padding: TABLE_NUM_PAD,
+                      width: 56,
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
                     }}
                   >
-                    <td style={{ padding: "0.4rem" }}>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(globalIndex)}
-                        onChange={() => toggleSelect(globalIndex)}
-                        aria-label={`Select row ${globalIndex + 1}`}
-                      />
-                    </td>
-                    <td style={{ padding: "0.4rem" }}>{globalIndex + 1}</td>
-                    <td style={{ padding: "0.4rem" }}>
-                      {formatCrewCell(r.captain)}
-                    </td>
-                    <td style={{ padding: "0.4rem" }}>
-                      {formatCrewCell(r.bridge)}
-                    </td>
-                    <td style={{ padding: "0.4rem" }}>
-                      {formatCrewCell(r.below_decks)}
-                    </td>
-                    <td
+                    #
+                  </th>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
+                      background: "var(--surface)",
+                      borderBottom: "1px solid var(--border)",
+                      textAlign: "left",
+                      padding: TABLE_CELL_PAD,
+                    }}
+                  >
+                    Captain
+                  </th>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
+                      background: "var(--surface)",
+                      borderBottom: "1px solid var(--border)",
+                      textAlign: "left",
+                      padding: TABLE_CELL_PAD,
+                    }}
+                  >
+                    Bridge
+                  </th>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
+                      background: "var(--surface)",
+                      borderBottom: "1px solid var(--border)",
+                      textAlign: "left",
+                      padding: TABLE_CELL_PAD,
+                    }}
+                  >
+                    Below Deck
+                  </th>
+                  {["Win %", "Stall %", "Loss %", "R1 %", "Hull %"].map((h) => (
+                    <th
+                      key={h}
                       style={{
-                        padding: "0.4rem",
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 2,
+                        background: "var(--surface)",
+                        borderBottom: "1px solid var(--border)",
                         textAlign: "right",
+                        padding: TABLE_NUM_PAD,
                         whiteSpace: "nowrap",
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {formatPctWithCi(
-                        r.win_rate,
-                        r.win_rate_ci_low,
-                        r.win_rate_ci_high,
-                      )}
-                    </td>
-                    <td
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pageRecs.map((r, i) => {
+                  const globalIndex = start + i;
+                  const isSelected = selected.has(globalIndex);
+                  const crewDisabled = !isSelected && totalSelected >= 5;
+                  const rowBg =
+                    i % 2 === 1 ? "rgba(255,255,255,0.02)" : "transparent";
+                  return (
+                    <tr
+                      key={globalIndex}
+                      title={
+                        crewDisabled
+                          ? "Selection limit reached (max 5). Unselect a row to add another."
+                          : undefined
+                      }
                       style={{
-                        padding: "0.4rem",
-                        textAlign: "right",
-                        whiteSpace: "nowrap",
+                        borderBottom: "1px solid var(--border)",
+                        background: isSelected
+                          ? "rgba(232,149,46,0.12)"
+                          : rowBg,
+                        opacity: crewDisabled ? 0.7 : 1,
+                      }}
+                      onClick={(e) => {
+                        // Let checkbox manage itself; otherwise row click toggles.
+                        if ((e.target as HTMLElement).tagName === "INPUT") {
+                          return;
+                        }
+                        toggleSelect(globalIndex);
                       }}
                     >
-                      {formatPctWithCi(
-                        r.stall_rate,
-                        r.stall_rate_ci_low,
-                        r.stall_rate_ci_high,
-                      )}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.4rem",
-                        textAlign: "right",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {formatPctWithCi(
-                        r.loss_rate,
-                        r.loss_rate_ci_low,
-                        r.loss_rate_ci_high,
-                      )}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.4rem",
-                        textAlign: "right",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {formatPctWithCi(
-                        r.r1_kill_rate,
-                        r.r1_kill_rate_ci_low,
-                        r.r1_kill_rate_ci_high,
-                      )}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.4rem",
-                        textAlign: "right",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {formatPctWithCi(
-                        r.avg_hull_remaining,
-                        r.avg_hull_remaining_ci_low,
-                        r.avg_hull_remaining_ci_high,
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td style={{ padding: TABLE_NUM_PAD }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          disabled={crewDisabled}
+                          onChange={() => toggleSelect(globalIndex)}
+                          aria-label={`Select row ${globalIndex + 1}`}
+                        />
+                      </td>
+                      <td
+                        style={{
+                          padding: TABLE_NUM_PAD,
+                          color: "var(--text-muted)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {globalIndex + 1}
+                      </td>
+                      {(
+                        [
+                          { label: "Captain", value: r.captain },
+                          { label: "Bridge", value: r.bridge },
+                          { label: "Below Deck", value: r.below_decks },
+                        ] as const
+                      ).map((c) => {
+                        const full = formatCrewCell(c.value);
+                        const shown = truncateMiddle(full, CREW_CELL_MAX_CH);
+                        return (
+                          <td
+                            key={c.label}
+                            style={{
+                              padding: TABLE_CELL_PAD,
+                              whiteSpace: "nowrap",
+                              maxWidth: 360,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                            title={full}
+                          >
+                            {shown}
+                          </td>
+                        );
+                      })}
+                      <td
+                        style={{
+                          padding: TABLE_NUM_PAD,
+                          textAlign: "right",
+                          whiteSpace: "nowrap",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {formatPctWithCi(
+                          r.win_rate,
+                          r.win_rate_ci_low,
+                          r.win_rate_ci_high,
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          padding: TABLE_NUM_PAD,
+                          textAlign: "right",
+                          whiteSpace: "nowrap",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {formatPctWithCi(
+                          r.stall_rate,
+                          r.stall_rate_ci_low,
+                          r.stall_rate_ci_high,
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          padding: TABLE_NUM_PAD,
+                          textAlign: "right",
+                          whiteSpace: "nowrap",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {formatPctWithCi(
+                          r.loss_rate,
+                          r.loss_rate_ci_low,
+                          r.loss_rate_ci_high,
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          padding: TABLE_NUM_PAD,
+                          textAlign: "right",
+                          whiteSpace: "nowrap",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {formatPctWithCi(
+                          r.r1_kill_rate,
+                          r.r1_kill_rate_ci_low,
+                          r.r1_kill_rate_ci_high,
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          padding: TABLE_NUM_PAD,
+                          textAlign: "right",
+                          whiteSpace: "nowrap",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {formatPctWithCi(
+                          r.avg_hull_remaining,
+                          r.avg_hull_remaining_ci_low,
+                          r.avg_hull_remaining_ci_high,
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {showCompare && (
             <div
