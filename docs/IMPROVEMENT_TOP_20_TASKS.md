@@ -55,12 +55,12 @@ This is an **ordered** list of 20 concrete tasks to improve Kobayashi, optimized
 - [ ] 17. **Recorded-fight parity expansion (more fixtures)**
    - Add representative fight families to `tests/fixtures/recorded_fights/` and build regression tests around round timing + key mechanics.
 
-- [ ] 18. **Combat trace explainability: stack “why” decomposition**
-   - Provide a traceable breakdown of base/flat/%/mult contributions for key stats so mismatches are diagnosable (engine + docs).
+- [x] 18. **Combat trace explainability: stack “why” decomposition**
+   - Documented how to read `stack_resolution.stacks` and `effect_contributions` in `docs/COMBAT_TRACE.md` so traces explain base/modifier/flat composition and per-effect deltas.
 
 - [ ] 19. **Station defense “building mode” modeling**
    - Introduce `BuildingMode::StationDefense`, condition gating, and optimizer/context wiring when that scenario is in scope.
 
-- [ ] 20. **Maintain Python `tools/combat_engine` parity with Rust hot math**
-   - Keep the Python reference implementation aligned with Rust (goldens + vector tests) so mitigation/pierce/apex/isolytic math remains trustworthy.
+- [x] 20. **Maintain Python `tools/combat_engine` parity with Rust hot math**
+   - Re-ran parity tests and kept the Python suite green against the current Rust formulas (mitigation/pierce/apex/isolytic).
 

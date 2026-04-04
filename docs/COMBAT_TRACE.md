@@ -50,6 +50,17 @@ After pre-attack damage is folded into the stacking model and attack-phase damag
 - **`pre_attack_multiplier`**, **`attack_phase_damage_multiplier`**, **`round_end_damage_multiplier`** — channel-level multipliers (`1 +` sum of `AttackMultiplier`-style contributions for that channel where applicable).  
 - **`stacks`** — object keyed by stack name (e.g. `pre_attack_damage`, `defense_mitigation_bonus`). Each entry has **`base`**, **`modifier_sum`**, **`flat`**, and **`composed`** (`base * (1 + modifier_sum) + flat` per [`CategoryTotals`](../src/combat/stacking.rs)). Only stacks with any non-zero component are listed.  
 - **`pre_attack_damage_composed`** / **`damage_after_attack_phase_compose`** — numeric results after the pre-attack and attack-phase channels respectively (before isolytic / apex on hull).
+- **`effect_contributions`** — optional array of per-effect “why” lines (only present when trace mode is enabled). Each line captures one contribution in a stable machine-readable form:
+  - **`source`**: `{ "ability": "<name>", "officer_id": "<id or null>" }` (ship abilities use `ability` names like `ship_ability:<id>`).
+  - **`target`**: a string key identifying the accumulator field being changed (e.g. `stack:pre_attack_damage:flat`, `attack_phase_damage_modifier_sum`, `pre_attack_pierce_bonus`).
+  - **`delta`**: the applied numeric change (already scaled/normalized to engine units).
+  - **`timing`**: the [`TimingWindow`](../src/combat/abilities.rs) that applied the effect.
+
+**Reading “why did my attack multiplier end up at X?”**
+
+1. Find the `stack_resolution` event for the round/weapon.
+2. Look at `stacks.<key>` for the math decomposition (`base`, `modifier_sum`, `flat`, `composed`).
+3. Use `effect_contributions` to see which abilities moved which `target` fields, then reconcile those deltas with the final `stacks` totals.
 
 **When you need a table, not a single fight:** use the CLI `kobayashi mitigation-sensitivity <ship_id> <hostile_id> [--delta-pct <f64>]` (from the project root, with data loaded — ids are the same as in `data/ships_extended` / `data/hostiles`, e.g. `uss_enterprise` and `2918121098` (data.stfc.space numeric hostile id)), or the library helpers in [`src/combat/mitigation_sensitivity.rs`](../src/combat/mitigation_sensitivity.rs) to sweep baseline stats with small deltas.
 

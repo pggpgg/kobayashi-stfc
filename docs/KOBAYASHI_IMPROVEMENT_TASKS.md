@@ -101,9 +101,6 @@ Work in **phases** so foundations and correctness land before large feature work
 - [ ] **18. Station defense building mode**  
   [ROADMAP.md](ROADMAP.md) backlog: `BuildingMode::StationDefense`, conditions on `BonusEntry`, and optimizer context when starbase defense is in scope.
 
-- [ ] **19. i18n scaffolding**  
-  If non-English UI is planned, introduce message catalogs or a lightweight extraction pipeline early ([ROADMAP.md](ROADMAP.md)); defer full translation.
-
 - [x] **20. Python `tools/combat_engine` parity and docs**  
   **Done:** `pierce_damage_through_bonus` / `PIERCE_CAP` added to [`tools/combat_engine/mitigation.py`](../tools/combat_engine/mitigation.py) (matches [`src/combat/mitigation.rs`](../src/combat/mitigation.rs)). Golden test [`test_mitigation_matches_rust_golden_reference_vectors`](../tools/combat_engine/tests/test_mitigation.py) locks the same stats and floats as [`golden_values_match_python_reference_for_each_ship_type`](../tests/combat_tests.rs); [`test_pierce_damage_through_bonus_matches_rust`](../tools/combat_engine/tests/test_mitigation.py) mirrors the Rust pierce test. [tools/combat_engine/README.md](../tools/combat_engine/README.md) documents parity table + cross-link to root [README.md](../README.md); root README links to the Python package for contributors.
 
