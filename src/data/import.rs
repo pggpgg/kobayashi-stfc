@@ -7,22 +7,19 @@ use std::path::Path;
 use csv::ReaderBuilder;
 use serde::{Deserialize, Serialize};
 
+use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
+
 const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
 const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canonical.json";
-pub const DEFAULT_IMPORT_OUTPUT_PATH: &str = "rosters/roster.imported.json";
 
-/// Historical doc-only path string. **Sync and optimize use** `profiles/{profile_id}/research.imported.json`
-/// via `profile_index::profile_path` and `profile_index::RESEARCH_IMPORTED`.
-/// The checked-in `rosters/research.imported.json` is not updated by the server (intentionally empty).
-/// Imported research stores **all** merged `rid` + `level` pairs; combat uses entries that also appear in
-/// `data/research_catalog.json`.
-pub const DEFAULT_RESEARCH_IMPORT_PATH: &str = "rosters/research.imported.json";
-/// Path for synced buildings state (stfc-mod sync). Load with [load_imported_buildings].
-pub const DEFAULT_BUILDINGS_IMPORT_PATH: &str = "rosters/buildings.imported.json";
-/// Path for synced ships state (stfc-mod sync). Load with [load_imported_ships].
-pub const DEFAULT_SHIPS_IMPORT_PATH: &str = "rosters/ships.imported.json";
-/// Path for synced forbidden/chaos tech state (stfc-mod sync). Load with [load_imported_forbidden_tech].
-pub const DEFAULT_FORBIDDEN_TECH_IMPORT_PATH: &str = "rosters/forbidden_tech.imported.json";
+/// Output path for [import_roster_csv] / [import_spocks_export] when no explicit path is given:
+/// `profiles/<effective_profile_id>/roster.imported.json` (same file mod sync merges into).
+fn default_roster_import_output_path() -> String {
+    let id = resolve_profile_id_for_api(None);
+    profile_path(&id, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .into_owned()
+}
 
 // ----- Synced game state (research, buildings, ships, forbidden tech) from stfc-mod sync -----
 
@@ -574,7 +571,7 @@ fn resolve_and_write_roster_to(
 }
 
 pub fn import_spocks_export(path: &str) -> Result<ImportReport, ImportError> {
-    import_spocks_export_to(path, DEFAULT_IMPORT_OUTPUT_PATH)
+    import_spocks_export_to(path, &default_roster_import_output_path())
 }
 
 /// Like [import_spocks_export] but writes to the given output path.
@@ -608,7 +605,7 @@ pub fn import_spocks_export_to(
 /// Uses the csv crate so names containing a comma can be quoted (e.g. `"Kirk, James",3,45`).
 /// Skips optional header "name,tier,level". Applies failsafe defaults: name only -> max tier+level; name+tier only -> max level for that tier.
 pub fn import_roster_csv(path: &str) -> Result<ImportReport, ImportError> {
-    import_roster_csv_to(path, DEFAULT_IMPORT_OUTPUT_PATH)
+    import_roster_csv_to(path, &default_roster_import_output_path())
 }
 
 /// Like [import_roster_csv] but writes to the given output path.
@@ -829,7 +826,7 @@ struct ImportedBuffsFile {
     buffs: Vec<GlobalBuffEntry>,
 }
 
-/// Loads research entries from a synced/imported JSON file (e.g. [DEFAULT_RESEARCH_IMPORT_PATH]).
+/// Loads research entries from a profile file (typically `profiles/<id>/research.imported.json`).
 /// Returns `None` if the file is missing or invalid.
 pub fn load_imported_research(path: &str) -> Option<Vec<ResearchEntry>> {
     let raw = fs::read_to_string(path).ok()?;
@@ -837,7 +834,7 @@ pub fn load_imported_research(path: &str) -> Option<Vec<ResearchEntry>> {
     Some(payload.research)
 }
 
-/// Loads building entries from a synced/imported JSON file (e.g. [DEFAULT_BUILDINGS_IMPORT_PATH]).
+/// Loads building entries from a profile file (typically `profiles/<id>/buildings.imported.json`).
 /// Returns `None` if the file is missing or invalid.
 pub fn load_imported_buildings(path: &str) -> Option<Vec<BuildingEntry>> {
     let raw = fs::read_to_string(path).ok()?;
@@ -852,7 +849,7 @@ pub fn load_imported_buffs(path: &str) -> Option<Vec<GlobalBuffEntry>> {
     Some(payload.buffs)
 }
 
-/// Loads ship entries from a synced/imported JSON file (e.g. [DEFAULT_SHIPS_IMPORT_PATH]).
+/// Loads ship entries from a profile file (typically `profiles/<id>/ships.imported.json`).
 /// Returns `None` if the file is missing or invalid.
 pub fn load_imported_ships(path: &str) -> Option<Vec<ShipEntry>> {
     let raw = fs::read_to_string(path).ok()?;
@@ -860,7 +857,7 @@ pub fn load_imported_ships(path: &str) -> Option<Vec<ShipEntry>> {
     Some(payload.ships)
 }
 
-/// Loads forbidden/chaos tech entries from a synced/imported JSON file (e.g. [DEFAULT_FORBIDDEN_TECH_IMPORT_PATH]).
+/// Loads forbidden/chaos tech from a profile file (typically `profiles/<id>/forbidden_tech.imported.json`).
 /// Returns `None` if the file is missing or invalid.
 pub fn load_imported_forbidden_tech(path: &str) -> Option<Vec<ForbiddenTechEntry>> {
     let raw = fs::read_to_string(path).ok()?;

@@ -80,7 +80,7 @@ On Windows, use `target\release\kobayashi.exe` instead of `./target/release/koba
 ```bash
 # Import roster from .txt (name,tier,level) or Spocks .json export
 ./target/release/kobayashi import <path> [--profile <id>]
-# Bare filename resolves to rosters/<filename>
+# Bare filename resolves to profiles/<effective_profile>/<filename>
 
 # Validate LCARS officer definitions (emits error/warning/info per mechanic)
 ./target/release/kobayashi validate data/officers
@@ -227,7 +227,7 @@ kobayashi/
 │   ├── hostiles.json        # Hostile stat sheets
 │   ├── synergies.json       # Synergy definitions
 │   └── profiles/            # Player profiles
-├── rosters/                 # Your roster files (.txt or .json); run `kobayashi import <file>`
+├── profiles/                # Per-player sync + imports (see profiles/README.md); roster CSV sources can live next to each profile (e.g. profiles/default/my_roster.txt)
 ├── frontend/                # Web UI (React); build with npm, served from frontend/dist
 └── tests/                   # Combat validation, LCARS parsing, optimizer regression
 ```

@@ -764,7 +764,7 @@ pub fn sync_status_payload(profile_id: Option<&str>) -> (StatusCode, String) {
         "research_catalog_item_count": research_catalog_item_count,
     });
     let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
-        r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string()
+        r#"{"roster_path":"profiles/<profile_id>/roster.imported.json","last_modified_iso":null}"#.to_string()
     });
     (StatusCode::OK, body_str)
 }

@@ -6,9 +6,8 @@ Place CSV files here and run the corresponding importer.
 
 Import which officers you own so the optimizer only suggests crew you have.
 
-- **Folder:** Put roster files in **`rosters/`** (project root) so they’re easy to find.
-- **File:** A `.txt` file (e.g. `rosters/my_roster.txt`).
-- **Command:** `kobayashi import rosters/my_roster.txt` — or use a bare filename and the app will look in `rosters/`: `kobayashi import my_roster.txt`
+- **Folder:** Put roster **sources** next to the profile they belong to, e.g. **`profiles/default/my_roster.txt`** (or any profile id). A sample CSV lives in **`profiles/demo/my_roster.txt`**.
+- **Command:** `kobayashi import profiles/default/my_roster.txt` — or, with the same profile selected as for `--profile`, a **bare filename** resolves under that profile directory: `kobayashi import my_roster.txt` → `profiles/<effective_profile>/my_roster.txt`.
 - **Format:** One line per officer, comma-separated: `name,tier,level`. Optional first line header `name,tier,level` is ignored.
   - **Name** is required. Apostrophes in names (e.g. D'Vana) are fine. If a name contains a comma, put it in double quotes (e.g. `"Kirk, James",3,45`).
   - **Tier** and **level** are optional. You can write tier as `T3`, `Tier 2`, or `2`; level as `lvl 20`, `LVL20`, or `20`.
@@ -23,7 +22,9 @@ Import which officers you own so the optimizer only suggests crew you have.
   "Kirk, James",1,30
   ```
 
-- The app writes `rosters/roster.imported.json`; you do not need to edit that file. For Spocks.club JSON export, use a `.json` file: `kobayashi import export.json`.
+- The app writes **`profiles/<profile>/roster.imported.json`** (the same file the Community Mod merges into). For Spocks.club JSON export, use a `.json` file: `kobayashi import export.json`.
+
+**Legacy:** If you still have `rosters/*.imported.json` from an old install, first startup without `profiles/index.json` may copy them into `profiles/default/` once. Prefer profile-scoped paths for everything new.
 
 ## Forbidden / Chaos tech
 

@@ -10,8 +10,9 @@ use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::profile::{apply_profile_to_attacker, load_profile};
 use crate::data::profile_index::{
-    migrate_from_legacy_if_needed, prune_ephemeral_scenario_test_profiles, profile_path,
-    resolve_profile_id_for_api, sync_profile_index_with_disk, PROFILE_JSON, ROSTER_IMPORTED,
+    migrate_from_legacy_if_needed, prune_ephemeral_scenario_test_profiles, profile_data_dir,
+    profile_path, resolve_profile_id_for_api, sync_profile_index_with_disk, PROFILE_JSON,
+    ROSTER_IMPORTED,
 };
 use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
@@ -260,16 +261,19 @@ fn handle_import(args: &[String]) -> i32 {
         None => {
             eprintln!("usage: kobayashi import <path> [--profile <id>]");
             eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
+            eprintln!("  bare filename resolves under profiles/<profile>/ (default profile if --profile omitted)");
             return 2;
         }
     };
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let path = if raw.contains('/') || raw.contains('\\') {
         raw
     } else {
-        format!("rosters/{raw}")
+        profile_data_dir(&profile_id)
+            .join(&raw)
+            .to_string_lossy()
+            .into_owned()
     };
-
-    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let output_path = profile_path(&profile_id, ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
