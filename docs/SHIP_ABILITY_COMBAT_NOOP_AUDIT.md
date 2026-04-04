@@ -2,7 +2,7 @@
 
 This document satisfies [KOBAYASHI_IMPROVEMENT_TASKS.md](KOBAYASHI_IMPROVEMENT_TASKS.md) task **9** and expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
 
-**Catalog revision (2026-03-30):** There are **137** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **73** map to `effect_type: combat_noop` (inventory-only in combat). **64** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
+**Catalog revision (2026-04-04):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **73** map to `effect_type: combat_noop` (inventory-only in combat). **67** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row or ship `loca_id` from `ships/*.json`).
 
@@ -10,9 +10,9 @@ Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_des
 
 ## 1. Inventory
 
-All `combat_noop` ability ids (sorted):
+All `combat_noop` ability ids (sorted; regen-safe):
 
-`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `546190599`, `593579233`, `673187302`, `701705952`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1379978713`, `1428543762`, `1439253182`, `1463338054`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2016654425`, `2057434885`, `2195955652`, `2254702328`, `2302150828`, `2441576367`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3432906971`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
+`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `509252162`, `546190599`, `673187302`, `701705952`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1379978713`, `1428543762`, `1439253182`, `1463338054`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2195955652`, `2254702328`, `2302150828`, `2425475474`, `2441576367`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3432906971`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
 
 Two ids (`953555085`, `4214885989`) share a `loca_id` with no `ship_ability_desc` text (empty string).
 

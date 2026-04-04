@@ -1,8 +1,5 @@
 import type { CSSProperties } from "react";
-import {
-  SUPPORT_BUFF_OPTIONS,
-  type SupportBuffId,
-} from "../lib/supportBuffs";
+import { SUPPORT_BUFF_OPTIONS, type SupportBuffId } from "../lib/supportBuffs";
 
 const summaryStyle: CSSProperties = {
   padding: "0.4rem 0.6rem",
@@ -64,12 +61,12 @@ export default function SupportBuffSelect({
       : `Support buffs (${selected.length})`;
 
   return (
-    <details
-      style={{ position: "relative" }}
-      className="support-buff-select"
-    >
+    <details style={{ position: "relative" }} className="support-buff-select">
       <summary style={summaryStyle}>{label}</summary>
-      <div style={panelStyle} role="group" aria-label="Support buffs">
+      <fieldset style={panelStyle}>
+        <legend style={{ position: "absolute", left: -10_000, top: "auto" }}>
+          Support buffs
+        </legend>
         {SUPPORT_BUFF_OPTIONS.map((opt) => (
           <label
             key={opt.id}
@@ -84,7 +81,7 @@ export default function SupportBuffSelect({
             <span>{opt.label}</span>
           </label>
         ))}
-      </div>
+      </fieldset>
     </details>
   );
 }

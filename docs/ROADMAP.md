@@ -10,7 +10,7 @@ After research sync/catalog merge work, a **major combat-engine focus** was **sh
 
 ## Ship Abilities
 
-Hull abilities from the data.stfc.space ship `ability` array are **modeled in combat** as timed effects alongside officers. They are distinct from officer LCARS abilities but use the same [`TimingWindow`](../src/combat/abilities.rs) ordering in the engine.
+Hull abilities from the data.stfc.space ship `ability` array are **modeled in combat** as timed effects alongside officers. They are distinct from officer LCARS abilities but use the same `[TimingWindow](../src/combat/abilities.rs)` ordering in the engine.
 
 ### Implemented
 
@@ -18,7 +18,7 @@ Hull abilities from the data.stfc.space ship `ability` array are **modeled in co
 - **Normalizer / ship record:** `cargo run --bin normalize_data_stfc_space` applies the catalog and writes `abilities` on [ships_extended](../data/ships_extended/) JSON; [ShipRecord](../src/data/ship.rs) carries them at runtime.
 - **Scenario:** [scenario.rs](../src/optimizer/monte_carlo/scenario.rs) `extend_crew_with_ship_abilities` merges hull rows into the attacker crew as `CrewSeat::Ship` after officers. Resolver: [ship_ability_resolve.rs](../src/data/ship_ability_resolve.rs) → `Ability` / `AbilityEffect` (e.g. pierce, attack multiplier, accumulating damage, hostile crit reduction, shield/hull regen, shots, isolytic, apex shred/barrier).
 - **Combat loop:** Engine and [effect_accumulator.rs](../src/combat/effect_accumulator.rs) evaluate ship abilities in the same windows as officer abilities (combat begin, round start, attack/defense phases, receive_damage, shield break, etc.).
-- **Defender shield break:** When the **defender’s** shields are depleted, defender-side `ShieldBreak` effects run (hostile hull abilities in `defender_crew`): immediate `ShieldRegen` / `HullRegen` on the defender where applicable, other effects feeding that sub-round’s counter-attack. Return fire’s damage-through includes `pre_attack_pierce_bonus` so pierce from shield-break (and stacked pierce) affects counter damage. Test: [`defender_crew_shield_break_effects_apply_to_counter_fire`](../tests/combat_tests.rs).
+- **Defender shield break:** When the **defender’s** shields are depleted, defender-side `ShieldBreak` effects run (hostile hull abilities in `defender_crew`): immediate `ShieldRegen` / `HullRegen` on the defender where applicable, other effects feeding that sub-round’s counter-attack. Return fire’s damage-through includes `pre_attack_pierce_bonus` so pierce from shield-break (and stacked pierce) affects counter damage. Test: `[defender_crew_shield_break_effects_apply_to_counter_fire](../tests/combat_tests.rs)`.
 - **Docs / approximations:** [DESIGN.md](DESIGN.md) §3.6 (ship hull abilities — catalog approximations and known proxies).
 
 ### Catalog coverage & `combat_noop` (maintain over time)
@@ -29,18 +29,20 @@ Many ability ids still map to `effect_type: combat_noop` (economy, mining, armad
 2. **Bucket / decide** — Update the audit doc if new patterns appear (economy, scope, opponent class, proc chains, etc.).
 3. **Drift** — Regenerate with `python3 scripts/generate_full_ship_ability_catalog.py`; merge durable hand edits via [ship_ability_catalog_overrides.json](../data/upstream/data-stfc-space/ship_ability_catalog_overrides.json) or extend the classifier.
 
+**Status:** Audit is kept current (latest counts + regen-safe noop id inventory) in `docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md`.
+
 ### Optional / backlog
 
-- **Hostile `ability` vs player** — Upstream hostile `ability` arrays are preserved on [`HostileRecord`](../src/data/hostile.rs) and drive **defender** crew (`defender_crew` / hostile ability catalog) for return fire and shield-break; they are not merged into the player’s own crew resolution.
+- **Hostile `ability` vs player** — Upstream hostile `ability` arrays are preserved on `[HostileRecord](../src/data/hostile.rs)` and drive **defender** crew (`defender_crew` / hostile ability catalog) for return fire and shield-break; they are not merged into the player’s own crew resolution.
 - **Conditional copy** — In-game text such as “when fighting Hostiles” is often applied **unconditionally** in the sim once the ship is loaded; faction gating uses `condition_opponent_faction` where mapped.
-- **Accuracy** — Hull `accuracy` at **combat_begin** is folded via [`sum_combat_begin_accuracy_from_ship_abilities`](../src/data/ship_ability_resolve.rs); other timings or wording gaps remain per [DESIGN.md](DESIGN.md) §3.6.
+- **Accuracy** — Hull `accuracy` at **combat_begin** is folded via `[sum_combat_begin_accuracy_from_ship_abilities](../src/data/ship_ability_resolve.rs)`; other timings or wording gaps remain per [DESIGN.md](DESIGN.md) §3.6.
 - **Further catalog work** — More class-gated lines (e.g. “first N rounds only”), additional faction tags, and hostile debuff modeling; see the noop audit buckets.
 
 ---
 
 ## Combat buffs support
 
-- **Data:** [`data/support_buffs.json`](../data/support_buffs.json) defines selectable ids (aligned with the workspace UI). Each entry may include `research_levels` (`rid` + `level`) merged in-memory via the same path as synced research, and optional `static_bonuses` (engine keys consumed by `apply_static_buffs_to_combatant` / mitigation). `exclusive_group` + `priority` resolve overlapping picks (e.g. Titan-A fort vs max).
+- **Data:** `[data/support_buffs.json](../data/support_buffs.json)` defines selectable ids (aligned with the workspace UI). Each entry may include `research_levels` (`rid` + `level`) merged in-memory via the same path as synced research, and optional `static_bonuses` (engine keys consumed by `apply_static_buffs_to_combatant` / mitigation). `exclusive_group` + `priority` resolve overlapping picks (e.g. Titan-A fort vs max).
 - **API:** Optional `support_buffs: string[]` on simulate, optimize, compare crews, and replay-seed; capped length with unknown-id warnings in JSON responses.
 - **Titan-A fort / max (alliance buff):** Static slice from in-game text: Fort → `crit_damage` 1.25 (+25% critical hit damage). Max → same plus `weapon_damage` 3.5 (+250% base weapon damage as 100% + 250% = 3.5× attack). Text also references bonuses scaling with the **recipient’s** Titan-A research; that portion is expected from the synced profile merge, not duplicated in `research_levels` here unless we later add explicit synthetic RIDs.
 - **Cerritos / Defiant:** Tune `static_bonuses` / optional `research_levels` when authoritative values are available.
@@ -51,8 +53,7 @@ Many ability ids still map to `effect_type: combat_noop` (economy, mining, armad
 ## Sync (STFC Community Mod)
 
 - **Persisted today:** officer, research, buildings, ships, and **forbidden tech (`type: "ft"`)** — see [SYNC.md](SYNC.md). Research is written to `profiles/{id}/research.imported.json` and merged into the player profile when a research catalog is present. FT is written to `profiles/{id}/forbidden_tech.imported.json` and merged into the player profile (bonuses from `data/forbidden_chaos_tech.json`).
-
-- **Optional next sync work** — the mod also sends payload types that are accepted (200) but not stored. **Note:** stfc-mod’s JSON `type: "tech"` is **forbidden/chaos tech** (same as `ft`); Kobayashi persists it to `forbidden_tech.imported.json`. Remaining candidates for future persistence: traits, slots, buffs, resources, missions, battlelogs, inventory, jobs, and any **additional** raw tech-tree payloads if the mod exposes shapes beyond research project levels (already covered by `research` sync).
+- **Non-priority / deferred:** the mod also sends payload types that are accepted (200) but not stored. This is intentionally **not** a combat-accuracy priority right now, so it is tracked only as a “maybe later” note: traits, slots, resources, missions, battlelogs, inventory, jobs, and any additional raw tech-tree payloads if the mod exposes shapes beyond research project levels (already covered by `research` sync). **Note:** stfc-mod’s JSON `type: "tech"` is forbidden/chaos tech (same as `ft`) and is already persisted to `forbidden_tech.imported.json`.
 
 See [SYNC.md](SYNC.md) for the current sync protocol and payload reference.
 
@@ -70,20 +71,20 @@ Buildings are **fully modeled for ship combat** per the “buildings full modeli
 - **Sync:** Buildings payloads are written to `profiles/{id}/buildings.imported.json`; default profile path is used consistently. See [SYNC.md](SYNC.md).
 - **Ops & context:** Ops level is inferred from Operations Center (bid 0 → `ops_center`); `PlayerProfile.ops_level` override is supported. Scenario uses `BuildingBonusContext { ops_level, mode: ShipCombat }`.
 - **Profile/combat:** Building bonuses (normalized stats) are merged in `merge_building_bonuses_into_profile` and applied in combat via profile.
-- **Tooling:** `cargo run --bin building_combat_bonuses [--profile <id>]` prints combat bonuses (all at max, or profile’s synced levels with ops_level). Validation warns on unmapped `buff_*` stats.
+- **Tooling:** `cargo run --bin building_combat_bonuses [--profile <id>]` prints combat bonuses (all at max, or profile’s synced levels with ops_level). Validation warns on unmapped `buff_`* stats.
 
 ### Optional / backlog (roadmap items)
 
 - **Building id ↔ bid in index** — Add bid (or a small mapping file) to the building index for clarity and fallback resolution.
 - **Conditions for station defense** — When station/starbase defense is in scope: populate `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) from import or mapping; support `BuildingMode::StationDefense` in the optimizer.
-- **Strict validation report** — Report that lists all `buff_*` and unmapped conditions (e.g. strict mode or separate script).
+- **Strict validation report** — Report that lists all `buff_`* and unmapped conditions (e.g. strict mode or separate script).
 - **Building summary API/UI** — Implemented: `GET /api/profile/buildings-summary` and Roster & Profile → Profile → “Buildings (sync → combat)”. Optional follow-up: editable building levels in the UI (today: sync or manual JSON / tooling such as `building_combat_bonuses`).
 
 ---
 
-## Forbidden tech (partial)
+## Forbidden tech (implemented; ongoing maintenance)
 
-Forbidden tech is **partially implemented**. The following is in place; remaining gaps and uncertainty are documented so we don’t lose track of what’s missing.
+Forbidden tech is implemented for ship combat; remaining items are maintenance/accuracy work (catalog upkeep, optional tier/level scaling).
 
 ### Implemented
 
@@ -95,18 +96,24 @@ Forbidden tech is **partially implemented**. The following is in place; remainin
 - **API:** `GET /api/forbidden-tech` returns the catalog for the UI.
 - **UI:** Roster & Profile → Profile tab → “Forbidden tech” dropdown (Use synced | None | Custom) and, for Custom, multi-select of catalog items that have a `fid`.
 
-### Partially implemented / gaps
+### Maintenance / gaps
 
-- **Catalog `fid`:** CI requires every committed catalog item to have a unique `fid` (`forbidden_chaos::sync_readiness_tests`). Rows without a `fid` never apply for synced players. Maintenance: upstream `summary-forbidden_tech.json` + `translations-forbidden_tech.json`, manual CSV `fid`, or `scripts/build_chaos_tech_csv_rows.mjs` (chaos rows from live `data.stfc.space/forbidden_tech/{id}.json`). See [data/README.md](../data/README.md) § Forbidden tech.
+- **Catalog `fid` (maintenance):** CI requires every committed catalog item to have a unique `fid` (`forbidden_chaos::sync_readiness_tests`) so stfc-mod sync can match bonuses by `fid`. Rows without a `fid` never apply for synced players. Workflow: upstream `summary-forbidden_tech.json` + `translations-forbidden_tech.json`, manual CSV `fid`, or `scripts/build_chaos_tech_csv_rows.mjs` (chaos rows from live `data.stfc.space/forbidden_tech/{id}.json`). See [data/README.md](../data/README.md) § Forbidden tech.
 - **Level/tier:** `ForbiddenTechEntry` includes `level` and `tier`. The merge can optionally scale catalog bonuses by `tier`/`level` when `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` is set (linear scaling within a tier; conservative behavior when catalog tier disagrees with synced tier). `build_shared_scenario_data_standalone` and the registry path both use the same merge helper and env flag. The exact in-game scaling is still uncertain, so scaling remains opt-in until confirmed.
 - **Combat timing:** DESIGN documents the intentional approximation: forbidden/chaos bonuses are applied at **profile merge**, not as a separate per-sub-round phase. A per-sub-round FT phase would require new evidence and engine work. See [DESIGN.md](DESIGN.md) §3.6 Notes.
 - **Chaos data fidelity:** Bulk chaos rows are generated with heuristics (PvP-only / armada / proc lines approximated or skipped). Review `data/import/forbidden_chaos_tech.csv` when balancing matters; re-run `node scripts/build_chaos_tech_csv_rows.mjs` after adjusting the script.
 
 ---
 
-## Research (partial)
+## Research (implemented; ongoing maintenance)
 
-Research **sync and catalog merge** are implemented for ship-combat stats. Gaps are mainly **stats the engine does not yet fold into the player profile** (e.g. accuracy) and **conditional in-game scopes** that the catalog still treats as unconditional bonuses.
+Research sync + catalog merge are implemented for ship-combat stats; remaining items are catalog-mapping and scope-accuracy maintenance.
+
+### Operational expectations (catalog required in CI)
+
+- `data/research_catalog.json` is **tracked in git** and is expected to be **non-empty** in CI.
+- `tests/scenario_research_integration_tests.rs` fails when `CI=true` if the catalog is missing/empty, with a remediation message.
+- Local runs can still proceed without the catalog (the scenario test skips), unless `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1` is set.
 
 ### Implemented
 
@@ -121,21 +128,17 @@ Research **sync and catalog merge** are implemented for ship-combat stats. Gaps 
 
 ### Partially implemented / gaps (roadmap items)
 
-- **Accuracy** — `accuracy` is merged into `profile.bonuses` and scales ship `AttackerStats.accuracy` when computing hostile mitigation / pierce-through (`scenario.rs`). Catalog values are treated as fractional bonuses (×(1 + sum)), same convention as `weapon_damage`; in-game wording may differ—verify with logs/toolbox if fights look off.
+- **Accuracy** — **Done:** `accuracy` merges into `profile.bonuses` and scales ship `AttackerStats.accuracy` for mitigation/pierce-through; catalog values are treated as fractional bonuses (×(1 + sum)), same convention as `weapon_damage`. Remaining risk: in-game wording/scopes may differ, so validate with additional recorded-fight fixtures if mismatches appear.
 - **Other combat stats** — Any future stat keys must be added to `normalize_profile_combat_stat` and wired in `apply_profile_to_attacker` / `apply_static_buffs_to_combatant` (or the mitigation path) before research mappings affect simulation.
-
 - **Apex (shred / barrier)** — **Done:** `apex_shred` and `apex_barrier` are normalized combat keys; research/building merges feed `profile.bonuses`, and `apply_profile_to_attacker` adds them to the player ship combatant (shred on outbound apex math; barrier on counter-attack defense). Import still depends on `import_stfcspace_research.mjs` mapping upstream buffs to those stat names in `research_catalog.json`.
-
 - **Conditional bonuses** — Armada-, class-, PvP-, or faction-scoped lines may be mapped as **global** ship bonuses when descriptions look generic; tightening requires engine/scenario context or buff-level overrides in `data/research/buff_id_to_stat.json`.
-
 - **Catalog refresh** — After upstream drops, re-run `fetch_stfcspace_research.mjs` then `import_stfcspace_research.mjs`; use `--dump-unmapped` to extend `data/research/buff_id_to_stat.json` / `loca_id_to_stat.json` for buff ids that still do not resolve.
 
 ---
 
 ## Maverick faction
 
-- **Maverick faction support** — Add support for the Maverick faction (Ops 55+, unlocked via Warp Dive Bar): combat-relevant research, hostiles (e.g. Conqueror Borg Solo Armadas), buildings/sync where applicable. See [Update 88 First Look: The Maverick Faction](https://startrekfleetcommand.com/news/update-88-first-look-the-maverick-faction/).
-
-- **Low priority (backlog)** — Deferred items: **Maverick faction research** (catalog + mappings), **Maverick favors** (faction-store / favor bonuses — not modeled yet), **new Maverick artifacts** (exocomp/artifact bonuses — not modeled yet). Detailed checklist: [MAVERICK.md](MAVERICK.md) § Low priority (backlog).
+- **Maverick faction track (content)** — Track and incrementally add Maverick support as the game’s content stabilizes: combat-relevant research, hostiles, and buildings/sync where applicable; keep in parallel with ship-ability coverage work. Source-of-truth checklist: [MAVERICK.md](MAVERICK.md).
+- **Low priority (backlog)** — Deferred items: Maverick faction research (catalog + mappings), Maverick favors (faction-store / favor bonuses), new Maverick artifacts (exocomp/artifact bonuses). Detailed checklist: [MAVERICK.md](MAVERICK.md) § Low priority (backlog).
 
 **Tracking doc:** [MAVERICK.md](MAVERICK.md) — scope, data pipeline, Warp Dive Bar (`building_88`), uncertainty (no placeholder hostile stats in-repo).

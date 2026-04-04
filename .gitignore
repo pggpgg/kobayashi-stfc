@@ -18,6 +18,9 @@ rosters/roster.imported.json
 # Downloaded spreadsheets (e.g. Syndicate Progression)
 data/import/*.xlsx
 
+# Python cache
+**/__pycache__/
+
 # Local reference spreadsheets in repo root
 Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx
 
@@ -37,3 +40,7 @@ profiles/*
 !profiles/index.json.example
 !profiles/demo/
 !profiles/demo/**
+
+# Playwright artifacts
+playwright-report/
+test-results/

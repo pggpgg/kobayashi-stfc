@@ -802,13 +802,13 @@
     {
       "id": "2016654425",
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value": 0.0,
+      "effect_type": "attack_multiplier",
+      "value": 0.35000000000000003,
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,
       "condition_defender_hull_breach": false,
-      "condition_opponent_faction": null,
+      "condition_opponent_faction": "swarm",
       "condition_opponent_ship_class": null,
       "round_cap": null
     }

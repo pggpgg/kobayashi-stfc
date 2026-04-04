@@ -1131,5 +1131,45 @@
       "health": 0.0
     }
   ],
-  "abilities": null
+  "abilities": [
+    {
+      "id": "509252162",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "round_cap": null
+    },
+    {
+      "id": "1781715001",
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value": 50000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "round_cap": null
+    },
+    {
+      "id": "2425475474",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "round_cap": null
+    }
+  ]
 }

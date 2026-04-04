@@ -910,8 +910,8 @@
     {
       "id": "593579233",
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value": 0.0,
+      "effect_type": "attack_multiplier",
+      "value": 8.6,
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,

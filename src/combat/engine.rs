@@ -128,6 +128,7 @@ pub fn simulate_combat_with_defender_faction(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn simulate_combat_with_defender_faction_and_defender_crew(
     attacker: &Combatant,
     defender: &Combatant,

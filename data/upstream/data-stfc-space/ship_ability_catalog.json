@@ -1,5 +1,5 @@
 {
-  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Optional overrides (merged last): ship_ability_catalog_overrides.json. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach, condition_opponent_faction, condition_opponent_ship_class (battleship|explorer|interceptor), round_cap (effect only in rounds 1..=N; combat_begin accuracy with round_cap is omitted from static mitigation accuracy). combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md.",
+  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Optional overrides (merged last): ship_ability_catalog_overrides.json. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach, condition_opponent_faction, condition_opponent_ship_class, round_cap. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md.",
   "entries": {
     "34867572": {
       "timing": "combat_begin",
@@ -107,6 +107,13 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
     },
+    "509252162": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
     "546190599": {
       "timing": "combat_begin",
       "effect_type": "combat_noop",
@@ -116,10 +123,8 @@
     },
     "593579233": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true
     },
     "644714972": {
       "timing": "combat_begin",
@@ -419,6 +424,12 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
     },
+    "1781715001": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
     "1784814733": {
       "timing": "combat_begin",
       "effect_type": "combat_noop",
@@ -509,10 +520,9 @@
     },
     "2016654425": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "condition_opponent_faction": "swarm"
     },
     "2039765033": {
       "timing": "combat_begin",
@@ -561,6 +571,13 @@
       "condition_opponent_faction": "xindi"
     },
     "2302150828": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
+    },
+    "2425475474": {
       "timing": "combat_begin",
       "effect_type": "combat_noop",
       "value_is_percentage": false,

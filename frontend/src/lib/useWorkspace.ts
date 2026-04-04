@@ -23,6 +23,7 @@ import {
   profileMatchesPersisted,
   readPersistedOptimizeJob,
 } from "./optimizeJobStorage";
+import type { SupportBuffId } from "./supportBuffs";
 import {
   belowDeckSlotCount,
   type CrewState,
@@ -30,7 +31,6 @@ import {
   createEmptyPins,
   type PinsState,
 } from "./types";
-import type { SupportBuffId } from "./supportBuffs";
 import {
   buildWorkspaceOptimizeStartBody,
   buildWorkspaceSimulateParams,
