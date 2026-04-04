@@ -934,8 +934,12 @@ async fn handle_optimize_job_cancel(Path(job_id): Path<String>) -> impl IntoResp
 // Sync handlers
 // ---------------------------------------------------------------------------
 
-async fn handle_sync_status() -> impl IntoResponse {
-    let (status, body) = sync::sync_status_payload();
+async fn handle_sync_status(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    let (status, body) = sync::sync_status_payload(profile_id.as_deref());
     JsonResponse { status, body }.into_response()
 }
 

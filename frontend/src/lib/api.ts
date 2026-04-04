@@ -765,6 +765,31 @@ export interface PlayerProfile {
   chaos_tech_override?: number[] | null;
 }
 
+/** Community mod persist timestamp (RFC3339) from `profiles/{id}/last_mod_sync.json`; null if never synced via mod. */
+export interface ModSyncStatus {
+  profile_id: string;
+  last_mod_sync_utc: string | null;
+}
+
+export async function fetchModSyncStatus(
+  profileId?: string | null,
+): Promise<ModSyncStatus> {
+  const url = profileId
+    ? `${API_BASE}/api/sync/status?profile=${encodeURIComponent(profileId)}`
+    : `${API_BASE}/api/sync/status`;
+  const res = await fetch(url);
+  await checkOk(res);
+  const data = (await res.json()) as Record<string, unknown>;
+  return {
+    profile_id:
+      typeof data.profile_id === "string" ? data.profile_id : "",
+    last_mod_sync_utc:
+      typeof data.last_mod_sync_utc === "string"
+        ? data.last_mod_sync_utc
+        : null,
+  };
+}
+
 export async function fetchProfile(
   profileId?: string | null,
 ): Promise<PlayerProfile> {
