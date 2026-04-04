@@ -138,7 +138,7 @@ Research sync + catalog merge are implemented for ship-combat stats; remaining i
 
 ## Maverick faction
 
-- **Maverick faction support** — Add support for the Maverick faction (Ops 55+, unlocked via Warp Dive Bar): combat-relevant research, hostiles (e.g. Conqueror Borg Solo Armadas), buildings/sync where applicable. See [Update 88 First Look: The Maverick Faction](https://startrekfleetcommand.com/news/update-88-first-look-the-maverick-faction/).
-- **Low priority (backlog)** — Deferred items: **Maverick faction research** (catalog + mappings), **Maverick favors** (faction-store / favor bonuses — not modeled yet), **new Maverick artifacts** (exocomp/artifact bonuses — not modeled yet). Detailed checklist: [MAVERICK.md](MAVERICK.md) § Low priority (backlog).
+- **Maverick faction track (content)** — Track and incrementally add Maverick support as the game’s content stabilizes: combat-relevant research, hostiles, and buildings/sync where applicable; keep in parallel with ship-ability coverage work. Source-of-truth checklist: [MAVERICK.md](MAVERICK.md).
+- **Low priority (backlog)** — Deferred items: Maverick faction research (catalog + mappings), Maverick favors (faction-store / favor bonuses), new Maverick artifacts (exocomp/artifact bonuses). Detailed checklist: [MAVERICK.md](MAVERICK.md) § Low priority (backlog).
 
 **Tracking doc:** [MAVERICK.md](MAVERICK.md) — scope, data pipeline, Warp Dive Bar (`building_88`), uncertainty (no placeholder hostile stats in-repo).
