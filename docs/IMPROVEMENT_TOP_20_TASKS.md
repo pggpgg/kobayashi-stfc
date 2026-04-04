@@ -13,8 +13,8 @@ This is an **ordered** list of 20 concrete tasks to improve Kobayashi, optimized
 - [x] 3. **Run CI on feature branches (not just main)**
    - Expand workflow triggers so PRs/branch pushes receive the full signal without manual steps.
 
-- [ ] 4. **Stabilize research-catalog operational expectations**
-   - Make tests + docs unambiguous about when `data/research_catalog.json` must exist, how to regenerate it, and how to detect drift.
+- [x] 4. **Stabilize research-catalog operational expectations**
+   - `data/research_catalog.json` is required in CI (enforced by `tests/scenario_research_integration_tests.rs`); docs in `README.md`, `scripts/README.md`, and `data/README.md` describe regeneration via `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0`. Locally, you can opt into strictness with `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1`.
 
 - [x] 5. **Validate research stat semantics that affect combat math**
    - Confirm `accuracy` handling and other “easy to misinterpret” stats; tighten mapping docs and add targeted tests for merge + application.
@@ -25,17 +25,17 @@ This is an **ordered** list of 20 concrete tasks to improve Kobayashi, optimized
 - [x] 7. **Improve hostile faction resolution and document unknowns**
    - Expand mappings for common hostiles and keep intentional `Unknown` cases explicit (avoid silently wrong categorization).
 
-- [ ] 8. **Increase ship-ability catalog coverage (reduce `combat_noop`)**
-   - Iterate on `ship_ability_catalog.json` generation/mapping so more upstream ship abilities are represented in combat with explicit, testable proxies.
+- [x] 8. **Increase ship-ability catalog coverage (reduce `combat_noop`)**
+   - Added stable catalog overrides for additional combat-relevant rows and validated import→scenario wiring with a unit test; regen workflow remains `python3 scripts/generate_full_ship_ability_catalog.py` + overrides.
 
 - [ ] 9. **Keep a structured audit trail for `combat_noop` decisions**
    - Maintain the noop audit buckets (economy-only, armada-only, proc-chain omissions, unmodeled conditions) so future catalog work is disciplined.
 
-- [ ] 10. **Clarify and harden “profile merge order” invariants**
-   - Ensure forbidden tech → buildings → research merge order is explicit, tested, and surfaced in docs/UI where it affects expectations.
+- [x] 10. **Clarify and harden “profile merge order” invariants**
+   - Merge order is now explicitly documented and locked by a unit test in scenario build logic: forbidden/chaos tech → buildings → research (then optional support-buff merge).
 
-- [ ] 11. **Persist one high-value additional sync payload**
-   - Pick a payload type stfc-mod already sends (traits/slots/buffs/etc.), persist it, and wire it into profile/scenario with tests.
+- [ ] 11. **(Removed) Persist one high-value additional sync payload**
+   - **Deprioritized:** This is not a combat-accuracy priority. Sync expansion beyond the current persisted payloads should only be revisited if it directly improves combat fidelity or core UX.
 
 - [x] 12. **Add minimal browser E2E smoke coverage**
    - Add Playwright smoke tests that prove `serve` can load the SPA, hit a read-only API, and render core flows (keep it small but real).

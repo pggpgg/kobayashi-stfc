@@ -870,6 +870,10 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .to_string_lossy()
         .to_string();
 
+    // Merge order invariants (profile bonus layer):
+    // 1) forbidden/chaos tech (by fid) — may be scaled by tier/level (opt-in)
+    // 2) buildings (by bid) — contextualized by ops level + mode
+    // 3) research (by rid) — requires research catalog
     let mut profile = load_profile(&profile_path_str);
     let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
     if let Some(catalog) = registry.forbidden_chaos_catalog() {
@@ -1057,13 +1061,16 @@ mod tests {
 
     use crate::combat::abilities::{AbilityClass, CrewSeat};
     use crate::combat::AttackerStats;
+    use crate::combat::OpponentFactionTag;
     use crate::data::data_registry::DataRegistry;
+    use crate::data::forbidden_chaos::{ForbiddenChaosList, ForbiddenChaosRecord};
     use crate::data::hostile::load_hostile_record;
     use crate::data::import::BuildingEntry;
     use crate::data::profile_index::{
         create_profile, delete_profile, load_profile_index, profile_path, PROFILE_JSON,
         RESEARCH_IMPORTED,
     };
+    use crate::data::profile::merge_tech_fids_into_profile_with_level_tier;
     use crate::data::ship::{ShipAbility, ShipRecord};
     use crate::optimizer::crew_generator::CrewCandidate;
     use uuid::Uuid;
@@ -1082,6 +1089,56 @@ mod tests {
         let d = defender_combatant_from_hostile_record("2918121098", &rec, 0.5, ShipType::Explorer);
         assert!(!d.weapons.is_empty());
         assert!(d.pierce > 0.0, "counter pierce-through should be positive");
+    }
+
+    #[test]
+    fn profile_merge_order_is_non_commutative_for_mult_then_add() {
+        // This test locks the reason we care about merge order:
+        // forbidden/chaos tech supports multiplicative bonuses (`operator: mult`) while buildings/research
+        // tend to be additive; therefore the order changes results.
+        let mut profile = PlayerProfile::default();
+        let catalog = ForbiddenChaosList {
+            source: Some("test".into()),
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(1),
+                name: "Test mult".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![crate::data::forbidden_chaos::BonusEntry {
+                    stat: "weapon_damage".into(),
+                    value: 0.10,
+                    operator: "mult".into(),
+                }],
+            }],
+        };
+        let imported = vec![crate::data::import::ForbiddenTechEntry {
+            fid: 1,
+            tier: 1,
+            level: 1,
+            shard_count: 0,
+        }];
+
+        // Intended order: FT mult first, then additive layers.
+        merge_tech_fids_into_profile_with_level_tier(&mut profile, &[1], &imported, &catalog, false);
+        let after_ft = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
+        assert!((after_ft - 0.10).abs() < 1e-9);
+
+        // Simulate building + research additive merges (0.20 + 0.30).
+        *profile.bonuses.entry("weapon_damage".into()).or_insert(0.0) += 0.20;
+        *profile.bonuses.entry("weapon_damage".into()).or_insert(0.0) += 0.30;
+        let intended = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
+        assert!((intended - 0.60).abs() < 1e-9);
+
+        // Wrong order: additive first, then FT mult yields an interaction term (b*v).
+        let mut wrong = PlayerProfile::default();
+        wrong.bonuses.insert("weapon_damage".into(), 0.50);
+        merge_tech_fids_into_profile_with_level_tier(&mut wrong, &[1], &imported, &catalog, false);
+        let wrong_v = wrong.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
+        assert!(
+            (wrong_v - intended).abs() > 1e-6,
+            "expected non-commutative merge; intended={intended}, wrong={wrong_v}"
+        );
     }
 
     #[test]
@@ -1145,6 +1202,50 @@ mod tests {
             (stats.accuracy - 420.0).abs() < 1e-6,
             "expected 400 * (1 + 0.05) research accuracy bonus, got {}",
             stats.accuracy
+        );
+    }
+
+    #[test]
+    fn ship_ability_catalog_overrides_apply_when_normalized_to_ships_extended() {
+        // This asserts end-to-end wiring:
+        // ship_ability_catalog_overrides.json → ship_ability_catalog.json → normalize_data_stfc_space →
+        // ships_extended/<id>.json → scenario extend_crew_with_ship_abilities → ship ability seat with faction gate.
+        //
+        // Franklin-A has upstream ability id `2016654425` which is overridden to:
+        // - combat_begin + attack_multiplier
+        // - condition_opponent_faction: swarm
+        //
+        // Pick a known Swarm hostile from bundled `data/hostiles/`.
+        let swarm_hostile_id = "23104545";
+
+        let registry = DataRegistry::load().expect("DataRegistry::load");
+        let shared = build_shared_scenario_data_from_registry(
+            registry.as_ref(),
+            "uss_franklin_a",
+            swarm_hostile_id,
+            Some(1),
+            Some(1),
+            None,
+            None,
+        );
+
+        let ship = shared.ship_rec.as_ref().expect("ship record");
+        let hostile = shared.hostile_rec.as_ref().expect("hostile record");
+        assert_eq!(hostile.opponent_faction_tag(), OpponentFactionTag::Swarm);
+
+        let mut seats = Vec::new();
+        extend_crew_with_ship_abilities(&mut seats, Some(ship));
+        let has_swarm_gated_attack_mult = seats.iter().any(|s| {
+            s.seat == CrewSeat::Ship
+                && matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_))
+                && matches!(
+                    s.ability.condition,
+                    Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Swarm))
+                )
+        });
+        assert!(
+            has_swarm_gated_attack_mult,
+            "expected Swarm-gated ship ability AttackMultiplier seat from ships_extended catalog import"
         );
     }
 
