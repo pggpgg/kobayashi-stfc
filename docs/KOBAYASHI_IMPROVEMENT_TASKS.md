@@ -33,7 +33,7 @@ Work in **phases** so foundations and correctness land before large feature work
 - [x] **2. Treat Clippy warnings as errors in CI (optional flag)**  
   CI and `npm run verify` run `cargo clippy --all-targets -- -D warnings`. Remaining policy exceptions use targeted `#[allow(clippy::…)]` on specific APIs (e.g. many-arg registry entrypoints, complex tuple return types).
 
-- [ ] **3. Run CI on development branches**  
+- [x] **3. Run CI on development branches**  
   Workflow triggers are limited to `main`/`master`. If the team uses long-lived branches (e.g. `cursor/stage-batch`), add `workflow_dispatch` and/or branch patterns so PRs and pushes to those branches get the same checks without manual `verify` runs.
 
 ---
@@ -76,14 +76,14 @@ Work in **phases** so foundations and correctness land before large feature work
 
 ### Phase 5 — UX, API, security
 
-- [ ] **12. Browser E2E smoke (Playwright)**  
-  Root `package.json` includes Playwright; CI does not run end-to-end tests. Add a small suite (health, load Workspace, one read-only API) and an optional CI job so regressions in `serve` + static assets are caught.
+- [x] **12. Browser E2E smoke (Playwright)**  
+  Implemented: Playwright smoke test + CI job that boots `kobayashi serve`, loads the SPA, and checks `/api/health` (see `playwright.config.ts`, `e2e/smoke.spec.ts`, and `.github/workflows/ci.yml`).
 
 - [ ] **13. OpenAPI contract coverage expansion**  
   Heavy payloads are documented in `docs/openapi/kobayashi-heavy-payloads.yaml` with tests in `tests/openapi_contract_test.rs`. Extend coverage for new or high-traffic routes as they evolve; keep `/api/openapi.yaml` the single contract source of truth.
 
-- [ ] **14. Accessibility pass on core UI**  
-  Modal focus trapping exists (`useModalFocusTrap`). Audit Workspace, Results Library, and Roster flows for keyboard order, labels, and focus return; fix high-impact issues without a full i18n effort.
+- [x] **14. Accessibility pass on core UI (table usability slice)**  
+  **Table usability done:** Optimize results table improvements (sticky header, tooltips for truncated cells, row click selection, selection limit messaging). Remaining a11y work (keyboard order, labels, focus return) still pending.
 
 - [ ] **15. Optional LAN/internet hardening**  
   [DEPLOYMENT_SECURITY.md](DEPLOYMENT_SECURITY.md) describes API keys and trust boundaries. For non-loopback binds, consider configurable rate limits or stricter concurrency defaults on CPU-heavy routes beyond the existing semaphore—document tradeoffs vs. local-first use.
@@ -100,6 +100,9 @@ Work in **phases** so foundations and correctness land before large feature work
 
 - [ ] **18. Station defense building mode**  
   [ROADMAP.md](ROADMAP.md) backlog: `BuildingMode::StationDefense`, conditions on `BonusEntry`, and optimizer context when starbase defense is in scope.
+
+- [x] **19. Combat trace explainability: stack “why” decomposition**  
+  Implemented via documentation: `docs/COMBAT_TRACE.md` now explains how to read `stack_resolution.stacks` (base/modifier_sum/flat/composed) and `effect_contributions` (per-effect deltas) to diagnose “why” a value is what it is.
 
 - [x] **20. Python `tools/combat_engine` parity and docs**  
   **Done:** `pierce_damage_through_bonus` / `PIERCE_CAP` added to [`tools/combat_engine/mitigation.py`](../tools/combat_engine/mitigation.py) (matches [`src/combat/mitigation.rs`](../src/combat/mitigation.rs)). Golden test [`test_mitigation_matches_rust_golden_reference_vectors`](../tools/combat_engine/tests/test_mitigation.py) locks the same stats and floats as [`golden_values_match_python_reference_for_each_ship_type`](../tests/combat_tests.rs); [`test_pierce_damage_through_bonus_matches_rust`](../tools/combat_engine/tests/test_mitigation.py) mirrors the Rust pierce test. [tools/combat_engine/README.md](../tools/combat_engine/README.md) documents parity table + cross-link to root [README.md](../README.md); root README links to the Python package for contributors.
