@@ -142,6 +142,16 @@ pub struct ShipListItem {
 
 const HULL_ID_REGISTRY_PATH: &str = "data/hull_id_registry.json";
 
+/// When several `ships.imported.json` rows share the same hull → same Kobayashi ship id (e.g. two
+/// Amalgams), keep the row with the highest tier, breaking ties by highest level.
+fn merge_roster_tier_level(existing: (u32, u32), incoming: (u32, u32)) -> (u32, u32) {
+    if existing.0 > incoming.0 || (existing.0 == incoming.0 && existing.1 > incoming.1) {
+        existing
+    } else {
+        incoming
+    }
+}
+
 /// Load hull_id -> ship_id mapping. Returns empty map if file missing or invalid.
 fn load_hull_id_registry() -> HashMap<i64, String> {
     let raw = match fs::read_to_string(HULL_ID_REGISTRY_PATH) {
@@ -193,9 +203,12 @@ pub fn ships_payload(
         if let Some(ships) = &imported {
             for entry in ships {
                 if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                    let t = entry.tier.max(0) as u32;
+                    let l = entry.level.max(0) as u32;
                     roster_tier_level
                         .entry(sid.clone())
-                        .or_insert_with(|| (entry.tier as u32, entry.level as u32));
+                        .and_modify(|cur| *cur = merge_roster_tier_level(*cur, (t, l)))
+                        .or_insert((t, l));
                 }
             }
         }
@@ -1539,5 +1552,22 @@ mod preset_schema_tests {
         assert!(pr.inferred);
         assert_eq!(pr.source, "repaired_v2_missing_provenance");
         let _ = std::fs::remove_file(&tmp);
+    }
+}
+
+#[cfg(test)]
+mod roster_tier_merge_tests {
+    use super::merge_roster_tier_level;
+
+    #[test]
+    fn merge_prefers_higher_tier() {
+        assert_eq!(merge_roster_tier_level((3, 45), (6, 1)), (6, 1));
+        assert_eq!(merge_roster_tier_level((6, 1), (3, 45)), (6, 1));
+    }
+
+    #[test]
+    fn merge_same_tier_prefers_higher_level() {
+        assert_eq!(merge_roster_tier_level((5, 10), (5, 30)), (5, 30));
+        assert_eq!(merge_roster_tier_level((5, 30), (5, 10)), (5, 30));
     }
 }

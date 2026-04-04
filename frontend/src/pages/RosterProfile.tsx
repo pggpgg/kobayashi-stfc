@@ -111,7 +111,6 @@ export default function RosterProfile() {
   }, [activeProfileId]);
 
   useEffect(() => {
-    if (tab !== "roster") return;
     let cancelled = false;
     const load = () => {
       fetchModSyncStatus(activeProfileId)
@@ -134,7 +133,7 @@ export default function RosterProfile() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [tab, activeProfileId]);
+  }, [activeProfileId]);
 
   const handleImport = async () => {
     setImportError(null);
@@ -241,9 +240,61 @@ export default function RosterProfile() {
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
 
+  const modSyncStatusBanner = (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        marginBottom: "0.75rem",
+        padding: "0.5rem 0.75rem",
+        fontSize: "0.9rem",
+        fontWeight: 500,
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 8,
+      }}
+    >
+      {modSyncError ? (
+        <span style={{ color: "var(--error)" }}>{modSyncError}</span>
+      ) : modSyncUtc === undefined ? (
+        <span style={{ color: "var(--text-muted)" }}>
+          Checking community mod sync…
+        </span>
+      ) : modSyncUtc === null ? (
+        <span style={{ color: "var(--text-muted)" }}>
+          No community mod sync recorded yet for this profile. Use the STFC
+          Community Mod in-game to push roster, buildings, research, and
+          other data to Kobayashi.
+        </span>
+      ) : (() => {
+          const t = Date.parse(modSyncUtc);
+          const ok =
+            !Number.isNaN(t) &&
+            Date.now() - t >= 0 &&
+            Date.now() - t < MOD_SYNC_STALE_AFTER_MS;
+          const when = Number.isNaN(t)
+            ? modSyncUtc
+            : new Date(t).toLocaleString(undefined, {
+                dateStyle: "short",
+                timeStyle: "medium",
+              });
+          return (
+            <span
+              style={{
+                color: ok ? "var(--success)" : "var(--error)",
+              }}
+            >
+              Last community mod sync received: {when}
+              {!Number.isNaN(t) && !ok ? " (stale)" : ""}
+            </span>
+          );
+        })()}
+    </div>
+  );
+
   return (
     <div>
-      <h1 style={{ marginBottom: "1rem" }}>
+      <h1 style={{ marginBottom: "0.5rem" }}>
         Roster & Profile
         {activeProfile && (
           <span
@@ -258,6 +309,8 @@ export default function RosterProfile() {
           </span>
         )}
       </h1>
+
+      {modSyncStatusBanner}
 
       <div style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
         <button
@@ -1005,51 +1058,6 @@ token = "${activeProfile.sync_token}"`}
             borderRadius: 8,
           }}
         >
-          <div
-            role="status"
-            aria-live="polite"
-            style={{
-              marginBottom: "0.75rem",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-            }}
-          >
-            {modSyncError ? (
-              <span style={{ color: "var(--error)" }}>{modSyncError}</span>
-            ) : modSyncUtc === undefined ? (
-              <span style={{ color: "var(--text-muted)" }}>
-                Checking community mod sync…
-              </span>
-            ) : modSyncUtc === null ? (
-              <span style={{ color: "var(--text-muted)" }}>
-                No community mod sync recorded yet for this profile. Use the
-                STFC Community Mod in-game to push roster and other data to
-                Kobayashi.
-              </span>
-            ) : (() => {
-                const t = Date.parse(modSyncUtc);
-                const ok =
-                  !Number.isNaN(t) &&
-                  Date.now() - t >= 0 &&
-                  Date.now() - t < MOD_SYNC_STALE_AFTER_MS;
-                const when = Number.isNaN(t)
-                  ? modSyncUtc
-                  : new Date(t).toLocaleString(undefined, {
-                      dateStyle: "short",
-                      timeStyle: "medium",
-                    });
-                return (
-                  <span
-                    style={{
-                      color: ok ? "var(--success)" : "var(--error)",
-                    }}
-                  >
-                    Last community mod sync received: {when}
-                    {!Number.isNaN(t) && !ok ? " (stale)" : ""}
-                  </span>
-                );
-              })()}
-          </div>
           <p
             style={{
               margin: "0 0 0.5rem",

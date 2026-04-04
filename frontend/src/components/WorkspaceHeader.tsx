@@ -130,6 +130,24 @@ export default function WorkspaceHeader({
     };
   }, [ownedOnly, activeProfileId]);
 
+  // Roster mode: once the owned ship list is loaded, align tier/level with the API row for the
+  // current selection (fixes stale localStorage and ensures re-fetch after profile change).
+  useEffect(() => {
+    if (!ownedOnly || shipsLoadState !== "done" || !shipId) return;
+    const ship = ships.find((s) => s.id === shipId);
+    if (ship?.tier != null && ship?.level != null) {
+      onShipTierChange(ship.tier);
+      onShipLevelChange(ship.level);
+    }
+  }, [
+    ownedOnly,
+    shipsLoadState,
+    shipId,
+    ships,
+    onShipTierChange,
+    onShipLevelChange,
+  ]);
+
   // When ship changes: in roster mode pre-fill tier/level from roster
   const handleShipChange = (id: string) => {
     onShipIdChange(id);
