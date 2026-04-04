@@ -2,11 +2,12 @@
 //!
 //! Each profile has: id, name, syncToken (UUID). Paths: profiles/{id}/profile.json, roster.imported.json, etc.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use uuid::Uuid;
 
 pub const PROFILES_DIR: &str = "profiles";
@@ -229,6 +230,146 @@ pub fn create_profile(
     fs::create_dir_all(dir.join(PRESETS_SUBDIR)).map_err(|e| e.to_string())?;
 
     Ok(entry)
+}
+
+/// Ephemeral profile ids used by research scenario tests under `profiles/`.
+///
+/// - `tests/scenario_research_integration_tests.rs` creates `scenario_research` (slug from "Scenario Research Test").
+/// - `src/optimizer/monte_carlo/scenario.rs` uses `scenario_research_{uuid}`.
+///
+/// These are not end-user profiles; cleanup may miss them if a test run aborts.
+fn is_ephemeral_scenario_test_profile_id(id: &str) -> bool {
+    id == "scenario_research" || id.starts_with("scenario_research_")
+}
+
+/// Removes ephemeral scenario-test profiles from `profiles/index.json` and deletes matching
+/// directories under `profiles/`, including orphans not listed in the index.
+pub fn prune_ephemeral_scenario_test_profiles() -> std::io::Result<()> {
+    let profiles_root = Path::new(PROFILES_DIR);
+    let mut index = load_profile_index();
+    let removed_from_index: Vec<String> = index
+        .profiles
+        .iter()
+        .filter(|p| is_ephemeral_scenario_test_profile_id(&p.id))
+        .map(|p| p.id.clone())
+        .collect();
+
+    if !removed_from_index.is_empty() {
+        index
+            .profiles
+            .retain(|p| !is_ephemeral_scenario_test_profile_id(&p.id));
+        if index
+            .default_id
+            .as_deref()
+            .is_some_and(|d| removed_from_index.iter().any(|r| r == d))
+        {
+            index.default_id = index.profiles.first().map(|p| p.id.clone());
+        }
+        save_profile_index(&index)?;
+        info!(
+            ?removed_from_index,
+            "removed ephemeral scenario research test profile(s) from profiles/index.json"
+        );
+    }
+
+    if profiles_root.is_dir() {
+        for entry in fs::read_dir(profiles_root)? {
+            let entry = entry?;
+            if !entry.file_type()?.is_dir() {
+                continue;
+            }
+            let id = entry.file_name().to_string_lossy().into_owned();
+            if is_ephemeral_scenario_test_profile_id(&id) {
+                let path = entry.path();
+                if let Err(e) = fs::remove_dir_all(&path) {
+                    tracing::warn!(path = %path.display(), error = %e, "failed to remove ephemeral scenario test profile directory");
+                } else {
+                    info!(%id, "removed ephemeral scenario research test profile directory");
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Human-readable display name from a directory id (`higgs_bozo` → `Higgs Bozo`).
+fn pretty_profile_name_from_id(id: &str) -> String {
+    let mut out = String::new();
+    for part in id.split('_').filter(|p| !p.is_empty()) {
+        let mut ch = part.chars();
+        if let Some(c) = ch.next() {
+            let rest: String = ch.collect();
+            out.extend(c.to_uppercase());
+            out.push_str(&rest.to_lowercase());
+        }
+        out.push(' ');
+    }
+    let s = out.trim_end().to_string();
+    if s.is_empty() {
+        id.to_string()
+    } else {
+        s
+    }
+}
+
+/// Registers `profiles/<id>/` directories that contain `profile.json` but are not listed in
+/// `profiles/index.json`, then saves the index.
+///
+/// This covers copied profile trees, gitignored folders, or an index reset that still leaves data
+/// on disk. Each newly listed profile gets a **new** sync token; point the STFC Community Mod at
+/// that token if you use sync for that profile.
+pub fn sync_profile_index_with_disk() -> std::io::Result<()> {
+    let profiles_root = Path::new(PROFILES_DIR);
+    if !profiles_root.is_dir() {
+        return Ok(());
+    }
+    let mut index = load_profile_index();
+    let indexed: HashSet<String> = index.profiles.iter().map(|p| p.id.clone()).collect();
+    let mut added: Vec<String> = Vec::new();
+
+    for entry in fs::read_dir(profiles_root)? {
+        let entry = entry?;
+        if !entry.file_type()?.is_dir() {
+            continue;
+        }
+        let id = entry.file_name().to_string_lossy().into_owned();
+        if id.starts_with('.') {
+            continue;
+        }
+        let sanitized = sanitize_profile_id(&id);
+        if sanitized != id {
+            continue;
+        }
+        if indexed.contains(&id) {
+            continue;
+        }
+        if is_ephemeral_scenario_test_profile_id(&id) {
+            continue;
+        }
+        let profile_json = entry.path().join(PROFILE_JSON);
+        if !profile_json.is_file() {
+            continue;
+        }
+        let sync_token = Uuid::new_v4().to_string();
+        let name = pretty_profile_name_from_id(&id);
+        index.profiles.push(ProfileEntry {
+            id: id.clone(),
+            name,
+            sync_token,
+            is_default: None,
+        });
+        added.push(id);
+    }
+
+    if !added.is_empty() {
+        save_profile_index(&index)?;
+        info!(
+            profiles = ?added,
+            "registered profile director(ies) that were on disk but missing from profiles/index.json"
+        );
+    }
+    Ok(())
 }
 
 /// Migrate from legacy single-profile layout (data/profile.json, rosters/*) to profiles/default/.

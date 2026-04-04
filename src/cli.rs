@@ -10,8 +10,8 @@ use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::profile::{apply_profile_to_attacker, load_profile};
 use crate::data::profile_index::{
-    migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON,
-    ROSTER_IMPORTED,
+    migrate_from_legacy_if_needed, prune_ephemeral_scenario_test_profiles, profile_path,
+    resolve_profile_id_for_api, sync_profile_index_with_disk, PROFILE_JSON, ROSTER_IMPORTED,
 };
 use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
@@ -44,6 +44,8 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
 
 pub fn run_with_args(args: &[String]) -> i32 {
     let _ = migrate_from_legacy_if_needed();
+    let _ = prune_ephemeral_scenario_test_profiles();
+    let _ = sync_profile_index_with_disk();
     crate::logging::init();
     init_from_env();
 

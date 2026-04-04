@@ -10,8 +10,8 @@ use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
 use kobayashi::data::loader::{resolve_hostile, resolve_ship};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
 use kobayashi::data::profile_index::{
-    migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON,
-    ROSTER_IMPORTED,
+    migrate_from_legacy_if_needed, prune_ephemeral_scenario_test_profiles, profile_path,
+    resolve_profile_id_for_api, sync_profile_index_with_disk, PROFILE_JSON, ROSTER_IMPORTED,
 };
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
@@ -597,6 +597,8 @@ mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--del
 
 fn main() {
     let _ = migrate_from_legacy_if_needed();
+    let _ = prune_ephemeral_scenario_test_profiles();
+    let _ = sync_profile_index_with_disk();
     kobayashi::logging::init();
     kobayashi::parallel::init_from_env();
 
