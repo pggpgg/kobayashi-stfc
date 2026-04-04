@@ -25,6 +25,4 @@ Put files such as `my_roster.txt` or `spocks-export.json` **inside the profile d
 - `kobayashi import my_roster.txt --profile default` (bare name resolves under that profile folder), or
 - pass a full path.
 
-The importer writes **`roster.imported.json` in the same profile directory** (shared with Community Mod sync). There is no separate global `rosters/` output anymore.
-
-**Legacy:** If you still have a `rosters/` folder with `*.imported.json` from an old Kobayashi version, a one-time migration (when `profiles/index.json` is missing) may copy those files into `profiles/default/`.
+The importer writes **`roster.imported.json` in the same profile directory** (shared with Community Mod sync).

@@ -374,76 +374,35 @@ pub fn sync_profile_index_with_disk() -> std::io::Result<()> {
     Ok(())
 }
 
-/// Migrate from legacy single-profile layout (data/profile.json, rosters/*) to profiles/default/.
-/// Call once at startup; idempotent (skips if profiles/index.json already exists).
+/// Create `profiles/index.json` when missing (first run or fresh clone).
 ///
-/// When there is no legacy data but the shipped [`DEMO_PROFILE_ID`] tree exists (fresh git clone),
-/// writes a new `profiles/index.json` with a **fresh** sync token so secrets are not read from the repo.
-pub fn migrate_from_legacy_if_needed() -> std::io::Result<()> {
+/// Idempotent: no-op if the index file already exists.
+///
+/// If the shipped [`DEMO_PROFILE_ID`] tree exists, registers it with a **fresh** sync token
+/// (so repo contents are not treated as a shared secret).
+/// Otherwise creates a single [`DEFAULT_PROFILE_ID`] profile via [`ensure_profile`].
+pub fn ensure_profile_index_bootstrap() -> std::io::Result<()> {
     if Path::new(PROFILE_INDEX_PATH).exists() {
         return Ok(());
     }
-    let legacy_profile = Path::new("data/profile.json");
-    let legacy_rosters = Path::new("rosters");
-    if !legacy_profile.exists() && !legacy_rosters.exists() {
-        // Nothing to migrate: bootstrap shipped demo profile if present, else a single "default" profile.
-        let demo_dir = profile_data_dir(DEMO_PROFILE_ID);
-        let demo_profile_json = demo_dir.join(PROFILE_JSON);
-        if demo_dir.is_dir() && demo_profile_json.is_file() {
-            let mut index = ProfileIndex::default();
-            let sync_token = Uuid::new_v4().to_string();
-            index.profiles.push(ProfileEntry {
-                id: DEMO_PROFILE_ID.to_string(),
-                name: "Demo".to_string(),
-                sync_token,
-                is_default: None,
-            });
-            index.default_id = Some(DEMO_PROFILE_ID.to_string());
-            save_profile_index(&index)?;
-            fs::create_dir_all(demo_dir.join(PRESETS_SUBDIR))?;
-            return Ok(());
-        }
+    let demo_dir = profile_data_dir(DEMO_PROFILE_ID);
+    let demo_profile_json = demo_dir.join(PROFILE_JSON);
+    if demo_dir.is_dir() && demo_profile_json.is_file() {
         let mut index = ProfileIndex::default();
-        ensure_profile(&mut index, DEFAULT_PROFILE_ID, Some("Default"))?;
+        let sync_token = Uuid::new_v4().to_string();
+        index.profiles.push(ProfileEntry {
+            id: DEMO_PROFILE_ID.to_string(),
+            name: "Demo".to_string(),
+            sync_token,
+            is_default: None,
+        });
+        index.default_id = Some(DEMO_PROFILE_ID.to_string());
+        save_profile_index(&index)?;
+        fs::create_dir_all(demo_dir.join(PRESETS_SUBDIR))?;
         return Ok(());
     }
-
-    let dir = profile_data_dir(DEFAULT_PROFILE_ID);
-    fs::create_dir_all(&dir)?;
-
-    if legacy_profile.exists() {
-        let dest = dir.join(PROFILE_JSON);
-        fs::copy(legacy_profile, dest)?;
-    } else {
-        fs::write(dir.join(PROFILE_JSON), "{\"bonuses\":{}}")?;
-    }
-
-    for (src_name, dest_name) in [
-        ("roster.imported.json", ROSTER_IMPORTED),
-        ("research.imported.json", RESEARCH_IMPORTED),
-        ("buildings.imported.json", BUILDINGS_IMPORTED),
-        ("ships.imported.json", SHIPS_IMPORTED),
-        ("forbidden_tech.imported.json", FORBIDDEN_TECH_IMPORTED),
-    ] {
-        let src = legacy_rosters.join(src_name);
-        if src.exists() {
-            fs::copy(&src, dir.join(dest_name))?;
-        }
-    }
-
-    let sync_token = Uuid::new_v4().to_string();
-    let index = ProfileIndex {
-        profiles: vec![ProfileEntry {
-            id: DEFAULT_PROFILE_ID.to_string(),
-            name: "Default".to_string(),
-            sync_token,
-            is_default: Some(true),
-        }],
-        default_id: Some(DEFAULT_PROFILE_ID.to_string()),
-    };
-    save_profile_index(&index)?;
-    fs::create_dir_all(dir.join(PRESETS_SUBDIR))?;
-
+    let mut index = ProfileIndex::default();
+    ensure_profile(&mut index, DEFAULT_PROFILE_ID, Some("Default"))?;
     Ok(())
 }
 

@@ -12,9 +12,6 @@ data/upstream/stfccommunity-data/
 data/research/unmapped_buff_backlog.json
 **/.DS_Store
 
-# Legacy single-profile import outputs (prefer profiles/<id>/roster.imported.json)
-rosters/*.imported.json
-
 # Downloaded spreadsheets (e.g. Syndicate Progression)
 data/import/*.xlsx
 

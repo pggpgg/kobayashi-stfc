@@ -24,8 +24,6 @@ Import which officers you own so the optimizer only suggests crew you have.
 
 - The app writes **`profiles/<profile>/roster.imported.json`** (the same file the Community Mod merges into). For Spocks.club JSON export, use a `.json` file: `kobayashi import export.json`.
 
-**Legacy:** If you still have `rosters/*.imported.json` from an old install, first startup without `profiles/index.json` may copy them into `profiles/default/` once. Prefer profile-scoped paths for everything new.
-
 ## Forbidden / Chaos tech
 
 - **File:** `forbidden_chaos_tech.csv`
