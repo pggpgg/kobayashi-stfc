@@ -6,7 +6,7 @@ use crate::combat::abilities::{AbilityEffect, ActiveAbilityEffect, TimingWindow}
 use crate::combat::events::round_f64;
 use crate::combat::stacking::{StackContribution, StatStacking};
 use crate::combat::types::{
-    CombatEvent, Combatant, EventSource, TraceCollector, ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+    CombatEvent, EventSource, TraceCollector, ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
 };
 
 #[derive(Debug, Clone)]
@@ -17,6 +17,8 @@ pub(crate) struct EffectAccumulator {
     round_end_modifier_sum: f64,
     /// Sum of timed [`AbilityEffect::CritChanceBonus`] for the current shot stack.
     crit_chance_bonus: f64,
+    /// Product of timed [`AbilityEffect::CritChanceMultiplier`] for the current shot stack.
+    crit_chance_multiplier: f64,
     /// Product of timed [`AbilityEffect::CritDamageMultiplier`] for the current shot stack.
     crit_damage_multiplier: f64,
     /// When true, each applied effect appends a row to [`Self::contribution_lines`] for `stack_resolution` traces.
@@ -108,6 +110,7 @@ impl Default for EffectAccumulator {
             attack_phase_damage_modifier_sum: 0.0,
             round_end_modifier_sum: 0.0,
             crit_chance_bonus: 0.0,
+            crit_chance_multiplier: 1.0,
             crit_damage_multiplier: 1.0,
             trace_contributions: false,
             contribution_lines: Vec::new(),
@@ -268,6 +271,29 @@ impl EffectAccumulator {
         }
     }
 
+    fn trace_crit_chance_mult(
+        &mut self,
+        source: Option<(&str, Option<&str>)>,
+        timing: TimingWindow,
+        factor: f64,
+    ) {
+        if factor.is_finite() && factor > 0.0 {
+            self.crit_chance_multiplier *= factor;
+            if self.trace_contributions {
+                if let Some((ab, oid)) = source {
+                    self.push_contribution_line(
+                        ab,
+                        oid,
+                        timing,
+                        "CritChanceMultiplier",
+                        "crit_chance_multiplier",
+                        factor,
+                    );
+                }
+            }
+        }
+    }
+
     fn trace_crit_damage_mult(
         &mut self,
         source: Option<(&str, Option<&str>)>,
@@ -361,6 +387,11 @@ impl EffectAccumulator {
     }
 
     #[inline]
+    pub(crate) fn crit_chance_multiplier(&self) -> f64 {
+        self.crit_chance_multiplier
+    }
+
+    #[inline]
     pub(crate) fn crit_damage_multiplier(&self) -> f64 {
         self.crit_damage_multiplier
     }
@@ -407,6 +438,7 @@ impl EffectAccumulator {
         self.attack_phase_damage_modifier_sum = 0.0;
         self.round_end_modifier_sum = 0.0;
         self.crit_chance_bonus = 0.0;
+        self.crit_chance_multiplier = 1.0;
         self.crit_damage_multiplier = 1.0;
         self.contribution_lines.clear();
     }
@@ -417,6 +449,7 @@ impl EffectAccumulator {
         self.attack_phase_damage_modifier_sum = other.attack_phase_damage_modifier_sum;
         self.round_end_modifier_sum = other.round_end_modifier_sum;
         self.crit_chance_bonus += other.crit_chance_bonus;
+        self.crit_chance_multiplier *= other.crit_chance_multiplier;
         self.crit_damage_multiplier *= other.crit_damage_multiplier;
         if self.trace_contributions {
             self.contribution_lines
@@ -431,6 +464,7 @@ impl EffectAccumulator {
         self.attack_phase_damage_modifier_sum += carry.attack_phase_damage_modifier_sum;
         self.round_end_modifier_sum += carry.round_end_modifier_sum;
         self.crit_chance_bonus += carry.crit_chance_bonus;
+        self.crit_chance_multiplier *= carry.crit_chance_multiplier;
         self.crit_damage_multiplier *= carry.crit_damage_multiplier;
         if self.trace_contributions {
             self.contribution_lines
@@ -458,6 +492,12 @@ impl EffectAccumulator {
             out.insert(
                 "crit_chance_bonus".to_string(),
                 Value::from(round_f64(self.crit_chance_bonus)),
+            );
+        }
+        if (self.crit_chance_multiplier - 1.0).abs() > EPS {
+            out.insert(
+                "crit_chance_multiplier".to_string(),
+                Value::from(round_f64(self.crit_chance_multiplier)),
             );
         }
         if (self.crit_damage_multiplier - 1.0).abs() > EPS {
@@ -532,6 +572,10 @@ impl EffectAccumulator {
         ) {
             if let AbilityEffect::CritChanceBonus(v) = &effect {
                 self.trace_crit_chance(source, timing, *v);
+                return;
+            }
+            if let AbilityEffect::CritChanceMultiplier(m) = &effect {
+                self.trace_crit_chance_mult(source, timing, *m);
                 return;
             }
             if let AbilityEffect::CritDamageMultiplier(m) = &effect {
@@ -621,6 +665,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceMultiplier(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -727,6 +772,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceMultiplier(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -839,6 +885,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceMultiplier(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -954,6 +1001,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceMultiplier(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. }
@@ -1057,6 +1105,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceMultiplier(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -1188,6 +1237,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. } => {}
                 AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceMultiplier(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -1237,7 +1287,6 @@ pub(crate) fn record_ability_activations(
     trace: &mut TraceCollector,
     round_index: u32,
     phase: &str,
-    attacker: &Combatant,
     effects: &[ActiveAbilityEffect],
     assimilated_active: bool,
 ) {
@@ -1253,7 +1302,7 @@ pub(crate) fn record_ability_activations(
             round_index,
             phase: phase.to_string(),
             source: EventSource {
-                officer_id: Some(attacker.id.clone()),
+                officer_id: effect.officer_id.clone(),
                 ship_ability_id: Some(effect.ability_name.clone()),
                 ..EventSource::default()
             },
@@ -1375,6 +1424,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::CritChanceBonus(v) => {
             AbilityEffect::CritChanceBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
+        AbilityEffect::CritChanceMultiplier(m) => AbilityEffect::CritChanceMultiplier(
+            1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+        ),
         AbilityEffect::CritDamageMultiplier(m) => AbilityEffect::CritDamageMultiplier(
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),

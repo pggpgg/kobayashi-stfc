@@ -97,6 +97,10 @@ pub enum AbilityEffect {
     /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
     /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
     CritChanceBonus(f64),
+    /// Multiplicative factor on [`Combatant::crit_chance`] for this shot stack (e.g. 1.2 = +20%).
+    /// Factors chain as a product. Applied before [`AbilityEffect::CritChanceBonus`], then clamped to [0, 1].
+    /// Ignored when non-finite or ≤ 0.
+    CritChanceMultiplier(f64),
     /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
     /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
     CritDamageMultiplier(f64),

@@ -208,7 +208,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         &mut trace,
         0,
         "combat_begin",
-        attacker,
         &combat_begin_filtered,
         combat_begin_assimilated,
     );
@@ -289,7 +288,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             &mut trace,
             round_index,
             "round_start",
-            attacker,
             &bench,
             round_start_assimilated,
         );
@@ -470,7 +468,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 &mut trace,
                 round_index,
                 "round_start",
-                attacker,
                 &round_start_extra,
                 round_start_assimilated,
             );
@@ -505,7 +502,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             &mut trace,
             round_index,
             "attack",
-            attacker,
             &attack_phase_filtered,
             attack_phase_assimilated,
         );
@@ -514,7 +510,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             &mut trace,
             round_index,
             "defense",
-            attacker,
             &defense_phase_filtered,
             defense_phase_assimilated,
         );
@@ -638,6 +633,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
                     let hull_breach_active = hull_breach_rounds_remaining > 0;
                     let effective_crit_chance = (attacker.weapon_crit_chance(weapon_index)
+                        * phase_effects.crit_chance_multiplier()
                         + phase_effects.crit_chance_bonus())
                     .clamp(0.0, 1.0);
                     let crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
@@ -928,7 +924,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     &mut trace,
                     round_index,
                     "shield_break",
-                    attacker,
                     &shield_break_filtered,
                     attack_phase_assimilated,
                 );
@@ -957,7 +952,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     &mut trace,
                     round_index,
                     "shield_break",
-                    defender,
                     &def_sb_filtered,
                     false,
                 );
@@ -985,7 +979,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     &mut trace,
                     round_index,
                     "hull_breach",
-                    attacker,
                     &hull_breach_filtered,
                     attack_phase_assimilated,
                 );
@@ -1129,6 +1122,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     defender_phase_effects.defense_mitigation_bonus(),
                 );
                 let def_effective_crit_chance = (defender.weapon_crit_chance(weapon_index)
+                    * defender_phase_effects.crit_chance_multiplier()
                     + defender_phase_effects.crit_chance_bonus())
                 .clamp(0.0, 1.0);
                 let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
@@ -1213,7 +1207,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         &mut trace,
                         round_index,
                         "self_shield_break",
-                        attacker,
                         &self_sb_filtered,
                         attack_phase_assimilated,
                     );
@@ -1266,7 +1259,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         &mut trace,
                         round_index,
                         "receive_damage",
-                        attacker,
                         &receive_damage_filtered,
                         assimilated_rounds_remaining > 0,
                     );
@@ -1321,7 +1313,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 &mut trace,
                 round_index,
                 "after_subround",
-                attacker,
                 &after_subround_filtered,
                 attack_phase_assimilated,
             );
@@ -1357,7 +1348,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             &mut trace,
             round_index,
             "round_end",
-            attacker,
             &round_end_filtered,
             round_end_assimilated_early,
         );
@@ -1486,7 +1476,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 &mut trace,
                 round_index,
                 "kill",
-                attacker,
                 &kill_filtered,
                 kill_assimilated,
             );
@@ -1539,7 +1528,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         &mut trace,
         rounds_completed,
         "combat_end",
-        attacker,
         &combat_end_filtered,
         false,
     );

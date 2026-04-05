@@ -240,6 +240,42 @@ export async function fetchDataVersion(): Promise<DataVersionResponse> {
   return res.json();
 }
 
+export interface MechanicsCoverageTierCounts {
+  implemented: number;
+  partial: number;
+  ignored: number;
+}
+
+export interface FidelityBacklogItem {
+  rank: number;
+  area: string;
+  key: string;
+  ignored: number;
+  partial: number;
+  implemented: number;
+  summary: string;
+}
+
+export interface MechanicsCoverageReport {
+  status: string;
+  lcars_officers_files: number;
+  lcars_effects: MechanicsCoverageTierCounts;
+  ship_hull_abilities: MechanicsCoverageTierCounts;
+  ships_with_abilities_scanned: number;
+  hostile_catalog_entries: MechanicsCoverageTierCounts;
+  hostile_catalog_entry_count: number;
+  lcars_by_effect_type: Record<string, MechanicsCoverageTierCounts>;
+  lcars_ignored_samples: string[];
+  fidelity_backlog: FidelityBacklogItem[];
+  notes: string[];
+}
+
+export async function fetchMechanicsCoverage(): Promise<MechanicsCoverageReport> {
+  const res = await fetch(`${API_BASE}/api/mechanics/coverage`);
+  await checkOk(res);
+  return res.json();
+}
+
 export interface SimulateCrew {
   captain: string | null;
   bridge: (string | null)[];

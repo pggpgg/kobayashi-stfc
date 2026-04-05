@@ -338,15 +338,18 @@ fn resolve_effect(
                     Some((timing, AbilityEffect::PierceBonus(add)))
                 }
                 "crit_chance" => {
-                    let add = match op.as_str() {
+                    match op.as_str() {
                         "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                        | "multiplybaseadd" => return None,
+                        | "multiplybaseadd" => {
+                            // Interpret as multiplicative factor on crit chance (1.2 = +20%).
+                            // Note: LCARS value is commonly expressed as a factor for multiply ops.
+                            Some((timing, AbilityEffect::CritChanceMultiplier(value)))
+                        }
                         "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
-                        | "multiplybasesub" => -value,
-                        "set" => return None,
-                        _ => value,
-                    };
-                    Some((timing, AbilityEffect::CritChanceBonus(add)))
+                        | "multiplybasesub" => Some((timing, AbilityEffect::CritChanceBonus(-value))),
+                        "set" => None,
+                        _ => Some((timing, AbilityEffect::CritChanceBonus(value))),
+                    }
                 }
                 "crit_damage" => {
                     let mult = match op.as_str() {
