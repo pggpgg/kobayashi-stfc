@@ -263,6 +263,8 @@ Conditions gate whether an effect activates. They are predicates evaluated by th
 
 Hull slugs match [`ShipType::from_data_slug`](src/combat/types.rs): `battleship`, `explorer`, `interceptor`, `survey`, `armada`. In combat, the engine sets **defender** hull class from the hostile and **attacker** hull class from the player ship record.
 
+**Upstream hostile `ship_type` (data.stfc.space):** The JSON field `ship_type` is stored on [`HostileRecord`](../src/data/hostile.rs) as `upstream_ship_type`. It is **not** hull class (that comes from `hull_type` → `ship_class`). Kobayashi maps selected integers in [`upstream_hostile_ship_type_profile`](../src/data/upstream_hostile_ship_type.rs); [`HostileRecord::ship_type_for_combat`](../src/data/hostile.rs) uses that mapping so the defender’s effective class can be [`ShipType::Armada`](../src/combat/types.rs) for **armada targets** (currently `upstream_ship_type == 1`, aligned with UI string “ARMADA TARGET”). Unmapped values fall back to hull-derived `ship_class` only. Ongoing reverse engineering and backlog items: [ROADMAP.md](ROADMAP.md) (section *Hostile upstream `ship_type`*).
+
 `kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction`, unknown slug, or empty `and` / `or`).
 
 **Passive + permanent `stat_modify`** is merged into `static_buffs` at resolve time and **does not** evaluate `condition` today. Use ship-class (and other) gates on timed effects (e.g. `on_combat_start`) or extend the resolver/engine before conditioning passive stats such as `armor`.

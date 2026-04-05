@@ -573,7 +573,7 @@ fn mitigation_sensitivity_command(args: &[String]) -> Result<(), String> {
     let baseline = HostileMitigationBaseline {
         defender,
         attacker,
-        ship_type: hostile_rec.ship_type(),
+        ship_type: hostile_rec.ship_type_for_combat(),
         mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
         mitigation_floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
         mitigation_ceiling: hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),

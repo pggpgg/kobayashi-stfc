@@ -134,7 +134,7 @@ pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
     profile: &PlayerProfile,
     static_buffs: &HashMap<String, f64>,
 ) -> (f64, f64) {
-    let ship_type = hostile_rec.ship_type();
+    let ship_type = hostile_rec.ship_type_for_combat();
     let attacker_stats =
         effective_attacker_stats_for_mitigation(ship_rec, profile, static_buffs, ship_type);
     let defender_stats = hostile_rec.to_defender_stats();
@@ -242,7 +242,7 @@ impl SharedScenarioData {
     pub(crate) fn defender_ship_type_for_combat(&self) -> ShipType {
         self.hostile_rec
             .as_ref()
-            .map(|h| h.ship_type())
+            .map(|h| h.ship_type_for_combat())
             .unwrap_or(ShipType::Battleship)
     }
 
@@ -681,7 +681,7 @@ pub(crate) fn computed_defender_mitigation(ship: &str, hostile: &str) -> f64 {
         return mitigation_for_hostile(
             hostile_rec.to_defender_stats(),
             ship_rec.to_attacker_stats(),
-            hostile_rec.ship_type(),
+            hostile_rec.ship_type_for_combat(),
             hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -833,7 +833,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
             hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -841,7 +841,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         let pierce = pierce_damage_through_bonus(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
         );
         let defender = defender_combatant_from_hostile_record(
             hostile,
@@ -1028,7 +1028,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
             hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -1036,7 +1036,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         let pierce = pierce_damage_through_bonus(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
         );
         let defender = defender_combatant_from_hostile_record(
             hostile,

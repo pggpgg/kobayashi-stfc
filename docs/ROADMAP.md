@@ -50,6 +50,23 @@ Many ability ids still map to `effect_type: combat_noop` (economy, mining, armad
 
 ---
 
+## Hostile upstream `ship_type` (reverse engineering)
+
+data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normalized `data/hostiles/{id}.json`) includes **`ship_type` as a u32**: a **game category enum**, separate from **`hull_type`** (which the normalizer maps to `ship_class`: battleship / explorer / interceptor / survey). Labels for many values live only in client localization (e.g. `translations-navigation.json` key `armada_target_label` → “ARMADA TARGET” for value **1**).
+
+### Implemented
+
+- **Rust mapping table:** [`src/data/upstream_hostile_ship_type.rs`](../src/data/upstream_hostile_ship_type.rs) — `UpstreamHostileShipTypeProfile` + `upstream_hostile_ship_type_profile(u32)`; extend the `match` as new ids are confirmed.
+- **Combat wiring:** [`HostileRecord::ship_type_for_combat`](../src/data/hostile.rs) chooses defender [`ShipType`](../src/combat/types.rs) for mitigation, player pierce-through vs that class, combat-begin ship-ability accuracy gates, and LCARS `defender_ship_type_is` when the hostile is the defender. **Mapped today:** `ship_type == 1` → treat as **armada target** (`ShipType::Armada`), so armada-gated officer/ship effects apply even when `ship_class` still looks like `survey` from hull mapping alone.
+
+### Roadmap / backlog
+
+- **Enumerate ids** — Cross-check `summary-hostile.json`, stfc.space UI, and in-game copy to document additional `ship_type` values and add `match` arms (and new `UpstreamHostileShipTypeProfile` fields if mechanics need more than `is_armada_target`).
+- **Unknown values** — Optional validation or a small report: list normalized hostiles whose `upstream_ship_type` is not in the mapping (for triage).
+- **Overlap with `EnemyTypes`** — If future categories do not fit [`EnemyType`](../src/combat/types.rs) / `ShipType` (e.g. multi-tag engagements), decide whether to thread [`EnemyTypes`](../src/combat/types.rs) through scenario vs growing the upstream profile struct.
+
+---
+
 ## Sync (STFC Community Mod)
 
 - **Persisted today:** officer, research, buildings, ships, and **forbidden tech (`type: "ft"`)** — see [SYNC.md](SYNC.md). Research is written to `profiles/{id}/research.imported.json` and merged into the player profile when a research catalog is present. FT is written to `profiles/{id}/forbidden_tech.imported.json` and merged into the player profile (bonuses from `data/forbidden_chaos_tech.json`).

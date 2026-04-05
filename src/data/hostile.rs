@@ -240,8 +240,25 @@ impl HostileRecord {
             .unwrap_or(OpponentFactionTag::Unknown)
     }
 
+    /// Hull-derived class from normalized `ship_class` (upstream `hull_type` mapping).
     pub fn ship_type(&self) -> ShipType {
         ship_class_to_type(&self.ship_class)
+    }
+
+    /// Effective defender [`ShipType`] for combat: mitigation, player pierce-through, ship-ability
+    /// accuracy gates, and LCARS `defender_ship_type_is` when the hostile is the defender.
+    ///
+    /// When [`Self::upstream_ship_type`] matches an armada target in
+    /// [`crate::data::upstream_hostile_ship_type`], returns [`ShipType::Armada`] so armada-tuned
+    /// buffs apply even if `ship_class` was inferred as another hull line.
+    pub fn ship_type_for_combat(&self) -> ShipType {
+        if super::upstream_hostile_ship_type::upstream_hostile_ship_type_profile(self.upstream_ship_type)
+            .is_armada_target
+        {
+            ShipType::Armada
+        } else {
+            self.ship_type()
+        }
     }
 }
 
@@ -515,6 +532,14 @@ mod tests {
         let j = r#"{"id":"2918121098","hostile_name":"Hostile 2918121098","level":81,"ship_class":"explorer","armor":1.0,"shield_deflection":2.0,"dodge":3.0,"hull_health":10.0,"shield_health":5.0,"upstream_ship_type":2,"hull_type_raw":3,"components":[{"k":1}],"ability":[]}"#;
         let r: HostileRecord = serde_json::from_str(j).expect("extended hostile JSON");
         assert_eq!(r.components.len(), 1);
+    }
+
+    #[test]
+    fn ship_type_for_combat_upstream_armada_overrides_hull_class() {
+        let j = r#"{"id":"2021752945","hostile_name":"Armada target","level":76,"ship_class":"survey","armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,"upstream_ship_type":1,"hull_type_raw":5,"components":[],"ability":[]}"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        assert_eq!(r.ship_type(), ShipType::Survey);
+        assert_eq!(r.ship_type_for_combat(), ShipType::Armada);
     }
 
     #[test]
