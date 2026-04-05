@@ -194,7 +194,8 @@ describe("useWorkspace", () => {
     const { result } = renderHook(() => useWorkspace(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.crew.belowDeck.length).toBe(3);
+      // Level 50: unlocks at 5,10,20,30,40,45 → 6 BD slots (default STFC schedule).
+      expect(result.current.crew.belowDeck.length).toBe(6);
     });
 
     await act(async () => {
@@ -202,7 +203,8 @@ describe("useWorkspace", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.crew.belowDeck.length).toBe(2);
+      // Level 34: first four unlocks only → 4 slots.
+      expect(result.current.crew.belowDeck.length).toBe(4);
     });
   });
 });

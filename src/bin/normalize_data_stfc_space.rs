@@ -38,8 +38,8 @@ struct AbilityCatalogEntry {
 }
 
 use kobayashi::data::ship::{
-    ExtendedShipRecord, LevelBonus, ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats,
-    WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
+    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, ShipAbility, ShipIdRegistry, ShipIdRegistryEntry,
+    TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
@@ -208,6 +208,27 @@ fn raw_to_extended(
         });
     }
 
+    let crew_slots: Vec<CrewSlotUnlock> = raw
+        .get("crew_slots")
+        .and_then(Value::as_array)
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|row| {
+                    Some(CrewSlotUnlock {
+                        slots: row
+                            .get("slots")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string()),
+                        unlock_level: row
+                            .get("unlock_level")
+                            .and_then(Value::as_u64)
+                            .unwrap_or(0) as u32,
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
     let abilities = ability_catalog.and_then(|catalog| {
         let arr = raw.get("ability")?.as_array()?;
         let mut out = Vec::new();
@@ -272,6 +293,7 @@ fn raw_to_extended(
         ship_class: ship_class.to_string(),
         tiers,
         levels,
+        crew_slots,
         abilities,
     })
 }

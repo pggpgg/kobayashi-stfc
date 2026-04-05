@@ -5,6 +5,10 @@
 //! **Across different research projects** (`rid`), per-project cumulative totals are combined
 //! additively in [`cumulative_research_bonuses`] (then added into `profile.bonuses`). Multiply
 //! operators apply only within a single project's level chain, in ascending level order.
+//!
+//! Bonuses with [`ResearchBonusConditionKey`] fields set (ship class, faction, morale, etc.) are
+//! **excluded** from flat profile merge; [`crate::data::profile::research_derived_attack_phase_seats`]
+//! turns them into gated attack-phase crit effects (see `docs/DESIGN.md` research section).
 
 use std::collections::HashMap;
 use std::fs;
@@ -33,12 +37,60 @@ pub struct ResearchLevel {
     pub bonuses: Vec<ResearchBonusEntry>,
 }
 
+/// When any optional field is set, this bonus is **conditional** (not merged into `profile.bonuses`).
+/// Slugs match [`crate::combat::ShipType`] / [`crate::combat::OpponentFactionTag::from_data_slug`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub struct ResearchBonusConditionKey {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub defender_ship_class: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub defender_faction: Option<String>,
+    #[serde(default)]
+    pub requires_morale: bool,
+    #[serde(default)]
+    pub requires_defender_burning: bool,
+    #[serde(default)]
+    pub requires_defender_hull_breach: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResearchBonusEntry {
     pub stat: String,
     pub value: f64,
     #[serde(default)]
     pub operator: String,
+    #[serde(flatten)]
+    pub condition: ResearchBonusConditionKey,
+}
+
+impl Default for ResearchBonusEntry {
+    fn default() -> Self {
+        Self {
+            stat: String::new(),
+            value: 0.0,
+            operator: "add".into(),
+            condition: ResearchBonusConditionKey::default(),
+        }
+    }
+}
+
+/// True when this row carries any research condition (hull class, faction, morale, etc.).
+pub fn research_bonus_is_conditional(bonus: &ResearchBonusEntry) -> bool {
+    bonus.condition.defender_ship_class.is_some()
+        || bonus.condition.defender_faction.is_some()
+        || bonus.condition.requires_morale
+        || bonus.condition.requires_defender_burning
+        || bonus.condition.requires_defender_hull_breach
+}
+
+fn is_crit_seat_research_stat(stat: &str) -> bool {
+    matches!(stat, "crit_chance" | "crit_damage")
+}
+
+/// Conditional **crit** rows are modeled as attack-phase seats; they must not also merge into `profile.bonuses`.
+/// Other conditional stats (if they appear in the catalog) still use the flat profile layer until we add seats.
+pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry) -> bool {
+    research_bonus_is_conditional(bonus) && is_crit_seat_research_stat(&bonus.stat)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -109,12 +161,99 @@ pub fn cumulative_research_level_bonuses(
     let mut out: HashMap<String, f64> = HashMap::new();
     for (_, _, lvl) in level_refs {
         for bonus in &lvl.bonuses {
+            if research_bonus_skipped_from_flat_profile_merge(bonus) {
+                continue;
+            }
             let op = if bonus.operator.is_empty() {
                 "add"
             } else {
                 bonus.operator.as_str()
             };
             accumulate_bonus(&mut out, &bonus.stat, op, bonus.value);
+        }
+    }
+    out
+}
+
+fn accumulate_conditional_bonus(
+    out: &mut HashMap<(ResearchBonusConditionKey, String), f64>,
+    key: &ResearchBonusConditionKey,
+    stat: &str,
+    operator: &str,
+    value: f64,
+) {
+    let map_key = (key.clone(), stat.to_string());
+    let current = out.get(&map_key).copied().unwrap_or(0.0);
+    let is_multiply = operator.eq_ignore_ascii_case("multiply")
+        || operator.eq_ignore_ascii_case("mul")
+        || operator.eq_ignore_ascii_case("mult");
+    let new_value = if is_multiply {
+        (1.0 + current) * (1.0 + value) - 1.0
+    } else {
+        current + value
+    };
+    out.insert(map_key, new_value);
+}
+
+/// Cumulative **conditional** bonuses for one research project (same level walk as [`cumulative_research_level_bonuses`]).
+pub fn cumulative_research_level_conditional_bonuses(
+    record: &ResearchRecord,
+    level: u32,
+) -> HashMap<(ResearchBonusConditionKey, String), f64> {
+    if level == 0 {
+        return HashMap::new();
+    }
+    let cap = level.min(max_level(record));
+    let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = record
+        .levels
+        .iter()
+        .enumerate()
+        .filter(|(_, l)| l.level <= cap)
+        .map(|(i, l)| (l.level, i, l))
+        .collect();
+    level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+
+    let mut out: HashMap<(ResearchBonusConditionKey, String), f64> = HashMap::new();
+    for (_, _, lvl) in level_refs {
+        for bonus in &lvl.bonuses {
+            if !research_bonus_is_conditional(bonus) {
+                continue;
+            }
+            if !is_crit_seat_research_stat(&bonus.stat) {
+                continue;
+            }
+            let op = if bonus.operator.is_empty() {
+                "add"
+            } else {
+                bonus.operator.as_str()
+            };
+            accumulate_conditional_bonus(
+                &mut out,
+                &bonus.condition,
+                &bonus.stat,
+                op,
+                bonus.value,
+            );
+        }
+    }
+    out
+}
+
+/// Merge conditional rows across rids (same condition + stat → sum values).
+pub fn cumulative_conditional_research_bonuses(
+    records: &[&ResearchRecord],
+    levels_by_rid: &HashMap<i64, u32>,
+) -> HashMap<(ResearchBonusConditionKey, String), f64> {
+    let by_rid: HashMap<i64, &ResearchRecord> = records.iter().map(|r| (r.rid, *r)).collect();
+    let mut out: HashMap<(ResearchBonusConditionKey, String), f64> = HashMap::new();
+    for (&rid, &level) in levels_by_rid {
+        let Some(rec) = by_rid.get(&rid) else {
+            continue;
+        };
+        let partial = cumulative_research_level_conditional_bonuses(rec, level);
+        for ((key, stat), value) in partial {
+            let cur = out.get(&(key.clone(), stat.clone())).copied().unwrap_or(0.0);
+            out.insert((key, stat), cur + value);
         }
     }
     out
@@ -157,6 +296,7 @@ mod tests {
                         stat: "weapon_damage".to_string(),
                         value: 0.05,
                         operator: "add".to_string(),
+                        condition: Default::default(),
                     }],
                 },
                 ResearchLevel {
@@ -165,6 +305,7 @@ mod tests {
                         stat: "weapon_damage".to_string(),
                         value: 0.05,
                         operator: "add".to_string(),
+                        condition: Default::default(),
                     }],
                 },
                 ResearchLevel {
@@ -173,6 +314,7 @@ mod tests {
                         stat: "hull_hp".to_string(),
                         value: 0.10,
                         operator: "add".to_string(),
+                        condition: Default::default(),
                     }],
                 },
             ],
@@ -237,6 +379,7 @@ mod tests {
                     stat: "shield_hp".to_string(),
                     value: 0.08,
                     operator: "add".to_string(),
+                    condition: Default::default(),
                 }],
             }],
         };
@@ -274,6 +417,7 @@ mod tests {
                         stat: "weapon_damage".to_string(),
                         value: 0.10,
                         operator: "mult".to_string(),
+                        condition: Default::default(),
                     }],
                 },
                 ResearchLevel {
@@ -282,6 +426,7 @@ mod tests {
                         stat: "weapon_damage".to_string(),
                         value: 0.10,
                         operator: "add".to_string(),
+                        condition: Default::default(),
                     }],
                 },
             ],
@@ -295,6 +440,73 @@ mod tests {
         assert!(
             (wd - want).abs() < 1e-9,
             "got weapon_damage {wd}, want {want} (add then mult)"
+        );
+    }
+
+    #[test]
+    fn conditional_non_crit_still_in_flat_level_bonuses() {
+        let r = ResearchRecord {
+            rid: 502,
+            name: None,
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "weapon_damage".into(),
+                    value: 0.04,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        defender_ship_class: Some("battleship".into()),
+                        ..Default::default()
+                    },
+                }],
+            }],
+        };
+        let flat = cumulative_research_level_bonuses(&r, 1);
+        assert_eq!(flat.get("weapon_damage").copied(), Some(0.04));
+        assert!(cumulative_research_level_conditional_bonuses(&r, 1).is_empty());
+    }
+
+    #[test]
+    fn conditional_crit_not_in_flat_level_bonuses() {
+        let r = ResearchRecord {
+            rid: 501,
+            name: None,
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![
+                    ResearchBonusEntry {
+                        stat: "crit_chance".into(),
+                        value: 0.05,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            defender_ship_class: Some("explorer".into()),
+                            ..Default::default()
+                        },
+                    },
+                    ResearchBonusEntry {
+                        stat: "crit_chance".into(),
+                        value: 0.01,
+                        operator: "add".into(),
+                        condition: Default::default(),
+                    },
+                ],
+            }],
+        };
+        let flat = cumulative_research_level_bonuses(&r, 1);
+        assert_eq!(flat.get("crit_chance").copied(), Some(0.01));
+
+        let cond = cumulative_research_level_conditional_bonuses(&r, 1);
+        let key = ResearchBonusConditionKey {
+            defender_ship_class: Some("explorer".into()),
+            ..Default::default()
+        };
+        assert_eq!(
+            cond.get(&(key, "crit_chance".into())).copied(),
+            Some(0.05)
         );
     }
 }

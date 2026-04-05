@@ -139,9 +139,16 @@ export interface ShipListItem {
   level?: number;
 }
 
+/** Below-decks slot row from `data/ships_extended` / upstream `crew_slots`. */
+export interface CrewSlotUnlockRow {
+  slots?: string | null;
+  unlock_level: number;
+}
+
 export interface ShipTiersLevels {
   tiers: number[];
   levels: number[];
+  crew_slots?: CrewSlotUnlockRow[];
 }
 
 export async function getShipTiersLevels(
@@ -369,7 +376,7 @@ export async function compareCrewsDistributions(
     body.ship_tier = params.ship_tier;
   if (params.ship_level != null && params.ship_level > 0)
     body.ship_level = params.ship_level;
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
   if (params.proc_sample_trials != null && params.proc_sample_trials > 0) {
@@ -458,6 +465,7 @@ export async function getOptimizeEstimate(
     max_candidates?: number | null;
     prioritize_below_decks_ability?: boolean;
     ship_tier?: number | null;
+    ship_level?: number | null;
     below_decks_slots?: number | null;
   },
   profileId?: string | null,
@@ -477,7 +485,10 @@ export async function getOptimizeEstimate(
   if (params.ship_tier != null && params.ship_tier > 0) {
     search.set("ship_tier", String(params.ship_tier));
   }
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.ship_level != null && params.ship_level > 0) {
+    search.set("ship_level", String(params.ship_level));
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     search.set("below_decks_slots", String(params.below_decks_slots));
   }
   if (profileId) search.set("profile", profileId);
@@ -515,7 +526,7 @@ export async function optimize(
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
   }
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
   const res = await fetch(`${API_BASE}/api/optimize`, {
@@ -635,7 +646,7 @@ export async function optimizeStart(
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
   }
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
   if (params.constraints && Object.keys(params.constraints).length > 0) {

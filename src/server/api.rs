@@ -19,7 +19,7 @@ use crate::data::import::load_imported_ships;
 use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
 };
-use crate::data::loader::ship_tiers_levels;
+use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
     PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
@@ -27,7 +27,8 @@ use crate::data::profile_index::{
 use crate::data::research_summary::research_combat_summary_for_profile;
 use crate::data::support_buffs;
 use crate::optimizer::crew_generator::{
-    resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
+    resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate, CrewGenerator,
+    BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
     compare_crews_monte_carlo_with_registry, replay_optimize_iteration_with_registry,
@@ -266,15 +267,17 @@ const DEFAULT_TIERS: &[u32] = &[1];
 const DEFAULT_LEVELS: &[u32] = &[1, 10, 20, 30, 40, 50, 60];
 
 pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Error> {
-    let (mut tiers, mut levels) = ship_tiers_levels(ship_id)
-        .unwrap_or_else(|| (DEFAULT_TIERS.to_vec(), DEFAULT_LEVELS.to_vec()));
+    let (mut tiers, mut levels, crew_slots) = ship_tiers_levels_and_crew_slots(ship_id)
+        .unwrap_or_else(|| (DEFAULT_TIERS.to_vec(), DEFAULT_LEVELS.to_vec(), vec![]));
     if tiers.is_empty() {
         tiers = DEFAULT_TIERS.to_vec();
     }
     if levels.is_empty() {
         levels = DEFAULT_LEVELS.to_vec();
     }
-    serde_json::to_string_pretty(&serde_json::json!({ "tiers": tiers, "levels": levels }))
+    serde_json::to_string_pretty(
+        &serde_json::json!({ "tiers": tiers, "levels": levels, "crew_slots": crew_slots }),
+    )
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -337,7 +340,7 @@ pub struct SimulateRequest {
     pub crew: SimulateCrew,
     pub num_sims: Option<u32>,
     pub seed: Option<u64>,
-    /// Below-decks slot count for padding crew (2–5). Omitted = tier default.
+    /// Below-decks slot count for padding crew (0–7). Omitted = resolved from ship level + `crew_slots` when present, else tier heuristic.
     pub below_decks_slots: Option<u32>,
     /// Optional alliance/ship support buff ids (see `data/support_buffs.json`).
     #[serde(default)]
@@ -511,7 +514,12 @@ pub fn simulate_payload(
             )));
         }
     }
-    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, req.below_decks_slots);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        req.below_decks_slots,
+    );
 
     let officers: Vec<(String, String)> = registry
         .officers()
@@ -636,7 +644,12 @@ pub fn compare_crews_payload(
         }
     }
     let proc_sample = req.proc_sample_trials.unwrap_or(0).min(150);
-    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, req.below_decks_slots);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        req.below_decks_slots,
+    );
 
     let officers: Vec<(String, String)> = registry
         .officers()
@@ -767,7 +780,12 @@ pub fn replay_optimize_seed_payload(
         .map(|o| (o.id.clone(), o.name.clone()))
         .collect();
 
-    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, None);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        None,
+    );
     let candidate = crew_candidate_from_officer_fields(
         req.crew.captain.as_deref(),
         req.crew.bridge.as_deref(),
@@ -1449,6 +1467,7 @@ pub fn optimize_estimate_payload(
         max_candidates,
         prioritize_below_decks_ability,
         ship_tier,
+        ship_level,
         bd_explicit,
     ) = requests::parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
@@ -1462,7 +1481,12 @@ pub fn optimize_estimate_payload(
             }],
         }));
     }
-    let below_decks_slots = resolve_below_decks_slots(ship_tier, bd_explicit);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        ship.trim(),
+        ship_tier,
+        ship_level,
+        bd_explicit,
+    );
     let estimated_candidates = match max_candidates {
         Some(cap) if cap <= MAX_CANDIDATES => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {

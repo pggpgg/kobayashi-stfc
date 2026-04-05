@@ -26,6 +26,7 @@ import {
 import type { SupportBuffId } from "./supportBuffs";
 import {
   belowDeckSlotCount,
+  DEFAULT_BELOW_DECK_UNLOCK_LEVELS,
   type CrewState,
   createEmptyCrew,
   createEmptyPins,
@@ -54,10 +55,18 @@ export function useWorkspace() {
   const [shipLevel, setShipLevel] = useState(50);
   const [shipId, setShipId] = useState("");
   const [scenarioId, setScenarioId] = useState("");
+  /** Per-ship below-decks unlock levels from API `crew_slots`; default matches typical STFC progression. */
+  const [belowDeckUnlockLevels, setBelowDeckUnlockLevels] = useState<number[]>(
+    () => [...DEFAULT_BELOW_DECK_UNLOCK_LEVELS],
+  );
 
   // Crew state
-  const [crew, setCrew] = useState<CrewState>(() => createEmptyCrew(50));
-  const [pins, setPins] = useState<PinsState>(() => createEmptyPins(50));
+  const [crew, setCrew] = useState<CrewState>(() =>
+    createEmptyCrew(50, DEFAULT_BELOW_DECK_UNLOCK_LEVELS),
+  );
+  const [pins, setPins] = useState<PinsState>(() =>
+    createEmptyPins(50, DEFAULT_BELOW_DECK_UNLOCK_LEVELS),
+  );
 
   // Simulation state
   const [simResult, setSimResult] = useState<SimulateStats | null>(null);
@@ -197,6 +206,8 @@ export function useWorkspace() {
         max_candidates: maxCandidates ?? undefined,
         prioritize_below_decks_ability:
           prioritizeBelowDecksAbility || undefined,
+        ship_tier: shipTier > 0 ? shipTier : undefined,
+        ship_level: shipLevel > 0 ? shipLevel : undefined,
       },
       activeProfileId,
     )
@@ -215,6 +226,8 @@ export function useWorkspace() {
     simsPerCrew,
     maxCandidates,
     prioritizeBelowDecksAbility,
+    shipTier,
+    shipLevel,
     activeProfileId,
   ]);
 
@@ -225,9 +238,9 @@ export function useWorkspace() {
       .catch(() => setAvailableSeeds([]));
   }, []);
 
-  // Sync crew/pins with ship level changes
+  // Sync crew/pins with ship level and per-ship below-decks unlock schedule
   useEffect(() => {
-    const n = belowDeckSlotCount(shipLevel);
+    const n = belowDeckSlotCount(shipLevel, belowDeckUnlockLevels);
     setCrew((c) => {
       const next = [...c.belowDeck];
       while (next.length < n) next.push(null);
@@ -240,7 +253,7 @@ export function useWorkspace() {
       if (next.length > n) next.length = n;
       return { ...p, belowDeck: next };
     });
-  }, [shipLevel]);
+  }, [shipLevel, belowDeckUnlockLevels]);
 
   // Handle running a simulation
   const handleRunSim = async () => {
@@ -621,6 +634,8 @@ export function useWorkspace() {
     setShipTier,
     shipLevel,
     setShipLevel,
+    belowDeckUnlockLevels,
+    setBelowDeckUnlockLevels,
     // Crew
     crew,
     setCrew,

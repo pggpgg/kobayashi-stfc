@@ -156,6 +156,7 @@ mod tests {
                         stat: "weapon_damage".to_string(),
                         value: 0.03,
                         operator: "add".to_string(),
+                        condition: Default::default(),
                     }],
                 }],
             }],

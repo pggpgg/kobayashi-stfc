@@ -4,10 +4,10 @@ import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import type { OfficerListItem } from "../lib/api";
 import { fetchOfficers } from "../lib/api";
 import type { CrewState, PinsState } from "../lib/types";
-import { belowDeckSlotCount } from "../lib/types";
 
 interface CrewBuilderProps {
-  shipLevel: number;
+  /** Resolved below-decks officer slot count for the current ship level + unlock schedule. */
+  belowDecksSlots: number;
   crew: CrewState;
   pins: PinsState;
   onCrewChange: (crew: CrewState) => void;
@@ -15,7 +15,7 @@ interface CrewBuilderProps {
 }
 
 export default function CrewBuilder({
-  shipLevel,
+  belowDecksSlots,
   crew,
   pins,
   onCrewChange,
@@ -25,7 +25,7 @@ export default function CrewBuilder({
   const { ownedOnly } = useWorkspaceMode();
   const [officers, setOfficers] = useState<OfficerListItem[]>([]);
 
-  const belowN = belowDeckSlotCount(shipLevel);
+  const belowN = belowDecksSlots;
 
   useEffect(() => {
     let cancelled = false;

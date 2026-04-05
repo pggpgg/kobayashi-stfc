@@ -16,7 +16,10 @@ export default function Workspace() {
           shipTier: ws.shipTier,
           shipLevel: ws.shipLevel,
           numSims: ws.simsPerCrew,
-          belowDecksSlots: belowDeckSlotCount(ws.shipLevel),
+          belowDecksSlots: belowDeckSlotCount(
+            ws.shipLevel,
+            ws.belowDeckUnlockLevels,
+          ),
           profileId: ws.activeProfileId,
           ...(ws.selectedSupportBuffs.length > 0
             ? { supportBuffs: ws.selectedSupportBuffs }
@@ -42,6 +45,7 @@ export default function Workspace() {
         onShipTierChange={ws.setShipTier}
         shipLevel={ws.shipLevel}
         onShipLevelChange={ws.setShipLevel}
+        onBelowDeckUnlockLevelsChange={ws.setBelowDeckUnlockLevels}
         crew={ws.crew}
         simsPerCrew={ws.simsPerCrew}
         onSimsPerCrewChange={ws.setSimsPerCrew}
@@ -133,7 +137,10 @@ export default function Workspace() {
           }}
         >
           <CrewBuilder
-            shipLevel={ws.shipLevel}
+            belowDecksSlots={belowDeckSlotCount(
+              ws.shipLevel,
+              ws.belowDeckUnlockLevels,
+            )}
             crew={ws.crew}
             pins={ws.pins}
             onCrewChange={ws.setCrew}

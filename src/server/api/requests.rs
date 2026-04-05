@@ -65,7 +65,7 @@ pub struct OptimizeRequest {
     pub below_decks_strategy: Option<String>,
     /// Keep only this many crews after approximate analytical ranking (closed-form expected hull damage) before Monte Carlo. Omitted = evaluate all generated candidates. Ignored for genetic strategy.
     pub analytical_prefilter_keep: Option<u32>,
-    /// Below-decks slot count (2–5). Omitted = tier default (tier 1 → 2, else 3).
+    /// Below-decks slot count (0–7). Omitted = resolved from ship level + `crew_slots` when present, else tier heuristic.
     pub below_decks_slots: Option<u32>,
     /// Optional crew search constraints (must-include, exclude, groups, seating).
     #[serde(default)]
@@ -400,7 +400,7 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 }
 
 /// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates,
-/// optional prioritize_below_decks_ability, optional ship_tier and below_decks_slots.
+/// optional prioritize_below_decks_ability, optional ship_tier, ship_level, below_decks_slots.
 pub fn parse_optimize_estimate_query(
     query: &str,
 ) -> (
@@ -411,6 +411,7 @@ pub fn parse_optimize_estimate_query(
     bool,
     Option<u32>,
     Option<u32>,
+    Option<u32>,
 ) {
     let mut ship = String::new();
     let mut hostile = String::new();
@@ -418,6 +419,7 @@ pub fn parse_optimize_estimate_query(
     let mut max_candidates: Option<u32> = None;
     let mut prioritize_below_decks_ability = false;
     let mut ship_tier: Option<u32> = None;
+    let mut ship_level: Option<u32> = None;
     let mut below_decks_slots: Option<u32> = None;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
@@ -433,6 +435,7 @@ pub fn parse_optimize_estimate_query(
                         value.eq_ignore_ascii_case("true") || value == "1"
                 }
                 "ship_tier" => ship_tier = value.parse().ok(),
+                "ship_level" => ship_level = value.parse().ok(),
                 "below_decks_slots" => below_decks_slots = value.parse().ok(),
                 _ => {}
             }
@@ -445,6 +448,7 @@ pub fn parse_optimize_estimate_query(
         max_candidates,
         prioritize_below_decks_ability,
         ship_tier,
+        ship_level,
         below_decks_slots,
     )
 }

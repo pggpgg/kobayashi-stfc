@@ -8,7 +8,8 @@ use crate::data::hostile::{
     DEFAULT_HOSTILES_INDEX_PATH,
 };
 use crate::data::ship::{
-    load_extended_ship_index, load_extended_ship_record, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
+    load_extended_ship_index, load_extended_ship_record, CrewSlotUnlock, ShipRecord,
+    DEFAULT_SHIPS_EXTENDED_DIR,
 };
 
 /// Normalize a string for lookup: lowercase, collapse spaces/underscores.
@@ -102,9 +103,11 @@ pub fn resolve_ship_with_tier_level(
     extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))
 }
 
-/// Return available tier and level numbers for a ship (by id or name). From data/ships_extended.
-/// Returns (tiers, levels); if no extended data, returns None.
-pub fn ship_tiers_levels(name_or_id: &str) -> Option<(Vec<u32>, Vec<u32>)> {
+/// Return available tier and level numbers plus below-decks unlock schedule. From `data/ships_extended`.
+/// Returns None if no extended ship file.
+pub fn ship_tiers_levels_and_crew_slots(
+    name_or_id: &str,
+) -> Option<(Vec<u32>, Vec<u32>, Vec<CrewSlotUnlock>)> {
     let normalized = normalize_lookup(name_or_id);
     let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
     if !extended_dir.is_dir() {
@@ -121,5 +124,11 @@ pub fn ship_tiers_levels(name_or_id: &str) -> Option<(Vec<u32>, Vec<u32>)> {
     let extended = load_extended_ship_record(extended_dir, id)?;
     let tiers: Vec<u32> = extended.tiers.iter().map(|t| t.tier).collect();
     let levels: Vec<u32> = extended.levels.iter().map(|l| l.level).collect();
-    Some((tiers, levels))
+    Some((tiers, levels, extended.crew_slots))
+}
+
+/// Return available tier and level numbers for a ship (by id or name). From data/ships_extended.
+/// Returns (tiers, levels); if no extended data, returns None.
+pub fn ship_tiers_levels(name_or_id: &str) -> Option<(Vec<u32>, Vec<u32>)> {
+    ship_tiers_levels_and_crew_slots(name_or_id).map(|(t, l, _)| (t, l))
 }

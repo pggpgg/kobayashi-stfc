@@ -3,10 +3,16 @@
 //! `accuracy` merges into `profile.bonuses` and scales ship base accuracy for hostile dodge mitigation
 //! (see `effective_attacker_stats_for_mitigation` tests in `src/optimizer/monte_carlo/scenario.rs`).
 
+use kobayashi::combat::{
+    AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, ShipType, TimingWindow,
+};
 use kobayashi::data::import::ResearchEntry;
-use kobayashi::data::profile::merge_research_bonuses_into_profile;
-use kobayashi::data::profile::PlayerProfile;
-use kobayashi::data::research::ResearchCatalog;
+use kobayashi::data::profile::{
+    merge_research_bonuses_into_profile, research_derived_attack_phase_seats, PlayerProfile,
+};
+use kobayashi::data::research::{
+    ResearchBonusConditionKey, ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+};
 
 #[test]
 fn merge_research_applies_fixture_catalog_weapon_damage() {
@@ -71,6 +77,7 @@ fn merge_research_stacks_accuracy_across_two_rids_additively() {
                 stat: "accuracy".into(),
                 value: 0.02,
                 operator: "add".into(),
+                condition: Default::default(),
             }],
         }],
     });
@@ -130,6 +137,7 @@ fn merge_research_duplicate_rid_uses_max_level() {
                         stat: "weapon_damage".to_string(),
                         value: 0.05,
                         operator: "add".to_string(),
+                        condition: Default::default(),
                     }],
                 },
                 ResearchLevel {
@@ -138,6 +146,7 @@ fn merge_research_duplicate_rid_uses_max_level() {
                         stat: "weapon_damage".to_string(),
                         value: 0.07,
                         operator: "add".to_string(),
+                        condition: Default::default(),
                     }],
                 },
             ],
@@ -156,5 +165,55 @@ fn merge_research_duplicate_rid_uses_max_level() {
     assert!(
         (w - 0.12).abs() < 1e-9,
         "expected weapon_damage 0.12 from max level 2, got {w}"
+    );
+}
+
+#[test]
+fn merge_research_conditional_crit_is_attack_phase_seat_not_profile_crit() {
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: 99000005,
+            name: Some("Gated crit lab".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "crit_chance".into(),
+                    value: 0.06,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        defender_ship_class: Some("explorer".into()),
+                        ..Default::default()
+                    },
+                }],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry {
+        rid: 99000005,
+        level: 1,
+    }];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    assert!(
+        !profile.bonuses.contains_key("crit_chance"),
+        "conditional crit must not merge into profile.bonuses"
+    );
+
+    let seats = research_derived_attack_phase_seats(&imported, &catalog);
+    assert_eq!(seats.len(), 1);
+    assert_eq!(seats[0].seat, CrewSeat::Ship);
+    assert_eq!(seats[0].ability.class, AbilityClass::ShipAbility);
+    assert_eq!(seats[0].ability.timing, TimingWindow::AttackPhase);
+    match &seats[0].ability.effect {
+        AbilityEffect::CritChanceBonus(v) => assert!((v - 0.06).abs() < 1e-12),
+        e => panic!("expected CritChanceBonus, got {e:?}"),
+    }
+    assert_eq!(
+        seats[0].ability.condition,
+        Some(AbilityCondition::DefenderShipTypeIs(ShipType::Explorer))
     );
 }

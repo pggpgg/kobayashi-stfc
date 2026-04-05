@@ -13,7 +13,7 @@ use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
-use crate::optimizer::crew_generator::{resolve_below_decks_slots, CrewCandidate};
+use crate::optimizer::crew_generator::{resolve_below_decks_slots_for_ship, CrewCandidate};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
@@ -317,7 +317,12 @@ fn gather_optimize_simulation_results(
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
     let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
-    let below_decks_slots = resolve_below_decks_slots(request.ship_tier, request.below_decks_slots);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &request.ship,
+        request.ship_tier,
+        request.ship_level,
+        request.below_decks_slots,
+    );
     let crew_constraints = build_crew_search_constraints(request);
 
     let mut h_candidates = if heuristics_seeds_nonempty {

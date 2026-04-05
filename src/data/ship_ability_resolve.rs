@@ -90,7 +90,7 @@ pub fn parse_ship_ability_timing(s: &str) -> Option<TimingWindow> {
 }
 
 /// If the game stores probabilities as whole percents (e.g. 25 = 25%), fold to [0, 1].
-fn normalize_probability(value: f64) -> f64 {
+pub(crate) fn normalize_probability(value: f64) -> f64 {
     if (1.0..=100.0).contains(&value) {
         value / 100.0
     } else {
