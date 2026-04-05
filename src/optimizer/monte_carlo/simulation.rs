@@ -34,10 +34,15 @@ pub struct SimulationResult {
     pub r1_kill_rate: f64,
     pub r1_kill_rate_ci_low: f64,
     pub r1_kill_rate_ci_high: f64,
+    /// Mean attacker hull fraction (0–1): on wins, score from remaining HP / formula; 0 on losses/stalls.
     pub avg_hull_remaining: f64,
     /// Normal-approx 95% CI for the per-trial mean (hull fraction on wins, 0 on losses).
     pub avg_hull_remaining_ci_low: f64,
     pub avg_hull_remaining_ci_high: f64,
+    /// Mean defender (hostile) hull fraction remaining (0–1), averaged over **all** trials.
+    pub avg_defender_hull_remaining: f64,
+    pub avg_defender_hull_remaining_ci_low: f64,
+    pub avg_defender_hull_remaining_ci_high: f64,
 }
 
 /// Stable hash for deduplicating identical crews in GA populations (same process = deterministic).
@@ -110,6 +115,8 @@ fn run_candidate_monte_carlo(
     let mut surviving_hull_sum = 0.0f64;
     let mut hull_mean = 0.0f64;
     let mut hull_m2 = 0.0f64;
+    let mut def_hull_mean = 0.0f64;
+    let mut def_hull_m2 = 0.0f64;
 
     let mut combat_config = SimulationConfig {
         rounds: input.rounds,
@@ -166,6 +173,13 @@ fn run_candidate_monte_carlo(
         let delta2 = hull_draw - hull_mean;
         hull_m2 += delta * delta2;
 
+        let def_max = input.defender.hull_health.max(1.0);
+        let def_draw = (result.defender_hull_remaining / def_max).clamp(0.0, 1.0);
+        let delta_d = def_draw - def_hull_mean;
+        def_hull_mean += delta_d / i as f64;
+        let delta_d2 = def_draw - def_hull_mean;
+        def_hull_m2 += delta_d * delta_d2;
+
         if result.attacker_won && !result.winner_by_round_limit && result.rounds_simulated == 1 {
             r1_kills += 1;
         }
@@ -218,6 +232,26 @@ fn run_candidate_monte_carlo(
         )
     };
 
+    let avg_defender_hull_remaining = if n_done == 0 {
+        0.0
+    } else {
+        def_hull_mean
+    };
+    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) =
+        if n_done == 0 {
+            (0.0, 0.0)
+        } else if n_done == 1 {
+            (avg_defender_hull_remaining, avg_defender_hull_remaining)
+        } else {
+            let var = def_hull_m2 / (n_done as f64 - 1.0);
+            let se = (var / n_done as f64).sqrt().max(0.0);
+            const Z: f64 = 1.96;
+            (
+                (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
+                (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
+            )
+        };
+
     SimulationResult {
         candidate: candidate.clone(),
         win_rate,
@@ -235,6 +269,9 @@ fn run_candidate_monte_carlo(
         avg_hull_remaining,
         avg_hull_remaining_ci_low,
         avg_hull_remaining_ci_high,
+        avg_defender_hull_remaining,
+        avg_defender_hull_remaining_ci_low,
+        avg_defender_hull_remaining_ci_high,
     }
 }
 
@@ -332,6 +369,9 @@ pub fn run_monte_carlo_parallel_deduped(
                 avg_hull_remaining: r.avg_hull_remaining,
                 avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
                 avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+                avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+                avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+                avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
             },
         );
     }

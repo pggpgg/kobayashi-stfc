@@ -258,6 +258,8 @@ export interface SimulateStats {
   stall_rate: number;
   loss_rate: number;
   avg_hull_remaining: number;
+  /** Mean hostile hull left as fraction of max hull (0–1), all trials. */
+  avg_defender_hull_remaining: number;
   n: number;
   win_rate_95_ci?: [number, number];
 }
@@ -419,6 +421,9 @@ export interface CrewRecommendation {
   avg_hull_remaining: number;
   avg_hull_remaining_ci_low: number;
   avg_hull_remaining_ci_high: number;
+  avg_defender_hull_remaining: number;
+  avg_defender_hull_remaining_ci_low: number;
+  avg_defender_hull_remaining_ci_high: number;
 }
 
 export interface OptimizeResponse {

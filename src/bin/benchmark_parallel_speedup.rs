@@ -97,6 +97,11 @@ fn main() {
             "result {} avg_hull_remaining mismatch",
             i
         );
+        assert!(
+            (a.avg_defender_hull_remaining - b.avg_defender_hull_remaining).abs() < 1e-9,
+            "result {} avg_defender_hull_remaining mismatch",
+            i
+        );
     }
     println!("(Results match sequential vs parallel)");
 }

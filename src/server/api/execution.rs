@@ -49,6 +49,9 @@ pub struct CrewRecommendation {
     pub avg_hull_remaining: f64,
     pub avg_hull_remaining_ci_low: f64,
     pub avg_hull_remaining_ci_high: f64,
+    pub avg_defender_hull_remaining: f64,
+    pub avg_defender_hull_remaining_ci_low: f64,
+    pub avg_defender_hull_remaining_ci_high: f64,
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
@@ -82,6 +85,9 @@ fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
         avg_hull_remaining: r.avg_hull_remaining,
         avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
         avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+        avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+        avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+        avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
     }
 }
 
@@ -300,6 +306,9 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
         avg_hull_remaining: r.avg_hull_remaining,
         avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
         avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+        avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+        avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+        avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
     }
 }
 
@@ -520,6 +529,9 @@ fn build_optimize_response(
                 avg_hull_remaining: result.avg_hull_remaining,
                 avg_hull_remaining_ci_low: result.avg_hull_remaining_ci_low,
                 avg_hull_remaining_ci_high: result.avg_hull_remaining_ci_high,
+                avg_defender_hull_remaining: result.avg_defender_hull_remaining,
+                avg_defender_hull_remaining_ci_low: result.avg_defender_hull_remaining_ci_low,
+                avg_defender_hull_remaining_ci_high: result.avg_defender_hull_remaining_ci_high,
             })
             .collect(),
         duration_ms: Some(duration_ms),

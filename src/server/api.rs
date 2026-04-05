@@ -371,6 +371,8 @@ pub struct SimulateStats {
     pub stall_rate: f64,
     pub loss_rate: f64,
     pub avg_hull_remaining: f64,
+    /// Mean hostile hull remaining as a fraction of max hull (0–1), all trials.
+    pub avg_defender_hull_remaining: f64,
     pub n: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub win_rate_95_ci: Option<[f64; 2]>,
@@ -575,6 +577,9 @@ pub fn simulate_payload(
         avg_hull_remaining: 0.0,
         avg_hull_remaining_ci_low: 0.0,
         avg_hull_remaining_ci_high: 0.0,
+        avg_defender_hull_remaining: 0.0,
+        avg_defender_hull_remaining_ci_low: 0.0,
+        avg_defender_hull_remaining_ci_high: 0.0,
     });
 
     let wins = (result.win_rate * num_sims as f64).round() as u32;
@@ -611,6 +616,7 @@ pub fn simulate_payload(
             stall_rate: result.stall_rate,
             loss_rate: result.loss_rate,
             avg_hull_remaining: result.avg_hull_remaining,
+            avg_defender_hull_remaining: result.avg_defender_hull_remaining,
             n: num_sims,
             win_rate_95_ci: Some(ci),
         },

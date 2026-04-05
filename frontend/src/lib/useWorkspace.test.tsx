@@ -29,6 +29,7 @@ const { apiMocks, doneOptimizeStatus } = vi.hoisted(() => {
         stall_rate: 0.1,
         loss_rate: 0.4,
         avg_hull_remaining: 0.3,
+        avg_defender_hull_remaining: 0.15,
         n: 100,
       },
       seed: 42,

@@ -389,8 +389,12 @@ export default function SimResults({
             <span>Stall rate: {(simResult.stall_rate * 100).toFixed(2)}%</span>
             <span>Loss rate: {(simResult.loss_rate * 100).toFixed(2)}%</span>
             <span>
-              Avg hull remaining:{" "}
+              Your hull remaining (wins):{" "}
               {(simResult.avg_hull_remaining * 100).toFixed(2)}%
+            </span>
+            <span>
+              Enemy hull remaining (avg):{" "}
+              {(simResult.avg_defender_hull_remaining * 100).toFixed(2)}%
             </span>
             <span style={{ color: "var(--text-muted)" }}>
               (n={simResult.n})
@@ -415,8 +419,8 @@ export default function SimResults({
             }}
           >
             Select 2–5 rows to compare. Optimize columns show point % (95% CI):
-            Wilson for win/stall/loss/R1; normal approx for hull score per
-            trial.
+            Wilson for win/stall/loss/R1; normal approx for hull scores per
+            trial (your hull on wins; enemy hull all trials).
           </p>
           <div
             style={{
@@ -602,7 +606,14 @@ export default function SimResults({
                   >
                     Below Deck
                   </th>
-                  {["Win %", "Stall %", "Loss %", "R1 %", "Hull %"].map((h) => (
+                  {[
+                    "Win %",
+                    "Stall %",
+                    "Loss %",
+                    "R1 %",
+                    "Your hull %",
+                    "Enemy hull %",
+                  ].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -765,6 +776,20 @@ export default function SimResults({
                           r.avg_hull_remaining_ci_high,
                         )}
                       </td>
+                      <td
+                        style={{
+                          padding: TABLE_NUM_PAD,
+                          textAlign: "right",
+                          whiteSpace: "nowrap",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {formatPctWithCi(
+                          r.avg_defender_hull_remaining,
+                          r.avg_defender_hull_remaining_ci_low,
+                          r.avg_defender_hull_remaining_ci_high,
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -809,6 +834,12 @@ export default function SimResults({
                     prev != null
                       ? (r.avg_hull_remaining - prev.avg_hull_remaining) * 100
                       : 0;
+                  const deltaEnemyHull =
+                    prev != null
+                      ? (r.avg_defender_hull_remaining -
+                          prev.avg_defender_hull_remaining) *
+                        100
+                      : 0;
                   return (
                     <div key={idx} style={{ fontSize: "0.85rem" }}>
                       <span style={{ fontWeight: 600 }}>#{idx + 1}</span>{" "}
@@ -823,11 +854,13 @@ export default function SimResults({
                           {deltaStall >= 0 ? "+" : ""}
                           {deltaStall.toFixed(2)}%, Δ Loss{" "}
                           {deltaLoss >= 0 ? "+" : ""}
-                          {deltaLoss.toFixed(2)}%, Δ R1{" "}
+                          {deltaLoss.toFixed(2)}%,                           Δ R1{" "}
                           {deltaR1 >= 0 ? "+" : ""}
-                          {deltaR1.toFixed(2)}%, Δ Hull{" "}
+                          {deltaR1.toFixed(2)}%, Δ Your hull{" "}
                           {deltaHull >= 0 ? "+" : ""}
-                          {deltaHull.toFixed(2)}%
+                          {deltaHull.toFixed(2)}%, Δ Enemy hull{" "}
+                          {deltaEnemyHull >= 0 ? "+" : ""}
+                          {deltaEnemyHull.toFixed(2)}%
                         </span>
                       )}
                     </div>
