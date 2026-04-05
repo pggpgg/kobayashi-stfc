@@ -24,6 +24,8 @@ This document outlines a strategy to import ship and hostile data from **data.st
 - `apex_barrier`: Optional, true damage mitigation (flat reduction after other mitigations)
 - `isolytic_defense`: Optional, flat reduction to isolytic damage taken
 
+**Upstream `ship_type` (u32):** Separate from hull line (`hull_type` → `ship_class`). Kobayashi maintains a reverse-engineered mapping in `src/data/upstream_hostile_ship_type.rs` and applies it at combat time via `HostileRecord::ship_type_for_combat` (e.g. value `1` = armada target). See [ROADMAP.md](ROADMAP.md) § *Hostile upstream `ship_type`* and [DESIGN.md](DESIGN.md) §3 (LCARS conditions / defender class note).
+
 **Hostile Index** — Lookup catalog in `data/hostiles/index.json`:
 - `data_version`: Semver or date string (e.g., `"stfcspace-2026-03-01"`)
 - `source_note`: Attribution (e.g., `"stfc.space API (data.stfc.space/hostile/summary.json)"`)

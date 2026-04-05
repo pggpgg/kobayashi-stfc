@@ -27,7 +27,8 @@ use crate::data::profile::{
     apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
     apply_static_buffs_to_combatant, forbidden_tech_level_tier_scaling_enabled_from_env,
     load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    merge_tech_fids_into_profile_with_level_tier, resolve_effective_tech_fids, PlayerProfile,
+    merge_tech_fids_into_profile_with_level_tier, research_derived_attack_phase_seats,
+    resolve_effective_tech_fids, PlayerProfile,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -94,6 +95,16 @@ fn extend_crew_with_morale_gated_profile_bonuses(
     });
 }
 
+fn extend_crew_with_research_derived_attack_phase_seats(
+    seats: &mut Vec<CrewSeatContext>,
+    derived: &[CrewSeatContext],
+) {
+    if derived.is_empty() {
+        return;
+    }
+    seats.extend(derived.iter().cloned());
+}
+
 /// [`AttackerStats`] for hostile mitigation and player pierce-through: ship components, profile
 /// accuracy multiplier, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
 /// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
@@ -123,7 +134,7 @@ pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
     profile: &PlayerProfile,
     static_buffs: &HashMap<String, f64>,
 ) -> (f64, f64) {
-    let ship_type = hostile_rec.ship_type();
+    let ship_type = hostile_rec.ship_type_for_combat();
     let attacker_stats =
         effective_attacker_stats_for_mitigation(ship_rec, profile, static_buffs, ship_type);
     let defender_stats = hostile_rec.to_defender_stats();
@@ -222,6 +233,8 @@ pub(crate) struct SharedScenarioData {
     /// Request ids not present in the support buff catalog (for API warnings).
     #[allow(dead_code)]
     pub unknown_support_buff_ids: Vec<String>,
+    /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
+    pub research_derived_seats: Vec<CrewSeatContext>,
 }
 
 impl SharedScenarioData {
@@ -229,7 +242,7 @@ impl SharedScenarioData {
     pub(crate) fn defender_ship_type_for_combat(&self) -> ShipType {
         self.hostile_rec
             .as_ref()
-            .map(|h| h.ship_type())
+            .map(|h| h.ship_type_for_combat())
             .unwrap_or(ShipType::Battleship)
     }
 
@@ -343,6 +356,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         let mut seats = crew_seats.clone();
         extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
         extend_crew_with_morale_gated_profile_bonuses(&mut seats, &shared.profile);
+        extend_crew_with_research_derived_attack_phase_seats(
+            &mut seats,
+            &shared.research_derived_seats,
+        );
         return CombatSimulationInput {
             attacker,
             defender,
@@ -388,6 +405,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     let mut seats = crew_seats.clone();
     extend_crew_with_ship_abilities(&mut seats, shared.ship_rec.as_ref());
     extend_crew_with_morale_gated_profile_bonuses(&mut seats, &shared.profile);
+    extend_crew_with_research_derived_attack_phase_seats(
+        &mut seats,
+        &shared.research_derived_seats,
+    );
 
     CombatSimulationInput {
         attacker,
@@ -660,7 +681,7 @@ pub(crate) fn computed_defender_mitigation(ship: &str, hostile: &str) -> f64 {
         return mitigation_for_hostile(
             hostile_rec.to_defender_stats(),
             ship_rec.to_attacker_stats(),
-            hostile_rec.ship_type(),
+            hostile_rec.ship_type_for_combat(),
             hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -730,11 +751,27 @@ pub(crate) fn build_shared_scenario_data_standalone(
         }
     }
 
+    let shared_research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
+    let research_derived_seats = if let Some(imported_research) = import::load_imported_research(
+        profile_path(&pid, RESEARCH_IMPORTED)
+            .to_string_lossy()
+            .as_ref(),
+    ) {
+        if let Some(ref cat) = shared_research_catalog {
+            merge_research_bonuses_into_profile(&mut profile, &imported_research, cat);
+            research_derived_attack_phase_seats(&imported_research, cat)
+        } else {
+            Vec::new()
+        }
+    } else {
+        Vec::new()
+    };
+
     let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
     let support_cat =
         SupportBuffCatalog::load(manifest.join(support_buffs::DEFAULT_SUPPORT_BUFFS_PATH)).ok();
     let research_for_buffs = if support_buffs_request.is_some_and(|s| !s.is_empty()) {
-        load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH)
+        shared_research_catalog.as_ref()
     } else {
         None
     };
@@ -742,7 +779,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         support_buffs::apply_support_buffs_for_request(
             &mut profile,
             support_cat.as_ref(),
-            research_for_buffs.as_ref(),
+            research_for_buffs,
             support_buffs_request,
         );
 
@@ -796,7 +833,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
             hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -804,7 +841,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         let pierce = pierce_damage_through_bonus(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
         );
         let defender = defender_combatant_from_hostile_record(
             hostile,
@@ -844,6 +881,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         resolved_support_buffs,
         support_static_buffs,
         unknown_support_buff_ids,
+        research_derived_seats,
     }
 }
 
@@ -925,15 +963,20 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         }
     }
 
-    if let Some(imported_research) = import::load_imported_research(
+    let research_derived_seats = if let Some(imported_research) = import::load_imported_research(
         profile_path(&pid, RESEARCH_IMPORTED)
             .to_string_lossy()
             .as_ref(),
     ) {
         if let Some(catalog) = registry.research_catalog() {
             merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
+            research_derived_attack_phase_seats(&imported_research, catalog)
+        } else {
+            Vec::new()
         }
-    }
+    } else {
+        Vec::new()
+    };
 
     let (resolved_support_buffs, support_static_buffs, unknown_support_buff_ids) =
         support_buffs::apply_support_buffs_for_request(
@@ -985,7 +1028,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
             hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -993,7 +1036,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         let pierce = pierce_damage_through_bonus(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type(),
+            hostile_r.ship_type_for_combat(),
         );
         let defender = defender_combatant_from_hostile_record(
             hostile,
@@ -1033,6 +1076,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         resolved_support_buffs,
         support_static_buffs,
         unknown_support_buff_ids,
+        research_derived_seats,
     }
 }
 
@@ -1163,6 +1207,7 @@ mod tests {
                         stat: "accuracy".into(),
                         value: 0.05,
                         operator: "add".into(),
+                        condition: Default::default(),
                     }],
                 }],
             }],
@@ -1467,6 +1512,7 @@ mod tests {
             resolved_support_buffs: vec![],
             support_static_buffs: HashMap::new(),
             unknown_support_buff_ids: vec![],
+            research_derived_seats: vec![],
         };
 
         let candidate = CrewCandidate {

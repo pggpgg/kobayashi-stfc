@@ -19,7 +19,7 @@ use crate::data::import::load_imported_ships;
 use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
 };
-use crate::data::loader::ship_tiers_levels;
+use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
     PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
@@ -27,7 +27,8 @@ use crate::data::profile_index::{
 use crate::data::research_summary::research_combat_summary_for_profile;
 use crate::data::support_buffs;
 use crate::optimizer::crew_generator::{
-    resolve_below_decks_slots, CandidateStrategy, CrewCandidate, CrewGenerator, BRIDGE_SLOTS,
+    resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate, CrewGenerator,
+    BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
     compare_crews_monte_carlo_with_registry, replay_optimize_iteration_with_registry,
@@ -142,6 +143,16 @@ pub struct ShipListItem {
 
 const HULL_ID_REGISTRY_PATH: &str = "data/hull_id_registry.json";
 
+/// When several `ships.imported.json` rows share the same hull → same Kobayashi ship id (e.g. two
+/// Amalgams), keep the row with the highest tier, breaking ties by highest level.
+fn merge_roster_tier_level(existing: (u32, u32), incoming: (u32, u32)) -> (u32, u32) {
+    if existing.0 > incoming.0 || (existing.0 == incoming.0 && existing.1 > incoming.1) {
+        existing
+    } else {
+        incoming
+    }
+}
+
 /// Load hull_id -> ship_id mapping. Returns empty map if file missing or invalid.
 fn load_hull_id_registry() -> HashMap<i64, String> {
     let raw = match fs::read_to_string(HULL_ID_REGISTRY_PATH) {
@@ -193,9 +204,12 @@ pub fn ships_payload(
         if let Some(ships) = &imported {
             for entry in ships {
                 if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                    let t = entry.tier.max(0) as u32;
+                    let l = entry.level.max(0) as u32;
                     roster_tier_level
                         .entry(sid.clone())
-                        .or_insert_with(|| (entry.tier as u32, entry.level as u32));
+                        .and_modify(|cur| *cur = merge_roster_tier_level(*cur, (t, l)))
+                        .or_insert((t, l));
                 }
             }
         }
@@ -253,15 +267,17 @@ const DEFAULT_TIERS: &[u32] = &[1];
 const DEFAULT_LEVELS: &[u32] = &[1, 10, 20, 30, 40, 50, 60];
 
 pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Error> {
-    let (mut tiers, mut levels) = ship_tiers_levels(ship_id)
-        .unwrap_or_else(|| (DEFAULT_TIERS.to_vec(), DEFAULT_LEVELS.to_vec()));
+    let (mut tiers, mut levels, crew_slots) = ship_tiers_levels_and_crew_slots(ship_id)
+        .unwrap_or_else(|| (DEFAULT_TIERS.to_vec(), DEFAULT_LEVELS.to_vec(), vec![]));
     if tiers.is_empty() {
         tiers = DEFAULT_TIERS.to_vec();
     }
     if levels.is_empty() {
         levels = DEFAULT_LEVELS.to_vec();
     }
-    serde_json::to_string_pretty(&serde_json::json!({ "tiers": tiers, "levels": levels }))
+    serde_json::to_string_pretty(
+        &serde_json::json!({ "tiers": tiers, "levels": levels, "crew_slots": crew_slots }),
+    )
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -324,7 +340,7 @@ pub struct SimulateRequest {
     pub crew: SimulateCrew,
     pub num_sims: Option<u32>,
     pub seed: Option<u64>,
-    /// Below-decks slot count for padding crew (2–5). Omitted = tier default.
+    /// Below-decks slot count for padding crew (0–7). Omitted = resolved from ship level + `crew_slots` when present, else tier heuristic.
     pub below_decks_slots: Option<u32>,
     /// Optional alliance/ship support buff ids (see `data/support_buffs.json`).
     #[serde(default)]
@@ -355,6 +371,8 @@ pub struct SimulateStats {
     pub stall_rate: f64,
     pub loss_rate: f64,
     pub avg_hull_remaining: f64,
+    /// Mean hostile hull remaining as a fraction of max hull (0–1), all trials.
+    pub avg_defender_hull_remaining: f64,
     pub n: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub win_rate_95_ci: Option<[f64; 2]>,
@@ -498,7 +516,12 @@ pub fn simulate_payload(
             )));
         }
     }
-    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, req.below_decks_slots);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        req.below_decks_slots,
+    );
 
     let officers: Vec<(String, String)> = registry
         .officers()
@@ -554,6 +577,9 @@ pub fn simulate_payload(
         avg_hull_remaining: 0.0,
         avg_hull_remaining_ci_low: 0.0,
         avg_hull_remaining_ci_high: 0.0,
+        avg_defender_hull_remaining: 0.0,
+        avg_defender_hull_remaining_ci_low: 0.0,
+        avg_defender_hull_remaining_ci_high: 0.0,
     });
 
     let wins = (result.win_rate * num_sims as f64).round() as u32;
@@ -590,6 +616,7 @@ pub fn simulate_payload(
             stall_rate: result.stall_rate,
             loss_rate: result.loss_rate,
             avg_hull_remaining: result.avg_hull_remaining,
+            avg_defender_hull_remaining: result.avg_defender_hull_remaining,
             n: num_sims,
             win_rate_95_ci: Some(ci),
         },
@@ -623,7 +650,12 @@ pub fn compare_crews_payload(
         }
     }
     let proc_sample = req.proc_sample_trials.unwrap_or(0).min(150);
-    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, req.below_decks_slots);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        req.below_decks_slots,
+    );
 
     let officers: Vec<(String, String)> = registry
         .officers()
@@ -754,7 +786,12 @@ pub fn replay_optimize_seed_payload(
         .map(|o| (o.id.clone(), o.name.clone()))
         .collect();
 
-    let below_decks_slots = resolve_below_decks_slots(req.ship_tier, None);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        None,
+    );
     let candidate = crew_candidate_from_officer_fields(
         req.crew.captain.as_deref(),
         req.crew.bridge.as_deref(),
@@ -1436,6 +1473,7 @@ pub fn optimize_estimate_payload(
         max_candidates,
         prioritize_below_decks_ability,
         ship_tier,
+        ship_level,
         bd_explicit,
     ) = requests::parse_optimize_estimate_query(query);
     let sims = sims.clamp(1, MAX_SIMS);
@@ -1449,7 +1487,12 @@ pub fn optimize_estimate_payload(
             }],
         }));
     }
-    let below_decks_slots = resolve_below_decks_slots(ship_tier, bd_explicit);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        ship.trim(),
+        ship_tier,
+        ship_level,
+        bd_explicit,
+    );
     let estimated_candidates = match max_candidates {
         Some(cap) if cap <= MAX_CANDIDATES => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
@@ -1539,5 +1582,22 @@ mod preset_schema_tests {
         assert!(pr.inferred);
         assert_eq!(pr.source, "repaired_v2_missing_provenance");
         let _ = std::fs::remove_file(&tmp);
+    }
+}
+
+#[cfg(test)]
+mod roster_tier_merge_tests {
+    use super::merge_roster_tier_level;
+
+    #[test]
+    fn merge_prefers_higher_tier() {
+        assert_eq!(merge_roster_tier_level((3, 45), (6, 1)), (6, 1));
+        assert_eq!(merge_roster_tier_level((6, 1), (3, 45)), (6, 1));
+    }
+
+    #[test]
+    fn merge_same_tier_prefers_higher_level() {
+        assert_eq!(merge_roster_tier_level((5, 10), (5, 30)), (5, 30));
+        assert_eq!(merge_roster_tier_level((5, 30), (5, 10)), (5, 30));
     }
 }

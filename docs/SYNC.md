@@ -7,7 +7,7 @@ This uses the same sync protocol as [Spocks.club](https://spocks.club/syncing/);
 ## Requirements
 
 - [STFC Community Mod](https://github.com/netniV/stfc-mod/releases) installed and working with Star Trek Fleet Command (Windows or Wine/macOS as per the mod’s INSTALL.md).
-- Kobayashi server running (e.g. `kobayashi serve`). **Run the server from the project root** so that `data/officers/` and `rosters/` paths resolve correctly.
+- Kobayashi server running (e.g. `kobayashi serve`). **Run the server from the project root** so that `data/officers/` and `profiles/` resolve correctly.
 
 ## Configuration
 
@@ -91,7 +91,7 @@ To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the 
 - **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; 401 if token is required and missing/invalid; 400 if body is not a JSON array.
 
 - **Endpoint**: `GET /api/sync/status`
-- **Response**: 200 with JSON paths for the default profile (same paths the optimizer uses): `roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, `buffs_path`, each with `*_last_modified_iso` (ISO8601 or null if file missing).
+- **Response**: 200 with JSON paths for the selected profile (`X-Profile-Id` / `?profile=`, else effective default): `roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, `buffs_path`, each with `*_last_modified_iso` (ISO8601 or null if file missing), plus `last_mod_sync_utc` when the mod has persisted a batch.
 
 ## Sync payload reference
 
@@ -99,10 +99,10 @@ The request body is a JSON array; the first element’s `type` field determines 
 
 | Type | Keys per item | Notes |
 |------|----------------|--------|
-| **officer** | `type`, `oid` (game id), `rank`, `level`, optional `shard_count` | Merged into `rosters/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`. |
+| **officer** | `type`, `oid` (game id), `rank`, `level`, optional `shard_count` | Merged into `profiles/{id}/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`. |
 | **research** | `type`, `rid` (int64), `level` (int32) | One object per research project level. Persisted to `profiles/{id}/research.imported.json`. Used for combat when `data/research_catalog.json` is present. |
-| **buildings** / **module** | `type`, `bid` (int64), `level` (int32) | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `rosters/buildings.imported.json`. |
-| **ships** / **ship** | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `rosters/ships.imported.json`. |
+| **buildings** / **module** | `type`, `bid` (int64), `level` (int32) | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `profiles/{id}/buildings.imported.json`. |
+| **ships** / **ship** | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `profiles/{id}/ships.imported.json`. |
 | **ft** | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64) | Forbidden/chaos tech. Persisted to `profiles/{id}/forbidden_tech.imported.json`. |
 | **tech** | Same fields as **ft** | Same persistence as **ft** (stfc-mod queue name for forbidden/chaos tech). |
 | **buffs** | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds) | Global active buffs → `profiles/{id}/buffs.imported.json`. Removals: `type: "expired_buffs"` with `bid`. |

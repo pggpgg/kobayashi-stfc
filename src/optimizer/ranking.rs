@@ -26,6 +26,9 @@ pub struct RankedCrewResult {
     pub avg_hull_remaining: f64,
     pub avg_hull_remaining_ci_low: f64,
     pub avg_hull_remaining_ci_high: f64,
+    pub avg_defender_hull_remaining: f64,
+    pub avg_defender_hull_remaining_ci_low: f64,
+    pub avg_defender_hull_remaining_ci_high: f64,
     pub score: RankingScore,
 }
 
@@ -53,6 +56,9 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
                 avg_hull_remaining: result.avg_hull_remaining,
                 avg_hull_remaining_ci_low: result.avg_hull_remaining_ci_low,
                 avg_hull_remaining_ci_high: result.avg_hull_remaining_ci_high,
+                avg_defender_hull_remaining: result.avg_defender_hull_remaining,
+                avg_defender_hull_remaining_ci_low: result.avg_defender_hull_remaining_ci_low,
+                avg_defender_hull_remaining_ci_high: result.avg_defender_hull_remaining_ci_high,
                 score: RankingScore { value: score },
             }
         })

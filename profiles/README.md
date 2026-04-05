@@ -17,3 +17,12 @@ Only the bundled **`demo/`** tree (sample `profile.json`, roster, etc.) is meant
 - **Backup** — Use the app’s profile menu **Export backup (zip)** to archive `profiles/` safely offline.
 
 - **Leaked token** — If a sync token was ever exposed, generate a new profile or replace the token in `index.json` and update the mod’s token for that profile.
+
+## Roster CSV / Spocks sources (optional)
+
+Put files such as `my_roster.txt` or `spocks-export.json` **inside the profile directory** they belong to (e.g. `profiles/default/my_roster.txt`). Then:
+
+- `kobayashi import my_roster.txt --profile default` (bare name resolves under that profile folder), or
+- pass a full path.
+
+The importer writes **`roster.imported.json` in the same profile directory** (shared with Community Mod sync).

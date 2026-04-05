@@ -13,7 +13,7 @@ use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
-use crate::optimizer::crew_generator::{resolve_below_decks_slots, CrewCandidate};
+use crate::optimizer::crew_generator::{resolve_below_decks_slots_for_ship, CrewCandidate};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
@@ -49,6 +49,9 @@ pub struct CrewRecommendation {
     pub avg_hull_remaining: f64,
     pub avg_hull_remaining_ci_low: f64,
     pub avg_hull_remaining_ci_high: f64,
+    pub avg_defender_hull_remaining: f64,
+    pub avg_defender_hull_remaining_ci_low: f64,
+    pub avg_defender_hull_remaining_ci_high: f64,
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
@@ -82,6 +85,9 @@ fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
         avg_hull_remaining: r.avg_hull_remaining,
         avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
         avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+        avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+        avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+        avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
     }
 }
 
@@ -300,6 +306,9 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
         avg_hull_remaining: r.avg_hull_remaining,
         avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
         avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+        avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+        avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+        avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
     }
 }
 
@@ -317,7 +326,12 @@ fn gather_optimize_simulation_results(
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
     let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
-    let below_decks_slots = resolve_below_decks_slots(request.ship_tier, request.below_decks_slots);
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &request.ship,
+        request.ship_tier,
+        request.ship_level,
+        request.below_decks_slots,
+    );
     let crew_constraints = build_crew_search_constraints(request);
 
     let mut h_candidates = if heuristics_seeds_nonempty {
@@ -515,6 +529,9 @@ fn build_optimize_response(
                 avg_hull_remaining: result.avg_hull_remaining,
                 avg_hull_remaining_ci_low: result.avg_hull_remaining_ci_low,
                 avg_hull_remaining_ci_high: result.avg_hull_remaining_ci_high,
+                avg_defender_hull_remaining: result.avg_defender_hull_remaining,
+                avg_defender_hull_remaining_ci_low: result.avg_defender_hull_remaining_ci_low,
+                avg_defender_hull_remaining_ci_high: result.avg_defender_hull_remaining_ci_high,
             })
             .collect(),
         duration_ms: Some(duration_ms),

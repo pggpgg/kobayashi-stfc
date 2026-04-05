@@ -12,12 +12,14 @@ function crewRec(p: {
   stall_rate: number;
   loss_rate: number;
   avg_hull_remaining: number;
+  avg_defender_hull_remaining?: number;
   r1_kill_rate?: number;
 }): CrewRecommendation {
   const w = p.win_rate;
   const s = p.stall_rate;
   const l = p.loss_rate;
   const h = p.avg_hull_remaining;
+  const dh = p.avg_defender_hull_remaining ?? 0.25;
   const r1 = p.r1_kill_rate ?? 0.05;
   return {
     captain: p.captain,
@@ -38,6 +40,9 @@ function crewRec(p: {
     avg_hull_remaining: h,
     avg_hull_remaining_ci_low: Math.max(0, h - 0.02),
     avg_hull_remaining_ci_high: Math.min(1, h + 0.02),
+    avg_defender_hull_remaining: dh,
+    avg_defender_hull_remaining_ci_low: Math.max(0, dh - 0.02),
+    avg_defender_hull_remaining_ci_high: Math.min(1, dh + 0.02),
   };
 }
 
@@ -82,13 +87,15 @@ describe("SimResults", () => {
       stall_rate: 0.1,
       loss_rate: 0.05,
       avg_hull_remaining: 0.42,
+      avg_defender_hull_remaining: 0.18,
       n: 5000,
     };
     render(<SimResults {...baseProps} simResult={simResult} />);
     expect(screen.getByText("Win rate: 85.00%")).toBeTruthy();
     expect(screen.getByText("Stall rate: 10.00%")).toBeTruthy();
     expect(screen.getByText("Loss rate: 5.00%")).toBeTruthy();
-    expect(screen.getByText("Avg hull remaining: 42.00%")).toBeTruthy();
+    expect(screen.getByText("Your hull remaining (wins): 42.00%")).toBeTruthy();
+    expect(screen.getByText("Enemy hull remaining (avg): 18.00%")).toBeTruthy();
     expect(screen.getByText("(n=5000)")).toBeTruthy();
   });
 
@@ -98,6 +105,7 @@ describe("SimResults", () => {
       stall_rate: 0.1,
       loss_rate: 0.05,
       avg_hull_remaining: 0.42,
+      avg_defender_hull_remaining: 0.2,
       n: 5000,
       win_rate_95_ci: [0.83, 0.87],
     };

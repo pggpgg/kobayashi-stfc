@@ -10,7 +10,8 @@ use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
 use kobayashi::data::loader::{resolve_hostile, resolve_ship};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
 use kobayashi::data::profile_index::{
-    migrate_from_legacy_if_needed, profile_path, resolve_profile_id_for_api, PROFILE_JSON,
+    ensure_profile_index_bootstrap, prune_ephemeral_scenario_test_profiles, profile_data_dir,
+    profile_path, resolve_profile_id_for_api, sync_profile_index_with_disk, PROFILE_JSON,
     ROSTER_IMPORTED,
 };
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
@@ -341,25 +342,25 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-/// Roster files live here; a bare filename is resolved as rosters/<filename>.
-const ROSTERS_DIR: &str = "rosters";
-
 fn handle_import(args: &[String]) -> i32 {
     let raw = match args.first() {
         Some(s) if !s.starts_with("--") => s.clone(),
         _ => {
             eprintln!("usage: kobayashi import <path> [--profile <id>]");
             eprintln!("  use a .txt file for your roster (comma-separated: name,tier,level), or a .json file for Spocks export");
-            eprintln!("  roster files are usually in the '{ROSTERS_DIR}/' folder; a bare filename (e.g. my_roster.txt) is looked up there");
+            eprintln!("  bare filename resolves under profiles/<profile>/ (default profile if --profile omitted)");
             return 2;
         }
     };
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let path = if raw.contains('/') || raw.contains('\\') {
         raw.clone()
     } else {
-        format!("{ROSTERS_DIR}/{raw}")
+        profile_data_dir(&profile_id)
+            .join(&raw)
+            .to_string_lossy()
+            .into_owned()
     };
-    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let output_path = profile_path(&profile_id, ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
@@ -572,7 +573,7 @@ fn mitigation_sensitivity_command(args: &[String]) -> Result<(), String> {
     let baseline = HostileMitigationBaseline {
         defender,
         attacker,
-        ship_type: hostile_rec.ship_type(),
+        ship_type: hostile_rec.ship_type_for_combat(),
         mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
         mitigation_floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
         mitigation_ceiling: hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -596,7 +597,9 @@ mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--del
 }
 
 fn main() {
-    let _ = migrate_from_legacy_if_needed();
+    let _ = ensure_profile_index_bootstrap();
+    let _ = prune_ephemeral_scenario_test_profiles();
+    let _ = sync_profile_index_with_disk();
     kobayashi::logging::init();
     kobayashi::parallel::init_from_env();
 

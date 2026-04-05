@@ -234,6 +234,16 @@
       "health": 129.36
     }
   ],
+  "crew_slots": [
+    {
+      "slots": "1",
+      "unlock_level": 5
+    },
+    {
+      "slots": "2",
+      "unlock_level": 15
+    }
+  ],
   "abilities": [
     {
       "id": "987222969",

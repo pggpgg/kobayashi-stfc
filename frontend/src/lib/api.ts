@@ -139,9 +139,16 @@ export interface ShipListItem {
   level?: number;
 }
 
+/** Below-decks slot row from `data/ships_extended` / upstream `crew_slots`. */
+export interface CrewSlotUnlockRow {
+  slots?: string | null;
+  unlock_level: number;
+}
+
 export interface ShipTiersLevels {
   tiers: number[];
   levels: number[];
+  crew_slots?: CrewSlotUnlockRow[];
 }
 
 export async function getShipTiersLevels(
@@ -251,6 +258,8 @@ export interface SimulateStats {
   stall_rate: number;
   loss_rate: number;
   avg_hull_remaining: number;
+  /** Mean hostile hull left as fraction of max hull (0–1), all trials. */
+  avg_defender_hull_remaining: number;
   n: number;
   win_rate_95_ci?: [number, number];
 }
@@ -369,7 +378,7 @@ export async function compareCrewsDistributions(
     body.ship_tier = params.ship_tier;
   if (params.ship_level != null && params.ship_level > 0)
     body.ship_level = params.ship_level;
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
   if (params.proc_sample_trials != null && params.proc_sample_trials > 0) {
@@ -412,6 +421,9 @@ export interface CrewRecommendation {
   avg_hull_remaining: number;
   avg_hull_remaining_ci_low: number;
   avg_hull_remaining_ci_high: number;
+  avg_defender_hull_remaining: number;
+  avg_defender_hull_remaining_ci_low: number;
+  avg_defender_hull_remaining_ci_high: number;
 }
 
 export interface OptimizeResponse {
@@ -458,6 +470,7 @@ export async function getOptimizeEstimate(
     max_candidates?: number | null;
     prioritize_below_decks_ability?: boolean;
     ship_tier?: number | null;
+    ship_level?: number | null;
     below_decks_slots?: number | null;
   },
   profileId?: string | null,
@@ -477,7 +490,10 @@ export async function getOptimizeEstimate(
   if (params.ship_tier != null && params.ship_tier > 0) {
     search.set("ship_tier", String(params.ship_tier));
   }
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.ship_level != null && params.ship_level > 0) {
+    search.set("ship_level", String(params.ship_level));
+  }
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     search.set("below_decks_slots", String(params.below_decks_slots));
   }
   if (profileId) search.set("profile", profileId);
@@ -515,7 +531,7 @@ export async function optimize(
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
   }
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
   const res = await fetch(`${API_BASE}/api/optimize`, {
@@ -635,7 +651,7 @@ export async function optimizeStart(
   if (params.ship_level != null && params.ship_level > 0) {
     body.ship_level = params.ship_level;
   }
-  if (params.below_decks_slots != null && params.below_decks_slots >= 2) {
+  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
   if (params.constraints && Object.keys(params.constraints).length > 0) {
@@ -763,6 +779,31 @@ export interface PlayerProfile {
   forbidden_tech_override?: number[] | null;
   /** When undefined/null: use synced chaos tech from forbidden_tech.imported.json. When []: none. When number[]: use these fids. */
   chaos_tech_override?: number[] | null;
+}
+
+/** Community mod persist timestamp (RFC3339) from `profiles/{id}/last_mod_sync.json`; null if never synced via mod. */
+export interface ModSyncStatus {
+  profile_id: string;
+  last_mod_sync_utc: string | null;
+}
+
+export async function fetchModSyncStatus(
+  profileId?: string | null,
+): Promise<ModSyncStatus> {
+  const url = profileId
+    ? `${API_BASE}/api/sync/status?profile=${encodeURIComponent(profileId)}`
+    : `${API_BASE}/api/sync/status`;
+  const res = await fetch(url);
+  await checkOk(res);
+  const data = (await res.json()) as Record<string, unknown>;
+  return {
+    profile_id:
+      typeof data.profile_id === "string" ? data.profile_id : "",
+    last_mod_sync_utc:
+      typeof data.last_mod_sync_utc === "string"
+        ? data.last_mod_sync_utc
+        : null,
+  };
 }
 
 export async function fetchProfile(

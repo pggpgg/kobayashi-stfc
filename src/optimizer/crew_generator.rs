@@ -2,8 +2,10 @@ use std::collections::HashSet;
 
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
+use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
+use crate::data::ship::CrewSlotUnlock;
 use crate::perf_log;
 
 /// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
@@ -12,24 +14,59 @@ pub const BRIDGE_SLOTS: usize = 2;
 pub const DEFAULT_BELOW_DECKS_SLOTS: usize = 3;
 /// Backwards-compatible alias for [`DEFAULT_BELOW_DECKS_SLOTS`].
 pub const BELOW_DECKS_SLOTS: usize = DEFAULT_BELOW_DECKS_SLOTS;
-pub const MIN_BELOW_DECKS_SLOTS: usize = 2;
-pub const MAX_BELOW_DECKS_SLOTS: usize = 5;
+/// Minimum explicit/resolvable below-decks slots (early-game ships may have zero unlocked).
+pub const MIN_BELOW_DECKS_SLOTS: usize = 0;
+/// STFC currently exposes up to seven below-decks slots on player ships.
+pub const MAX_BELOW_DECKS_SLOTS: usize = 7;
 
-/// Tier-aware default: early ships often have 2 below-decks slots; tier 2+ uses 3 in this heuristic.
+/// Tier-aware default when ship JSON has no `crew_slots` schedule (legacy heuristic).
 pub fn default_below_decks_slots_for_tier(ship_tier: Option<u32>) -> usize {
     match ship_tier {
-        Some(1) => MIN_BELOW_DECKS_SLOTS,
+        Some(1) => 2,
         _ => DEFAULT_BELOW_DECKS_SLOTS,
     }
 }
 
-/// Resolve slot count from explicit API value or ship tier default.
-pub fn resolve_below_decks_slots(ship_tier: Option<u32>, explicit: Option<u32>) -> usize {
+/// Resolve slot count: explicit API override, else unlock schedule + ship level, else tier default.
+pub fn resolve_below_decks_slots(
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    crew_slots: Option<&[CrewSlotUnlock]>,
+    explicit: Option<u32>,
+) -> usize {
     if let Some(n) = explicit {
         let n = n as usize;
         return n.clamp(MIN_BELOW_DECKS_SLOTS, MAX_BELOW_DECKS_SLOTS);
     }
+    let level = ship_level.unwrap_or(1).max(1);
+    if let Some(schedule) = crew_slots {
+        if !schedule.is_empty() {
+            return schedule
+                .iter()
+                .filter(|s| s.unlock_level <= level)
+                .count()
+                .clamp(MIN_BELOW_DECKS_SLOTS, MAX_BELOW_DECKS_SLOTS);
+        }
+    }
     default_below_decks_slots_for_tier(ship_tier)
+}
+
+/// Resolve below-decks slots using `data/ships_extended` crew schedule when present.
+pub fn resolve_below_decks_slots_for_ship(
+    ship: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    explicit: Option<u32>,
+) -> usize {
+    let schedule = ship_tiers_levels_and_crew_slots(ship.trim())
+        .map(|(_, _, cs)| cs)
+        .filter(|cs| !cs.is_empty());
+    resolve_below_decks_slots(
+        ship_tier,
+        ship_level,
+        schedule.as_deref(),
+        explicit,
+    )
 }
 
 /// Officer pools by slot, as names. Shared by crew generator and genetic optimizer.
@@ -733,26 +770,58 @@ fn mix_seed(seed: u64, ship: &str, hostile: &str) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        resolve_below_decks_slots, CandidateStrategy, CrewGenerator, MAX_BELOW_DECKS_SLOTS,
-        MIN_BELOW_DECKS_SLOTS,
+        resolve_below_decks_slots, CandidateStrategy, CrewGenerator, CrewSlotUnlock,
+        MAX_BELOW_DECKS_SLOTS,
     };
 
     #[test]
     fn resolve_below_decks_uses_explicit_or_tier_default() {
-        assert_eq!(resolve_below_decks_slots(None, Some(4)), 4);
         assert_eq!(
-            resolve_below_decks_slots(Some(1), None),
-            MIN_BELOW_DECKS_SLOTS
+            resolve_below_decks_slots(None, None, None, Some(4)),
+            4
         );
-        assert_eq!(resolve_below_decks_slots(Some(2), None), 3);
-        assert_eq!(resolve_below_decks_slots(None, None), 3);
+        assert_eq!(resolve_below_decks_slots(Some(1), None, None, None), 2);
+        assert_eq!(resolve_below_decks_slots(Some(2), None, None, None), 3);
+        assert_eq!(resolve_below_decks_slots(None, None, None, None), 3);
         assert_eq!(
-            resolve_below_decks_slots(None, Some(99)),
+            resolve_below_decks_slots(None, None, None, Some(99)),
             MAX_BELOW_DECKS_SLOTS
         );
+        assert_eq!(resolve_below_decks_slots(None, None, None, Some(0)), 0);
+        assert_eq!(resolve_below_decks_slots(None, None, None, Some(1)), 1);
+    }
+
+    #[test]
+    fn resolve_below_decks_uses_crew_slot_schedule_and_level() {
+        let sched = [
+            CrewSlotUnlock {
+                slots: Some("1".into()),
+                unlock_level: 5,
+            },
+            CrewSlotUnlock {
+                slots: Some("2".into()),
+                unlock_level: 10,
+            },
+            CrewSlotUnlock {
+                slots: Some("3".into()),
+                unlock_level: 20,
+            },
+            CrewSlotUnlock {
+                slots: Some("4".into()),
+                unlock_level: 30,
+            },
+        ];
         assert_eq!(
-            resolve_below_decks_slots(None, Some(1)),
-            MIN_BELOW_DECKS_SLOTS
+            resolve_below_decks_slots(None, Some(4), Some(&sched), None),
+            0
+        );
+        assert_eq!(
+            resolve_below_decks_slots(None, Some(5), Some(&sched), None),
+            1
+        );
+        assert_eq!(
+            resolve_below_decks_slots(None, Some(30), Some(&sched), None),
+            4
         );
     }
 

@@ -15,6 +15,7 @@ import {
 } from "../lib/api";
 import type { SupportBuffId } from "../lib/supportBuffs";
 import type { CrewState } from "../lib/types";
+import { DEFAULT_BELOW_DECK_UNLOCK_LEVELS } from "../lib/types";
 import HostilePicker from "./HostilePicker";
 import SupportBuffSelect from "./SupportBuffSelect";
 
@@ -37,6 +38,8 @@ interface WorkspaceHeaderProps {
   onShipTierChange: (tier: number) => void;
   shipLevel: number;
   onShipLevelChange: (level: number) => void;
+  /** Called when tiers-levels fetch returns per-ship below-decks unlock schedule (`crew_slots`). */
+  onBelowDeckUnlockLevelsChange: (unlockLevels: number[]) => void;
   crew: CrewState;
   simsPerCrew: number;
   onSimsPerCrewChange: (n: number) => void;
@@ -68,6 +71,7 @@ export default function WorkspaceHeader({
   onShipTierChange,
   shipLevel,
   onShipLevelChange,
+  onBelowDeckUnlockLevelsChange,
   simsPerCrew,
   onSimsPerCrewChange,
   estimate,
@@ -130,6 +134,24 @@ export default function WorkspaceHeader({
     };
   }, [ownedOnly, activeProfileId]);
 
+  // Roster mode: once the owned ship list is loaded, align tier/level with the API row for the
+  // current selection (fixes stale localStorage and ensures re-fetch after profile change).
+  useEffect(() => {
+    if (!ownedOnly || shipsLoadState !== "done" || !shipId) return;
+    const ship = ships.find((s) => s.id === shipId);
+    if (ship?.tier != null && ship?.level != null) {
+      onShipTierChange(ship.tier);
+      onShipLevelChange(ship.level);
+    }
+  }, [
+    ownedOnly,
+    shipsLoadState,
+    shipId,
+    ships,
+    onShipTierChange,
+    onShipLevelChange,
+  ]);
+
   // When ship changes: in roster mode pre-fill tier/level from roster
   const handleShipChange = (id: string) => {
     onShipIdChange(id);
@@ -144,6 +166,7 @@ export default function WorkspaceHeader({
     if (!shipId) {
       setTiers([1]);
       setLevels([1, 10, 20, 30, 40, 50, 60]);
+      onBelowDeckUnlockLevelsChange([...DEFAULT_BELOW_DECK_UNLOCK_LEVELS]);
       return;
     }
     let c = false;
@@ -158,18 +181,29 @@ export default function WorkspaceHeader({
           setLevels(l);
           if (!t.includes(shipTier)) onShipTierChange(t[0] ?? 1);
           if (!l.includes(shipLevel)) onShipLevelChange(l[0] ?? 1);
+          const rows = data.crew_slots;
+          if (rows?.length) {
+            const unlockLevels = rows
+              .map((r) => r.unlock_level)
+              .filter((n) => Number.isFinite(n))
+              .sort((a, b) => a - b);
+            onBelowDeckUnlockLevelsChange(unlockLevels);
+          } else {
+            onBelowDeckUnlockLevelsChange([...DEFAULT_BELOW_DECK_UNLOCK_LEVELS]);
+          }
         }
       })
       .catch(() => {
         if (!c) {
           setTiers([1]);
           setLevels([1, 10, 20, 30, 40, 50, 60]);
+          onBelowDeckUnlockLevelsChange([...DEFAULT_BELOW_DECK_UNLOCK_LEVELS]);
         }
       });
     return () => {
       c = true;
     };
-  }, [shipId]);
+  }, [shipId, onBelowDeckUnlockLevelsChange, onShipLevelChange, onShipTierChange]);
 
   useEffect(() => {
     let c = false;

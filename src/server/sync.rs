@@ -3,9 +3,9 @@
 
 use crate::data::import;
 use crate::data::profile_index::{
-    effective_profile_id, load_profile_index, profile_id_by_sync_token, profile_path,
-    BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, RESEARCH_IMPORTED,
-    ROSTER_IMPORTED, SHIPS_IMPORTED,
+    load_profile_index, profile_id_by_sync_token, profile_path, resolve_profile_id_for_api,
+    BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, LAST_MOD_SYNC_JSON,
+    RESEARCH_IMPORTED, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use axum::http::StatusCode;
@@ -38,6 +38,36 @@ static SYNC_BUILDINGS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_FT_MTX: Mutex<()> = Mutex::new(());
 static SYNC_BUFFS_MTX: Mutex<()> = Mutex::new(());
+
+fn record_mod_sync_received(profile_id: &str) {
+    let path = profile_path(profile_id, LAST_MOD_SYNC_JSON);
+    let payload = serde_json::json!({
+        "received_at_utc": Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+    });
+    let text = match serde_json::to_string_pretty(&payload) {
+        Ok(t) => t,
+        Err(e) => {
+            warn!(error = %e, "last_mod_sync json serialize failed");
+            return;
+        }
+    };
+    if let Some(parent) = path.parent() {
+        if let Err(e) = std::fs::create_dir_all(parent) {
+            warn!(error = %e, "last_mod_sync mkdir failed");
+            return;
+        }
+    }
+    if let Err(e) = std::fs::write(&path, text) {
+        warn!(error = %e, path = %path.display(), "last_mod_sync write failed");
+    }
+}
+
+fn read_last_mod_sync_utc(profile_id: &str) -> Option<String> {
+    let path = profile_path(profile_id, LAST_MOD_SYNC_JSON);
+    let raw = std::fs::read_to_string(&path).ok()?;
+    let v: Value = serde_json::from_str(&raw).ok()?;
+    v.get("received_at_utc")?.as_str().map(String::from)
+}
 
 /// Handles POST /api/sync/ingress: token-based routing. The stfc-sync-token header
 /// identifies the profile; sync data is written to that profile's paths.
@@ -107,6 +137,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
     let accepted = match type_lower.as_str() {
         "officer" => match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, &roster_path) {
             Ok(accepted_count) => {
+                record_mod_sync_received(pid);
                 info!(accepted_count, kind = "officer", "sync ingress 200");
                 vec![format!("officer({accepted_count})")]
             }
@@ -117,6 +148,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "research" => match apply_research_sync(&payload, &research_path) {
             Ok(accepted_count) => {
+                record_mod_sync_received(pid);
                 info!(accepted_count, kind = "research", "sync ingress 200");
                 vec![format!("research({accepted_count})")]
             }
@@ -127,6 +159,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "buildings" | "module" => match apply_buildings_sync(&payload, &buildings_path) {
             Ok(accepted_count) => {
+                record_mod_sync_received(pid);
                 info!(accepted_count, kind = "buildings", "sync ingress 200");
                 vec![format!("buildings({accepted_count})")]
             }
@@ -137,6 +170,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "ships" | "ship" => match apply_ships_sync(&payload, &ships_path) {
             Ok(accepted_count) => {
+                record_mod_sync_received(pid);
                 info!(accepted_count, kind = "ships", "sync ingress 200");
                 vec![format!("ships({accepted_count})")]
             }
@@ -147,6 +181,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "ft" => match apply_ft_sync(&payload, &ft_path) {
             Ok(accepted_count) => {
+                record_mod_sync_received(pid);
                 info!(accepted_count, kind = "ft", "sync ingress 200");
                 vec![format!("ft({accepted_count})")]
             }
@@ -158,6 +193,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         // stfc-mod uses JSON type "tech" for forbidden/chaos tech (same payload as "ft": fid, tier, level, shard_count).
         "tech" => match apply_ft_sync(&payload, &ft_path) {
             Ok(accepted_count) => {
+                record_mod_sync_received(pid);
                 info!(
                     accepted_count,
                     kind = "tech",
@@ -173,6 +209,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         // Mod may send only removals in a batch (`type: "expired_buffs"` on the first row).
         "buffs" | "expired_buffs" => match apply_buffs_sync(&payload, &buffs_path) {
             Ok(accepted_count) => {
+                record_mod_sync_received(pid);
                 info!(accepted_count, kind = "buffs", "sync ingress 200");
                 vec![format!("buffs({accepted_count})")]
             }
@@ -676,12 +713,12 @@ fn last_modified_iso(path: &str) -> Option<String> {
 }
 
 /// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
-/// Uses the default profile's paths so the response matches where the optimizer reads (profile_path(profile_id, ...)).
+/// Uses [`resolve_profile_id_for_api`] so `X-Profile-Id` / `?profile=` match the active UI profile (same as other profile APIs).
+/// `last_mod_sync_utc` is set only when the Community Mod persists via `POST /api/sync/ingress` (not manual roster paste).
 /// Also includes research_path, buildings_path, ships_path, forbidden_tech_path, buffs_path and their last_modified_iso when present.
 /// Returns `(StatusCode, json_body_string)`.
-pub fn sync_status_payload() -> (StatusCode, String) {
-    let index = load_profile_index();
-    let pid = effective_profile_id(&index);
+pub fn sync_status_payload(profile_id: Option<&str>) -> (StatusCode, String) {
+    let pid = resolve_profile_id_for_api(profile_id);
     let roster_path = profile_path(&pid, ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
@@ -709,8 +746,10 @@ pub fn sync_status_payload() -> (StatusCode, String) {
         .unwrap_or(0);
 
     let body = serde_json::json!({
+        "profile_id": pid,
         "roster_path": roster_path,
         "last_modified_iso": last_modified_iso(&roster_path),
+        "last_mod_sync_utc": read_last_mod_sync_utc(&pid),
         "research_path": research_path,
         "research_last_modified_iso": last_modified_iso(&research_path),
         "buildings_path": buildings_path,
@@ -725,7 +764,7 @@ pub fn sync_status_payload() -> (StatusCode, String) {
         "research_catalog_item_count": research_catalog_item_count,
     });
     let body_str = serde_json::to_string_pretty(&body).unwrap_or_else(|_| {
-        r#"{"roster_path":"rosters/roster.imported.json","last_modified_iso":null}"#.to_string()
+        r#"{"roster_path":"profiles/<profile_id>/roster.imported.json","last_modified_iso":null}"#.to_string()
     });
     (StatusCode::OK, body_str)
 }
@@ -736,7 +775,8 @@ mod tests {
     use crate::data::import;
     use crate::data::profile_index::{
         create_profile, delete_profile, load_profile_index, profile_path, BUFFS_IMPORTED,
-        BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, RESEARCH_IMPORTED, SHIPS_IMPORTED,
+        BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, LAST_MOD_SYNC_JSON, RESEARCH_IMPORTED,
+        SHIPS_IMPORTED,
     };
     use axum::http::StatusCode;
     use std::sync::Mutex;
@@ -859,6 +899,17 @@ mod tests {
             entries.iter().any(|e| e.rid == 919291 && e.level == 3),
             "expected rid=919291 level=3 in {:?}",
             entries
+        );
+        let sync_marker = profile_path(&profile_id, LAST_MOD_SYNC_JSON);
+        assert!(
+            sync_marker.is_file(),
+            "expected last_mod_sync.json after persist"
+        );
+        let (st, status_body) = super::sync_status_payload(Some(&profile_id));
+        assert_eq!(st, StatusCode::OK);
+        assert!(
+            status_body.contains("last_mod_sync_utc"),
+            "sync status should include last_mod_sync_utc: {status_body}"
         );
     }
 

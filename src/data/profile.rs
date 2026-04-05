@@ -11,11 +11,18 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::{AttackerStats, Combatant};
+use crate::combat::{
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewSeat,
+    CrewSeatContext, OpponentFactionTag, ShipType, TimingWindow, EPSILON,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
+};
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
-use crate::data::research::{cumulative_research_bonuses, ResearchCatalog};
+use crate::data::research::{
+    cumulative_conditional_research_bonuses, cumulative_research_bonuses, ResearchBonusConditionKey,
+    ResearchCatalog,
+};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlayerProfile {
@@ -346,17 +353,8 @@ pub fn merge_building_bonuses_into_profile(
     }
 }
 
-/// Effective combat stat bonuses from synced research only (engine keys after normalization).
-/// Duplicate `rid` rows use the **maximum** synced level for that `rid`.
-/// Used by [`merge_research_bonuses_into_profile`] and [`crate::data::research_summary::research_combat_summary_for_profile`].
-pub fn combat_research_bonuses_from_import(
-    imported_research: &[ResearchEntry],
-    catalog: &ResearchCatalog,
-) -> HashMap<String, f64> {
-    if imported_research.is_empty() || catalog.items.is_empty() {
-        return HashMap::new();
-    }
-
+/// Per-`rid` research level from sync import: duplicate rows use **max** level for that `rid`.
+fn research_levels_by_rid_from_import(imported_research: &[ResearchEntry]) -> HashMap<i64, u32> {
     let mut levels_by_rid: HashMap<i64, u32> = HashMap::new();
     for entry in imported_research {
         let level = if entry.level > 0 {
@@ -371,6 +369,116 @@ pub fn combat_research_bonuses_from_import(
                 .or_insert(level);
         }
     }
+    levels_by_rid
+}
+
+fn research_condition_key_to_ability_condition(
+    key: &ResearchBonusConditionKey,
+) -> Option<AbilityCondition> {
+    let mut parts: Vec<AbilityCondition> = Vec::new();
+    if let Some(ref slug) = key.defender_ship_class {
+        let st = ShipType::from_data_slug(slug)?;
+        parts.push(AbilityCondition::DefenderShipTypeIs(st));
+    }
+    if let Some(ref slug) = key.defender_faction {
+        let tag = OpponentFactionTag::from_data_slug(slug)?;
+        parts.push(AbilityCondition::DefenderFactionIs(tag));
+    }
+    if key.requires_morale {
+        parts.push(AbilityCondition::MoraleActive);
+    }
+    if key.requires_defender_burning {
+        parts.push(AbilityCondition::DefenderBurning);
+    }
+    if key.requires_defender_hull_breach {
+        parts.push(AbilityCondition::DefenderHullBreach);
+    }
+    match parts.len() {
+        0 => None,
+        1 => Some(parts[0].clone()),
+        _ => Some(AbilityCondition::And(parts)),
+    }
+}
+
+/// Conditional research rows (hull class, faction, morale, burning, hull breach) for `crit_chance` /
+/// `crit_damage` become attack-phase ship seats so crit rolls respect gates (see `research.rs`).
+///
+/// Unconditional `crit_*` rows stay in [`merge_research_bonuses_into_profile`] / `profile.bonuses`.
+pub fn research_derived_attack_phase_seats(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+) -> Vec<CrewSeatContext> {
+    if imported_research.is_empty() || catalog.items.is_empty() {
+        return Vec::new();
+    }
+    let levels_by_rid = research_levels_by_rid_from_import(imported_research);
+    if levels_by_rid.is_empty() {
+        return Vec::new();
+    }
+
+    let records: Vec<&crate::data::research::ResearchRecord> = catalog
+        .items
+        .iter()
+        .filter(|r| levels_by_rid.contains_key(&r.rid))
+        .collect();
+    if records.is_empty() {
+        return Vec::new();
+    }
+
+    let conditional = cumulative_conditional_research_bonuses(&records, &levels_by_rid);
+    let mut out: Vec<CrewSeatContext> = Vec::new();
+    let mut idx = 0u32;
+    for ((key, stat), value) in conditional {
+        if !value.is_finite() || value == 0.0 {
+            continue;
+        }
+        let Some(norm) = normalize_profile_combat_stat(&stat) else {
+            continue;
+        };
+        if norm != "crit_chance" && norm != "crit_damage" {
+            continue;
+        }
+        let Some(condition) = research_condition_key_to_ability_condition(&key) else {
+            continue;
+        };
+        let effect = match norm {
+            "crit_chance" => AbilityEffect::CritChanceBonus(
+                crate::data::ship_ability_resolve::normalize_probability(value),
+            ),
+            "crit_damage" => AbilityEffect::CritDamageMultiplier((1.0 + value).max(EPSILON)),
+            _ => continue,
+        };
+        idx = idx.saturating_add(1);
+        out.push(CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: format!("research_{norm}_{idx}"),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::AttackPhase,
+                boostable: false,
+                effect,
+                condition: Some(condition),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        });
+    }
+    out
+}
+
+/// Effective combat stat bonuses from synced research only (engine keys after normalization).
+/// Duplicate `rid` rows use the **maximum** synced level for that `rid`.
+/// Used by [`merge_research_bonuses_into_profile`] and [`crate::data::research_summary::research_combat_summary_for_profile`].
+pub fn combat_research_bonuses_from_import(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+) -> HashMap<String, f64> {
+    if imported_research.is_empty() || catalog.items.is_empty() {
+        return HashMap::new();
+    }
+
+    let levels_by_rid = research_levels_by_rid_from_import(imported_research);
     if levels_by_rid.is_empty() {
         return HashMap::new();
     }
@@ -680,11 +788,13 @@ mod tests {
                             stat: "weapon_damage".to_string(),
                             value: 0.05,
                             operator: "add".to_string(),
+                            condition: Default::default(),
                         },
                         ResearchBonusEntry {
                             stat: "buff_unknown".to_string(),
                             value: 1.0,
                             operator: "add".to_string(),
+                            condition: Default::default(),
                         },
                     ],
                 }],
@@ -718,11 +828,13 @@ mod tests {
                             stat: "apex_shred".to_string(),
                             value: 0.25,
                             operator: "add".to_string(),
+                            condition: Default::default(),
                         },
                         ResearchBonusEntry {
                             stat: "apex_barrier".to_string(),
                             value: 500.0,
                             operator: "add".to_string(),
+                            condition: Default::default(),
                         },
                     ],
                 }],

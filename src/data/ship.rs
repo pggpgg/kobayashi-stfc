@@ -134,6 +134,24 @@ pub struct LevelBonus {
     pub health: f64,
 }
 
+/// Below-decks officer slot unlock from upstream `crew_slots` (data.stfc.space ship JSON).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CrewSlotUnlock {
+    /// Upstream 1-based slot ordinal as string (informational).
+    #[serde(default)]
+    pub slots: Option<String>,
+    /// Ship level at which this below-decks slot becomes available.
+    pub unlock_level: u32,
+}
+
+/// Count below-decks slots unlocked at `ship_level` using normalized `crew_slots` (empty → 0).
+pub fn below_decks_slot_count_at_level(crew_slots: &[CrewSlotUnlock], ship_level: u32) -> usize {
+    crew_slots
+        .iter()
+        .filter(|s| s.unlock_level <= ship_level)
+        .count()
+}
+
 /// Extended ship record: one file per ship with all tiers and level bonuses. Resolved at request time to ShipRecord.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtendedShipRecord {
@@ -142,6 +160,9 @@ pub struct ExtendedShipRecord {
     pub ship_class: String,
     pub tiers: Vec<TierStats>,
     pub levels: Vec<LevelBonus>,
+    /// Below-decks slot unlock schedule from upstream `crew_slots` (optional; when empty, UI/API use tier/level heuristics).
+    #[serde(default)]
+    pub crew_slots: Vec<CrewSlotUnlock>,
     /// Ship hull abilities from data.stfc.space ability array. Applied to all tiers.
     #[serde(default)]
     pub abilities: Option<Vec<ShipAbility>>,
@@ -355,5 +376,30 @@ mod tests {
         let abilities = rec.abilities.expect("abilities present");
         assert_eq!(abilities.len(), 1);
         assert_eq!(abilities[0].effect_type, "pierce_bonus");
+    }
+
+    #[test]
+    fn below_decks_slot_count_matches_unlock_levels() {
+        let slots = [
+            CrewSlotUnlock {
+                slots: Some("1".into()),
+                unlock_level: 5,
+            },
+            CrewSlotUnlock {
+                slots: Some("2".into()),
+                unlock_level: 10,
+            },
+            CrewSlotUnlock {
+                slots: Some("3".into()),
+                unlock_level: 20,
+            },
+            CrewSlotUnlock {
+                slots: Some("4".into()),
+                unlock_level: 30,
+            },
+        ];
+        assert_eq!(below_decks_slot_count_at_level(&slots, 4), 0);
+        assert_eq!(below_decks_slot_count_at_level(&slots, 5), 1);
+        assert_eq!(below_decks_slot_count_at_level(&slots, 30), 4);
     }
 }

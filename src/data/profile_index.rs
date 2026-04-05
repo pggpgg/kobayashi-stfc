@@ -2,11 +2,12 @@
 //!
 //! Each profile has: id, name, syncToken (UUID). Paths: profiles/{id}/profile.json, roster.imported.json, etc.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use uuid::Uuid;
 
 pub const PROFILES_DIR: &str = "profiles";
@@ -52,6 +53,8 @@ pub const BUILDINGS_IMPORTED: &str = "buildings.imported.json";
 pub const SHIPS_IMPORTED: &str = "ships.imported.json";
 pub const FORBIDDEN_TECH_IMPORTED: &str = "forbidden_tech.imported.json";
 pub const BUFFS_IMPORTED: &str = "buffs.imported.json";
+/// Written when the STFC Community Mod persists data via `POST /api/sync/ingress` (not manual UI import).
+pub const LAST_MOD_SYNC_JSON: &str = "last_mod_sync.json";
 
 /// Resolve profile id for optimizer/simulate; uses default when None.
 pub fn resolve_profile_id_for_api(profile_id: Option<&str>) -> String {
@@ -231,76 +234,175 @@ pub fn create_profile(
     Ok(entry)
 }
 
-/// Migrate from legacy single-profile layout (data/profile.json, rosters/*) to profiles/default/.
-/// Call once at startup; idempotent (skips if profiles/index.json already exists).
+/// Ephemeral profile ids used by research scenario tests under `profiles/`.
 ///
-/// When there is no legacy data but the shipped [`DEMO_PROFILE_ID`] tree exists (fresh git clone),
-/// writes a new `profiles/index.json` with a **fresh** sync token so secrets are not read from the repo.
-pub fn migrate_from_legacy_if_needed() -> std::io::Result<()> {
+/// - `tests/scenario_research_integration_tests.rs` creates `scenario_research` (slug from "Scenario Research Test").
+/// - `src/optimizer/monte_carlo/scenario.rs` uses `scenario_research_{uuid}`.
+///
+/// These are not end-user profiles; cleanup may miss them if a test run aborts.
+fn is_ephemeral_scenario_test_profile_id(id: &str) -> bool {
+    id == "scenario_research" || id.starts_with("scenario_research_")
+}
+
+/// Removes ephemeral scenario-test profiles from `profiles/index.json` and deletes matching
+/// directories under `profiles/`, including orphans not listed in the index.
+pub fn prune_ephemeral_scenario_test_profiles() -> std::io::Result<()> {
+    let profiles_root = Path::new(PROFILES_DIR);
+    let mut index = load_profile_index();
+    let removed_from_index: Vec<String> = index
+        .profiles
+        .iter()
+        .filter(|p| is_ephemeral_scenario_test_profile_id(&p.id))
+        .map(|p| p.id.clone())
+        .collect();
+
+    if !removed_from_index.is_empty() {
+        index
+            .profiles
+            .retain(|p| !is_ephemeral_scenario_test_profile_id(&p.id));
+        if index
+            .default_id
+            .as_deref()
+            .is_some_and(|d| removed_from_index.iter().any(|r| r == d))
+        {
+            index.default_id = index.profiles.first().map(|p| p.id.clone());
+        }
+        save_profile_index(&index)?;
+        info!(
+            ?removed_from_index,
+            "removed ephemeral scenario research test profile(s) from profiles/index.json"
+        );
+    }
+
+    if profiles_root.is_dir() {
+        for entry in fs::read_dir(profiles_root)? {
+            let entry = entry?;
+            if !entry.file_type()?.is_dir() {
+                continue;
+            }
+            let id = entry.file_name().to_string_lossy().into_owned();
+            if is_ephemeral_scenario_test_profile_id(&id) {
+                let path = entry.path();
+                if let Err(e) = fs::remove_dir_all(&path) {
+                    tracing::warn!(path = %path.display(), error = %e, "failed to remove ephemeral scenario test profile directory");
+                } else {
+                    info!(%id, "removed ephemeral scenario research test profile directory");
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Human-readable display name from a directory id (`higgs_bozo` → `Higgs Bozo`).
+fn pretty_profile_name_from_id(id: &str) -> String {
+    let mut out = String::new();
+    for part in id.split('_').filter(|p| !p.is_empty()) {
+        let mut ch = part.chars();
+        if let Some(c) = ch.next() {
+            let rest: String = ch.collect();
+            out.extend(c.to_uppercase());
+            out.push_str(&rest.to_lowercase());
+        }
+        out.push(' ');
+    }
+    let s = out.trim_end().to_string();
+    if s.is_empty() {
+        id.to_string()
+    } else {
+        s
+    }
+}
+
+/// Registers `profiles/<id>/` directories that contain `profile.json` but are not listed in
+/// `profiles/index.json`, then saves the index.
+///
+/// This covers copied profile trees, gitignored folders, or an index reset that still leaves data
+/// on disk. Each newly listed profile gets a **new** sync token; point the STFC Community Mod at
+/// that token if you use sync for that profile.
+pub fn sync_profile_index_with_disk() -> std::io::Result<()> {
+    let profiles_root = Path::new(PROFILES_DIR);
+    if !profiles_root.is_dir() {
+        return Ok(());
+    }
+    let mut index = load_profile_index();
+    let indexed: HashSet<String> = index.profiles.iter().map(|p| p.id.clone()).collect();
+    let mut added: Vec<String> = Vec::new();
+
+    for entry in fs::read_dir(profiles_root)? {
+        let entry = entry?;
+        if !entry.file_type()?.is_dir() {
+            continue;
+        }
+        let id = entry.file_name().to_string_lossy().into_owned();
+        if id.starts_with('.') {
+            continue;
+        }
+        let sanitized = sanitize_profile_id(&id);
+        if sanitized != id {
+            continue;
+        }
+        if indexed.contains(&id) {
+            continue;
+        }
+        if is_ephemeral_scenario_test_profile_id(&id) {
+            continue;
+        }
+        let profile_json = entry.path().join(PROFILE_JSON);
+        if !profile_json.is_file() {
+            continue;
+        }
+        let sync_token = Uuid::new_v4().to_string();
+        let name = pretty_profile_name_from_id(&id);
+        index.profiles.push(ProfileEntry {
+            id: id.clone(),
+            name,
+            sync_token,
+            is_default: None,
+        });
+        added.push(id);
+    }
+
+    if !added.is_empty() {
+        save_profile_index(&index)?;
+        info!(
+            profiles = ?added,
+            "registered profile director(ies) that were on disk but missing from profiles/index.json"
+        );
+    }
+    Ok(())
+}
+
+/// Create `profiles/index.json` when missing (first run or fresh clone).
+///
+/// Idempotent: no-op if the index file already exists.
+///
+/// If the shipped [`DEMO_PROFILE_ID`] tree exists, registers it with a **fresh** sync token
+/// (so repo contents are not treated as a shared secret).
+/// Otherwise creates a single [`DEFAULT_PROFILE_ID`] profile via [`ensure_profile`].
+pub fn ensure_profile_index_bootstrap() -> std::io::Result<()> {
     if Path::new(PROFILE_INDEX_PATH).exists() {
         return Ok(());
     }
-    let legacy_profile = Path::new("data/profile.json");
-    let legacy_rosters = Path::new("rosters");
-    if !legacy_profile.exists() && !legacy_rosters.exists() {
-        // Nothing to migrate: bootstrap shipped demo profile if present, else a single "default" profile.
-        let demo_dir = profile_data_dir(DEMO_PROFILE_ID);
-        let demo_profile_json = demo_dir.join(PROFILE_JSON);
-        if demo_dir.is_dir() && demo_profile_json.is_file() {
-            let mut index = ProfileIndex::default();
-            let sync_token = Uuid::new_v4().to_string();
-            index.profiles.push(ProfileEntry {
-                id: DEMO_PROFILE_ID.to_string(),
-                name: "Demo".to_string(),
-                sync_token,
-                is_default: None,
-            });
-            index.default_id = Some(DEMO_PROFILE_ID.to_string());
-            save_profile_index(&index)?;
-            fs::create_dir_all(demo_dir.join(PRESETS_SUBDIR))?;
-            return Ok(());
-        }
+    let demo_dir = profile_data_dir(DEMO_PROFILE_ID);
+    let demo_profile_json = demo_dir.join(PROFILE_JSON);
+    if demo_dir.is_dir() && demo_profile_json.is_file() {
         let mut index = ProfileIndex::default();
-        ensure_profile(&mut index, DEFAULT_PROFILE_ID, Some("Default"))?;
+        let sync_token = Uuid::new_v4().to_string();
+        index.profiles.push(ProfileEntry {
+            id: DEMO_PROFILE_ID.to_string(),
+            name: "Demo".to_string(),
+            sync_token,
+            is_default: None,
+        });
+        index.default_id = Some(DEMO_PROFILE_ID.to_string());
+        save_profile_index(&index)?;
+        fs::create_dir_all(demo_dir.join(PRESETS_SUBDIR))?;
         return Ok(());
     }
-
-    let dir = profile_data_dir(DEFAULT_PROFILE_ID);
-    fs::create_dir_all(&dir)?;
-
-    if legacy_profile.exists() {
-        let dest = dir.join(PROFILE_JSON);
-        fs::copy(legacy_profile, dest)?;
-    } else {
-        fs::write(dir.join(PROFILE_JSON), "{\"bonuses\":{}}")?;
-    }
-
-    for (src_name, dest_name) in [
-        ("roster.imported.json", ROSTER_IMPORTED),
-        ("research.imported.json", RESEARCH_IMPORTED),
-        ("buildings.imported.json", BUILDINGS_IMPORTED),
-        ("ships.imported.json", SHIPS_IMPORTED),
-        ("forbidden_tech.imported.json", FORBIDDEN_TECH_IMPORTED),
-    ] {
-        let src = legacy_rosters.join(src_name);
-        if src.exists() {
-            fs::copy(&src, dir.join(dest_name))?;
-        }
-    }
-
-    let sync_token = Uuid::new_v4().to_string();
-    let index = ProfileIndex {
-        profiles: vec![ProfileEntry {
-            id: DEFAULT_PROFILE_ID.to_string(),
-            name: "Default".to_string(),
-            sync_token,
-            is_default: Some(true),
-        }],
-        default_id: Some(DEFAULT_PROFILE_ID.to_string()),
-    };
-    save_profile_index(&index)?;
-    fs::create_dir_all(dir.join(PRESETS_SUBDIR))?;
-
+    let mut index = ProfileIndex::default();
+    ensure_profile(&mut index, DEFAULT_PROFILE_ID, Some("Default"))?;
     Ok(())
 }
 

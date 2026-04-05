@@ -22,4 +22,5 @@ pub mod support_buffs;
 pub mod syndicate_combat;
 pub mod syndicate_reputation;
 pub mod synergy;
+pub mod upstream_hostile_ship_type;
 pub mod validate;
