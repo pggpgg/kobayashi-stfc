@@ -1,3 +1,4 @@
+use crate::combat::condition::stat_pct_for_condition;
 use crate::combat::types::{OpponentFactionTag, ShipType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -189,29 +190,13 @@ impl AbilityCondition {
             Self::StatBelow {
                 stat,
                 threshold_pct,
-            } => {
-                let pct = match stat.as_str() {
-                    "shield_hp" | "shield" => ctx.defender_shield_pct,
-                    "hull_hp" | "hull" => ctx.defender_hull_pct,
-                    "attacker_shield_hp" => ctx.attacker_shield_pct,
-                    "attacker_hull_hp" => ctx.attacker_hull_pct,
-                    _ => return false,
-                };
-                pct < *threshold_pct
-            }
+            } => stat_pct_for_condition(stat.as_str(), ctx)
+                .is_some_and(|pct| pct < *threshold_pct),
             Self::StatAbove {
                 stat,
                 threshold_pct,
-            } => {
-                let pct = match stat.as_str() {
-                    "shield_hp" | "shield" => ctx.defender_shield_pct,
-                    "hull_hp" | "hull" => ctx.defender_hull_pct,
-                    "attacker_shield_hp" => ctx.attacker_shield_pct,
-                    "attacker_hull_hp" => ctx.attacker_hull_pct,
-                    _ => return false,
-                };
-                pct > *threshold_pct
-            }
+            } => stat_pct_for_condition(stat.as_str(), ctx)
+                .is_some_and(|pct| pct > *threshold_pct),
             Self::RoundRange { min, max } => ctx.round_index >= *min && ctx.round_index <= *max,
             Self::MoraleActive => ctx.attacker_morale_active,
             Self::DefenderBurning => ctx.defender_burning_active,

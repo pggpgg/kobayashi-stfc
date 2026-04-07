@@ -8,6 +8,28 @@ After research sync/catalog merge work, a **major combat-engine focus** was **sh
 
 ---
 
+## High priority — combat correctness
+
+### Fix `on_hull_breach` timing (vs hull breach **state**)
+
+**Bug / modeling error:** [`TimingWindow::HullBreach`](../src/combat/abilities.rs) is driven by a **single global check** in [`simulate_combat_with_defender_faction_and_defender_crew`](../src/combat/engine.rs): the first time defender remaining hull fraction is **strictly below a hardcoded 50%** (`defender_hull_pct < 0.5`), the engine fires the hull-breach **timing window** once. That constant is **not** established from extracted client data in-repo and does **not** match how hull breach is modeled elsewhere.
+
+**Wires crossed:** This timing is easy to confuse with two **separate** concepts that already exist in the type system:
+
+- **[`AbilityEffect::HullBreach`](../src/combat/abilities.rs)** — a **proc effect** (chance + duration) that applies a timed **“hull breached” state** on the defender; and
+- **`AbilityCondition::DefenderHullBreach`** — true while that **state** is active, gating other effects (e.g. ship catalog `condition_defender_hull_breach` on `round_start` accumulating weapon damage).
+
+So: **when** `on_hull_breach` abilities should run (trigger semantics) was implemented using a **placeholder threshold**, while **whether the target is breached** is a **duration state** from procs. Those are not interchangeable.
+
+**Fix track (high priority):**
+
+1. **Evidence** — Establish real STFC behavior for `on_hull_breach` / hull-damage triggers (threshold if any, once vs repeatable, relation to UI “breached”, data.stfc.space timing strings, recorded fights).
+2. **Engine** — Replace the 50% shortcut with behavior that matches evidence; if still uncertain, keep a **named, documented assumption** (not a bare literal) and surface it in [DESIGN.md](DESIGN.md) triggers table.
+3. **Clarity** — Reduce naming/doc ambiguity between the **timing window** (`on_hull_breach`), the **proc effect** (`AbilityEffect::HullBreach`), and the **condition** (`DefenderHullBreach`) so new effects do not re-cross these wires.
+4. **Tests** — Update or replace tests that lock in the wrong model (e.g. [`burning_triggers_on_hull_breach_threshold`](../tests/combat_tests.rs)) once semantics are defined.
+
+---
+
 ## Ship Abilities
 
 Hull abilities from the data.stfc.space ship `ability` array are **modeled in combat** as timed effects alongside officers. They are distinct from officer LCARS abilities but use the same `[TimingWindow](../src/combat/abilities.rs)` ordering in the engine.

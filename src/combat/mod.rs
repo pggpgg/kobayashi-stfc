@@ -1,4 +1,5 @@
 pub mod abilities;
+pub mod condition;
 pub mod buffs;
 pub mod damage;
 pub mod effect_accumulator;
@@ -22,8 +23,8 @@ pub use damage::{
     compute_isolytic_taken,
 };
 pub use engine::{
-    apply_morale_primary_piercing, component_mitigation, isolytic_damage, mitigation,
-    mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,
+    apply_morale_primary_piercing, component_mitigation, effective_shots_for_weapon, isolytic_damage,
+    mitigation, mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,
     pierce_damage_through_bonus, round_half_even, serialize_events_json, simulate_combat,
     simulate_combat_with_defender_faction, simulate_combat_with_defender_faction_and_defender_crew,
     AttackerStats, CombatEvent, Combatant, DefenderStats, EventSource, OpponentFactionTag,

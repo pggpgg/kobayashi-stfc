@@ -25,8 +25,8 @@ Focus is on simulator correctness, explainability, maintainability, and develope
 - [ ] **5) Proc semantics: standardize proc RNG + per-round/proc caps**  
   Define and test proc behavior (roll timing, proc-chance stacking rules, cap enforcement, and duration refresh vs extend) with a minimal synthetic scenario suite.
 
-- [ ] **6) “Shots” / multi-hit semantics: unify hit accounting**  
-  Ensure extra-shots and multi-hit effects interact correctly with mitigation, crit, pierce, and on-hit triggers. Add regression tests around hit counting and sub-round ordering.
+- [x] **6) “Shots” / multi-hit semantics: unify hit accounting**  
+  Outbound shots already used the same formula; **defender counter-fire now loops `effective_shots_for_weapon(defender.weapon_base_shots, 0)`** (hostile crew `ShotsBonus` not wired yet). Hostile `Proc*` and weapon proc/crit roll **per counter hit**; `ReceiveDamage` stacks apply once per sub-round if any counter hull damage; per-hit burning rolls use updated hull context. Added `effective_shots_for_weapon` in `src/combat/types.rs`, trace `hit_index` on outbound `attack_roll` / `damage_application`, tests in `tests/combat_tests.rs` (`defender_counter_respects_weapon_base_shots`, `attack_trace_includes_hit_index_per_weapon_shot`, `effective_shots_for_weapon_matches_round_half_even_product`).
 
 - [ ] **7) Crit pipeline audit: ensure consistent crit chance/damage application points**  
   Verify where crit chance is read and where crit damage multiplier is applied (including counter-fire). Add a small trace invariant to guarantee crit is applied once per hit.

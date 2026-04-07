@@ -1,6 +1,7 @@
 use kobayashi::combat::{
-    aggregate_contributions, apply_morale_primary_piercing, component_mitigation, isolytic_damage,
-    mitigation, mitigation_with_morale, pierce_damage_through_bonus, round_half_even,
+    aggregate_contributions, apply_morale_primary_piercing, component_mitigation,
+    effective_shots_for_weapon, isolytic_damage, mitigation, mitigation_with_morale,
+    pierce_damage_through_bonus, round_half_even,
     serialize_events_json, simulate_combat, simulate_combat_with_defender_faction,
     simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass,
     AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration,
@@ -25,6 +26,147 @@ fn round_half_even_bankers_rounding() {
     assert_eq!(round_half_even(4.5), 4);
     assert_eq!(round_half_even(0.0), 0);
     assert_eq!(round_half_even(2.0), 2);
+}
+
+#[test]
+fn effective_shots_for_weapon_matches_round_half_even_product() {
+    assert_eq!(effective_shots_for_weapon(3, 0.0), 3);
+    assert_eq!(effective_shots_for_weapon(2, 0.1), round_half_even(2.2));
+    assert_eq!(effective_shots_for_weapon(1, 0.5), round_half_even(1.5));
+}
+
+/// Player deals no outbound damage; hostile only differs by `shots` on its single weapon.
+/// Counter-fire hull damage must scale linearly with shot count (crit/proc disabled).
+#[test]
+fn defender_counter_respects_weapon_base_shots() {
+    let crew = CrewConfiguration { seats: vec![] };
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 20260407,
+        trace_mode: TraceMode::Off,
+    };
+    let player = Combatant {
+        id: "player".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1.0e9,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let hostile_one = Combatant {
+        id: "h1".into(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1.0e9,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 80.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let mut hostile_three = hostile_one.clone();
+    hostile_three.id = "h3".into();
+    hostile_three.weapons = vec![WeaponStats {
+        attack: 80.0,
+        shots: Some(3),
+        ..Default::default()
+    }];
+
+    let r1 = simulate_combat(&player, &hostile_one, cfg, &crew);
+    let r3 = simulate_combat(&player, &hostile_three, cfg, &crew);
+    let d1 = player.hull_health - r1.attacker_hull_remaining;
+    let d3 = player.hull_health - r3.attacker_hull_remaining;
+    approx_eq(d3, 3.0 * d1, d1 * 1e-9 + 1e-6);
+}
+
+/// Traces include `hit_index` per outbound hit within a weapon sub-round for stable hit accounting.
+#[test]
+fn attack_trace_includes_hit_index_per_weapon_shot() {
+    let crew = CrewConfiguration { seats: vec![] };
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 1,
+        trace_mode: TraceMode::Events,
+    };
+    let player = Combatant {
+        id: "player".into(),
+        attack: 1.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1.0e9,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 10.0,
+            shots: Some(3),
+            ..Default::default()
+        }],
+    };
+    let hostile = Combatant {
+        id: "hostile".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1.0e9,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let res = simulate_combat(&player, &hostile, cfg, &crew);
+    let rolls: Vec<&CombatEvent> = res
+        .events
+        .iter()
+        .filter(|e| e.event_type == "attack_roll" && e.weapon_index == Some(0))
+        .collect();
+    assert_eq!(rolls.len(), 3, "expected three outbound shots in round 1");
+    for (i, ev) in rolls.iter().enumerate() {
+        assert_eq!(
+            ev.values.get("hit_index"),
+            Some(&Value::from(i as u64)),
+            "hit_index mismatch at shot {i}"
+        );
+    }
 }
 
 #[test]

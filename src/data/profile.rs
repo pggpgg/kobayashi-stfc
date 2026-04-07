@@ -393,11 +393,7 @@ fn research_condition_key_to_ability_condition(
     if key.requires_defender_hull_breach {
         parts.push(AbilityCondition::DefenderHullBreach);
     }
-    match parts.len() {
-        0 => None,
-        1 => Some(parts[0].clone()),
-        _ => Some(AbilityCondition::And(parts)),
-    }
+    crate::combat::condition::combine_optional_and(parts)
 }
 
 /// Conditional research rows (hull class, faction, morale, burning, hull breach) for `crit_chance` /

@@ -35,6 +35,17 @@ pub fn round_half_even(x: f64) -> u32 {
         }
     }
 }
+
+/// Effective shots for one weapon in a combat round: `round_half_even(n_w0 * (1 + B_shots))`.
+///
+/// `shots_bonus_sum` is the summed fractional bonus from active [`AbilityEffect::ShotsBonus`] entries
+/// (e.g. `0.1` => +10%). Pass `0.0` when modeling a combatant with no shots bonus (e.g. hostile
+/// counter-fire today, where only the player crew contributes `B_shots` in the combat engine).
+#[inline]
+pub fn effective_shots_for_weapon(base_shots: u32, shots_bonus_sum: f64) -> u32 {
+    round_half_even(base_shots as f64 * (1.0 + shots_bonus_sum))
+}
+
 pub const MAX_COMBAT_ROUNDS: u32 = 100;
 pub const MORALE_PRIMARY_PIERCING_BONUS: f64 = 0.10;
 /// When target has Hull Breach, critical damage is multiplied by this factor (per game rules).
@@ -277,7 +288,7 @@ pub struct SimulationResult {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct WeaponStats {
     pub attack: f64,
-    /// Base shots per weapon per round (n_w,0). When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
+    /// Base shots per weapon per round (n_w,0). When absent, 1. Effective shots = [`effective_shots_for_weapon`] with the round's `B_shots` sum.
     #[serde(default)]
     pub shots: Option<u32>,
     /// Damage-through pierce bonus for this weapon (same units as [`Combatant::pierce`]).

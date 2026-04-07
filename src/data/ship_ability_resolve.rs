@@ -24,6 +24,7 @@ use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
     TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
+use crate::combat::condition::combine_optional_and;
 use crate::combat::types::{OpponentFactionTag, ShipType, EPSILON, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
 
@@ -56,11 +57,7 @@ fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition
         let max_r = n.min(MAX_COMBAT_ROUNDS);
         parts.push(AbilityCondition::RoundRange { min: 1, max: max_r });
     }
-    match parts.len() {
-        0 => None,
-        1 => Some(parts[0].clone()),
-        _ => Some(AbilityCondition::And(parts)),
-    }
+    combine_optional_and(parts)
 }
 
 /// Map catalog timing string to engine window. Accepts Kobayashi canonical names and LCARS-style triggers.

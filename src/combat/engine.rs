@@ -7,11 +7,11 @@ pub use crate::combat::mitigation::{
     pierce_damage_through_bonus, MITIGATION_CEILING, MITIGATION_FLOOR, PIERCE_CAP,
 };
 pub use crate::combat::types::{
-    round_half_even, AttackerStats, CombatEvent, Combatant, DefenderStats, EventSource,
-    FightResult, OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector,
-    TraceMode, WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS,
-    INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS,
-    SURVEY_COEFFICIENTS,
+    effective_shots_for_weapon, round_half_even, AttackerStats, CombatEvent, Combatant,
+    DefenderStats, EventSource, FightResult, OpponentFactionTag, ShipType, SimulationConfig,
+    SimulationResult, TraceCollector, TraceMode, WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON,
+    EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS,
+    MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -20,6 +20,9 @@ use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy, filter_effects_by_condition,
     hostile_crit_damage_reduction_from_crew, sum_mitigation_additive, AbilityEffect,
     ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
+};
+use crate::combat::condition::{
+    defender_hull_below_hull_breach_timing_threshold, round_in_inclusive_first_n,
 };
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_crit_multiplier,
@@ -560,11 +563,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 compute_apex_damage_factor(effective_apex_shred, effective_apex_barrier);
 
             let base_shots = attacker.weapon_base_shots(weapon_index);
-            let effective_shots = round_half_even(base_shots as f64 * (1.0 + b_shots));
+            let effective_shots = effective_shots_for_weapon(base_shots, b_shots);
             let shield_before_weapon = defender_shield_remaining;
 
             let weapon_index_u = weapon_index as u32;
-            for _ in 0..effective_shots {
+            for hit_index in 0..effective_shots {
                 if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
                     let effective_attack =
                         attacker_weapon_attack * phase_effects.pre_attack_multiplier();
@@ -581,6 +584,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         weapon_index: Some(weapon_index_u),
                         values: Map::from_iter([
                             ("roll".to_string(), Value::from(round_f64(roll))),
+                            ("hit_index".to_string(), Value::from(hit_index)),
                             (
                                 "base_attack".to_string(),
                                 Value::from(attacker_weapon_attack),
@@ -914,6 +918,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                 "assimilated_active".to_string(),
                                 Value::Bool(assimilated_rounds_remaining > 0),
                             ),
+                            ("hit_index".to_string(), Value::from(hit_index)),
                         ]),
                     });
                 }
@@ -977,7 +982,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
             let defender_hull_pct =
                 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-            if !hull_breach_threshold_fired && defender_hull_pct < 0.5 {
+            if !hull_breach_threshold_fired
+                && defender_hull_below_hull_breach_timing_threshold(defender_hull_pct)
+            {
                 hull_breach_threshold_fired = true;
                 let hull_breach_filtered =
                     filter_effects_by_condition(&hull_breach_effects, &combat_ctx);
@@ -1012,14 +1019,19 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {
                 // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
                 // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
-                // so the two paths stay in sync.
+                // so the two paths stay in sync. Shot count matches outbound: `effective_shots_for_weapon`
+                // on `defender.weapon_base_shots` (defender crew `ShotsBonus` is not wired here yet).
+                let def_base_shots = defender.weapon_base_shots(weapon_index);
+                let def_effective_shots = effective_shots_for_weapon(def_base_shots, 0.0);
+
                 let eff_player_mitigation =
                     (attacker.mitigation + attacker_mitigation_additive).clamp(0.0, 1.0);
                 let counter_mitigation_mult = (1.0 - eff_player_mitigation).max(0.0);
 
-                // Build defender-side effect accumulator for this weapon base.
-                let mut defender_phase_effects = EffectAccumulator::default();
-                defender_phase_effects.set_trace_contributions(trace.is_enabled());
+                // Static hostile buffs for this weapon sub-round; cloned per counter shot so officer
+                // `Proc*` rolls do not accumulate across hits.
+                let mut defender_phase_template = EffectAccumulator::default();
+                defender_phase_template.set_trace_contributions(false);
                 let defender_ctx = CombatContext {
                     round_index,
                     defender_hull_pct: combat_ctx.defender_hull_pct,
@@ -1042,63 +1054,35 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 let defender_defense_filtered =
                     filter_effects_by_condition(&defender_defense_phase_effects, &defender_ctx);
 
-                // Deterministically roll defender-side proc effects for this counter shot and apply them as
-                // ephemeral effects via the accumulator (no persistent state across shots).
-                //
-                // This is intentionally limited to hostile-side effects (`Proc*`) that can be modeled as
-                // immediate multipliers/bonuses on return fire.
-                let mut proc_pre_attack_multiplier = 1.0_f64;
-                let mut proc_pre_attack_pierce_bonus = 0.0_f64;
-                for e in defender_combat_begin_filtered
-                    .iter()
-                    .chain(defender_round_start_filtered.iter())
-                    .chain(defender_attack_filtered.iter())
-                    .chain(defender_defense_filtered.iter())
-                {
-                    match e.effect {
-                        AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
-                            if roll_proc(chance.clamp(0.0, 1.0), &mut rng) {
-                                proc_pre_attack_multiplier *= multiplier.max(0.0);
-                            }
-                        }
-                        AbilityEffect::ProcPierceBonus { chance, bonus } => {
-                            if roll_proc(chance.clamp(0.0, 1.0), &mut rng) {
-                                proc_pre_attack_pierce_bonus += bonus;
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-
-                defender_phase_effects.add_effects(
+                defender_phase_template.add_effects(
                     TimingWindow::CombatBegin,
                     &defender_combat_begin_filtered,
                     defender_weapon_attack,
                     false,
                     round_index,
                 );
-                defender_phase_effects.add_effects(
+                defender_phase_template.add_effects(
                     TimingWindow::RoundStart,
                     &defender_round_start_filtered,
                     defender_weapon_attack,
                     false,
                     round_index,
                 );
-                defender_phase_effects.add_effects(
+                defender_phase_template.add_effects(
                     TimingWindow::ShieldBreak,
                     &defender_shield_break_carry,
                     defender_weapon_attack,
                     false,
                     round_index,
                 );
-                defender_phase_effects.add_effects(
+                defender_phase_template.add_effects(
                     TimingWindow::AttackPhase,
                     &defender_attack_filtered,
                     defender_weapon_attack,
                     false,
                     round_index,
                 );
-                defender_phase_effects.add_effects(
+                defender_phase_template.add_effects(
                     TimingWindow::DefensePhase,
                     &defender_defense_filtered,
                     defender_weapon_attack,
@@ -1106,162 +1090,226 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     round_index,
                 );
 
-                // Apply proc outcomes as deterministic, already-rolled effects so they compose naturally.
-                defender_phase_effects.add_effect(
-                    TimingWindow::CombatBegin,
-                    AbilityEffect::AttackMultiplier(proc_pre_attack_multiplier - 1.0),
-                    defender_weapon_attack,
-                    round_index,
-                    None,
-                );
-                defender_phase_effects.add_effect(
-                    TimingWindow::CombatBegin,
-                    AbilityEffect::PierceBonus(proc_pre_attack_pierce_bonus),
-                    defender_weapon_attack,
-                    round_index,
-                    None,
-                );
+                let mut counter_hull_damage_this_subround = false;
 
-                let counter_damage_through = compute_damage_through_factor(
-                    counter_mitigation_mult,
-                    defender.weapon_pierce(weapon_index)
-                        + defender_phase_effects.pre_attack_pierce_bonus(),
-                    defender_phase_effects.defense_mitigation_bonus(),
-                );
-                let def_effective_crit_chance = (defender.weapon_crit_chance(weapon_index)
-                    + defender_phase_effects.crit_chance_bonus())
-                .clamp(0.0, 1.0);
-                let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let def_is_crit = def_crit_roll < def_effective_crit_chance;
-                let def_base_crit_mult = defender.weapon_crit_multiplier(weapon_index)
-                    * defender_phase_effects.crit_damage_multiplier();
-                let mut def_crit_mult =
-                    compute_crit_multiplier(def_is_crit, def_base_crit_mult, false);
-                // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
-                if def_is_crit
-                    && hostile_crit_reduction > 0.0
-                    && hostile_crit_reduction_rounds > 0
-                    && round_index <= hostile_crit_reduction_rounds
-                {
-                    def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
-                }
-                let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let def_w_proc = defender.weapon_proc_chance(weapon_index);
-                let def_proc_mult = if def_proc_roll < def_w_proc {
-                    defender.weapon_proc_multiplier(weapon_index)
-                } else {
-                    1.0
-                };
-                let counter_effective_attack =
-                    defender_weapon_attack * defender_phase_effects.pre_attack_multiplier();
-                let counter_base_damage = counter_effective_attack
-                    * counter_damage_through
-                    * def_crit_mult
-                    * def_proc_mult;
-                defender_phase_effects.set_pre_attack_damage_base(counter_base_damage);
-                let counter_pre_attack_damage = defender_phase_effects.composed_pre_attack_damage();
-                let counter_after_attack_phase =
-                    defender_phase_effects.compose_attack_phase_damage(counter_pre_attack_damage);
-                let counter_iso_taken = compute_isolytic_taken(
-                    counter_after_attack_phase,
-                    (defender.isolytic_damage
-                        + defender_phase_effects.composed_isolytic_damage_bonus())
-                    .max(0.0),
-                    (attacker.isolytic_defense
-                        + defender_phase_effects.composed_isolytic_defense_bonus())
-                    .max(0.0),
-                    defender_phase_effects
-                        .composed_isolytic_cascade_damage_bonus()
-                        .max(0.0),
-                );
-                let counter_before_apex = counter_after_attack_phase + counter_iso_taken;
-                let counter_apex_factor = compute_apex_damage_factor(
-                    defender.apex_shred.max(0.0),
-                    attacker.apex_barrier.max(0.0),
-                );
-                let counter_after_apex = counter_before_apex * counter_apex_factor;
-                let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
-                    attacker.shield_mitigation.clamp(0.0, 1.0)
-                } else {
-                    0.0
-                };
-                let att_shield_before_counter = attacker_shield_remaining;
-                let (att_actual_shield_damage, att_hull_damage_this_round) =
-                    apply_shield_hull_split(
-                        counter_after_apex,
-                        att_shield_mitigation,
-                        attacker_shield_remaining,
-                    );
-                attacker_shield_remaining =
-                    (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
-                total_attacker_hull_damage += att_hull_damage_this_round;
+                for _hit_index in 0..def_effective_shots {
+                    let mut defender_phase_effects = defender_phase_template.clone();
+                    defender_phase_effects.set_trace_contributions(trace.is_enabled());
 
-                let attacker_own_shields_broke =
-                    att_shield_before_counter > 0.0 && attacker_shield_remaining <= 0.0;
-                if attacker_own_shields_broke {
-                    let mut ctx_self_sb = combat_ctx.clone();
-                    ctx_self_sb.attacker_shield_pct = if attacker.shield_health > 0.0 {
-                        attacker_shield_remaining / attacker.shield_health
-                    } else {
-                        0.0
-                    };
-                    ctx_self_sb.attacker_hull_pct =
-                        1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
-                    let self_sb_filtered =
-                        filter_effects_by_condition(&self_shield_break_effects, &ctx_self_sb);
-                    record_ability_activations(
-                        &mut trace,
-                        round_index,
-                        "self_shield_break",
-                        attacker,
-                        &self_sb_filtered,
-                        attack_phase_assimilated,
-                    );
-                    for e in &self_sb_filtered {
-                        match scale_effect(e.effect, attack_phase_assimilated) {
-                            AbilityEffect::ShieldRegen(v) => {
-                                attacker_shield_remaining = (attacker_shield_remaining + v)
-                                    .min(attacker.shield_health.max(0.0));
+                    // Per-shot `Proc*` (mirrors outbound per-shot weapon proc rolls).
+                    let mut proc_pre_attack_multiplier = 1.0_f64;
+                    let mut proc_pre_attack_pierce_bonus = 0.0_f64;
+                    for e in defender_combat_begin_filtered
+                        .iter()
+                        .chain(defender_round_start_filtered.iter())
+                        .chain(defender_attack_filtered.iter())
+                        .chain(defender_defense_filtered.iter())
+                    {
+                        match e.effect {
+                            AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
+                                if roll_proc(chance.clamp(0.0, 1.0), &mut rng) {
+                                    proc_pre_attack_multiplier *= multiplier.max(0.0);
+                                }
                             }
-                            AbilityEffect::HullRegen(v) => {
-                                total_attacker_hull_damage =
-                                    (total_attacker_hull_damage - v).max(0.0);
+                            AbilityEffect::ProcPierceBonus { chance, bonus } => {
+                                if roll_proc(chance.clamp(0.0, 1.0), &mut rng) {
+                                    proc_pre_attack_pierce_bonus += bonus;
+                                }
                             }
                             _ => {}
                         }
                     }
-                    let self_sb_combat: Vec<ActiveAbilityEffect> = self_sb_filtered
-                        .iter()
-                        .filter(|e| {
-                            !matches!(
-                                scale_effect(e.effect, attack_phase_assimilated),
-                                AbilityEffect::ShieldRegen(_) | AbilityEffect::HullRegen(_)
-                            )
-                        })
-                        .cloned()
-                        .collect();
-                    phase_effects_round.add_effects(
-                        TimingWindow::SelfShieldBreak,
-                        &self_sb_combat,
-                        weapon_base,
-                        attack_phase_assimilated,
+
+                    defender_phase_effects.add_effect(
+                        TimingWindow::CombatBegin,
+                        AbilityEffect::AttackMultiplier(proc_pre_attack_multiplier - 1.0),
+                        defender_weapon_attack,
                         round_index,
-                    );
-                    roll_burning_triggers(
-                        &self_sb_combat,
-                        attack_phase_assimilated,
-                        &mut rng,
-                        &mut trace,
-                        round_index,
-                        "self_shield_break",
-                        &attacker.id,
                         None,
-                        &mut burning_rounds_remaining,
                     );
+                    defender_phase_effects.add_effect(
+                        TimingWindow::CombatBegin,
+                        AbilityEffect::PierceBonus(proc_pre_attack_pierce_bonus),
+                        defender_weapon_attack,
+                        round_index,
+                        None,
+                    );
+
+                    let counter_damage_through = compute_damage_through_factor(
+                        counter_mitigation_mult,
+                        defender.weapon_pierce(weapon_index)
+                            + defender_phase_effects.pre_attack_pierce_bonus(),
+                        defender_phase_effects.defense_mitigation_bonus(),
+                    );
+                    let def_effective_crit_chance = (defender.weapon_crit_chance(weapon_index)
+                        + defender_phase_effects.crit_chance_bonus())
+                    .clamp(0.0, 1.0);
+                    let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                    let def_is_crit = def_crit_roll < def_effective_crit_chance;
+                    let def_base_crit_mult = defender.weapon_crit_multiplier(weapon_index)
+                        * defender_phase_effects.crit_damage_multiplier();
+                    let mut def_crit_mult =
+                        compute_crit_multiplier(def_is_crit, def_base_crit_mult, false);
+                    // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
+                    if def_is_crit
+                        && hostile_crit_reduction > 0.0
+                        && round_in_inclusive_first_n(round_index, hostile_crit_reduction_rounds)
+                    {
+                        def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
+                    }
+                    let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                    let def_w_proc = defender.weapon_proc_chance(weapon_index);
+                    let def_proc_mult = if def_proc_roll < def_w_proc {
+                        defender.weapon_proc_multiplier(weapon_index)
+                    } else {
+                        1.0
+                    };
+                    let counter_effective_attack =
+                        defender_weapon_attack * defender_phase_effects.pre_attack_multiplier();
+                    let counter_base_damage = counter_effective_attack
+                        * counter_damage_through
+                        * def_crit_mult
+                        * def_proc_mult;
+                    defender_phase_effects.set_pre_attack_damage_base(counter_base_damage);
+                    let counter_pre_attack_damage =
+                        defender_phase_effects.composed_pre_attack_damage();
+                    let counter_after_attack_phase =
+                        defender_phase_effects.compose_attack_phase_damage(counter_pre_attack_damage);
+                    let counter_iso_taken = compute_isolytic_taken(
+                        counter_after_attack_phase,
+                        (defender.isolytic_damage
+                            + defender_phase_effects.composed_isolytic_damage_bonus())
+                        .max(0.0),
+                        (attacker.isolytic_defense
+                            + defender_phase_effects.composed_isolytic_defense_bonus())
+                        .max(0.0),
+                        defender_phase_effects
+                            .composed_isolytic_cascade_damage_bonus()
+                            .max(0.0),
+                    );
+                    let counter_before_apex = counter_after_attack_phase + counter_iso_taken;
+                    let counter_apex_factor = compute_apex_damage_factor(
+                        defender.apex_shred.max(0.0),
+                        attacker.apex_barrier.max(0.0),
+                    );
+                    let counter_after_apex = counter_before_apex * counter_apex_factor;
+                    let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
+                        attacker.shield_mitigation.clamp(0.0, 1.0)
+                    } else {
+                        0.0
+                    };
+                    let att_shield_before_counter = attacker_shield_remaining;
+                    let (att_actual_shield_damage, att_hull_damage_this_round) =
+                        apply_shield_hull_split(
+                            counter_after_apex,
+                            att_shield_mitigation,
+                            attacker_shield_remaining,
+                        );
+                    attacker_shield_remaining =
+                        (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
+                    total_attacker_hull_damage += att_hull_damage_this_round;
+
+                    let attacker_own_shields_broke =
+                        att_shield_before_counter > 0.0 && attacker_shield_remaining <= 0.0;
+                    if attacker_own_shields_broke {
+                        let mut ctx_self_sb = combat_ctx.clone();
+                        ctx_self_sb.attacker_shield_pct = if attacker.shield_health > 0.0 {
+                            attacker_shield_remaining / attacker.shield_health
+                        } else {
+                            0.0
+                        };
+                        ctx_self_sb.attacker_hull_pct = 1.0
+                            - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+                        let self_sb_filtered =
+                            filter_effects_by_condition(&self_shield_break_effects, &ctx_self_sb);
+                        record_ability_activations(
+                            &mut trace,
+                            round_index,
+                            "self_shield_break",
+                            attacker,
+                            &self_sb_filtered,
+                            attack_phase_assimilated,
+                        );
+                        for e in &self_sb_filtered {
+                            match scale_effect(e.effect, attack_phase_assimilated) {
+                                AbilityEffect::ShieldRegen(v) => {
+                                    attacker_shield_remaining = (attacker_shield_remaining + v)
+                                        .min(attacker.shield_health.max(0.0));
+                                }
+                                AbilityEffect::HullRegen(v) => {
+                                    total_attacker_hull_damage =
+                                        (total_attacker_hull_damage - v).max(0.0);
+                                }
+                                _ => {}
+                            }
+                        }
+                        let self_sb_combat: Vec<ActiveAbilityEffect> = self_sb_filtered
+                            .iter()
+                            .filter(|e| {
+                                !matches!(
+                                    scale_effect(e.effect, attack_phase_assimilated),
+                                    AbilityEffect::ShieldRegen(_) | AbilityEffect::HullRegen(_)
+                                )
+                            })
+                            .cloned()
+                            .collect();
+                        phase_effects_round.add_effects(
+                            TimingWindow::SelfShieldBreak,
+                            &self_sb_combat,
+                            weapon_base,
+                            attack_phase_assimilated,
+                            round_index,
+                        );
+                        roll_burning_triggers(
+                            &self_sb_combat,
+                            attack_phase_assimilated,
+                            &mut rng,
+                            &mut trace,
+                            round_index,
+                            "self_shield_break",
+                            &attacker.id,
+                            None,
+                            &mut burning_rounds_remaining,
+                        );
+                    }
+                    if att_hull_damage_this_round > 0.0 {
+                        counter_hull_damage_this_subround = true;
+                        let receive_damage_assimilated = assimilated_rounds_remaining > 0;
+                        let mut ctx_receive = combat_ctx.clone();
+                        ctx_receive.attacker_hull_pct = 1.0
+                            - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+                        ctx_receive.attacker_shield_pct = if attacker.shield_health > 0.0 {
+                            attacker_shield_remaining / attacker.shield_health
+                        } else {
+                            0.0
+                        };
+                        let receive_damage_filtered =
+                            filter_effects_by_condition(&receive_damage_effects, &ctx_receive);
+                        roll_burning_triggers(
+                            &receive_damage_filtered,
+                            receive_damage_assimilated,
+                            &mut rng,
+                            &mut trace,
+                            round_index,
+                            "receive_damage",
+                            &attacker.id,
+                            None,
+                            &mut burning_rounds_remaining,
+                        );
+                    }
                 }
-                if att_hull_damage_this_round > 0.0 {
+
+                if counter_hull_damage_this_subround {
+                    let mut ctx_rd = combat_ctx.clone();
+                    ctx_rd.attacker_hull_pct =
+                        1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+                    ctx_rd.attacker_shield_pct = if attacker.shield_health > 0.0 {
+                        attacker_shield_remaining / attacker.shield_health
+                    } else {
+                        0.0
+                    };
                     let receive_damage_filtered =
-                        filter_effects_by_condition(&receive_damage_effects, &combat_ctx);
+                        filter_effects_by_condition(&receive_damage_effects, &ctx_rd);
                     record_ability_activations(
                         &mut trace,
                         round_index,
@@ -1276,18 +1324,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         defender_weapon_attack,
                         assimilated_rounds_remaining > 0,
                         round_index,
-                    );
-                    let receive_damage_assimilated = assimilated_rounds_remaining > 0;
-                    roll_burning_triggers(
-                        &receive_damage_filtered,
-                        receive_damage_assimilated,
-                        &mut rng,
-                        &mut trace,
-                        round_index,
-                        "receive_damage",
-                        &attacker.id,
-                        None,
-                        &mut burning_rounds_remaining,
                     );
                 }
             }
