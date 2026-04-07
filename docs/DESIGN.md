@@ -110,66 +110,76 @@ The stat list is extensible. The engine ignores stats it doesn't recognize (with
 
 The simulator tracks implementation status per combat mechanic. LCARS validation maps each effect/condition to this matrix so users can see whether a ranking is exact or partial.
 
-| Mechanic | LCARS cues (effects/conditions/stats) | Status |
-|---|---|---|
-| Mitigation | `shield_mitigation`, `damage_reduction` | **implemented** |
-| Piercing | `shield_pierce`, `armor_pierce` | **implemented** |
-| Armor | `armor` | **implemented** |
-| Critical | `crit_chance`, `crit_damage`, `on_critical` | **implemented** |
-| Extra attack | `extra_attack`, double-shot style triggers | **implemented** |
-| Burn | LCARS `type: burning` / ship `burning` at supported timings; tick = 1% of target max hull per round while state on, hull-only; hostile burning the player ship is not modeled | **implemented** |
-| Regeneration | `shield_regen`, repair/heal effects | **partial** |
-| Isolytic | `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` | **implemented** |
-| Apex | `apex_shred`, `apex_barrier` | **partial** (engine implemented; officer/ability stacking can be added later) |
-| Non-combat tags | mining/loot/cargo/warp effects | **planned (ignored in combat sim)** |
+
+| Mechanic        | LCARS cues (effects/conditions/stats)                                                                                                                                         | Status                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Mitigation      | `shield_mitigation`, `damage_reduction`                                                                                                                                       | **implemented**                                                               |
+| Piercing        | `shield_pierce`, `armor_pierce`                                                                                                                                               | **implemented**                                                               |
+| Armor           | `armor`                                                                                                                                                                       | **implemented**                                                               |
+| Critical        | `crit_chance`, `crit_damage`, `on_critical`                                                                                                                                   | **implemented**                                                               |
+| Extra attack    | `extra_attack`, double-shot style triggers                                                                                                                                    | **implemented**                                                               |
+| Burn            | LCARS `type: burning` / ship `burning` at supported timings; tick = 1% of target max hull per round while state on, hull-only; hostile burning the player ship is not modeled | **implemented**                                                               |
+| Regeneration    | `shield_regen`, repair/heal effects                                                                                                                                           | **partial**                                                                   |
+| Isolytic        | `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage`                                                                                                              | **implemented**                                                               |
+| Apex            | `apex_shred`, `apex_barrier`                                                                                                                                                  | **partial** (engine implemented; officer/ability stacking can be added later) |
+| Non-combat tags | mining/loot/cargo/warp effects                                                                                                                                                | **planned (ignored in combat sim)**                                           |
+
 
 #### Targets
 
-| Target | Description |
-|---|---|
-| `self` | The player's ship |
-| `enemy` | The hostile / opponent |
-| `all_allies` | All friendly ships (armadas) |
-| `all_enemies` | All hostile ships |
+
+| Target        | Description                  |
+| ------------- | ---------------------------- |
+| `self`        | The player's ship            |
+| `enemy`       | The hostile / opponent       |
+| `all_allies`  | All friendly ships (armadas) |
+| `all_enemies` | All hostile ships            |
+
 
 #### Triggers
 
-| Trigger | When it fires |
-|---|---|
-| `passive` | Always active |
-| `on_combat_start` | Once, before round 1 |
-| `on_round_start` | Each round, before attacks |
-| `on_attack` | Each time this ship attacks |
-| `on_hit` | Each time an attack lands |
-| `on_critical` | Each time a critical hit lands |
-| `on_shield_break` | Legacy: **whose** shields is inferred from `target` — `target: self` → your shields depleted ([`TimingWindow::SelfShieldBreak`](../src/combat/abilities.rs)); `target: enemy` → enemy shields depleted ([`ShieldBreak`](../src/combat/abilities.rs)). If `target` is omitted, **self** is assumed. Prefer explicit `on_own_shield_break` / `on_enemy_shield_break`. |
-| `on_own_shield_break` | When **your** ship's shields reach 0 (counter-fire, etc.) |
-| `on_enemy_shield_break` | When the **opponent's** shields reach 0 (Yan'Agh-style) |
-| `on_hull_breach` | When target's hull drops below threshold |
-| `on_kill` | When this ship destroys a target |
-| `on_receive_damage` | When this ship takes damage |
-| `on_round_end` | Each round, after attacks |
-| `on_combat_end` | Once, after fight resolves |
+
+| Trigger                 | When it fires                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `passive`               | Always active                                                                                                                                                                                                                                                                                                                                                       |
+| `on_combat_start`       | Once, before round 1                                                                                                                                                                                                                                                                                                                                                |
+| `on_round_start`        | Each round, before attacks                                                                                                                                                                                                                                                                                                                                          |
+| `on_attack`             | Each time this ship attacks                                                                                                                                                                                                                                                                                                                                         |
+| `on_hit`                | Each time an attack lands                                                                                                                                                                                                                                                                                                                                           |
+| `on_critical`           | Each time a critical hit lands                                                                                                                                                                                                                                                                                                                                      |
+| `on_shield_break`       | Legacy: **whose** shields is inferred from `target` — `target: self` → your shields depleted (`[TimingWindow::SelfShieldBreak](../src/combat/abilities.rs)`); `target: enemy` → enemy shields depleted (`[ShieldBreak](../src/combat/abilities.rs)`). If `target` is omitted, **self** is assumed. Prefer explicit `on_own_shield_break` / `on_enemy_shield_break`. |
+| `on_own_shield_break`   | When **your** ship's shields reach 0 (counter-fire, etc.)                                                                                                                                                                                                                                                                                                           |
+| `on_enemy_shield_break` | When the **opponent's** shields reach 0 (Yan'Agh-style)                                                                                                                                                                                                                                                                                                             |
+| `on_hull_breach`        | When target's hull drops below threshold                                                                                                                                                                                                                                                                                                                            |
+| `on_kill`               | When this ship destroys a target                                                                                                                                                                                                                                                                                                                                    |
+| `on_receive_damage`     | When this ship takes damage                                                                                                                                                                                                                                                                                                                                         |
+| `on_round_end`          | Each round, after attacks                                                                                                                                                                                                                                                                                                                                           |
+| `on_combat_end`         | Once, after fight resolves                                                                                                                                                                                                                                                                                                                                          |
+
 
 #### Operators
 
-| Operator | Behavior |
-|---|---|
-| `add` | Flat addition to stat |
-| `multiply` | Multiplicative scaling |
-| `set` | Override stat to exact value |
-| `min` | Set a floor |
-| `max` | Set a ceiling |
+
+| Operator         | Behavior                                     |
+| ---------------- | -------------------------------------------- |
+| `add`            | Flat addition to stat                        |
+| `multiply`       | Multiplicative scaling                       |
+| `set`            | Override stat to exact value                 |
+| `min`            | Set a floor                                  |
+| `max`            | Set a ceiling                                |
 | `add_pct_of_max` | Add a percentage of the stat's maximum value |
+
 
 #### Duration
 
-| Duration | Behavior |
-|---|---|
-| `permanent` | Lasts entire fight |
-| `rounds: N` | Lasts N rounds from activation |
-| `stacks: N` | Can stack up to N times |
-| `until: <condition>` | Lasts until condition is met |
+
+| Duration             | Behavior                       |
+| -------------------- | ------------------------------ |
+| `permanent`          | Lasts entire fight             |
+| `rounds: N`          | Lasts N rounds from activation |
+| `stacks: N`          | Can stack up to N times        |
+| `until: <condition>` | Lasts until condition is met   |
+
 
 ### 3.3 Effect Types
 
@@ -247,29 +257,31 @@ accumulate:
 
 Conditions gate whether an effect activates. They are predicates evaluated by the engine.
 
-| Condition Type | Parameters | Example |
-|---|---|---|
-| `stat_below` | stat, threshold_pct | Shields below 50% |
-| `stat_above` | stat, threshold_pct | Hull above 80% |
-| `defender_faction_is` | `faction` or `tag` (slug) | Against Romulan hostiles (aliases: `opponent_faction_is`, `faction_is`, …) |
-| `defender_ship_type_is` | `ship_type` hull slug | Enemy hull is explorer / battleship / interceptor / survey / armada (aliases: `defender_ship_class_is`, `opponent_ship_type_is`, `opponent_ship_class_is`) |
-| `attacker_ship_type_is` | `ship_type` hull slug | Player’s ship hull matches (aliases: `attacker_ship_class_is`, `self_ship_type_is`, `self_ship_class_is`) |
-| `round_range` | min, max | Only rounds 1–3 |
-| `morale_active` | — | Attacker succeeded on primary morale roll this round |
-| `defender_burning` | — | Opponent has burning |
-| `defender_hull_breach` | — | Opponent hull breached |
-| `group_count` | group, min_members | *(not implemented in resolver)* |
-| `has_tag` | tag | *(not implemented in resolver)* |
 
-Hull slugs match [`ShipType::from_data_slug`](src/combat/types.rs): `battleship`, `explorer`, `interceptor`, `survey`, `armada`. In combat, the engine sets **defender** hull class from the hostile and **attacker** hull class from the player ship record.
+| Condition Type          | Parameters                | Example                                                                                                                                                    |
+| ----------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stat_below`            | stat, threshold_pct       | Shields below 50%                                                                                                                                          |
+| `stat_above`            | stat, threshold_pct       | Hull above 80%                                                                                                                                             |
+| `defender_faction_is`   | `faction` or `tag` (slug) | Against Romulan hostiles (aliases: `opponent_faction_is`, `faction_is`, …)                                                                                 |
+| `defender_ship_type_is` | `ship_type` hull slug     | Enemy hull is explorer / battleship / interceptor / survey / armada (aliases: `defender_ship_class_is`, `opponent_ship_type_is`, `opponent_ship_class_is`) |
+| `attacker_ship_type_is` | `ship_type` hull slug     | Player’s ship hull matches (aliases: `attacker_ship_class_is`, `self_ship_type_is`, `self_ship_class_is`)                                                  |
+| `round_range`           | min, max                  | Only rounds 1–3                                                                                                                                            |
+| `morale_active`         | —                         | Attacker succeeded on primary morale roll this round                                                                                                       |
+| `defender_burning`      | —                         | Opponent has burning                                                                                                                                       |
+| `defender_hull_breach`  | —                         | Opponent hull breached                                                                                                                                     |
+| `group_count`           | group, min_members        | *(not implemented in resolver)*                                                                                                                            |
+| `has_tag`               | tag                       | *(not implemented in resolver)*                                                                                                                            |
 
-**Upstream hostile `ship_type` (data.stfc.space):** The JSON field `ship_type` is stored on [`HostileRecord`](../src/data/hostile.rs) as `upstream_ship_type`. It is **not** hull class (that comes from `hull_type` → `ship_class`). Kobayashi maps selected integers in [`upstream_hostile_ship_type_profile`](../src/data/upstream_hostile_ship_type.rs); [`HostileRecord::ship_type_for_combat`](../src/data/hostile.rs) uses that mapping so the defender’s effective class can be [`ShipType::Armada`](../src/combat/types.rs) for **armada targets** (currently `upstream_ship_type == 1`, aligned with UI string “ARMADA TARGET”). Unmapped values fall back to hull-derived `ship_class` only. Ongoing reverse engineering and backlog items: [ROADMAP.md](ROADMAP.md) (section *Hostile upstream `ship_type`*).
+
+Hull slugs match `[ShipType::from_data_slug](src/combat/types.rs)`: `battleship`, `explorer`, `interceptor`, `survey`, `armada`. In combat, the engine sets **defender** hull class from the hostile and **attacker** hull class from the player ship record.
+
+**Upstream hostile `ship_type` (data.stfc.space):** The JSON field `ship_type` is stored on `[HostileRecord](../src/data/hostile.rs)` as `upstream_ship_type`. It is **not** hull class (that comes from `hull_type` → `ship_class`). Kobayashi maps selected integers in `[upstream_hostile_ship_type_profile](../src/data/upstream_hostile_ship_type.rs)`; `[HostileRecord::ship_type_for_combat](../src/data/hostile.rs)` uses that mapping so the defender’s effective class can be `[ShipType::Armada](../src/combat/types.rs)` for **armada targets** (currently `upstream_ship_type == 1`, aligned with UI string “ARMADA TARGET”). Unmapped values fall back to hull-derived `ship_class` only. Ongoing reverse engineering and backlog items: [ROADMAP.md](ROADMAP.md) (section *Hostile upstream `ship_type`*).
 
 `kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction`, unknown slug, or empty `and` / `or`).
 
 **Passive + permanent `stat_modify`** is merged into `static_buffs` at resolve time and **does not** evaluate `condition` today. Use ship-class (and other) gates on timed effects (e.g. `on_combat_start`) or extend the resolver/engine before conditioning passive stats such as `armor`.
 
-**Timed `armor` (`on_combat_start` / `on_round_start`):** resolved to [`AbilityEffect::MitigationAdditive`](../src/combat/abilities.rs), summed from combat-begin officer rows and applied when **hostiles return fire** (increases effective player mitigation). LCARS magnitudes `|v| > 1` are treated as percent points (`v / 100`) for the mitigation fraction; this is an approximation of “all defenses” / sheet-style values, not a full armor–deflection–dodge split.
+**Timed `armor` (`on_combat_start` / `on_round_start`):** resolved to `[AbilityEffect::MitigationAdditive](../src/combat/abilities.rs)`, summed from combat-begin officer rows and applied when **hostiles return fire** (increases effective player mitigation). LCARS magnitudes `|v| > 1` are treated as percent points (`v / 100`) for the mitigation fraction; this is an approximation of “all defenses” / sheet-style values, not a full armor–deflection–dodge split.
 
 Conditions are composable with `and` / `or`:
 
@@ -360,15 +372,16 @@ Per round, the engine processes effects in this order:
 1. Passive effects (always on)
 2. Round-start maintenance (`HULL_REPAIR_START` / `HULL_REPAIR_END`)
 3. For each sub-round (weapon index `i`):
-   - Apply officer + ship ability buffs
-   - Apply forbidden-tech and chaos-tech buffs
-   - Resolve all attacks using weapon `i`
-   - Process `on_attack` → `on_hit` / `on_critical` / `on_receive_damage`
+  - Apply officer + ship ability buffs
+  - Apply forbidden-tech and chaos-tech buffs
+  - Resolve all attacks using weapon `i`
+  - Process `on_attack` → `on_hit` / `on_critical` / `on_receive_damage`
 4. End-of-round effects (`on_round_end`)
 5. Burning tick and temporary-effect cleanup
 6. Check `on_kill`, `on_shield_break`, `on_hull_breach`, and round cap (100)
 
 Notes:
+
 - **Forbidden tech and chaos tech (implementation):** bonuses are merged into `profile.bonuses` at scenario build time (same static stack as research/buildings for combat math), not re-applied as a separate sub-round phase. The numbered list above still reflects toolbox/client ordering for officer/ship abilities and weapons; treat FT/chaos there as *conceptual* unless we add a dedicated engine phase with evidence.
 - UI logs can collapse duplicate ability/forbidden-tech lines even when multiple ships apply the same source.
 - Ordering details for per-ship buff application are currently treated as implementation targets inferred from raw logs and should remain test-backed as fixtures expand.
@@ -406,7 +419,7 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 - **Combat start: armor/shield piercing or weapon damage** — Mapped to `combat_begin` + `pierce_bonus` or `attack_multiplier` with percentage flags set from text heuristics. **“Ignore X% of enemy shields” (Breen-style)** — Mapped to percentage `pierce_bonus`; the client may implement this as a distinct bypass layer rather than the same stat as armor piercing.
 - **Upstream `values[]`** — Only the first scalar value is normalized onto the ship; per-tier ability curves are not modeled.
 
-**Gaps:** **Accuracy** from ship hull abilities: catalog `effect_type` `accuracy` / `accuracy_bonus` at **`combat_begin` only** is summed by `sum_combat_begin_accuracy_from_ship_abilities` into attacker stats (not a crew `AbilityEffect`; see `ship_ability_resolve`). Other timings or accuracy tied to non-combat-begin windows are not modeled. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids are inventoried in [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md); maintain that list when the catalog changes.
+**Gaps:** **Accuracy** from ship hull abilities: catalog `effect_type` `accuracy` / `accuracy_bonus` at `**combat_begin` only** is summed by `sum_combat_begin_accuracy_from_ship_abilities` into attacker stats (not a crew `AbilityEffect`; see `ship_ability_resolve`). Other timings or accuracy tied to non-combat-begin windows are not modeled. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids are inventoried in [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md); maintain that list when the catalog changes.
 
 **Combat-begin and pre-combat stats:** Combat_begin effects are applied at the start of each round to a fresh per-round effect accumulator (see engine loop). They are not re-accumulated across rounds, so they behave as permanent pre-combat modifiers. The first round uses the same effective stats as later rounds (same accumulator build: combat_begin → round_start → attack → defense → round_end).
 
@@ -415,10 +428,10 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 The engine implements the canonical STFC client order (from community toolbox / combat logs):
 
 1. **Start of round:** `START_ROUND` → hull repair window (`HULL_REPAIR_START` / `HULL_REPAIR_END`), once per round.
-2. **Per sub-round (weapon index 0, 1, …):**  
-   - Officer/ship abilities for that sub-round (AttackPhase, DefensePhase with current weapon base).  
-   - Forbidden tech and chaos tech buffs.  
-   - Attacker fires weapon `i` (if present), then defender fires weapon `i` (if present).  
+2. **Per sub-round (weapon index 0, 1, …):**
+  - Officer/ship abilities for that sub-round (AttackPhase, DefensePhase with current weapon base).  
+  - Forbidden tech and chaos tech buffs.  
+  - Attacker fires weapon `i` (if present), then defender fires weapon `i` (if present).
 3. **End of round:** `END_ROUND` → ability activation record, burning tick (1% of target max hull per round while burning active), regen, temporary-effect cleanup, then next round (max 100).
 
 Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon with the scalar `attack` is used (backward compatible). Trace events for attack/damage include optional `weapon_index` for parity with logs (see [docs/combat_log_format.md](docs/combat_log_format.md)).
@@ -510,14 +523,16 @@ struct FightResult {
 
 ### 4.5 Target Throughput
 
-| Metric | Target |
-|---|---|
-| Single sim, single core | < 1 μs |
-| Sims/sec, single core | 2–5 million |
-| Sims/sec, 16 cores | 30–80 million |
+
+| Metric                                                      | Target         |
+| ----------------------------------------------------------- | -------------- |
+| Single sim, single core                                     | < 1 μs         |
+| Sims/sec, single core                                       | 2–5 million    |
+| Sims/sec, 16 cores                                          | 30–80 million  |
 | Full exhaustive sweep (current: all combos, user sim count) | ~3 min typical |
-| Phase 1 scouting only (tiered strategy) | ~8 seconds |
-| Phase 1 + Phase 2 (tiered strategy) | ~16 seconds |
+| Phase 1 scouting only (tiered strategy)                     | ~8 seconds     |
+| Phase 1 + Phase 2 (tiered strategy)                         | ~16 seconds    |
+
 
 ---
 
@@ -738,12 +753,14 @@ Each simulation is independent — the problem is embarrassingly parallel. KOBAY
 
 For ~280 officers with 3 crew slots. **Current optimizer:** exhaustive/sampled sweep (default) or genetic (`strategy: "genetic"`); tiered (scouting → confirmation) is available via `strategy: "tiered"` (implementation details may depend on registry/candidate context).
 
-| Scenario | Combos | Sims | Total Sims | Time (16 cores) |
-|---|---|---|---|---|
-| Full sweep (current) | ~800K | user choice (e.g. 10K each) | e.g. 8B | ~3 min typical |
-| Phase 1 scouting (planned) | ~800K | 500 each | 400M | ~8 sec |
-| Phase 2 top 5% (planned) | ~40K | 10K each | 400M | ~8 sec |
-| With 5 below-decks | billions | — | — | genetic (use `strategy: "genetic"`) |
+
+| Scenario                   | Combos   | Sims                        | Total Sims | Time (16 cores)                     |
+| -------------------------- | -------- | --------------------------- | ---------- | ----------------------------------- |
+| Full sweep (current)       | ~800K    | user choice (e.g. 10K each) | e.g. 8B    | ~3 min typical                      |
+| Phase 1 scouting (planned) | ~800K    | 500 each                    | 400M       | ~8 sec                              |
+| Phase 2 top 5% (planned)   | ~40K     | 10K each                    | 400M       | ~8 sec                              |
+| With 5 below-decks         | billions | —                           | —          | genetic (use `strategy: "genetic"`) |
+
 
 ### 8.3 PRNG Choice
 
@@ -795,15 +812,17 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 
 ### 10.3 Key Components
 
-| Component | Purpose |
-|---|---|
-| **CrewBuilder** | Drag-and-drop crew assembly with slot constraints |
-| **SimResults** | Results table + charts, sortable by multiple metrics |
-| **FightReplay** | Round-by-round visual replay of a sample fight |
-| **SynergyGraph** | Network visualization of officer synergies (nodes = officers, edges = synergy strength) |
-| **RosterImportPanel** | Import player-owned officer list (tier/level) for personalization |
-| **PlayerProfile** | Quick mode bonus entry + advanced mode source editor |
-| **OptimizePanel** | Configuration for optimization runs (strategy, sim count, constraints) with live progress |
+
+| Component             | Purpose                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| **CrewBuilder**       | Drag-and-drop crew assembly with slot constraints                                         |
+| **SimResults**        | Results table + charts, sortable by multiple metrics                                      |
+| **FightReplay**       | Round-by-round visual replay of a sample fight                                            |
+| **SynergyGraph**      | Network visualization of officer synergies (nodes = officers, edges = synergy strength)   |
+| **RosterImportPanel** | Import player-owned officer list (tier/level) for personalization                         |
+| **PlayerProfile**     | Quick mode bonus entry + advanced mode source editor                                      |
+| **OptimizePanel**     | Configuration for optimization runs (strategy, sim count, constraints) with live progress |
+
 
 ### 10.4 API
 
@@ -957,3 +976,4 @@ clap = "4"                  # CLI args
 - **GPU acceleration**: Port combat engine to CUDA/WebGPU for billions of sims. Probably overkill but fun.
 - **Mobile companion**: PWA version that talks to the desktop KOBAYASHI instance on the local network.
 - **Direct account sync (deferred)**: If a stable and trusted API emerges, allow one-click refresh of user-owned roster data while keeping the global catalog maintainer-curated.
+

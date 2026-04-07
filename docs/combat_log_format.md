@@ -15,24 +15,28 @@ For how to read mitigation and pierce fields in a trace, see [COMBAT_TRACE.md](C
 
 A single JSON object with:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `rounds_simulated` | number | Number of rounds completed. |
-| `total_damage` | number | Total damage dealt to defender (hull + shield). |
-| `attacker_won` | boolean | True if attacker won. |
-| `defender_hull_remaining` | number | Defender hull HP at end. |
-| `defender_shield_remaining` | number (optional) | Defender shield HP at end (0 if depleted). |
-| `events` | array | Ordered list of events (see below). |
+
+| Field                       | Type              | Description                                     |
+| --------------------------- | ----------------- | ----------------------------------------------- |
+| `rounds_simulated`          | number            | Number of rounds completed.                     |
+| `total_damage`              | number            | Total damage dealt to defender (hull + shield). |
+| `attacker_won`              | boolean           | True if attacker won.                           |
+| `defender_hull_remaining`   | number            | Defender hull HP at end.                        |
+| `defender_shield_remaining` | number (optional) | Defender shield HP at end (0 if depleted).      |
+| `events`                    | array             | Ordered list of events (see below).             |
+
 
 Each event in `events`:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `event_type` | string | e.g. `round_start`, `damage_application`, `mitigation_calc`. |
-| `round_index` | number | 1-based round. |
-| `phase` | string | e.g. `round`, `attack`, `damage`, `end`. |
-| `values` | object (optional) | Key-value pairs (e.g. `final_damage`, `running_total`, `shield_damage`, `hull_damage`). |
+
+| Field          | Type              | Description                                                                                               |
+| -------------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
+| `event_type`   | string            | e.g. `round_start`, `damage_application`, `mitigation_calc`.                                              |
+| `round_index`  | number            | 1-based round.                                                                                            |
+| `phase`        | string            | e.g. `round`, `attack`, `damage`, `end`.                                                                  |
+| `values`       | object (optional) | Key-value pairs (e.g. `final_damage`, `running_total`, `shield_damage`, `hull_damage`).                   |
 | `weapon_index` | number (optional) | Sub-round (weapon) index when the simulator uses multi-weapon resolution; omitted for round-level events. |
+
 
 Event types aligned with simulator trace for parity:
 
@@ -58,24 +62,21 @@ The game can export a fight log as a **tab-separated** file with several section
 **Sections (in order):**
 
 1. **Summary** — Header row starting with `Player Name`. Two data rows: player (attacker) and enemy (defender).
-   - Key columns: `Outcome` (VICTORY/DEFEAT), `Ship Name`, `Officer One`, `Officer Two`, `Officer Three`, `Hull Health Remaining`, `Shield Health Remaining`.
-   - Player row outcome = attacker_won; defender hull/shield remaining come from the enemy row. `Ship Name` is used to infer attacker ship type; officer columns are used to build crew (see below). `"--"` or empty cells are treated as absent.
-
+  - Key columns: `Outcome` (VICTORY/DEFEAT), `Ship Name`, `Officer One`, `Officer Two`, `Officer Three`, `Hull Health Remaining`, `Shield Health Remaining`.
+  - Player row outcome = attacker_won; defender hull/shield remaining come from the enemy row. `Ship Name` is used to infer attacker ship type; officer columns are used to build crew (see below). `"--"` or empty cells are treated as absent.
 2. **Rewards** — Optional; header `Reward Name`, then reward rows. Skipped for combat parity.
-
 3. **Fleet stats** — Header row starting with `Fleet Type`. Two data rows: `Player Fleet 1` and `Enemy Fleet 1`.
-   - Used to build `Combatant` stats. Column names (exact match):
-   - **Attack / defense**: `Attack`, `Defense`, `Damage Per Round` → engine uses `Damage Per Round` as attacker `attack`.
-   - **Piercing / accuracy**: `Armour Pierce`, `Shield Pierce`, `Accuracy` → `AttackerStats` for mitigation/pierce.
-   - **Defense**: `Armour`, `Shield Deflection`, `Dodge` → `DefenderStats`.
-   - **Health**: `Hull Health`, `Shield Health` → combatant hull/shield HP.
-   - **Crit**: `Critical Chance`, `Critical Damage` → combatant `crit_chance`, `crit_multiplier`.
-   - Shield mitigation is defaulted to 0.8 if not present.
-
+  - Used to build `Combatant` stats. Column names (exact match):
+  - **Attack / defense**: `Attack`, `Defense`, `Damage Per Round` → engine uses `Damage Per Round` as attacker `attack`.
+  - **Piercing / accuracy**: `Armour Pierce`, `Shield Pierce`, `Accuracy` → `AttackerStats` for mitigation/pierce.
+  - **Defense**: `Armour`, `Shield Deflection`, `Dodge` → `DefenderStats`.
+  - **Health**: `Hull Health`, `Shield Health` → combatant hull/shield HP.
+  - **Crit**: `Critical Chance`, `Critical Damage` → combatant `crit_chance`, `crit_multiplier`.
+  - Shield mitigation is defaulted to 0.8 if not present.
 4. **Events** — Header row starting with `Round`. One row per battle event (Attack, Shield Depleted, Combatant Destroyed, etc.).
-   - Columns are looked up by **header name** (not by position), so the parser tolerates reordered or added columns. Used names: `Round`, `Type`, `Critical Hit?`, `Hull Damage`, `Shield Damage`, `Total Damage`.
-   - Optional **`Weapon Index`** (unsigned integer): sub-round / weapon slot index for parity with JSON ingested logs and simulator traces. Standard game exports usually omit this column; `FightExportEvent.weapon_index` is then `None`. Extended or synthetic exports may include it — see `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` and `export_parse_tests` in `src/combat/export_csv.rs`.
-   - Summary parity uses total damage from summary (initial HP − remaining).
+  - Columns are looked up by **header name** (not by position), so the parser tolerates reordered or added columns. Used names: `Round`, `Type`, `Critical Hit?`, `Hull Damage`, `Shield Damage`, `Total Damage`.
+  - Optional `**Weapon Index`** (unsigned integer): sub-round / weapon slot index for parity with JSON ingested logs and simulator traces. Standard game exports usually omit this column; `FightExportEvent.weapon_index` is then `None`. Extended or synthetic exports may include it — see `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` and `export_parse_tests` in `src/combat/export_csv.rs`.
+  - Summary parity uses total damage from summary (initial HP − remaining).
 
 **Mapping to engine:**
 

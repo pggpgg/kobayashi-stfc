@@ -13,7 +13,7 @@ This uses the same sync protocol as [Spocks.club](https://spocks.club/syncing/);
 
 ### 1. Kobayashi (optional token)
 
-- **`KOBAYASHI_SYNC_TOKEN`** (optional): If set, the server will require the `stfc-sync-token` request header to match this value for `POST /api/sync/ingress`. If unset, any request is accepted (suitable for local-only use).
+- `**KOBAYASHI_SYNC_TOKEN`** (optional): If set, the server will require the `stfc-sync-token` request header to match this value for `POST /api/sync/ingress`. If unset, any request is accepted (suitable for local-only use).
 
 Example (PowerShell):
 
@@ -55,16 +55,18 @@ Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1
 
 Sync is profile-scoped: the `stfc-sync-token` header identifies the profile, and data is written to that profile’s directory (`profiles/{profile_id}/...`). The optimizer reads from the default profile path. `GET /api/sync/status` returns those same paths. Run the server from the project root so `profiles/` and `data/` resolve.
 
-| Payload type | Persisted | File / usage |
-|--------------|-----------|--------------|
-| officer | Yes | `profiles/{id}/roster.imported.json` — roster for “Owned only” and optimizer |
-| research | Yes | `profiles/{id}/research.imported.json` — **full merged savepoint** of every `rid` + `level` synced for this profile (not filtered by `research_catalog.json`; catalog only affects combat bonuses) |
-| buildings / module | Yes | `profiles/{id}/buildings.imported.json` |
-| ships / ship | Yes | `profiles/{id}/ships.imported.json` |
-| ft (forbidden tech) | Yes | `profiles/{id}/forbidden_tech.imported.json` — bonuses merged into optimizer profile |
-| tech | Yes (same as ft) | **STFC Community Mod** sends forbidden/chaos tech with JSON `type: "tech"` (fid, tier, level, shard_count). Written to the same `forbidden_tech.imported.json` as `ft`. |
-| buffs | Yes | `profiles/{id}/buffs.imported.json` — global active buffs (`bid`, `level`, optional `expiry_time`). Removals use `type: "expired_buffs"` with `bid` (stfc-mod). |
-| resources, missions, battlelogs, traits, slots, inventory, jobs | No (accepted, 200) | — |
+
+| Payload type                                                    | Persisted          | File / usage                                                                                                                                                                                       |
+| --------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| officer                                                         | Yes                | `profiles/{id}/roster.imported.json` — roster for “Owned only” and optimizer                                                                                                                       |
+| research                                                        | Yes                | `profiles/{id}/research.imported.json` — **full merged savepoint** of every `rid` + `level` synced for this profile (not filtered by `research_catalog.json`; catalog only affects combat bonuses) |
+| buildings / module                                              | Yes                | `profiles/{id}/buildings.imported.json`                                                                                                                                                            |
+| ships / ship                                                    | Yes                | `profiles/{id}/ships.imported.json`                                                                                                                                                                |
+| ft (forbidden tech)                                             | Yes                | `profiles/{id}/forbidden_tech.imported.json` — bonuses merged into optimizer profile                                                                                                               |
+| tech                                                            | Yes (same as ft)   | **STFC Community Mod** sends forbidden/chaos tech with JSON `type: "tech"` (fid, tier, level, shard_count). Written to the same `forbidden_tech.imported.json` as `ft`.                            |
+| buffs                                                           | Yes                | `profiles/{id}/buffs.imported.json` — global active buffs (`bid`, `level`, optional `expiry_time`). Removals use `type: "expired_buffs"` with `bid` (stfc-mod).                                    |
+| resources, missions, battlelogs, traits, slots, inventory, jobs | No (accepted, 200) | —                                                                                                                                                                                                  |
+
 
 ## What gets synced
 
@@ -89,7 +91,6 @@ To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the 
 - **Headers**: `Content-Type: application/json`; optional `stfc-sync-token: <token>` (required if `KOBAYASHI_SYNC_TOKEN` is set).
 - **Body**: JSON array of objects. Each object has a `type` field; the first element’s `type` determines how the payload is handled (officer, research, buildings, ships, etc.). Shape per type matches the [Community Mod sync payloads](https://github.com/netniV/stfc-mod/blob/main/mods/src/patches/parts/sync.cc).
 - **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; 401 if token is required and missing/invalid; 400 if body is not a JSON array.
-
 - **Endpoint**: `GET /api/sync/status`
 - **Response**: 200 with JSON paths for the selected profile (`X-Profile-Id` / `?profile=`, else effective default): `roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, `buffs_path`, each with `*_last_modified_iso` (ISO8601 or null if file missing), plus `last_mod_sync_utc` when the mod has persisted a batch.
 
@@ -97,14 +98,16 @@ To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the 
 
 The request body is a JSON array; the first element’s `type` field determines handling. Field shapes per type (source: [Community Mod sync.cc](https://github.com/netniV/stfc-mod/blob/main/mods/src/patches/parts/sync.cc)):
 
-| Type | Keys per item | Notes |
-|------|----------------|--------|
-| **officer** | `type`, `oid` (game id), `rank`, `level`, optional `shard_count` | Merged into `profiles/{id}/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`. |
-| **research** | `type`, `rid` (int64), `level` (int32) | One object per research project level. Persisted to `profiles/{id}/research.imported.json`. Used for combat when `data/research_catalog.json` is present. |
-| **buildings** / **module** | `type`, `bid` (int64), `level` (int32) | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `profiles/{id}/buildings.imported.json`. |
-| **ships** / **ship** | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `profiles/{id}/ships.imported.json`. |
-| **ft** | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64) | Forbidden/chaos tech. Persisted to `profiles/{id}/forbidden_tech.imported.json`. |
-| **tech** | Same fields as **ft** | Same persistence as **ft** (stfc-mod queue name for forbidden/chaos tech). |
-| **buffs** | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds) | Global active buffs → `profiles/{id}/buffs.imported.json`. Removals: `type: "expired_buffs"` with `bid`. |
+
+| Type                       | Keys per item                                                                                                          | Notes                                                                                                                                                        |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **officer**                | `type`, `oid` (game id), `rank`, `level`, optional `shard_count`                                                       | Merged into `profiles/{id}/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`.                                                         |
+| **research**               | `type`, `rid` (int64), `level` (int32)                                                                                 | One object per research project level. Persisted to `profiles/{id}/research.imported.json`. Used for combat when `data/research_catalog.json` is present.    |
+| **buildings** / **module** | `type`, `bid` (int64), `level` (int32)                                                                                 | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `profiles/{id}/buildings.imported.json`. |
+| **ships** / **ship**       | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `profiles/{id}/ships.imported.json`.         |
+| **ft**                     | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64)                                                          | Forbidden/chaos tech. Persisted to `profiles/{id}/forbidden_tech.imported.json`.                                                                             |
+| **tech**                   | Same fields as **ft**                                                                                                  | Same persistence as **ft** (stfc-mod queue name for forbidden/chaos tech).                                                                                   |
+| **buffs**                  | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds)                                        | Global active buffs → `profiles/{id}/buffs.imported.json`. Removals: `type: "expired_buffs"` with `bid`.                                                     |
+
 
 Other types (resources, missions, battlelogs, traits, slots, inventory, jobs) are accepted (200) but not persisted.
