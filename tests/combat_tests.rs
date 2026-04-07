@@ -3445,10 +3445,10 @@ fn burning_triggers_on_shield_break() {
 }
 
 #[test]
-fn burning_triggers_on_hull_breach_threshold() {
+fn burning_triggers_on_hull_breach_state_entry() {
     let attacker = Combatant {
         id: "a".to_string(),
-        attack: 600.0,
+        attack: 1.0,
         mitigation: 0.0,
         pierce: 0.0,
         crit_chance: 0.0,
@@ -3484,6 +3484,46 @@ fn burning_triggers_on_hull_breach_threshold() {
         isolytic_defense: 0.0,
         weapons: vec![],
     };
+    // `TimingWindow::HullBreach` runs when a hull-breach **state** begins (HullBreach proc), not when hull HP crosses a fraction.
+    let crew = CrewConfiguration {
+        seats: vec![
+            CrewSeatContext {
+                seat: CrewSeat::Bridge,
+                ability: Ability {
+                    name: "fixture-hull-breach-proc".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::HullBreach {
+                        chance: 1.0,
+                        duration_rounds: 2,
+                        requires_critical: false,
+                    },
+                    condition: None,
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
+            CrewSeatContext {
+                seat: CrewSeat::Captain,
+                ability: Ability {
+                    name: "burn-timing-test".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::HullBreach,
+                    boostable: true,
+                    effect: AbilityEffect::Burning {
+                        chance: 1.0,
+                        duration_rounds: 2,
+                    },
+                    condition: None,
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            },
+        ],
+    };
     let r = simulate_combat(
         &attacker,
         &defender,
@@ -3492,7 +3532,7 @@ fn burning_triggers_on_hull_breach_threshold() {
             seed: 19,
             trace_mode: TraceMode::Events,
         },
-        &burning_only_crew(TimingWindow::HullBreach),
+        &crew,
     );
     assert_burning_phase(&r.events, "hull_breach");
 }

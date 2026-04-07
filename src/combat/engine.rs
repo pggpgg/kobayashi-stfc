@@ -21,9 +21,7 @@ use crate::combat::abilities::{
     hostile_crit_damage_reduction_from_crew, sum_mitigation_additive, AbilityEffect,
     ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
-use crate::combat::condition::{
-    defender_hull_below_hull_breach_timing_threshold, round_in_inclusive_first_n,
-};
+use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_crit_multiplier,
     compute_damage_through_factor, compute_isolytic_taken,
@@ -47,7 +45,7 @@ fn roll_proc(chance: f64, rng: &mut Rng) -> bool {
 }
 
 /// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
-/// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach threshold;
+/// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach state entry;
 /// receive_damage (hull); round_end (before burn tick); kill when defender dies.
 #[allow(clippy::too_many_arguments)] // engine-internal; splitting would obscure round-phase contract
 fn roll_burning_triggers(
@@ -93,6 +91,51 @@ fn roll_burning_triggers(
             });
         }
     }
+}
+
+/// `on_hull_breach` / [`TimingWindow::HullBreach`] effects run when the defender **enters** the hull-breached
+/// state (first stack of [`AbilityEffect::HullBreach`] duration), not from a hull HP fraction threshold.
+#[allow(clippy::too_many_arguments)]
+fn apply_hull_breach_timing_window(
+    trace: &mut TraceCollector,
+    round_index: u32,
+    attacker: &Combatant,
+    hull_breach_effects: &[ActiveAbilityEffect],
+    mut ctx: CombatContext,
+    assimilated_active: bool,
+    weapon_base: f64,
+    accumulator: &mut EffectAccumulator,
+    rng: &mut Rng,
+    burning_rounds_remaining: &mut u32,
+) {
+    ctx.defender_hull_breach_active = true;
+    let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
+    record_ability_activations(
+        trace,
+        round_index,
+        "hull_breach",
+        attacker,
+        &hull_breach_filtered,
+        assimilated_active,
+    );
+    accumulator.add_effects(
+        TimingWindow::HullBreach,
+        &hull_breach_filtered,
+        weapon_base,
+        assimilated_active,
+        round_index,
+    );
+    roll_burning_triggers(
+        &hull_breach_filtered,
+        assimilated_active,
+        rng,
+        trace,
+        round_index,
+        "hull_breach",
+        &attacker.id,
+        None,
+        burning_rounds_remaining,
+    );
 }
 
 /// Same as [`simulate_combat_with_defender_faction`] with [`OpponentFactionTag::Unknown`]
@@ -349,9 +392,25 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
                 let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                 let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
+                let breach_before = hull_breach_rounds_remaining;
                 if triggered {
                     hull_breach_rounds_remaining =
                         hull_breach_rounds_remaining.max(duration_rounds.max(1));
+                }
+                if breach_before == 0 && hull_breach_rounds_remaining > 0 {
+                    let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
+                    apply_hull_breach_timing_window(
+                        &mut trace,
+                        round_index,
+                        attacker,
+                        &hull_breach_effects,
+                        combat_ctx.clone(),
+                        round_start_assimilated,
+                        weapon_base_rs,
+                        &mut phase_effects,
+                        &mut rng,
+                        &mut burning_rounds_remaining,
+                    );
                 }
                 trace.record_if(|| CombatEvent {
                     event_type: "hull_breach_trigger".to_string(),
@@ -497,7 +556,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         // for this round (see merge into `phase_effects_round` below).
         let mut phase_effects_round = phase_effects.clone();
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
-        let mut hull_breach_threshold_fired = false;
 
         let attack_phase_assimilated = assimilated_rounds_remaining > 0;
         let attack_phase_filtered = filter_effects_by_condition(&attack_phase_effects, &combat_ctx);
@@ -721,9 +779,32 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
                             let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                             let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
+                            let breach_before = hull_breach_rounds_remaining;
                             if triggered {
                                 hull_breach_rounds_remaining =
                                     hull_breach_rounds_remaining.max(duration_rounds.max(1));
+                            }
+                            if breach_before == 0 && hull_breach_rounds_remaining > 0 {
+                                let mut ctx_hb = combat_ctx.clone();
+                                ctx_hb.defender_hull_pct = 1.0
+                                    - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+                                ctx_hb.defender_shield_pct = if defender.shield_health > 0.0 {
+                                    defender_shield_remaining / defender.shield_health
+                                } else {
+                                    1.0
+                                };
+                                apply_hull_breach_timing_window(
+                                    &mut trace,
+                                    round_index,
+                                    attacker,
+                                    &hull_breach_effects,
+                                    ctx_hb,
+                                    attack_phase_assimilated,
+                                    weapon_base,
+                                    &mut phase_effects_round,
+                                    &mut rng,
+                                    &mut burning_rounds_remaining,
+                                );
                             }
                             trace.record_if(|| CombatEvent {
                                 event_type: "hull_breach_trigger".to_string(),
@@ -978,42 +1059,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         _ => defender_shield_break_carry.push(e.clone()),
                     }
                 }
-            }
-
-            let defender_hull_pct =
-                1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-            if !hull_breach_threshold_fired
-                && defender_hull_below_hull_breach_timing_threshold(defender_hull_pct)
-            {
-                hull_breach_threshold_fired = true;
-                let hull_breach_filtered =
-                    filter_effects_by_condition(&hull_breach_effects, &combat_ctx);
-                record_ability_activations(
-                    &mut trace,
-                    round_index,
-                    "hull_breach",
-                    attacker,
-                    &hull_breach_filtered,
-                    attack_phase_assimilated,
-                );
-                phase_effects_round.add_effects(
-                    TimingWindow::HullBreach,
-                    &hull_breach_filtered,
-                    weapon_base,
-                    attack_phase_assimilated,
-                    round_index,
-                );
-                roll_burning_triggers(
-                    &hull_breach_filtered,
-                    attack_phase_assimilated,
-                    &mut rng,
-                    &mut trace,
-                    round_index,
-                    "hull_breach",
-                    &attacker.id,
-                    None,
-                    &mut burning_rounds_remaining,
-                );
             }
 
             if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {

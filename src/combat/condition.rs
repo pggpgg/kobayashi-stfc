@@ -33,16 +33,6 @@ pub fn round_in_inclusive_first_n(round_index: u32, n: u32) -> bool {
     n > 0 && round_index >= 1 && round_index <= n
 }
 
-/// Simulator assumption for when [`crate::combat::abilities::TimingWindow::HullBreach`] may fire
-/// (see [`defender_hull_below_hull_breach_timing_threshold`]). Not proven identical to in-game
-/// `on_hull_breach` for all content; see `docs/ROADMAP.md` (hull breach timing vs state).
-pub const HULL_BREACH_TIMING_DEFENDER_HULL_PCT_THRESHOLD: f64 = 0.5;
-
-/// True if defender remaining hull fraction is strictly below [`HULL_BREACH_TIMING_DEFENDER_HULL_PCT_THRESHOLD`].
-pub fn defender_hull_below_hull_breach_timing_threshold(hull_pct: f64) -> bool {
-    hull_pct < HULL_BREACH_TIMING_DEFENDER_HULL_PCT_THRESHOLD
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -102,11 +92,5 @@ mod tests {
             assert!(!round_in_inclusive_first_n(0, n));
         }
         assert!(!round_in_inclusive_first_n(1, 0));
-    }
-
-    #[test]
-    fn defender_hull_below_hull_breach_timing_threshold_boundary() {
-        assert!(!defender_hull_below_hull_breach_timing_threshold(0.5));
-        assert!(defender_hull_below_hull_breach_timing_threshold(0.5 - 1e-9));
     }
 }

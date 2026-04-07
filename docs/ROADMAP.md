@@ -12,12 +12,12 @@ After research sync/catalog merge work, a **major combat-engine focus** was **sh
 
 ### Fix `on_hull_breach` timing (vs hull breach **state**)
 
-**Bug / modeling error:** [`TimingWindow::HullBreach`](../src/combat/abilities.rs) is driven by a **single global check** in [`simulate_combat_with_defender_faction_and_defender_crew`](../src/combat/engine.rs): the first time defender remaining hull fraction is **strictly below a hardcoded 50%** (`defender_hull_pct < 0.5`), the engine fires the hull-breach **timing window** once. That constant is **not** established from extracted client data in-repo and does **not** match how hull breach is modeled elsewhere.
+**Bug / modeling error:** `[TimingWindow::HullBreach](../src/combat/abilities.rs)` is driven by a **single global check** in `[simulate_combat_with_defender_faction_and_defender_crew](../src/combat/engine.rs)`: the first time defender remaining hull fraction is **strictly below a hardcoded 50%** (`defender_hull_pct < 0.5`), the engine fires the hull-breach **timing window** once. That constant is **not** established from extracted client data in-repo and does **not** match how hull breach is modeled elsewhere.
 
 **Wires crossed:** This timing is easy to confuse with two **separate** concepts that already exist in the type system:
 
-- **[`AbilityEffect::HullBreach`](../src/combat/abilities.rs)** — a **proc effect** (chance + duration) that applies a timed **“hull breached” state** on the defender; and
-- **`AbilityCondition::DefenderHullBreach`** — true while that **state** is active, gating other effects (e.g. ship catalog `condition_defender_hull_breach` on `round_start` accumulating weapon damage).
+- `**[AbilityEffect::HullBreach](../src/combat/abilities.rs)`** — a **proc effect** (chance + duration) that applies a timed **“hull breached” state** on the defender; and
+- `**AbilityCondition::DefenderHullBreach`** — true while that **state** is active, gating other effects (e.g. ship catalog `condition_defender_hull_breach` on `round_start` accumulating weapon damage).
 
 So: **when** `on_hull_breach` abilities should run (trigger semantics) was implemented using a **placeholder threshold**, while **whether the target is breached** is a **duration state** from procs. Those are not interchangeable.
 
@@ -26,7 +26,7 @@ So: **when** `on_hull_breach` abilities should run (trigger semantics) was imple
 1. **Evidence** — Establish real STFC behavior for `on_hull_breach` / hull-damage triggers (threshold if any, once vs repeatable, relation to UI “breached”, data.stfc.space timing strings, recorded fights).
 2. **Engine** — Replace the 50% shortcut with behavior that matches evidence; if still uncertain, keep a **named, documented assumption** (not a bare literal) and surface it in [DESIGN.md](DESIGN.md) triggers table.
 3. **Clarity** — Reduce naming/doc ambiguity between the **timing window** (`on_hull_breach`), the **proc effect** (`AbilityEffect::HullBreach`), and the **condition** (`DefenderHullBreach`) so new effects do not re-cross these wires.
-4. **Tests** — Update or replace tests that lock in the wrong model (e.g. [`burning_triggers_on_hull_breach_threshold`](../tests/combat_tests.rs)) once semantics are defined.
+4. **Tests** — Update or replace tests that lock in the wrong model (e.g. `[burning_triggers_on_hull_breach_threshold](../tests/combat_tests.rs)`) once semantics are defined.
 
 ---
 
@@ -74,18 +74,18 @@ Many ability ids still map to `effect_type: combat_noop` (economy, mining, armad
 
 ## Hostile upstream `ship_type` (reverse engineering)
 
-data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normalized `data/hostiles/{id}.json`) includes **`ship_type` as a u32**: a **game category enum**, separate from **`hull_type`** (which the normalizer maps to `ship_class`: battleship / explorer / interceptor / survey). Labels for many values live only in client localization (e.g. `translations-navigation.json` key `armada_target_label` → “ARMADA TARGET” for value **1**).
+data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normalized `data/hostiles/{id}.json`) includes `**ship_type` as a u32**: a **game category enum**, separate from `**hull_type`** (which the normalizer maps to `ship_class`: battleship / explorer / interceptor / survey). Labels for many values live only in client localization (e.g. `translations-navigation.json` key `armada_target_label` → “ARMADA TARGET” for value **1**).
 
 ### Implemented
 
-- **Rust mapping table:** [`src/data/upstream_hostile_ship_type.rs`](../src/data/upstream_hostile_ship_type.rs) — `UpstreamHostileShipTypeProfile` + `upstream_hostile_ship_type_profile(u32)`; extend the `match` as new ids are confirmed.
-- **Combat wiring:** [`HostileRecord::ship_type_for_combat`](../src/data/hostile.rs) chooses defender [`ShipType`](../src/combat/types.rs) for mitigation, player pierce-through vs that class, combat-begin ship-ability accuracy gates, and LCARS `defender_ship_type_is` when the hostile is the defender. **Mapped today:** `ship_type == 1` → treat as **armada target** (`ShipType::Armada`), so armada-gated officer/ship effects apply even when `ship_class` still looks like `survey` from hull mapping alone.
+- **Rust mapping table:** `[src/data/upstream_hostile_ship_type.rs](../src/data/upstream_hostile_ship_type.rs)` — `UpstreamHostileShipTypeProfile` + `upstream_hostile_ship_type_profile(u32)`; extend the `match` as new ids are confirmed.
+- **Combat wiring:** `[HostileRecord::ship_type_for_combat](../src/data/hostile.rs)` chooses defender `[ShipType](../src/combat/types.rs)` for mitigation, player pierce-through vs that class, combat-begin ship-ability accuracy gates, and LCARS `defender_ship_type_is` when the hostile is the defender. **Mapped today:** `ship_type == 1` → treat as **armada target** (`ShipType::Armada`), so armada-gated officer/ship effects apply even when `ship_class` still looks like `survey` from hull mapping alone.
 
 ### Roadmap / backlog
 
 - **Enumerate ids** — Cross-check `summary-hostile.json`, stfc.space UI, and in-game copy to document additional `ship_type` values and add `match` arms (and new `UpstreamHostileShipTypeProfile` fields if mechanics need more than `is_armada_target`).
 - **Unknown values** — Optional validation or a small report: list normalized hostiles whose `upstream_ship_type` is not in the mapping (for triage).
-- **Overlap with `EnemyTypes`** — If future categories do not fit [`EnemyType`](../src/combat/types.rs) / `ShipType` (e.g. multi-tag engagements), decide whether to thread [`EnemyTypes`](../src/combat/types.rs) through scenario vs growing the upstream profile struct.
+- **Overlap with `EnemyTypes`** — If future categories do not fit `[EnemyType](../src/combat/types.rs)` / `ShipType` (e.g. multi-tag engagements), decide whether to thread `[EnemyTypes](../src/combat/types.rs)` through scenario vs growing the upstream profile struct.
 
 ---
 
@@ -110,7 +110,7 @@ Buildings are **fully modeled for ship combat** per the “buildings full modeli
 - **Sync:** Buildings payloads are written to `profiles/{id}/buildings.imported.json`; default profile path is used consistently. See [SYNC.md](SYNC.md).
 - **Ops & context:** Ops level is inferred from Operations Center (bid 0 → `ops_center`); `PlayerProfile.ops_level` override is supported. Scenario uses `BuildingBonusContext { ops_level, mode: ShipCombat }`.
 - **Profile/combat:** Building bonuses (normalized stats) are merged in `merge_building_bonuses_into_profile` and applied in combat via profile.
-- **Tooling:** `cargo run --bin building_combat_bonuses [--profile <id>]` prints combat bonuses (all at max, or profile’s synced levels with ops_level). Validation warns on unmapped `buff_`* stats.
+- **Tooling:** `cargo run --bin building_combat_bonuses [--profile <id>]` prints combat bonuses (all at max, or profile’s synced levels with ops_level). Validation warns on unmapped `buff`_* stats.
 
 ### Optional / backlog (roadmap items)
 

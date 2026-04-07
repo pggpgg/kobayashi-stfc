@@ -27,7 +27,8 @@ pub enum TimingWindow {
     SelfShieldBreak,
     /// When this ship destroys a target (on_kill).
     Kill,
-    /// When target's hull drops below threshold (on_hull_breach).
+    /// When the defender **enters** the hull-breached state from a [`AbilityEffect::HullBreach`] proc
+    /// (`on_hull_breach` timing in LCARS). Not tied to a hull HP fraction threshold.
     HullBreach,
     /// When this ship takes damage (on_receive_damage).
     ReceiveDamage,
