@@ -1,5 +1,7 @@
 # Combat Feature Backlog (derived from stfc-toolbox.vercel.app)
 
+Checkboxes track **Kobayashi implementation status** in this repository (`[x]` = done or substantially shipped, `[ ]` = not done; nested bullets refine partial work). Update these when scope changes.
+
 Source pages reviewed:
 
 - `/mitigation`
@@ -10,42 +12,48 @@ Source pages reviewed:
 
 ## High-priority features (core combat accuracy)
 
-1. **Separate raw combat pipeline from CSV combat log parser**
-  - Add parser/import model for raw combat logs as a first-class input format.
-  - Preserve subround-level events and intermediate stat state snapshots to support mechanics reverse-engineering.
-  - Encode canonical round/sub-round ordering from observed client event identifiers:
+- [ ] **Separate raw combat pipeline from CSV combat log parser**
+  - [x] First-class structured ingest: JSON (`parse_combat_log_json`, `IngestedCombatLog` in `src/combat/log_ingest.rs`) and game export TSV (`parse_fight_export` in `src/combat/export_csv.rs`); see `docs/combat_log_format.md` and `tests/log_ingest_tests.rs`.
+  - [ ] Preserve subround-level events and **full** intermediate stat state snapshots for mechanics reverse-engineering (beyond what ingest/export carry today).
+  - [ ] Encode canonical round/sub-round ordering from observed client event identifiers:
     - `START_ROUND` → `HULL_REPAIR_START/END` (once per round, before first sub-round)
     - Per sub-round: officer/ship abilities apply, then forbidden tech + chaos tech buffs, then attacks for that sub-round weapon index
     - `END_ROUND`: burning tick (1% of target max hull per round while burning active), temporary-effect cleanup, then next round (up to 100 rounds)
-  - Persist full ordered event stream (including repeated per-ship applications) even when the UI collapses duplicate ability/FT log lines.
-2. **Add Monte Carlo combat simulator mode**
-  - Build simulation runner taking combat snapshot input + iteration count.
-  - Return confidence intervals / distributions (not just mean outcomes) for damage and survival.
+  - [ ] Persist full ordered event stream (including repeated per-ship applications) even when the UI collapses duplicate ability/FT log lines.
+
+- [x] **Monte Carlo combat simulator mode**
+  - [x] Simulation runner over combat inputs with iteration count (`src/optimizer/monte_carlo/`, `POST /api/simulate`, `POST /api/optimize`, CLI `simulate`).
+  - [x] Distributions / uncertainty: win-rate and related **95% CIs** on optimize/sim API responses (`win_rate_95_ci`, hull CIs in `src/server/api.rs` / `api/execution.rs`); crew compare histograms (`src/optimizer/monte_carlo/compare_crews.rs`, `POST /api/compare/crews`).
 
 ## Medium-priority features (mechanics completeness)
 
-1. **Implement ability-boost interaction rules**
-  - Add boost logic for effects that modify maneuver/ability potency.
-  - Respect “boostable at combat begin or subround end” timing restriction.
-  - Keep a per-effect boostability flag so unsupported effects are not amplified.
-2. **Model temporary-combat-only effects**
-  - Add transient state for combat-only gains that are removed after battle (e.g., temporary hull restoration behavior like Leslie).
+- [ ] **Implement ability-boost interaction rules**
+  - [x] Schema hooks: `boostable` / `boosted` on `Ability` / `ActiveAbilityEffect`, seat gating (`can_activate_in_seat` in `src/combat/abilities.rs`).
+  - [ ] Boost logic for effects that modify maneuver/ability potency; respect “boostable at combat begin or subround end” timing; keep per-effect boostability so unsupported effects are not amplified (still open).
+
+- [ ] **Model temporary-combat-only effects**
+  - Add transient state for combat-only gains removed after battle (e.g. temporary hull restoration behavior like Leslie).
   - Ensure post-combat state rollback for those effects.
-3. **Add duplicate-officer bug compatibility toggle**
-  - Introduce optional simulation mode reproducing known duplicate-officer bug behavior for log parity.
-4. **Improve stat nomenclature and baseline definitions**
+
+- [ ] **Add duplicate-officer bug compatibility toggle**
+  - Note: the engine **deduplicates** duplicate officer ids today (`apply_duplicate_officer_policy` in `src/combat/abilities.rs`); this item is an optional **parity** mode to reproduce legacy bug behavior, not current default.
+
+- [ ] **Improve stat nomenclature and baseline definitions**
   - Standardize HHP/SHP and component stat naming.
   - Define “base” values consistently (component bonuses + tier-max level assumptions, excluding research unless toggled on).
 
 ## Validation and tooling features
 
-1. **Mitigation scenario analyzer**
-  - Add tool endpoint that computes sensitivity deltas (“+1000 armor”, “+1000 all defenses”, etc.) and reports mitigation and damage-taken delta.
-2. **Mechanics regression corpus from raw logs**
-  - Create a fixture suite from representative raw logs.
-    - Add snapshot tests for mitigation%, per-round damage, and effect-stack outcomes.
-3. **Engine explainability output (mitigation decomposition)**
-  - Extend optional debug trace for mitigation with per-step calculations not covered by today’s scalar `mitigation_calc` events:
+- [x] **Mitigation scenario analyzer** (partial)
+  - [x] CLI + library: `kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]` and `src/combat/mitigation_sensitivity.rs` (sensitivity rows vs baseline stats).
+  - [ ] Dedicated HTTP tool endpoint mirroring toolbox-style “what-if” mitigation tables (if desired for UI parity).
+
+- [x] **Mechanics regression corpus from raw logs** (partial)
+  - [x] Fixture suite under `tests/fixtures/recorded_fights/` and calibration tests using recorded fights.
+  - [ ] Broader corpus from representative **raw** client/toolbox logs with snapshot tests for mitigation%, per-round damage, and effect-stack outcomes as described here.
+
+- [ ] **Engine explainability output (mitigation decomposition)**
+  - Extend optional debug trace for mitigation with per-step calculations beyond today’s scalar `mitigation_calc` events (`mitigation` + `multiplier` only in `src/combat/engine.rs`):
     - defense/piercing ratios per component
     - each `f(x)` value
     - weighted component contributions (`cA`, `cS`, `cD`)
@@ -53,14 +61,16 @@ Source pages reviewed:
 
 ## Future / optional (sub-round and weapons)
 
-1. **Per-weapon pierce/crit/proc from upstream data**
-  - The engine already supports optional per-weapon overrides on `WeaponStats` (fallback to combatant-level when unset).
-  - When upstream or STFC data differs by weapon, extend normalizers / importers so those fields are populated consistently.
+- [ ] **Per-weapon pierce/crit/proc from upstream data**
+  - [x] Engine already supports optional per-weapon overrides on `WeaponStats` (fallback to combatant-level when unset).
+  - [ ] When upstream or STFC data differs by weapon, extend normalizers / importers so those fields are populated consistently.
 
 ## Suggested implementation order
 
-1. Raw-log parser and simulator integration (client-fidelity stream and snapshots)
-2. Monte Carlo snapshot mode + damage/survival distributions
-3. Ability boost rules + temporary combat-only state
-4. Compatibility toggles + regression suite
-5. Mitigation analyzer endpoint + trace decomposition for mitigation
+Track the same ordering as above; status mirrors sections above.
+
+- [ ] 1. Raw-log parser and simulator integration (client-fidelity stream and snapshots) — **in progress** (structured ingest exists; full fidelity still open).
+- [x] 2. Monte Carlo snapshot mode + damage/survival distributions — **shipped** (core MC + CIs + compare histograms).
+- [ ] 3. Ability boost rules + temporary combat-only state
+- [ ] 4. Compatibility toggles + regression suite — **partial** (fixtures exist; duplicate-officer toggle and full corpus still open).
+- [x] 5. Mitigation analyzer endpoint + trace decomposition for mitigation — **partial** (CLI/library sensitivity done; HTTP endpoint and full trace decomposition still open).
