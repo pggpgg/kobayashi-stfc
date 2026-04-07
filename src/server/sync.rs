@@ -4,8 +4,8 @@
 use crate::data::import;
 use crate::data::profile_index::{
     load_profile_index, profile_id_by_sync_token, profile_path, resolve_profile_id_for_api,
-    BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, LAST_MOD_SYNC_JSON,
-    RESEARCH_IMPORTED, ROSTER_IMPORTED, SHIPS_IMPORTED,
+    BATTLELOGS_IMPORTED, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED,
+    LAST_MOD_SYNC_JSON, RESEARCH_IMPORTED, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use axum::http::StatusCode;
@@ -38,6 +38,10 @@ static SYNC_BUILDINGS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_SHIPS_MTX: Mutex<()> = Mutex::new(());
 static SYNC_FT_MTX: Mutex<()> = Mutex::new(());
 static SYNC_BUFFS_MTX: Mutex<()> = Mutex::new(());
+static SYNC_BATTLELOGS_MTX: Mutex<()> = Mutex::new(());
+
+/// Rolling window of battle log objects per profile (Community Mod `battlelogs` batches).
+const BATTLELOGS_MAX_STORED: usize = 50;
 
 fn record_mod_sync_received(profile_id: &str) {
     let path = profile_path(profile_id, LAST_MOD_SYNC_JSON);
@@ -107,6 +111,9 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         .to_string_lossy()
         .to_string();
     let buffs_path = profile_path(pid, BUFFS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let battlelogs_path = profile_path(pid, BATTLELOGS_IMPORTED)
         .to_string_lossy()
         .to_string();
 
@@ -218,7 +225,18 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
                 return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
             }
         },
-        "resources" | "missions" | "battlelogs" | "traits" | "slots" | "inventory" | "jobs" => {
+        "battlelogs" => match apply_battlelogs_sync(&payload, &battlelogs_path) {
+            Ok(accepted_count) => {
+                record_mod_sync_received(pid);
+                info!(accepted_count, kind = "battlelogs", "sync ingress 200");
+                vec![format!("battlelogs({accepted_count})")]
+            }
+            Err(e) => {
+                error!(error = %e, kind = "battlelogs", "sync ingress 500 persist failed");
+                return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            }
+        },
+        "resources" | "missions" | "traits" | "slots" | "inventory" | "jobs" => {
             info!(sync_type = %type_str, "sync ingress 200 accepted (not persisted)");
             vec![type_str.to_string()]
         }
@@ -443,6 +461,51 @@ fn apply_buffs_sync(
     let output_payload = serde_json::json!({
         "source_path": "stfc-mod sync",
         "buffs": buffs,
+    });
+    if let Some(parent) = std::path::Path::new(output_path).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    Ok(accepted)
+}
+
+fn load_existing_battlelogs(output_path: &str) -> Vec<Value> {
+    let raw = match std::fs::read_to_string(output_path) {
+        Ok(s) => s,
+        Err(_) => return Vec::new(),
+    };
+    let v: Value = match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+    v.get("battlelogs")
+        .and_then(|b| b.as_array())
+        .cloned()
+        .unwrap_or_default()
+}
+
+/// Appends each payload object to `battlelogs.imported.json`, then keeps the last
+/// [`BATTLELOGS_MAX_STORED`] entries (receive order within and across batches).
+fn apply_battlelogs_sync(
+    payload: &[Value],
+    output_path: &str,
+) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+    let _guard = SYNC_BATTLELOGS_MTX
+        .lock()
+        .map_err(|e| format!("lock poisoned: {e}"))?;
+    let mut logs = load_existing_battlelogs(output_path);
+    let mut accepted = 0usize;
+    for item in payload {
+        logs.push(item.clone());
+        accepted += 1;
+    }
+    if logs.len() > BATTLELOGS_MAX_STORED {
+        let drop_n = logs.len() - BATTLELOGS_MAX_STORED;
+        logs.drain(..drop_n);
+    }
+    let output_payload = serde_json::json!({
+        "source_path": "stfc-mod sync",
+        "battlelogs": logs,
     });
     if let Some(parent) = std::path::Path::new(output_path).parent() {
         std::fs::create_dir_all(parent)?;
@@ -715,7 +778,8 @@ fn last_modified_iso(path: &str) -> Option<String> {
 /// Handles GET /api/sync/status: returns roster path and last modified time (ISO8601) or null if missing.
 /// Uses [`resolve_profile_id_for_api`] so `X-Profile-Id` / `?profile=` match the active UI profile (same as other profile APIs).
 /// `last_mod_sync_utc` is set only when the Community Mod persists via `POST /api/sync/ingress` (not manual roster paste).
-/// Also includes research_path, buildings_path, ships_path, forbidden_tech_path, buffs_path and their last_modified_iso when present.
+/// Also includes research_path, buildings_path, ships_path, forbidden_tech_path, buffs_path,
+/// battlelogs_path and their last_modified_iso when present.
 /// Returns `(StatusCode, json_body_string)`.
 pub fn sync_status_payload(profile_id: Option<&str>) -> (StatusCode, String) {
     let pid = resolve_profile_id_for_api(profile_id);
@@ -735,6 +799,9 @@ pub fn sync_status_payload(profile_id: Option<&str>) -> (StatusCode, String) {
         .to_string_lossy()
         .to_string();
     let buffs_path = profile_path(&pid, BUFFS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let battlelogs_path = profile_path(&pid, BATTLELOGS_IMPORTED)
         .to_string_lossy()
         .to_string();
 
@@ -760,6 +827,8 @@ pub fn sync_status_payload(profile_id: Option<&str>) -> (StatusCode, String) {
         "forbidden_tech_last_modified_iso": last_modified_iso(&forbidden_tech_path),
         "buffs_path": buffs_path,
         "buffs_last_modified_iso": last_modified_iso(&buffs_path),
+        "battlelogs_path": battlelogs_path,
+        "battlelogs_last_modified_iso": last_modified_iso(&battlelogs_path),
         "research_catalog_loaded": research_catalog_loaded,
         "research_catalog_item_count": research_catalog_item_count,
     });
@@ -774,10 +843,11 @@ mod tests {
     use super::ingress_payload;
     use crate::data::import;
     use crate::data::profile_index::{
-        create_profile, delete_profile, load_profile_index, profile_path, BUFFS_IMPORTED,
-        BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, LAST_MOD_SYNC_JSON, RESEARCH_IMPORTED,
-        SHIPS_IMPORTED,
+        create_profile, delete_profile, load_profile_index, profile_path, BATTLELOGS_IMPORTED,
+        BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, LAST_MOD_SYNC_JSON,
+        RESEARCH_IMPORTED, SHIPS_IMPORTED,
     };
+    use serde_json::json;
     use axum::http::StatusCode;
     use std::sync::Mutex;
     use std::sync::Once;
@@ -944,6 +1014,65 @@ mod tests {
             "expired_buffs should remove bid: {:?}",
             entries2
         );
+    }
+
+    #[test]
+    fn ingress_battlelogs_persist_to_file() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
+        let (status, resp) = ingress_payload(
+            r#"[{"type":"battlelogs","seq":1},{"type":"battlelogs","seq":2}]"#,
+            Some(&token),
+        );
+        assert_eq!(status, StatusCode::OK);
+        assert!(resp.contains("battlelogs(2)"));
+        let path = profile_path(&profile_id, BATTLELOGS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
+        let raw = std::fs::read_to_string(&path).expect("battlelogs.imported.json");
+        let v: serde_json::Value = serde_json::from_str(&raw).unwrap();
+        let arr = v
+            .get("battlelogs")
+            .and_then(|x| x.as_array())
+            .expect("battlelogs array");
+        assert_eq!(arr.len(), 2);
+        assert_eq!(arr[0].get("seq"), Some(&json!(1)));
+        assert_eq!(arr[1].get("seq"), Some(&json!(2)));
+    }
+
+    #[test]
+    fn ingress_battlelogs_keeps_last_fifty() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
+        let battle_path = profile_path(&profile_id, BATTLELOGS_IMPORTED);
+        std::fs::create_dir_all(battle_path.parent().unwrap()).unwrap();
+        let existing: Vec<serde_json::Value> = (0i64..40)
+            .map(|i| json!({"type":"battlelogs","seq":i}))
+            .collect();
+        let seed = json!({
+            "source_path": "stfc-mod sync",
+            "battlelogs": existing,
+        });
+        std::fs::write(
+            &battle_path,
+            serde_json::to_string_pretty(&seed).unwrap(),
+        )
+        .unwrap();
+
+        let new_batch: String = (40i64..55)
+            .map(|i| format!(r#"{{"type":"battlelogs","seq":{i}}}"#))
+            .collect::<Vec<_>>()
+            .join(",");
+        let body = format!("[{new_batch}]");
+        let (status, resp) = ingress_payload(&body, Some(&token));
+        assert_eq!(status, StatusCode::OK);
+        assert!(resp.contains("battlelogs(15)"));
+        let raw = std::fs::read_to_string(&battle_path).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&raw).unwrap();
+        let arr = v["battlelogs"].as_array().unwrap();
+        assert_eq!(arr.len(), 50);
+        assert_eq!(arr[0]["seq"].as_i64().unwrap(), 5);
+        assert_eq!(arr[49]["seq"].as_i64().unwrap(), 54);
     }
 
     #[test]

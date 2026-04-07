@@ -144,7 +144,7 @@ paths:
       summary: STFC Community Mod sync batch (JSON array)
       description: |
         Body must be a top-level JSON array. Each element is an object with a `type` field
-        (`officer`, `research`, `buildings`, `ships`, `ft`, `tech`, `buffs`, `expired_buffs`, etc.).
+        (`officer`, `research`, `buildings`, `ships`, `ft`, `tech`, `buffs`, `expired_buffs`, `battlelogs`, etc.).
         See `docs/SYNC.md` and server tests in `src/server/sync.rs`.
       parameters:
         - name: stfc-sync-token

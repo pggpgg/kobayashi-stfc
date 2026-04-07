@@ -53,6 +53,7 @@ pub const BUILDINGS_IMPORTED: &str = "buildings.imported.json";
 pub const SHIPS_IMPORTED: &str = "ships.imported.json";
 pub const FORBIDDEN_TECH_IMPORTED: &str = "forbidden_tech.imported.json";
 pub const BUFFS_IMPORTED: &str = "buffs.imported.json";
+pub const BATTLELOGS_IMPORTED: &str = "battlelogs.imported.json";
 /// Written when the STFC Community Mod persists data via `POST /api/sync/ingress` (not manual UI import).
 pub const LAST_MOD_SYNC_JSON: &str = "last_mod_sync.json";
 

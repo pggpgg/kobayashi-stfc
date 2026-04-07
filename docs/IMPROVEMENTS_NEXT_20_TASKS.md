@@ -10,8 +10,8 @@ Focus is on simulator correctness, explainability, maintainability, and develope
 
 ## Ordered task list (1 = do first)
 
-- [ ] **1) Recorded-fight “parity harness” (trace → assertions)**  
-  Add a small harness that runs a fixture fight, captures a deterministic trace, and asserts **invariants** (event ordering, monotonic counters, non-negative clamps, duration expiry, proc cap behavior) rather than trying to match every number.
+- [x] **1) Recorded-fight “parity harness” (trace → assertions)**  
+  Implemented `kobayashi::calibration::check_trace_invariants` + `TraceInvariantContext` ([`src/calibration/trace_invariants.rs`](../src/calibration/trace_invariants.rs)), drift runner `simulate_drift_fixture_traced`, and integration tests in [`tests/trace_invariant_tests.rs`](../tests/trace_invariant_tests.rs) over all `tests/fixtures/recorded_fights/drift_*.json`. Covers round ordering, numeric sanity on known event kinds, mitigation multiplier consistency, optional monotonic `running_hull_damage`, and contiguous `hit_index` per `(event_type, round, weapon)`. **Not in trace yet:** duration/proc-cap fields — add invariants when the engine exposes them.
 
 - [x] **2) Faction-gated effects: make defender faction first-class for CLI/imports**  
   `kobayashi simulate` accepts `--defender-faction <slug>` and/or `--hostile <id|name level>`; slug wins, else faction from resolved hostile, else `Unknown`. Implemented in `data::loader::defender_faction_for_cli_simulate` and wired in `main.rs` + `cli::handle_simulate`. (Roster `import` does not run combat.)

@@ -190,6 +190,18 @@ pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::Simulat
     simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
 }
 
+/// Same as [`simulate_drift_fixture`] but records full combat trace events ([`TraceMode::Events`]).
+pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::SimulationResult {
+    let attacker = spec.attacker.to_combatant("drift_attacker");
+    let defender = spec.defender.to_combatant("drift_defender");
+    let config = SimulationConfig {
+        rounds: spec.simulation.rounds,
+        seed: spec.simulation.seed,
+        trace_mode: TraceMode::Events,
+    };
+    simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
+}
+
 fn band_mid(low: f64, high: f64) -> f64 {
     0.5 * (low + high)
 }
