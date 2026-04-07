@@ -1,6 +1,6 @@
 # Structured audit: `combat_noop` ship abilities
 
-This document satisfies [KOBAYASHI_IMPROVEMENT_TASKS.md](KOBAYASHI_IMPROVEMENT_TASKS.md) task **9** and expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
+This document expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
 
 **Catalog revision (2026-04-04):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **73** map to `effect_type: combat_noop` (inventory-only in combat). **67** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 

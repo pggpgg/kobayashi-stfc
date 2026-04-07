@@ -2,12 +2,14 @@ use std::env;
 use std::process;
 
 use kobayashi::combat::{
-    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat, Combatant,
-    CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING,
-    MITIGATION_FLOOR,
+    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat_with_defender_faction,
+    Combatant, CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode,
+    MITIGATION_CEILING, MITIGATION_FLOOR,
 };
 use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
-use kobayashi::data::loader::{resolve_hostile, resolve_ship};
+use kobayashi::data::loader::{
+    defender_faction_for_cli_simulate, resolve_hostile, resolve_ship,
+};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
 use kobayashi::data::profile_index::{
     ensure_profile_index_bootstrap, prune_ephemeral_scenario_test_profiles, profile_data_dir,
@@ -47,6 +49,10 @@ struct SimulateCliArgs {
     rounds: u32,
     seed: u64,
     trace_events: bool,
+    /// `kobayashi simulate --defender-faction <slug>` (same slugs as LCARS / `OpponentFactionTag::from_data_slug`).
+    defender_faction_slug: Option<String>,
+    /// `kobayashi simulate --hostile <id|name level>` — faction from hostile record when slug not set.
+    hostile_lookup: Option<String>,
 }
 
 fn parse_command() -> Option<Command> {
@@ -157,6 +163,8 @@ fn parse_simulate_args(args: &[String]) -> Result<SimulateCliArgs, String> {
                 .parse::<u64>()
                 .map_err(|_| "seed must be a positive integer".to_string())?,
             trace_events: true,
+            defender_faction_slug: None,
+            hostile_lookup: None,
         });
     }
 
@@ -169,6 +177,8 @@ fn parse_simulate_args(args: &[String]) -> Result<SimulateCliArgs, String> {
         rounds: 3,
         seed: 7,
         trace_events: false,
+        defender_faction_slug: None,
+        hostile_lookup: None,
     };
 
     let mut idx = 0;
@@ -231,6 +241,22 @@ fn parse_simulate_args(args: &[String]) -> Result<SimulateCliArgs, String> {
             "--trace-events" => {
                 parsed.trace_events = true;
                 idx += 1;
+            }
+            "--defender-faction" => {
+                parsed.defender_faction_slug = Some(
+                    args.get(idx + 1)
+                        .ok_or_else(|| "missing value for --defender-faction".to_string())?
+                        .clone(),
+                );
+                idx += 2;
+            }
+            "--hostile" => {
+                parsed.hostile_lookup = Some(
+                    args.get(idx + 1)
+                        .ok_or_else(|| "missing value for --hostile".to_string())?
+                        .clone(),
+                );
+                idx += 2;
             }
             "--profile" => {
                 idx += 2;
@@ -333,7 +359,17 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         },
     };
 
-    let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let defender_faction = defender_faction_for_cli_simulate(
+        parsed.defender_faction_slug.as_deref(),
+        parsed.hostile_lookup.as_deref(),
+    )?;
+    let result = simulate_combat_with_defender_faction(
+        &attacker,
+        &defender,
+        config,
+        &CrewConfiguration::default(),
+        defender_faction,
+    );
     println!(
         "{}",
         serde_json::to_string_pretty(&result)
@@ -587,8 +623,8 @@ fn mitigation_sensitivity_command(args: &[String]) -> Result<(), String> {
 fn print_usage() {
     eprintln!(
         "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars|mitigation-sensitivity> [args]\n\
-simulate: kobayashi simulate <rounds> <seed> [--profile <id>]\n\
-  or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--profile <id>]\n\
+simulate: kobayashi simulate <rounds> <seed> [--profile <id>] [--defender-faction <slug>] [--hostile <id>]\n\
+  or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--defender-faction <slug>] [--hostile <id>] [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
   or kobayashi optimize --ship <id> --hostile <id> --sims <u32> [--max-candidates <u32>] [--profile <id>]\n\
 import: kobayashi import <path> [--profile <id>]\n\
@@ -680,5 +716,22 @@ mod tests {
         assert_eq!(parsed.rounds, 5);
         assert_eq!(parsed.seed, 99);
         assert!(parsed.trace_events);
+    }
+
+    #[test]
+    fn parse_simulate_args_defender_faction_and_hostile() {
+        let args = vec![
+            "--rounds".to_string(),
+            "2".to_string(),
+            "--seed".to_string(),
+            "1".to_string(),
+            "--defender-faction".to_string(),
+            "borg".to_string(),
+            "--hostile".to_string(),
+            "2918121098".to_string(),
+        ];
+        let parsed = parse_simulate_args(&args).expect("parse should succeed");
+        assert_eq!(parsed.defender_faction_slug.as_deref(), Some("borg"));
+        assert_eq!(parsed.hostile_lookup.as_deref(), Some("2918121098"));
     }
 }

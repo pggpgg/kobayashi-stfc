@@ -2,12 +2,14 @@ use std::env;
 use std::fmt::Write as _;
 
 use crate::combat::{
-    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat, Combatant,
-    CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING,
-    MITIGATION_FLOOR,
+    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat_with_defender_faction,
+    Combatant, CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode,
+    MITIGATION_CEILING, MITIGATION_FLOOR,
 };
 use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
-use crate::data::loader::{resolve_hostile, resolve_ship};
+use crate::data::loader::{
+    defender_faction_for_cli_simulate, resolve_hostile, resolve_ship,
+};
 use crate::data::profile::{apply_profile_to_attacker, load_profile};
 use crate::data::profile_index::{
     ensure_profile_index_bootstrap, prune_ephemeral_scenario_test_profiles, profile_data_dir,
@@ -150,10 +152,53 @@ fn parse_profile_arg(args: &[String]) -> Option<String> {
     None
 }
 
+/// Optional `--defender-faction` / `--hostile` for `simulate` (same semantics as `main` binary).
+fn parse_simulate_defender_faction_flags(args: &[String]) -> (Option<String>, Option<String>) {
+    let mut faction: Option<String> = None;
+    let mut hostile: Option<String> = None;
+    let mut i = 0usize;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--defender-faction" => {
+                if let Some(v) = args.get(i + 1) {
+                    faction = Some(v.clone());
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
+            "--hostile" => {
+                if let Some(v) = args.get(i + 1) {
+                    hostile = Some(v.clone());
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
+            "--profile" => {
+                i = i.saturating_add(2);
+            }
+            _ => i += 1,
+        }
+    }
+    (faction, hostile)
+}
+
 fn handle_simulate(args: &[String]) -> i32 {
     let rounds = parse_u32_arg(args.get(2), "rounds", 3);
     let seed = parse_u64_arg(args.get(3), "seed", 7);
     let as_table = args.iter().any(|arg| arg == "--table");
+    let (faction_slug, hostile_lookup) = parse_simulate_defender_faction_flags(args);
+    let defender_faction = match defender_faction_for_cli_simulate(
+        faction_slug.as_deref(),
+        hostile_lookup.as_deref(),
+    ) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("simulate error: {e}");
+            return 2;
+        }
+    };
 
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let profile_path_str = profile_path(&profile_id, PROFILE_JSON)
@@ -203,7 +248,7 @@ fn handle_simulate(args: &[String]) -> i32 {
         weapons: vec![],
     };
 
-    let result = simulate_combat(
+    let result = simulate_combat_with_defender_faction(
         &attacker,
         &defender,
         SimulationConfig {
@@ -212,6 +257,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             trace_mode: TraceMode::Events,
         },
         &CrewConfiguration::default(),
+        defender_faction,
     );
 
     if as_table {

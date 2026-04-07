@@ -3,6 +3,7 @@
 
 use std::path::Path;
 
+use crate::combat::OpponentFactionTag;
 use crate::data::hostile::{
     load_hostile_index, load_hostile_record, HostileIndex, HostileRecord,
     DEFAULT_HOSTILES_INDEX_PATH,
@@ -131,4 +132,86 @@ pub fn ship_tiers_levels_and_crew_slots(
 /// Returns (tiers, levels); if no extended data, returns None.
 pub fn ship_tiers_levels(name_or_id: &str) -> Option<(Vec<u32>, Vec<u32>)> {
     ship_tiers_levels_and_crew_slots(name_or_id).map(|(t, l, _)| (t, l))
+}
+
+/// Resolve defender faction for standalone `kobayashi simulate` (and similar CLI paths).
+///
+/// Precedence: `faction_slug` from `--defender-faction` wins over `hostile_lookup` from `--hostile`.
+/// If neither is set, returns [`OpponentFactionTag::Unknown`] (same as [`crate::combat::simulate_combat`]).
+pub fn defender_faction_for_cli_simulate(
+    faction_slug: Option<&str>,
+    hostile_lookup: Option<&str>,
+) -> Result<OpponentFactionTag, String> {
+    if let Some(slug) = faction_slug {
+        let t = slug.trim();
+        if t.is_empty() {
+            return Err("--defender-faction requires a non-empty value".to_string());
+        }
+        return OpponentFactionTag::from_data_slug(t).ok_or_else(|| {
+            format!(
+                "unknown --defender-faction {t:?}; expected a slug such as klingon, romulan, federation, borg, swarm, or unknown"
+            )
+        });
+    }
+    if let Some(hostile) = hostile_lookup {
+        let key = hostile.trim();
+        if key.is_empty() {
+            return Err("--hostile requires a non-empty value".to_string());
+        }
+        let rec = resolve_hostile(key).ok_or_else(|| {
+            format!(
+                "could not resolve hostile {key:?} from data/hostiles index (try numeric id or \"name level\")"
+            )
+        })?;
+        return Ok(rec.opponent_faction_tag());
+    }
+    Ok(OpponentFactionTag::Unknown)
+}
+
+#[cfg(test)]
+mod defender_faction_cli_tests {
+    use super::defender_faction_for_cli_simulate;
+    use crate::combat::OpponentFactionTag;
+
+    #[test]
+    fn explicit_slug_and_none_default() {
+        assert_eq!(
+            defender_faction_for_cli_simulate(Some("klingon"), None).unwrap(),
+            OpponentFactionTag::Klingon
+        );
+        assert_eq!(
+            defender_faction_for_cli_simulate(Some("mirror-universe"), None).unwrap(),
+            OpponentFactionTag::MirrorUniverse
+        );
+        assert_eq!(
+            defender_faction_for_cli_simulate(Some("unknown"), None).unwrap(),
+            OpponentFactionTag::Unknown
+        );
+        assert_eq!(
+            defender_faction_for_cli_simulate(None, None).unwrap(),
+            OpponentFactionTag::Unknown
+        );
+    }
+
+    #[test]
+    fn bad_slug_errors() {
+        assert!(defender_faction_for_cli_simulate(Some("not_a_real_faction"), None).is_err());
+    }
+
+    #[test]
+    fn explicit_slug_wins_over_hostile_token() {
+        assert_eq!(
+            defender_faction_for_cli_simulate(Some("romulan"), Some("2918121098")).unwrap(),
+            OpponentFactionTag::Romulan
+        );
+    }
+
+    #[test]
+    fn hostile_numeric_id_resolves_when_data_present() {
+        let tag = defender_faction_for_cli_simulate(None, Some("2918121098"));
+        assert!(
+            tag.is_ok(),
+            "bundled hostiles should resolve default optimize id: {tag:?}"
+        );
+    }
 }

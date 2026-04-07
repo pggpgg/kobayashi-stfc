@@ -13,8 +13,8 @@ Focus is on simulator correctness, explainability, maintainability, and develope
 - [ ] **1) Recorded-fight “parity harness” (trace → assertions)**  
   Add a small harness that runs a fixture fight, captures a deterministic trace, and asserts **invariants** (event ordering, monotonic counters, non-negative clamps, duration expiry, proc cap behavior) rather than trying to match every number.
 
-- [ ] **2) Faction-gated effects: make defender faction first-class for CLI/imports**  
-  Wire a consistent path to supply defender faction for imported/CLI simulations (explicit flag + optional hostile-id lookup), so faction-conditioned effects can be validated without relying on optimizer-only context.
+- [x] **2) Faction-gated effects: make defender faction first-class for CLI/imports**  
+  `kobayashi simulate` accepts `--defender-faction <slug>` and/or `--hostile <id|name level>`; slug wins, else faction from resolved hostile, else `Unknown`. Implemented in `data::loader::defender_faction_for_cli_simulate` and wired in `main.rs` + `cli::handle_simulate`. (Roster `import` does not run combat.)
 
 - [ ] **3) Condition engine: centralize “is this condition true?” evaluation**  
   Consolidate condition checks (burning, hull breach, morale, opponent tags, ship class, “first N rounds”, etc.) behind a single typed evaluator so new effects don’t re-implement slightly different logic.
