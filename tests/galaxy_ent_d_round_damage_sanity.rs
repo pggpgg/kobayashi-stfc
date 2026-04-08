@@ -16,6 +16,39 @@ fn as_f64(v: &Value) -> f64 {
         .unwrap_or(0.0)
 }
 
+/// Human-readable damage totals (e.g. `456K`, `1.2M`, `145B`) instead of scientific notation.
+fn format_compact_damage(n: f64) -> String {
+    if !n.is_finite() {
+        return n.to_string();
+    }
+    let sign = if n < 0.0 { "-" } else { "" };
+    let n = n.abs();
+
+    if n < 1000.0 {
+        return format!("{}{:.0}", sign, n);
+    }
+
+    for (div, label) in [(1e12, "T"), (1e9, "B"), (1e6, "M"), (1e3, "K")] {
+        if n >= div {
+            let x = n / div;
+            let body = if x >= 100.0 {
+                format!("{:.0}", x)
+            } else if x >= 10.0 {
+                trim_trailing_zeros(format!("{:.1}", x))
+            } else {
+                trim_trailing_zeros(format!("{:.2}", x))
+            };
+            return format!("{}{}{}", sign, body, label);
+        }
+    }
+    format!("{}{:.0}", sign, n)
+}
+
+fn trim_trailing_zeros(s: String) -> String {
+    let s = s.trim_end_matches('0');
+    s.trim_end_matches('.').to_string()
+}
+
 #[test]
 fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
     let registry = Arc::new(DataRegistry::load().expect("DataRegistry::load"));
@@ -91,18 +124,26 @@ fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
 
     println!(
         "\n=== Enterprise-D T5 L7 vs kobayashi_theoretical_damage_sponge (demo profile) ===\n\
-         rounds_simulated={} attacker_won={} total_damage={:.6e}\n",
+         rounds_simulated={} attacker_won={} total_damage={}\n",
         replay.rounds_simulated,
         replay.attacker_won,
-        replay.total_damage
+        format_compact_damage(replay.total_damage)
     );
-    println!("round\ttotal_dmg_to_defender\tmorale_proc");
+    println!("round\tdmg_this_round\tmorale_proc");
+    let mut cumulative = 0.0_f64;
     for r in 0..=replay.rounds_simulated.saturating_sub(1) {
         let dmg = per_round.get(&r).copied().unwrap_or(0.0);
+        cumulative += dmg;
         let m = morale_by_round
             .get(&r)
             .map(|b| if *b { "yes" } else { "no" })
             .unwrap_or("-");
-        println!("{}\t{:.6e}\t{}", r, dmg, m);
+        println!(
+            "{}\t{}\t{}",
+            r,
+            format_compact_damage(dmg),
+            m
+        );
     }
+    println!("cumulative_damage_to_defender={}", format_compact_damage(cumulative));
 }

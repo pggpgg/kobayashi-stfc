@@ -646,11 +646,47 @@ enum MappedEffect {
     StatModify(String, String, f64),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum StateType {
     Morale,
     Assimilated,
     HullBreach,
     Burning,
+}
+
+/// Canonical `attributes` use `state=8` (Morale), `state=4` (Hull Breach), etc.
+/// Parse the numeric id so `state=2` does not match `state=20`.
+fn add_state_type_from_attributes(raw: &str) -> Option<StateType> {
+    let attrs = raw.to_lowercase();
+    if let Some(idx) = attrs.find("state=") {
+        let rest = &attrs[idx + "state=".len()..];
+        let digits: String = rest
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect();
+        if let Ok(id) = digits.parse::<u32>() {
+            return match id {
+                8 => Some(StateType::Morale),
+                64 => Some(StateType::Assimilated),
+                4 => Some(StateType::HullBreach),
+                2 => Some(StateType::Burning),
+                _ => None,
+            };
+        }
+    }
+    if attrs.contains("state8") || attrs.contains("morale") {
+        return Some(StateType::Morale);
+    }
+    if attrs.contains("state64") || attrs.contains("assimilat") {
+        return Some(StateType::Assimilated);
+    }
+    if attrs.contains("state4") || attrs.contains("hullbreach") {
+        return Some(StateType::HullBreach);
+    }
+    if attrs.contains("state2") || attrs.contains("burning") {
+        return Some(StateType::Burning);
+    }
+    None
 }
 
 fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
@@ -698,17 +734,10 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("hull_hp_repair".into(), "add".into(), val)
         }
         "AddState" => {
-            let attrs = a.attributes.as_deref().unwrap_or("").to_lowercase();
-            if attrs.contains("state8") || attrs.contains("morale") {
-                MappedEffect::State(StateType::Morale, chance)
-            } else if attrs.contains("state64") || attrs.contains("assimilat") {
-                MappedEffect::State(StateType::Assimilated, chance)
-            } else if attrs.contains("state4") || attrs.contains("hullbreach") {
-                MappedEffect::State(StateType::HullBreach, chance)
-            } else if attrs.contains("state2") || attrs.contains("burning") {
-                MappedEffect::State(StateType::Burning, chance)
-            } else {
-                MappedEffect::Tag(format!("add_state:{}", modifier.to_lowercase()))
+            let attrs = a.attributes.as_deref().unwrap_or("");
+            match add_state_type_from_attributes(attrs) {
+                Some(st) => MappedEffect::State(st, chance),
+                None => MappedEffect::Tag(format!("add_state:{}", modifier.to_lowercase())),
             }
         }
         "MiningRate"
@@ -840,5 +869,40 @@ mod canonical_condition_tests {
         let c = map_canonical_condition_token("SelfHasMorale").unwrap();
         assert_eq!(c.condition_type, "morale_active");
         resolve_lcars_condition(&c).unwrap();
+    }
+
+    #[test]
+    fn add_state_canonical_attributes_map_morale() {
+        assert_eq!(
+            add_state_type_from_attributes("num_rounds=1, state=8"),
+            Some(StateType::Morale)
+        );
+        assert_eq!(
+            add_state_type_from_attributes("num_rounds=3, state=4"),
+            Some(StateType::HullBreach)
+        );
+    }
+
+    #[test]
+    fn add_state_does_not_treat_state_20_as_burning() {
+        assert_eq!(add_state_type_from_attributes("state=20"), None);
+    }
+
+    #[test]
+    fn convert_add_state_harry_kim_style_to_morale_lcars() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "modifier": "AddState",
+            "attributes": "num_rounds=1, state=8",
+            "trigger": "RoundStart",
+            "target": "SelfShip",
+            "chance_by_rank": [0.1, 0.15, 0.3, 0.6, 1.0],
+            "value_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0]
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&a, "Harry Kim").expect("maps");
+        assert_eq!(e.effect_type, "morale");
+        assert_eq!(e.trigger.as_deref(), Some("on_round_start"));
+        assert!(e.scaling.is_some());
+        assert_eq!(e.scaling.as_ref().unwrap().chance_values.as_ref().unwrap().len(), 5);
     }
 }

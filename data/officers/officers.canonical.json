@@ -259,7 +259,7 @@
           "description": "Increases Apex Barrier against Explorer hostiles by X (X at rank X). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -329,7 +329,7 @@
           "description": "Alonzo Freeman increases the base amount of positive Federation, Romulan and Klingon reputation gained from defeating hostiles by X.",
           "modifier": "FactionPointsGain",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -407,7 +407,7 @@
           "description": "On round start, if on a Battleship and enemy player has Burning, Andy Billups increases your Isolytic Defense by X for 1 round.",
           "modifier": "IsolyticDefense",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -821,7 +821,7 @@
           "description": "X chance each round to apply Hull Breach to non-Player hostiles or Armada for 1 round.",
           "modifier": "AddState",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -1028,7 +1028,7 @@
           "description": "Badgey increases Armor Penetration, Shield Penetration, and Accuracy by X.",
           "modifier": "AllPiercing",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -1167,7 +1167,7 @@
           "description": "Beckett Mariner increases the ship's Weapon Damage by X.",
           "modifier": "AllDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -1377,7 +1377,7 @@
           "description": "SNW Black Ops Chapel increases the ship's base Hull Health by X (X at rank X).",
           "modifier": "HullHPMax",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -1452,7 +1452,7 @@
           "description": "SNW Black Ops M'Benga restores the Shield Health of your ship every round by X (X at rank X) when fighting hostiles.",
           "modifier": "ShieldHPRepair",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -1598,7 +1598,7 @@
           "description": "While fighting a player ship with Assimilate, Borg Queen increases the ship's Armor Piercing, Shield Piercing and Accuracy by X each round (Cumulative).",
           "modifier": "AllPiercing",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -1668,7 +1668,7 @@
           "description": "Brad Boimler increases Armor, Shield Deflection, and Dodge by X.",
           "modifier": "AllDefenses",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -1740,7 +1740,7 @@
           "description": "Increases base Loot gained from non-Armada Hostiles by X (X at rank X).",
           "modifier": "HostileLoot",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -2924,7 +2924,7 @@
           "description": "D'Vana Tendi increases the ship's Hull Health by X.",
           "modifier": "HullHPMax",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -3138,7 +3138,7 @@
           "description": "Alexander Dane Increases your ship's base Impulse Speed by X (X at rank X).",
           "modifier": "ImpulseSpeed",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -3495,7 +3495,7 @@
           "description": "Gwen DeMarco Increases Isolytic Cascade Damage in PvP when the enemy player has any state by  X (X at rank X) -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -3570,7 +3570,7 @@
           "description": "At the start of each round, if opponents Hull health is below 95%, Dezoc has X chance to apply Assimilate to it for 4 rounds. -- While a ship is affected by the Assimilate state, Officer Abilities have their effectiveness reduced by 25%.",
           "modifier": "AddState",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -3643,7 +3643,7 @@
           "description": "Dixon Hill increases base Mining Speed by X.",
           "modifier": "MiningRate",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -3717,7 +3717,7 @@
           "description": "On round start against players, Dr. T'Ana increases your Isolytic Defense by X for 1 round.",
           "modifier": "IsolyticDefense",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -4103,7 +4103,7 @@
           "description": "Increases your ship\u2019s Max Cargo by X of base.",
           "modifier": "CargoCapacity",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -4341,7 +4341,7 @@
           "description": "Increases Critical Hit Damage by X versus Armadas and Hostiles.",
           "modifier": "CritDamage",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -4758,7 +4758,7 @@
           "description": "On round start, if the enemy player has any state, French Marshal Q repairs X (X at rank X) of hull damage taken in the previous round of combat.",
           "modifier": "HullRepair",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundEnd",
           "value_by_rank": [
@@ -5109,7 +5109,7 @@
           "description": "Ghalenar increases Actian Venom and Inert Nanoprobe loot dropped from hostiles by X of their base value.",
           "modifier": "ActianVenomAndNanoprobeLoot",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -5455,7 +5455,7 @@
           "description": "While fighting a player ship with Assimilate, Gossa increases the ship's Armor, Shield Deflection and Dodge by X each round (Cumulative).",
           "modifier": "AllDefenses",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -5809,7 +5809,7 @@
           "description": "At the start of a round, Harry Kim has a X chance to apply Morale to your ship for 1 round when fighting non-Player hostiles or Armadas.",
           "modifier": "AddState",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -6157,7 +6157,7 @@
           "description": "Hoshi Sato increases Gas mining speed by X (X at rank X) of base.",
           "modifier": "MiningRate",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -6230,7 +6230,7 @@
           "description": "Hugh has X chance to increase Critical Hit Chance by 25% for 2 rounds after being hit by a Hostile. (This ability can stack) (Weapons with multiple shots will only trigger this ability once per attack)",
           "modifier": "CritChance",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "HullDamageTaken",
           "value_by_rank": [
@@ -6307,7 +6307,7 @@
           "description": "On round start against players, if on a ship with no State applied Icheb increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds (Cumulative). -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -6457,7 +6457,7 @@
           "description": "On round start against players, if on a ship with no State applied Infiltrator Tuvok increases your Apex Barrier by X (X at rank X) for 3 rounds (Cumulative). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -6601,7 +6601,7 @@
           "description": "On round start, if on an Interceptor and enemy player has Hull Breach, Jack Ransom increases your Isolytic Defense by X for 1 round.",
           "modifier": "IsolyticDefense",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -7714,7 +7714,7 @@
           "description": "Kira Nerys reduces opponent player Critical Hit Chance by X.",
           "modifier": "CritChance",
           "operation": "Sub",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -8408,7 +8408,7 @@
           "description": "Laliari increases the Apex Barrier by X (X at rank X) when in Wave Defense. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -9242,7 +9242,7 @@
           "description": "On round start against players afflicted by Burning, Mariachi Q increases your Apex Barrier by X (X at rank X) for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -9450,7 +9450,7 @@
           "description": "When hit by an Armada or Hostile, increases Critical Hit chance by X (X at rank X) for 4 rounds -- (Weapons with multiple shots will only trigger this ability once per attack).",
           "modifier": "CritChance",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "HitTaken",
           "value_by_rank": [
@@ -9656,7 +9656,7 @@
           "description": "Miles O'Brien increases the ship's base Warp Speed by X.",
           "modifier": "WarpSpeed",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -10165,7 +10165,7 @@
           "description": "Increases your Apex Barrier by X (X at rank X) at the start of combat versus non-Armada Hostiles. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -10242,7 +10242,7 @@
           "description": "On round start, if placed on a ship with Morale against players, Miss Q increases your Apex Barrier by X (X at rank X) for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -10546,7 +10546,7 @@
           "description": "Increases base repair cost efficiency of the ship X (X at rank X).",
           "modifier": "RepairCostsPost",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -10691,7 +10691,7 @@
           "description": "X chance each round to apply Burning for 1 round versus non-Player hostiles or Armadas. -- This ability does not trigger when Tal is assigned to the bridge of your ship",
           "modifier": "AddState",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -11377,7 +11377,7 @@
           "description": "Odo increases Critical Hit Damage by X.",
           "modifier": "CritDamage",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -11917,7 +11917,7 @@
           "description": "Increases base protected cargo by X (X at rank X)",
           "modifier": "CargoProtection",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -11991,7 +11991,7 @@
           "description": "Phlox increases the efficiency of charging the Borg Cube's Cutting Beam by X (X at rank X)",
           "modifier": "SkillCuttingBeamAbilityCost",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -12135,7 +12135,7 @@
           "description": "Beverly increases the amount of Broken Parts you get from killing hostiles by X.",
           "modifier": "BrokenShipPartsLoot",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -12205,7 +12205,7 @@
           "description": "At the beginning of each round of combat Hugh repairs X (X at rank X) of hull damage taken in the previous round of combat.",
           "modifier": "HullRepair",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundEnd",
           "value_by_rank": [
@@ -12702,7 +12702,7 @@
           "description": "Increases Apex Shred against non-Armada hostiles by X (X at rank X). -- Apex Barrier remaining after Apex Shred is equal to: -- Apex Barrier / (100% + Apex Shred) -- 100% Apex Shred reduces Apex Barrier by 50%.",
           "modifier": "ApexShred",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -12777,7 +12777,7 @@
           "description": "Increases Apex Barrier against Battleship hostiles by X (X at rank X). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -12847,7 +12847,7 @@
           "description": "Reginald Barclay increases the ship's base Protected Cargo by X.",
           "modifier": "CargoProtection",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -13134,7 +13134,7 @@
           "description": "On round start against players afflicted by Hull Breach, Romi increases your Apex Barrier by X (X at rank X) for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -13281,7 +13281,7 @@
           "description": "Increases Apex Shred against players by X (X at rank X). -- Apex Barrier remaining after Apex Shred is equal to: -- Apex Barrier / (100% + Apex Shred) -- 100% Apex Shred reduces Apex Barrier by 50%.",
           "modifier": "ApexShred",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -13351,7 +13351,7 @@
           "description": "Sam Rutherford increases the ship's Shield Health by X.",
           "modifier": "ShieldHPMax",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -13703,7 +13703,7 @@
           "description": "Increases Critical Hit Damage by X (X at rank X) for 4 rounds each time you score a hit (Once per weapon) when fighting hostiles.",
           "modifier": "CritDamage",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "EnemyTakesHit",
           "value_by_rank": [
@@ -13846,7 +13846,7 @@
           "description": "Increases your ship's Isolytic Cascade by X versus players. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -13996,7 +13996,7 @@
           "description": "On round start, if on an Explorer with Morale, Shaxs increases your Isolytic Defense by X for 1 round against players.",
           "modifier": "IsolyticDefense",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -14135,7 +14135,7 @@
           "description": "Shran increases Crystal mining speed by X (X at rank X) of base.",
           "modifier": "MiningRate",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -14273,7 +14273,7 @@
           "description": "SNW D'Chok increases the ship's Weapon Damage by X (X at rank X).",
           "modifier": "AllDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -14347,7 +14347,7 @@
           "description": "SNW Hemmer increases the Health of all Officers on the ship by X of their base value.",
           "modifier": "OfficerStatHealth",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfAll",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -14489,7 +14489,7 @@
           "description": "SNW La'an increases the ship's base Max Cargo by X.",
           "modifier": "CargoCapacity",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -14634,7 +14634,7 @@
           "description": "At the start of combat, SNW Chapel increases Isolytic Cascade damage by X (X at rank X) vs non-Armada Hostiles. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -14781,7 +14781,7 @@
           "description": "SNW Pelia increases Isolytic Defense by X (X at rank X)",
           "modifier": "IsolyticDefense",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -14997,7 +14997,7 @@
           "description": "SNW Montgomery Scott increases the ship's Shield Health by X (X at rank X).",
           "modifier": "ShieldHPMax",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -15144,7 +15144,7 @@
           "description": "SNW T'Pring Increases the amount of 3\u21f5-6\u21f5 Ore/Crystal/Gas collected by X (X at rank X), without draining the mining node faster.",
           "modifier": "MiningReward",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -15933,7 +15933,7 @@
           "description": "At the start of combat increases Critical Hit Damage by X (X at rank X) for 5 rounds when fighting hostiles.",
           "modifier": "CritDamage",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -16143,7 +16143,7 @@
           "description": "T'Pol increases Ore mining speed by X of base.",
           "modifier": "MiningRate",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -16492,7 +16492,7 @@
           "description": "Increases all resources dropped by hostiles and Outposts by X.",
           "modifier": "CombatPveRewards",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -16914,7 +16914,7 @@
           "description": "TMP Nyota Uhura increases your ship's Isolytic Cascade Damage by X (X at rank X) when fighting non-Armada Hostiles, Outposts, or Retaliation Hostiles.",
           "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -16986,7 +16986,7 @@
           "description": "Increases base Warp Speed by X (X at rank X)",
           "modifier": "WarpSpeed",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -17060,7 +17060,7 @@
           "description": "At the start of combat against non-Player hostiles or Armadas, Tom Paris increases your Armor, Shield Deflection, and Dodge by X of Defense.",
           "modifier": "AllDefenses",
           "operation": "MultiplyBaseAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -17697,7 +17697,7 @@
           "description": "Increases the amount of resources you get from destroying Hirogen and Species 8472 hostiles by X.",
           "modifier": "HirogenRelicAndBiotoxinLoot",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -17769,7 +17769,7 @@
           "description": "Increases your ship's Cargo Capacity by X of base if your ship is the U.S.S. Voyager.",
           "modifier": "CargoCapacity",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -18325,7 +18325,7 @@
           "description": "VIL Gul Dukat reduces enemy player Critical Chance by X (X at rank X) during 4 rounds at the start of the combat.",
           "modifier": "CritChance",
           "operation": "Sub",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyAllShips",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -18400,7 +18400,7 @@
           "description": "Reduces enemy player Critical Damage by X (X at rank X) .",
           "modifier": "CritDamage",
           "operation": "Sub",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyAllShips",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -18757,7 +18757,7 @@
           "description": "When you take hull damage from a non-Armada hostile, WOK Carol Marcus increases your Shield Mitigation by X (X at rank X) for 1 round (cumulative). -- (Weapons with multiple shots will only trigger this ability once per attack.)",
           "modifier": "ShieldMitigation",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "HullDamageTaken",
           "value_by_rank": [
@@ -18832,7 +18832,7 @@
           "description": "WOK Joachim increases your Isolytic Defense by X (X at rank X) against hostiles and players.",
           "modifier": "IsolyticDefense",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
           "value_by_rank": [
@@ -18906,7 +18906,7 @@
           "description": "On combat start against non-player hostiles or Armadas, WOK Leonard McCoy increases your Armor, Shield Deflection, and Dodge by X (X at rank X) of Defense.",
           "modifier": "AllDefenses",
           "operation": "MultiplyBaseAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -18982,7 +18982,7 @@
           "description": "On round start, against non-Armada hostiles, WOK Saavik increases your Isolytic Cascade damage by X (X at rank X) for 1 round, if the enemy has any state.",
           "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [
@@ -19055,7 +19055,7 @@
           "description": "WOK Montgomery Scott reduces enemy Shield Mitigation by X (X at rank X) when fighting non-Armada hostiles.",
           "modifier": "ShieldMitigation",
           "operation": "Sub",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "EnemyShip",
           "trigger": "CombatStart",
           "value_by_rank": [
@@ -19479,7 +19479,7 @@
           "description": "Increases Apex Barrier against Interceptor hostiles by X (X at rank X). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
           "operation": "Add",
-          "slot": "officer",
+          "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "CombatStart",
           "value_by_rank": [

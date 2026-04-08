@@ -38,7 +38,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ### Design Principles
 
-- **Local server + Web UI**: Rust backend with a custom HTTP server. The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) when the server is run from the project root. No Docker; run from project root so the server finds `frontend/dist` and `data/`.
+- **Local server + Web UI**: Rust backend using **Tokio + Axum** (`src/server/`). CPU-heavy handlers offload work with `tokio::task::spawn_blocking` so the async runtime stays responsive. The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) when the server is run from the project root (via `tower-http` static serving and SPA fallback). No Docker; run from project root so the server finds `frontend/dist` and `data/`.
 - **Community-driven data**: Officers defined in LCARS (YAML), hostiles and ships in JSON. Community contributes definitions via pull requests. Schema validation catches errors automatically.
 - **Graceful degradation**: Unknown ability types are logged and skipped, not crashed on. Accuracy improves incrementally as more mechanics are supported.
 - **Performance-first**: The combat engine is the hot loop. Zero allocations, no dynamic dispatch, pre-computed buffs. Target: 2–5M simulations/sec/core.
@@ -47,7 +47,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ## 2. Architecture
 
-**Actual stack:** Tokio + Axum 0.7 (`src/server/mod.rs` + `routes.rs`). Multi-threaded async runtime; CPU-bound work (optimize, simulate) offloaded via `tokio::task::spawn_blocking`. REST API only; WebSocket (e.g. for optimize progress) is not yet implemented. Frontend is served from the filesystem (`frontend/dist`) when present, not embedded in the binary.
+**Actual stack:** Tokio + Axum 0.7 (`src/server/mod.rs` + `routes.rs`). Multi-threaded async runtime; CPU-bound work (optimize, simulate) offloaded via `tokio::task::spawn_blocking`. The API is **REST-first**; there is **no WebSocket**. Long-running optimize jobs can be tracked with **JSON polling** (`GET /api/optimize/status/:job_id`) or **Server-Sent Events** (`GET /api/optimize/jobs/:job_id/stream`). Frontend is served from the filesystem (`frontend/dist`) when present, not embedded in the binary.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -58,7 +58,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 │  │ Builder │ │ Results  │ │   Graph   │            │
 │  └────┬────┘ └────┬─────┘ └─────┬─────┘            │
 │       └───────────┼─────────────┘                   │
-│              REST (WebSocket planned)                │
+│    REST + SSE (optimize job stream); no WebSocket   │
 ├─────────────────────────────────────────────────────┤
 │                  RUST BACKEND                       │
 │                                                     │
@@ -419,7 +419,7 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 - **Combat start: armor/shield piercing or weapon damage** — Mapped to `combat_begin` + `pierce_bonus` or `attack_multiplier` with percentage flags set from text heuristics. **“Ignore X% of enemy shields” (Breen-style)** — Mapped to percentage `pierce_bonus`; the client may implement this as a distinct bypass layer rather than the same stat as armor piercing.
 - **Upstream `values[]`** — Only the first scalar value is normalized onto the ship; per-tier ability curves are not modeled.
 
-**Gaps:** **Accuracy** from ship hull abilities: catalog `effect_type` `accuracy` / `accuracy_bonus` at `**combat_begin` only** is summed by `sum_combat_begin_accuracy_from_ship_abilities` into attacker stats (not a crew `AbilityEffect`; see `ship_ability_resolve`). Other timings or accuracy tied to non-combat-begin windows are not modeled. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids are inventoried in [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md); maintain that list when the catalog changes.
+**Gaps:** **Accuracy** from ship hull abilities: catalog `effect_type` `accuracy` / `accuracy_bonus` at `combat_begin` only is summed by `sum_combat_begin_accuracy_from_ship_abilities` into attacker stats (not a crew `AbilityEffect`; see `ship_ability_resolve`). Other timings or accuracy tied to non-combat-begin windows are not modeled. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids are inventoried in [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md); maintain that list when the catalog changes.
 
 **Combat-begin and pre-combat stats:** Combat_begin effects are applied at the start of each round to a fresh per-round effect accumulator (see engine loop). They are not re-accumulated across rounds, so they behave as permanent pre-combat modifiers. The first round uses the same effective stats as later rounds (same accumulator build: combat_begin → round_start → attack → defense → round_end).
 
@@ -459,16 +459,7 @@ Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon 
 
 The combat engine is the hot loop. Every design decision here affects throughput by millions of simulations.
 
-```rust
-/// Pure function. No side effects, no allocations.
-fn simulate(
-    ship: &ShipStats,
-    hostile: &HostileStats,
-    crew: &ResolvedCrew,      // LCARS abilities pre-resolved to a BuffSet
-    player: &PlayerProfile,    // pre-combat modifier layer
-    seed: u64,
-) -> FightResult
-```
+The implemented entry points are functions such as `simulate_combat_with_defender_faction_and_defender_crew` in `src/combat/engine.rs`: they take resolved attacker/defender [`Combatant`](src/combat/types.rs) values, crew context, a [`SimulationConfig`](src/combat/types.rs) (seed, optional trace mode, chain carry-over hull damage), and return a [`SimulationResult`](src/combat/types.rs). Scenario building (ship + hostile + profile + LCARS resolution) lives in the data/optimizer layers before the hot loop runs.
 
 Key design constraints:
 
@@ -507,19 +498,23 @@ for each round (1..MAX_ROUNDS):
 
 ### 4.4 Output
 
+A single fight returns [`SimulationResult`](src/combat/types.rs) (serialized for API/replay when tracing is on):
+
 ```rust
-struct FightResult {
-    win: bool,
-    rounds: u8,
-    hull_remaining: f32,
-    hull_pct: f32,
-    damage_dealt_r1: f32,       // for R1 kill optimization
-    total_damage_dealt: f32,
-    critical_hits: u8,
-    double_shots: u8,
-    round_log: Option<Vec<RoundSnapshot>>,  // only for sample/replay fights
+pub struct SimulationResult {
+    pub total_damage: f64,
+    pub attacker_won: bool,
+    pub winner_by_round_limit: bool,
+    pub rounds_simulated: u32,
+    pub attacker_hull_remaining: f64,
+    pub defender_hull_remaining: f64,
+    pub defender_shield_remaining: f64,
+    pub attacker_shield_remaining: f64,
+    pub events: Vec<CombatEvent>,
 }
 ```
+
+The Monte Carlo layer aggregates many `SimulationResult` values into win rate, hull remaining, R1 kill rate, etc. A minimal [`FightResult { won }`](src/combat/types.rs) exists for tests/stubs only; it is not the combat engine’s real output.
 
 ### 4.5 Target Throughput
 
@@ -676,6 +671,8 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 Synergies are a first-class concept in KOBAYASHI. They serve two purposes: guiding the optimizer to try promising combinations first, and helping the player understand *why* certain crews work well together.
 
+**HTTP surface:** There is no `/api/synergies` (or “learn synergies”) route wired in the server today. Synergy-related types and logic live in the Rust data layer (e.g. `src/data/synergy.rs`) and UI concepts; exposing a REST API for synergy graphs or learning would be additive.
+
 ### 7.2 Manual Synergies
 
 Known mechanical synergies, tagged by the community:
@@ -747,7 +744,7 @@ Each simulation is independent — the problem is embarrassingly parallel. KOBAY
 
 - Each thread owns its own PRNG instance (seeded deterministically from crew index)
 - Lock-free result collection (e.g. via channel or shared output)
-- Progress: not yet streamed to the frontend (REST only; WebSocket or polling planned)
+- **Optimize job progress:** `GET /api/optimize/status/:job_id` returns JSON snapshots; `GET /api/optimize/jobs/:job_id/stream` pushes **Server-Sent Events** until the job completes or errors. Synchronous `POST /api/optimize` still returns one final JSON response when it finishes. There is no WebSocket API.
 
 ### 8.2 Scaling Estimates
 
@@ -787,8 +784,8 @@ Accepted source formats can include exported data from community tools such as S
 Global officer catalog updates are maintained manually in version-controlled LCARS YAML files:
 
 ```
-1. Edit/update `data/officers/officers.lcars.yaml` entries.
-2. Validate schema and mechanics with `kobayashi validate`.
+1. Edit LCARS under `data/officers/` (any `*.lcars.yaml` / `*.lcars.yml`; multi-file layouts use merge/generate workflows — see `merge_lcars` / `generate_lcars` binaries as needed).
+2. Validate with `kobayashi validate data/officers` (and regenerate `officers.canonical.json` when that is part of your workflow).
 3. Run simulation/regression checks to confirm no unintended balance drift.
 4. Commit reviewed changes in small, auditable batches.
 5. Publish curated catalog updates when new officers are released.
@@ -826,22 +823,24 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 
 ### 10.4 API
 
-```
-GET  /api/officers                  # list all (with filters)
-POST /api/officers/import           # upload user-owned roster (e.g., Spocks.club export)
-GET  /api/ships                     # list ships
-GET  /api/hostiles                  # list hostiles
-POST /api/simulate                  # single crew simulation
-  → { ship, hostile, crew, num_sims }
-  ← { stats, sample_log }
-POST /api/optimize                  # find best crews
-  → { ship, hostile, constraints, strategy, num_sims }
-  ← REST: single response with final_ranking (progress/streaming planned)
-GET  /api/synergies                 # synergy graph data
-POST /api/synergies/learn           # trigger learning from past results
-GET  /api/profile                   # player profile
-PUT  /api/profile                   # update player profile
-```
+**Canonical contract:** OpenAPI is served at **`GET /api/openapi.yaml`** and **`GET /api/openapi.json`**. The bundled document is maintained as [`docs/openapi/kobayashi-heavy-payloads.yaml`](../docs/openapi/kobayashi-heavy-payloads.yaml) and wired through [`src/server/openapi.rs`](../src/server/openapi.rs). Prefer those definitions over this summary; routes evolve in `src/server/routes.rs`.
+
+**Primary endpoints (illustrative):**
+
+| Method | Path | Role |
+| ------ | ---- | ---- |
+| `POST` | `/api/simulate` | Monte Carlo for one crew |
+| `POST` | `/api/optimize` | Optimize (blocking until done); CPU-bound work in `spawn_blocking` |
+| `POST` | `/api/optimize/start` | Start background optimize job |
+| `GET` | `/api/optimize/status/:job_id` | Poll job status (JSON) |
+| `GET` | `/api/optimize/jobs/:job_id/stream` | SSE stream of job status until done/error |
+| `POST` | `/api/optimize/jobs/:job_id/cancel` | Request cancellation |
+| `GET` | `/api/sync/status` | stfc-mod / sync state |
+| `POST` | `/api/sync/ingress` | Sync payload ingress |
+| `GET` / `PUT` | `/api/profile` | Active player profile |
+| `GET` | `/api/officers`, `/api/ships`, `/api/hostiles` | Catalogs |
+
+Also exposed: health, mechanics coverage, officer resolved view, ship tiers/levels, data version, forbidden-tech catalog, profile/buildings and research summaries, profiles CRUD + zip export/import, presets, heuristics list, optimize estimate/replay-seed, compare crews, large-body import routes, etc. Requests may pass through API-key middleware (`src/server/api_key.rs`).
 
 ---
 
@@ -852,107 +851,87 @@ kobayashi/
 ├── Cargo.toml
 ├── README.md
 ├── data/
-│   ├── officers/              # LCARS officer definitions
-│   │   ├── officers.lcars.yaml   # all officers (single file)
-│   │   └── ...
-│   ├── ships.json
-│   ├── hostiles.json
-│   ├── synergies.json
-│   └── profiles/
-│       └── default.yaml
+│   ├── officers/                    # LCARS: all *.lcars.yaml / *.lcars.yml in dir
+│   │   ├── officers.lcars.yaml
+│   │   ├── officers.canonical.json  # canonical catalog (regenerate when workflow requires)
+│   │   ├── id_registry.json
+│   │   └── name_aliases.json
+│   ├── ships_extended/              # index.json + per-ship JSON (extended tiers/levels)
+│   ├── hostiles/                    # index.json + per-hostile JSON
+│   ├── buildings/                   # index.json + per-building JSON
+│   ├── heuristics/                  # *.txt optimizer seed lists
+│   ├── research_catalog.json
+│   ├── registry.json                # top-level loader registry
+│   ├── import/                      # user-imported roster payloads
+│   └── profiles/                    # per-profile trees (YAML/JSON import state)
 │
 ├── src/
-│   ├── main.rs                # CLI parsing, starts server or batch mode
+│   ├── lib.rs
+│   ├── main.rs
+│   ├── cli.rs
 │   │
-│   ├── data/
-│   │   ├── mod.rs
-│   │   ├── officer.rs         # Officer struct, ability enums, slot constraints
-│   │   ├── ship.rs            # Ship stats
-│   │   ├── hostile.rs         # Hostile stats + special mechanics
-│   │   ├── synergy.rs         # Synergy definitions, co-occurrence matrix
-│   │   ├── profile.rs         # Player profile, bonus resolution
-│   │   └── import.rs          # User roster import parser + validation helpers
-│   │
+│   ├── data/                        # loader, registry, ship, hostile, officer, profile, import, …
 │   ├── lcars/
 │   │   ├── mod.rs
-│   │   ├── parser.rs          # YAML → typed LCARS structures
-│   │   ├── schema.rs          # Schema definition & validation rules
-│   │   ├── resolver.rs        # LCARS abilities → pre-combat BuffSet
-│   │   └── errors.rs          # Validation warnings & errors
+│   │   ├── parser.rs                # YAML → LCARS structs; directory load
+│   │   └── resolver.rs              # LCARS → BuffSet + validation helpers
 │   │
 │   ├── combat/
 │   │   ├── mod.rs
-│   │   ├── engine.rs          # Core fight loop (the hot path)
-│   │   ├── buffs.rs           # Buff/debuff system, stacking rules
-│   │   ├── effects.rs         # Effect evaluation (decay, accumulate, triggers)
-│   │   └── rng.rs             # SplitMix64 PRNG
+│   │   ├── engine.rs                # Fight loop (hot path)
+│   │   ├── abilities.rs             # Effect evaluation, triggers
+│   │   ├── buffs.rs
+│   │   ├── stacking.rs
+│   │   ├── effect_accumulator.rs
+│   │   ├── damage.rs, mitigation.rs, condition.rs, types.rs, events.rs, rng.rs, …
 │   │
 │   ├── optimizer/
 │   │   ├── mod.rs
-│   │   ├── monte_carlo.rs     # Monte Carlo runner (N sims → stats)
-│   │   ├── crew_generator.rs  # Exhaustive & synergy-prioritized enumeration
-│   │   ├── tiered.rs          # Two-pass: scouting → confirmation
-│   │   ├── genetic.rs         # Genetic algorithm for large spaces
-│   │   ├── analytical.rs      # Closed-form expected damage calculator
-│   │   └── ranking.rs         # Multi-metric scoring & ranking
+│   │   ├── crew_generator.rs
+│   │   ├── genetic.rs, tiered.rs, analytical.rs, ranking.rs
+│   │   ├── chain.rs, constraints.rs
+│   │   └── monte_carlo/             # scenario, simulation, compare_crews, crew_resolution, …
 │   │
 │   ├── parallel/
-│   │   ├── mod.rs
-│   │   ├── pool.rs            # Rayon thread pool configuration
-│   │   ├── batch.rs           # Crew combo → worker thread distribution
-│   │   └── progress.rs        # Progress tracking, ETA, throughput
+│   │   ├── mod.rs, pool.rs, batch.rs, progress.rs
 │   │
 │   └── server/
-│       ├── mod.rs             # Custom TCP HTTP server (blocking)
-│       ├── api.rs             # REST endpoints
-│       ├── routes.rs          # Route definitions
-│       └── static_files.rs   # Serve SPA from frontend/dist
+│       ├── mod.rs                   # Multi-thread Tokio runtime + axum::serve
+│       ├── routes.rs                # Axum router; spawn_blocking for CPU routes
+│       ├── api.rs, api/             # Handlers, request types, execution helpers
+│       ├── openapi.rs               # OpenAPI document for /api/openapi.{yaml,json}
+│       ├── sync.rs                  # stfc-mod sync ingress/status
+│       ├── api_key.rs, profile_backup.rs, static_files.rs
 │
 ├── frontend/
 │   ├── package.json
-│   ├── src/
-│   │   ├── App.tsx
-│   │   ├── components/
-│   │   │   ├── CrewBuilder.tsx
-│   │   │   ├── SimResults.tsx
-│   │   │   ├── FightReplay.tsx
-│   │   │   ├── SynergyGraph.tsx
-│   │   │   ├── RosterImportPanel.tsx
-│   │   │   ├── PlayerProfile.tsx
-│   │   │   └── OptimizePanel.tsx
-│   │   └── lib/
-│   │       ├── api.ts
-│   │       └── types.ts
-│   └── dist/                  # Built → served from disk by server
+│   ├── src/ …
+│   └── dist/                        # Built SPA → served from disk (tower-http + fallback)
 │
 └── tests/
-    ├── combat_tests.rs
-    ├── lcars_tests.rs         # Parser & validation tests
-    ├── optimizer_tests.rs
+    ├── …
     └── fixtures/
-        ├── officers/          # Test LCARS files
-        └── recorded_fights/   # Real fight data for validation
-            ├── fight_001.json
-            └── ...
+        ├── officers/
+        └── recorded_fights/
 ```
 
 ---
 
 ## 12. Dependencies
 
-The backend does **not** use Tokio or Axum. The server is a custom blocking TCP implementation. Example core dependencies:
+Core backend crates (versions and the full dependency set live in `Cargo.toml`):
 
-```toml
-[dependencies]
-rayon = "1.10"              # Parallel iterators, work-stealing
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-serde_yaml = "0.9"          # LCARS parsing
-# No tokio/axum: custom HTTP server in src/server
-rand = "0.8"                # PRNG traits
-clap = "4"                  # CLI args
-# ... (see Cargo.toml for full list; no rust-embed, frontend served from disk)
-```
+- **axum** — HTTP router and handlers (0.7)
+- **tokio** — async runtime (`spawn_blocking` for simulate/optimize)
+- **tower-http** — static file serving, compression for `frontend/dist`
+- **tokio-stream** — SSE for optimize job progress stream
+- **rayon** — parallel Monte Carlo / optimizer work-stealing pool
+- **serde** / **serde_json** / **serde_yaml** — data + LCARS YAML
+- **clap** — CLI
+- **tracing** / **tracing-subscriber** — logging
+- **zip**, **calamine**, **csv**, **chrono**, **uuid**, **futures-util**, **getrandom** — import, profiles, utilities
+
+The combat engine uses a built-in **SplitMix64** implementation (not `rand` on the hot path for fight resolution).
 
 ---
 

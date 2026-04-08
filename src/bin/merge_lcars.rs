@@ -34,15 +34,17 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         file.officers.len()
     );
 
-    // Remove other .yaml/.yml files in the directory (keep only officers.lcars.yaml).
+    // Remove per-faction inputs only (`*.lcars.yaml` / `*.lcars.yml`), not other YAML in this dir
+    // (e.g. `officer_modeling_fidelity.yaml`).
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
         if path.is_file() {
-            let ext = path.extension();
-            if ext.is_some_and(|e| e == "yaml" || e == "yml")
-                && path.file_name().is_none_or(|n| n != OUTPUT_FILE)
-            {
+            let name = path.file_name().and_then(|n| n.to_str());
+            let is_lcars_shard = name.is_some_and(|n| {
+                n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml")
+            });
+            if is_lcars_shard && path.file_name().is_none_or(|n| n != OUTPUT_FILE) {
                 fs::remove_file(&path)?;
                 println!("Removed {}", path.display());
             }
