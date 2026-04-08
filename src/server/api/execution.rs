@@ -25,8 +25,8 @@ use crate::optimizer::{
 };
 
 use super::requests::{
-    build_crew_search_constraints, parse_below_decks_strategy, parse_strategy,
-    OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
+    build_crew_search_constraints, chain_grind_params_from_request, parse_below_decks_strategy,
+    parse_strategy, ChainGrindRequest, OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -52,6 +52,8 @@ pub struct CrewRecommendation {
     pub avg_defender_hull_remaining: f64,
     pub avg_defender_hull_remaining_ci_low: f64,
     pub avg_defender_hull_remaining_ci_high: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chain: Option<crate::optimizer::ChainSimulationSummary>,
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
@@ -88,6 +90,7 @@ fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
         avg_defender_hull_remaining: r.avg_defender_hull_remaining,
         avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
+        chain: r.chain.clone(),
     }
 }
 
@@ -127,6 +130,8 @@ pub struct ScenarioSummary {
     /// Crew count after analytical truncation (only when truncation ran).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analytical_prefilter_kept: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chain: Option<ChainGrindRequest>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -309,6 +314,7 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
         avg_defender_hull_remaining: r.avg_defender_hull_remaining,
         avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
+        chain: r.chain.clone(),
     }
 }
 
@@ -321,6 +327,10 @@ fn gather_optimize_simulation_results(
 ) -> Result<(Vec<SimulationResult>, OptimizeGatherMeta), ()> {
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     let seed = request.seed.unwrap_or(0);
+    let chain_grind = request
+        .chain
+        .as_ref()
+        .and_then(|c| chain_grind_params_from_request(c).ok().flatten());
     let strategy = parse_strategy(request.strategy.as_ref());
     let heuristics_only = request.heuristics_only.unwrap_or(false);
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
@@ -378,6 +388,7 @@ fn gather_optimize_simulation_results(
             seed,
             profile_id,
             request.support_buffs.as_deref(),
+            chain_grind.clone(),
         );
         sink.on_heuristics_complete(heuristics_only, h_total, &results);
         results
@@ -408,6 +419,7 @@ fn gather_optimize_simulation_results(
             below_decks_slots,
             constraints: crew_constraints.clone(),
             support_buffs: request.support_buffs.clone().unwrap_or_default(),
+            chain_grind: chain_grind.clone(),
         };
         let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
             sink.on_optimize_tick(tick)
@@ -471,6 +483,11 @@ fn build_optimize_response(
     } else if meta.heuristics_seeds_nonempty {
         notes.insert(0, "Heuristics crews were evaluated first.");
     }
+    if request.chain.as_ref().map(|c| c.enabled).unwrap_or(false) {
+        notes.push(
+            "Chain grind: attacker hull carries between fights; shields reset to full each fight. win_rate is P(completing the chain); avg_hull_remaining is the secondary mean given success.",
+        );
+    }
 
     let mut approximate_notes = Vec::new();
     if let Some((generated, kept)) = meta.analytical_prefilter {
@@ -483,6 +500,14 @@ fn build_optimize_response(
         approximate_notes.push(
             "analytical_prefilter_keep was ignored because the genetic strategy builds its own population."
                 .to_string(),
+        );
+    }
+    if request.chain.as_ref().map(|c| c.enabled).unwrap_or(false)
+        && request.analytical_prefilter_keep.is_some()
+        && !matches!(meta.strategy, OptimizerStrategy::Genetic)
+    {
+        approximate_notes.push(
+            "analytical_prefilter_keep was skipped for chain grind mode.".to_string(),
         );
     }
 
@@ -507,32 +532,11 @@ fn build_optimize_response(
             analytical_prefilter_keep: request.analytical_prefilter_keep,
             analytical_prefilter_from: meta.analytical_prefilter.map(|(g, _)| g as u32),
             analytical_prefilter_kept: meta.analytical_prefilter.map(|(_, k)| k as u32),
+            chain: request.chain.clone(),
         },
         recommendations: ranked_results
-            .into_iter()
-            .map(|result| CrewRecommendation {
-                captain: result.captain,
-                bridge: result.bridge,
-                below_decks: result.below_decks,
-                win_rate: result.win_rate,
-                win_rate_ci_low: result.win_rate_ci_low,
-                win_rate_ci_high: result.win_rate_ci_high,
-                stall_rate: result.stall_rate,
-                stall_rate_ci_low: result.stall_rate_ci_low,
-                stall_rate_ci_high: result.stall_rate_ci_high,
-                loss_rate: result.loss_rate,
-                loss_rate_ci_low: result.loss_rate_ci_low,
-                loss_rate_ci_high: result.loss_rate_ci_high,
-                r1_kill_rate: result.r1_kill_rate,
-                r1_kill_rate_ci_low: result.r1_kill_rate_ci_low,
-                r1_kill_rate_ci_high: result.r1_kill_rate_ci_high,
-                avg_hull_remaining: result.avg_hull_remaining,
-                avg_hull_remaining_ci_low: result.avg_hull_remaining_ci_low,
-                avg_hull_remaining_ci_high: result.avg_hull_remaining_ci_high,
-                avg_defender_hull_remaining: result.avg_defender_hull_remaining,
-                avg_defender_hull_remaining_ci_low: result.avg_defender_hull_remaining_ci_low,
-                avg_defender_hull_remaining_ci_high: result.avg_defender_hull_remaining_ci_high,
-            })
+            .iter()
+            .map(crew_recommendation_from_ranked)
             .collect(),
         duration_ms: Some(duration_ms),
         notes,

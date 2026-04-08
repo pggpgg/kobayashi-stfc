@@ -12,6 +12,7 @@
 //! balancing gentle exploration around good seeds with escape from local optima.
 
 use crate::combat::rng::Rng;
+use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::constraints::CrewSearchConstraints;
 use crate::optimizer::crew_generator::{
     build_officer_pools, CrewCandidate, OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
@@ -22,9 +23,13 @@ use crate::optimizer::monte_carlo::{
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use std::collections::HashSet;
 
-/// Same scalar as ranking: win_rate * 0.8 + avg_hull_remaining * 0.2
+/// Single-fight: hull-weighted win rate. Chain: lexicographic proxy (primary then conditional secondary).
 fn fitness_from_result(result: &SimulationResult) -> f32 {
-    (result.win_rate * 0.8 + result.avg_hull_remaining * 0.2) as f32
+    if result.chain.is_some() {
+        result.win_rate as f32 * 1e4 + result.avg_hull_remaining.min(1.0) as f32
+    } else {
+        (result.win_rate * 0.8 + result.avg_hull_remaining * 0.2) as f32
+    }
 }
 
 /// Configuration for the genetic algorithm.
@@ -64,6 +69,8 @@ pub struct GeneticConfig {
     /// Optional alliance/ship support buff ids (same as API `support_buffs`).
     #[allow(clippy::struct_field_names)]
     pub support_buffs: Vec<String>,
+
+    pub chain_grind: Option<ChainGrindParams>,
 }
 
 impl Default for GeneticConfig {
@@ -84,6 +91,7 @@ impl Default for GeneticConfig {
             mutation_rate_ceiling: 0.40,
             constraints: None,
             support_buffs: Vec::new(),
+            chain_grind: None,
         }
     }
 }
@@ -488,6 +496,7 @@ pub fn run_genetic_optimizer(
             config.sims_per_eval,
             seed.wrapping_add(generation as u64),
             support_slice,
+            config.chain_grind.clone(),
         );
         let fitness: Vec<f32> = sim_results.iter().map(fitness_from_result).collect();
 
@@ -575,8 +584,15 @@ pub fn run_genetic_optimizer_ranked(
     }
     let support_slice =
         (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
-    let final_results =
-        run_monte_carlo_parallel(ship, hostile, &top, final_sims.max(1), seed, support_slice);
+    let final_results = run_monte_carlo_parallel(
+        ship,
+        hostile,
+        &top,
+        final_sims.max(1),
+        seed,
+        support_slice,
+        config.chain_grind.clone(),
+    );
     rank_results(final_results)
 }
 

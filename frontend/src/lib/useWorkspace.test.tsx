@@ -116,6 +116,10 @@ describe("useWorkspace", () => {
   it("calls savePreset when saving a preset", async () => {
     const { result } = renderHook(() => useWorkspace(), { wrapper });
 
+    await waitFor(() => {
+      expect(result.current.activeProfileId).toBe("p1");
+    });
+
     act(() => {
       result.current.setShipId("enterprise");
       result.current.setScenarioId("hostile-x");

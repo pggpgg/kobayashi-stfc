@@ -1,10 +1,27 @@
 pub mod analytical;
+pub mod chain;
 pub mod constraints;
 pub mod crew_generator;
 pub mod genetic;
 pub mod monte_carlo;
 pub mod ranking;
 pub mod tiered;
+
+pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
+
+fn analytical_prefilter_unless_chain(
+    shared: &SharedScenarioData,
+    candidates: Vec<CrewCandidate>,
+    seed: u64,
+    keep: Option<usize>,
+    chain_grind: &Option<ChainGrindParams>,
+) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
+    if chain_grind.is_some() {
+        (candidates, None)
+    } else {
+        sort_and_analytical_prefilter(shared, candidates, seed, keep)
+    }
+}
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::analytical::expected_damage;
@@ -147,6 +164,8 @@ pub struct OptimizationScenario<'a> {
     pub constraints: Option<CrewSearchConstraints>,
     /// Support buff ids (lower decks) applied when building scenario profile; empty = none.
     pub support_buffs: Vec<String>,
+    /// Sequential chain grind (HHP carry-over, full SHP each link). When set, analytical prefilter is skipped.
+    pub chain_grind: Option<ChainGrindParams>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -169,6 +188,7 @@ impl Default for OptimizationScenario<'_> {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            chain_grind: None,
         }
     }
 }
@@ -209,11 +229,12 @@ fn optimize_scenario_tiered_with_registry(
         scenario.profile_id,
         scenario_support_slice(scenario),
     );
-    let (candidates, _) = sort_and_analytical_prefilter(
+    let (candidates, _) = analytical_prefilter_unless_chain(
         &shared_tiered,
         candidates,
         scenario.seed,
         scenario.analytical_prefilter_keep,
+        &scenario.chain_grind,
     );
     let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
     let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
@@ -228,6 +249,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.seed,
         scenario.profile_id,
         scenario_support_slice(scenario),
+        scenario.chain_grind.clone(),
         |_| true,
     )
 }
@@ -274,11 +296,12 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.profile_id,
         scenario_support_slice(scenario),
     );
-    let (candidates, _) = sort_and_analytical_prefilter(
+    let (candidates, _) = analytical_prefilter_unless_chain(
         &shared_ex,
         candidates,
         scenario.seed,
         scenario.analytical_prefilter_keep,
+        &scenario.chain_grind,
     );
     let (simulation_results, _) = run_monte_carlo_parallel_with_registry(
         registry,
@@ -291,6 +314,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.seed,
         scenario.profile_id,
         scenario_support_slice(scenario),
+        scenario.chain_grind.clone(),
     );
     rank_results(simulation_results)
 }
@@ -311,11 +335,12 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario.hostile,
         scenario_support_slice(scenario),
     );
-    let (candidates, _) = sort_and_analytical_prefilter(
+    let (candidates, _) = analytical_prefilter_unless_chain(
         &shared,
         candidates,
         scenario.seed,
         scenario.analytical_prefilter_keep,
+        &scenario.chain_grind,
     );
     let simulation_results = run_monte_carlo_parallel(
         scenario.ship,
@@ -324,6 +349,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario.simulation_count.max(1),
         scenario.seed,
         scenario_support_slice(scenario),
+        scenario.chain_grind.clone(),
     );
     rank_results(simulation_results)
 }
@@ -347,6 +373,7 @@ where
             below_decks_slots: scenario.below_decks_slots,
             constraints: scenario.constraints.clone(),
             support_buffs: scenario.support_buffs.clone(),
+            chain_grind: scenario.chain_grind.clone(),
             ..GeneticConfig::default()
         }
     } else {
@@ -355,6 +382,7 @@ where
         cfg.below_decks_slots = scenario.below_decks_slots;
         cfg.constraints = scenario.constraints.clone();
         cfg.support_buffs = scenario.support_buffs.clone();
+        cfg.chain_grind = scenario.chain_grind.clone();
         cfg
     };
     run_genetic_optimizer_ranked(
@@ -398,6 +426,7 @@ where
                 below_decks_slots: scenario.below_decks_slots,
                 constraints: scenario.constraints.clone(),
                 support_buffs: scenario.support_buffs.clone(),
+                chain_grind: scenario.chain_grind.clone(),
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -417,11 +446,12 @@ where
                 scenario.hostile,
                 scenario_support_slice(scenario),
             );
-            let (candidates, _) = sort_and_analytical_prefilter(
+            let (candidates, _) = analytical_prefilter_unless_chain(
                 &shared,
                 candidates,
                 scenario.seed,
                 scenario.analytical_prefilter_keep,
+                &scenario.chain_grind,
             );
             let total = candidates.len();
             if total == 0 {
@@ -450,6 +480,7 @@ where
                     sim_count,
                     scenario.seed,
                     scenario_support_slice(scenario),
+                    scenario.chain_grind.clone(),
                 );
                 all_results.extend(batch_results);
                 let partial_top = rank_results(all_results.clone())
@@ -514,11 +545,12 @@ where
                 scenario.profile_id,
                 scenario_support_slice(scenario),
             );
-            let (candidates, analytical_prefilter) = sort_and_analytical_prefilter(
+            let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
                 &shared,
                 candidates,
                 scenario.seed,
                 scenario.analytical_prefilter_keep,
+                &scenario.chain_grind,
             );
             let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
             let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
@@ -533,6 +565,7 @@ where
                 scenario.seed,
                 scenario.profile_id,
                 scenario_support_slice(scenario),
+                scenario.chain_grind.clone(),
                 &mut on_progress,
             );
             OptimizeRunOutcome {
@@ -565,11 +598,12 @@ where
                 scenario.profile_id,
                 scenario_support_slice(scenario),
             );
-            let (candidates, analytical_prefilter) = sort_and_analytical_prefilter(
+            let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
                 &shared_ex,
                 candidates,
                 scenario.seed,
                 scenario.analytical_prefilter_keep,
+                &scenario.chain_grind,
             );
             let total = candidates.len();
             if total == 0 {
@@ -608,6 +642,7 @@ where
                     scenario.seed,
                     scenario.profile_id,
                     scenario_support_slice(scenario),
+                    scenario.chain_grind.clone(),
                 );
                 all_results.extend(batch_results);
                 let partial_top = rank_results(all_results.clone())
@@ -667,6 +702,7 @@ pub fn optimize_crew(
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
         support_buffs: Vec::new(),
+        chain_grind: None,
     })
 }
 
@@ -698,6 +734,7 @@ mod tests {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            chain_grind: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -731,6 +768,7 @@ mod tests {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            chain_grind: None,
         };
         let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true);
         assert!(

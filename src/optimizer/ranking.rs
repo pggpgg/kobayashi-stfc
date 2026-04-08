@@ -1,3 +1,4 @@
+use crate::optimizer::chain::ChainSimulationSummary;
 use crate::optimizer::monte_carlo::SimulationResult;
 use serde::Serialize;
 
@@ -30,13 +31,21 @@ pub struct RankedCrewResult {
     pub avg_defender_hull_remaining_ci_low: f64,
     pub avg_defender_hull_remaining_ci_high: f64,
     pub score: RankingScore,
+    /// Chain grind summary when optimize used sequential fights; primary = `win_rate`, secondary = `avg_hull_remaining`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chain: Option<ChainSimulationSummary>,
 }
 
 pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrewResult> {
     let mut ranked: Vec<RankedCrewResult> = simulation_results
         .into_iter()
         .map(|result| {
-            let score = (result.win_rate * 0.8 + result.avg_hull_remaining * 0.2) as f32;
+            let score = if result.chain.is_some() {
+                // Lexicographic proxy: primary dominates; secondary uses avg_hull_remaining (conditional mean).
+                result.win_rate as f32 * 1e4 + result.avg_hull_remaining.min(1.0) as f32
+            } else {
+                (result.win_rate * 0.8 + result.avg_hull_remaining * 0.2) as f32
+            };
             RankedCrewResult {
                 captain: result.candidate.captain,
                 bridge: result.candidate.bridge.clone(),
@@ -60,17 +69,24 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
                 avg_defender_hull_remaining_ci_low: result.avg_defender_hull_remaining_ci_low,
                 avg_defender_hull_remaining_ci_high: result.avg_defender_hull_remaining_ci_high,
                 score: RankingScore { value: score },
+                chain: result.chain.clone(),
             }
         })
         .collect();
 
     ranked.sort_by(|left, right| {
-        right
-            .score
-            .value
-            .total_cmp(&left.score.value)
-            .then_with(|| right.win_rate.total_cmp(&left.win_rate))
-            .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining))
+        match (&left.chain, &right.chain) {
+            (Some(_), Some(_)) => right
+                .win_rate
+                .total_cmp(&left.win_rate)
+                .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
+            _ => right
+                .score
+                .value
+                .total_cmp(&left.score.value)
+                .then_with(|| right.win_rate.total_cmp(&left.win_rate))
+                .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
+        }
     });
 
     ranked

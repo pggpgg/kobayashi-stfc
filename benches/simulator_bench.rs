@@ -67,6 +67,7 @@ fn bench_simulator(c: &mut Criterion) {
             rounds,
             seed: 7,
             trace_mode: TraceMode::Off,
+            initial_attacker_hull_damage: 0.0,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
@@ -85,6 +86,7 @@ fn bench_simulator(c: &mut Criterion) {
             rounds,
             seed: 7,
             trace_mode: TraceMode::Off,
+            initial_attacker_hull_damage: 0.0,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
@@ -103,6 +105,7 @@ fn bench_simulator(c: &mut Criterion) {
             rounds,
             seed: 7,
             trace_mode: TraceMode::Off,
+            initial_attacker_hull_damage: 0.0,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),

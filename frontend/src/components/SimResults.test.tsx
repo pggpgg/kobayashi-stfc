@@ -191,6 +191,36 @@ describe("SimResults", () => {
     expect(screen.getByText("Compare (delta)")).toBeTruthy();
   });
 
+  it("shows chain grind column headers when recommendations include chain", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Kirk",
+          bridge: "Spock",
+          below_decks: "McCoy",
+          win_rate: 0.4,
+          stall_rate: 0.1,
+          loss_rate: 0.5,
+          avg_hull_remaining: 0.7,
+        }),
+        chain: {
+          kills_target: 4,
+          secondary_objective: "min_hull_damage",
+          primary_success_rate: 0.4,
+          primary_ci_low: 0.35,
+          primary_ci_high: 0.45,
+          secondary_mean_given_primary: 0.7,
+          secondary_ci_low: 0.65,
+          secondary_ci_high: 0.75,
+          n_primary_successes: 100,
+        },
+      },
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    expect(screen.getByText("P(4-kill)")).toBeTruthy();
+    expect(screen.getByText("Hull %*|hit")).toBeTruthy();
+  });
+
   it("limits selection to 5 rows", () => {
     const recs: CrewRecommendation[] = Array.from({ length: 7 }, (_, i) =>
       crewRec({

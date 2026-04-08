@@ -7,8 +7,9 @@ pub use execution::{
     OptimizeStatusResponse, ScenarioSummary,
 };
 pub use requests::{
-    validate_request, OptimizePayloadError, OptimizeRequest, ReplaySeedRequest,
-    ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
+    chain_grind_params_from_request, validate_request, ChainGrindRequest, OptimizePayloadError,
+    OptimizeRequest, ReplaySeedRequest, ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS,
+    MAX_CANDIDATES, MAX_SIMS,
 };
 
 use crate::data::building_summary::building_combat_summary_for_profile;
@@ -345,6 +346,8 @@ pub struct SimulateRequest {
     /// Optional alliance/ship support buff ids (see `data/support_buffs.json`).
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub chain: Option<requests::ChainGrindRequest>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -523,6 +526,16 @@ pub fn simulate_payload(
         req.below_decks_slots,
     );
 
+    if let Some(ref ch) = &req.chain {
+        if let Err(msg) = requests::chain_grind_params_from_request(ch) {
+            return Err(SimulateError::Validation(msg));
+        }
+    }
+    let chain_grind = req
+        .chain
+        .as_ref()
+        .and_then(|c| requests::chain_grind_params_from_request(c).ok().flatten());
+
     let officers: Vec<(String, String)> = registry
         .officers()
         .iter()
@@ -555,6 +568,7 @@ pub fn simulate_payload(
         seed,
         profile_id,
         req.support_buffs.as_deref(),
+        chain_grind,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {
@@ -580,6 +594,7 @@ pub fn simulate_payload(
         avg_defender_hull_remaining: 0.0,
         avg_defender_hull_remaining_ci_low: 0.0,
         avg_defender_hull_remaining_ci_high: 0.0,
+        chain: None,
     });
 
     let wins = (result.win_rate * num_sims as f64).round() as u32;

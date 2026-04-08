@@ -255,6 +255,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             rounds,
             seed,
             trace_mode: TraceMode::Events,
+            initial_attacker_hull_damage: 0.0,
         },
         &CrewConfiguration::default(),
         defender_faction,

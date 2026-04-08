@@ -60,6 +60,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
@@ -165,6 +166,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         rounds: 1,
         seed: 101,
         trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
     };
     let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let after_sub = CrewConfiguration {
@@ -251,6 +253,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         rounds: 1,
         seed: 7,
         trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
     };
     let r = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     // Weapon0: high pierce + guaranteed crit x2 + proc x3 vs weapon1: no pierce, no crit, no proc.
@@ -314,6 +317,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
         rounds: 1,
         seed: 1,
         trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
 

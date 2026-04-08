@@ -252,11 +252,15 @@ pub enum TraceMode {
     Events,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SimulationConfig {
     pub rounds: u32,
     pub seed: u64,
     pub trace_mode: TraceMode,
+    /// Hull damage already applied to the attacker before round 1 (chain grinding: carry-over HHP).
+    /// Clamped to `[0, attacker.hull_health]` in the engine. Default 0.
+    #[serde(default)]
+    pub initial_attacker_hull_damage: f64,
 }
 
 impl Default for SimulationConfig {
@@ -265,6 +269,7 @@ impl Default for SimulationConfig {
             rounds: 3,
             seed: 7,
             trace_mode: TraceMode::Off,
+            initial_attacker_hull_damage: 0.0,
         }
     }
 }
@@ -280,6 +285,9 @@ pub struct SimulationResult {
     /// Defender shield HP remaining at end of combat (0 when shields were depleted).
     #[serde(default)]
     pub defender_shield_remaining: f64,
+    /// Attacker shield HP remaining at end of combat (replay/debug; chain mode resets SHP each link).
+    #[serde(default)]
+    pub attacker_shield_remaining: f64,
     pub events: Vec<CombatEvent>,
 }
 

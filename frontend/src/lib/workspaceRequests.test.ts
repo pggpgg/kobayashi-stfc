@@ -86,6 +86,32 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     expect(body.below_decks_strategy).toBe("exploration");
   });
 
+  it("includes chain when chainGrind.enabled with kills_target", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "exhaustive",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      chainGrind: {
+        enabled: true,
+        kills_target: 5,
+        secondary: "max_loot_per_hull_proxy",
+      },
+    });
+    expect(body.chain).toEqual({
+      enabled: true,
+      kills_target: 5,
+      secondary: "max_loot_per_hull_proxy",
+    });
+  });
+
   it("includes constraints when form fields are set", () => {
     const body = buildWorkspaceOptimizeStartBody({
       shipId: "S",

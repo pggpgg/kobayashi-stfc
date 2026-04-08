@@ -162,6 +162,36 @@ export default function SimResults({
   const [compareDistErr, setCompareDistErr] = useState<string | null>(null);
   const hasSim = simResult != null;
   const hasRecs = recommendations.length > 0;
+  const chainMeta = recommendations.find((r) => r.chain)?.chain;
+  const chainMode = chainMeta != null;
+  const chainWinHeader = chainMode
+    ? `P(${chainMeta.kills_target}-kill)`
+    : "Win %";
+  const chainHullHeader =
+    chainMode &&
+    chainMeta.secondary_objective === "max_loot_per_hull_proxy"
+      ? "Loot proxy*|hit"
+      : chainMode
+        ? "Hull %*|hit"
+        : "Your hull %";
+  const chainR1Header = chainMode ? "R1 (1st link)" : "R1 %";
+  const numericTableHeaders = chainMode
+    ? [
+        chainWinHeader,
+        "Stall %",
+        "Loss %",
+        chainR1Header,
+        chainHullHeader,
+        "Enemy hull %",
+      ]
+    : [
+        "Win %",
+        "Stall %",
+        "Loss %",
+        "R1 %",
+        "Your hull %",
+        "Enemy hull %",
+      ];
   const totalSelected = selected.size;
 
   const total = recommendations.length;
@@ -418,9 +448,23 @@ export default function SimResults({
               color: "var(--text-muted)",
             }}
           >
-            Select 2–5 rows to compare. Optimize columns show point % (95% CI):
-            Wilson for win/stall/loss/R1; normal approx for hull scores per
-            trial (your hull on wins; enemy hull all trials).
+            {chainMode ? (
+              <>
+                Select 2–5 rows to compare.{" "}
+                <strong>Chain grind:</strong> {chainMeta.kills_target} consecutive
+                wins vs the same hostile; attacker hull carries between fights;
+                shields start full each fight. First column is chain completion
+                rate (Wilson CI). &quot;Hull %*|hit&quot; / &quot;Loot
+                proxy*|hit&quot; is the secondary mean given a successful chain
+                (normal approx CI). Stall/loss/R1 follow the first link.
+              </>
+            ) : (
+              <>
+                Select 2–5 rows to compare. Optimize columns show point % (95%
+                CI): Wilson for win/stall/loss/R1; normal approx for hull scores
+                per trial (your hull on wins; enemy hull all trials).
+              </>
+            )}
           </p>
           <div
             style={{
@@ -606,14 +650,7 @@ export default function SimResults({
                   >
                     Below Deck
                   </th>
-                  {[
-                    "Win %",
-                    "Stall %",
-                    "Loss %",
-                    "R1 %",
-                    "Your hull %",
-                    "Enemy hull %",
-                  ].map((h) => (
+                  {numericTableHeaders.map((h) => (
                     <th
                       key={h}
                       style={{
@@ -849,14 +886,16 @@ export default function SimResults({
                         <span
                           style={{ marginLeft: 8, color: "var(--text-muted)" }}
                         >
-                          Δ Win {deltaWin >= 0 ? "+" : ""}
+                          Δ {chainMode ? "P(chain)" : "Win"}{" "}
+                          {deltaWin >= 0 ? "+" : ""}
                           {deltaWin.toFixed(2)}%, Δ Stall{" "}
                           {deltaStall >= 0 ? "+" : ""}
                           {deltaStall.toFixed(2)}%, Δ Loss{" "}
                           {deltaLoss >= 0 ? "+" : ""}
-                          {deltaLoss.toFixed(2)}%,                           Δ R1{" "}
+                          {deltaLoss.toFixed(2)}%, Δ R1{" "}
                           {deltaR1 >= 0 ? "+" : ""}
-                          {deltaR1.toFixed(2)}%, Δ Your hull{" "}
+                          {deltaR1.toFixed(2)}%, Δ{" "}
+                          {chainMode ? "Secondary" : "Your hull"}{" "}
                           {deltaHull >= 0 ? "+" : ""}
                           {deltaHull.toFixed(2)}%, Δ Enemy hull{" "}
                           {deltaEnemyHull >= 0 ? "+" : ""}

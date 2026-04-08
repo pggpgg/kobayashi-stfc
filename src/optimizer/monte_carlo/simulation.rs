@@ -5,6 +5,9 @@ use crate::combat::{
     SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
+use crate::optimizer::chain::{
+    run_chain_trial, secondary_draw, ChainGrindParams, ChainSimulationSummary,
+};
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::perf_log;
 use rayon::prelude::*;
@@ -43,6 +46,8 @@ pub struct SimulationResult {
     pub avg_defender_hull_remaining: f64,
     pub avg_defender_hull_remaining_ci_low: f64,
     pub avg_defender_hull_remaining_ci_high: f64,
+    /// When set, `win_rate` is chain primary success rate and `avg_hull_remaining` is the conditional secondary mean.
+    pub chain: Option<ChainSimulationSummary>,
 }
 
 /// Stable hash for deduplicating identical crews in GA populations (same process = deterministic).
@@ -100,6 +105,158 @@ impl ScoutEarlyStopCfg {
     }
 }
 
+fn run_candidate_chain_monte_carlo(
+    shared: &SharedScenarioData,
+    candidate: &CrewCandidate,
+    seed: u64,
+    max_iterations: usize,
+    chain: &ChainGrindParams,
+    early_scout: Option<ScoutEarlyStopCfg>,
+) -> SimulationResult {
+    let input = scenario_to_combat_input_from_shared(shared, candidate, seed);
+    let mut primary_ok = 0usize;
+    let mut stalls = 0usize;
+    let mut losses = 0usize;
+    let mut r1_first = 0usize;
+    let mut sec_mean = 0.0f64;
+    let mut sec_m2 = 0.0f64;
+    let mut sec_count = 0usize;
+    let mut def_hull_mean = 0.0f64;
+    let mut def_hull_m2 = 0.0f64;
+
+    let mut n_done = 0usize;
+    while n_done < max_iterations {
+        let trial_seed = input.base_seed.wrapping_add(n_done as u64);
+        let outcome = run_chain_trial(shared, &input, chain, trial_seed);
+
+        let i = n_done + 1;
+        let d = outcome.last_defender_hull_frac;
+        let delta_d = d - def_hull_mean;
+        def_hull_mean += delta_d / i as f64;
+        let delta_d2 = d - def_hull_mean;
+        def_hull_m2 += delta_d * delta_d2;
+
+        if outcome.first_link_r1_clean_win {
+            r1_first += 1;
+        }
+
+        if outcome.primary_success {
+            primary_ok += 1;
+            let hf = outcome.hull_fraction_end.unwrap_or(0.0);
+            let sdraw = secondary_draw(chain.secondary, chain.kills_target, hf);
+            sec_count += 1;
+            let j = sec_count as f64;
+            let delta = sdraw - sec_mean;
+            sec_mean += delta / j;
+            let delta2 = sdraw - sec_mean;
+            sec_m2 += delta * delta2;
+        } else if outcome.failed_on_stall {
+            stalls += 1;
+        } else {
+            losses += 1;
+        }
+
+        n_done += 1;
+
+        if let Some(cfg) = early_scout {
+            if n_done >= cfg.min_trials
+                && n_done < max_iterations
+                && cfg.check_every > 0
+                && n_done % cfg.check_every == 0
+                && win_rate_upper_wilson_95(primary_ok, n_done) < cfg.eliminate_upper_below
+            {
+                break;
+            }
+        }
+    }
+
+    let n = n_done;
+    let nf = n as f64;
+    let win_rate = if n == 0 { 0.0 } else { primary_ok as f64 / nf };
+    let stall_rate = if n == 0 { 0.0 } else { stalls as f64 / nf };
+    let loss_rate = if n == 0 { 0.0 } else { losses as f64 / nf };
+    let r1_kill_rate = if n == 0 {
+        0.0
+    } else {
+        r1_first as f64 / nf
+    };
+
+    let avg_cond_secondary = if sec_count == 0 { 0.0 } else { sec_mean };
+    let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if sec_count == 0 {
+        (0.0, 0.0)
+    } else if sec_count == 1 {
+        (avg_cond_secondary, avg_cond_secondary)
+    } else {
+        let var = sec_m2 / (sec_count as f64 - 1.0);
+        let se = (var / sec_count as f64).sqrt().max(0.0);
+        const Z: f64 = 1.96;
+        (
+            (avg_cond_secondary - Z * se),
+            (avg_cond_secondary + Z * se),
+        )
+    };
+
+    let (win_rate_ci_low, win_rate_ci_high) = wilson_95_interval(primary_ok, n);
+    let (stall_rate_ci_low, stall_rate_ci_high) = wilson_95_interval(stalls, n);
+    let (loss_rate_ci_low, loss_rate_ci_high) = wilson_95_interval(losses, n);
+    let (r1_kill_rate_ci_low, r1_kill_rate_ci_high) = wilson_95_interval(r1_first, n);
+
+    let avg_defender_hull_remaining = if n == 0 {
+        0.0
+    } else {
+        def_hull_mean
+    };
+    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) =
+        if n == 0 {
+            (0.0, 0.0)
+        } else if n == 1 {
+            (avg_defender_hull_remaining, avg_defender_hull_remaining)
+        } else {
+            let var = def_hull_m2 / (n as f64 - 1.0);
+            let se = (var / n as f64).sqrt().max(0.0);
+            const Z: f64 = 1.96;
+            (
+                (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
+                (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
+            )
+        };
+
+    let summary = ChainSimulationSummary {
+        kills_target: chain.kills_target,
+        secondary_objective: chain.secondary,
+        primary_success_rate: win_rate,
+        primary_ci_low: win_rate_ci_low,
+        primary_ci_high: win_rate_ci_high,
+        secondary_mean_given_primary: avg_cond_secondary,
+        secondary_ci_low: avg_hull_remaining_ci_low,
+        secondary_ci_high: avg_hull_remaining_ci_high,
+        n_primary_successes: sec_count,
+    };
+
+    SimulationResult {
+        candidate: candidate.clone(),
+        win_rate,
+        win_rate_ci_low,
+        win_rate_ci_high,
+        stall_rate,
+        stall_rate_ci_low,
+        stall_rate_ci_high,
+        loss_rate,
+        loss_rate_ci_low,
+        loss_rate_ci_high,
+        r1_kill_rate,
+        r1_kill_rate_ci_low,
+        r1_kill_rate_ci_high,
+        avg_hull_remaining: avg_cond_secondary,
+        avg_hull_remaining_ci_low,
+        avg_hull_remaining_ci_high,
+        avg_defender_hull_remaining,
+        avg_defender_hull_remaining_ci_low,
+        avg_defender_hull_remaining_ci_high,
+        chain: Some(summary),
+    }
+}
+
 fn run_candidate_monte_carlo(
     shared: &SharedScenarioData,
     candidate: &CrewCandidate,
@@ -122,6 +279,7 @@ fn run_candidate_monte_carlo(
         rounds: input.rounds,
         seed: 0,
         trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
     };
 
     let mut n_done = 0usize;
@@ -272,6 +430,7 @@ fn run_candidate_monte_carlo(
         avg_defender_hull_remaining,
         avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high,
+        chain: None,
     }
 }
 
@@ -282,6 +441,7 @@ pub fn run_monte_carlo(
     iterations: usize,
     seed: u64,
     support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     run_monte_carlo_with_parallelism(
         ship,
@@ -291,6 +451,7 @@ pub fn run_monte_carlo(
         seed,
         false,
         support_buffs,
+        chain_grind,
     )
 }
 
@@ -303,6 +464,7 @@ pub fn run_monte_carlo_parallel(
     iterations: usize,
     seed: u64,
     support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     run_monte_carlo_with_parallelism(
         ship,
@@ -312,6 +474,7 @@ pub fn run_monte_carlo_parallel(
         seed,
         true,
         support_buffs,
+        chain_grind,
     )
 }
 
@@ -324,6 +487,7 @@ pub fn run_monte_carlo_parallel_deduped(
     iterations: usize,
     seed: u64,
     support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     if candidates.is_empty() {
         return Vec::new();
@@ -343,8 +507,15 @@ pub fn run_monte_carlo_parallel_deduped(
         .map(|&i| candidates[i].clone())
         .collect();
 
-    let uniq_results =
-        run_monte_carlo_parallel(ship, hostile, &uniq, iterations, seed, support_buffs);
+    let uniq_results = run_monte_carlo_parallel(
+        ship,
+        hostile,
+        &uniq,
+        iterations,
+        seed,
+        support_buffs,
+        chain_grind.clone(),
+    );
 
     let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq_results.len());
     for (j, r) in uniq_results.into_iter().enumerate() {
@@ -372,6 +543,7 @@ pub fn run_monte_carlo_parallel_deduped(
                 avg_defender_hull_remaining: r.avg_defender_hull_remaining,
                 avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
                 avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
+                chain: r.chain.clone(),
             },
         );
     }
@@ -401,6 +573,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     seed: u64,
     profile_id: Option<&str>,
     support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -413,7 +586,14 @@ pub fn run_monte_carlo_parallel_with_registry(
     );
     let placeholder = shared.using_placeholder_combatants;
     (
-        run_monte_carlo_with_shared(shared, candidates, iterations, seed, true),
+        run_monte_carlo_with_shared(
+            shared,
+            candidates,
+            iterations,
+            seed,
+            true,
+            chain_grind,
+        ),
         placeholder,
     )
 }
@@ -432,6 +612,7 @@ pub fn run_monte_carlo_with_registry(
     seed: u64,
     profile_id: Option<&str>,
     support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -444,7 +625,14 @@ pub fn run_monte_carlo_with_registry(
     );
     let placeholder = shared.using_placeholder_combatants;
     (
-        run_monte_carlo_with_shared(shared, candidates, iterations, seed, false),
+        run_monte_carlo_with_shared(
+            shared,
+            candidates,
+            iterations,
+            seed,
+            false,
+            chain_grind,
+        ),
         placeholder,
     )
 }
@@ -512,6 +700,7 @@ pub fn replay_optimize_iteration_with_registry(
         rounds: input.rounds,
         seed: iteration_seed,
         trace_mode: TraceMode::Events,
+        initial_attacker_hull_damage: 0.0,
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(
@@ -567,9 +756,17 @@ fn run_monte_carlo_with_parallelism(
     seed: u64,
     parallel: bool,
     support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     let shared = build_shared_scenario_data_standalone(ship, hostile, support_buffs);
-    run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel)
+    run_monte_carlo_with_shared(
+        shared,
+        candidates,
+        iterations,
+        seed,
+        parallel,
+        chain_grind,
+    )
 }
 
 /// Run Monte Carlo using pre-built SharedScenarioData (used by both legacy and registry paths).
@@ -579,9 +776,18 @@ pub(crate) fn run_monte_carlo_with_shared(
     iterations: usize,
     seed: u64,
     parallel: bool,
+    chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     let t0 = perf_log::perf_start();
-    let out = run_monte_carlo_inner(shared, candidates, iterations, seed, parallel, None);
+    let out = run_monte_carlo_inner(
+        shared,
+        candidates,
+        iterations,
+        seed,
+        parallel,
+        None,
+        chain_grind,
+    );
     perf_log::log_duration(
         &format!(
             "monte_carlo.with_shared(candidates={}, iterations={}, parallel={parallel})",
@@ -601,9 +807,18 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
     iterations: usize,
     seed: u64,
     parallel: bool,
+    chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     let cfg = ScoutEarlyStopCfg::for_scout_iterations(iterations.max(1));
-    run_monte_carlo_inner(shared, candidates, iterations, seed, parallel, Some(cfg))
+    run_monte_carlo_inner(
+        shared,
+        candidates,
+        iterations,
+        seed,
+        parallel,
+        Some(cfg),
+        chain_grind,
+    )
 }
 
 fn run_monte_carlo_inner(
@@ -613,9 +828,18 @@ fn run_monte_carlo_inner(
     seed: u64,
     parallel: bool,
     early_scout: Option<ScoutEarlyStopCfg>,
+    chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
-    let run_one = |candidate: &CrewCandidate| {
-        run_candidate_monte_carlo(&shared, candidate, seed, iterations, early_scout)
+    let run_one = |candidate: &CrewCandidate| match chain_grind.as_ref() {
+        None => run_candidate_monte_carlo(&shared, candidate, seed, iterations, early_scout),
+        Some(c) => run_candidate_chain_monte_carlo(
+            &shared,
+            candidate,
+            seed,
+            iterations,
+            c,
+            early_scout,
+        ),
     };
 
     if parallel {
@@ -655,8 +879,9 @@ mod tests {
             below_decks: vec!["D".into(), "E".into(), "F".into()],
         };
         let pop = vec![a.clone(), a.clone()];
-        let full = run_monte_carlo_parallel("enterprise", "swarm", &pop, 8, 42, None);
-        let deduped = run_monte_carlo_parallel_deduped("enterprise", "swarm", &pop, 8, 42, None);
+        let full = run_monte_carlo_parallel("enterprise", "swarm", &pop, 8, 42, None, None);
+        let deduped =
+            run_monte_carlo_parallel_deduped("enterprise", "swarm", &pop, 8, 42, None, None);
         assert_eq!(full.len(), deduped.len());
         assert_eq!(full[0].win_rate, deduped[0].win_rate);
         assert_eq!(full[1].win_rate, deduped[1].win_rate);

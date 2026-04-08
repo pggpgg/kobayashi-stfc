@@ -38,6 +38,14 @@ interface OptimizePanelProps {
   onOptimizeBelowMustChange: (value: string) => void;
   optimizeGroupsJson: string;
   onOptimizeGroupsJsonChange: (value: string) => void;
+  chainGrindEnabled: boolean;
+  onChainGrindEnabledChange: (value: boolean) => void;
+  chainKillsTarget: number;
+  onChainKillsTargetChange: (value: number) => void;
+  chainSecondary: "min_hull_damage" | "max_loot_per_hull_proxy";
+  onChainSecondaryChange: (
+    value: "min_hull_damage" | "max_loot_per_hull_proxy",
+  ) => void;
 }
 
 const selectStyle: CSSProperties = {
@@ -93,6 +101,12 @@ export default function OptimizePanel({
   onOptimizeBelowMustChange,
   optimizeGroupsJson,
   onOptimizeGroupsJsonChange,
+  chainGrindEnabled,
+  onChainGrindEnabledChange,
+  chainKillsTarget,
+  onChainKillsTargetChange,
+  chainSecondary,
+  onChainSecondaryChange,
 }: OptimizePanelProps) {
   if (collapsed) {
     return (
@@ -262,9 +276,81 @@ export default function OptimizePanel({
         </select>
       </label>
 
+      <div>
+        <label style={checkboxLabelStyle}>
+          <input
+            type="checkbox"
+            checked={chainGrindEnabled}
+            onChange={(e) => onChainGrindEnabledChange(e.target.checked)}
+            style={{ margin: 0 }}
+          />
+          <span>Chain grind (N wins, hull carries, shields full each fight)</span>
+        </label>
+        {chainGrindEnabled && (
+          <>
+            <label style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}>
+              Kills target (N)
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={chainKillsTarget}
+                onChange={(e) =>
+                  onChainKillsTargetChange(
+                    Math.min(50, Math.max(1, Number(e.target.value) || 1)),
+                  )
+                }
+                style={{
+                  display: "block",
+                  marginTop: 4,
+                  width: "100%",
+                  padding: "0.35rem",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 4,
+                  color: "var(--text)",
+                }}
+              />
+            </label>
+            <label style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}>
+              Secondary (tie-break after chain success rate)
+              <select
+                value={chainSecondary}
+                onChange={(e) =>
+                  onChainSecondaryChange(
+                    e.target.value as
+                      | "min_hull_damage"
+                      | "max_loot_per_hull_proxy",
+                  )
+                }
+                style={selectStyle}
+              >
+                <option value="min_hull_damage">
+                  Max hull after N kills (min damage)
+                </option>
+                <option value="max_loot_per_hull_proxy">
+                  Loot / hull proxy (placeholder)
+                </option>
+              </select>
+            </label>
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontSize: "0.72rem",
+                color: "var(--text-muted)",
+              }}
+            >
+              Same hostile each link. Analytical prefilter is skipped. Results
+              table labels update for chain metrics.
+            </p>
+          </>
+        )}
+      </div>
+
       <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)" }}>
-        Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see
-        optimizer ranking).
+        {chainGrindEnabled
+          ? "Ranking: chain success rate first, then secondary among successful trials."
+          : "Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see optimizer ranking)."}
       </p>
 
       <div style={{ fontSize: "0.85rem", fontWeight: 600, marginTop: 4 }}>

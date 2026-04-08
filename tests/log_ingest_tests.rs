@@ -92,6 +92,7 @@ fn parity_within_tolerance_matches_when_close() {
         attacker_hull_remaining: 1000.0,
         defender_hull_remaining: 0.0,
         defender_shield_remaining: 0.0,
+        attacker_shield_remaining: 0.0,
         events: vec![],
     };
     assert!(parity_within_tolerance(&sim, &log, 1.0, 1.0));

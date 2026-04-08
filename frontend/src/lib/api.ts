@@ -399,6 +399,19 @@ export async function compareCrewsDistributions(
   return res.json();
 }
 
+/** Chain grind Monte Carlo summary (POST /api optimize when `chain.enabled`). */
+export interface ChainSimulationSummary {
+  kills_target: number;
+  secondary_objective: "min_hull_damage" | "max_loot_per_hull_proxy";
+  primary_success_rate: number;
+  primary_ci_low: number;
+  primary_ci_high: number;
+  secondary_mean_given_primary: number;
+  secondary_ci_low: number;
+  secondary_ci_high: number;
+  n_primary_successes: number;
+}
+
 export interface CrewRecommendation {
   captain: string;
   /** API returns string[]; we accept string for backward compatibility. */
@@ -424,6 +437,14 @@ export interface CrewRecommendation {
   avg_defender_hull_remaining: number;
   avg_defender_hull_remaining_ci_low: number;
   avg_defender_hull_remaining_ci_high: number;
+  /** Present when optimization used chain grind mode. */
+  chain?: ChainSimulationSummary;
+}
+
+export interface ChainGrindRequestBody {
+  enabled: boolean;
+  kills_target?: number;
+  secondary?: "min_hull_damage" | "max_loot_per_hull_proxy";
 }
 
 export interface OptimizeResponse {
@@ -448,6 +469,8 @@ export interface OptimizeResponse {
     analytical_prefilter_keep?: number;
     analytical_prefilter_from?: number;
     analytical_prefilter_kept?: number;
+    /** Echo of optimize request chain settings when present. */
+    chain?: ChainGrindRequestBody;
   };
   recommendations: CrewRecommendation[];
   duration_ms?: number;
@@ -615,6 +638,7 @@ export async function optimizeStart(
     below_decks_slots?: number | null;
     constraints?: OptimizeCrewConstraintsBody;
     support_buffs?: string[];
+    chain?: ChainGrindRequestBody;
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -659,6 +683,15 @@ export async function optimizeStart(
   }
   if (params.support_buffs && params.support_buffs.length > 0) {
     body.support_buffs = params.support_buffs;
+  }
+  if (params.chain?.enabled) {
+    body.chain = {
+      enabled: true,
+      kills_target: params.chain.kills_target,
+      ...(params.chain.secondary && params.chain.secondary !== "min_hull_damage"
+        ? { secondary: params.chain.secondary }
+        : {}),
+    };
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: "POST",

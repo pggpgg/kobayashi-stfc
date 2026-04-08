@@ -357,6 +357,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         } else {
             TraceMode::Off
         },
+        initial_attacker_hull_damage: 0.0,
     };
 
     let defender_faction = defender_faction_for_cli_simulate(

@@ -41,6 +41,12 @@ const baseProps = {
   onOptimizeBelowMustChange: vi.fn(),
   optimizeGroupsJson: "",
   onOptimizeGroupsJsonChange: vi.fn(),
+  chainGrindEnabled: false,
+  onChainGrindEnabledChange: vi.fn(),
+  chainKillsTarget: 3,
+  onChainKillsTargetChange: vi.fn(),
+  chainSecondary: "min_hull_damage" as const,
+  onChainSecondaryChange: vi.fn(),
 };
 
 describe("OptimizePanel", () => {

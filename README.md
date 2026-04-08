@@ -295,7 +295,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 - [x] User-owned roster import workflow (CLI + Web UI, Spocks.club export)
 - [ ] Synergy learning from simulation results (planned)
 - [x] Genetic algorithm optimizer (implemented)
-- [ ] Chain grinding simulation (multi-fight with carry-over) (planned)
+- [x] Chain grinding simulation (N sequential fights: hull carry-over, full shields each link; optimizer + API + UI)
 - [ ] Armada mode (multi-ship combat) (planned)
 - [ ] Sensitivity analysis ("what if I promote this officer?") (planned)
 - [x] Full 280+ officer LCARS database

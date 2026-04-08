@@ -202,6 +202,12 @@ export default function Workspace() {
           onOptimizeBelowMustChange={ws.setOptimizeBelowMust}
           optimizeGroupsJson={ws.optimizeGroupsJson}
           onOptimizeGroupsJsonChange={ws.setOptimizeGroupsJson}
+          chainGrindEnabled={ws.chainGrindEnabled}
+          onChainGrindEnabledChange={ws.setChainGrindEnabled}
+          chainKillsTarget={ws.chainKillsTarget}
+          onChainKillsTargetChange={ws.setChainKillsTarget}
+          chainSecondary={ws.chainSecondary}
+          onChainSecondaryChange={ws.setChainSecondary}
         />
       </div>
     </div>

@@ -61,6 +61,7 @@ fn simulate_trial(
         rounds: input.rounds,
         seed: iteration_seed,
         trace_mode: trace,
+        initial_attacker_hull_damage: 0.0,
     };
     let defender_faction = shared
         .hostile_rec

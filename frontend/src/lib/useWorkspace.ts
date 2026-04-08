@@ -122,6 +122,13 @@ export function useWorkspace() {
     "ordered" | "exploration"
   >("ordered");
 
+  /** Chain grind: N sequential wins, hull carries, shields full each link. */
+  const [chainGrindEnabled, setChainGrindEnabled] = useState(false);
+  const [chainKillsTarget, setChainKillsTarget] = useState(3);
+  const [chainSecondary, setChainSecondary] = useState<
+    "min_hull_damage" | "max_loot_per_hull_proxy"
+  >("min_hull_damage");
+
   // Optimize constraints (comma-separated lists; groups JSON optional)
   const [optimizeMustInclude, setOptimizeMustInclude] = useState("");
   const [optimizeExclude, setOptimizeExclude] = useState("");
@@ -542,6 +549,16 @@ export function useWorkspace() {
             belowMustComma: optimizeBelowMust,
             groupsJson: optimizeGroupsJson,
           },
+          chainGrind: chainGrindEnabled
+            ? {
+                enabled: true,
+                kills_target: Math.min(50, Math.max(1, chainKillsTarget)),
+                secondary:
+                  chainSecondary === "max_loot_per_hull_proxy"
+                    ? chainSecondary
+                    : undefined,
+              }
+            : undefined,
         }),
         activeProfileId,
       );
@@ -676,6 +693,12 @@ export function useWorkspace() {
     setHeuristicsOnly,
     belowDecksStrategy,
     setBelowDecksStrategy,
+    chainGrindEnabled,
+    setChainGrindEnabled,
+    chainKillsTarget,
+    setChainKillsTarget,
+    chainSecondary,
+    setChainSecondary,
     optimizerStrategy,
     setOptimizerStrategy,
     optimizeMustInclude,

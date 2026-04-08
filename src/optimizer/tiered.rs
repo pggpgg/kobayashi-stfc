@@ -4,6 +4,7 @@
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::build_shared_scenario_data_from_registry;
+use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared, SimulationResult,
 };
@@ -32,6 +33,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     seed: u64,
     profile_id: Option<&str>,
     support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
@@ -72,8 +74,14 @@ where
 
     for (start, end) in ranges {
         let batch = &candidates[start..end];
-        let batch_results =
-            run_monte_carlo_scout_phase_with_shared(shared.clone(), batch, scout_sims, seed, true);
+        let batch_results = run_monte_carlo_scout_phase_with_shared(
+            shared.clone(),
+            batch,
+            scout_sims,
+            seed,
+            true,
+            chain_grind.clone(),
+        );
         scout_results.extend(batch_results);
         let partial_top = rank_results(scout_results.clone())
             .into_iter()
@@ -109,6 +117,7 @@ where
         full_sims,
         seed.wrapping_add(1), // distinct seed for confirmation phase
         true,
+        chain_grind,
     );
 
     let partial_top = rank_results(confirmation_results.clone())

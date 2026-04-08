@@ -186,6 +186,7 @@ pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::Simulat
         rounds: spec.simulation.rounds,
         seed: spec.simulation.seed,
         trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
     };
     simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
 }
@@ -198,6 +199,7 @@ pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::
         rounds: spec.simulation.rounds,
         seed: spec.simulation.seed,
         trace_mode: TraceMode::Events,
+        initial_attacker_hull_damage: 0.0,
     };
     simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
 }

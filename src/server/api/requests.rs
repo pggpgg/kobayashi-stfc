@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use std::fmt;
 
 use crate::data::heuristics::BelowDecksStrategy;
+use crate::optimizer::chain::{ChainGrindParams, ChainSecondaryObjective};
 use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };
@@ -20,6 +21,47 @@ pub const MAX_ANALYTICAL_PREFILTER_KEEP: u32 = 500_000;
 pub const MAX_OPTIMIZE_CONSTRAINT_LIST_LEN: usize = 32;
 pub const MAX_OPTIMIZE_CONSTRAINT_GROUPS: usize = 8;
 pub const MAX_OPTIMIZE_GROUP_OFFICERS: usize = 32;
+pub const MAX_CHAIN_KILLS_TARGET: u32 = 50;
+
+/// Chain grinding: N sequential fights, HHP carry-over, full SHP each link (optimizer / simulate).
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
+pub struct ChainGrindRequest {
+    #[serde(default)]
+    pub enabled: bool,
+    pub kills_target: Option<u32>,
+    /// `min_hull_damage` (default) or `max_loot_per_hull_proxy` (placeholder economy).
+    pub secondary: Option<String>,
+}
+
+/// Build params when `enabled` and fields are valid.
+pub fn chain_grind_params_from_request(
+    c: &ChainGrindRequest,
+) -> Result<Option<ChainGrindParams>, String> {
+    if !c.enabled {
+        return Ok(None);
+    }
+    let kt = c
+        .kills_target
+        .ok_or_else(|| "chain.enabled requires chain.kills_target".to_string())?;
+    if !(1..=MAX_CHAIN_KILLS_TARGET).contains(&kt) {
+        return Err(format!(
+            "chain.kills_target must be 1..={MAX_CHAIN_KILLS_TARGET}"
+        ));
+    }
+    let sec = match c.secondary.as_deref().unwrap_or("min_hull_damage") {
+        "min_hull_damage" => ChainSecondaryObjective::MinHullDamage,
+        "max_loot_per_hull_proxy" => ChainSecondaryObjective::MaxLootPerHullProxy,
+        other => {
+            return Err(format!(
+                "chain.secondary: unknown {other:?} (expected min_hull_damage or max_loot_per_hull_proxy)"
+            ));
+        }
+    };
+    Ok(Some(ChainGrindParams {
+        kills_target: kt,
+        secondary: sec,
+    }))
+}
 
 /// Same JSON shape as simulate `crew` — duplicated so `requests` stays independent of `api`.
 #[derive(Debug, Clone, Deserialize)]
@@ -72,6 +114,8 @@ pub struct OptimizeRequest {
     pub constraints: Option<OptimizeConstraintsDto>,
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub chain: Option<ChainGrindRequest>,
 }
 
 /// JSON body for `OptimizeRequest.constraints`.
@@ -185,6 +229,15 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
     }
 
     validate_optimize_constraints(request, &mut errors);
+
+    if let Some(ref ch) = request.chain {
+        if let Err(msg) = chain_grind_params_from_request(ch) {
+            errors.push(ValidationIssue {
+                field: "chain",
+                messages: vec![msg],
+            });
+        }
+    }
 
     if errors.is_empty() {
         return Ok(());

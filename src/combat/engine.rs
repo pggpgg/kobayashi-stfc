@@ -196,7 +196,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let mut total_shield_damage = 0.0;
     let mut defender_shield_remaining = defender.shield_health.max(0.0);
     let mut attacker_shield_remaining = attacker.shield_health.max(0.0);
-    let mut total_attacker_hull_damage = 0.0;
+    let max_att_hull = attacker.hull_health.max(0.0);
+    let mut total_attacker_hull_damage = config
+        .initial_attacker_hull_damage
+        .clamp(0.0, max_att_hull);
     let mut hull_breach_rounds_remaining = 0_u32;
     let mut burning_rounds_remaining = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
@@ -1649,6 +1652,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         attacker_hull_remaining: round_f64(attacker_hull_remaining),
         defender_hull_remaining: round_f64(defender_hull_remaining),
         defender_shield_remaining: round_f64(defender_shield_remaining),
+        attacker_shield_remaining: round_f64(attacker_shield_remaining),
         events: trace.events(),
     }
 }

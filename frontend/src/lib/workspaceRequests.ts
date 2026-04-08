@@ -1,4 +1,8 @@
-import type { OptimizeCrewConstraintsBody, OptimizerStrategyType } from "./api";
+import type {
+  ChainGrindRequestBody,
+  OptimizeCrewConstraintsBody,
+  OptimizerStrategyType,
+} from "./api";
 import type { SupportBuffId } from "./supportBuffs";
 import type { CrewState } from "./types";
 
@@ -141,6 +145,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
     belowMustComma: string;
     groupsJson: string;
   };
+  /** Chain grind: sequential fights, hull carry-over, full shields each link. */
+  chainGrind?: ChainGrindRequestBody;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -170,5 +176,17 @@ export function buildWorkspaceOptimizeStartBody(args: {
     ship_level: args.shipLevel,
     ...(support_buffs ? { support_buffs } : {}),
     ...(constraints ? { constraints } : {}),
+    ...(args.chainGrind?.enabled
+      ? {
+          chain: {
+            enabled: true,
+            kills_target: args.chainGrind.kills_target,
+            ...(args.chainGrind.secondary &&
+            args.chainGrind.secondary !== "min_hull_damage"
+              ? { secondary: args.chainGrind.secondary }
+              : {}),
+          } satisfies ChainGrindRequestBody,
+        }
+      : {}),
   };
 }

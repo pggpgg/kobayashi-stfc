@@ -967,7 +967,7 @@ clap = "4"                  # CLI args
 
 ### Future Work
 
-- **Chain grinding simulation**: Model N sequential fights with hull/shield carry-over between fights. Optimize for fights-before-repair, not just single-fight metrics. (Mudd's repair ability becomes relevant here.)
+- **Chain grinding (simulator)**: Implemented in the optimizer as an optional mode: **N** consecutive wins against the **same** hostile template; **attacker hull HP carries** between links; **attacker shields reset to full** at the start of each new fight (models fast post-fight shield regen). Ranking is **lexicographic**: primary = Wilson-scored chain completion rate; secondary = conditional mean (hull remaining after the Nth win, or a **documented loot/hull placeholder** until real loot is resolved from LCARS/combat). **Between-fight hull repair** (e.g. Mudd-style) is out of scope until explicitly modeled. Round-limit “stall” outcomes on a link abort the chain (same stall semantics as single-fight MC for that link).
 - **Armada mode**: Multi-ship combat with ally-targeting abilities.
 - **Per-weapon pierce/crit/proc**: When STFC or upstream data differentiates pierce/crit/proc by weapon, add optional per-weapon fields to data and engine (see [COMBAT_FEATURES_FROM_STFC_TOOLBOX.md](COMBAT_FEATURES_FROM_STFC_TOOLBOX.md) §13).
 - **After-shot effects affecting next shot(s)**: Officer effects that trigger after a shot and modify the next shot(s) in the same round (e.g. +crit chance for next shot). Requires SubroundEnd or “after shot” timing and carrying buff state between sub-rounds (see [COMBAT_FEATURES_FROM_STFC_TOOLBOX.md](COMBAT_FEATURES_FROM_STFC_TOOLBOX.md) §14).
