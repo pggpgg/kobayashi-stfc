@@ -18,7 +18,10 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::combat::{AttackerStats, DefenderStats, OpponentFactionTag, ShipType, WeaponStats};
+use crate::combat::{
+    pierce_damage_through_bonus, AttackerStats, DefenderStats, OpponentFactionTag, ShipType,
+    WeaponStats,
+};
 
 #[derive(Debug, Clone)]
 pub struct Hostile {
@@ -183,17 +186,38 @@ impl HostileRecord {
     }
 
     /// Per-weapon stats from normalized `components` entries whose `data.tag` is `"Weapon"`.
-    /// Matches the mean-of-min/max convention used for player ships in upstream normalization.
-    /// Empty when `components` is empty or has no weapon rows (legacy hostiles).
+    /// Sorted by component `order` (ascending; missing → last). Pierce fields are left unset (use
+    /// [`Self::weapons_for_counter_attack`] when building the hostile attacker in combat).
     pub fn weapons_from_components(&self) -> Vec<WeaponStats> {
-        let mut out = Vec::new();
-        for comp in &self.components {
-            let data = comp.as_object().and_then(|o| o.get("data")).unwrap_or(comp);
-            if let Some(w) = weapon_stats_from_component_data(data) {
-                out.push(w);
-            }
-        }
-        out
+        sorted_weapon_component_data(&self.components)
+            .into_iter()
+            .filter_map(weapon_stats_from_component_data)
+            .collect()
+    }
+
+    /// Same weapon rows as [`Self::weapons_from_components`], with per-weapon damage-through pierce
+    /// derived from this hostile’s piercing/accuracy vs the player hull class (counter-attack path).
+    pub fn weapons_for_counter_attack(&self, player_ship_type: ShipType) -> Vec<WeaponStats> {
+        let base = self.to_attacker_stats();
+        let defender_zero = DefenderStats {
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+        };
+        sorted_weapon_component_data(&self.components)
+            .into_iter()
+            .filter_map(|data| {
+                weapon_stats_from_component_data(data).map(|mut w| {
+                    let atk = hostile_weapon_row_attacker_stats(data, &base);
+                    w.pierce = Some(pierce_damage_through_bonus(
+                        defender_zero,
+                        atk,
+                        player_ship_type,
+                    ));
+                    w
+                })
+            })
+            .collect()
     }
 
     /// Scalar attack when [`Self::weapons_from_components`] is empty: prefer `stat_attack`, then `dpr`.
@@ -314,6 +338,62 @@ fn opponent_faction_from_faction_loca_id(loca: u64) -> Option<OpponentFactionTag
     }
 }
 
+/// data.stfc.space weapon component order (ascending); missing or negative → last.
+const HOSTILE_WEAPON_ORDER_LAST: i64 = 999;
+
+/// `data` refs for weapon components, ordered like player ship normalization (primary first).
+fn sorted_weapon_component_data<'a>(components: &'a [Value]) -> Vec<&'a Value> {
+    let mut pairs: Vec<(i64, &'a Value)> = Vec::new();
+    for comp in components {
+        let data = comp.as_object().and_then(|o| o.get("data")).unwrap_or(comp);
+        let Some(obj) = data.as_object() else {
+            continue;
+        };
+        let Some(tag) = obj.get("tag").and_then(|t| t.as_str()) else {
+            continue;
+        };
+        if !tag.eq_ignore_ascii_case("weapon") {
+            continue;
+        }
+        let order = comp
+            .as_object()
+            .and_then(|o| o.get("order"))
+            .and_then(|v| v.as_i64())
+            .filter(|&o| o >= 0)
+            .unwrap_or(HOSTILE_WEAPON_ORDER_LAST);
+        pairs.push((order, data));
+    }
+    pairs.sort_by_key(|(o, _)| *o);
+    pairs.into_iter().map(|(_, d)| d).collect()
+}
+
+/// AttackerStats for one hostile weapon row: `penetration`/`modulation`/`accuracy` when present, else top-level hostile stats.
+fn hostile_weapon_row_attacker_stats(data: &Value, fallback: &AttackerStats) -> AttackerStats {
+    let obj = match data.as_object() {
+        Some(o) => o,
+        None => return *fallback,
+    };
+    let ap = obj
+        .get("penetration")
+        .and_then(json_f64)
+        .or_else(|| obj.get("armor_piercing").and_then(json_f64))
+        .unwrap_or(fallback.armor_piercing);
+    let sp = obj
+        .get("modulation")
+        .and_then(json_f64)
+        .or_else(|| obj.get("shield_piercing").and_then(json_f64))
+        .unwrap_or(fallback.shield_piercing);
+    let acc = obj
+        .get("accuracy")
+        .and_then(json_f64)
+        .unwrap_or(fallback.accuracy);
+    AttackerStats {
+        armor_piercing: ap,
+        shield_piercing: sp,
+        accuracy: acc,
+    }
+}
+
 /// Parse one `components[].data` value into weapon stats when `tag == "Weapon"` and damage is present.
 fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
     let obj = data.as_object()?;
@@ -346,13 +426,8 @@ fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
             .map(|u| u as u32)
             .or_else(|| v.as_i64().map(|i| i.max(0) as u32))
     });
-    let ap = obj.get("armor_piercing").and_then(json_f64).unwrap_or(0.0);
-    let sp = obj.get("shield_piercing").and_then(json_f64).unwrap_or(0.0);
-    let pierce = if ap > 0.0 || sp > 0.0 {
-        Some(ap + sp)
-    } else {
-        None
-    };
+    // Raw piercing belongs in AttackerStats + pierce_damage_through_bonus; do not store ap+sp on
+    // WeaponStats.pierce (wrong units for the damage-through term).
     let crit_chance = obj
         .get("crit_chance")
         .or_else(|| obj.get("critical_chance"))
@@ -361,6 +436,7 @@ fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
         .get("crit_damage")
         .or_else(|| obj.get("critical_damage"))
         .or_else(|| obj.get("crit_multiplier"))
+        .or_else(|| obj.get("crit_modifier"))
         .and_then(json_f64)
         .filter(|v| v.is_finite() && *v > 0.0);
     let proc_chance = obj.get("proc_chance").and_then(json_f64);
@@ -372,7 +448,7 @@ fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
     Some(WeaponStats {
         attack,
         shots,
-        pierce,
+        pierce: None,
         crit_chance,
         crit_multiplier,
         proc_chance,
@@ -563,6 +639,34 @@ mod tests {
         assert_eq!(w.len(), 1);
         assert!((w[0].attack - 150.0).abs() < 1e-9);
         assert_eq!(w[0].shots, Some(3));
+    }
+
+    #[test]
+    fn hostile_weapons_sorted_by_order_and_counter_pierce_scales_with_penetration() {
+        let j = r#"{
+            "id":"mw","hostile_name":"M","level":1,"ship_class":"battleship",
+            "armor":100.0,"shield_deflection":100.0,"dodge":50.0,"hull_health":100.0,"shield_health":50.0,
+            "armor_piercing":10.0,"shield_piercing":10.0,"accuracy":10.0,
+            "components":[
+                {"order":2,"data":{"tag":"Weapon","minimum_damage":50,"maximum_damage":50,
+                  "penetration":200,"modulation":200,"accuracy":200}},
+                {"order":1,"data":{"tag":"Weapon","minimum_damage":10,"maximum_damage":10,
+                  "penetration":1,"modulation":1,"accuracy":1}}
+            ]
+        }"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        let w = r.weapons_from_components();
+        assert_eq!(w.len(), 2);
+        assert!((w[0].attack - 10.0).abs() < 1e-9);
+        assert!((w[1].attack - 50.0).abs() < 1e-9);
+        let wc = r.weapons_for_counter_attack(ShipType::Battleship);
+        assert_eq!(wc.len(), 2);
+        let p0 = wc[0].pierce.expect("pierce filled for counter-attack");
+        let p1 = wc[1].pierce.expect("pierce filled for counter-attack");
+        assert!(p0 <= crate::combat::PIERCE_CAP && p1 <= crate::combat::PIERCE_CAP);
+        // Placeholder defender stats are zeros on the counter-attack path, so mitigation is
+        // independent of attacker piercing; values still match `pierce_damage_through_bonus` per row.
+        assert!((p0 - p1).abs() < 1e-12);
     }
 
     #[test]

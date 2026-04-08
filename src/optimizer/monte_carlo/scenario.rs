@@ -128,6 +128,82 @@ pub(crate) fn effective_attacker_stats_for_mitigation(
     s
 }
 
+/// Merge optional per-weapon piercing/accuracy from [`crate::data::ship::WeaponRecord`] with tier
+/// aggregates, then apply the same accuracy bonuses as [`effective_attacker_stats_for_mitigation`].
+fn effective_attacker_stats_for_ship_weapon_row(
+    ship_rec: &ShipRecord,
+    row: Option<&crate::data::ship::WeaponRecord>,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+    defender_ship_type: ShipType,
+) -> AttackerStats {
+    let base = ship_rec.to_attacker_stats();
+    let mut s = if let Some(w) = row {
+        AttackerStats {
+            armor_piercing: w.armor_piercing.unwrap_or(base.armor_piercing),
+            shield_piercing: w.shield_piercing.unwrap_or(base.shield_piercing),
+            accuracy: w.accuracy.unwrap_or(base.accuracy),
+        }
+    } else {
+        base
+    };
+    apply_profile_accuracy_to_attacker_stats(&mut s, profile);
+    s.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
+    s.accuracy += crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
+        ship_rec.abilities.as_deref().unwrap_or(&[]),
+        defender_ship_type,
+    );
+    let cbm = static_buffs.get("accuracy_cb_mult").copied().unwrap_or(1.0);
+    if cbm.is_finite() && cbm > 0.0 {
+        s.accuracy *= cbm;
+    }
+    s
+}
+
+/// When normalized weapon rows include per-component piercing or accuracy, set each
+/// [`WeaponStats::pierce`] to the toolbox damage-through term for that row vs this hostile.
+/// Mitigation for the fight still uses tier-averaged [`ShipRecord::to_attacker_stats`] (unchanged).
+pub(crate) fn ship_weapons_with_resolved_pierce_through(
+    ship_rec: &ShipRecord,
+    hostile_rec: &HostileRecord,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+) -> Vec<crate::combat::WeaponStats> {
+    let mut weapons = ship_rec.to_weapons();
+    let Some(rows) = ship_rec.weapons.as_ref() else {
+        return weapons;
+    };
+    if rows.is_empty() || weapons.is_empty() {
+        return weapons;
+    }
+    let any = rows.iter().any(|w| {
+        w.armor_piercing.is_some() || w.shield_piercing.is_some() || w.accuracy.is_some()
+    });
+    if !any {
+        return weapons;
+    }
+    let ship_type = hostile_rec.ship_type_for_combat();
+    let defender = hostile_rec.to_defender_stats();
+    for (i, w) in weapons.iter_mut().enumerate() {
+        let row = rows.get(i);
+        let has_row = row.is_some_and(|r| {
+            r.armor_piercing.is_some() || r.shield_piercing.is_some() || r.accuracy.is_some()
+        });
+        if !has_row {
+            continue;
+        }
+        let stats = effective_attacker_stats_for_ship_weapon_row(
+            ship_rec,
+            row,
+            profile,
+            static_buffs,
+            ship_type,
+        );
+        w.pierce = Some(pierce_damage_through_bonus(defender, stats, ship_type));
+    }
+    weapons
+}
+
 pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
     ship_rec: &ShipRecord,
     hostile_rec: &HostileRecord,
@@ -158,7 +234,7 @@ fn defender_combatant_from_hostile_record(
     defender_mitigation: f64,
     player_ship_type: ShipType,
 ) -> Combatant {
-    let weapons = hostile_rec.weapons_from_components();
+    let weapons = hostile_rec.weapons_for_counter_attack(player_ship_type);
     let attack = if weapons.is_empty() {
         hostile_rec.scalar_attack_fallback()
     } else {
@@ -346,7 +422,18 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 apex_shred: ship_rec.apex_shred,
                 isolytic_damage: ship_rec.isolytic_damage,
                 isolytic_defense: 0.0,
-                weapons: ship_rec.to_weapons(),
+                weapons: shared
+                    .hostile_rec
+                    .as_ref()
+                    .map(|h| {
+                        ship_weapons_with_resolved_pierce_through(
+                            ship_rec,
+                            h,
+                            &shared.profile,
+                            &merged_static,
+                        )
+                    })
+                    .unwrap_or_else(|| ship_rec.to_weapons()),
             },
             &shared.profile,
         );
@@ -562,7 +649,12 @@ pub(crate) fn scenario_to_combat_input(
                 apex_shred: ship_rec.apex_shred,
                 isolytic_damage: ship_rec.isolytic_damage,
                 isolytic_defense: 0.0,
-                weapons: ship_rec.to_weapons(),
+                weapons: ship_weapons_with_resolved_pierce_through(
+                    &ship_rec,
+                    &hostile_rec,
+                    profile,
+                    &static_buffs,
+                ),
             },
             profile,
         );

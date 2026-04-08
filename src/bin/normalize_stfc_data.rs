@@ -573,7 +573,7 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
     let mut crit_damage = 1.5f64;
     let mut shield_health = 0.0f64;
     let mut weapon_count = 0u32;
-    let mut weapon_attacks: Vec<f64> = Vec::new();
+    let mut weapon_rows: Vec<kobayashi::data::ship::WeaponRecord> = Vec::new();
 
     for comp in &tier.components {
         if let Some(ref info) = comp.additional_info {
@@ -584,9 +584,18 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
                 accuracy += w.accuracy;
                 let per_weapon = (w.max_damage + w.min_damage) * 0.5;
                 attack += per_weapon;
-                weapon_attacks.push(per_weapon);
                 crit_chance = w.crit_chance;
                 crit_damage = w.crit_damage;
+                weapon_rows.push(kobayashi::data::ship::WeaponRecord {
+                    attack: per_weapon,
+                    shots: None,
+                    armor_piercing: Some(w.armor_pierce),
+                    shield_piercing: Some(w.shield_pierce),
+                    accuracy: Some(w.accuracy),
+                    crit_chance: Some(w.crit_chance),
+                    crit_multiplier: Some(w.crit_damage),
+                    ..Default::default()
+                });
             }
             if let Some(ref s) = info.shield_info {
                 shield_health += s.shield_health;
@@ -607,19 +616,10 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
     }
     let hull_health = shield_health * 2.0;
 
-    let weapons = if weapon_attacks.is_empty() {
+    let weapons = if weapon_rows.is_empty() {
         None
     } else {
-        Some(
-            weapon_attacks
-                .into_iter()
-                .map(|a| kobayashi::data::ship::WeaponRecord {
-                    attack: a,
-                    shots: None,
-                    ..Default::default()
-                })
-                .collect(),
-        )
+        Some(weapon_rows)
     };
 
     Some(kobayashi::data::ship::ShipRecord {

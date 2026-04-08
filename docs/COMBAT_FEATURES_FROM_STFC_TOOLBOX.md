@@ -61,9 +61,15 @@ Source pages reviewed:
 
 ## Future / optional (sub-round and weapons)
 
-- [ ] **Per-weapon pierce/crit/proc from upstream data**
-  - [x] Engine already supports optional per-weapon overrides on `WeaponStats` (fallback to combatant-level when unset).
-  - [ ] When upstream or STFC data differs by weapon, extend normalizers / importers so those fields are populated consistently.
+- [x] **Per-weapon pierce/crit/proc from upstream data** (shipped; see caveats below)
+  - [x] Engine: optional per-weapon fields on `WeaponStats` with combatant-level fallback (`src/combat/types.rs`).
+  - [x] Ship normalizers: per-component `penetration` / `modulation` / `accuracy`, crit, and proc when present — `src/bin/normalize_data_stfc_space.rs`; legacy STFCcommunity ship path `raw_to_ship_record` in `src/bin/normalize_stfc_data.rs` fills `WeaponRecord` from each `weapons_info` row (armor/shield pierce, accuracy, crit).
+  - [x] `WeaponRecord` carries optional `armor_piercing` / `shield_piercing` / `accuracy` for importer round-trip (`src/data/ship.rs`).
+  - [x] Scenario: `ship_weapons_with_resolved_pierce_through` merges row-level piercing with profile/static accuracy bonuses and sets each weapon’s **damage-through** pierce via `pierce_damage_through_bonus` vs the resolved hostile (`src/optimizer/monte_carlo/scenario.rs`).
+  - [x] Hostiles: weapon components sorted by upstream `order`; parse `penetration` / `modulation` / `crit_modifier`; counter-attack weapons use `weapons_for_counter_attack` (no raw ap+sp stuffed into `WeaponStats.pierce`) — `src/data/hostile.rs`.
+  - [ ] **Still open:** mitigation **multiplier** for the fight remains from **tier-averaged** `ShipRecord` attacker stats; only the additive damage-through pierce term is per-weapon. Full per–sub-round mitigation from per-weapon piercing would need engine work.
+  - [ ] **Still open:** hostile counter-fire still uses placeholder zero player `DefenderStats`, so per-weapon counter pierce may not diverge until that path is richer.
+  - Re-run `cargo run --bin normalize_data_stfc_space` after refreshing upstream ship JSON so `data/ships_extended/` picks up new per-weapon fields (older files deserialize with absent optional fields and keep previous fallbacks).
 
 ## Suggested implementation order
 
@@ -74,3 +80,4 @@ Track the same ordering as above; status mirrors sections above.
 - [ ] 3. Ability boost rules + temporary combat-only state
 - [ ] 4. Compatibility toggles + regression suite — **partial** (fixtures exist; duplicate-officer toggle and full corpus still open).
 - [x] 5. Mitigation analyzer endpoint + trace decomposition for mitigation — **partial** (CLI/library sensitivity done; HTTP endpoint and full trace decomposition still open).
+- [x] 6. Per-weapon upstream fields + scenario/hostile wiring — **shipped** (normalizers + `ship_weapons_with_resolved_pierce_through` + hostile weapon ordering/parsing; see **Future / optional** above for mitigation/counter-fire caveats).

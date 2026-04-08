@@ -20,8 +20,18 @@ pub struct WeaponRecord {
     /// Base shots per weapon per round. When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
     #[serde(default)]
     pub shots: Option<u32>,
+    /// Damage-through pierce override for this weapon (same units as [`crate::combat::Combatant::pierce`]). Rare; usually unset.
     #[serde(default)]
     pub pierce: Option<f64>,
+    /// Raw armor piercing from upstream (`penetration` / `armor_pierce`). When any of armor/shield/accuracy per row is set, scenario code may derive per-weapon pierce from mitigation math.
+    #[serde(default)]
+    pub armor_piercing: Option<f64>,
+    /// Raw shield piercing from upstream (`modulation` / `shield_pierce`).
+    #[serde(default)]
+    pub shield_piercing: Option<f64>,
+    /// Raw accuracy for this weapon (upstream component). Merged with profile / static accuracy bonuses when resolving pierce-through.
+    #[serde(default)]
+    pub accuracy: Option<f64>,
     #[serde(default)]
     pub crit_chance: Option<f64>,
     #[serde(default)]

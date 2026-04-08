@@ -394,13 +394,25 @@ fn extract_tier_combat(
         let avg_damage = (min_d + max_d) * 0.5;
         attack_total += avg_damage * (shots as f64);
 
-        // Crit from primary weapon only (first by order).
+        let w_crit_chance = data.get("crit_chance").and_then(Value::as_f64);
+        let w_crit_mult = data
+            .get("crit_modifier")
+            .or_else(|| data.get("crit_damage"))
+            .and_then(Value::as_f64)
+            .filter(|c| c.is_finite() && *c > 0.0);
+        let w_proc_chance = data.get("proc_chance").and_then(Value::as_f64);
+        let w_proc_mult = data
+            .get("proc_multiplier")
+            .and_then(Value::as_f64)
+            .filter(|c| c.is_finite() && *c > 0.0);
+
+        // Tier-level crit scalars: primary weapon (first by order) for backward compatibility.
         if first_weapon {
             first_weapon = false;
-            if let Some(c) = data.get("crit_chance").and_then(Value::as_f64) {
+            if let Some(c) = w_crit_chance {
                 crit_chance = c;
             }
-            if let Some(c) = data.get("crit_modifier").and_then(Value::as_f64) {
+            if let Some(c) = w_crit_mult {
                 crit_damage = c;
             }
         }
@@ -408,6 +420,13 @@ fn extract_tier_combat(
         weapons_out.push(WeaponRecord {
             attack: avg_damage,
             shots: Some(shots),
+            armor_piercing: Some(penetration),
+            shield_piercing: Some(modulation),
+            accuracy: Some(accuracy),
+            crit_chance: w_crit_chance,
+            crit_multiplier: w_crit_mult,
+            proc_chance: w_proc_chance,
+            proc_multiplier: w_proc_mult,
             ..Default::default()
         });
     }

@@ -6,9 +6,9 @@ This guide explains how to add or update officer definitions in KOBAYASHI's LCAR
 
 LCARS (Language for Combat Ability Resolution & Simulation) is the declarative YAML format for officer abilities. All officer definitions live in a single file: `data/officers/officers.lcars.yaml`.
 
-**Game-accurate ability names** (e.g. “Chirurgical Precision”) live in upstream `translations-officer_buffs.json` and are keyed by **`loca_id`** from `summary-officer.json`, not by LCARS alone. See [OFFICER_TRANSLATIONS_MAPPING.md](OFFICER_TRANSLATIONS_MAPPING.md) for the join model and Ahvix as a worked example.
+**Game-accurate ability names** (e.g. “Chirurgical Precision”) live in upstream `translations-officer_buffs.json` and are keyed by `**loca_id`** from `summary-officer.json`, not by LCARS alone. See [OFFICER_TRANSLATIONS_MAPPING.md](OFFICER_TRANSLATIONS_MAPPING.md) for the join model and Ahvix as a worked example.
 
-When you run `cargo run --bin generate_lcars` (or `kobayashi generate-lcars`), ability **`name:`** fields are filled from those files by default; pass **`--no-ability-names`** if you want legacy `{Officer} (Captain)` placeholders. Optional **`--summary`** and **`--translations`** override the paths under `data/upstream/data-stfc-space/`.
+When you run `cargo run --bin generate_lcars` (or `kobayashi generate-lcars`), ability `**name:**` fields are filled from those files by default; pass `**--no-ability-names**` if you want legacy `{Officer} (Captain)` placeholders. Optional `**--summary**` and `**--translations**` override the paths under `data/upstream/data-stfc-space/`.
 
 ## File Organization
 
@@ -53,32 +53,36 @@ officers:
 
 When converting from game data or spreadsheets:
 
-| Game Modifier | LCARS stat / effect |
-|---------------|---------------------|
-| CritChance | stat_modify → crit_chance |
-| CritDamage | stat_modify → crit_damage |
-| AllDamage, OfficerStatAttack | stat_modify → weapon_damage |
-| ShipArmor, AllDefenses, OfficerStatDefense | stat_modify → armor / shield_mitigation |
-| ArmorPiercing, AllPiercing | stat_modify → shield_pierce |
-| ShieldHPMax | stat_modify → shield_hp (multiply) |
-| HullHPMax | stat_modify → hull_hp (multiply) |
-| ApexShred, ApexBarrier | stat_modify → apex_shred / apex_barrier |
-| IsolyticDamage, IsolyticDefense | stat_modify → isolytic_damage / isolytic_defense |
-| ShieldHPRepair, HullHPRepair | stat_modify → shield_regen / hull_hp_repair |
-| AddState (morale) | effect type: morale |
+
+| Game Modifier                              | LCARS stat / effect                              |
+| ------------------------------------------ | ------------------------------------------------ |
+| CritChance                                 | stat_modify → crit_chance                        |
+| CritDamage                                 | stat_modify → crit_damage                        |
+| AllDamage, OfficerStatAttack               | stat_modify → weapon_damage                      |
+| ShipArmor, AllDefenses, OfficerStatDefense | stat_modify → armor / shield_mitigation          |
+| ArmorPiercing, AllPiercing                 | stat_modify → shield_pierce                      |
+| ShieldHPMax                                | stat_modify → shield_hp (multiply)               |
+| HullHPMax                                  | stat_modify → hull_hp (multiply)                 |
+| ApexShred, ApexBarrier                     | stat_modify → apex_shred / apex_barrier          |
+| IsolyticDamage, IsolyticDefense            | stat_modify → isolytic_damage / isolytic_defense |
+| ShieldHPRepair, HullHPRepair               | stat_modify → shield_regen / hull_hp_repair      |
+| AddState (morale)                          | effect type: morale                              |
 | AddState (assimilated/hull breach/burning) | effect type: assimilated / hull_breach / burning |
-| MiningRate, CargoCapacity, etc. | type: tag (non-combat) |
+| MiningRate, CargoCapacity, etc.            | type: tag (non-combat)                           |
+
 
 ## Trigger Mapping
 
-| Game Trigger | LCARS trigger |
-|--------------|----------------|
-| ShipLaunched | passive |
-| CombatStart | on_combat_start |
-| RoundStart | on_round_start |
-| EnemyTakesHit, HitTaken | on_hit |
-| ShieldsDepleted | on_shield_break |
-| Kill, EnemyKilled | on_kill |
+
+| Game Trigger            | LCARS trigger   |
+| ----------------------- | --------------- |
+| ShipLaunched            | passive         |
+| CombatStart             | on_combat_start |
+| RoundStart              | on_round_start  |
+| EnemyTakesHit, HitTaken | on_hit          |
+| ShieldsDepleted         | on_shield_break |
+| Kill, EnemyKilled       | on_kill         |
+
 
 ## Validation
 
@@ -89,6 +93,7 @@ kobayashi validate data/officers
 ```
 
 Validation checks:
+
 - Required fields (id, name)
 - Duplicate IDs
 - Schema (stat names, trigger/duration combos)
