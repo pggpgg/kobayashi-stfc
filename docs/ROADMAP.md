@@ -28,6 +28,19 @@ Planned features and priorities for Kobayashi.
 
 ---
 
+## Officers (canonical, id registry, LCARS)
+
+### Implemented (readability + sync)
+
+- **Decimal game ids in JSON:** `data/officers/officers.canonical.json` uses plain integer strings for `source_officer_id` and `abilities[].ability_id` (no scientific notation). `data/officers/id_registry.json` keys are the same. Regenerate after upstream re-import with `python3 scripts/normalize_officer_id_strings.py` from the repo root.
+- **Mod sync lookup:** `oid_to_map_key` in [`src/server/sync.rs`](../src/server/sync.rs) formats numeric `oid` values as decimal strings so roster ingress matches `id_registry.json` keys.
+
+### Roadmap / backlog
+
+- **Harry Kim below-decks Morale (LCARS + seating):** Upstream officer `1458469333` (`data/upstream/data-stfc-space/officers/1458469333.json`) places ability **`568169426`** on **`below_decks_ability`** (round-start Morale proc, `chance` 0.1 → 1.0 by rank; in-game card name from loca, e.g. “To the Journey!”). Canonical still marks that row **`slot`: `officer`**, so [`generate_lcars`](../src/bin/generate_lcars.rs) folds it into **`bridge_ability`** and LCARS ends with **`below_decks_ability: null`**. **Fix:** set canonical `slot` to **`below_decks`** (or derive seat layout from upstream per-ability blocks), run `cargo run --bin generate_lcars`, confirm `resolve_crew_to_buff_set` emits round-start `morale` from below decks and that `EnemyHostile` (and armada if applicable) matches scenario tests / traces.
+
+---
+
 ## Hostile upstream `ship_type` (reverse engineering)
 
 data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normalized `data/hostiles/{id}.json`) includes `**ship_type` as a u32**: a **game category enum**, separate from `**hull_type`** (which the normalizer maps to `ship_class`: battleship / explorer / interceptor / survey). Labels for many values live only in client localization (e.g. `translations-navigation.json` key `armada_target_label` → “ARMADA TARGET” for value **1**).

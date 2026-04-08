@@ -8,6 +8,10 @@
 //! that need extra parameters (decay, accumulate, shots duration) are not representable with the
 //! single scalar `ShipAbility::value` and are omitted here until the schema grows.
 //!
+//! **Scalar `value` on [`ShipRecord`]:** Normalizer + [`crate::data::ship::ExtendedShipRecord::to_ship_record`]
+//! already fold catalog semantics (e.g. Galaxy class: decimal fraction per round growth, not “÷100 percent points”)
+//! and optional per-level curves into one number before this resolver runs.
+//!
 //! **Morale (U.S.S. Enterprise-D / Galaxy Class):** Cumulative weapon damage uses
 //! [`AbilityCondition::MoraleActive`], satisfied when the primary round-start [AbilityEffect::Morale]
 //! roll succeeds that round.
@@ -333,6 +337,7 @@ mod tests {
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
                 round_cap: None,
+                level_scaled_values: None,
             },
             ShipAbility {
                 id: "rs".into(),
@@ -346,6 +351,7 @@ mod tests {
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
                 round_cap: None,
+                level_scaled_values: None,
             },
         ];
         assert_eq!(
@@ -368,6 +374,7 @@ mod tests {
             condition_opponent_faction: None,
             condition_opponent_ship_class: None,
             round_cap: Some(5),
+            level_scaled_values: None,
         }];
         assert_eq!(
             sum_combat_begin_accuracy_from_ship_abilities(&abilities, ShipType::Battleship),
@@ -389,6 +396,7 @@ mod tests {
             condition_opponent_faction: None,
             condition_opponent_ship_class: None,
             round_cap: Some(2),
+            level_scaled_values: None,
         })
         .expect("seat");
         assert_eq!(
@@ -429,7 +437,7 @@ mod tests {
 
     #[test]
     fn accumulating_attack_multiplier_requires_round_start() {
-        let g = 0.0085;
+        let g = 0.85;
         let e = ship_ability_effect_from_catalog(
             "accumulating_attack_multiplier",
             TimingWindow::RoundStart,
@@ -475,6 +483,7 @@ mod tests {
             condition_opponent_faction: None,
             condition_opponent_ship_class: Some("interceptor".to_string()),
             round_cap: None,
+            level_scaled_values: None,
         })
         .expect("ship class + morale");
         assert_eq!(
@@ -500,6 +509,7 @@ mod tests {
             condition_opponent_faction: Some("klingon".to_string()),
             condition_opponent_ship_class: None,
             round_cap: None,
+            level_scaled_values: None,
         })
         .expect("faction + morale");
         assert_eq!(
@@ -517,7 +527,7 @@ mod tests {
             id: "448699234".to_string(),
             timing: "round_start".to_string(),
             effect_type: "accumulating_attack_multiplier".to_string(),
-            value: 0.0085,
+            value: 0.93,
             duration_rounds: None,
             condition_morale: true,
             condition_defender_burning: false,
@@ -525,6 +535,7 @@ mod tests {
             condition_opponent_faction: None,
             condition_opponent_ship_class: None,
             round_cap: None,
+            level_scaled_values: None,
         })
         .expect("Galaxy Class seat");
         assert_eq!(seat.ability.timing, TimingWindow::RoundStart);

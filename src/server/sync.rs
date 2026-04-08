@@ -332,16 +332,26 @@ fn oid_to_map_key(
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let v = oid.ok_or("missing oid")?;
     if let Some(s) = v.as_str() {
-        return Ok(s.to_string());
-    }
-    if let Some(n) = v.as_f64() {
-        return Ok(format!("{:E}", n));
-    }
-    if let Some(n) = v.as_i64() {
-        return Ok(format!("{:E}", n as f64));
+        return Ok(s.trim().to_string());
     }
     if let Some(n) = v.as_u64() {
-        return Ok(format!("{:E}", n as f64));
+        return Ok(n.to_string());
+    }
+    if let Some(n) = v.as_i64() {
+        if n >= 0 {
+            return Ok((n as u64).to_string());
+        }
+        return Err("oid must be non-negative".into());
+    }
+    if let Some(f) = v.as_f64() {
+        if !f.is_finite() || f < 0.0 || f > u64::MAX as f64 {
+            return Err("oid float out of range".into());
+        }
+        let u = f as u64;
+        if (f - u as f64).abs() < 1.0 {
+            return Ok(u.to_string());
+        }
+        return Err("oid float must be a whole number".into());
     }
     Err("oid must be string or number".into())
 }
@@ -1213,6 +1223,24 @@ mod tests {
                 .any(|e| e.fid == 424242 && e.tier == 2 && e.level == 3),
             "expected fid=424242 in {:?}",
             entries
+        );
+    }
+
+    /// `id_registry.json` keys are decimal strings; numeric sync `oid` must match (not `{:E}`).
+    #[test]
+    fn oid_to_map_key_uses_decimal_strings() {
+        use super::oid_to_map_key;
+        assert_eq!(
+            oid_to_map_key(Some(&json!(1458469333_u64))).unwrap(),
+            "1458469333"
+        );
+        assert_eq!(
+            oid_to_map_key(Some(&json!(1458469333.0))).unwrap(),
+            "1458469333"
+        );
+        assert_eq!(
+            oid_to_map_key(Some(&json!("1458469333"))).unwrap(),
+            "1458469333"
         );
     }
 }

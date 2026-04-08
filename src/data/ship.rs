@@ -75,6 +75,31 @@ pub struct ShipAbility {
     /// Combat-begin accuracy folded into static attacker stats ignores this field (see [`crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities`]).
     #[serde(default)]
     pub round_cap: Option<u32>,
+    /// When present, index `level - 1` selects [`ShipAbility::value`] at [`ExtendedShipRecord::to_ship_record`] time
+    /// (upstream `ability.values[]` curves, e.g. Galaxy class per-level weapon damage bonus). Omitted after resolution onto [`ShipRecord`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub level_scaled_values: Option<Vec<f64>>,
+}
+
+/// Pick a per-level scalar from an upstream `values[]` curve (1-based `level`).
+/// Trailing zero padding in the curve is skipped in favor of the last positive entry.
+pub fn ship_ability_value_for_level(curve: &[f64], level: u32) -> f64 {
+    if curve.is_empty() {
+        return 0.0;
+    }
+    let i = level.saturating_sub(1) as usize;
+    if i < curve.len() {
+        let v = curve[i];
+        if v > 0.0 || i == 0 {
+            return v;
+        }
+    }
+    curve
+        .iter()
+        .copied()
+        .rev()
+        .find(|v| *v > 0.0)
+        .unwrap_or(0.0)
 }
 
 #[derive(Debug, Clone)]
@@ -197,6 +222,18 @@ impl ExtendedShipRecord {
             .find(|x| x.level == level_num)
             .map(|x| x.health)
             .unwrap_or(0.0);
+        let abilities = self.abilities.as_ref().map(|rows| {
+            rows.iter()
+                .map(|a| {
+                    let mut a = a.clone();
+                    if let Some(ref curve) = a.level_scaled_values {
+                        a.value = ship_ability_value_for_level(curve, level_num);
+                        a.level_scaled_values = None;
+                    }
+                    a
+                })
+                .collect()
+        });
         Some(ShipRecord {
             id: self.id.clone(),
             ship_name: self.ship_name.clone(),
@@ -213,7 +250,7 @@ impl ExtendedShipRecord {
             apex_shred: 0.0,
             isolytic_damage: 0.0,
             weapons: t.weapons.clone(),
-            abilities: self.abilities.clone(),
+            abilities,
         })
     }
 }
@@ -386,6 +423,45 @@ mod tests {
         let abilities = rec.abilities.expect("abilities present");
         assert_eq!(abilities.len(), 1);
         assert_eq!(abilities[0].effect_type, "pierce_bonus");
+    }
+
+    #[test]
+    fn level_scaled_ability_resolves_value_from_curve() {
+        let json = r#"{
+            "id": "fixture_level_curve",
+            "ship_name": "Fixture",
+            "ship_class": "battleship",
+            "tiers": [{
+                "tier": 1,
+                "armor_piercing": 1.0,
+                "shield_piercing": 1.0,
+                "accuracy": 1.0,
+                "attack": 100.0,
+                "crit_chance": 0.0,
+                "crit_damage": 1.0,
+                "hull_health": 1000.0,
+                "shield_health": 0.0
+            }],
+            "levels": [
+                { "level": 1, "shield": 0.0, "health": 0.0 },
+                { "level": 7, "shield": 0.0, "health": 0.0 }
+            ],
+            "abilities": [{
+                "id": "99",
+                "timing": "round_start",
+                "effect_type": "attack_multiplier",
+                "value": 0.0,
+                "level_scaled_values": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+            }]
+        }"#;
+
+        let extended: ExtendedShipRecord = serde_json::from_str(json).expect("parse");
+        let rec = extended
+            .to_ship_record(Some(1), Some(7))
+            .expect("tier 1 level 7");
+        let a = &rec.abilities.as_ref().expect("abilities")[0];
+        assert!((a.value - 0.7).abs() < 1e-9, "level 7 → index 6 = 0.7, got {}", a.value);
+        assert!(a.level_scaled_values.is_none());
     }
 
     #[test]

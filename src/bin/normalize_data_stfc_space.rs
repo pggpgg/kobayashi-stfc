@@ -35,6 +35,9 @@ struct AbilityCatalogEntry {
     condition_opponent_ship_class: Option<String>,
     #[serde(default)]
     round_cap: Option<u32>,
+    /// When true, emit [`ShipAbility::level_scaled_values`] from every upstream `values[]` row (still one [`ShipAbility`]).
+    #[serde(default)]
+    values_scale_with_ship_level: bool,
 }
 
 use kobayashi::data::ship::{
@@ -247,15 +250,36 @@ fn raw_to_extended(
                     .and_then(Value::as_bool)
                     .unwrap_or(entry.value_is_percentage)
             };
+            let Some(values_arr) = ab.get("values").and_then(Value::as_array) else {
+                continue;
+            };
+            let Some(first_val) = values_arr.first() else {
+                continue;
+            };
+
+            let scale_curve = entry.values_scale_with_ship_level;
+            let level_scaled_values = if scale_curve {
+                let mut curve: Vec<f64> = Vec::with_capacity(values_arr.len());
+                for item in values_arr {
+                    let raw_value = item
+                        .get("value")
+                        .and_then(Value::as_f64)
+                        .unwrap_or(0.0);
+                    let v = if value_is_percentage {
+                        raw_value * 0.01
+                    } else {
+                        raw_value
+                    };
+                    curve.push(v);
+                }
+                Some(curve)
+            } else {
+                None
+            };
+
             let value = if let Some(v) = entry.value_override {
                 v
             } else {
-                let Some(values_arr) = ab.get("values").and_then(Value::as_array) else {
-                    continue;
-                };
-                let Some(first_val) = values_arr.first() else {
-                    continue;
-                };
                 let raw_value = first_val
                     .get("value")
                     .and_then(Value::as_f64)
@@ -266,6 +290,7 @@ fn raw_to_extended(
                     raw_value
                 }
             };
+
             out.push(ShipAbility {
                 id: id_str,
                 timing: entry.timing.clone(),
@@ -278,6 +303,7 @@ fn raw_to_extended(
                 condition_opponent_faction: entry.condition_opponent_faction.clone(),
                 condition_opponent_ship_class: entry.condition_opponent_ship_class.clone(),
                 round_cap: entry.round_cap,
+                level_scaled_values,
             });
         }
         if out.is_empty() {

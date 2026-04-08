@@ -97,9 +97,10 @@
     "448699234": {
       "timing": "round_start",
       "effect_type": "accumulating_attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
-      "condition_morale": true
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_morale": true,
+      "values_scale_with_ship_level": true
     },
     "457140182": {
       "timing": "combat_begin",

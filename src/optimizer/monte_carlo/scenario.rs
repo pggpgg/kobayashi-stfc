@@ -1419,6 +1419,7 @@ mod tests {
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
                 round_cap: None,
+                level_scaled_values: None,
             }]),
         };
         let mut static_buffs = HashMap::new();
@@ -1451,6 +1452,7 @@ mod tests {
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: Some("interceptor".into()),
                 round_cap: None,
+                level_scaled_values: None,
             }]),
             ..ship_rec.clone()
         };
@@ -1484,6 +1486,7 @@ mod tests {
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
                 round_cap: Some(3),
+                level_scaled_values: None,
             }]),
             ..ship_rec.clone()
         };
@@ -1580,6 +1583,7 @@ mod tests {
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
                 round_cap: None,
+                level_scaled_values: None,
             }]),
         };
 
