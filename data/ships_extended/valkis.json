@@ -19,8 +19,11 @@
           "attack": 1232.0,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 362.0,
+          "shield_piercing": 422.0,
+          "accuracy": 317.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -42,8 +45,11 @@
           "attack": 1601.0,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 470.0,
+          "shield_piercing": 549.0,
+          "accuracy": 412.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -65,8 +71,11 @@
           "attack": 2082.0,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 612.0,
+          "shield_piercing": 714.0,
+          "accuracy": 535.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -88,8 +97,11 @@
           "attack": 2706.5,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 795.0,
+          "shield_piercing": 928.0,
+          "accuracy": 696.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -111,8 +123,11 @@
           "attack": 3518.0,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 1034.0,
+          "shield_piercing": 1206.0,
+          "accuracy": 904.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -134,8 +149,11 @@
           "attack": 4573.5,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 1344.0,
+          "shield_piercing": 1568.0,
+          "accuracy": 1176.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -157,8 +175,11 @@
           "attack": 5945.5,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 1747.0,
+          "shield_piercing": 2038.0,
+          "accuracy": 1529.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -180,8 +201,11 @@
           "attack": 7729.0,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 2271.0,
+          "shield_piercing": 2649.0,
+          "accuracy": 1987.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }
@@ -203,8 +227,11 @@
           "attack": 10048.0,
           "shots": 1,
           "pierce": null,
-          "crit_chance": null,
-          "crit_multiplier": null,
+          "armor_piercing": 2952.0,
+          "shield_piercing": 3444.0,
+          "accuracy": 2583.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
           "proc_chance": null,
           "proc_multiplier": null
         }

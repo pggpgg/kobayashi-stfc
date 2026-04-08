@@ -44362,6 +44362,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 10020
+    },
+    {
+      "id": "kobayashi_theoretical_damage_sponge",
+      "hostile_name": "Kobayashi Theoretical Damage Sponge",
+      "level": 50,
+      "ship_class": "survey",
+      "rarity": 1,
+      "upstream_ship_type": 1,
+      "loca_id": null
     }
   ]
 }

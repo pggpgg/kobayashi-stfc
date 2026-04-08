@@ -5,7 +5,7 @@
     {
       "abilities": [
         {
-          "ability_id": "2.894716041E9",
+          "ability_id": "2894716041",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -28,7 +28,7 @@
           ]
         },
         {
-          "ability_id": "4.283269593E9",
+          "ability_id": "4283269593",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -68,12 +68,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.219901626E9"
+      "source_officer_id": "4219901626"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.074437376E9",
+          "ability_id": "1074437376",
           "attributes": "faction_id=1750120904, num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -96,7 +96,7 @@
           ]
         },
         {
-          "ability_id": "3.792739416E9",
+          "ability_id": "3792739416",
           "attributes": "faction_id=1750120904",
           "chance_by_rank": [
             0.25,
@@ -138,12 +138,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.29898163E8"
+      "source_officer_id": "229898163"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.029331443E9",
+          "ability_id": "3029331443",
           "attributes": "resources=[2991010408, 2705205969, 563579678]",
           "chance_by_rank": [
             1.0,
@@ -164,7 +164,7 @@
           ]
         },
         {
-          "ability_id": "2.35386558E8",
+          "ability_id": "235386558",
           "attributes": "battle_types=[4], game_context=capture_node, num_rounds=1, state=2",
           "chance_by_rank": [
             0.6,
@@ -208,12 +208,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "7.43931698E8"
+      "source_officer_id": "743931698"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.778774634E9",
+          "ability_id": "3778774634",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -241,7 +241,7 @@
           ]
         },
         {
-          "ability_id": "3.098652344E9",
+          "ability_id": "3098652344",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -286,12 +286,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.100903263E9"
+      "source_officer_id": "2100903263"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.928045499E9",
+          "ability_id": "1928045499",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -316,7 +316,7 @@
           ]
         },
         {
-          "ability_id": "2.910275817E9",
+          "ability_id": "2910275817",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -356,12 +356,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.423547423E9"
+      "source_officer_id": "3423547423"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.795968688E9",
+          "ability_id": "2795968688",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -390,7 +390,7 @@
           ]
         },
         {
-          "ability_id": "3.479467907E9",
+          "ability_id": "3479467907",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -434,12 +434,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.4588229E9"
+      "source_officer_id": "3458822900"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.565476998E9",
+          "ability_id": "2565476998",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -460,7 +460,7 @@
           ]
         },
         {
-          "ability_id": "2.281926825E9",
+          "ability_id": "2281926825",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -504,12 +504,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.511887954E9"
+      "source_officer_id": "1511887954"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.60350455E9",
+          "ability_id": "2603504550",
           "attributes": "num_rounds=1, state=2",
           "chance_by_rank": [
             0.1,
@@ -532,7 +532,7 @@
           ]
         },
         {
-          "ability_id": "1.93818243E8",
+          "ability_id": "193818243",
           "attributes": "percentage=0.7",
           "chance_by_rank": [
             1.0,
@@ -574,12 +574,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.39936167E8"
+      "source_officer_id": "339936167"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.15187074E9",
+          "ability_id": "4151870740",
           "attributes": "num_rounds=3, state=8",
           "chance_by_rank": [
             0.5,
@@ -600,7 +600,7 @@
           ]
         },
         {
-          "ability_id": "3.062248728E9",
+          "ability_id": "3062248728",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -640,12 +640,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.82462507E8"
+      "source_officer_id": "282462507"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.319690809E9",
+          "ability_id": "1319690809",
           "attributes": "resources=[2164745208]",
           "chance_by_rank": [
             1.0,
@@ -666,7 +666,7 @@
           ]
         },
         {
-          "ability_id": "1.04723506E8",
+          "ability_id": "104723506",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 1908242242, 96209859, 1371898528, 84292608, 1779416627, 680796905, 802509572, 2964093937, 3735331456, 2905009151, 1349464922, 3598797204, 1600760006, 2166628666, 1957060718, 1692987719, 2424553373, 2991010408, 2705205969, 563579678, 2164745208, 4275314946, 1734940706, 733419347, 3842158911, 2002611017, 3739531165, 999782265, 580616659, 3043859351, 3662113780, 2392079650, 3111281042, 2160856496, 3821364733, 1768524995, 1495067766, 2431214132, 3342042571, 819663825, 1586478890, 296474010, 2285412015, 2440004407, 1574840331, 298768773, 141958867]",
           "chance_by_rank": [
             1.0,
@@ -706,12 +706,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.835829612E9"
+      "source_officer_id": "1835829612"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.262973132E9",
+          "ability_id": "1262973132",
           "attributes": "num_rounds=2, state=4",
           "chance_by_rank": [
             0.2,
@@ -734,7 +734,7 @@
           ]
         },
         {
-          "ability_id": "3.301945997E9",
+          "ability_id": "3301945997",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -774,12 +774,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.47523516E9"
+      "source_officer_id": "2475235160"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.939864485E9",
+          "ability_id": "3939864485",
           "attributes": "num_rounds=1, officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -806,7 +806,7 @@
           ]
         },
         {
-          "ability_id": "2.723314214E9",
+          "ability_id": "2723314214",
           "attributes": "num_rounds=1, state=4",
           "chance_by_rank": [
             0.1,
@@ -848,12 +848,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.8768657E7"
+      "source_officer_id": "38768657"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.319707047E9",
+          "ability_id": "2319707047",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -874,7 +874,7 @@
           ]
         },
         {
-          "ability_id": "2.971941649E9",
+          "ability_id": "2971941649",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -916,12 +916,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.577339063E9"
+      "source_officer_id": "1577339063"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.281603395E9",
+          "ability_id": "1281603395",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -942,7 +942,7 @@
           ]
         },
         {
-          "ability_id": "1.300699647E9",
+          "ability_id": "1300699647",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -982,12 +982,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "5.66062509E8"
+      "source_officer_id": "566062509"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.821429098E9",
+          "ability_id": "1821429098",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1015,7 +1015,7 @@
           ]
         },
         {
-          "ability_id": "2.353995811E9",
+          "ability_id": "2353995811",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1055,12 +1055,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.437818828E9"
+      "source_officer_id": "1437818828"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.03289562E8",
+          "ability_id": "703289562",
           "attributes": "resources=[1371898528, 680796905, 3735331456, 3598797204, 3739531165, 2285412015]",
           "chance_by_rank": [
             1.0,
@@ -1081,7 +1081,7 @@
           ]
         },
         {
-          "ability_id": "2.398413031E9",
+          "ability_id": "2398413031",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1124,12 +1124,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.518604778E9"
+      "source_officer_id": "2518604778"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.587348908E9",
+          "ability_id": "2587348908",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1154,7 +1154,7 @@
           ]
         },
         {
-          "ability_id": "4.09777518E8",
+          "ability_id": "409777518",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1194,12 +1194,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "7.25106789E8"
+      "source_officer_id": "725106789"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.663862053E9",
+          "ability_id": "3663862053",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -1222,7 +1222,7 @@
           ]
         },
         {
-          "ability_id": "2.210405629E9",
+          "ability_id": "2210405629",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1264,12 +1264,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.178926216E9"
+      "source_officer_id": "2178926216"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.222722823E9",
+          "ability_id": "4222722823",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -1292,7 +1292,7 @@
           ]
         },
         {
-          "ability_id": "6.97043235E8",
+          "ability_id": "697043235",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -1334,12 +1334,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.77664289E8"
+      "source_officer_id": "177664289"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.228564648E9",
+          "ability_id": "1228564648",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1364,7 +1364,7 @@
           ]
         },
         {
-          "ability_id": "1.316211407E9",
+          "ability_id": "1316211407",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1404,12 +1404,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.258596709E9"
+      "source_officer_id": "3258596709"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.1250125E9",
+          "ability_id": "1125012500",
           "attributes": "faction_id=3292196998",
           "chance_by_rank": [
             1.0,
@@ -1436,7 +1436,7 @@
           ]
         },
         {
-          "ability_id": "1.513489186E9",
+          "ability_id": "1513489186",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1479,12 +1479,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.01708334E8"
+      "source_officer_id": "901708334"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.88993107E8",
+          "ability_id": "188993107",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -1507,7 +1507,7 @@
           ]
         },
         {
-          "ability_id": "1.520108895E9",
+          "ability_id": "1520108895",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -1549,12 +1549,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.923643019E9"
+      "source_officer_id": "3923643019"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.27010413E8",
+          "ability_id": "727010413",
           "attributes": "faction_id=2943562711",
           "chance_by_rank": [
             1.0,
@@ -1582,7 +1582,7 @@
           ]
         },
         {
-          "ability_id": "2.712288625E9",
+          "ability_id": "2712288625",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1625,12 +1625,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.203492497E9"
+      "source_officer_id": "1203492497"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.954073301E9",
+          "ability_id": "3954073301",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1655,7 +1655,7 @@
           ]
         },
         {
-          "ability_id": "4.19878869E8",
+          "ability_id": "419878869",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1695,12 +1695,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.486433247E9"
+      "source_officer_id": "2486433247"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.757146314E9",
+          "ability_id": "2757146314",
           "attributes": "num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -1727,7 +1727,7 @@
           ]
         },
         {
-          "ability_id": "4.77917953E8",
+          "ability_id": "477917953",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1767,12 +1767,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.08323068E9"
+      "source_officer_id": "3083230680"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.369873168E9",
+          "ability_id": "2369873168",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1793,7 +1793,7 @@
           ]
         },
         {
-          "ability_id": "3.200446473E9",
+          "ability_id": "3200446473",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1833,12 +1833,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.525867544E9"
+      "source_officer_id": "1525867544"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.79039619E8",
+          "ability_id": "779039619",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1859,7 +1859,7 @@
           ]
         },
         {
-          "ability_id": "4.225330505E9",
+          "ability_id": "4225330505",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1899,12 +1899,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.853520303E9"
+      "source_officer_id": "1853520303"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.029156666E9",
+          "ability_id": "3029156666",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1925,7 +1925,7 @@
           ]
         },
         {
-          "ability_id": "2.254319436E9",
+          "ability_id": "2254319436",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -1965,12 +1965,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.150311506E9"
+      "source_officer_id": "4150311506"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.782601905E9",
+          "ability_id": "1782601905",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -1991,7 +1991,7 @@
           ]
         },
         {
-          "ability_id": "1.980387696E9",
+          "ability_id": "1980387696",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2031,12 +2031,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.066988596E9"
+      "source_officer_id": "4066988596"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.34855586E8",
+          "ability_id": "734855586",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2060,7 +2060,7 @@
           ]
         },
         {
-          "ability_id": "2.570807487E9",
+          "ability_id": "2570807487",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2100,12 +2100,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.94631754E8"
+      "source_officer_id": "194631754"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.059684707E9",
+          "ability_id": "2059684707",
           "attributes": "battle_types=[4], game_context=capture_node, officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -2131,7 +2131,7 @@
           ]
         },
         {
-          "ability_id": "1.561819154E9",
+          "ability_id": "1561819154",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -2173,12 +2173,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.958876935E9"
+      "source_officer_id": "1958876935"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.068090718E9",
+          "ability_id": "2068090718",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2202,7 +2202,7 @@
           ]
         },
         {
-          "ability_id": "2.541302043E9",
+          "ability_id": "2541302043",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2242,12 +2242,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.722250154E9"
+      "source_officer_id": "3722250154"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.950989344E9",
+          "ability_id": "1950989344",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2270,7 +2270,7 @@
           ]
         },
         {
-          "ability_id": "4.131039971E9",
+          "ability_id": "4131039971",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -2313,12 +2313,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.116563882E9"
+      "source_officer_id": "1116563882"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.100318825E9",
+          "ability_id": "1100318825",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2339,7 +2339,7 @@
           ]
         },
         {
-          "ability_id": "1.250096698E9",
+          "ability_id": "1250096698",
           "attributes": "max_level=51",
           "chance_by_rank": [
             1.0,
@@ -2384,12 +2384,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.019230068E9"
+      "source_officer_id": "4019230068"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.134526441E9",
+          "ability_id": "3134526441",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2412,7 +2412,7 @@
           ]
         },
         {
-          "ability_id": "2.858479175E9",
+          "ability_id": "2858479175",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -2454,12 +2454,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.838190976E9"
+      "source_officer_id": "3838190976"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.42644831E8",
+          "ability_id": "242644831",
           "attributes": "num_rounds=1, percentage=0.6",
           "chance_by_rank": [
             1.0,
@@ -2482,7 +2482,7 @@
           ]
         },
         {
-          "ability_id": "2.1574135E9",
+          "ability_id": "2157413500",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             0.3,
@@ -2526,12 +2526,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.730335425E9"
+      "source_officer_id": "1730335425"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.15263807E9",
+          "ability_id": "3152638070",
           "attributes": "faction_id=3536012672",
           "chance_by_rank": [
             1.0,
@@ -2555,7 +2555,7 @@
           ]
         },
         {
-          "ability_id": "2.108234991E9",
+          "ability_id": "2108234991",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -2597,12 +2597,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.80486983E8"
+      "source_officer_id": "180486983"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.930256423E9",
+          "ability_id": "3930256423",
           "attributes": "num_rounds=3, percentage=0.8, state=2",
           "chance_by_rank": [
             0.8,
@@ -2625,7 +2625,7 @@
           ]
         },
         {
-          "ability_id": "2.825675256E9",
+          "ability_id": "2825675256",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -2665,12 +2665,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.250418815E9"
+      "source_officer_id": "1250418815"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.019544321E9",
+          "ability_id": "4019544321",
           "attributes": "max_level=51",
           "chance_by_rank": [
             1.0,
@@ -2694,7 +2694,7 @@
           ]
         },
         {
-          "ability_id": "4.155292475E9",
+          "ability_id": "4155292475",
           "attributes": "max_level=51",
           "chance_by_rank": [
             1.0,
@@ -2739,12 +2739,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.765885322E9"
+      "source_officer_id": "2765885322"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.511725168E9",
+          "ability_id": "3511725168",
           "attributes": "battle_types=[4], game_context=capture_node, officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -2769,7 +2769,7 @@
           ]
         },
         {
-          "ability_id": "2.499304252E9",
+          "ability_id": "2499304252",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2811,12 +2811,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.40622131E8"
+      "source_officer_id": "440622131"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.554625138E9",
+          "ability_id": "2554625138",
           "attributes": "duration_seconds=60",
           "chance_by_rank": [
             1.0,
@@ -2837,7 +2837,7 @@
           ]
         },
         {
-          "ability_id": "1.785494954E9",
+          "ability_id": "1785494954",
           "attributes": "num_rounds=1, officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -2881,12 +2881,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "5.13311144E8"
+      "source_officer_id": "513311144"
     },
     {
       "abilities": [
         {
-          "ability_id": "6.98615866E8",
+          "ability_id": "698615866",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2911,7 +2911,7 @@
           ]
         },
         {
-          "ability_id": "2.296451322E9",
+          "ability_id": "2296451322",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2951,12 +2951,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.865023367E9"
+      "source_officer_id": "3865023367"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.490941423E9",
+          "ability_id": "2490941423",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -2977,7 +2977,7 @@
           ]
         },
         {
-          "ability_id": "2.011733285E9",
+          "ability_id": "2011733285",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             0.3,
@@ -3019,12 +3019,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.739192827E9"
+      "source_officer_id": "3739192827"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.54323065E9",
+          "ability_id": "2543230650",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3049,7 +3049,7 @@
           ]
         },
         {
-          "ability_id": "1.272288893E9",
+          "ability_id": "1272288893",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -3093,12 +3093,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.613379706E9"
+      "source_officer_id": "2613379706"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.037991534E9",
+          "ability_id": "4037991534",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3125,7 +3125,7 @@
           ]
         },
         {
-          "ability_id": "3.611840689E9",
+          "ability_id": "3611840689",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3165,12 +3165,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.662189922E9"
+      "source_officer_id": "3662189922"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.368245052E9",
+          "ability_id": "3368245052",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3194,7 +3194,7 @@
           ]
         },
         {
-          "ability_id": "2.899912544E9",
+          "ability_id": "2899912544",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3236,12 +3236,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.963484044E9"
+      "source_officer_id": "2963484044"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.99317258E8",
+          "ability_id": "399317258",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3264,7 +3264,7 @@
           ]
         },
         {
-          "ability_id": "2.6428617E8",
+          "ability_id": "264286170",
           "attributes": "battle_types=[2, 3, 5, 6, 7, 8, 9]",
           "chance_by_rank": [
             1.0,
@@ -3306,12 +3306,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.683164967E9"
+      "source_officer_id": "1683164967"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.458678084E9",
+          "ability_id": "1458678084",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3334,7 +3334,7 @@
           ]
         },
         {
-          "ability_id": "1.57839587E9",
+          "ability_id": "1578395870",
           "attributes": "faction_id=669838839",
           "chance_by_rank": [
             1.0,
@@ -3377,12 +3377,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.070197892E9"
+      "source_officer_id": "1070197892"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.94381903E9",
+          "ability_id": "3943819030",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3405,7 +3405,7 @@
           ]
         },
         {
-          "ability_id": "2.07614493E8",
+          "ability_id": "207614493",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3445,12 +3445,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.961190554E9"
+      "source_officer_id": "3961190554"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.042216827E9",
+          "ability_id": "2042216827",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3479,7 +3479,7 @@
           ]
         },
         {
-          "ability_id": "2.07443867E8",
+          "ability_id": "207443867",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -3522,12 +3522,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.339276935E9"
+      "source_officer_id": "2339276935"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.625902371E9",
+          "ability_id": "1625902371",
           "attributes": "faction_id=2943562711",
           "chance_by_rank": [
             1.0,
@@ -3555,7 +3555,7 @@
           ]
         },
         {
-          "ability_id": "2.967109481E9",
+          "ability_id": "2967109481",
           "attributes": "num_rounds=4, percentage=0.95, state=64",
           "chance_by_rank": [
             0.4,
@@ -3597,12 +3597,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.412597742E9"
+      "source_officer_id": "3412597742"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.76414451E8",
+          "ability_id": "276414451",
           "attributes": "game_context=mining_node",
           "chance_by_rank": [
             1.0,
@@ -3630,7 +3630,7 @@
           ]
         },
         {
-          "ability_id": "2.060792769E9",
+          "ability_id": "2060792769",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 1908242242, 96209859, 1371898528, 84292608, 1779416627, 680796905, 802509572, 2964093937, 3735331456, 2905009151, 1349464922, 3598797204, 1600760006, 2166628666, 1957060718, 1692987719, 2424553373, 2991010408, 2705205969, 563579678, 2164745208, 4275314946, 1734940706, 733419347, 3842158911, 2002611017, 3739531165, 999782265, 580616659, 3043859351, 3662113780, 2392079650, 3111281042, 2160856496, 3821364733, 1768524995, 1495067766, 2431214132, 3342042571, 819663825, 1586478890, 296474010, 2285412015, 2440004407, 1574840331, 298768773, 141958867]",
           "chance_by_rank": [
             1.0,
@@ -3670,12 +3670,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.02277539E9"
+      "source_officer_id": "1022775390"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.275347566E9",
+          "ability_id": "1275347566",
           "attributes": "multi_state=[8, 4, 2], num_rounds=3",
           "chance_by_rank": [
             0.4,
@@ -3702,7 +3702,7 @@
           ]
         },
         {
-          "ability_id": "1166803.0",
+          "ability_id": "1166803",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -3744,12 +3744,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.013113875E9"
+      "source_officer_id": "3013113875"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.591028018E9",
+          "ability_id": "2591028018",
           "attributes": "resources=[2614028847, 733419347]",
           "chance_by_rank": [
             1.0,
@@ -3770,7 +3770,7 @@
           ]
         },
         {
-          "ability_id": "2.68749517E9",
+          "ability_id": "2687495170",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3812,12 +3812,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.816036121E9"
+      "source_officer_id": "3816036121"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.02018014E9",
+          "ability_id": "4020180140",
           "attributes": "resources=[680796905, 1779416627, 84292608]",
           "chance_by_rank": [
             1.0,
@@ -3838,7 +3838,7 @@
           ]
         },
         {
-          "ability_id": "3.267066178E9",
+          "ability_id": "3267066178",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3878,12 +3878,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.446409392E9"
+      "source_officer_id": "2446409392"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.537186442E9",
+          "ability_id": "3537186442",
           "attributes": "faction_id=2943562711",
           "chance_by_rank": [
             1.0,
@@ -3906,7 +3906,7 @@
           ]
         },
         {
-          "ability_id": "3.979049942E9",
+          "ability_id": "3979049942",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -3946,12 +3946,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.131760724E9"
+      "source_officer_id": "1131760724"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.830386207E9",
+          "ability_id": "3830386207",
           "attributes": "resources=[1371898528, 680796905, 3735331456, 3598797204, 3739531165, 2285412015]",
           "chance_by_rank": [
             1.0,
@@ -3972,7 +3972,7 @@
           ]
         },
         {
-          "ability_id": "3.620433776E9",
+          "ability_id": "3620433776",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4012,12 +4012,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.542999283E9"
+      "source_officer_id": "3542999283"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.172773477E9",
+          "ability_id": "4172773477",
           "attributes": "game_context=takeover",
           "chance_by_rank": [
             1.0,
@@ -4041,7 +4041,7 @@
           ]
         },
         {
-          "ability_id": "2.557888665E9",
+          "ability_id": "2557888665",
           "attributes": "battle_types=[4], game_context=capture_node",
           "chance_by_rank": [
             1.0,
@@ -4085,12 +4085,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.449957978E9"
+      "source_officer_id": "2449957978"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.868996366E9",
+          "ability_id": "1868996366",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4115,7 +4115,7 @@
           ]
         },
         {
-          "ability_id": "1.705525993E9",
+          "ability_id": "1705525993",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4158,12 +4158,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.397371699E9"
+      "source_officer_id": "2397371699"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.330196976E9",
+          "ability_id": "3330196976",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4184,7 +4184,7 @@
           ]
         },
         {
-          "ability_id": "2.171230488E9",
+          "ability_id": "2171230488",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -4227,12 +4227,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.852124874E9"
+      "source_officer_id": "2852124874"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.295176865E9",
+          "ability_id": "1295176865",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4253,7 +4253,7 @@
           ]
         },
         {
-          "ability_id": "2.481912459E9",
+          "ability_id": "2481912459",
           "attributes": "num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -4293,12 +4293,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.449938138E9"
+      "source_officer_id": "1449938138"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.298455942E9",
+          "ability_id": "2298455942",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -4326,7 +4326,7 @@
           ]
         },
         {
-          "ability_id": "5.4855508E8",
+          "ability_id": "548555080",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4368,12 +4368,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "5.0741564E8"
+      "source_officer_id": "507415640"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.789527814E9",
+          "ability_id": "3789527814",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -4396,7 +4396,7 @@
           ]
         },
         {
-          "ability_id": "1.608351478E9",
+          "ability_id": "1608351478",
           "attributes": "max_level=70",
           "chance_by_rank": [
             0.35,
@@ -4438,12 +4438,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.49329475E8"
+      "source_officer_id": "949329475"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.091866033E9",
+          "ability_id": "2091866033",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4468,7 +4468,7 @@
           ]
         },
         {
-          "ability_id": "4.100401808E9",
+          "ability_id": "4100401808",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -4511,12 +4511,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.549505702E9"
+      "source_officer_id": "1549505702"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.265842515E9",
+          "ability_id": "4265842515",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 1908242242, 96209859, 1371898528, 84292608, 1779416627, 680796905, 802509572, 2964093937, 3735331456, 2905009151, 1349464922, 3598797204, 1600760006, 2166628666, 1957060718, 1692987719, 2424553373, 2991010408, 2705205969, 563579678, 2164745208, 4275314946, 1734940706, 733419347, 3842158911, 2002611017, 3739531165, 999782265, 580616659, 3043859351, 3662113780, 2392079650, 3111281042, 2160856496, 3821364733, 1768524995, 1495067766, 2431214132, 3342042571, 819663825, 1586478890, 296474010, 2285412015, 2440004407, 1574840331, 298768773, 141958867]",
           "chance_by_rank": [
             1.0,
@@ -4537,7 +4537,7 @@
           ]
         },
         {
-          "ability_id": "2.110567361E9",
+          "ability_id": "2110567361",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4577,12 +4577,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.191841428E9"
+      "source_officer_id": "3191841428"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.107085046E9",
+          "ability_id": "1107085046",
           "attributes": "num_rounds=1, officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -4603,7 +4603,7 @@
           ]
         },
         {
-          "ability_id": "4.049923936E9",
+          "ability_id": "4049923936",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4643,12 +4643,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.583932904E9"
+      "source_officer_id": "3583932904"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.641795234E9",
+          "ability_id": "1641795234",
           "attributes": "resources=[1908242242, 84292608, 802509572, 2905009151, 3842158911, 1586478890]",
           "chance_by_rank": [
             1.0,
@@ -4669,7 +4669,7 @@
           ]
         },
         {
-          "ability_id": "1.89386619E8",
+          "ability_id": "189386619",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4709,12 +4709,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.490516652E9"
+      "source_officer_id": "3490516652"
     },
     {
       "abilities": [
         {
-          "ability_id": "5.08841684E8",
+          "ability_id": "508841684",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -4742,7 +4742,7 @@
           ]
         },
         {
-          "ability_id": "2.88610542E9",
+          "ability_id": "2886105420",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4785,12 +4785,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.862563009E9"
+      "source_officer_id": "2862563009"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.055328539E9",
+          "ability_id": "2055328539",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4811,7 +4811,7 @@
           ]
         },
         {
-          "ability_id": "2.166644813E9",
+          "ability_id": "2166644813",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -4854,12 +4854,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "7.76602621E8"
+      "source_officer_id": "776602621"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.779404384E9",
+          "ability_id": "2779404384",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4885,7 +4885,7 @@
           ]
         },
         {
-          "ability_id": "9.88061493E8",
+          "ability_id": "988061493",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4929,12 +4929,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.681781473E9"
+      "source_officer_id": "3681781473"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.45049752E8",
+          "ability_id": "345049752",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -4955,7 +4955,7 @@
           ]
         },
         {
-          "ability_id": "3.30406172E8",
+          "ability_id": "330406172",
           "attributes": "faction_id=4153667145",
           "chance_by_rank": [
             1.0,
@@ -4998,12 +4998,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.204519406E9"
+      "source_officer_id": "2204519406"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.904063321E9",
+          "ability_id": "3904063321",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -5026,7 +5026,7 @@
           ]
         },
         {
-          "ability_id": "2.490699031E9",
+          "ability_id": "2490699031",
           "attributes": "num_rounds=2, state=2",
           "chance_by_rank": [
             0.5,
@@ -5066,12 +5066,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.580157615E9"
+      "source_officer_id": "1580157615"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.14889367E9",
+          "ability_id": "1148893670",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5096,7 +5096,7 @@
           ]
         },
         {
-          "ability_id": "6.95016552E8",
+          "ability_id": "695016552",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5136,12 +5136,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.442833808E9"
+      "source_officer_id": "1442833808"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.41219458E8",
+          "ability_id": "741219458",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5162,7 +5162,7 @@
           ]
         },
         {
-          "ability_id": "1.514072808E9",
+          "ability_id": "1514072808",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5202,12 +5202,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.09354959E8"
+      "source_officer_id": "909354959"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.126712571E9",
+          "ability_id": "2126712571",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5230,7 +5230,7 @@
           ]
         },
         {
-          "ability_id": "3.59740833E9",
+          "ability_id": "3597408330",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5272,12 +5272,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.865735742E9"
+      "source_officer_id": "2865735742"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.587777576E9",
+          "ability_id": "3587777576",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -5300,7 +5300,7 @@
           ]
         },
         {
-          "ability_id": "2.608766342E9",
+          "ability_id": "2608766342",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5340,12 +5340,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.083140166E9"
+      "source_officer_id": "1083140166"
     },
     {
       "abilities": [
         {
-          "ability_id": "6.74724565E8",
+          "ability_id": "674724565",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -5366,7 +5366,7 @@
           ]
         },
         {
-          "ability_id": "3.732921554E9",
+          "ability_id": "3732921554",
           "attributes": "num_rounds=3, state=4",
           "chance_by_rank": [
             0.7,
@@ -5406,12 +5406,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.465017198E9"
+      "source_officer_id": "1465017198"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.208839018E9",
+          "ability_id": "1208839018",
           "attributes": "faction_id=2943562711, num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -5439,7 +5439,7 @@
           ]
         },
         {
-          "ability_id": "7.20203532E8",
+          "ability_id": "720203532",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5482,12 +5482,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.039950897E9"
+      "source_officer_id": "1039950897"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.629388546E9",
+          "ability_id": "2629388546",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5510,7 +5510,7 @@
           ]
         },
         {
-          "ability_id": "1.180450595E9",
+          "ability_id": "1180450595",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -5550,12 +5550,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.392608691E9"
+      "source_officer_id": "2392608691"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.381531883E9",
+          "ability_id": "1381531883",
           "attributes": "num_rounds=3, state=4",
           "chance_by_rank": [
             0.2,
@@ -5579,7 +5579,7 @@
           ]
         },
         {
-          "ability_id": "2.187582501E9",
+          "ability_id": "2187582501",
           "attributes": "num_rounds=5",
           "chance_by_rank": [
             1.0,
@@ -5623,12 +5623,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.310878702E9"
+      "source_officer_id": "1310878702"
     },
     {
       "abilities": [
         {
-          "ability_id": "5.11272321E8",
+          "ability_id": "511272321",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5649,7 +5649,7 @@
           ]
         },
         {
-          "ability_id": "2.331408146E9",
+          "ability_id": "2331408146",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5691,12 +5691,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.314108979E9"
+      "source_officer_id": "3314108979"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.099626491E9",
+          "ability_id": "2099626491",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -5720,7 +5720,7 @@
           ]
         },
         {
-          "ability_id": "3.875841674E9",
+          "ability_id": "3875841674",
           "attributes": "max_level=70, num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -5764,12 +5764,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.553398304E9"
+      "source_officer_id": "3553398304"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.735747219E9",
+          "ability_id": "3735747219",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5794,7 +5794,7 @@
           ]
         },
         {
-          "ability_id": "5.68169426E8",
+          "ability_id": "568169426",
           "attributes": "num_rounds=1, state=8",
           "chance_by_rank": [
             0.1,
@@ -5836,12 +5836,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.458469333E9"
+      "source_officer_id": "1458469333"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.186472721E9",
+          "ability_id": "2186472721",
           "attributes": "max_level=70, num_rounds=2",
           "chance_by_rank": [
             0.4,
@@ -5864,7 +5864,7 @@
           ]
         },
         {
-          "ability_id": "1.43246507E8",
+          "ability_id": "143246507",
           "attributes": "max_level=70, num_rounds=1",
           "chance_by_rank": [
             0.2,
@@ -5906,12 +5906,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "6.77303054E8"
+      "source_officer_id": "677303054"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.744017E8",
+          "ability_id": "774401700",
           "attributes": "resources=[2325683920, 4275314946, 999782265]",
           "chance_by_rank": [
             1.0,
@@ -5932,7 +5932,7 @@
           ]
         },
         {
-          "ability_id": "2.541405785E9",
+          "ability_id": "2541405785",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -5974,12 +5974,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.15673632E9"
+      "source_officer_id": "3156736320"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.815450665E9",
+          "ability_id": "1815450665",
           "attributes": "num_rounds=1, percentage=0.5",
           "chance_by_rank": [
             1.0,
@@ -6002,7 +6002,7 @@
           ]
         },
         {
-          "ability_id": "4.056050786E9",
+          "ability_id": "4056050786",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6044,12 +6044,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.628828668E9"
+      "source_officer_id": "3628828668"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.884241557E9",
+          "ability_id": "2884241557",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -6072,7 +6072,7 @@
           ]
         },
         {
-          "ability_id": "4.096806574E9",
+          "ability_id": "4096806574",
           "attributes": "num_rounds=8",
           "chance_by_rank": [
             1.0,
@@ -6114,12 +6114,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.498836305E9"
+      "source_officer_id": "2498836305"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.603994169E9",
+          "ability_id": "3603994169",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6144,7 +6144,7 @@
           ]
         },
         {
-          "ability_id": "2.226051516E9",
+          "ability_id": "2226051516",
           "attributes": "resources=[96209859, 1779416627, 2964093937, 1349464922, 2002611017, 296474010]",
           "chance_by_rank": [
             1.0,
@@ -6184,12 +6184,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.039659244E9"
+      "source_officer_id": "1039659244"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.27986703E9",
+          "ability_id": "4279867030",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6214,7 +6214,7 @@
           ]
         },
         {
-          "ability_id": "1.120204726E9",
+          "ability_id": "1120204726",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             0.45,
@@ -6257,12 +6257,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.29076494E9"
+      "source_officer_id": "4290764940"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.870364263E9",
+          "ability_id": "1870364263",
           "attributes": "num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -6291,7 +6291,7 @@
           ]
         },
         {
-          "ability_id": "2.348699497E9",
+          "ability_id": "2348699497",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -6334,12 +6334,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.86489522E9"
+      "source_officer_id": "2864895220"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.151549753E9",
+          "ability_id": "4151549753",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -6363,7 +6363,7 @@
           ]
         },
         {
-          "ability_id": "3.744176993E9",
+          "ability_id": "3744176993",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -6407,12 +6407,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.835531386E9"
+      "source_officer_id": "3835531386"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.042455437E9",
+          "ability_id": "4042455437",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -6440,7 +6440,7 @@
           ]
         },
         {
-          "ability_id": "2.34626269E8",
+          "ability_id": "234626269",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -6484,12 +6484,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.592998124E9"
+      "source_officer_id": "3592998124"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.862576044E9",
+          "ability_id": "1862576044",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6510,7 +6510,7 @@
           ]
         },
         {
-          "ability_id": "2.372470621E9",
+          "ability_id": "2372470621",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6550,12 +6550,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.622062016E9"
+      "source_officer_id": "1622062016"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.997969719E9",
+          "ability_id": "2997969719",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -6584,7 +6584,7 @@
           ]
         },
         {
-          "ability_id": "1.458247623E9",
+          "ability_id": "1458247623",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -6628,12 +6628,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.852482387E9"
+      "source_officer_id": "2852482387"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.902853214E9",
+          "ability_id": "3902853214",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -6656,7 +6656,7 @@
           ]
         },
         {
-          "ability_id": "1.999054927E9",
+          "ability_id": "1999054927",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -6698,12 +6698,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.916661181E9"
+      "source_officer_id": "1916661181"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.120680252E9",
+          "ability_id": "2120680252",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6724,7 +6724,7 @@
           ]
         },
         {
-          "ability_id": "6.40569748E8",
+          "ability_id": "640569748",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6766,12 +6766,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "6.68528267E8"
+      "source_officer_id": "668528267"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.40693577E9",
+          "ability_id": "3406935770",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6794,7 +6794,7 @@
           ]
         },
         {
-          "ability_id": "5.65052704E8",
+          "ability_id": "565052704",
           "attributes": "faction_id=2489857622",
           "chance_by_rank": [
             1.0,
@@ -6837,12 +6837,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.479870516E9"
+      "source_officer_id": "3479870516"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.022859147E9",
+          "ability_id": "1022859147",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -6865,7 +6865,7 @@
           ]
         },
         {
-          "ability_id": "3.573803212E9",
+          "ability_id": "3573803212",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6905,12 +6905,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.427486959E9"
+      "source_officer_id": "1427486959"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.1695482E8",
+          "ability_id": "416954820",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             0.5,
@@ -6934,7 +6934,7 @@
           ]
         },
         {
-          "ability_id": "5.56660994E8",
+          "ability_id": "556660994",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -6977,12 +6977,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.264304828E9"
+      "source_officer_id": "3264304828"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.585093811E9",
+          "ability_id": "1585093811",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7003,7 +7003,7 @@
           ]
         },
         {
-          "ability_id": "1.24441374E9",
+          "ability_id": "1244413740",
           "attributes": "resources=[1600760006, 2166628666]",
           "chance_by_rank": [
             1.0,
@@ -7043,12 +7043,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.528103772E9"
+      "source_officer_id": "3528103772"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.50725998E8",
+          "ability_id": "450725998",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7069,7 +7069,7 @@
           ]
         },
         {
-          "ability_id": "1.001707675E9",
+          "ability_id": "1001707675",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -7112,12 +7112,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.679776436E9"
+      "source_officer_id": "2679776436"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.897000131E9",
+          "ability_id": "2897000131",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7140,7 +7140,7 @@
           ]
         },
         {
-          "ability_id": "2.6631076E9",
+          "ability_id": "2663107600",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7182,12 +7182,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.62001435E9"
+      "source_officer_id": "2620014350"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.62142944E8",
+          "ability_id": "762142944",
           "attributes": "resources=[743985951, 1734940706, 580616659]",
           "chance_by_rank": [
             1.0,
@@ -7208,7 +7208,7 @@
           ]
         },
         {
-          "ability_id": "2.133714071E9",
+          "ability_id": "2133714071",
           "attributes": "battle_types=[4], game_context=mining_node",
           "chance_by_rank": [
             1.0,
@@ -7252,12 +7252,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.432668775E9"
+      "source_officer_id": "2432668775"
     },
     {
       "abilities": [
         {
-          "ability_id": "8.40557541E8",
+          "ability_id": "840557541",
           "attributes": "num_rounds=3, state=4",
           "chance_by_rank": [
             0.8,
@@ -7278,7 +7278,7 @@
           ]
         },
         {
-          "ability_id": "4.6974357E8",
+          "ability_id": "469743570",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -7318,12 +7318,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.608562191E9"
+      "source_officer_id": "1608562191"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.578865036E9",
+          "ability_id": "2578865036",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -7346,7 +7346,7 @@
           ]
         },
         {
-          "ability_id": "1.307730206E9",
+          "ability_id": "1307730206",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7388,12 +7388,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.343910766E9"
+      "source_officer_id": "2343910766"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.199621934E9",
+          "ability_id": "3199621934",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -7417,7 +7417,7 @@
           ]
         },
         {
-          "ability_id": "9.05884666E8",
+          "ability_id": "905884666",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7460,12 +7460,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.602389738E9"
+      "source_officer_id": "1602389738"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.693249064E9",
+          "ability_id": "1693249064",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7488,7 +7488,7 @@
           ]
         },
         {
-          "ability_id": "1.04634538E9",
+          "ability_id": "1046345380",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7530,12 +7530,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.492633912E9"
+      "source_officer_id": "3492633912"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.28933399E8",
+          "ability_id": "228933399",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7556,7 +7556,7 @@
           ]
         },
         {
-          "ability_id": "1.118413176E9",
+          "ability_id": "1118413176",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7598,12 +7598,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.880112208E9"
+      "source_officer_id": "3880112208"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.479384085E9",
+          "ability_id": "1479384085",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             0.5,
@@ -7627,7 +7627,7 @@
           ]
         },
         {
-          "ability_id": "4.235813457E9",
+          "ability_id": "4235813457",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7667,12 +7667,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.822661458E9"
+      "source_officer_id": "2822661458"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.34251988E8",
+          "ability_id": "234251988",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7699,7 +7699,7 @@
           ]
         },
         {
-          "ability_id": "4.121832941E9",
+          "ability_id": "4121832941",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7741,12 +7741,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.39027623E8"
+      "source_officer_id": "339027623"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.102716881E9",
+          "ability_id": "4102716881",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -7769,7 +7769,7 @@
           ]
         },
         {
-          "ability_id": "2.068068163E9",
+          "ability_id": "2068068163",
           "attributes": "num_rounds=2, state=8",
           "chance_by_rank": [
             0.5,
@@ -7809,12 +7809,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.88947581E8"
+      "source_officer_id": "988947581"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.580371455E9",
+          "ability_id": "2580371455",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7835,7 +7835,7 @@
           ]
         },
         {
-          "ability_id": "1.433248203E9",
+          "ability_id": "1433248203",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7875,12 +7875,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.601201375E9"
+      "source_officer_id": "2601201375"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.339536277E9",
+          "ability_id": "1339536277",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7904,7 +7904,7 @@
           ]
         },
         {
-          "ability_id": "5.0881558E8",
+          "ability_id": "508815580",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7947,12 +7947,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "6.80147223E8"
+      "source_officer_id": "680147223"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.092278144E9",
+          "ability_id": "2092278144",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -7975,7 +7975,7 @@
           ]
         },
         {
-          "ability_id": "1.880351032E9",
+          "ability_id": "1880351032",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8018,12 +8018,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.50991574E8"
+      "source_officer_id": "250991574"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.721061052E9",
+          "ability_id": "3721061052",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8046,7 +8046,7 @@
           ]
         },
         {
-          "ability_id": "3.322010576E9",
+          "ability_id": "3322010576",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8088,12 +8088,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.847497836E9"
+      "source_officer_id": "2847497836"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.599377845E9",
+          "ability_id": "3599377845",
           "attributes": "num_rounds=1, state=4",
           "chance_by_rank": [
             0.3,
@@ -8114,7 +8114,7 @@
           ]
         },
         {
-          "ability_id": "6.78167089E8",
+          "ability_id": "678167089",
           "attributes": "faction_id=2064723306, officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -8156,12 +8156,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.465002315E9"
+      "source_officer_id": "3465002315"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.44686537E9",
+          "ability_id": "1446865370",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8182,7 +8182,7 @@
           ]
         },
         {
-          "ability_id": "2.642188917E9",
+          "ability_id": "2642188917",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -8224,12 +8224,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.983456684E9"
+      "source_officer_id": "1983456684"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.556590305E9",
+          "ability_id": "1556590305",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             0.5,
@@ -8252,7 +8252,7 @@
           ]
         },
         {
-          "ability_id": "2.443405066E9",
+          "ability_id": "2443405066",
           "attributes": "duration_seconds=30",
           "chance_by_rank": [
             1.0,
@@ -8292,12 +8292,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.13104893E8"
+      "source_officer_id": "913104893"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.171947561E9",
+          "ability_id": "3171947561",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8318,7 +8318,7 @@
           ]
         },
         {
-          "ability_id": "3.079666421E9",
+          "ability_id": "3079666421",
           "attributes": "faction_id=4153667145, officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -8360,12 +8360,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.079282844E9"
+      "source_officer_id": "3079282844"
     },
     {
       "abilities": [
         {
-          "ability_id": "9.35161406E8",
+          "ability_id": "935161406",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8392,7 +8392,7 @@
           ]
         },
         {
-          "ability_id": "1.863961009E9",
+          "ability_id": "1863961009",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8435,12 +8435,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.729881938E9"
+      "source_officer_id": "2729881938"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.079302126E9",
+          "ability_id": "2079302126",
           "attributes": "percentage=0.35",
           "chance_by_rank": [
             1.0,
@@ -8463,7 +8463,7 @@
           ]
         },
         {
-          "ability_id": "4.091368E7",
+          "ability_id": "40913680",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8505,12 +8505,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.07877748E8"
+      "source_officer_id": "307877748"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.592757008E9",
+          "ability_id": "1592757008",
           "attributes": "max_level=35",
           "chance_by_rank": [
             1.0,
@@ -8536,7 +8536,7 @@
           ]
         },
         {
-          "ability_id": "3.074253819E9",
+          "ability_id": "3074253819",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8576,12 +8576,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.64381082E9"
+      "source_officer_id": "3643810820"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.086809246E9",
+          "ability_id": "2086809246",
           "attributes": "duration_seconds=60",
           "chance_by_rank": [
             1.0,
@@ -8602,7 +8602,7 @@
           ]
         },
         {
-          "ability_id": "2.401299714E9",
+          "ability_id": "2401299714",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -8642,12 +8642,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.114234402E9"
+      "source_officer_id": "3114234402"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.144007762E9",
+          "ability_id": "2144007762",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8670,7 +8670,7 @@
           ]
         },
         {
-          "ability_id": "2.714109144E9",
+          "ability_id": "2714109144",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8712,12 +8712,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.333021829E9"
+      "source_officer_id": "2333021829"
     },
     {
       "abilities": [
         {
-          "ability_id": "5.98057792E8",
+          "ability_id": "598057792",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -8741,7 +8741,7 @@
           ]
         },
         {
-          "ability_id": "3.344613248E9",
+          "ability_id": "3344613248",
           "attributes": "num_rounds=2, state=4",
           "chance_by_rank": [
             0.5,
@@ -8781,12 +8781,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.110037371E9"
+      "source_officer_id": "4110037371"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.037918091E9",
+          "ability_id": "1037918091",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8807,7 +8807,7 @@
           ]
         },
         {
-          "ability_id": "3.409009998E9",
+          "ability_id": "3409009998",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8850,12 +8850,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.63974291E9"
+      "source_officer_id": "2639742910"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.760528359E9",
+          "ability_id": "3760528359",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8878,7 +8878,7 @@
           ]
         },
         {
-          "ability_id": "6.4409548E7",
+          "ability_id": "64409548",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8920,12 +8920,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.775384983E9"
+      "source_officer_id": "2775384983"
     },
     {
       "abilities": [
         {
-          "ability_id": "5.08362235E8",
+          "ability_id": "508362235",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8946,7 +8946,7 @@
           ]
         },
         {
-          "ability_id": "1.987416811E9",
+          "ability_id": "1987416811",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -8986,12 +8986,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.221819893E9"
+      "source_officer_id": "3221819893"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.618813132E9",
+          "ability_id": "3618813132",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 1908242242, 96209859, 1371898528, 84292608, 1779416627, 680796905, 802509572, 2964093937, 3735331456, 2905009151, 1349464922, 3598797204, 1600760006, 2166628666, 1957060718, 1692987719, 2424553373, 2991010408, 2705205969, 563579678, 2164745208, 4275314946, 1734940706, 733419347, 3842158911, 2002611017, 3739531165, 999782265, 580616659, 3043859351, 3662113780, 2392079650, 3111281042, 2160856496, 3821364733, 1768524995, 1495067766, 2431214132, 3342042571, 819663825, 1586478890, 296474010, 2285412015, 2440004407, 1574840331, 298768773, 141958867]",
           "chance_by_rank": [
             1.0,
@@ -9012,7 +9012,7 @@
           ]
         },
         {
-          "ability_id": "2.208202896E9",
+          "ability_id": "2208202896",
           "attributes": "resources=[2991010408, 2705205969, 563579678]",
           "chance_by_rank": [
             1.0,
@@ -9052,12 +9052,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.155462804E9"
+      "source_officer_id": "3155462804"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.30431925E9",
+          "ability_id": "1304319250",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9080,7 +9080,7 @@
           ]
         },
         {
-          "ability_id": "1.9550683E9",
+          "ability_id": "1955068300",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9124,12 +9124,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.353192478E9"
+      "source_officer_id": "1353192478"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.221311201E9",
+          "ability_id": "2221311201",
           "attributes": "num_rounds=3, percentage=0.8, state=8",
           "chance_by_rank": [
             0.8,
@@ -9152,7 +9152,7 @@
           ]
         },
         {
-          "ability_id": "1.877391678E9",
+          "ability_id": "1877391678",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -9192,12 +9192,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.127234629E9"
+      "source_officer_id": "1127234629"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.245472598E9",
+          "ability_id": "2245472598",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -9225,7 +9225,7 @@
           ]
         },
         {
-          "ability_id": "1.5748373E9",
+          "ability_id": "1574837300",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -9269,12 +9269,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.341819707E9"
+      "source_officer_id": "2341819707"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.905060077E9",
+          "ability_id": "2905060077",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9295,7 +9295,7 @@
           ]
         },
         {
-          "ability_id": "1.434879169E9",
+          "ability_id": "1434879169",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9335,12 +9335,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.617168639E9"
+      "source_officer_id": "1617168639"
     },
     {
       "abilities": [
         {
-          "ability_id": "8.76485508E8",
+          "ability_id": "876485508",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9363,7 +9363,7 @@
           ]
         },
         {
-          "ability_id": "4.048510643E9",
+          "ability_id": "4048510643",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -9403,12 +9403,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.184439996E9"
+      "source_officer_id": "2184439996"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.767792326E9",
+          "ability_id": "3767792326",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9435,7 +9435,7 @@
           ]
         },
         {
-          "ability_id": "2.985939895E9",
+          "ability_id": "2985939895",
           "attributes": "num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -9477,12 +9477,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.73853704E8"
+      "source_officer_id": "473853704"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.07512332E8",
+          "ability_id": "107512332",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9503,7 +9503,7 @@
           ]
         },
         {
-          "ability_id": "3.295255917E9",
+          "ability_id": "3295255917",
           "attributes": "resources=[1371898528, 96209859, 1908242242, 680796905, 1779416627, 84292608, 3735331456, 2964093937, 802509572, 3598797204, 1349464922, 2905009151, 3842158911, 2002611017, 3739531165, 1586478890, 296474010, 2285412015]",
           "chance_by_rank": [
             1.0,
@@ -9543,12 +9543,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.628322562E9"
+      "source_officer_id": "1628322562"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.309231106E9",
+          "ability_id": "3309231106",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9569,7 +9569,7 @@
           ]
         },
         {
-          "ability_id": "2.958606151E9",
+          "ability_id": "2958606151",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -9611,12 +9611,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.999633781E9"
+      "source_officer_id": "3999633781"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.396349483E9",
+          "ability_id": "3396349483",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             0.25,
@@ -9643,7 +9643,7 @@
           ]
         },
         {
-          "ability_id": "2.665059133E9",
+          "ability_id": "2665059133",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9683,12 +9683,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.871265794E9"
+      "source_officer_id": "2871265794"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.030072621E9",
+          "ability_id": "3030072621",
           "attributes": "num_rounds=1, state=2",
           "chance_by_rank": [
             0.2,
@@ -9709,7 +9709,7 @@
           ]
         },
         {
-          "ability_id": "2.59747624E8",
+          "ability_id": "259747624",
           "attributes": "faction_id=2064723306, officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -9751,12 +9751,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "5.31187684E8"
+      "source_officer_id": "531187684"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.572759108E9",
+          "ability_id": "1572759108",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9781,7 +9781,7 @@
           ]
         },
         {
-          "ability_id": "3.287853792E9",
+          "ability_id": "3287853792",
           "attributes": "num_rounds=2, state=64",
           "chance_by_rank": [
             0.45,
@@ -9821,12 +9821,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.35759625E8"
+      "source_officer_id": "435759625"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.716400972E9",
+          "ability_id": "3716400972",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -9851,7 +9851,7 @@
           ]
         },
         {
-          "ability_id": "1.7577042E9",
+          "ability_id": "1757704200",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -9895,12 +9895,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.01426684E8"
+      "source_officer_id": "901426684"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.920164717E9",
+          "ability_id": "3920164717",
           "attributes": "num_rounds=5",
           "chance_by_rank": [
             1.0,
@@ -9924,7 +9924,7 @@
           ]
         },
         {
-          "ability_id": "4.188648392E9",
+          "ability_id": "4188648392",
           "attributes": "num_rounds=5",
           "chance_by_rank": [
             1.0,
@@ -9967,12 +9967,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.2356472E9"
+      "source_officer_id": "4235647200"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.66412629E8",
+          "ability_id": "366412629",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -9995,7 +9995,7 @@
           ]
         },
         {
-          "ability_id": "9.6790018E8",
+          "ability_id": "967900180",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10039,12 +10039,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.131537917E9"
+      "source_officer_id": "3131537917"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.64094674E9",
+          "ability_id": "3640946740",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10069,7 +10069,7 @@
           ]
         },
         {
-          "ability_id": "2.509758838E9",
+          "ability_id": "2509758838",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10113,12 +10113,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.598147546E9"
+      "source_officer_id": "3598147546"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.914828553E9",
+          "ability_id": "1914828553",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -10148,7 +10148,7 @@
           ]
         },
         {
-          "ability_id": "6.19430526E8",
+          "ability_id": "619430526",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10192,12 +10192,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.294120304E9"
+      "source_officer_id": "4294120304"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.605405429E9",
+          "ability_id": "3605405429",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -10225,7 +10225,7 @@
           ]
         },
         {
-          "ability_id": "1.775722178E9",
+          "ability_id": "1775722178",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10269,12 +10269,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.3766267E7"
+      "source_officer_id": "93766267"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.825243742E9",
+          "ability_id": "1825243742",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10297,7 +10297,7 @@
           ]
         },
         {
-          "ability_id": "3.132926029E9",
+          "ability_id": "3132926029",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10337,12 +10337,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.132174205E9"
+      "source_officer_id": "4132174205"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.0760547E7",
+          "ability_id": "10760547",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10363,7 +10363,7 @@
           ]
         },
         {
-          "ability_id": "1.471408949E9",
+          "ability_id": "1471408949",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -10407,12 +10407,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.990993357E9"
+      "source_officer_id": "3990993357"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.953367854E9",
+          "ability_id": "2953367854",
           "attributes": "max_level=70, num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10436,7 +10436,7 @@
           ]
         },
         {
-          "ability_id": "1.501211612E9",
+          "ability_id": "1501211612",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -10478,12 +10478,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "6.34330627E8"
+      "source_officer_id": "634330627"
     },
     {
       "abilities": [
         {
-          "ability_id": "9.94242252E8",
+          "ability_id": "994242252",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10506,7 +10506,7 @@
           ]
         },
         {
-          "ability_id": "1.696619996E9",
+          "ability_id": "1696619996",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10533,7 +10533,7 @@
           ]
         },
         {
-          "ability_id": "2.492819884E9",
+          "ability_id": "2492819884",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10573,12 +10573,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.402639187E9"
+      "source_officer_id": "2402639187"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.63928546E9",
+          "ability_id": "1639285460",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10601,7 +10601,7 @@
           ]
         },
         {
-          "ability_id": "2.724936958E9",
+          "ability_id": "2724936958",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10643,12 +10643,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.019272402E9"
+      "source_officer_id": "3019272402"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.36960987E8",
+          "ability_id": "236960987",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10675,7 +10675,7 @@
           ]
         },
         {
-          "ability_id": "1.091333371E9",
+          "ability_id": "1091333371",
           "attributes": "num_rounds=1, state=2",
           "chance_by_rank": [
             0.1,
@@ -10718,12 +10718,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.97650232E8"
+      "source_officer_id": "497650232"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.824840463E9",
+          "ability_id": "1824840463",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -10746,7 +10746,7 @@
           ]
         },
         {
-          "ability_id": "1.215201819E9",
+          "ability_id": "1215201819",
           "attributes": "num_rounds=2, state=2",
           "chance_by_rank": [
             0.25,
@@ -10786,12 +10786,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "6.56972203E8"
+      "source_officer_id": "656972203"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.429780564E9",
+          "ability_id": "3429780564",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10814,7 +10814,7 @@
           ]
         },
         {
-          "ability_id": "1.13904784E9",
+          "ability_id": "1139047840",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10858,12 +10858,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.785409233E9"
+      "source_officer_id": "2785409233"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.365829083E9",
+          "ability_id": "3365829083",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10884,7 +10884,7 @@
           ]
         },
         {
-          "ability_id": "9.72047904E8",
+          "ability_id": "972047904",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10924,12 +10924,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.485791413E9"
+      "source_officer_id": "1485791413"
     },
     {
       "abilities": [
         {
-          "ability_id": "8.34551032E8",
+          "ability_id": "834551032",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10950,7 +10950,7 @@
           ]
         },
         {
-          "ability_id": "8.024964E7",
+          "ability_id": "80249640",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -10990,12 +10990,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.84159747E9"
+      "source_officer_id": "1841597470"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.462377933E9",
+          "ability_id": "1462377933",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11019,7 +11019,7 @@
           ]
         },
         {
-          "ability_id": "1.499701415E9",
+          "ability_id": "1499701415",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11059,12 +11059,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.968109489E9"
+      "source_officer_id": "3968109489"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.35446036E8",
+          "ability_id": "735446036",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -11085,7 +11085,7 @@
           ]
         },
         {
-          "ability_id": "1.603399419E9",
+          "ability_id": "1603399419",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11125,12 +11125,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "6.31590783E8"
+      "source_officer_id": "631590783"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.15015459E8",
+          "ability_id": "715015459",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11151,7 +11151,7 @@
           ]
         },
         {
-          "ability_id": "8.70791323E8",
+          "ability_id": "870791323",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11191,12 +11191,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.217575459E9"
+      "source_officer_id": "3217575459"
     },
     {
       "abilities": [
         {
-          "ability_id": "9.66801625E8",
+          "ability_id": "966801625",
           "attributes": "faction_id=2943562711",
           "chance_by_rank": [
             1.0,
@@ -11219,7 +11219,7 @@
           ]
         },
         {
-          "ability_id": "1.49413627E8",
+          "ability_id": "149413627",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11259,12 +11259,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.859906553E9"
+      "source_officer_id": "1859906553"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.102667011E9",
+          "ability_id": "4102667011",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -11289,7 +11289,7 @@
           ]
         },
         {
-          "ability_id": "8.11065857E8",
+          "ability_id": "811065857",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -11332,12 +11332,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.878219859E9"
+      "source_officer_id": "1878219859"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.2910202E8",
+          "ability_id": "329102020",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11364,7 +11364,7 @@
           ]
         },
         {
-          "ability_id": "3.392361409E9",
+          "ability_id": "3392361409",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11404,12 +11404,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.028718336E9"
+      "source_officer_id": "1028718336"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.29656832E9",
+          "ability_id": "2296568320",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11430,7 +11430,7 @@
           ]
         },
         {
-          "ability_id": "4.130092864E9",
+          "ability_id": "4130092864",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11470,12 +11470,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.89647182E8"
+      "source_officer_id": "989647182"
     },
     {
       "abilities": [
         {
-          "ability_id": "5.68584807E8",
+          "ability_id": "568584807",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11496,7 +11496,7 @@
           ]
         },
         {
-          "ability_id": "4.94500487E8",
+          "ability_id": "494500487",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11536,12 +11536,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.245467973E9"
+      "source_officer_id": "3245467973"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.14063495E8",
+          "ability_id": "714063495",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11562,7 +11562,7 @@
           ]
         },
         {
-          "ability_id": "1.714820297E9",
+          "ability_id": "1714820297",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11602,12 +11602,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.534264929E9"
+      "source_officer_id": "3534264929"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.081533684E9",
+          "ability_id": "2081533684",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11628,7 +11628,7 @@
           ]
         },
         {
-          "ability_id": "1.703022152E9",
+          "ability_id": "1703022152",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11668,12 +11668,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "8.68427019E8"
+      "source_officer_id": "868427019"
     },
     {
       "abilities": [
         {
-          "ability_id": "9.35457644E8",
+          "ability_id": "935457644",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -11697,7 +11697,7 @@
           ]
         },
         {
-          "ability_id": "2.283189229E9",
+          "ability_id": "2283189229",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11737,12 +11737,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.219055924E9"
+      "source_officer_id": "2219055924"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.08011378E9",
+          "ability_id": "1080113780",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11763,7 +11763,7 @@
           ]
         },
         {
-          "ability_id": "2.657236509E9",
+          "ability_id": "2657236509",
           "attributes": "num_rounds=3, state=4",
           "chance_by_rank": [
             0.25,
@@ -11803,12 +11803,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.3410162E7"
+      "source_officer_id": "43410162"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.584210106E9",
+          "ability_id": "1584210106",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11831,7 +11831,7 @@
           ]
         },
         {
-          "ability_id": "8.62911683E8",
+          "ability_id": "862911683",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11874,12 +11874,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.030703558E9"
+      "source_officer_id": "2030703558"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.628555092E9",
+          "ability_id": "1628555092",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11904,7 +11904,7 @@
           ]
         },
         {
-          "ability_id": "2.654275345E9",
+          "ability_id": "2654275345",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -11944,12 +11944,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.038078185E9"
+      "source_officer_id": "3038078185"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.57058544E8",
+          "ability_id": "457058544",
           "attributes": "num_rounds=8",
           "chance_by_rank": [
             1.0,
@@ -11978,7 +11978,7 @@
           ]
         },
         {
-          "ability_id": "1.685560011E9",
+          "ability_id": "1685560011",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12018,12 +12018,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.84894313E9"
+      "source_officer_id": "1848943130"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.119262188E9",
+          "ability_id": "3119262188",
           "attributes": "num_rounds=3, state=8",
           "chance_by_rank": [
             0.9,
@@ -12046,7 +12046,7 @@
           ]
         },
         {
-          "ability_id": "1.747115615E9",
+          "ability_id": "1747115615",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12089,12 +12089,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.109650513E9"
+      "source_officer_id": "1109650513"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.013453392E9",
+          "ability_id": "4013453392",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12122,7 +12122,7 @@
           ]
         },
         {
-          "ability_id": "3.142924865E9",
+          "ability_id": "3142924865",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12162,12 +12162,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "8.02343108E8"
+      "source_officer_id": "802343108"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.44425105E8",
+          "ability_id": "744425105",
           "attributes": "resources=[1371898528, 680796905, 3735331456, 3598797204, 3739531165, 96209859, 1779416627, 2964093937, 1349464922, 2002611017, 1908242242, 84292608, 802509572, 2905009151, 3842158911, 1586478890, 296474010, 2285412015]",
           "chance_by_rank": [
             1.0,
@@ -12192,7 +12192,7 @@
           ]
         },
         {
-          "ability_id": "2.974230331E9",
+          "ability_id": "2974230331",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12232,12 +12232,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.82221633E8"
+      "source_officer_id": "182221633"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.774366383E9",
+          "ability_id": "3774366383",
           "attributes": "num_rounds=3, state=2",
           "chance_by_rank": [
             0.9,
@@ -12260,7 +12260,7 @@
           ]
         },
         {
-          "ability_id": "3.042467533E9",
+          "ability_id": "3042467533",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12303,12 +12303,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.83632482E9"
+      "source_officer_id": "2836324820"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.9650777E8",
+          "ability_id": "496507770",
           "attributes": "num_rounds=3, state=4",
           "chance_by_rank": [
             0.9,
@@ -12331,7 +12331,7 @@
           ]
         },
         {
-          "ability_id": "2.175948376E9",
+          "ability_id": "2175948376",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12374,12 +12374,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.484257385E9"
+      "source_officer_id": "3484257385"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.56238802E8",
+          "ability_id": "156238802",
           "attributes": "max_level=70",
           "chance_by_rank": [
             1.0,
@@ -12402,7 +12402,7 @@
           ]
         },
         {
-          "ability_id": "2.383265567E9",
+          "ability_id": "2383265567",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12442,12 +12442,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.29940464E8"
+      "source_officer_id": "329940464"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.77564302E9",
+          "ability_id": "2775643020",
           "attributes": "",
           "chance_by_rank": [
             0.1,
@@ -12472,7 +12472,7 @@
           ]
         },
         {
-          "ability_id": "2.006290587E9",
+          "ability_id": "2006290587",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -12516,12 +12516,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.860865109E9"
+      "source_officer_id": "1860865109"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.19701236E9",
+          "ability_id": "4197012360",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12546,7 +12546,7 @@
           ]
         },
         {
-          "ability_id": "2.314534937E9",
+          "ability_id": "2314534937",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12588,12 +12588,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.594947012E9"
+      "source_officer_id": "3594947012"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.140201508E9",
+          "ability_id": "3140201508",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12614,7 +12614,7 @@
           ]
         },
         {
-          "ability_id": "2.656564852E9",
+          "ability_id": "2656564852",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 1908242242, 96209859, 1371898528, 84292608, 1779416627, 680796905, 802509572, 2964093937, 3735331456, 2905009151, 1349464922, 3598797204, 1600760006, 2166628666, 1957060718, 1692987719, 2424553373, 2991010408, 2705205969, 563579678, 2164745208, 4275314946, 1734940706, 733419347, 3842158911, 2002611017, 3739531165, 999782265, 580616659, 3043859351, 3662113780, 2392079650, 3111281042, 2160856496, 3821364733, 1768524995, 1495067766, 2431214132, 3342042571, 819663825, 1586478890, 296474010, 2285412015, 2440004407, 1574840331, 298768773, 141958867]",
           "chance_by_rank": [
             1.0,
@@ -12654,12 +12654,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.334517642E9"
+      "source_officer_id": "2334517642"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.437470376E9",
+          "ability_id": "2437470376",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12686,7 +12686,7 @@
           ]
         },
         {
-          "ability_id": "1.6163305E7",
+          "ability_id": "16163305",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12729,12 +12729,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.814065186E9"
+      "source_officer_id": "3814065186"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.386103827E9",
+          "ability_id": "1386103827",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12759,7 +12759,7 @@
           ]
         },
         {
-          "ability_id": "1.46541033E8",
+          "ability_id": "146541033",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12804,12 +12804,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.409510538E9"
+      "source_officer_id": "1409510538"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.136273375E9",
+          "ability_id": "3136273375",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12834,7 +12834,7 @@
           ]
         },
         {
-          "ability_id": "3.37243133E8",
+          "ability_id": "337243133",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12874,12 +12874,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.523093667E9"
+      "source_officer_id": "3523093667"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.804399891E9",
+          "ability_id": "2804399891",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -12902,7 +12902,7 @@
           ]
         },
         {
-          "ability_id": "1.975058516E9",
+          "ability_id": "1975058516",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -12944,12 +12944,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.349602017E9"
+      "source_officer_id": "1349602017"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.604629509E9",
+          "ability_id": "1604629509",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -12970,7 +12970,7 @@
           ]
         },
         {
-          "ability_id": "3.958845992E9",
+          "ability_id": "3958845992",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             0.2,
@@ -13010,12 +13010,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.330179266E9"
+      "source_officer_id": "1330179266"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.54611297E9",
+          "ability_id": "3546112970",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13040,7 +13040,7 @@
           ]
         },
         {
-          "ability_id": "4.79594847E8",
+          "ability_id": "479594847",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13084,12 +13084,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.248750548E9"
+      "source_officer_id": "1248750548"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.13451749E8",
+          "ability_id": "213451749",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -13117,7 +13117,7 @@
           ]
         },
         {
-          "ability_id": "2.315532916E9",
+          "ability_id": "2315532916",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -13161,12 +13161,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.12289551E8"
+      "source_officer_id": "312289551"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.058272079E9",
+          "ability_id": "2058272079",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13190,7 +13190,7 @@
           ]
         },
         {
-          "ability_id": "2.461367983E9",
+          "ability_id": "2461367983",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13233,12 +13233,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.76044746E8"
+      "source_officer_id": "176044746"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.22892959E8",
+          "ability_id": "322892959",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13266,7 +13266,7 @@
           ]
         },
         {
-          "ability_id": "1.924653048E9",
+          "ability_id": "1924653048",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13308,12 +13308,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.923667463E9"
+      "source_officer_id": "2923667463"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.260942311E9",
+          "ability_id": "2260942311",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13338,7 +13338,7 @@
           ]
         },
         {
-          "ability_id": "1.49510426E9",
+          "ability_id": "1495104260",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13378,12 +13378,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.7699744E7"
+      "source_officer_id": "47699744"
     },
     {
       "abilities": [
         {
-          "ability_id": "9.65390436E8",
+          "ability_id": "965390436",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13406,7 +13406,7 @@
           ]
         },
         {
-          "ability_id": "2.273274943E9",
+          "ability_id": "2273274943",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13448,12 +13448,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "5.6060748E7"
+      "source_officer_id": "56060748"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.33399498E8",
+          "ability_id": "233399498",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13474,7 +13474,7 @@
           ]
         },
         {
-          "ability_id": "1.70467658E9",
+          "ability_id": "1704676580",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13514,12 +13514,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.155244352E9"
+      "source_officer_id": "3155244352"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.412669858E9",
+          "ability_id": "1412669858",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13542,7 +13542,7 @@
           ]
         },
         {
-          "ability_id": "5.42000466E8",
+          "ability_id": "542000466",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13584,12 +13584,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.36948052E8"
+      "source_officer_id": "336948052"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.96211263E8",
+          "ability_id": "196211263",
           "attributes": "faction_id=1750120904",
           "chance_by_rank": [
             0.2,
@@ -13612,7 +13612,7 @@
           ]
         },
         {
-          "ability_id": "4.129104008E9",
+          "ability_id": "4129104008",
           "attributes": "faction_id=1750120904, num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -13654,12 +13654,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.651130337E9"
+      "source_officer_id": "2651130337"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.196098481E9",
+          "ability_id": "3196098481",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13687,7 +13687,7 @@
           ]
         },
         {
-          "ability_id": "2.435779542E9",
+          "ability_id": "2435779542",
           "attributes": "num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -13730,12 +13730,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.45898358E9"
+      "source_officer_id": "2458983580"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.774124358E9",
+          "ability_id": "3774124358",
           "attributes": "faction_id=2943562711",
           "chance_by_rank": [
             0.2,
@@ -13759,7 +13759,7 @@
           ]
         },
         {
-          "ability_id": "1.955519035E9",
+          "ability_id": "1955519035",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13799,12 +13799,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.304441016E9"
+      "source_officer_id": "3304441016"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.900232706E9",
+          "ability_id": "2900232706",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13831,7 +13831,7 @@
           ]
         },
         {
-          "ability_id": "2.632569419E9",
+          "ability_id": "2632569419",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13873,12 +13873,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.037089464E9"
+      "source_officer_id": "2037089464"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.133890335E9",
+          "ability_id": "1133890335",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -13903,7 +13903,7 @@
           ]
         },
         {
-          "ability_id": "3.765448209E9",
+          "ability_id": "3765448209",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -13945,12 +13945,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.61972881E8"
+      "source_officer_id": "161972881"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.055093161E9",
+          "ability_id": "3055093161",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -13979,7 +13979,7 @@
           ]
         },
         {
-          "ability_id": "2.855453718E9",
+          "ability_id": "2855453718",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -14023,12 +14023,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.151676212E9"
+      "source_officer_id": "4151676212"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.509864835E9",
+          "ability_id": "2509864835",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14049,7 +14049,7 @@
           ]
         },
         {
-          "ability_id": "1.009573168E9",
+          "ability_id": "1009573168",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14092,12 +14092,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.567136252E9"
+      "source_officer_id": "2567136252"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.449610397E9",
+          "ability_id": "2449610397",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14122,7 +14122,7 @@
           ]
         },
         {
-          "ability_id": "1.499364395E9",
+          "ability_id": "1499364395",
           "attributes": "resources=[1371898528, 680796905, 3735331456, 3598797204, 3739531165, 2285412015]",
           "chance_by_rank": [
             1.0,
@@ -14162,12 +14162,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.221659017E9"
+      "source_officer_id": "3221659017"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.15416486E8",
+          "ability_id": "115416486",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -14188,7 +14188,7 @@
           ]
         },
         {
-          "ability_id": "3.353791415E9",
+          "ability_id": "3353791415",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -14230,12 +14230,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.62760002E9"
+      "source_officer_id": "3627600020"
     },
     {
       "abilities": [
         {
-          "ability_id": "9.19105554E8",
+          "ability_id": "919105554",
           "attributes": "resources=[1495067766, 2431214132, 3342042571, 819663825]",
           "chance_by_rank": [
             1.0,
@@ -14260,7 +14260,7 @@
           ]
         },
         {
-          "ability_id": "4.031608842E9",
+          "ability_id": "4031608842",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14300,12 +14300,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "5.98126845E8"
+      "source_officer_id": "598126845"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.879504116E9",
+          "ability_id": "3879504116",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -14334,7 +14334,7 @@
           ]
         },
         {
-          "ability_id": "3.078181122E9",
+          "ability_id": "3078181122",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14374,12 +14374,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.742595916E9"
+      "source_officer_id": "3742595916"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.157017944E9",
+          "ability_id": "3157017944",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14403,7 +14403,7 @@
           ]
         },
         {
-          "ability_id": "4.95017292E8",
+          "ability_id": "495017292",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14446,12 +14446,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.294474373E9"
+      "source_officer_id": "3294474373"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.282961192E9",
+          "ability_id": "2282961192",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14476,7 +14476,7 @@
           ]
         },
         {
-          "ability_id": "7.865047E8",
+          "ability_id": "786504700",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14516,12 +14516,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.543722471E9"
+      "source_officer_id": "2543722471"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.071759559E9",
+          "ability_id": "2071759559",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -14545,7 +14545,7 @@
           ]
         },
         {
-          "ability_id": "3.634862157E9",
+          "ability_id": "3634862157",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14588,12 +14588,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.532505261E9"
+      "source_officer_id": "1532505261"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.357755834E9",
+          "ability_id": "1357755834",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14618,7 +14618,7 @@
           ]
         },
         {
-          "ability_id": "1.664636088E9",
+          "ability_id": "1664636088",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14661,12 +14661,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "5.97303582E8"
+      "source_officer_id": "597303582"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.272956905E9",
+          "ability_id": "2272956905",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14690,7 +14690,7 @@
           ]
         },
         {
-          "ability_id": "2.416006584E9",
+          "ability_id": "2416006584",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -14735,12 +14735,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.689277174E9"
+      "source_officer_id": "1689277174"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.59537181E8",
+          "ability_id": "259537181",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14768,7 +14768,7 @@
           ]
         },
         {
-          "ability_id": "5.06412383E8",
+          "ability_id": "506412383",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14808,12 +14808,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.936395808E9"
+      "source_officer_id": "3936395808"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.308805436E9",
+          "ability_id": "3308805436",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14837,7 +14837,7 @@
           ]
         },
         {
-          "ability_id": "1.761806598E9",
+          "ability_id": "1761806598",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14880,12 +14880,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.241990218E9"
+      "source_officer_id": "2241990218"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.86142361E9",
+          "ability_id": "2861423610",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14909,7 +14909,7 @@
           ]
         },
         {
-          "ability_id": "2.813724537E9",
+          "ability_id": "2813724537",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -14952,12 +14952,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.426126747E9"
+      "source_officer_id": "1426126747"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.735581723E9",
+          "ability_id": "3735581723",
           "attributes": "faction_id=3292196998",
           "chance_by_rank": [
             1.0,
@@ -14984,7 +14984,7 @@
           ]
         },
         {
-          "ability_id": "2.927268716E9",
+          "ability_id": "2927268716",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15024,12 +15024,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.536491613E9"
+      "source_officer_id": "1536491613"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.24647769E9",
+          "ability_id": "2246477690",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15053,7 +15053,7 @@
           ]
         },
         {
-          "ability_id": "1.101292289E9",
+          "ability_id": "1101292289",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -15098,12 +15098,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.702893021E9"
+      "source_officer_id": "2702893021"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.70208867E9",
+          "ability_id": "1702088670",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -15131,7 +15131,7 @@
           ]
         },
         {
-          "ability_id": "5.18597711E8",
+          "ability_id": "518597711",
           "attributes": "resources=[680796905, 3735331456, 3598797204, 3739531165, 1779416627, 2964093937, 1349464922, 2002611017, 84292608, 802509572, 2905009151, 3842158911]",
           "chance_by_rank": [
             1.0,
@@ -15171,12 +15171,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.339117238E9"
+      "source_officer_id": "3339117238"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.975835149E9",
+          "ability_id": "2975835149",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15200,7 +15200,7 @@
           ]
         },
         {
-          "ability_id": "3.878448065E9",
+          "ability_id": "3878448065",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -15245,12 +15245,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.7787926E7"
+      "source_officer_id": "97787926"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.08396594E8",
+          "ability_id": "208396594",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15274,7 +15274,7 @@
           ]
         },
         {
-          "ability_id": "3.288424435E9",
+          "ability_id": "3288424435",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15314,12 +15314,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.72479314E9"
+      "source_officer_id": "1724793140"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.134842541E9",
+          "ability_id": "3134842541",
           "attributes": "num_rounds=1, state=2",
           "chance_by_rank": [
             0.4,
@@ -15343,7 +15343,7 @@
           ]
         },
         {
-          "ability_id": "2.994432443E9",
+          "ability_id": "2994432443",
           "attributes": "num_rounds=5",
           "chance_by_rank": [
             1.0,
@@ -15388,12 +15388,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "7.83581005E8"
+      "source_officer_id": "783581005"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.848008929E9",
+          "ability_id": "1848008929",
           "attributes": "num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -15418,7 +15418,7 @@
           ]
         },
         {
-          "ability_id": "4.031461692E9",
+          "ability_id": "4031461692",
           "attributes": "num_rounds=2, state=4",
           "chance_by_rank": [
             0.6,
@@ -15460,12 +15460,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.778731701E9"
+      "source_officer_id": "2778731701"
     },
     {
       "abilities": [
         {
-          "ability_id": "8.69555258E8",
+          "ability_id": "869555258",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15486,7 +15486,7 @@
           ]
         },
         {
-          "ability_id": "2.500262645E9",
+          "ability_id": "2500262645",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -15528,12 +15528,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "7.66809588E8"
+      "source_officer_id": "766809588"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.276152561E9",
+          "ability_id": "3276152561",
           "attributes": "num_rounds=1, state=8",
           "chance_by_rank": [
             0.4,
@@ -15556,7 +15556,7 @@
           ]
         },
         {
-          "ability_id": "2.54327409E9",
+          "ability_id": "2543274090",
           "attributes": "num_rounds=5",
           "chance_by_rank": [
             1.0,
@@ -15601,12 +15601,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.787886893E9"
+      "source_officer_id": "2787886893"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.656033988E9",
+          "ability_id": "2656033988",
           "attributes": "resources=[1908242242, 84292608, 802509572, 2905009151, 3842158911, 1586478890]",
           "chance_by_rank": [
             1.0,
@@ -15627,7 +15627,7 @@
           ]
         },
         {
-          "ability_id": "3.963393918E9",
+          "ability_id": "3963393918",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15667,12 +15667,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "7.55079845E8"
+      "source_officer_id": "755079845"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.065338757E9",
+          "ability_id": "3065338757",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15697,7 +15697,7 @@
           ]
         },
         {
-          "ability_id": "3.785159004E9",
+          "ability_id": "3785159004",
           "attributes": "num_rounds=3, state=2",
           "chance_by_rank": [
             0.6,
@@ -15740,12 +15740,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.479942533E9"
+      "source_officer_id": "3479942533"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.241392103E9",
+          "ability_id": "4241392103",
           "attributes": "num_rounds=3, state=2",
           "chance_by_rank": [
             0.05,
@@ -15769,7 +15769,7 @@
           ]
         },
         {
-          "ability_id": "1.842949267E9",
+          "ability_id": "1842949267",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             0.4,
@@ -15812,12 +15812,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.354305961E9"
+      "source_officer_id": "2354305961"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.85131547E8",
+          "ability_id": "185131547",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15841,7 +15841,7 @@
           ]
         },
         {
-          "ability_id": "3.519202949E9",
+          "ability_id": "3519202949",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15884,12 +15884,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.512227954E9"
+      "source_officer_id": "3512227954"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.041170794E9",
+          "ability_id": "2041170794",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -15917,7 +15917,7 @@
           ]
         },
         {
-          "ability_id": "4.145846912E9",
+          "ability_id": "4145846912",
           "attributes": "num_rounds=5",
           "chance_by_rank": [
             1.0,
@@ -15960,12 +15960,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.173095604E9"
+      "source_officer_id": "2173095604"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.346498472E9",
+          "ability_id": "3346498472",
           "attributes": "num_rounds=2, state=8",
           "chance_by_rank": [
             0.4,
@@ -15986,7 +15986,7 @@
           ]
         },
         {
-          "ability_id": "1.840304835E9",
+          "ability_id": "1840304835",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -16029,12 +16029,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.520801863E9"
+      "source_officer_id": "2520801863"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.46079457E8",
+          "ability_id": "746079457",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -16055,7 +16055,7 @@
           ]
         },
         {
-          "ability_id": "2.109540283E9",
+          "ability_id": "2109540283",
           "attributes": "max_level=51",
           "chance_by_rank": [
             1.0,
@@ -16100,12 +16100,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.455040265E9"
+      "source_officer_id": "1455040265"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.928724152E9",
+          "ability_id": "3928724152",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -16130,7 +16130,7 @@
           ]
         },
         {
-          "ability_id": "2.260526141E9",
+          "ability_id": "2260526141",
           "attributes": "resources=[1908242242, 84292608, 802509572, 2905009151, 3842158911, 1586478890]",
           "chance_by_rank": [
             1.0,
@@ -16170,12 +16170,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.11443354E9"
+      "source_officer_id": "4114433540"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.248153153E9",
+          "ability_id": "3248153153",
           "attributes": "resources=[96209859, 1779416627, 2964093937, 1349464922, 2002611017, 296474010]",
           "chance_by_rank": [
             1.0,
@@ -16196,7 +16196,7 @@
           ]
         },
         {
-          "ability_id": "1.776341383E9",
+          "ability_id": "1776341383",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -16236,12 +16236,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.556052341E9"
+      "source_officer_id": "1556052341"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.857502443E9",
+          "ability_id": "2857502443",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -16264,7 +16264,7 @@
           ]
         },
         {
-          "ability_id": "3.20601814E9",
+          "ability_id": "3206018140",
           "attributes": "max_level=60",
           "chance_by_rank": [
             1.0,
@@ -16311,12 +16311,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.61377304E8"
+      "source_officer_id": "361377304"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.342912908E9",
+          "ability_id": "3342912908",
           "attributes": "battle_types=[3]",
           "chance_by_rank": [
             1.0,
@@ -16339,7 +16339,7 @@
           ]
         },
         {
-          "ability_id": "1.382019546E9",
+          "ability_id": "1382019546",
           "attributes": "battle_types=[2, 3, 5, 6, 7, 8, 9]",
           "chance_by_rank": [
             1.0,
@@ -16381,12 +16381,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.148782205E9"
+      "source_officer_id": "4148782205"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.859510273E9",
+          "ability_id": "2859510273",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 999782265, 580616659, 3043859351]",
           "chance_by_rank": [
             1.0,
@@ -16407,7 +16407,7 @@
           ]
         },
         {
-          "ability_id": "3.585546924E9",
+          "ability_id": "3585546924",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 1908242242, 96209859, 1371898528, 84292608, 1779416627, 680796905, 802509572, 2964093937, 3735331456, 2905009151, 1349464922, 3598797204, 1600760006, 2166628666, 1957060718, 1692987719, 2424553373, 2991010408, 2705205969, 563579678, 2164745208, 4275314946, 1734940706, 733419347, 3842158911, 2002611017, 3739531165, 999782265, 580616659, 3043859351, 3662113780, 2392079650, 3111281042, 2160856496, 3821364733, 1768524995, 1495067766, 2431214132, 3342042571, 819663825, 1586478890, 296474010, 2285412015, 2440004407, 1574840331, 298768773, 141958867]",
           "chance_by_rank": [
             1.0,
@@ -16447,12 +16447,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.70544309E8"
+      "source_officer_id": "370544309"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.5318848E9",
+          "ability_id": "2531884800",
           "attributes": "num_rounds=2, officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -16479,7 +16479,7 @@
           ]
         },
         {
-          "ability_id": "3.623386511E9",
+          "ability_id": "3623386511",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -16519,12 +16519,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.421610149E9"
+      "source_officer_id": "1421610149"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.111245783E9",
+          "ability_id": "3111245783",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -16547,7 +16547,7 @@
           ]
         },
         {
-          "ability_id": "2.351016344E9",
+          "ability_id": "2351016344",
           "attributes": "multi_state=[4, 2, 64], num_rounds=2",
           "chance_by_rank": [
             0.5,
@@ -16589,12 +16589,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.29857188E8"
+      "source_officer_id": "429857188"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.222862242E9",
+          "ability_id": "1222862242",
           "attributes": "resources=[96209859, 1779416627, 2964093937, 1349464922, 2002611017, 296474010]",
           "chance_by_rank": [
             1.0,
@@ -16615,7 +16615,7 @@
           ]
         },
         {
-          "ability_id": "2.422039622E9",
+          "ability_id": "2422039622",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -16655,12 +16655,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.395454844E9"
+      "source_officer_id": "1395454844"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.999787012E9",
+          "ability_id": "1999787012",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -16684,7 +16684,7 @@
           ]
         },
         {
-          "ability_id": "1.776666269E9",
+          "ability_id": "1776666269",
           "attributes": "",
           "chance_by_rank": [
             0.3,
@@ -16724,12 +16724,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.800794103E9"
+      "source_officer_id": "1800794103"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.54956305E8",
+          "ability_id": "254956305",
           "attributes": "faction_id=1750120904, num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -16752,7 +16752,7 @@
           ]
         },
         {
-          "ability_id": "7.80595425E8",
+          "ability_id": "780595425",
           "attributes": "faction_id=1750120904",
           "chance_by_rank": [
             0.35,
@@ -16794,12 +16794,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.106264505E9"
+      "source_officer_id": "3106264505"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.952269443E9",
+          "ability_id": "2952269443",
           "attributes": "battle_types=[17, 18, 2, 5, 9, 6], max_level=81, num_rounds=10",
           "chance_by_rank": [
             1.0,
@@ -16824,7 +16824,7 @@
           ]
         },
         {
-          "ability_id": "4.55729729E8",
+          "ability_id": "455729729",
           "attributes": "battle_types=[17, 18, 2, 5, 6, 9], num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -16867,12 +16867,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.28154093E8"
+      "source_officer_id": "328154093"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.534319381E9",
+          "ability_id": "3534319381",
           "attributes": "battle_types=[17, 18, 2, 5, 6, 9, 9], num_rounds=2, state=4",
           "chance_by_rank": [
             0.5,
@@ -16899,7 +16899,7 @@
           ]
         },
         {
-          "ability_id": "3.948501792E9",
+          "ability_id": "3948501792",
           "attributes": "battle_types=[17, 18, 2, 5, 6, 9]",
           "chance_by_rank": [
             1.0,
@@ -16941,12 +16941,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.983933897E9"
+      "source_officer_id": "1983933897"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.664195138E9",
+          "ability_id": "1664195138",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -16973,7 +16973,7 @@
           ]
         },
         {
-          "ability_id": "3.49987507E9",
+          "ability_id": "3499875070",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17013,12 +17013,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.087036948E9"
+      "source_officer_id": "2087036948"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.246984954E9",
+          "ability_id": "2246984954",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -17045,7 +17045,7 @@
           ]
         },
         {
-          "ability_id": "3.192273655E9",
+          "ability_id": "3192273655",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -17087,12 +17087,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.849424588E9"
+      "source_officer_id": "3849424588"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.018220297E9",
+          "ability_id": "4018220297",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17115,7 +17115,7 @@
           ]
         },
         {
-          "ability_id": "2.23743617E8",
+          "ability_id": "223743617",
           "attributes": "faction_id=4153667145, officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -17157,12 +17157,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.1508965E8"
+      "source_officer_id": "215089650"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.058182319E9",
+          "ability_id": "1058182319",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17185,7 +17185,7 @@
           ]
         },
         {
-          "ability_id": "3.1900316E9",
+          "ability_id": "3190031600",
           "attributes": "battle_types=[4]",
           "chance_by_rank": [
             1.0,
@@ -17229,12 +17229,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.382562951E9"
+      "source_officer_id": "3382562951"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.524108217E9",
+          "ability_id": "3524108217",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -17259,7 +17259,7 @@
           ]
         },
         {
-          "ability_id": "1.602353343E9",
+          "ability_id": "1602353343",
           "attributes": "num_rounds=1, percentage=0.3, state=8",
           "chance_by_rank": [
             0.75,
@@ -17301,12 +17301,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.07451388E8"
+      "source_officer_id": "107451388"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.411083962E9",
+          "ability_id": "1411083962",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -17329,7 +17329,7 @@
           ]
         },
         {
-          "ability_id": "1.471902954E9",
+          "ability_id": "1471902954",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17371,12 +17371,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.23029416E8"
+      "source_officer_id": "423029416"
     },
     {
       "abilities": [
         {
-          "ability_id": "8.95293227E8",
+          "ability_id": "895293227",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17399,7 +17399,7 @@
           ]
         },
         {
-          "ability_id": "1.072929447E9",
+          "ability_id": "1072929447",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17439,12 +17439,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.579242146E9"
+      "source_officer_id": "3579242146"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.015269686E9",
+          "ability_id": "2015269686",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -17467,7 +17467,7 @@
           ]
         },
         {
-          "ability_id": "2.57826584E9",
+          "ability_id": "2578265840",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -17510,12 +17510,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.757127113E9"
+      "source_officer_id": "2757127113"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.61387865E8",
+          "ability_id": "261387865",
           "attributes": "num_rounds=1, state=8",
           "chance_by_rank": [
             0.55,
@@ -17536,7 +17536,7 @@
           ]
         },
         {
-          "ability_id": "3.831328818E9",
+          "ability_id": "3831328818",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -17579,12 +17579,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.670351312E9"
+      "source_officer_id": "1670351312"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.796469058E9",
+          "ability_id": "1796469058",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -17608,7 +17608,7 @@
           ]
         },
         {
-          "ability_id": "2.247949691E9",
+          "ability_id": "2247949691",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -17651,12 +17651,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.75212688E9"
+      "source_officer_id": "1752126880"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.036449255E9",
+          "ability_id": "1036449255",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -17684,7 +17684,7 @@
           ]
         },
         {
-          "ability_id": "1.226535821E9",
+          "ability_id": "1226535821",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17724,12 +17724,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.903302017E9"
+      "source_officer_id": "1903302017"
     },
     {
       "abilities": [
         {
-          "ability_id": "6.71418104E8",
+          "ability_id": "671418104",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17754,7 +17754,7 @@
           ]
         },
         {
-          "ability_id": "3.2740695E7",
+          "ability_id": "32740695",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17796,12 +17796,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.120397875E9"
+      "source_officer_id": "2120397875"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.012264418E9",
+          "ability_id": "1012264418",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -17822,7 +17822,7 @@
           ]
         },
         {
-          "ability_id": "3.972571863E9",
+          "ability_id": "3972571863",
           "attributes": "resources=[1371898528, 96209859, 1908242242, 680796905, 1779416627, 84292608, 3735331456, 2964093937, 802509572, 3598797204, 1349464922, 2905009151, 3842158911, 2002611017, 3739531165, 1586478890, 296474010, 2285412015]",
           "chance_by_rank": [
             1.0,
@@ -17862,12 +17862,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.18103052E8"
+      "source_officer_id": "118103052"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.48521835E9",
+          "ability_id": "1485218350",
           "attributes": "battle_types=[4], game_context=capture_node",
           "chance_by_rank": [
             1.0,
@@ -17892,7 +17892,7 @@
           ]
         },
         {
-          "ability_id": "2.478131502E9",
+          "ability_id": "2478131502",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -17934,12 +17934,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.769449499E9"
+      "source_officer_id": "3769449499"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.587051486E9",
+          "ability_id": "3587051486",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             0.5,
@@ -17960,7 +17960,7 @@
           ]
         },
         {
-          "ability_id": "2.416805344E9",
+          "ability_id": "2416805344",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18000,12 +18000,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.695272429E9"
+      "source_officer_id": "2695272429"
     },
     {
       "abilities": [
         {
-          "ability_id": "9.13371453E8",
+          "ability_id": "913371453",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18029,7 +18029,7 @@
           ]
         },
         {
-          "ability_id": "3.632112638E9",
+          "ability_id": "3632112638",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18072,12 +18072,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.394864658E9"
+      "source_officer_id": "3394864658"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.09435174E9",
+          "ability_id": "4094351740",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18098,7 +18098,7 @@
           ]
         },
         {
-          "ability_id": "3.26209566E8",
+          "ability_id": "326209566",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18141,12 +18141,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.281026482E9"
+      "source_officer_id": "3281026482"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.575708063E9",
+          "ability_id": "3575708063",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18169,7 +18169,7 @@
           ]
         },
         {
-          "ability_id": "4.246759861E9",
+          "ability_id": "4246759861",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18209,12 +18209,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.235857051E9"
+      "source_officer_id": "2235857051"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.289717791E9",
+          "ability_id": "4289717791",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18235,7 +18235,7 @@
           ]
         },
         {
-          "ability_id": "2.633638696E9",
+          "ability_id": "2633638696",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -18277,12 +18277,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.959514562E9"
+      "source_officer_id": "2959514562"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.857736688E9",
+          "ability_id": "2857736688",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18310,7 +18310,7 @@
           ]
         },
         {
-          "ability_id": "3.94709744E8",
+          "ability_id": "394709744",
           "attributes": "num_rounds=4",
           "chance_by_rank": [
             1.0,
@@ -18352,12 +18352,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.033443887E9"
+      "source_officer_id": "2033443887"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.883874665E9",
+          "ability_id": "2883874665",
           "attributes": "num_rounds=3",
           "chance_by_rank": [
             1.0,
@@ -18385,7 +18385,7 @@
           ]
         },
         {
-          "ability_id": "2.429471841E9",
+          "ability_id": "2429471841",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18427,12 +18427,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.686255925E9"
+      "source_officer_id": "2686255925"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.053788649E9",
+          "ability_id": "3053788649",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             0.06,
@@ -18456,7 +18456,7 @@
           ]
         },
         {
-          "ability_id": "3.174366498E9",
+          "ability_id": "3174366498",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18499,12 +18499,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.517597941E9"
+      "source_officer_id": "2517597941"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.111864873E9",
+          "ability_id": "2111864873",
           "attributes": "officer_stat=1",
           "chance_by_rank": [
             1.0,
@@ -18527,7 +18527,7 @@
           ]
         },
         {
-          "ability_id": "4.24820476E8",
+          "ability_id": "424820476",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18567,12 +18567,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.116707401E9"
+      "source_officer_id": "1116707401"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.603567245E9",
+          "ability_id": "3603567245",
           "attributes": "num_rounds=3, state=8",
           "chance_by_rank": [
             0.2,
@@ -18596,7 +18596,7 @@
           ]
         },
         {
-          "ability_id": "1.777728821E9",
+          "ability_id": "1777728821",
           "attributes": "num_rounds=2",
           "chance_by_rank": [
             1.0,
@@ -18640,12 +18640,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.925563045E9"
+      "source_officer_id": "1925563045"
     },
     {
       "abilities": [
         {
-          "ability_id": "8.55610396E8",
+          "ability_id": "855610396",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18668,7 +18668,7 @@
           ]
         },
         {
-          "ability_id": "1.577212247E9",
+          "ability_id": "1577212247",
           "attributes": "faction_id=2064723306",
           "chance_by_rank": [
             1.0,
@@ -18711,12 +18711,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.137482318E9"
+      "source_officer_id": "1137482318"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.093942349E9",
+          "ability_id": "2093942349",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18741,7 +18741,7 @@
           ]
         },
         {
-          "ability_id": "1.387906359E9",
+          "ability_id": "1387906359",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -18784,12 +18784,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "8.07303933E8"
+      "source_officer_id": "807303933"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.533467574E9",
+          "ability_id": "1533467574",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18819,7 +18819,7 @@
           ]
         },
         {
-          "ability_id": "3.51013842E8",
+          "ability_id": "351013842",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18859,12 +18859,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "8.97691678E8"
+      "source_officer_id": "897691678"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.96935785E8",
+          "ability_id": "796935785",
           "attributes": "officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -18891,7 +18891,7 @@
           ]
         },
         {
-          "ability_id": "5.33816193E8",
+          "ability_id": "533816193",
           "attributes": "officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -18933,12 +18933,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.35228856E9"
+      "source_officer_id": "1352288560"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.156699259E9",
+          "ability_id": "2156699259",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -18965,7 +18965,7 @@
           ]
         },
         {
-          "ability_id": "3.649514938E9",
+          "ability_id": "3649514938",
           "attributes": "num_rounds=1",
           "chance_by_rank": [
             1.0,
@@ -19009,12 +19009,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.738777089E9"
+      "source_officer_id": "1738777089"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.910983177E9",
+          "ability_id": "3910983177",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19039,7 +19039,7 @@
           ]
         },
         {
-          "ability_id": "1.897079104E9",
+          "ability_id": "1897079104",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19082,12 +19082,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.242236216E9"
+      "source_officer_id": "3242236216"
     },
     {
       "abilities": [
         {
-          "ability_id": "2.418798268E9",
+          "ability_id": "2418798268",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19108,7 +19108,7 @@
           ]
         },
         {
-          "ability_id": "3.612793883E9",
+          "ability_id": "3612793883",
           "attributes": "battle_types=[2, 3, 5, 6, 7, 8, 9]",
           "chance_by_rank": [
             1.0,
@@ -19150,12 +19150,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "2.593842933E9"
+      "source_officer_id": "2593842933"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.287045306E9",
+          "ability_id": "4287045306",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19178,7 +19178,7 @@
           ]
         },
         {
-          "ability_id": "2.75923455E9",
+          "ability_id": "2759234550",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19220,12 +19220,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "9.8548875E7"
+      "source_officer_id": "98548875"
     },
     {
       "abilities": [
         {
-          "ability_id": "7.5374504E8",
+          "ability_id": "753745040",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19246,7 +19246,7 @@
           ]
         },
         {
-          "ability_id": "6.60977416E8",
+          "ability_id": "660977416",
           "attributes": "faction_id=669838839, officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -19288,12 +19288,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.001921707E9"
+      "source_officer_id": "3001921707"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.427535254E9",
+          "ability_id": "1427535254",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19317,7 +19317,7 @@
           ]
         },
         {
-          "ability_id": "2.64056742E8",
+          "ability_id": "264056742",
           "attributes": "faction_id=669838839, officer_stat=3",
           "chance_by_rank": [
             1.0,
@@ -19359,12 +19359,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.381802332E9"
+      "source_officer_id": "3381802332"
     },
     {
       "abilities": [
         {
-          "ability_id": "4.231113561E9",
+          "ability_id": "4231113561",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19387,7 +19387,7 @@
           ]
         },
         {
-          "ability_id": "2.43472742E8",
+          "ability_id": "243472742",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19429,12 +19429,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "4.07568868E8"
+      "source_officer_id": "407568868"
     },
     {
       "abilities": [
         {
-          "ability_id": "3.682632277E9",
+          "ability_id": "3682632277",
           "attributes": "multi_state=[8, 4, 2], num_rounds=3",
           "chance_by_rank": [
             0.4,
@@ -19461,7 +19461,7 @@
           ]
         },
         {
-          "ability_id": "6.88153966E8",
+          "ability_id": "688153966",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19506,12 +19506,12 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "3.594463469E9"
+      "source_officer_id": "3594463469"
     },
     {
       "abilities": [
         {
-          "ability_id": "1.892484976E9",
+          "ability_id": "1892484976",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -19532,7 +19532,7 @@
           ]
         },
         {
-          "ability_id": "4.081666796E9",
+          "ability_id": "4081666796",
           "attributes": "num_rounds=1, officer_stat=2",
           "chance_by_rank": [
             1.0,
@@ -19574,35 +19574,63 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "1.143746577E9"
+      "source_officer_id": "1143746577"
     },
     {
       "abilities": [
         {
           "ability_id": "0",
           "attributes": "",
-          "chance_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0],
-          "conditions": ["TargetIsArmada"],
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "TargetIsArmada"
+          ],
           "description": "Let's Rock'n'Roll! Increases Isolytic Cascade Damage by X against Group Armadas.",
           "modifier": "IsolyticCascadeDamage",
           "operation": "MultiplyAdd",
           "slot": "officer",
           "target": "SelfShip",
           "trigger": "ShipLaunched",
-          "value_by_rank": [0.7, 1.0, 1.4, 1.9, 2.5]
+          "value_by_rank": [
+            0.7,
+            1.0,
+            1.4,
+            1.9,
+            2.5
+          ]
         },
         {
           "ability_id": "0",
           "attributes": "",
-          "chance_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0],
-          "conditions": ["TargetIsArmada"],
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "TargetIsArmada"
+          ],
           "description": "Visionary... or Something. On round start, repair X of hull damage taken in the previous round of combat against all Armadas.",
           "modifier": "HullHPRepair",
           "operation": "MultiplyAdd",
           "slot": "below_decks",
           "target": "SelfShip",
           "trigger": "RoundStart",
-          "value_by_rank": [0.05, 0.07, 0.12, 0.2, 0.3]
+          "value_by_rank": [
+            0.05,
+            0.07,
+            0.12,
+            0.2,
+            0.3
+          ]
         }
       ],
       "faction": "Federation",
@@ -19620,7 +19648,7 @@
         "sheet": "RawOfficers",
         "workbook": "manual_curation"
       },
-      "source_officer_id": "7.66153048E8"
+      "source_officer_id": "766153048"
     },
     {
       "abilities": [],
