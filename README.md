@@ -259,15 +259,16 @@ To add or update officers:
 3. Run `kobayashi validate data/officers` to validate LCARS files (or `kobayashi validate data/officers/officers.canonical.json` for canonical JSON)
 4. Submit a PR
 
-To regenerate LCARS from the canonical spreadsheet export:
+To regenerate **`data/officers/officers.lcars.yaml`** from `officers.canonical.json` (maintainer-curated catalog; see repo data policy), optionally sync ids and below-decks slots from cached stfc.space officer JSON, then generate:
 
 ```bash
+python3 scripts/normalize_officer_id_strings.py   # optional; needs data/upstream/.../officers/*.json
 kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers] \
   [--summary data/upstream/data-stfc-space/summary-officer.json] \
   [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
 ```
 
-By default, `generate_lcars` loads `summary-officer.json` and `translations-officer_buffs.json` (when present under `data/upstream/data-stfc-space/`) and fills **`captain_ability` / `bridge_ability` / `below_decks_ability` `name:`** from `officer_ability_name` rows (`loca_id` ↔ `ability_id`). Use `--no-ability-names` for legacy placeholder names like `{Officer} (Captain)`.
+`generate_lcars` writes a **single** `officers.lcars.yaml` under `--output`. By default it loads `summary-officer.json` and `translations-officer_buffs.json` (when present) and fills **`captain_ability` / `bridge_ability` / `below_decks_ability` `name:`** from `officer_ability_name` rows (`loca_id` ↔ `ability_id`). Use `--no-ability-names` for legacy placeholder names like `{Officer} (Captain)`.
 
 See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) and [docs/OFFICER_TRANSLATIONS_MAPPING.md](docs/OFFICER_TRANSLATIONS_MAPPING.md) for the modifier mapping and translation join model.
 

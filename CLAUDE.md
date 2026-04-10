@@ -50,7 +50,8 @@ cargo clippy --all-targets
 # Validate LCARS officer definitions
 ./target/release/kobayashi validate data/officers
 
-# Regenerate LCARS (runs the generate_lcars binary)
+# Regenerate LCARS monolith (`officers.lcars.yaml` under --output)
+# After upstream officer cache refresh: python3 scripts/normalize_officer_id_strings.py
 cargo build --bin generate_lcars && ./target/release/kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/officers]
 
 # Run benchmarks
@@ -72,7 +73,7 @@ npm run test     # Vitest tests
 ```bash
 cargo run --bin normalize_stfc_data
 cargo run --bin validate_data
-cargo run --bin merge_lcars
+cargo run --bin merge_lcars   # optional: merge legacy per-faction *.lcars.yaml shards only
 cargo run --bin import_forbidden_chaos
 cargo run --bin import_syndicate_reputation
 cargo run --bin generate_officer_scorecard   # docs/OFFICER_MODELING_SCORECARD.md — edit fidelity in data/officers/officer_modeling_fidelity.yaml
@@ -129,7 +130,7 @@ The library is at `src/lib.rs` and exposes these modules:
 - **`src/combat/`** — Core fight loop (`engine.rs`). This is the hot path: zero allocations, no dynamic dispatch, SplitMix64 PRNG. `abilities.rs` evaluates effects per round; `buffs.rs` implements stacking rules; `stacking.rs` handles the base→flat→pct→multiply→cap resolution order.
 - **`src/lcars/`** — LCARS YAML parser (`parser.rs`) and resolver (`resolver.rs`) that collapses officer definitions into a `BuffSet` (static buffs + per-round effects + triggered effects). Only files matching `*.lcars.yaml` are loaded from a directory.
 - **`src/optimizer/`** — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates; `genetic.rs` is the GA strategy (select via `strategy: "genetic"` in API); `tiered.rs` implements a two-pass scouting → confirmation strategy (select via `strategy: "tiered"`). `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
-- **`src/data/`** — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is canonical; `officers.lcars.yaml` is the LCARS source of truth. `loader.rs` resolves by id (e.g. data.stfc.space numeric string `2918121098`) or by normalized hostile name + level (e.g. `hostile_2918121098_81` for placeholder display names).
+- **`src/data/`** — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is the maintainer-curated catalog; `officers.lcars.yaml` is generated from it (`generate_lcars`) and is the combat YAML the sim loads. `loader.rs` resolves by id (e.g. data.stfc.space numeric string `2918121098`) or by normalized hostile name + level (e.g. `hostile_2918121098_81` for placeholder display names).
 - **`src/server/`** — Axum HTTP server with Tokio async runtime. Heavy operations (simulate, optimize) are offloaded via `spawn_blocking`. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
 - **`src/server/`** — Async HTTP server built on Tokio + Axum 0.7. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers; CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present.
 - **`src/parallel/`** — Rayon thread pool integration; each thread owns its PRNG instance.
@@ -142,8 +143,8 @@ The library is at `src/lib.rs` and exposes these modules:
 ```
 data/
 ├── officers/
-│   ├── officers.lcars.yaml        # LCARS source of truth for officer abilities
-│   ├── officers.canonical.json    # Canonical officer catalog (regenerated from LCARS)
+│   ├── officers.lcars.yaml        # LCARS combat definitions (from generate_lcars)
+│   ├── officers.canonical.json    # Maintainer catalog; normalize_officer_id_strings.py + manual edits
 │   ├── id_registry.json           # Officer id → canonical id mapping
 │   └── name_aliases.json          # Name normalization aliases
 ├── ships_extended/                # Extended schema: index.json + <id>.json (tiers, levels)

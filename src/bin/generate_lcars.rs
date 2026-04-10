@@ -1,8 +1,9 @@
-//! Generate LCARS YAML files from officers.canonical.json.
+//! Generate a single LCARS monolith (`officers.lcars.yaml`) from officers.canonical.json.
 //! Run: cargo run --bin generate_lcars [-- path/to/officers.canonical.json] [--output data/officers]
 //!   [--summary data/upstream/data-stfc-space/summary-officer.json]
 //!   [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
-//! Output: data/officers/<faction>.lcars.yaml files grouped by faction.
+//! Output: `<output_dir>/officers.lcars.yaml` (all officers, sorted by id).
+//! For legacy per-faction shards, see `merge_lcars` + cached `*.lcars.yaml` workflows in docs.
 //!
 //! When `--summary` and `--translations` point at data-stfc-space exports, ability block names are
 //! resolved from `officer_ability_name` rows (`loca_id` in summary matches `id` in translations).
@@ -164,21 +165,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     fs::create_dir_all(&output_dir)?;
 
-    for (faction_key, officers) in officers_by_faction {
-        if officers.is_empty() {
-            continue;
-        }
-        let filename = format!("{}.lcars.yaml", faction_key);
-        let out_path = output_dir.join(&filename);
-        let file = LcarsFile { officers };
-        let yaml = serde_yaml::to_string(&file)?;
-        fs::write(&out_path, yaml)?;
-        println!(
-            "Wrote {} ({} officers)",
-            out_path.display(),
-            file.officers.len()
-        );
-    }
+    let mut all_officers: Vec<LcarsOfficer> = officers_by_faction
+        .into_values()
+        .flatten()
+        .collect();
+    all_officers.sort_by(|a, b| a.id.cmp(&b.id));
+
+    let out_path = output_dir.join("officers.lcars.yaml");
+    let file = LcarsFile {
+        officers: all_officers,
+    };
+    let yaml = serde_yaml::to_string(&file)?;
+    fs::write(&out_path, yaml)?;
+    println!(
+        "Wrote {} ({} officers)",
+        out_path.display(),
+        file.officers.len()
+    );
 
     println!(
         "Done. Ability names resolved from translations: {names_resolved} blocks (use --no-ability-names to skip).",

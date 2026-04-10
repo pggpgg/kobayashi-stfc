@@ -47,7 +47,7 @@ python3 scripts/fetch_stfcspace_page_upstream.py
 |--------|-----------------|-------------------------|
 | `node scripts/fetch_stfcspace_ships.mjs` | `ships/` | `python3 scripts/build_ship_registry.py` → `cargo run --bin normalize_data_stfc_space` |
 | `node scripts/fetch_stfcspace_hostiles.mjs` | `hostiles/` | `cargo run --bin normalize_hostiles_stfc_space` |
-| `node scripts/fetch_stfcspace_officers.mjs` | `officers/` | Reference only (LCARS remains source of truth for combat) |
+| `node scripts/fetch_stfcspace_officers.mjs` | `officers/` | After refresh: `python3 scripts/normalize_officer_id_strings.py` syncs decimal ids + **`below_decks` slots** from these files into `officers.canonical.json`, then `cargo run --bin generate_lcars` rebuilds `officers.lcars.yaml` |
 | `node scripts/fetch_stfcspace_research.mjs` | `research/` (tracked) | `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` |
 | `node scripts/fetch_stfcspace_forbidden_tech.mjs` | `forbidden_tech/` | Manual / CSV workflows (see `data/README.md` § Forbidden tech) |
 

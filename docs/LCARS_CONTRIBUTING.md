@@ -101,23 +101,20 @@ Validation checks:
 
 ## Regenerating from Canonical
 
-To regenerate LCARS from `officers.canonical.json` (this produces multiple faction files):
+`generate_lcars` writes a **single** `officers.lcars.yaml` under `--output` (all officers, sorted by id). After refreshing upstream officer JSON, run **`python3 scripts/normalize_officer_id_strings.py`** first so decimal ids and **below-decks `slot`** fields match `data/upstream/data-stfc-space/officers/*.json`.
 
 ```bash
+python3 scripts/normalize_officer_id_strings.py
 kobayashi generate-lcars data/officers/officers.canonical.json --output data/officers
 ```
 
-Or use the standalone binary:
+Or the standalone binary:
 
 ```bash
 cargo run --bin generate_lcars -- data/officers/officers.canonical.json --output data/officers
 ```
 
-To merge all `*.lcars.yaml` files in `data/officers` into a single `officers.lcars.yaml` (and remove the others):
-
-```bash
-cargo run --bin merge_lcars -- data/officers
-```
+**Legacy:** If you still have per-faction `*.lcars.yaml` shards, [`merge_lcars`](../src/bin/merge_lcars.rs) can combine them into one file and delete shards (see source for behavior).
 
 ## Using LCARS in Simulation
 
