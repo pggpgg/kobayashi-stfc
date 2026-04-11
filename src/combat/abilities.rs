@@ -116,6 +116,14 @@ pub enum AbilityEffect {
         growth_per_round: f64,
         ceiling: f64,
     },
+    /// Galaxy-class hull growth (e.g. U.S.S. Enterprise-D): cumulative fraction `g` (same units as
+    /// profile `weapon_damage` bonus `p`) applied as `×(1 + g/(1+p))` on outgoing weapon damage so it
+    /// stacks **additively** with research weapon_damage (`∝ 1+p+g`) instead of as another factor in
+    /// `pre_attack_multiplier` (`∝ (1+p)(1+g)` when alone).
+    GalaxyAdditiveWeaponDamageGrowth {
+        growth_per_round: f64,
+        ceiling: f64,
+    },
     /// Increase shots per weapon for a duration. Formula: n_w(r) = RoundHalfEven(n_w0 * (1 + B_shots)); this effect adds to B_shots when it triggers.
     /// chance: 1.0 = deterministic (e.g. "at start of each round, +X% shots for Y rounds").
     ShotsBonus {
@@ -191,13 +199,11 @@ impl AbilityCondition {
             Self::StatBelow {
                 stat,
                 threshold_pct,
-            } => stat_pct_for_condition(stat.as_str(), ctx)
-                .is_some_and(|pct| pct < *threshold_pct),
+            } => stat_pct_for_condition(stat.as_str(), ctx).is_some_and(|pct| pct < *threshold_pct),
             Self::StatAbove {
                 stat,
                 threshold_pct,
-            } => stat_pct_for_condition(stat.as_str(), ctx)
-                .is_some_and(|pct| pct > *threshold_pct),
+            } => stat_pct_for_condition(stat.as_str(), ctx).is_some_and(|pct| pct > *threshold_pct),
             Self::RoundRange { min, max } => ctx.round_index >= *min && ctx.round_index <= *max,
             Self::MoraleActive => ctx.attacker_morale_active,
             Self::DefenderBurning => ctx.defender_burning_active,

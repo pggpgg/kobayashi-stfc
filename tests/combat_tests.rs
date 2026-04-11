@@ -1,13 +1,12 @@
 use kobayashi::combat::{
     aggregate_contributions, apply_morale_primary_piercing, component_mitigation,
     effective_shots_for_weapon, isolytic_damage, mitigation, mitigation_with_morale,
-    pierce_damage_through_bonus, round_half_even,
-    serialize_events_json, simulate_combat, simulate_combat_with_defender_faction,
-    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass,
-    AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration,
-    CrewSeat, CrewSeatContext, DefenderStats, EventSource, OpponentFactionTag, ShipType,
-    SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode,
-    WeaponStats, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
+    pierce_damage_through_bonus, round_half_even, serialize_events_json, simulate_combat,
+    simulate_combat_with_defender_faction, simulate_combat_with_defender_faction_and_defender_crew,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, OpponentFactionTag,
+    ShipType, SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector,
+    TraceMode, WeaponStats, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
 };
 use serde_json::{Map, Value};
 
@@ -45,6 +44,8 @@ fn defender_counter_respects_weapon_base_shots() {
         seed: 20260407,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let player = Combatant {
         id: "player".into(),
@@ -112,6 +113,8 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         seed: 1,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let player = Combatant {
         id: "player".into(),
@@ -421,6 +424,8 @@ fn defender_crew_can_modify_counter_fire_damage() {
         seed: 1,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -523,6 +528,8 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -617,6 +624,8 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         seed: 3,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let baseline = simulate_combat(
         &attacker,
@@ -791,6 +800,8 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew = CrewConfiguration::default();
 
@@ -877,6 +888,8 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     // 200 damage: 80% = 160 to shield, 20% = 40 to hull.
@@ -931,6 +944,8 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     approx_eq(result.total_damage, 1000.0, 1e-12);
@@ -983,6 +998,8 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
@@ -1036,6 +1053,8 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_shred = CrewConfiguration {
@@ -1116,6 +1135,8 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_barrier = CrewConfiguration {
@@ -1197,6 +1218,8 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew_no_ship_ability = CrewConfiguration::default();
     let crew_with_ship_ability = CrewConfiguration {
@@ -1273,6 +1296,8 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         seed: 11,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1363,6 +1388,8 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         seed: 11,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1456,6 +1483,8 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         seed: 13,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1551,6 +1580,8 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         seed: 17,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1610,8 +1641,16 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         both_match.total_damage > wrong_hostile_hull.total_damage,
         "AND gate should fail when hostile hull class does not match"
     );
-    approx_eq(wrong_player_hull.total_damage, wrong_hostile_hull.total_damage, 1.0);
-    approx_eq(wrong_player_hull.total_damage, both_match.total_damage / 2.0, 1.0);
+    approx_eq(
+        wrong_player_hull.total_damage,
+        wrong_hostile_hull.total_damage,
+        1.0,
+    );
+    approx_eq(
+        wrong_player_hull.total_damage,
+        both_match.total_damage / 2.0,
+        1.0,
+    );
 }
 
 #[test]
@@ -1663,6 +1702,8 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         seed: 2,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let uncapped = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1776,6 +1817,8 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         seed: 11,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew_plain = CrewConfiguration::default();
     let crew_crozier_style = CrewConfiguration {
@@ -1880,6 +1923,8 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             seed: 11,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -1962,6 +2007,8 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         seed: 7,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, config, &no_morale);
@@ -2060,6 +2107,8 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         seed: 100,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let never_morale = simulate_combat(&attacker, &defender, config, &crew_with_morale_chance(0.0));
@@ -2171,6 +2220,8 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         seed: 7,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, config, &baseline_crew);
@@ -2267,6 +2318,8 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
             seed: 7,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -2354,6 +2407,8 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
             seed: 7,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -2442,6 +2497,8 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
             seed: 42,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -2528,6 +2585,8 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
             seed: 1,
             trace_mode: TraceMode::Off,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -2605,6 +2664,8 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
             seed: 7,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -2666,6 +2727,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         seed: 7,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let crew = CrewConfiguration::default();
@@ -2888,6 +2951,8 @@ fn crew_slot_gating_matrix_controls_activation() {
         seed: 9,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let valid_crew = CrewConfiguration {
@@ -2990,6 +3055,8 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         seed: 11,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let boosted = CrewConfiguration {
@@ -3074,6 +3141,8 @@ fn timing_windows_materially_change_damage_outcomes() {
         seed: 17,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let attack_phase_crew = CrewConfiguration {
@@ -3205,6 +3274,8 @@ fn burning_deals_one_percent_hull_per_round() {
             seed: 1,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_crew,
     );
@@ -3305,6 +3376,8 @@ fn burning_triggers_on_combat_begin() {
             seed: 7,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_only_crew(TimingWindow::CombatBegin),
     );
@@ -3359,6 +3432,8 @@ fn burning_triggers_on_defense_phase_per_shot() {
             seed: 11,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_only_crew(TimingWindow::DefensePhase),
     );
@@ -3413,6 +3488,8 @@ fn burning_triggers_on_round_end_before_tick() {
             seed: 13,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_only_crew(TimingWindow::RoundEnd),
     );
@@ -3474,6 +3551,8 @@ fn burning_triggers_on_shield_break() {
             seed: 17,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_only_crew(TimingWindow::ShieldBreak),
     );
@@ -3568,6 +3647,8 @@ fn burning_triggers_on_hull_breach_state_entry() {
             seed: 19,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -3622,6 +3703,8 @@ fn burning_triggers_on_receive_damage_hull() {
             seed: 23,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_only_crew(TimingWindow::ReceiveDamage),
     );
@@ -3676,6 +3759,8 @@ fn burning_triggers_on_kill() {
             seed: 29,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_only_crew(TimingWindow::Kill),
     );
@@ -3730,6 +3815,8 @@ fn burning_triggers_on_after_subround() {
             seed: 31,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &burning_only_crew(TimingWindow::AfterSubround),
     );
@@ -3874,6 +3961,8 @@ fn emits_ability_activation_for_each_timing_window() {
             seed: 19,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -3988,6 +4077,8 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         seed: 11,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let summed = simulate_combat(&attacker, &defender, config, &two_ten_percent);
@@ -4062,6 +4153,8 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         seed: 42,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &decay_crew);
     assert!(result.total_damage > 0.0);
@@ -4133,6 +4226,8 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         seed: 42,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &accumulate_crew);
     assert!(result.total_damage > 0.0);
@@ -4188,6 +4283,8 @@ fn combat_rounds_are_capped_at_100() {
             seed: 9,
             trace_mode: TraceMode::Off,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &CrewConfiguration::default(),
     );
@@ -4277,6 +4374,8 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             seed: 99,
             trace_mode: TraceMode::Off,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew_no_regen,
     );
@@ -4288,6 +4387,8 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             seed: 99,
             trace_mode: TraceMode::Off,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew_with_regen,
     );
@@ -4350,6 +4451,8 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
             seed: 3,
             trace_mode: TraceMode::Off,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &CrewConfiguration::default(),
     );
@@ -4413,6 +4516,8 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         seed: 5,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew = CrewConfiguration::default();
     let result_no_iso = simulate_combat(&attacker_no_iso, &defender, config, &crew);
@@ -4475,6 +4580,8 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         seed: 5,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew_empty = CrewConfiguration::default();
     let crew_with_iso = CrewConfiguration {
@@ -4546,6 +4653,8 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         seed: 5,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew_base_iso = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -4659,6 +4768,8 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         seed: 7,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -4741,6 +4852,8 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         seed: 3,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -4814,6 +4927,8 @@ fn shots_bonus_increases_damage() {
         seed: 42,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let no_bonus = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
 
@@ -4928,6 +5043,8 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
             seed: 13,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -5009,6 +5126,8 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             seed: 7,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew_with_regen,
     );
@@ -5020,6 +5139,8 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             seed: 7,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &CrewConfiguration::default(),
     );
@@ -5122,6 +5243,8 @@ fn combat_end_window_respects_condition_filtering() {
             seed: 17,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );
@@ -5207,6 +5330,8 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
             seed: 3,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &crew,
     );

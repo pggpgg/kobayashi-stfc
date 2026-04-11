@@ -506,9 +506,8 @@ fn build_optimize_response(
         && request.analytical_prefilter_keep.is_some()
         && !matches!(meta.strategy, OptimizerStrategy::Genetic)
     {
-        approximate_notes.push(
-            "analytical_prefilter_keep was skipped for chain grind mode.".to_string(),
-        );
+        approximate_notes
+            .push("analytical_prefilter_keep was skipped for chain grind mode.".to_string());
     }
 
     let mut warnings = Vec::new();

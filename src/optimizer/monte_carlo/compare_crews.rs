@@ -62,6 +62,8 @@ fn simulate_trial(
         seed: iteration_seed,
         trace_mode: trace,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
+        profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
     };
     let defender_faction = shared
         .hostile_rec

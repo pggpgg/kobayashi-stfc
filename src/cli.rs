@@ -2,19 +2,17 @@ use std::env;
 use std::fmt::Write as _;
 
 use crate::combat::{
-    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat_with_defender_faction,
-    Combatant, CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode,
-    MITIGATION_CEILING, MITIGATION_FLOOR,
+    default_percent_sensitivity_rows, format_sensitivity_tsv,
+    simulate_combat_with_defender_faction, Combatant, CrewConfiguration, HostileMitigationBaseline,
+    SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
 };
 use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
-use crate::data::loader::{
-    defender_faction_for_cli_simulate, resolve_hostile, resolve_ship,
-};
+use crate::data::loader::{defender_faction_for_cli_simulate, resolve_hostile, resolve_ship};
 use crate::data::profile::{apply_profile_to_attacker, load_profile};
 use crate::data::profile_index::{
-    ensure_profile_index_bootstrap, prune_ephemeral_scenario_test_profiles, profile_data_dir,
-    profile_path, resolve_profile_id_for_api, sync_profile_index_with_disk, PROFILE_JSON,
-    ROSTER_IMPORTED,
+    ensure_profile_index_bootstrap, profile_data_dir, profile_path,
+    prune_ephemeral_scenario_test_profiles, resolve_profile_id_for_api,
+    sync_profile_index_with_disk, PROFILE_JSON, ROSTER_IMPORTED,
 };
 use crate::data::validate::{validate_officer_dataset, ValidationSeverity};
 use crate::optimizer::optimize_crew;
@@ -189,16 +187,15 @@ fn handle_simulate(args: &[String]) -> i32 {
     let seed = parse_u64_arg(args.get(3), "seed", 7);
     let as_table = args.iter().any(|arg| arg == "--table");
     let (faction_slug, hostile_lookup) = parse_simulate_defender_faction_flags(args);
-    let defender_faction = match defender_faction_for_cli_simulate(
-        faction_slug.as_deref(),
-        hostile_lookup.as_deref(),
-    ) {
-        Ok(t) => t,
-        Err(e) => {
-            eprintln!("simulate error: {e}");
-            return 2;
-        }
-    };
+    let defender_faction =
+        match defender_faction_for_cli_simulate(faction_slug.as_deref(), hostile_lookup.as_deref())
+        {
+            Ok(t) => t,
+            Err(e) => {
+                eprintln!("simulate error: {e}");
+                return 2;
+            }
+        };
 
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let profile_path_str = profile_path(&profile_id, PROFILE_JSON)
@@ -256,6 +253,8 @@ fn handle_simulate(args: &[String]) -> i32 {
             seed,
             trace_mode: TraceMode::Events,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         },
         &CrewConfiguration::default(),
         defender_faction,

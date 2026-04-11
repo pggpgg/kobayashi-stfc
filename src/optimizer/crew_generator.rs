@@ -61,12 +61,7 @@ pub fn resolve_below_decks_slots_for_ship(
     let schedule = ship_tiers_levels_and_crew_slots(ship.trim())
         .map(|(_, _, cs)| cs)
         .filter(|cs| !cs.is_empty());
-    resolve_below_decks_slots(
-        ship_tier,
-        ship_level,
-        schedule.as_deref(),
-        explicit,
-    )
+    resolve_below_decks_slots(ship_tier, ship_level, schedule.as_deref(), explicit)
 }
 
 /// Officer pools by slot, as names. Shared by crew generator and genetic optimizer.
@@ -776,10 +771,7 @@ mod tests {
 
     #[test]
     fn resolve_below_decks_uses_explicit_or_tier_default() {
-        assert_eq!(
-            resolve_below_decks_slots(None, None, None, Some(4)),
-            4
-        );
+        assert_eq!(resolve_below_decks_slots(None, None, None, Some(4)), 4);
         assert_eq!(resolve_below_decks_slots(Some(1), None, None, None), 2);
         assert_eq!(resolve_below_decks_slots(Some(2), None, None, None), 3);
         assert_eq!(resolve_below_decks_slots(None, None, None, None), 3);

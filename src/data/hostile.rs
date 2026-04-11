@@ -276,8 +276,10 @@ impl HostileRecord {
     /// [`crate::data::upstream_hostile_ship_type`], returns [`ShipType::Armada`] so armada-tuned
     /// buffs apply even if `ship_class` was inferred as another hull line.
     pub fn ship_type_for_combat(&self) -> ShipType {
-        if super::upstream_hostile_ship_type::upstream_hostile_ship_type_profile(self.upstream_ship_type)
-            .is_armada_target
+        if super::upstream_hostile_ship_type::upstream_hostile_ship_type_profile(
+            self.upstream_ship_type,
+        )
+        .is_armada_target
         {
             ShipType::Armada
         } else {

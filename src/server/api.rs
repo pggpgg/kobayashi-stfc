@@ -801,12 +801,8 @@ pub fn replay_optimize_seed_payload(
         .map(|o| (o.id.clone(), o.name.clone()))
         .collect();
 
-    let below_decks_slots = resolve_below_decks_slots_for_ship(
-        &req.ship,
-        req.ship_tier,
-        req.ship_level,
-        None,
-    );
+    let below_decks_slots =
+        resolve_below_decks_slots_for_ship(&req.ship, req.ship_tier, req.ship_level, None);
     let candidate = crew_candidate_from_officer_fields(
         req.crew.captain.as_deref(),
         req.crew.bridge.as_deref(),
@@ -1502,12 +1498,8 @@ pub fn optimize_estimate_payload(
             }],
         }));
     }
-    let below_decks_slots = resolve_below_decks_slots_for_ship(
-        ship.trim(),
-        ship_tier,
-        ship_level,
-        bd_explicit,
-    );
+    let below_decks_slots =
+        resolve_below_decks_slots_for_ship(ship.trim(), ship_tier, ship_level, bd_explicit);
     let estimated_candidates = match max_candidates {
         Some(cap) if cap <= MAX_CANDIDATES => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {

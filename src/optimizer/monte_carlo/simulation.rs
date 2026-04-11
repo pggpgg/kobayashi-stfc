@@ -175,11 +175,7 @@ fn run_candidate_chain_monte_carlo(
     let win_rate = if n == 0 { 0.0 } else { primary_ok as f64 / nf };
     let stall_rate = if n == 0 { 0.0 } else { stalls as f64 / nf };
     let loss_rate = if n == 0 { 0.0 } else { losses as f64 / nf };
-    let r1_kill_rate = if n == 0 {
-        0.0
-    } else {
-        r1_first as f64 / nf
-    };
+    let r1_kill_rate = if n == 0 { 0.0 } else { r1_first as f64 / nf };
 
     let avg_cond_secondary = if sec_count == 0 { 0.0 } else { sec_mean };
     let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if sec_count == 0 {
@@ -190,10 +186,7 @@ fn run_candidate_chain_monte_carlo(
         let var = sec_m2 / (sec_count as f64 - 1.0);
         let se = (var / sec_count as f64).sqrt().max(0.0);
         const Z: f64 = 1.96;
-        (
-            (avg_cond_secondary - Z * se),
-            (avg_cond_secondary + Z * se),
-        )
+        ((avg_cond_secondary - Z * se), (avg_cond_secondary + Z * se))
     };
 
     let (win_rate_ci_low, win_rate_ci_high) = wilson_95_interval(primary_ok, n);
@@ -201,25 +194,20 @@ fn run_candidate_chain_monte_carlo(
     let (loss_rate_ci_low, loss_rate_ci_high) = wilson_95_interval(losses, n);
     let (r1_kill_rate_ci_low, r1_kill_rate_ci_high) = wilson_95_interval(r1_first, n);
 
-    let avg_defender_hull_remaining = if n == 0 {
-        0.0
+    let avg_defender_hull_remaining = if n == 0 { 0.0 } else { def_hull_mean };
+    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) = if n == 0 {
+        (0.0, 0.0)
+    } else if n == 1 {
+        (avg_defender_hull_remaining, avg_defender_hull_remaining)
     } else {
-        def_hull_mean
+        let var = def_hull_m2 / (n as f64 - 1.0);
+        let se = (var / n as f64).sqrt().max(0.0);
+        const Z: f64 = 1.96;
+        (
+            (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
+            (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
+        )
     };
-    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) =
-        if n == 0 {
-            (0.0, 0.0)
-        } else if n == 1 {
-            (avg_defender_hull_remaining, avg_defender_hull_remaining)
-        } else {
-            let var = def_hull_m2 / (n as f64 - 1.0);
-            let se = (var / n as f64).sqrt().max(0.0);
-            const Z: f64 = 1.96;
-            (
-                (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
-                (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
-            )
-        };
 
     let summary = ChainSimulationSummary {
         kills_target: chain.kills_target,
@@ -280,6 +268,8 @@ fn run_candidate_monte_carlo(
         seed: 0,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
+        profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
     };
 
     let mut n_done = 0usize;
@@ -390,25 +380,20 @@ fn run_candidate_monte_carlo(
         )
     };
 
-    let avg_defender_hull_remaining = if n_done == 0 {
-        0.0
+    let avg_defender_hull_remaining = if n_done == 0 { 0.0 } else { def_hull_mean };
+    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) = if n_done == 0 {
+        (0.0, 0.0)
+    } else if n_done == 1 {
+        (avg_defender_hull_remaining, avg_defender_hull_remaining)
     } else {
-        def_hull_mean
+        let var = def_hull_m2 / (n_done as f64 - 1.0);
+        let se = (var / n_done as f64).sqrt().max(0.0);
+        const Z: f64 = 1.96;
+        (
+            (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
+            (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
+        )
     };
-    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) =
-        if n_done == 0 {
-            (0.0, 0.0)
-        } else if n_done == 1 {
-            (avg_defender_hull_remaining, avg_defender_hull_remaining)
-        } else {
-            let var = def_hull_m2 / (n_done as f64 - 1.0);
-            let se = (var / n_done as f64).sqrt().max(0.0);
-            const Z: f64 = 1.96;
-            (
-                (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
-                (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
-            )
-        };
 
     SimulationResult {
         candidate: candidate.clone(),
@@ -586,14 +571,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     );
     let placeholder = shared.using_placeholder_combatants;
     (
-        run_monte_carlo_with_shared(
-            shared,
-            candidates,
-            iterations,
-            seed,
-            true,
-            chain_grind,
-        ),
+        run_monte_carlo_with_shared(shared, candidates, iterations, seed, true, chain_grind),
         placeholder,
     )
 }
@@ -625,14 +603,7 @@ pub fn run_monte_carlo_with_registry(
     );
     let placeholder = shared.using_placeholder_combatants;
     (
-        run_monte_carlo_with_shared(
-            shared,
-            candidates,
-            iterations,
-            seed,
-            false,
-            chain_grind,
-        ),
+        run_monte_carlo_with_shared(shared, candidates, iterations, seed, false, chain_grind),
         placeholder,
     )
 }
@@ -701,6 +672,8 @@ pub fn replay_optimize_iteration_with_registry(
         seed: iteration_seed,
         trace_mode: TraceMode::Events,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
+        profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(
@@ -759,14 +732,7 @@ fn run_monte_carlo_with_parallelism(
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     let shared = build_shared_scenario_data_standalone(ship, hostile, support_buffs);
-    run_monte_carlo_with_shared(
-        shared,
-        candidates,
-        iterations,
-        seed,
-        parallel,
-        chain_grind,
-    )
+    run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel, chain_grind)
 }
 
 /// Run Monte Carlo using pre-built SharedScenarioData (used by both legacy and registry paths).
@@ -832,14 +798,9 @@ fn run_monte_carlo_inner(
 ) -> Vec<SimulationResult> {
     let run_one = |candidate: &CrewCandidate| match chain_grind.as_ref() {
         None => run_candidate_monte_carlo(&shared, candidate, seed, iterations, early_scout),
-        Some(c) => run_candidate_chain_monte_carlo(
-            &shared,
-            candidate,
-            seed,
-            iterations,
-            c,
-            early_scout,
-        ),
+        Some(c) => {
+            run_candidate_chain_monte_carlo(&shared, candidate, seed, iterations, c, early_scout)
+        }
     };
 
     if parallel {

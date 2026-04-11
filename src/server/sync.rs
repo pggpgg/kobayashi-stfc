@@ -857,8 +857,8 @@ mod tests {
         BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, LAST_MOD_SYNC_JSON,
         RESEARCH_IMPORTED, SHIPS_IMPORTED,
     };
-    use serde_json::json;
     use axum::http::StatusCode;
+    use serde_json::json;
     use std::sync::Mutex;
     use std::sync::Once;
     use uuid::Uuid;
@@ -1063,11 +1063,7 @@ mod tests {
             "source_path": "stfc-mod sync",
             "battlelogs": existing,
         });
-        std::fs::write(
-            &battle_path,
-            serde_json::to_string_pretty(&seed).unwrap(),
-        )
-        .unwrap();
+        std::fs::write(&battle_path, serde_json::to_string_pretty(&seed).unwrap()).unwrap();
 
         let new_batch: String = (40i64..55)
             .map(|i| format!(r#"{{"type":"battlelogs","seq":{i}}}"#))

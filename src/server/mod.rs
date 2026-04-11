@@ -39,9 +39,8 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
 
     crate::data::profile_index::ensure_profile_index_bootstrap()
         .map_err(|e| std::io::Error::other(format!("Profile index bootstrap failed: {e}")))?;
-    crate::data::profile_index::prune_ephemeral_scenario_test_profiles().map_err(|e| {
-        std::io::Error::other(format!("Ephemeral profile prune failed: {e}"))
-    })?;
+    crate::data::profile_index::prune_ephemeral_scenario_test_profiles()
+        .map_err(|e| std::io::Error::other(format!("Ephemeral profile prune failed: {e}")))?;
     crate::data::profile_index::sync_profile_index_with_disk()
         .map_err(|e| std::io::Error::other(format!("Profile index sync failed: {e}")))?;
 

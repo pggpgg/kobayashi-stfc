@@ -20,8 +20,8 @@ use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
 use crate::data::research::{
-    cumulative_conditional_research_bonuses, cumulative_research_bonuses, ResearchBonusConditionKey,
-    ResearchCatalog,
+    cumulative_conditional_research_bonuses, cumulative_research_bonuses,
+    ResearchBonusConditionKey, ResearchCatalog,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

@@ -1,4 +1,16 @@
 //! One-off sanity trace: U.S.S. Enterprise-D Galaxy class hull ability (level-scaled growth) + demo profile.
+//!
+//! **Crew:** Harry Kim is on **below decks**; LCARS [`below_decks_ability`] (“To the Journey!”) supplies
+//! round-start **Morale**. The Galaxy hull ability (`448699234`) is **`additive_weapon_damage_growth`**
+//! (cumulative `g` diluted against profile `weapon_damage` `p` as `×(1+g/(1+p))`), gated on [`MoraleActive`],
+//! so you expect **per-round damage to trend up** when Morale procs reliably
+//! (e.g. `(T5)` → 100% chance). The middle column is **damage in that round only**, not cumulative; the
+//! footer line is the running sum from trace `damage_application` events. Trace `round_index` is **1-based**
+//! (first combat round is `1`).
+//!
+//! **Officer source:** Below-decks Morale comes from LCARS YAML. This test sets `KOBAYASHI_OFFICER_SOURCE=lcars`
+//! before [`DataRegistry::load`] (default registry load uses canonical JSON only).
+//!
 //! Run: `cargo test galaxy_ent_d_round_damage_sanity_prints_per_round_damage -- --nocapture`
 
 use kobayashi::data::data_registry::DataRegistry;
@@ -49,8 +61,31 @@ fn trim_trailing_zeros(s: String) -> String {
     s.trim_end_matches('.').to_string()
 }
 
+struct EnvVarGuard {
+    key: &'static str,
+    previous: Option<String>,
+}
+
+impl EnvVarGuard {
+    fn set(key: &'static str, value: &str) -> Self {
+        let previous = std::env::var(key).ok();
+        std::env::set_var(key, value);
+        Self { key, previous }
+    }
+}
+
+impl Drop for EnvVarGuard {
+    fn drop(&mut self) {
+        match &self.previous {
+            Some(p) => std::env::set_var(self.key, p),
+            None => std::env::remove_var(self.key),
+        }
+    }
+}
+
 #[test]
 fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
+    let _lcars = EnvVarGuard::set("KOBAYASHI_OFFICER_SOURCE", "lcars");
     let registry = Arc::new(DataRegistry::load().expect("DataRegistry::load"));
 
     let ship_rec = resolve_ship_with_tier_level("uss_enterprise_d", Some(5), Some(7))
@@ -102,6 +137,12 @@ fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
         "expected at least 50 rounds (sponge hull); got {}",
         replay.rounds_simulated
     );
+    assert!(
+        !replay.trace_truncated,
+        "trace was truncated ({} events, {} kept); morale rows may be missing — raise max_trace_events in replay call",
+        replay.trace_event_count,
+        replay.trace_events_returned
+    );
 
     let mut per_round: BTreeMap<u32, f64> = BTreeMap::new();
     let mut morale_by_round: BTreeMap<u32, bool> = BTreeMap::new();
@@ -122,28 +163,35 @@ fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
         }
     }
 
+    for r in 1..=replay.rounds_simulated {
+        assert_eq!(
+            morale_by_round.get(&r).copied(),
+            Some(true),
+            "round {r}: T5 Harry below decks — Morale should succeed every round (chance 1.0); see resolve_options_with_candidate_tiers"
+        );
+    }
+
     println!(
         "\n=== Enterprise-D T5 L7 vs kobayashi_theoretical_damage_sponge (demo profile) ===\n\
-         rounds_simulated={} attacker_won={} total_damage={}\n",
+         rounds_simulated={} attacker_won={} total_damage={} (morale=all {} rounds)\n",
         replay.rounds_simulated,
         replay.attacker_won,
-        format_compact_damage(replay.total_damage)
+        format_compact_damage(replay.total_damage),
+        replay.rounds_simulated
     );
-    println!("round\tdmg_this_round\tmorale_proc");
+    println!("round\tdmg_this_round\tmorale_triggered");
     let mut cumulative = 0.0_f64;
-    for r in 0..=replay.rounds_simulated.saturating_sub(1) {
+    for r in 1..=replay.rounds_simulated {
         let dmg = per_round.get(&r).copied().unwrap_or(0.0);
         cumulative += dmg;
         let m = morale_by_round
             .get(&r)
             .map(|b| if *b { "yes" } else { "no" })
             .unwrap_or("-");
-        println!(
-            "{}\t{}\t{}",
-            r,
-            format_compact_damage(dmg),
-            m
-        );
+        println!("{}\t{}\t{}", r, format_compact_damage(dmg), m);
     }
-    println!("cumulative_damage_to_defender={}", format_compact_damage(cumulative));
+    println!(
+        "cumulative_damage_to_defender={}",
+        format_compact_damage(cumulative)
+    );
 }

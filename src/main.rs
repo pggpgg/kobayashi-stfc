@@ -2,19 +2,17 @@ use std::env;
 use std::process;
 
 use kobayashi::combat::{
-    default_percent_sensitivity_rows, format_sensitivity_tsv, simulate_combat_with_defender_faction,
-    Combatant, CrewConfiguration, HostileMitigationBaseline, SimulationConfig, TraceMode,
-    MITIGATION_CEILING, MITIGATION_FLOOR,
+    default_percent_sensitivity_rows, format_sensitivity_tsv,
+    simulate_combat_with_defender_faction, Combatant, CrewConfiguration, HostileMitigationBaseline,
+    SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
 };
 use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
-use kobayashi::data::loader::{
-    defender_faction_for_cli_simulate, resolve_hostile, resolve_ship,
-};
+use kobayashi::data::loader::{defender_faction_for_cli_simulate, resolve_hostile, resolve_ship};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
 use kobayashi::data::profile_index::{
-    ensure_profile_index_bootstrap, prune_ephemeral_scenario_test_profiles, profile_data_dir,
-    profile_path, resolve_profile_id_for_api, sync_profile_index_with_disk, PROFILE_JSON,
-    ROSTER_IMPORTED,
+    ensure_profile_index_bootstrap, profile_data_dir, profile_path,
+    prune_ephemeral_scenario_test_profiles, resolve_profile_id_for_api,
+    sync_profile_index_with_disk, PROFILE_JSON, ROSTER_IMPORTED,
 };
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
@@ -358,6 +356,8 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
             TraceMode::Off
         },
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
 
     let defender_faction = defender_faction_for_cli_simulate(

@@ -91,13 +91,10 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
         | "opponent_faction_is"
         | "opponent_faction"
         | "faction_is" => {
-            let slug = c
-                .faction
-                .as_deref()
-                .or(c.tag.as_deref())
-                .ok_or_else(|| {
-                    "faction condition requires `faction` or `tag` with a known faction slug".to_string()
-                })?;
+            let slug = c.faction.as_deref().or(c.tag.as_deref()).ok_or_else(|| {
+                "faction condition requires `faction` or `tag` with a known faction slug"
+                    .to_string()
+            })?;
             let tag = OpponentFactionTag::from_data_slug(slug).ok_or_else(|| {
                 format!("unknown faction slug '{slug}' for condition type '{ty}'")
             })?;
@@ -129,7 +126,8 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
                 .as_deref()
                 .or(c.stat.as_deref())
                 .ok_or_else(|| {
-                    "attacker/self ship class condition requires `ship_type` or `stat` slug".to_string()
+                    "attacker/self ship class condition requires `ship_type` or `stat` slug"
+                        .to_string()
                 })?;
             let st = ShipType::from_data_slug(slug).ok_or_else(|| {
                 format!("unknown ship class slug '{slug}' for condition type '{ty}'")
@@ -137,10 +135,9 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
             Ok(AbilityCondition::AttackerShipTypeIs(st))
         }
         "and" => {
-            let children = c
-                .conditions
-                .as_ref()
-                .ok_or_else(|| "`and` condition requires non-empty `conditions` array".to_string())?;
+            let children = c.conditions.as_ref().ok_or_else(|| {
+                "`and` condition requires non-empty `conditions` array".to_string()
+            })?;
             if children.is_empty() {
                 return Err("`and` condition must include at least one sub-condition".to_string());
             }
@@ -151,10 +148,9 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
             Ok(AbilityCondition::And(conds))
         }
         "or" => {
-            let children = c
-                .conditions
-                .as_ref()
-                .ok_or_else(|| "`or` condition requires non-empty `conditions` array".to_string())?;
+            let children = c.conditions.as_ref().ok_or_else(|| {
+                "`or` condition requires non-empty `conditions` array".to_string()
+            })?;
             if children.is_empty() {
                 return Err("`or` condition must include at least one sub-condition".to_string());
             }
@@ -408,10 +404,7 @@ fn resolve_effect(
                     Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
                 }
                 "armor" => {
-                    if !matches!(
-                        timing,
-                        TimingWindow::CombatBegin | TimingWindow::RoundStart
-                    ) {
+                    if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
                         return None;
                     }
                     let add = match op.as_str() {
@@ -1078,7 +1071,10 @@ mod tests {
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
-        assert_eq!(ac, AbilityCondition::AttackerShipTypeIs(ShipType::Battleship));
+        assert_eq!(
+            ac,
+            AbilityCondition::AttackerShipTypeIs(ShipType::Battleship)
+        );
         let ctx_bb = CombatContext {
             round_index: 1,
             defender_hull_pct: 1.0,
@@ -1440,13 +1436,8 @@ mod tests {
             tier: None,
             officer_tiers: Some([("table_officer".to_string(), 2u8)].into_iter().collect()),
         };
-        let buff =
-            resolve_crew_to_buff_set("table_officer", &[], &[], &officers, &options_tier2);
-        let v2 = buff
-            .static_buffs
-            .get("apex_shred")
-            .copied()
-            .unwrap_or(0.0);
+        let buff = resolve_crew_to_buff_set("table_officer", &[], &[], &officers, &options_tier2);
+        let v2 = buff.static_buffs.get("apex_shred").copied().unwrap_or(0.0);
         assert!(
             (v2 - 0.25).abs() < 1e-9,
             "expected discrete rank-2 value 0.25, got {v2}"

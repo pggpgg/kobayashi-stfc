@@ -13,6 +13,8 @@ use crate::combat::types::{
 pub(crate) struct EffectAccumulator {
     stacks: StatStacking<EffectStatKey>,
     pre_attack_modifier_sum: f64,
+    /// Cumulative Galaxy-class hull growth `g` (weapon_damage fraction units); applied in the engine as `×(1+g/(1+p))`.
+    galaxy_additive_weapon_frac: f64,
     attack_phase_damage_modifier_sum: f64,
     round_end_modifier_sum: f64,
     /// Sum of timed [`AbilityEffect::CritChanceBonus`] for the current shot stack.
@@ -105,6 +107,7 @@ impl Default for EffectAccumulator {
         Self {
             stacks,
             pre_attack_modifier_sum: 0.0,
+            galaxy_additive_weapon_frac: 0.0,
             attack_phase_damage_modifier_sum: 0.0,
             round_end_modifier_sum: 0.0,
             crit_chance_bonus: 0.0,
@@ -295,6 +298,11 @@ impl EffectAccumulator {
         (1.0 + self.pre_attack_modifier_sum).max(0.0)
     }
 
+    #[inline]
+    pub(crate) fn galaxy_additive_weapon_frac(&self) -> f64 {
+        self.galaxy_additive_weapon_frac
+    }
+
     pub(crate) fn pre_attack_pierce_bonus(&self) -> f64 {
         self.stacks
             .composed_for(&EffectStatKey::PreAttackPierceBonus)
@@ -404,6 +412,7 @@ impl EffectAccumulator {
     pub(crate) fn clear(&mut self) {
         self.stacks.clear();
         self.pre_attack_modifier_sum = 0.0;
+        self.galaxy_additive_weapon_frac = 0.0;
         self.attack_phase_damage_modifier_sum = 0.0;
         self.round_end_modifier_sum = 0.0;
         self.crit_chance_bonus = 0.0;
@@ -414,6 +423,7 @@ impl EffectAccumulator {
     pub(crate) fn merge_from(&mut self, other: &EffectAccumulator) {
         self.stacks.merge_from(&other.stacks);
         self.pre_attack_modifier_sum = other.pre_attack_modifier_sum;
+        self.galaxy_additive_weapon_frac = other.galaxy_additive_weapon_frac;
         self.attack_phase_damage_modifier_sum = other.attack_phase_damage_modifier_sum;
         self.round_end_modifier_sum = other.round_end_modifier_sum;
         self.crit_chance_bonus += other.crit_chance_bonus;
@@ -428,6 +438,7 @@ impl EffectAccumulator {
     pub(crate) fn merge_carry_additive(&mut self, carry: &EffectAccumulator) {
         self.stacks.merge_from(&carry.stacks);
         self.pre_attack_modifier_sum += carry.pre_attack_modifier_sum;
+        self.galaxy_additive_weapon_frac += carry.galaxy_additive_weapon_frac;
         self.attack_phase_damage_modifier_sum += carry.attack_phase_damage_modifier_sum;
         self.round_end_modifier_sum += carry.round_end_modifier_sum;
         self.crit_chance_bonus += carry.crit_chance_bonus;
@@ -446,6 +457,12 @@ impl EffectAccumulator {
             "pre_attack_multiplier".to_string(),
             Value::from(round_f64(self.pre_attack_multiplier())),
         );
+        if self.galaxy_additive_weapon_frac.abs() > EPS {
+            out.insert(
+                "galaxy_additive_weapon_frac".to_string(),
+                Value::from(round_f64(self.galaxy_additive_weapon_frac)),
+            );
+        }
         out.insert(
             "attack_phase_damage_multiplier".to_string(),
             Value::from(round_f64(1.0 + self.attack_phase_damage_modifier_sum)),
@@ -645,6 +662,28 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+                    growth_per_round,
+                    ceiling,
+                } => {
+                    if matches!(timing, TimingWindow::RoundStart) {
+                        let r = round_index as f64;
+                        let g = (r * growth_per_round).min(ceiling);
+                        if g.is_finite() && g > 0.0 {
+                            self.galaxy_additive_weapon_frac += g;
+                            if let Some((ab, oid)) = source {
+                                self.push_contribution_line(
+                                    ab,
+                                    oid,
+                                    timing,
+                                    "GalaxyAdditiveWeaponDamageGrowth",
+                                    "galaxy_additive_weapon_frac",
+                                    g,
+                                );
+                            }
+                        }
+                    }
+                }
             },
             TimingWindow::AttackPhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -756,6 +795,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
             // Same stacking rules as AttackPhase; evaluated once per sub-round end for carry into later weapons.
             TimingWindow::AfterSubround => match effect {
@@ -868,6 +908,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
             TimingWindow::DefensePhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -957,6 +998,7 @@ impl EffectAccumulator {
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. }
+                | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
                 | AbilityEffect::MitigationAdditive(_) => {}
             },
             // Resolved in the engine only after all weapon sub-rounds for the same round
@@ -1086,6 +1128,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
             TimingWindow::ShieldBreak
             | TimingWindow::SelfShieldBreak
@@ -1212,6 +1255,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
         }
     }
@@ -1361,6 +1405,13 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         } => AbilityEffect::AccumulatingAttackMultiplier {
             initial: 1.0 + (initial - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             growth_per_round,
+            ceiling,
+        },
+        AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+            growth_per_round,
+            ceiling,
+        } => AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+            growth_per_round: growth_per_round * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             ceiling,
         },
         AbilityEffect::ShotsBonus {

@@ -197,9 +197,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let mut defender_shield_remaining = defender.shield_health.max(0.0);
     let mut attacker_shield_remaining = attacker.shield_health.max(0.0);
     let max_att_hull = attacker.hull_health.max(0.0);
-    let mut total_attacker_hull_damage = config
-        .initial_attacker_hull_damage
-        .clamp(0.0, max_att_hull);
+    let mut total_attacker_hull_damage =
+        config.initial_attacker_hull_damage.clamp(0.0, max_att_hull);
     let mut hull_breach_rounds_remaining = 0_u32;
     let mut burning_rounds_remaining = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
@@ -630,8 +629,25 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             let weapon_index_u = weapon_index as u32;
             for hit_index in 0..effective_shots {
                 if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
-                    let effective_attack =
-                        attacker_weapon_attack * phase_effects.pre_attack_multiplier();
+                    let pre_mult = phase_effects.pre_attack_multiplier();
+                    let g_galaxy = phase_effects.galaxy_additive_weapon_frac();
+                    let p_prof = config.profile_weapon_damage_fraction;
+                    let galaxy_dilution = if g_galaxy > 0.0
+                        && g_galaxy.is_finite()
+                        && (1.0 + p_prof) > 1e-12
+                    {
+                        1.0 + g_galaxy / (1.0 + p_prof)
+                    } else {
+                        1.0
+                    };
+                    let effective_attack = match config.weapon_damage_profile_additive_pool {
+                        Some(p) if p > 0.0 && p.is_finite() => {
+                            // Experimental: one additive pool for profile weapon_damage + dynamic pre-attack sum.
+                            // Galaxy growth `g` shares the same additive pool as `p` (see findings doc).
+                            attacker_weapon_attack * (p + pre_mult + g_galaxy) / (1.0 + p)
+                        }
+                        _ => attacker_weapon_attack * pre_mult * galaxy_dilution,
+                    };
 
                     let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                     trace.record_if(|| CombatEvent {
@@ -1221,8 +1237,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     defender_phase_effects.set_pre_attack_damage_base(counter_base_damage);
                     let counter_pre_attack_damage =
                         defender_phase_effects.composed_pre_attack_damage();
-                    let counter_after_attack_phase =
-                        defender_phase_effects.compose_attack_phase_damage(counter_pre_attack_damage);
+                    let counter_after_attack_phase = defender_phase_effects
+                        .compose_attack_phase_damage(counter_pre_attack_damage);
                     let counter_iso_taken = compute_isolytic_taken(
                         counter_after_attack_phase,
                         (defender.isolytic_damage

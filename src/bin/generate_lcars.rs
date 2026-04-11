@@ -165,10 +165,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     fs::create_dir_all(&output_dir)?;
 
-    let mut all_officers: Vec<LcarsOfficer> = officers_by_faction
-        .into_values()
-        .flatten()
-        .collect();
+    let mut all_officers: Vec<LcarsOfficer> = officers_by_faction.into_values().flatten().collect();
     all_officers.sort_by(|a, b| a.id.cmp(&b.id));
 
     let out_path = output_dir.join("officers.lcars.yaml");
@@ -663,10 +660,7 @@ fn add_state_type_from_attributes(raw: &str) -> Option<StateType> {
     let attrs = raw.to_lowercase();
     if let Some(idx) = attrs.find("state=") {
         let rest = &attrs[idx + "state=".len()..];
-        let digits: String = rest
-            .chars()
-            .take_while(|c| c.is_ascii_digit())
-            .collect();
+        let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
         if let Ok(id) = digits.parse::<u32>() {
             return match id {
                 8 => Some(StateType::Morale),
@@ -906,6 +900,15 @@ mod canonical_condition_tests {
         assert_eq!(e.effect_type, "morale");
         assert_eq!(e.trigger.as_deref(), Some("on_round_start"));
         assert!(e.scaling.is_some());
-        assert_eq!(e.scaling.as_ref().unwrap().chance_values.as_ref().unwrap().len(), 5);
+        assert_eq!(
+            e.scaling
+                .as_ref()
+                .unwrap()
+                .chance_values
+                .as_ref()
+                .unwrap()
+                .len(),
+            5
+        );
     }
 }

@@ -41,8 +41,8 @@ struct AbilityCatalogEntry {
 }
 
 use kobayashi::data::ship::{
-    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, ShipAbility, ShipIdRegistry, ShipIdRegistryEntry,
-    TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
+    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, ShipAbility, ShipIdRegistry,
+    ShipIdRegistryEntry, TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
@@ -222,10 +222,8 @@ fn raw_to_extended(
                             .get("slots")
                             .and_then(|v| v.as_str())
                             .map(|s| s.to_string()),
-                        unlock_level: row
-                            .get("unlock_level")
-                            .and_then(Value::as_u64)
-                            .unwrap_or(0) as u32,
+                        unlock_level: row.get("unlock_level").and_then(Value::as_u64).unwrap_or(0)
+                            as u32,
                     })
                 })
                 .collect()
@@ -261,10 +259,7 @@ fn raw_to_extended(
             let level_scaled_values = if scale_curve {
                 let mut curve: Vec<f64> = Vec::with_capacity(values_arr.len());
                 for item in values_arr {
-                    let raw_value = item
-                        .get("value")
-                        .and_then(Value::as_f64)
-                        .unwrap_or(0.0);
+                    let raw_value = item.get("value").and_then(Value::as_f64).unwrap_or(0.0);
                     let v = if value_is_percentage {
                         raw_value * 0.01
                     } else {

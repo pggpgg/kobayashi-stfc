@@ -261,6 +261,18 @@ pub struct SimulationConfig {
     /// Clamped to `[0, attacker.hull_health]` in the engine. Default 0.
     #[serde(default)]
     pub initial_attacker_hull_damage: f64,
+    /// **Experimental:** When `Some(p)`, `p` is the profile `weapon_damage` additive bonus (same units
+    /// as [`crate::data::profile::get_bonus`] — fraction added by `apply_profile_to_attacker`, e.g. `0.65` = +65%).
+    /// Outgoing shot damage uses `weapon_attack * (p + pre_attack_multiplier) / (1 + p)` instead of
+    /// `weapon_attack * pre_attack_multiplier`, i.e. profile bonus and dynamic `pre_attack_modifier_sum`
+    /// share one pool `(1 + p + sum)` on the pre-profile weapon base. See `docs/GALAXY_CLASS_DAMAGE_STACKING_FINDINGS.md`.
+    #[serde(default)]
+    pub weapon_damage_profile_additive_pool: Option<f64>,
+    /// Profile `weapon_damage` additive bonus `p` (fraction, e.g. `0.65` = +65%), same units as
+    /// [`crate::data::profile::apply_profile_to_attacker`]. Used to dilute
+    /// [`crate::combat::abilities::AbilityEffect::GalaxyAdditiveWeaponDamageGrowth`] as `×(1+g/(1+p))`.
+    #[serde(default)]
+    pub profile_weapon_damage_fraction: f64,
 }
 
 impl Default for SimulationConfig {
@@ -270,6 +282,8 @@ impl Default for SimulationConfig {
             seed: 7,
             trace_mode: TraceMode::Off,
             initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
         }
     }
 }

@@ -460,7 +460,11 @@ mod tests {
             .to_ship_record(Some(1), Some(7))
             .expect("tier 1 level 7");
         let a = &rec.abilities.as_ref().expect("abilities")[0];
-        assert!((a.value - 0.7).abs() < 1e-9, "level 7 → index 6 = 0.7, got {}", a.value);
+        assert!(
+            (a.value - 0.7).abs() < 1e-9,
+            "level 7 → index 6 = 0.7, got {}",
+            a.value
+        );
         assert!(a.level_scaled_values.is_none());
     }
 

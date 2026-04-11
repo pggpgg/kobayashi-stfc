@@ -1,0 +1,540 @@
+Player Name	Player Level	Outcome	Ship Name	Ship Level	Ship Strength	Ship XP	Officer One	Officer Two	Officer Three	Hull Health	Hull Health Remaining	Shield Health	Shield Health Remaining	Location	Timestamp
+HiggsBozo	60	VICTORY	U.S.S. ENTERPRISE-D	18	1068817920	89487	Annorax	Suder	Seska	801521886	651806474	3564875722	2655994177	Lecio	2026-04-11 3:38:57 AM
+V'ger Hurak Honorguard ▶	59	DEFEAT	V'ger Hurak Honorguard	59	14437923840	0	Replicated Hurak Commander	--	--	14836533168	0	13813323984	0	Lecio	2026-04-11 3:38:57 AM
+
+Reward Name	Count
+5★ Broken Interceptor Parts	3150
+
+Fleet Type	Attack	Defense	Health	Ship Ability	Captain Maneuver	Officer One Ability	Officer Two Ability	Officer Three Ability	Officer Attack Bonus	Damage Per Round	Armour Pierce	Shield Pierce	Accuracy	Critical Chance	Critical Damage	Officer Defense Bonus	Armour	Shield Deflection	Dodge	Officer Health Bonus	Shield Health	Hull Health	Impulse Speed	Warp Range	Warp Speed	Cargo Capacity	Protected Cargo	Mining Bonus	Debuff applied	Buff applied
+Player Fleet 1	161384016	86286616	821147264	Galaxy Class	Past, Present, and Future	Time is Patient	Silence Your Demons	Lone Operative	6.5	129983264	1659633	1659633	20121646	0.31	2.95	6.5	1009596	15223966	1023761	6.5	840772576	801521886	204	1034	174.41	1746110	0	1	NO	NO
+Enemy Fleet 1	67386000	45609552	14324928512	Replicated Honorguard Apex---Replicated Counter-Intel---ship_ability_name_{0}	--	--	--	--	0	63047592	1381332	393936	393936	0.15	1.5	0	1534814	680434	6906662	0	13813323776	14836533248	80	2	2	0	0	1	NO	NO
+
+Round	Battle Event	Type	Attacker Name	Attacker Alliance	Attacker Ship	Attacker - Is Armada?	Target Name	Target Alliance	Target Ship	Target - Is Armada?	Hyperthermic Decay %	Hyperthermic Stablizer %	Critical Hit?	Hull Damage	Shield Damage	Mitigated Damage	Mitigated Isolytic Damage	Mitigated Apex Barrier	Total Damage	Total Isolytic Damage	Ability Type	Ability Value	Ability Name	Ability Owner Name	Target Defeated	Target Destroyed	Charging Weapons %
+1	1	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+1	2	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+1	3	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+1	4	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1596091	7271082	2318219	10522288	320502	3404664	18623518	--	--	--	--	--	--	--
+1	5	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1613719	7351388	2343823	10638501	324042	3442267	18829206	--	--	--	--	--	--	--
+1	6	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	75306120	266994416	43043184	260485776	17021818	184895762	477955552	--	--	--	--	--	--	--
+1	7	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6295561	22320628	3598393	21776508	1423017	15457213	39956894	--	--	--	--	--	--	--
+1	8	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	80748648	286290656	46154004	279311616	18252022	198258562	512498384	--	--	--	--	--	--	--
+1	9	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6075347	21539864	3472523	21014780	1373241	14916527	38559228	--	--	--	--	--	--	--
+1	10	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	83148568	294799456	47525740	287612992	18794486	204150970	527730272	--	--	--	--	--	--	--
+1	11	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5584459	19799446	3191943	19316786	1262283	13711273	35443644	--	--	--	--	--	--	--
+1	12	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+1	13	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1395553	6357521	2262643	10270030	1214340	3323042	18177045	--	--	--	--	--	--	--
+1	14	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1476152	6724695	2393320	10863169	1284473	3514961	19226848	--	--	--	--	--	--	--
+1	15	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+1	16	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+1	17	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	4415475	20114940	7966642	35935448	6797580	11627523	63602562	--	--	--	--	--	--	--
+1	18	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+1	19	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+1	20	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3905245	17790564	7710785	34781340	8626055	11254095	61559894	--	--	--	--	--	--	--
+2	22	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	5472850	--	--	--	--
+2	23	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+2	24	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+2	25	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+2	26	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+2	27	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+2	28	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1089229	4962042	2317864	10520678	3134998	3404143	18620668	--	--	--	--	--	--	--
+2	29	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+2	30	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+2	31	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+2	32	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	984443	4484685	2261142	10263216	3492336	3320838	18164984	--	--	--	--	--	--	--
+2	33	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	995137	4533403	2285705	10374707	3530274	3356912	18362314	--	--	--	--	--	--	--
+2	34	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6533230	23163270	3734238	22598608	1476738	16040748	41465336	--	--	--	--	--	--	--
+2	35	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	76826160	272383648	43912004	265743632	17365402	188627854	487602992	--	--	--	--	--	--	--
+2	36	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5829677	20668854	3332104	20165000	1317711	14313346	37000000	--	--	--	--	--	--	--
+2	37	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	78956328	279936064	45129556	273111936	17846894	193857962	501122816	--	--	--	--	--	--	--
+2	38	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	89296368	316596224	51039680	308878432	20184106	219245402	566749408	--	--	--	--	--	--	--
+2	39	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6200499	21983588	3544057	21447682	1401529	15223809	39353546	--	--	--	--	--	--	--
+2	40	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+2	41	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3069261	13982188	7627441	34405400	12942674	11132452	60894512	--	--	--	--	--	--	--
+2	42	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	29629468	105049928	16935498	102489080	6697297	72747911	188053360	--	--	--	--	--	--	--
+2	43	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	26655856	94507128	15235853	92203288	6025156	65446937	169180344	--	--	--	--	--	--	--
+2	44	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+2	45	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	2964124	13503232	7870699	35502672	14483353	11487492	62836588	--	--	--	--	--	--	--
+3	47	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	3458834	--	--	--	--
+3	48	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+3	49	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+3	50	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+3	51	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+3	52	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+3	53	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1169860	4679441	2418320	10976639	3735097	3551678	19427679	--	--	--	--	--	--	--
+3	54	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1101728	4406914	2277478	10337368	3517568	3344830	18296226	--	--	--	--	--	--	--
+3	55	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	69503704	278014816	43699328	264456576	17281296	187714296	485241424	--	--	--	--	--	--	--
+3	56	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5792863	23171454	3642169	22041428	1440328	15645254	40442988	--	--	--	--	--	--	--
+3	57	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5591086	22364344	3515305	21273680	1390159	15100298	39034276	--	--	--	--	--	--	--
+3	58	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	72437400	289749600	45543840	275619072	18010726	195637566	505723072	--	--	--	--	--	--	--
+3	59	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5533573	22134292	3479144	21054846	1375859	14944968	38632746	--	--	--	--	--	--	--
+3	60	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	78140464	312561856	49129552	297318816	19428728	211040296	545539120	--	--	--	--	--	--	--
+3	61	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+3	62	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1097160	4388642	2434803	11051458	4163925	3575886	19560102	--	--	--	--	--	--	--
+3	63	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1104781	4419123	2451714	11128215	4192845	3600723	19695955	--	--	--	--	--	--	--
+3	64	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+3	65	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+3	66	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3348704	13394815	8002693	36098064	14726244	11680142	63890378	--	--	--	--	--	--	--
+3	67	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	50
+3	68	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+3	69	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+4	71	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2972449	--	--	--	--
+4	72	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+4	73	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+4	74	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+4	75	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+4	76	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+4	77	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1184990	4739960	2449596	11118600	3783403	3597611	19678938	--	--	--	--	--	--	--
+4	78	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1186351	4745406	2452410	11131373	3787750	3601745	19701545	--	--	--	--	--	--	--
+4	79	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+4	80	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+4	81	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1087947	4351789	2414357	10958655	4128959	3545858	19395849	--	--	--	--	--	--	--
+4	82	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1078353	4313410	2393065	10862010	4092545	3514587	19224796	--	--	--	--	--	--	--
+4	83	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5751154	23004616	3689366	21592896	1429958	15847996	39619994	--	--	--	--	--	--	--
+4	84	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5980649	23922596	3836587	22454542	1487019	16480399	41200994	--	--	--	--	--	--	--
+4	85	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	79652328	318609312	51096992	299057312	19804636	219491588	548728992	--	--	--	--	--	--	--
+4	86	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5082424	20329696	3260376	19082128	1263686	14005232	35013078	--	--	--	--	--	--	--
+4	87	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	79631216	318524864	51083448	298978016	19799386	219433410	548583520	--	--	--	--	--	--	--
+4	88	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5483401	21933604	3517603	20587608	1363384	15110172	37775428	--	--	--	--	--	--	--
+4	89	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+4	90	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3421313	13685252	8176214	36880768	15045550	11933401	65275696	--	--	--	--	--	--	--
+4	91	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+4	92	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+4	93	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3111748	12446990	7913107	35693964	15558738	11549389	63175158	--	--	--	--	--	--	--
+5	95	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	4206867	--	--	--	--
+5	96	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+5	97	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+5	98	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+5	99	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+5	100	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+5	101	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1178812	4715247	2436824	11060630	3763678	3578854	19576337	--	--	--	--	--	--	--
+5	102	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1114772	4459087	2304442	10459754	3559213	3384430	18512838	--	--	--	--	--	--	--
+5	103	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5959533	23838132	3823042	22375264	1481769	16422210	41055530	--	--	--	--	--	--	--
+5	104	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	80474008	321896032	51624096	302142304	20008936	221755824	554389552	--	--	--	--	--	--	--
+5	105	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6089953	24359814	3906706	22864930	1514196	16781599	41954000	--	--	--	--	--	--	--
+5	106	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	83121960	332487840	53322756	312084128	20667318	229052578	572631424	--	--	--	--	--	--	--
+5	107	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	78499792	313999168	50357636	294730048	19518070	216315626	540789088	--	--	--	--	--	--	--
+5	108	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	77503128	310012512	49718276	290988032	19270262	213569202	533923008	--	--	--	--	--	--	--
+5	109	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+5	110	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1083289	4333156	2404020	10911734	4111280	3530676	19312803	--	--	--	--	--	--	--
+5	111	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1104114	4416456	2450234	11121498	4190315	3598549	19684068	--	--	--	--	--	--	--
+5	112	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+5	113	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+5	114	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3298725	13194901	7883255	35559308	14506459	11505820	62936828	--	--	--	--	--	--	--
+5	115	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	344024800	1376099200	220692000	1291652352	85537808	948001808	2370004352	--	--	--	--	--	--	--
+5	116	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	23261648	93046584	14922352	87336616	5783741	64100269	160250672	--	--	--	--	--	--	--
+5	117	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+5	118	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+6	120	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2956291	--	--	--	--
+6	121	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+6	122	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+6	123	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+6	124	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+6	125	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+6	126	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+6	127	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+6	128	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+6	129	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+6	130	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1032754	4131016	2291873	10402705	3919490	3365971	18411867	--	--	--	--	--	--	--
+6	131	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1044761	4179045	2318519	10523651	3965059	3405105	18625930	--	--	--	--	--	--	--
+6	132	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5842576	23370302	3748013	21936142	1452689	16099920	40249802	--	--	--	--	--	--	--
+6	133	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	77256680	309026720	49560180	290062752	19208986	212890086	532225232	--	--	--	--	--	--	--
+6	134	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	78894552	315578208	50610876	296212192	19616224	217403444	543508608	--	--	--	--	--	--	--
+6	135	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	74151232	296604928	47568032	278403232	18436852	204332660	510831616	--	--	--	--	--	--	--
+6	136	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5772247	23088990	3702898	21672092	1435203	15906122	39765308	--	--	--	--	--	--	--
+6	137	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	83766400	335065600	53736168	314503712	20827554	230828394	577071040	--	--	--	--	--	--	--
+6	138	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+6	139	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3236554	12946216	7734679	34889120	14233054	11288967	61750656	--	--	--	--	--	--	--
+6	140	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	50
+6	141	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+6	142	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3100977	12403907	7885718	35570416	15504884	11509414	62956488	--	--	--	--	--	--	--
+7	144	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	3197718	--	--	--	--
+7	145	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+7	146	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+7	147	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+7	148	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+7	149	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+7	150	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1116502	4466009	2308019	10475987	3564737	3389683	18541571	--	--	--	--	--	--	--
+7	151	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1177596	4710386	2434312	11049227	3759797	3575165	19556153	--	--	--	--	--	--	--
+7	152	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5706837	22827350	3660937	21426508	1418939	15725877	39314694	--	--	--	--	--	--	--
+7	153	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6111298	24445194	3920399	22945070	1519504	16840419	42101046	--	--	--	--	--	--	--
+7	154	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	77545624	310182496	49745536	291147584	19280828	213686324	534215744	--	--	--	--	--	--	--
+7	155	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	80092800	320371200	51379552	300711072	19914154	220705354	551763424	--	--	--	--	--	--	--
+7	156	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	84912576	339650304	54471440	318807072	21112536	233986824	584967104	--	--	--	--	--	--	--
+7	157	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5484498	21937990	3518306	20591728	1363657	15113193	37782986	--	--	--	--	--	--	--
+7	158	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+7	159	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1084617	4338468	2406967	10925109	4116320	3535004	19336477	--	--	--	--	--	--	--
+7	160	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1018054	4072214	2259250	10254630	3863699	3318059	18149788	--	--	--	--	--	--	--
+7	161	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+7	162	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+7	163	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3293499	13173994	7870765	35502968	14483475	11487589	62837112	--	--	--	--	--	--	--
+7	164	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+7	165	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+7	166	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3035962	12143846	7720385	34824644	15179808	11268105	61636540	--	--	--	--	--	--	--
+8	168	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	4075968	--	--	--	--
+8	169	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+8	170	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+8	171	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+8	172	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+8	173	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+8	174	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1125755	4503022	2327147	10562811	3594281	3417776	18695240	--	--	--	--	--	--	--
+8	175	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1155659	4622638	2388964	10843396	3689758	3508564	19191851	--	--	--	--	--	--	--
+8	176	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+8	177	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+8	178	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1019740	4078958	2262992	10271613	3870098	3323555	18179846	--	--	--	--	--	--	--
+8	179	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1042202	4168809	2312841	10497875	3955348	3396765	18580310	--	--	--	--	--	--	--
+8	180	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5660328	22641312	3631102	21251888	1407375	15597715	38994290	--	--	--	--	--	--	--
+8	181	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5619683	22478732	3605028	21099284	1397269	15485712	38714284	--	--	--	--	--	--	--
+8	182	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6062166	24248664	3888881	22760602	1507287	16705028	41762572	--	--	--	--	--	--	--
+8	183	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6226284	24905136	3994162	23376788	1548094	17157276	42893188	--	--	--	--	--	--	--
+8	184	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	85849616	343398464	55072548	322325184	21345520	236568964	591422368	--	--	--	--	--	--	--
+8	185	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5601262	22405048	3593211	21030122	1392689	15434952	38587380	--	--	--	--	--	--	--
+8	186	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+8	187	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3409172	13636689	8147200	36749896	14992160	11891053	65044064	--	--	--	--	--	--	--
+8	188	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	335417920	1341671680	215170672	1259337600	83397808	924284512	2310711168	--	--	--	--	--	--	--
+8	189	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	25276950	101107800	16215170	94903144	6284823	69653679	174134208	--	--	--	--	--	--	--
+8	190	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+8	191	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3171059	12684238	8063936	36374316	15855297	11769526	64379320	--	--	--	--	--	--	--
+9	193	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2840133	--	--	--	--
+9	194	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+9	195	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+9	196	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+9	197	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+9	198	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1148948	4595790	2375090	10780419	3668328	3488187	19080388	--	--	--	--	--	--	--
+9	199	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1106627	4426506	2287604	10383327	3533207	3359701	18377570	--	--	--	--	--	--	--
+9	200	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5571920	22287680	3744943	20502540	1385393	15873136	37619340	--	--	--	--	--	--	--
+9	201	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5329093	21316370	3581736	19609026	1325017	15181377	35979865	--	--	--	--	--	--	--
+9	202	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	69966248	279864992	47025012	257449088	17396302	199317994	472383648	--	--	--	--	--	--	--
+9	203	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	72212464	288849856	48534720	265714320	17954800	205716944	487549216	--	--	--	--	--	--	--
+9	204	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5497853	21991412	3695161	20230000	1366978	15662136	37119268	--	--	--	--	--	--	--
+9	205	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5854626	23418502	3934952	21542786	1455685	16678501	39528050	--	--	--	--	--	--	--
+9	206	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+9	207	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1044788	4179151	2318579	10523920	3965161	3405193	18626406	--	--	--	--	--	--	--
+9	208	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1079359	4317436	2395298	10872147	4096365	3517867	19242738	--	--	--	--	--	--	--
+9	209	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+9	210	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+9	211	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3374660	13498641	8064724	36377868	14840390	11770679	64385604	--	--	--	--	--	--	--
+9	212	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	50
+9	213	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+9	214	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3049181	12196726	7754003	34976284	15245907	11317173	61904928	--	--	--	--	--	--	--
+10	216	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	4105354	--	--	--	--
+10	217	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+10	218	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+10	219	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+10	220	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+10	221	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+10	222	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1114317	4457268	2303502	10455486	3557761	3383050	18505284	--	--	--	--	--	--	--
+10	223	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1165763	4663050	2409849	10938192	3722015	3539237	19359632	--	--	--	--	--	--	--
+10	224	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+10	225	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+10	226	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1058802	4235208	2349679	10665080	4018347	3450868	18876248	--	--	--	--	--	--	--
+10	227	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1017503	4070014	2258029	10249088	3861612	3316266	18139980	--	--	--	--	--	--	--
+10	228	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6317672	25270688	4052788	23719908	1570816	17409106	43522766	--	--	--	--	--	--	--
+10	229	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6075299	24301196	3897305	22809910	1510553	16741217	41853046	--	--	--	--	--	--	--
+10	230	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5789851	23159406	3714191	21738188	1439580	15954632	39886584	--	--	--	--	--	--	--
+10	231	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5871736	23486946	3766720	22045628	1459939	16180277	40450692	--	--	--	--	--	--	--
+10	232	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6116037	24464148	3923439	22962862	1520682	16853476	42133692	--	--	--	--	--	--	--
+10	233	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6452128	25808512	4139042	24224728	1604247	17779615	44449042	--	--	--	--	--	--	--
+10	234	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+10	235	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3305285	13221140	7898931	35630020	14535306	11528698	63061984	--	--	--	--	--	--	--
+10	236	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+10	237	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+10	238	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3044837	12179350	7742956	34926456	15224187	11301050	61816736	--	--	--	--	--	--	--
+11	240	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	4068473	--	--	--	--
+11	241	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+11	242	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+11	243	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+11	244	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+11	245	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+11	246	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1180690	4722758	2440706	11078249	3769673	3584555	19607521	--	--	--	--	--	--	--
+11	247	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1154959	4619837	2387517	10836825	3687522	3506439	19180221	--	--	--	--	--	--	--
+11	248	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	79285056	317140224	50861384	297678336	19713318	218479518	546198800	--	--	--	--	--	--	--
+11	249	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6335387	25341546	4064152	23786418	1575221	17457922	43644802	--	--	--	--	--	--	--
+11	250	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	83370400	333481600	53482136	313016928	20729092	229737180	574342976	--	--	--	--	--	--	--
+11	251	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	5903602	23614408	3787162	22165268	1467862	16268086	40670216	--	--	--	--	--	--	--
+11	252	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	6197618	24790470	3975773	23269160	1540966	17078281	42695706	--	--	--	--	--	--	--
+11	253	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	85522392	342089568	54862636	321096608	21264158	235667266	589168096	--	--	--	--	--	--	--
+11	254	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+11	255	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1042207	4168826	2312850	10497919	3955364	3396779	18580387	--	--	--	--	--	--	--
+11	256	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1058493	4233972	2348993	10661968	4017174	3449860	18870740	--	--	--	--	--	--	--
+11	257	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+11	258	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+11	259	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3178335	12713341	7595549	34261540	13977032	11085903	60639894	--	--	--	--	--	--	--
+11	260	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	363131584	1452526336	232949008	1363389440	90288496	1000652864	2501632000	--	--	--	--	--	--	--
+11	261	Shield Depleted	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--	--
+11	262	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	145824336	0	18709270	109500456	7251509	80367307	200918264	--	--	--	--	--	--	--
+11	263	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+11	264	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3229682	12918729	8213013	37046760	16148411	11987107	65569488	--	--	--	--	--	--	--
+12	266	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2819535	--	--	--	--
+12	267	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+12	268	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+12	269	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+12	270	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+12	271	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+12	272	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1095513	4382053	2264631	10279052	3497724	3325961	18193012	--	--	--	--	--	--	--
+12	273	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+12	274	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+12	275	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1093260	4373039	2426147	11012168	4149121	3563173	19490562	--	--	--	--	--	--	--
+12	276	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1049004	4196017	2327935	10566389	3981163	3418934	18701574	--	--	--	--	--	--	--
+12	277	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	30378596	0	4083551	22356328	1510657	17308348	41020784	--	--	--	--	--	--	--
+12	278	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	30760162	0	4134842	22637132	1529632	17525748	41536020	--	--	--	--	--	--	--
+12	279	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	377524128	0	50747548	277828960	18773408	215096140	509777904	--	--	--	--	--	--	--
+12	280	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	373221792	0	50169216	274662752	18559462	212644870	503968352	--	--	--	--	--	--	--
+12	281	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	30755960	0	4134277	22634038	1529423	17523352	41530346	--	--	--	--	--	--	--
+12	282	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	355486464	0	47785200	261610896	17677524	202540084	480020000	--	--	--	--	--	--	--
+12	283	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+12	284	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3251069	13004274	7769366	35045584	14296884	11339593	62027584	--	--	--	--	--	--	--
+12	285	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	50
+12	286	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+12	287	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3012994	12051977	7661980	34561196	15064971	11182862	61170256	--	--	--	--	--	--	--
+13	289	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	3610699	--	--	--	--
+13	290	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+13	291	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+13	292	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+13	293	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+13	294	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+13	295	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1148446	4593784	2374053	10775713	3666727	3486665	19072058	--	--	--	--	--	--	--
+13	296	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1185682	4742727	2451026	11125090	3785612	3599712	19690425	--	--	--	--	--	--	--
+13	297	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	32510964	0	4171158	24412696	1616695	17917573	44793940	--	--	--	--	--	--	--
+13	298	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	29061348	0	3728572	21822360	1445154	16016408	40041026	--	--	--	--	--	--	--
+13	299	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	414501600	0	53180576	311251968	20612210	228441826	571104528	--	--	--	--	--	--	--
+13	300	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	31521792	0	4044247	23669920	1567506	17372417	43431048	--	--	--	--	--	--	--
+13	301	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	32577036	0	4179635	24462312	1619981	17953988	44884976	--	--	--	--	--	--	--
+13	302	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	32501784	0	4169980	24405804	1616239	17912515	44781292	--	--	--	--	--	--	--
+13	303	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+13	304	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1021974	4087898	2267951	10294124	3878580	3330838	18219689	--	--	--	--	--	--	--
+13	305	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1077547	4310189	2391278	10853898	4089488	3511962	19210438	--	--	--	--	--	--	--
+13	306	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+13	307	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+13	308	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3256299	13025196	7781865	35101964	14319885	11357837	62127372	--	--	--	--	--	--	--
+13	309	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+13	310	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+13	311	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3005542	12022170	7643030	34475716	15027712	11155204	61018966	--	--	--	--	--	--	--
+14	313	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	4064286	--	--	--	--
+14	314	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+14	315	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+14	316	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+14	317	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+14	318	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+14	319	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1155980	4623920	2389627	10846403	3690781	3509538	19197173	--	--	--	--	--	--	--
+14	320	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1127373	4509493	2330491	10577988	3599446	3422688	18722103	--	--	--	--	--	--	--
+14	321	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+14	322	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+14	323	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1035062	4140249	2296996	10425955	3928250	3373494	18453018	--	--	--	--	--	--	--
+14	324	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1084848	4339392	2407480	10927437	4117196	3535757	19340596	--	--	--	--	--	--	--
+14	325	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	30347628	0	3893602	22788234	1509117	16725307	41813274	--	--	--	--	--	--	--
+14	326	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	28706204	0	3683007	21555678	1427493	15820680	39551702	--	--	--	--	--	--	--
+14	327	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	32047440	0	4111688	24064632	1593645	17662117	44155288	--	--	--	--	--	--	--
+14	328	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	430622784	0	55248924	323357472	21413880	237326612	593316448	--	--	--	--	--	--	--
+14	329	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	29722744	0	3813429	22319004	1478043	16380918	40952302	--	--	--	--	--	--	--
+14	330	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	32096288	0	4117955	24101312	1596074	17689037	44222592	--	--	--	--	--	--	--
+14	331	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+14	332	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3463968	13855873	8278151	37340580	15233131	12082179	66089524	--	--	--	--	--	--	--
+14	333	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	1935120896	0	248276112	1453095040	96229112	1066491784	2666229376	--	--	--	--	--	--	--
+14	334	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	130334904	0	16721974	97869336	6481255	71830709	179576760	--	--	--	--	--	--	--
+14	335	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+14	336	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3188268	12753070	8107696	36571704	15941338	11833396	64728680	--	--	--	--	--	--	--
+15	338	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	4201090	--	--	--	--
+15	339	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+15	340	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+15	341	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+15	342	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+15	343	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+15	344	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1151745	4606979	2380872	10806665	3677259	3496680	19126840	--	--	--	--	--	--	--
+15	345	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1102003	4408011	2278046	10339942	3518444	3345664	18300782	--	--	--	--	--	--	--
+15	346	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	398633856	0	58413120	341876704	79291672	250918648	627296704	--	--	--	--	--	--	--
+15	347	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	24894580	0	3647883	21350108	4951743	15669804	39174510	--	--	--	--	--	--	--
+15	348	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	384422080	0	56330620	329688352	76464824	241973108	604932768	--	--	--	--	--	--	--
+15	349	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	25669612	0	3761452	22014792	5105904	16157646	40394114	--	--	--	--	--	--	--
+15	350	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	29615784	0	4339697	25399110	5890831	18641550	46603872	--	--	--	--	--	--	--
+15	351	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	26314204	0	3855906	22567610	5234119	16563381	41408458	--	--	--	--	--	--	--
+15	352	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+15	353	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1038509	4154038	2304645	10460677	3941333	3384729	18514473	--	--	--	--	--	--	--
+15	354	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1105983	4423930	2454381	11140320	4197406	3604639	19717381	--	--	--	--	--	--	--
+15	355	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+15	356	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+15	357	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+15	358	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	50
+15	359	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+15	360	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3002814	12011257	7636092	34444420	15014071	11145078	60963576	--	--	--	--	--	--	--
+16	362	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	1924274	--	--	--	--
+16	363	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+16	364	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+16	365	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+16	366	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+16	367	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1145942	4583767	2368876	10752215	3658731	3479062	19030469	--	--	--	--	--	--	--
+16	368	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1184341	4737366	2448255	11112514	3781333	3595642	19668167	--	--	--	--	--	--	--
+16	369	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+16	370	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+16	371	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1061140	4244560	2354867	10688630	4027220	3458488	18917929	--	--	--	--	--	--	--
+16	372	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1067676	4270705	2369372	10754468	4052026	3479790	19034457	--	--	--	--	--	--	--
+16	373	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	25499496	0	4401942	24099428	8876131	18657861	44219136	--	--	--	--	--	--	--
+16	374	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	317299360	0	54774936	299877824	110448872	232166464	550234528	--	--	--	--	--	--	--
+16	375	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	277835872	0	47962416	262581104	96712016	203291216	481800192	--	--	--	--	--	--	--
+16	376	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	21725750	0	3750485	20532882	7562525	15896628	37675014	--	--	--	--	--	--	--
+16	377	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	21774908	0	3758971	20579340	7579636	15932599	37760256	--	--	--	--	--	--	--
+16	378	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	292052096	0	50416540	276016768	101660544	213693164	506452784	--	--	--	--	--	--	--
+16	379	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+16	380	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3282192	13128770	7843745	35381088	14433754	11448153	62621396	--	--	--	--	--	--	--
+16	381	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+16	382	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+16	383	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3053533	12214131	7765069	35026200	15267664	11333321	61993276	--	--	--	--	--	--	--
+17	385	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	4102033	--	--	--	--
+17	386	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+17	387	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+17	388	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+17	389	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+17	390	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+17	391	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1113662	4454648	2302147	10449338	3555669	3381060	18494404	--	--	--	--	--	--	--
+17	392	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+17	393	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	306459872	0	56082152	328234144	152394128	240905816	602264480	--	--	--	--	--	--	--
+17	394	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	23762152	0	4348474	25450478	11816270	18679248	46698126	--	--	--	--	--	--	--
+17	395	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	22736194	0	4160723	24351624	11306089	17872750	44681880	--	--	--	--	--	--	--
+17	396	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	301093952	0	55100192	322486976	149725808	236687696	591719232	--	--	--	--	--	--	--
+17	397	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	308379264	0	56433408	330289952	153348592	242414608	606036608	--	--	--	--	--	--	--
+17	398	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	301141664	0	55108924	322538112	149749536	236725180	591813056	--	--	--	--	--	--	--
+17	399	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+17	400	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1039784	4159137	2307475	10473519	3946171	3388885	18537201	--	--	--	--	--	--	--
+17	401	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1061333	4245330	2355295	10690571	4027951	3459115	18921365	--	--	--	--	--	--	--
+17	402	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+17	403	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+17	404	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3365705	13462819	8043322	36281328	14801008	11739442	64214740	--	--	--	--	--	--	--
+17	405	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	103182568	0	18882410	110513800	51309876	81111046	202777608	--	--	--	--	--	--	--
+17	406	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	106582672	0	19504628	114155480	53000656	83783836	209459600	--	--	--	--	--	--	--
+17	407	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+17	408	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3180647	12722590	8088318	36484296	15903237	11805112	64573976	--	--	--	--	--	--	--
+18	410	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2537894	--	--	--	--
+18	411	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+18	412	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+18	413	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+18	414	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+18	415	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1136247	4544986	2348834	10661248	3627777	3449627	18869465	--	--	--	--	--	--	--
+18	416	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1093371	4373482	2260201	10258948	3490884	3319456	18157430	--	--	--	--	--	--	--
+18	417	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+18	418	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+18	419	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1030597	4122390	2287087	10380981	3911305	3358942	18373418	--	--	--	--	--	--	--
+18	420	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1038999	4155996	2305732	10465610	3943191	3386325	18523203	--	--	--	--	--	--	--
+18	421	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	20672484	0	4358488	23861532	13363804	18473680	43782628	--	--	--	--	--	--	--
+18	422	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	223982816	0	47223472	258535584	144794528	200159184	474377216	--	--	--	--	--	--	--
+18	423	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	20754904	0	4375865	23956664	13417085	18547334	43957184	--	--	--	--	--	--	--
+18	424	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	252333632	0	53200820	291259968	163122016	225494484	534421952	--	--	--	--	--	--	--
+18	425	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	20578412	0	4338654	23752946	13302990	18389616	43583386	--	--	--	--	--	--	--
+18	426	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	19116968	0	4030530	22066054	12358235	17083615	40488172	--	--	--	--	--	--	--
+18	427	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+18	428	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+18	429	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	50
+18	430	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+18	431	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3193450	12773800	8120875	36631148	15967250	11852631	64833892	--	--	--	--	--	--	--
+19	433	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2847212	--	--	--	--
+19	434	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+19	435	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+19	436	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+19	437	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+19	438	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+19	439	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1103835	4415339	2281833	10357131	3524293	3351225	18331206	--	--	--	--	--	--	--
+19	440	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1114606	4458424	2304099	10458196	3558683	3383927	18510081	--	--	--	--	--	--	--
+19	441	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	242474304	0	53214992	311453408	192921088	228589648	571474144	--	--	--	--	--	--	--
+19	442	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	17512108	0	3843321	22493952	13933248	16509323	41273306	--	--	--	--	--	--	--
+19	443	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	18823884	0	4131212	24178902	14976944	17745984	44364958	--	--	--	--	--	--	--
+19	444	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	17151988	0	3764286	22031384	13646724	16169824	40424558	--	--	--	--	--	--	--
+19	445	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	258846768	0	56808200	332483488	205947584	244024600	610061440	--	--	--	--	--	--	--
+19	446	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	19991128	0	4387383	25678206	15905645	18846388	47115974	--	--	--	--	--	--	--
+19	447	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+19	448	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1087025	4348098	2412310	10949361	4125457	3542851	19379400	--	--	--	--	--	--	--
+19	449	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1026668	4106674	2278368	10341407	3896394	3346136	18303375	--	--	--	--	--	--	--
+19	450	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+19	451	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+19	452	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3332132	13328526	7963089	35919420	14653366	11622337	63574196	--	--	--	--	--	--	--
+19	453	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+19	454	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+19	455	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3186457	12745830	8103093	36550940	15932287	11826679	64691928	--	--	--	--	--	--	--
+20	457	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2821188	--	--	--	--
+20	458	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+20	459	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+20	460	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+20	461	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+20	462	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1149078	4596312	2375359	10781643	3668745	3488583	19082554	--	--	--	--	--	--	--
+20	463	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1146653	4586611	2370346	10758888	3661001	3481220	19042279	--	--	--	--	--	--	--
+20	464	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+20	465	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+20	466	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1084115	4336459	2405852	10920051	4114413	3533367	19327523	--	--	--	--	--	--	--
+20	467	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+20	468	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	16724886	0	4165198	22803326	15801969	17654415	41840964	--	--	--	--	--	--	--
+20	469	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	224963056	0	56025248	306722912	212549088	237465968	562794336	--	--	--	--	--	--	--
+20	470	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	222039648	0	55297200	302737056	209787008	234380080	555480832	--	--	--	--	--	--	--
+20	471	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	17813864	0	4436400	24288080	16830856	18803916	44565284	--	--	--	--	--	--	--
+20	472	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	17457892	0	4347748	23802734	16494527	18428159	43674742	--	--	--	--	--	--	--
+20	473	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	192878848	0	48034932	262978128	182235360	203598596	482528672	--	--	--	--	--	--	--
+20	474	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+20	475	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3209750	12839000	7670623	34600180	14115182	11195477	61239258	--	--	--	--	--	--	--
+20	476	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	75834344	0	18885936	103395336	71649632	80049040	189716208	--	--	--	--	--	--	--
+20	477	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	81232160	0	20230220	110754920	76749584	85746844	203220040	--	--	--	--	--	--	--
+20	478	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+20	479	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3202841	12811365	8144756	36738872	16014206	11887488	65024552	--	--	--	--	--	--	--
+21	481	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	2546034	--	--	--	--
+21	482	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+21	483	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+21	484	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+21	485	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+21	486	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1157588	4630354	2392951	10861494	3695916	3514420	19223883	--	--	--	--	--	--	--
+21	487	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+21	488	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	15547442	0	4168974	22823996	17008896	17670416	41878892	--	--	--	--	--	--	--
+21	489	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	182508432	0	48938788	267926496	199664160	207429620	491608256	--	--	--	--	--	--	--
+21	490	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	15699975	0	4209875	23047918	17175768	17843778	42289758	--	--	--	--	--	--	--
+21	491	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	210145760	0	56349612	308498720	229899392	238840796	566052688	--	--	--	--	--	--	--
+21	492	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	14665235	0	3932414	21528896	16043762	16667747	39502560	--	--	--	--	--	--	--
+21	493	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	14626675	0	3922075	21472290	16001578	16623922	39398696	--	--	--	--	--	--	--
+21	494	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+21	495	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1077433	4309734	2391025	10852750	4089057	3511591	19208408	--	--	--	--	--	--	--
+21	496	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1068638	4274554	2371507	10764160	4055678	3482926	19051611	--	--	--	--	--	--	--
+21	497	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+21	498	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+21	499	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3297231	13188926	7879685	35543208	14499890	11500608	62908332	--	--	--	--	--	--	--
+21	500	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	50
+21	501	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+21	502	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3064719	12258876	7793515	35154516	15323595	11374841	62220380	--	--	--	--	--	--	--
+22	504	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	3672932	--	--	--	--
+22	505	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+22	506	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.6	To the Journey!	Harry Kim	--	--	--
+22	507	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+22	508	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+22	509	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+22	510	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1126615	4506461	2328924	10570877	3597026	3420386	18709517	--	--	--	--	--	--	--
+22	511	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1173363	4693453	2425561	11009506	3746282	3562313	19485852	--	--	--	--	--	--	--
+22	512	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+22	513	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+22	514	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+22	515	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1051002	4204009	2332369	10586515	3988746	3425446	18737195	--	--	--	--	--	--	--
+22	516	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	211075504	0	57869912	338697408	262405584	248585272	621463136	--	--	--	--	--	--	--
+22	517	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	15426069	0	4229317	24753084	19177436	18167402	45418504	--	--	--	--	--	--	--
+22	518	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	216070016	0	59239240	346711744	268614688	254467368	636168320	--	--	--	--	--	--	--
+22	519	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	14953387	0	4099723	23994606	18589804	17610720	44026800	--	--	--	--	--	--	--
+22	520	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	15848125	0	4345031	25430328	19702128	18664460	46661152	--	--	--	--	--	--	--
+22	521	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	15246542	0	4180096	24465010	18954250	17955972	44889926	--	--	--	--	--	--	--
+22	522	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+22	523	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3335002	13340006	7969948	35950360	14665988	11632348	63628956	--	--	--	--	--	--	--
+22	524	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+22	525	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+22	526	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+23	528	battle_action_type_{0}	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	1738355	--	--	--	--
+23	529	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+23	530	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+23	531	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.18	Silence Your Demons	Suder	--	--	--
+23	532	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.12	Lone Operative	Seska	--	--	--
+23	533	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1148632	4594528	2374437	10777459	3667321	3487229	19075148	--	--	--	--	--	--	--
+23	534	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1136825	4547299	2350029	10666672	3629623	3451383	18879065	--	--	--	--	--	--	--
+23	535	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	161688720	0	49533640	271183136	225129168	209950936	497583728	--	--	--	--	--	--	--
+23	536	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	14015113	0	4293556	23506044	19514106	18198463	43130356	--	--	--	--	--	--	--
+23	537	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	173930240	0	53283852	291714528	242173792	225846412	535256000	--	--	--	--	--	--	--
+23	538	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	14449444	0	4426614	24234502	20118852	18762436	44466976	--	--	--	--	--	--	--
+23	539	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	13188424	0	4040298	22119528	18363056	17125016	40586290	--	--	--	--	--	--	--
+23	540	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	13087848	0	4009486	21950842	18223018	16994420	40276774	--	--	--	--	--	--	--
+23	541	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+23	542	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1099933	4399733	2440957	11079387	4174448	3584924	19609534	--	--	--	--	--	--	--
+23	543	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	1044298	4177190	2317491	10518981	3963300	3403595	18617665	--	--	--	--	--	--	--
+23	544	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+23	545	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	Officer	2000	Time is Patient	Annorax	--	--	--
+23	546	Attack	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3232561	12930244	7725137	34846080	14215495	11275041	61674476	--	--	--	--	--	--	--
+23	547	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	NO	57791304	0	17704472	96927152	80466392	75041336	177847984	--	--	--	--	--	--	--
+23	548	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	--	--	YES	743911808	0	227898768	1247683456	1035794304	965960912	2289327424	--	--	--	--	--	--	--
+23	549	Combatant Destroyed	V'ger Hurak Honorguard ▶	--	V'ger Hurak Honorguard	NO	HiggsBozo	INFINITE	V'ger Hurak Honorguard	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--
+

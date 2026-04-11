@@ -74,19 +74,17 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
         })
         .collect();
 
-    ranked.sort_by(|left, right| {
-        match (&left.chain, &right.chain) {
-            (Some(_), Some(_)) => right
-                .win_rate
-                .total_cmp(&left.win_rate)
-                .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
-            _ => right
-                .score
-                .value
-                .total_cmp(&left.score.value)
-                .then_with(|| right.win_rate.total_cmp(&left.win_rate))
-                .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
-        }
+    ranked.sort_by(|left, right| match (&left.chain, &right.chain) {
+        (Some(_), Some(_)) => right
+            .win_rate
+            .total_cmp(&left.win_rate)
+            .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
+        _ => right
+            .score
+            .value
+            .total_cmp(&left.score.value)
+            .then_with(|| right.win_rate.total_cmp(&left.win_rate))
+            .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
     });
 
     ranked

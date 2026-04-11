@@ -61,6 +61,8 @@ fn main() {
         seed: 7,
         trace_mode: TraceMode::Off,
         initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
     };
     let crew = CrewConfiguration::default();
 

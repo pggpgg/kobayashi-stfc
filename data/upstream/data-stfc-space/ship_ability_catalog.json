@@ -96,7 +96,7 @@
     },
     "448699234": {
       "timing": "round_start",
-      "effect_type": "accumulating_attack_multiplier",
+      "effect_type": "additive_weapon_damage_growth",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "condition_morale": true,

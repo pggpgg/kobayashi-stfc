@@ -227,13 +227,7 @@ pub fn cumulative_research_level_conditional_bonuses(
             } else {
                 bonus.operator.as_str()
             };
-            accumulate_conditional_bonus(
-                &mut out,
-                &bonus.condition,
-                &bonus.stat,
-                op,
-                bonus.value,
-            );
+            accumulate_conditional_bonus(&mut out, &bonus.condition, &bonus.stat, op, bonus.value);
         }
     }
     out
@@ -252,7 +246,10 @@ pub fn cumulative_conditional_research_bonuses(
         };
         let partial = cumulative_research_level_conditional_bonuses(rec, level);
         for ((key, stat), value) in partial {
-            let cur = out.get(&(key.clone(), stat.clone())).copied().unwrap_or(0.0);
+            let cur = out
+                .get(&(key.clone(), stat.clone()))
+                .copied()
+                .unwrap_or(0.0);
             out.insert((key, stat), cur + value);
         }
     }
@@ -504,9 +501,6 @@ mod tests {
             defender_ship_class: Some("explorer".into()),
             ..Default::default()
         };
-        assert_eq!(
-            cond.get(&(key, "crit_chance".into())).copied(),
-            Some(0.05)
-        );
+        assert_eq!(cond.get(&(key, "crit_chance".into())).copied(), Some(0.05));
     }
 }

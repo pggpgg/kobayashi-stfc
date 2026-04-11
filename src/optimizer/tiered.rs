@@ -2,9 +2,9 @@
 //! Phase 1: low sims per crew to prune; Phase 2: full Monte Carlo on top N only.
 
 use crate::data::data_registry::DataRegistry;
+use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::build_shared_scenario_data_from_registry;
-use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared, SimulationResult,
 };

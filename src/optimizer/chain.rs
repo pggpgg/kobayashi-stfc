@@ -77,13 +77,14 @@ pub(crate) fn run_chain_trial(
     let attacker_ship_type = shared.attacker_ship_type_for_combat();
 
     for link in 0..n {
-        let fight_seed =
-            trial_seed.wrapping_add((link as u64).wrapping_mul(FIGHT_SEED_STRIDE));
+        let fight_seed = trial_seed.wrapping_add((link as u64).wrapping_mul(FIGHT_SEED_STRIDE));
         let combat_config = SimulationConfig {
             rounds: input.rounds,
             seed: fight_seed,
             trace_mode: TraceMode::Off,
             initial_attacker_hull_damage: initial_hull_damage,
+            weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
+            profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
         };
 
         let result = simulate_combat_with_defender_faction_and_defender_crew(
@@ -168,6 +169,9 @@ mod tests {
     fn secondary_loot_proxy_monotone() {
         let a = secondary_draw(ChainSecondaryObjective::MaxLootPerHullProxy, 3, 0.9);
         let b = secondary_draw(ChainSecondaryObjective::MaxLootPerHullProxy, 3, 0.5);
-        assert!(a > b, "more hull left => higher placeholder loot/hull proxy");
+        assert!(
+            a > b,
+            "more hull left => higher placeholder loot/hull proxy"
+        );
     }
 }

@@ -14,7 +14,9 @@
 //!
 //! **Morale (U.S.S. Enterprise-D / Galaxy Class):** Cumulative weapon damage uses
 //! [`AbilityCondition::MoraleActive`], satisfied when the primary round-start [AbilityEffect::Morale]
-//! roll succeeds that round.
+//! roll succeeds that round. The Enterprise-D hull id `448699234` maps to
+//! [`AbilityEffect::GalaxyAdditiveWeaponDamageGrowth`] so growth stacks additively with profile
+//! `weapon_damage` (diluted by `1+p`), not as another term in `pre_attack_multiplier`.
 //!
 //! **Accuracy:** `accuracy` / `accuracy_bonus` at **combat begin** are summed by
 //! [`sum_combat_begin_accuracy_from_ship_abilities`] (using the hostile’s [`crate::combat::ShipType`])
@@ -137,6 +139,22 @@ pub fn ship_ability_effect_from_catalog(
             let ceiling = 1.0 + growth * MAX_COMBAT_ROUNDS as f64 + 1.0;
             Some(AbilityEffect::AccumulatingAttackMultiplier {
                 initial: 1.0,
+                growth_per_round: growth,
+                ceiling,
+            })
+        }
+
+        // Galaxy-class hull (e.g. U.S.S. Enterprise-D): same round-index growth as accumulating,
+        // but applied in the engine as additive with profile weapon_damage (see ability enum doc).
+        "additive_weapon_damage_growth"
+        | "galaxy_additive_weapon_damage_growth"
+        | "galaxy_class_weapon_damage_growth" => {
+            if timing != TimingWindow::RoundStart {
+                return None;
+            }
+            let growth = value;
+            let ceiling = growth * MAX_COMBAT_ROUNDS as f64 + 1.0;
+            Some(AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
                 growth_per_round: growth,
                 ceiling,
             })
@@ -436,6 +454,39 @@ mod tests {
     }
 
     #[test]
+    fn additive_weapon_damage_growth_requires_round_start() {
+        let g = 0.85;
+        let e = ship_ability_effect_from_catalog(
+            "additive_weapon_damage_growth",
+            TimingWindow::RoundStart,
+            g,
+            None,
+        )
+        .expect("round_start maps");
+        let ceiling = g * MAX_COMBAT_ROUNDS as f64 + 1.0;
+        assert!(
+            matches!(
+                e,
+                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+                    growth_per_round,
+                    ceiling: c
+                } if (growth_per_round - g).abs() < 1e-12 && (c - ceiling).abs() < 1e-9
+            ),
+            "{e:?}"
+        );
+        assert!(
+            ship_ability_effect_from_catalog(
+                "additive_weapon_damage_growth",
+                TimingWindow::CombatBegin,
+                g,
+                None,
+            )
+            .is_none(),
+            "must be round_start only"
+        );
+    }
+
+    #[test]
     fn accumulating_attack_multiplier_requires_round_start() {
         let g = 0.85;
         let e = ship_ability_effect_from_catalog(
@@ -522,11 +573,11 @@ mod tests {
     }
 
     #[test]
-    fn enterprise_d_hull_ability_resolves_to_accumulating_multiplier() {
+    fn enterprise_d_hull_ability_resolves_to_galaxy_additive_weapon_damage_growth() {
         let seat = ship_ability_to_crew_seat_context(&ShipAbility {
             id: "448699234".to_string(),
             timing: "round_start".to_string(),
-            effect_type: "accumulating_attack_multiplier".to_string(),
+            effect_type: "additive_weapon_damage_growth".to_string(),
             value: 0.93,
             duration_rounds: None,
             condition_morale: true,
@@ -541,7 +592,7 @@ mod tests {
         assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
         assert!(matches!(
             seat.ability.effect,
-            AbilityEffect::AccumulatingAttackMultiplier { .. }
+            AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
         ));
         assert_eq!(seat.ability.condition, Some(AbilityCondition::MoraleActive));
     }

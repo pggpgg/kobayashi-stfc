@@ -146,11 +146,7 @@ impl LcarsScaling {
         if let Some(ref table) = self.values {
             if !table.is_empty() {
                 let n = table.len().min(u8::MAX as usize) as u8;
-                let max = self
-                    .max_rank
-                    .unwrap_or(n)
-                    .max(1)
-                    .min(n);
+                let max = self.max_rank.unwrap_or(n).max(1).min(n);
                 let idx = Self::table_clamped_index(rank, max);
                 return table[idx];
             }
@@ -167,11 +163,7 @@ impl LcarsScaling {
         if let Some(ref table) = self.chance_values {
             if !table.is_empty() {
                 let n = table.len().min(u8::MAX as usize) as u8;
-                let max = self
-                    .max_rank
-                    .unwrap_or(n)
-                    .max(1)
-                    .min(n);
+                let max = self.max_rank.unwrap_or(n).max(1).min(n);
                 let idx = Self::table_clamped_index(rank, max);
                 return table[idx];
             }

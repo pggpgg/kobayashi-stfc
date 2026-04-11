@@ -115,6 +115,8 @@ mod tests {
             crew: CrewConfiguration { seats: vec![] },
             rounds: 3,
             defender_hull: 500.0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
             base_seed: 0,
         }
     }

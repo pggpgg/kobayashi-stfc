@@ -176,9 +176,9 @@ pub(crate) fn ship_weapons_with_resolved_pierce_through(
     if rows.is_empty() || weapons.is_empty() {
         return weapons;
     }
-    let any = rows.iter().any(|w| {
-        w.armor_piercing.is_some() || w.shield_piercing.is_some() || w.accuracy.is_some()
-    });
+    let any = rows
+        .iter()
+        .any(|w| w.armor_piercing.is_some() || w.shield_piercing.is_some() || w.accuracy.is_some());
     if !any {
         return weapons;
     }
@@ -277,7 +277,19 @@ fn use_lcars_officer_source_standalone() -> bool {
 #[derive(Debug, Clone)]
 pub(crate) struct LcarsOfficerData {
     pub by_id: HashMap<String, crate::lcars::LcarsOfficer>,
+    /// Normalized lookup → canonical LCARS id. Keys include both officer [`LcarsOfficer::name`] and
+    /// [`LcarsOfficer::id`] so API/optimizer candidates can use either display names or slugs.
     pub name_to_id: HashMap<String, String>,
+}
+
+fn lcars_officer_data_from_officers(officers: Vec<crate::lcars::LcarsOfficer>) -> LcarsOfficerData {
+    let by_id = index_lcars_officers_by_id(officers);
+    let mut name_to_id: HashMap<String, String> = HashMap::new();
+    for o in by_id.values() {
+        name_to_id.insert(normalize_lookup_key(&o.name), o.id.clone());
+        name_to_id.insert(normalize_lookup_key(&o.id), o.id.clone());
+    }
+    LcarsOfficerData { by_id, name_to_id }
 }
 
 /// Pre-resolved data for (ship, hostile) shared across all candidates in one Monte Carlo run.
@@ -342,6 +354,11 @@ pub(crate) struct CombatSimulationInput {
     pub rounds: u32,
     pub defender_hull: f64,
     pub base_seed: u64,
+    /// Copied into [`crate::combat::SimulationConfig::weapon_damage_profile_additive_pool`] when set
+    /// (e.g. from `KOBAYASHI_WEAPON_DAMAGE_ADDITIVE_POOL=1` at scenario build).
+    pub weapon_damage_profile_additive_pool: Option<f64>,
+    /// Profile `weapon_damage` fraction `p` for [`crate::combat::SimulationConfig::profile_weapon_damage_fraction`].
+    pub profile_weapon_damage_fraction: f64,
 }
 
 /// Build combat input from pre-resolved shared data and candidate. Resolves ship/hostile only once per run.
@@ -359,11 +376,16 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         seed,
     );
 
+    let resolve_opts = resolve_options_with_candidate_tiers(
+        &shared.resolve_options,
+        candidate,
+        shared.lcars_data.as_ref(),
+    );
     let (crew_seats, static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
         candidate,
         &shared.officer_index,
         shared.lcars_data.as_ref(),
-        &shared.resolve_options,
+        &resolve_opts,
     );
     let merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
@@ -447,6 +469,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             &mut seats,
             &shared.research_derived_seats,
         );
+        let weapon_damage_profile_additive_pool =
+            weapon_damage_profile_additive_pool_from_env(&shared.profile);
+        let profile_weapon_damage_fraction =
+            profile_weapon_damage_fraction_for_combat(&shared.profile);
         return CombatSimulationInput {
             attacker,
             defender,
@@ -455,6 +481,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             rounds,
             defender_hull,
             base_seed,
+            weapon_damage_profile_additive_pool,
+            profile_weapon_damage_fraction,
         };
     }
 
@@ -497,6 +525,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &shared.research_derived_seats,
     );
 
+    let weapon_damage_profile_additive_pool =
+        weapon_damage_profile_additive_pool_from_env(&shared.profile);
+    let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(&shared.profile);
     CombatSimulationInput {
         attacker,
         defender: Combatant {
@@ -523,6 +554,75 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
         base_seed,
+        weapon_damage_profile_additive_pool,
+        profile_weapon_damage_fraction,
+    }
+}
+
+/// When `KOBAYASHI_WEAPON_DAMAGE_ADDITIVE_POOL` is `1` or `true`, scenario build exposes profile
+/// `weapon_damage` bonus to the combat engine as [`SimulationConfig::weapon_damage_profile_additive_pool`]
+/// so outgoing damage can use a single additive pool vs layered `(1+p)×(1+sum)` (see findings doc).
+fn weapon_damage_profile_additive_pool_from_env(profile: &PlayerProfile) -> Option<f64> {
+    let on = std::env::var("KOBAYASHI_WEAPON_DAMAGE_ADDITIVE_POOL")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    if !on {
+        return None;
+    }
+    let p = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
+    Some(if p.is_finite() { p.max(0.0) } else { 0.0 })
+}
+
+fn profile_weapon_damage_fraction_for_combat(profile: &PlayerProfile) -> f64 {
+    let p = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
+    if p.is_finite() {
+        p.max(0.0)
+    } else {
+        0.0
+    }
+}
+
+/// Merge `Name (TN)` tier suffixes from the candidate into [`ResolveOptions::officer_tiers`].
+///
+/// Imported roster tiers remain as defaults; explicit `(T#)` on captain / bridge / below decks
+/// overrides per canonical officer id (same ids LCARS uses in [`resolve_crew_to_buff_set`]).
+fn resolve_options_with_candidate_tiers(
+    base: &ResolveOptions,
+    candidate: &CrewCandidate,
+    lcars: Option<&LcarsOfficerData>,
+) -> ResolveOptions {
+    let Some(lcars) = lcars else {
+        return base.clone();
+    };
+
+    let mut officer_tiers = base.officer_tiers.clone().unwrap_or_default();
+
+    let mut apply_slot = |slot: &str| {
+        let (name, tier_opt) = split_name_and_tier(slot);
+        let Some(tier) = tier_opt else {
+            return;
+        };
+        let Some(id) = lcars.name_to_id.get(&normalize_lookup_key(&name)).cloned() else {
+            return;
+        };
+        officer_tiers.insert(id, tier);
+    };
+
+    apply_slot(&candidate.captain);
+    for s in &candidate.bridge {
+        apply_slot(s);
+    }
+    for s in &candidate.below_decks {
+        apply_slot(s);
+    }
+
+    ResolveOptions {
+        tier: base.tier,
+        officer_tiers: if officer_tiers.is_empty() {
+            None
+        } else {
+            Some(officer_tiers)
+        },
     }
 }
 
@@ -663,6 +763,9 @@ pub(crate) fn scenario_to_combat_input(
         }
         let mut seats = crew_seats.clone();
         extend_crew_with_ship_abilities(&mut seats, Some(&ship_rec));
+        let weapon_damage_profile_additive_pool =
+            weapon_damage_profile_additive_pool_from_env(profile);
+        let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
         return CombatSimulationInput {
             attacker,
             defender: defender_combatant_from_hostile_record(
@@ -676,6 +779,8 @@ pub(crate) fn scenario_to_combat_input(
             rounds,
             defender_hull,
             base_seed,
+            weapon_damage_profile_additive_pool,
+            profile_weapon_damage_fraction,
         };
     }
 
@@ -714,6 +819,8 @@ pub(crate) fn scenario_to_combat_input(
     extend_crew_with_ship_abilities(&mut seats, resolve_ship(ship).as_ref());
 
     let defender_crew = CrewConfiguration { seats: Vec::new() };
+    let weapon_damage_profile_additive_pool = weapon_damage_profile_additive_pool_from_env(profile);
+    let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
     CombatSimulationInput {
         attacker,
         defender: Combatant {
@@ -740,6 +847,8 @@ pub(crate) fn scenario_to_combat_input(
         rounds: 3 + (hostile_hash % 4) as u32,
         defender_hull,
         base_seed,
+        weapon_damage_profile_additive_pool,
+        profile_weapon_damage_fraction,
     }
 }
 
@@ -878,14 +987,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
     let lcars_data = if use_lcars_officer_source_standalone() {
         load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
             .ok()
-            .map(|officers| {
-                let by_id = index_lcars_officers_by_id(officers);
-                let name_to_id: HashMap<String, String> = by_id
-                    .values()
-                    .map(|o| (normalize_lookup_key(&o.name), o.id.clone()))
-                    .collect();
-                LcarsOfficerData { by_id, name_to_id }
-            })
+            .map(lcars_officer_data_from_officers)
     } else {
         None
     };
@@ -1078,15 +1180,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             support_buffs_request,
         );
 
-    let lcars_data = registry.lcars_officers().map(|officers| {
-        let officers_vec = officers.to_vec();
-        let by_id = index_lcars_officers_by_id(officers_vec);
-        let name_to_id: HashMap<String, String> = by_id
-            .values()
-            .map(|o| (normalize_lookup_key(&o.name), o.id.clone()))
-            .collect();
-        LcarsOfficerData { by_id, name_to_id }
-    });
+    let lcars_data = registry
+        .lcars_officers()
+        .map(|officers| lcars_officer_data_from_officers(officers.to_vec()));
 
     let resolve_options = import::load_imported_roster(&roster_path)
         .map(|entries| {
@@ -1202,11 +1298,11 @@ mod tests {
     use crate::data::forbidden_chaos::{ForbiddenChaosList, ForbiddenChaosRecord};
     use crate::data::hostile::load_hostile_record;
     use crate::data::import::BuildingEntry;
+    use crate::data::profile::merge_tech_fids_into_profile_with_level_tier;
     use crate::data::profile_index::{
         create_profile, delete_profile, load_profile_index, profile_path, PROFILE_JSON,
         RESEARCH_IMPORTED,
     };
-    use crate::data::profile::merge_tech_fids_into_profile_with_level_tier;
     use crate::data::ship::{ShipAbility, ShipRecord};
     use crate::optimizer::crew_generator::CrewCandidate;
     use uuid::Uuid;
@@ -1256,7 +1352,13 @@ mod tests {
         }];
 
         // Intended order: FT mult first, then additive layers.
-        merge_tech_fids_into_profile_with_level_tier(&mut profile, &[1], &imported, &catalog, false);
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &[1],
+            &imported,
+            &catalog,
+            false,
+        );
         let after_ft = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
         assert!((after_ft - 0.10).abs() < 1e-9);
 
@@ -1377,7 +1479,9 @@ mod tests {
                 && matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_))
                 && matches!(
                     s.ability.condition,
-                    Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Swarm))
+                    Some(AbilityCondition::DefenderFactionIs(
+                        OpponentFactionTag::Swarm
+                    ))
                 )
         });
         assert!(

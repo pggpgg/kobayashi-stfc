@@ -60,7 +60,8 @@ mod tests {
         assert!(combine_optional_and(vec![]).is_none());
         let m = AbilityCondition::MoraleActive;
         assert_eq!(combine_optional_and(vec![m.clone()]), Some(m.clone()));
-        let anded = combine_optional_and(vec![m.clone(), AbilityCondition::DefenderBurning]).unwrap();
+        let anded =
+            combine_optional_and(vec![m.clone(), AbilityCondition::DefenderBurning]).unwrap();
         assert_eq!(
             anded,
             AbilityCondition::And(vec![m, AbilityCondition::DefenderBurning])
