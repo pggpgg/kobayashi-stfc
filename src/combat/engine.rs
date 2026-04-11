@@ -30,19 +30,9 @@ use crate::combat::effect_accumulator::{
     record_ability_activations, scale_effect, sum_on_kill_hull_regen, EffectAccumulator,
 };
 use crate::combat::events::round_f64;
+use crate::combat::proc::{accumulate_proc_attack_effects, roll_weapon_intrinsic_proc};
 use crate::combat::rng::Rng;
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
-
-fn roll_proc(chance: f64, rng: &mut Rng) -> bool {
-    if chance <= 0.0 {
-        return false;
-    }
-    if chance >= 1.0 {
-        return true;
-    }
-    let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-    roll < chance
-}
 
 /// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
 /// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach state entry;
@@ -883,9 +873,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         );
                     }
 
-                    let proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                     let w_proc_chance = attacker.weapon_proc_chance(weapon_index);
-                    let did_proc = proc_roll < w_proc_chance;
+                    let (did_proc, proc_roll) =
+                        roll_weapon_intrinsic_proc(w_proc_chance, &mut rng);
                     let proc_multiplier = if did_proc {
                         attacker.weapon_proc_multiplier(weapon_index)
                     } else {
@@ -1170,29 +1160,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     let mut defender_phase_effects = defender_phase_template.clone();
                     defender_phase_effects.set_trace_contributions(trace.is_enabled());
 
-                    // Per-shot `Proc*` (mirrors outbound per-shot weapon proc rolls).
-                    let mut proc_pre_attack_multiplier = 1.0_f64;
-                    let mut proc_pre_attack_pierce_bonus = 0.0_f64;
-                    for e in defender_combat_begin_filtered
-                        .iter()
-                        .chain(defender_round_start_filtered.iter())
-                        .chain(defender_attack_filtered.iter())
-                        .chain(defender_defense_filtered.iter())
-                    {
-                        match e.effect {
-                            AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
-                                if roll_proc(chance.clamp(0.0, 1.0), &mut rng) {
-                                    proc_pre_attack_multiplier *= multiplier.max(0.0);
-                                }
-                            }
-                            AbilityEffect::ProcPierceBonus { chance, bonus } => {
-                                if roll_proc(chance.clamp(0.0, 1.0), &mut rng) {
-                                    proc_pre_attack_pierce_bonus += bonus;
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
+                    // Per-shot `Proc*` (mirrors outbound per-shot weapon intrinsic proc: fresh rolls).
+                    let (proc_pre_attack_multiplier, proc_pre_attack_pierce_bonus) =
+                        accumulate_proc_attack_effects(
+                            defender_combat_begin_filtered
+                                .iter()
+                                .chain(defender_round_start_filtered.iter())
+                                .chain(defender_attack_filtered.iter())
+                                .chain(defender_defense_filtered.iter()),
+                            &mut rng,
+                        );
 
                     defender_phase_effects.add_effect(
                         TimingWindow::CombatBegin,
@@ -1231,9 +1208,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     {
                         def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
                     }
-                    let def_proc_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                     let def_w_proc = defender.weapon_proc_chance(weapon_index);
-                    let def_proc_mult = if def_proc_roll < def_w_proc {
+                    let (def_did_proc, _def_proc_roll) =
+                        roll_weapon_intrinsic_proc(def_w_proc, &mut rng);
+                    let def_proc_mult = if def_did_proc {
                         defender.weapon_proc_multiplier(weapon_index)
                     } else {
                         1.0

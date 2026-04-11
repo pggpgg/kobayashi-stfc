@@ -9,6 +9,7 @@ pub mod export_csv;
 pub mod log_ingest;
 pub mod mitigation;
 pub mod mitigation_sensitivity;
+pub mod proc;
 pub mod rng;
 pub mod stacking;
 pub mod types;
