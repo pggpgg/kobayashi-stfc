@@ -19,8 +19,8 @@ Focus is on simulator correctness, explainability, maintainability, and develope
 - [x] **3) Condition engine: centralize “is this condition true?” evaluation**  
   Consolidate condition checks (burning, hull breach, morale, opponent tags, ship class, “first N rounds”, etc.) behind a single typed evaluator so new effects don’t re-implement slightly different logic. Implemented [`evaluate_ability_condition`](../src/combat/condition.rs), [`ability_condition_from_ship_ability`](../src/combat/condition.rs), [`ability_condition_from_research_bonus_key`](../src/combat/condition.rs); [`AbilityCondition::evaluate`](../src/combat/abilities.rs) delegates to the shared evaluator; ship and profile importers call the builders (unit tests in `condition` module).
 
-- [ ] **4) Burning/Hull Breach/Morale: write explicit timing tests**  
-  Add unit/integration tests that lock down **when** statuses apply, tick, decay, and clear relative to attack/defense windows and end-of-round cleanup.
+- [x] **4) Burning/Hull Breach/Morale: write explicit timing tests**  
+  Add unit/integration tests that lock down **when** statuses apply, tick, decay, and clear relative to attack/defense windows and end-of-round cleanup. Implemented [`tests/status_effect_timing_tests.rs`](../tests/status_effect_timing_tests.rs): combat-begin burn tick count vs `duration_rounds`, round-end `burning_trigger` before `end_of_round_effects`, `morale_activation` before first `attack_roll`, hull breach event order + refresh-vs-decay cases (bounded seed search when follow-up procs fail).
 
 - [ ] **5) Proc semantics: standardize proc RNG + per-round/proc caps**  
   Define and test proc behavior (roll timing, proc-chance stacking rules, cap enforcement, and duration refresh vs extend) with a minimal synthetic scenario suite.
