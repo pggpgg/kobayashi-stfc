@@ -459,7 +459,7 @@ Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon 
 
 The combat engine is the hot loop. Every design decision here affects throughput by millions of simulations.
 
-The implemented entry points are functions such as `simulate_combat_with_defender_faction_and_defender_crew` in `src/combat/engine.rs`: they take resolved attacker/defender [`Combatant`](src/combat/types.rs) values, crew context, a [`SimulationConfig`](src/combat/types.rs) (seed, optional trace mode, chain carry-over hull damage), and return a [`SimulationResult`](src/combat/types.rs). Scenario building (ship + hostile + profile + LCARS resolution) lives in the data/optimizer layers before the hot loop runs.
+The implemented entry points are functions such as `simulate_combat_with_defender_faction_and_defender_crew` in `src/combat/engine.rs`: they take resolved attacker/defender `[Combatant](src/combat/types.rs)` values, crew context, a `[SimulationConfig](src/combat/types.rs)` (seed, optional trace mode, chain carry-over hull damage), and return a `[SimulationResult](src/combat/types.rs)`. Scenario building (ship + hostile + profile + LCARS resolution) lives in the data/optimizer layers before the hot loop runs.
 
 Key design constraints:
 
@@ -498,7 +498,7 @@ for each round (1..MAX_ROUNDS):
 
 ### 4.4 Output
 
-A single fight returns [`SimulationResult`](src/combat/types.rs) (serialized for API/replay when tracing is on):
+A single fight returns `[SimulationResult](src/combat/types.rs)` (serialized for API/replay when tracing is on):
 
 ```rust
 pub struct SimulationResult {
@@ -514,7 +514,7 @@ pub struct SimulationResult {
 }
 ```
 
-The Monte Carlo layer aggregates many `SimulationResult` values into win rate, hull remaining, R1 kill rate, etc. A minimal [`FightResult { won }`](src/combat/types.rs) exists for tests/stubs only; it is not the combat engine’s real output.
+The Monte Carlo layer aggregates many `SimulationResult` values into win rate, hull remaining, R1 kill rate, etc. A minimal `[FightResult { won }](src/combat/types.rs)` exists for tests/stubs only; it is not the combat engine’s real output.
 
 ### 4.5 Target Throughput
 
@@ -823,22 +823,24 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 
 ### 10.4 API
 
-**Canonical contract:** OpenAPI is served at **`GET /api/openapi.yaml`** and **`GET /api/openapi.json`**. The bundled document is maintained as [`docs/openapi/kobayashi-heavy-payloads.yaml`](../docs/openapi/kobayashi-heavy-payloads.yaml) and wired through [`src/server/openapi.rs`](../src/server/openapi.rs). Prefer those definitions over this summary; routes evolve in `src/server/routes.rs`.
+**Canonical contract:** OpenAPI is served at `**GET /api/openapi.yaml`** and `**GET /api/openapi.json**`. The bundled document is maintained as `[docs/openapi/kobayashi-heavy-payloads.yaml](../docs/openapi/kobayashi-heavy-payloads.yaml)` and wired through `[src/server/openapi.rs](../src/server/openapi.rs)`. Prefer those definitions over this summary; routes evolve in `src/server/routes.rs`.
 
 **Primary endpoints (illustrative):**
 
-| Method | Path | Role |
-| ------ | ---- | ---- |
-| `POST` | `/api/simulate` | Monte Carlo for one crew |
-| `POST` | `/api/optimize` | Optimize (blocking until done); CPU-bound work in `spawn_blocking` |
-| `POST` | `/api/optimize/start` | Start background optimize job |
-| `GET` | `/api/optimize/status/:job_id` | Poll job status (JSON) |
-| `GET` | `/api/optimize/jobs/:job_id/stream` | SSE stream of job status until done/error |
-| `POST` | `/api/optimize/jobs/:job_id/cancel` | Request cancellation |
-| `GET` | `/api/sync/status` | stfc-mod / sync state |
-| `POST` | `/api/sync/ingress` | Sync payload ingress |
-| `GET` / `PUT` | `/api/profile` | Active player profile |
-| `GET` | `/api/officers`, `/api/ships`, `/api/hostiles` | Catalogs |
+
+| Method        | Path                                           | Role                                                               |
+| ------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
+| `POST`        | `/api/simulate`                                | Monte Carlo for one crew                                           |
+| `POST`        | `/api/optimize`                                | Optimize (blocking until done); CPU-bound work in `spawn_blocking` |
+| `POST`        | `/api/optimize/start`                          | Start background optimize job                                      |
+| `GET`         | `/api/optimize/status/:job_id`                 | Poll job status (JSON)                                             |
+| `GET`         | `/api/optimize/jobs/:job_id/stream`            | SSE stream of job status until done/error                          |
+| `POST`        | `/api/optimize/jobs/:job_id/cancel`            | Request cancellation                                               |
+| `GET`         | `/api/sync/status`                             | stfc-mod / sync state                                              |
+| `POST`        | `/api/sync/ingress`                            | Sync payload ingress                                               |
+| `GET` / `PUT` | `/api/profile`                                 | Active player profile                                              |
+| `GET`         | `/api/officers`, `/api/ships`, `/api/hostiles` | Catalogs                                                           |
+
 
 Also exposed: health, mechanics coverage, officer resolved view, ship tiers/levels, data version, forbidden-tech catalog, profile/buildings and research summaries, profiles CRUD + zip export/import, presets, heuristics list, optimize estimate/replay-seed, compare crews, large-body import routes, etc. Requests may pass through API-key middleware (`src/server/api_key.rs`).
 

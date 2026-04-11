@@ -12,11 +12,13 @@
 
 A ship has:
 
-| Role          | Slots | Description                    |
-|---------------|-------|--------------------------------|
-| Captain       | 1     | Single captain                 |
-| Bridge        | 2     | Two bridge officers            |
-| Below decks   | 7     | Seven below-deck officers       |
+
+| Role        | Slots | Description               |
+| ----------- | ----- | ------------------------- |
+| Captain     | 1     | Single captain            |
+| Bridge      | 2     | Two bridge officers       |
+| Below decks | 7     | Seven below-deck officers |
+
 
 **Total crew size:** 1 + 2 + 7 = 10 distinct officers per crew.
 
@@ -41,16 +43,14 @@ For this baseline we assume **no role restrictions**: any officer may be placed 
 
 We count assignments with **all 10 officers distinct**: captain (1); bridge (unordered pair of 2); below decks (ordered 7-tuple).
 
-1. **Captain**  
-   Choose 1 from N:  
+1. **Captain**
+  Choose 1 from N:  
    **C_captain = N**
-
-2. **Bridge**  
-   Choose 2 distinct officers from the remaining (N−1); **order does not matter** (combination, not permutation):  
+2. **Bridge**
+  Choose 2 distinct officers from the remaining (N−1); **order does not matter** (combination, not permutation):  
    **C_bridge = C(N−1, 2) = (N−1)(N−2) / 2**
-
-3. **Below decks**  
-   From the remaining (N−3) officers, choose 7 and assign them to the 7 below-deck slots (order matters). That is 7-permutations of (N−3):  
+3. **Below decks**
+  From the remaining (N−3) officers, choose 7 and assign them to the 7 below-deck slots (order matters). That is 7-permutations of (N−3):  
    **C_below = P(N−3, 7) = (N−3)(N−4)(N−5)(N−6)(N−7)(N−8)(N−9)**
 
 **Total combinations:**
@@ -62,11 +62,13 @@ C_total = N × (N−1)(N−2)/2 × P(N−3, 7)
 
 With **N = 231**:
 
-| Factor              | Value        |
-|---------------------|--------------|
-| C_captain           | 231          |
-| C_bridge            | C(230, 2) = 230×229/2 = 26,335 |
+
+| Factor              | Value                                    |
+| ------------------- | ---------------------------------------- |
+| C_captain           | 231                                      |
+| C_bridge            | C(230, 2) = 230×229/2 = 26,335           |
 | C_below = P(228, 7) | 228×227×226×225×224×223×222 ≈ 2.918×10¹⁶ |
+
 
 **Baseline total:**
 
@@ -77,13 +79,15 @@ With **N = 231**:
 
 ### 4. Baseline summary
 
-| Quantity        | Value / Formula |
-|-----------------|------------------|
-| Officers (N)    | 231 (owned)     |
-| Captain choices | N = 231          |
-| Bridge (unordered pair) | C(N−1, 2) = 26,335 |
-| Below-deck 7-tuples | P(N−3, 7) ≈ 2.918×10¹⁶ |
+
+| Quantity                    | Value / Formula                     |
+| --------------------------- | ----------------------------------- |
+| Officers (N)                | 231 (owned)                         |
+| Captain choices             | N = 231                             |
+| Bridge (unordered pair)     | C(N−1, 2) = 26,335                  |
+| Below-deck 7-tuples         | P(N−3, 7) ≈ 2.918×10¹⁶              |
 | **Total crew combinations** | **177,542,699,875,593,966,144,000** |
+
 
 This is the **baseline** combination space. Any constraint (e.g. role eligibility, "below decks: only 7 highest-power if no below-decks ability") will reduce this number; the reduction can be computed and recorded below.
 
@@ -93,17 +97,21 @@ This is the **baseline** combination space. Any constraint (e.g. role eligibilit
 
 If we **simulate one combat per crew combination** to evaluate it, the total number of simulations equals **C_total**. Using the benchmark throughput from the project's [PERFORMANCE.md](PERFORMANCE.md) (run after the sim efficiency plan):
 
-| Benchmark | Throughput | Source |
-|-----------|------------|--------|
-| Single combat (100 rounds) | **829,736** combats/s | `benchmark_simulator --log` |
-| Monte Carlo parallel (64 candidates × 1000 it) | **513,081** sims/s | `benchmark_parallel_speedup` |
+
+| Benchmark                                      | Throughput            | Source                       |
+| ---------------------------------------------- | --------------------- | ---------------------------- |
+| Single combat (100 rounds)                     | **829,736** combats/s | `benchmark_simulator --log`  |
+| Monte Carlo parallel (64 candidates × 1000 it) | **513,081** sims/s    | `benchmark_parallel_speedup` |
+
 
 **One simulation per combination:**
 
-| Throughput | Time (seconds) | Time (years) |
-|------------|-----------------|--------------|
-| 829,736 /s | ≈ 2.14 × 10¹⁷ s | **≈ 6.8 billion years** |
+
+| Throughput | Time (seconds)  | Time (years)             |
+| ---------- | --------------- | ------------------------ |
+| 829,736 /s | ≈ 2.14 × 10¹⁷ s | **≈ 6.8 billion years**  |
 | 513,081 /s | ≈ 3.46 × 10¹⁷ s | **≈ 11.0 billion years** |
+
 
 So exhausting all **177.5 × 10²¹** combinations at current benchmark speeds is on the order of **billions of years** (far beyond the age of the Universe). This motivates reducing the combination space with the optimizations in §6 (e.g. role restrictions, below-decks pruning) and/or not enumerating all combinations (e.g. sampling, search, heuristics).
 
@@ -120,7 +128,7 @@ So exhausting all **177.5 × 10²¹** combinations at current benchmark speeds i
 #### 6.1 Bridge–captain synergy (same group)
 
 - **Rule:** Ignore a bridge officer unless they have **synergy** with the captain. Synergy = same **group** as the captain (e.g. "TOS ENTERPRISE CREW", "SECTION 31"). Bridge slots are still unordered; below decks unchanged.
-- **Formula:** For each captain-eligible officer *c*, let *n(c)* = number of bridge-eligible officers in the same group as *c* (excluding *c* if *c* is bridge-eligible). Bridge combinations for that captain = C(*n(c)*, 2). Total: **C_total_synergy = P(N−3, 7) × Σ_c C(*n(c)*, 2)** (sum over captain-eligible *c*).
+- **Formula:** For each captain-eligible officer *c*, let *n(c)* = number of bridge-eligible officers in the same group as *c* (excluding *c* if *c* is bridge-eligible). Bridge combinations for that captain = C(*n(c)*, 2). Total: **C_total_synergy = P(N−3, 7) × Σ_c C(n(c), 2)** (sum over captain-eligible *c*).
 - **Computed on canonical roster (N = 277):** Σ_c C(*n(c)*, 2) = **4,626** (vs 277 × C(276, 2) = 10,512,150 unrestricted). New total (277) ≈ **4.96 × 10²⁰**. **Reduction factor ≈ 0.00044** (≈ 1∕2,270).
 - **For N = 231 (owned):** Exact total depends on which 231 you own. If group distribution is similar, new total ≈ baseline_231 × 0.00044 ≈ **7.8 × 10¹⁹** (vs 1.78 × 10²³). **Reduction by a factor of ~2,270.**
 - **Time to exhaust (at 830k/s):** ~7.8×10¹⁹ / 829736 ≈ 3.0×10¹³ s ≈ **950,000 years** (still huge, but ~7,200× less than baseline).
