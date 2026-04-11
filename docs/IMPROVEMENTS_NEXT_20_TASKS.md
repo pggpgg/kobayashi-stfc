@@ -16,8 +16,8 @@ Focus is on simulator correctness, explainability, maintainability, and develope
 - [x] **2) Faction-gated effects: make defender faction first-class for CLI/imports**  
   `kobayashi simulate` accepts `--defender-faction <slug>` and/or `--hostile <id|name level>`; slug wins, else faction from resolved hostile, else `Unknown`. Implemented in `data::loader::defender_faction_for_cli_simulate` and wired in `main.rs` + `cli::handle_simulate`. (Roster `import` does not run combat.)
 
-- [ ] **3) Condition engine: centralize “is this condition true?” evaluation**  
-  Consolidate condition checks (burning, hull breach, morale, opponent tags, ship class, “first N rounds”, etc.) behind a single typed evaluator so new effects don’t re-implement slightly different logic.
+- [x] **3) Condition engine: centralize “is this condition true?” evaluation**  
+  Consolidate condition checks (burning, hull breach, morale, opponent tags, ship class, “first N rounds”, etc.) behind a single typed evaluator so new effects don’t re-implement slightly different logic. Implemented [`evaluate_ability_condition`](../src/combat/condition.rs), [`ability_condition_from_ship_ability`](../src/combat/condition.rs), [`ability_condition_from_research_bonus_key`](../src/combat/condition.rs); [`AbilityCondition::evaluate`](../src/combat/abilities.rs) delegates to the shared evaluator; ship and profile importers call the builders (unit tests in `condition` module).
 
 - [ ] **4) Burning/Hull Breach/Morale: write explicit timing tests**  
   Add unit/integration tests that lock down **when** statuses apply, tick, decay, and clear relative to attack/defense windows and end-of-round cleanup.

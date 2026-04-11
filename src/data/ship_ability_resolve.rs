@@ -27,43 +27,15 @@
 //! `1..=N` so crew-seat effects apply only in the first **N** combat rounds.
 
 use crate::combat::abilities::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
-    TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
-use crate::combat::condition::combine_optional_and;
+use crate::combat::condition::ability_condition_from_ship_ability;
 use crate::combat::types::{OpponentFactionTag, ShipType, EPSILON, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
 
 fn normalize_key(s: &str) -> String {
     s.trim().to_lowercase().replace('-', "_")
-}
-
-fn conditions_for_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition> {
-    let mut parts: Vec<AbilityCondition> = Vec::new();
-    if ability.condition_morale {
-        parts.push(AbilityCondition::MoraleActive);
-    }
-    if ability.condition_defender_burning {
-        parts.push(AbilityCondition::DefenderBurning);
-    }
-    if ability.condition_defender_hull_breach {
-        parts.push(AbilityCondition::DefenderHullBreach);
-    }
-    if let Some(ref slug) = ability.condition_opponent_faction {
-        if let Some(tag) = OpponentFactionTag::from_data_slug(slug) {
-            parts.push(AbilityCondition::DefenderFactionIs(tag));
-        }
-    }
-    if let Some(ref slug) = ability.condition_opponent_ship_class {
-        if let Some(st) = ShipType::from_data_slug(slug) {
-            parts.push(AbilityCondition::DefenderShipTypeIs(st));
-        }
-    }
-    if let Some(n) = ability.round_cap.filter(|&n| n > 0) {
-        let max_r = n.min(MAX_COMBAT_ROUNDS);
-        parts.push(AbilityCondition::RoundRange { min: 1, max: max_r });
-    }
-    combine_optional_and(parts)
 }
 
 /// Map catalog timing string to engine window. Accepts Kobayashi canonical names and LCARS-style triggers.
@@ -270,7 +242,7 @@ pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSe
         ability.value,
         ability.duration_rounds,
     )?;
-    let condition = conditions_for_ship_ability(ability);
+    let condition = ability_condition_from_ship_ability(ability);
     Some(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {

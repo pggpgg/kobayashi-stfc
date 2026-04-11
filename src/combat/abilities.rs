@@ -1,4 +1,3 @@
-use crate::combat::condition::stat_pct_for_condition;
 use crate::combat::types::{OpponentFactionTag, ShipType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -202,28 +201,10 @@ pub enum AbilityCondition {
 }
 
 impl AbilityCondition {
+    /// Delegates to [`crate::combat::condition::evaluate_ability_condition`].
+    #[inline]
     pub fn evaluate(&self, ctx: &CombatContext) -> bool {
-        match self {
-            Self::StatBelow {
-                stat,
-                threshold_pct,
-            } => stat_pct_for_condition(stat.as_str(), ctx).is_some_and(|pct| pct < *threshold_pct),
-            Self::StatAbove {
-                stat,
-                threshold_pct,
-            } => stat_pct_for_condition(stat.as_str(), ctx).is_some_and(|pct| pct > *threshold_pct),
-            Self::RoundRange { min, max } => ctx.round_index >= *min && ctx.round_index <= *max,
-            Self::MoraleActive => ctx.attacker_morale_active,
-            Self::DefenderBurning => ctx.defender_burning_active,
-            Self::DefenderHullBreach => ctx.defender_hull_breach_active,
-            Self::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
-            Self::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
-            Self::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
-            Self::DefenderIsNpcHostile => ctx.defender_is_npc_hostile,
-            Self::DefenderIsPlayerShip => ctx.defender_is_player_ship,
-            Self::And(conds) => conds.iter().all(|c| c.evaluate(ctx)),
-            Self::Or(conds) => conds.iter().any(|c| c.evaluate(ctx)),
-        }
+        crate::combat::condition::evaluate_ability_condition(self, ctx)
     }
 }
 

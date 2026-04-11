@@ -12,16 +12,15 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewSeat,
-    CrewSeatContext, OpponentFactionTag, ShipType, TimingWindow, EPSILON,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant, CrewSeat, CrewSeatContext,
+    TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
+use crate::combat::condition::ability_condition_from_research_bonus_key;
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
 use crate::data::research::{
-    cumulative_conditional_research_bonuses, cumulative_research_bonuses,
-    ResearchBonusConditionKey, ResearchCatalog,
+    cumulative_conditional_research_bonuses, cumulative_research_bonuses, ResearchCatalog,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -372,30 +371,6 @@ fn research_levels_by_rid_from_import(imported_research: &[ResearchEntry]) -> Ha
     levels_by_rid
 }
 
-fn research_condition_key_to_ability_condition(
-    key: &ResearchBonusConditionKey,
-) -> Option<AbilityCondition> {
-    let mut parts: Vec<AbilityCondition> = Vec::new();
-    if let Some(ref slug) = key.defender_ship_class {
-        let st = ShipType::from_data_slug(slug)?;
-        parts.push(AbilityCondition::DefenderShipTypeIs(st));
-    }
-    if let Some(ref slug) = key.defender_faction {
-        let tag = OpponentFactionTag::from_data_slug(slug)?;
-        parts.push(AbilityCondition::DefenderFactionIs(tag));
-    }
-    if key.requires_morale {
-        parts.push(AbilityCondition::MoraleActive);
-    }
-    if key.requires_defender_burning {
-        parts.push(AbilityCondition::DefenderBurning);
-    }
-    if key.requires_defender_hull_breach {
-        parts.push(AbilityCondition::DefenderHullBreach);
-    }
-    crate::combat::condition::combine_optional_and(parts)
-}
-
 /// Conditional research rows (hull class, faction, morale, burning, hull breach) for `crit_chance` /
 /// `crit_damage` become attack-phase ship seats so crit rolls respect gates (see `research.rs`).
 ///
@@ -434,7 +409,7 @@ pub fn research_derived_attack_phase_seats(
         if norm != "crit_chance" && norm != "crit_damage" {
             continue;
         }
-        let Some(condition) = research_condition_key_to_ability_condition(&key) else {
+        let Some(condition) = ability_condition_from_research_bonus_key(&key) else {
             continue;
         };
         let effect = match norm {
