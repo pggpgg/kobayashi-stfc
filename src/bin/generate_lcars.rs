@@ -463,6 +463,16 @@ fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         "TargetHasBurning" => return Some(lcars_cond_base("defender_burning")),
         "TargetHasHullBreach" => return Some(lcars_cond_base("defender_hull_breach")),
         "SelfHasMorale" => return Some(lcars_cond_base("morale_active")),
+        // Canonical opponent category: NPC hostile (ship-vs-hostile optimizer default).
+        "EnemyHostile" => return Some(lcars_cond_base("defender_is_npc_hostile")),
+        // Canonical opponent category: player ship (PvP-shaped API toggle).
+        "EnemyPlayer" => return Some(lcars_cond_base("defender_is_player_ship")),
+        // Canonical armada target: modeled as defender combat ship-type Armada (same signal as mitigation / upstream ship_type).
+        "EnemyArmada" => {
+            let mut c = lcars_cond_base("defender_ship_type_is");
+            c.ship_type = Some("armada".to_string());
+            return Some(c);
+        }
         _ => {}
     }
 
@@ -830,16 +840,29 @@ mod canonical_condition_tests {
     }
 
     #[test]
-    fn mixed_tokens_drop_unmapped_keep_enemy_explorer() {
+    fn mixed_tokens_map_enemy_hostile_and_explorer_to_and() {
         let raw = vec![
             "EnemyHostile".to_string(),
             " TargetNotArmada".to_string(),
             "EnemyExplorer".to_string(),
             "SelfOfficerTalNotOnBridge".to_string(),
         ];
-        let out = canonical_conditions_to_lcars(&raw, "Alok", "test").expect("one maps");
-        assert_eq!(out.condition_type, "defender_ship_type_is");
-        assert_eq!(out.ship_type.as_deref(), Some("explorer"));
+        let out = canonical_conditions_to_lcars(&raw, "Alok", "test").expect("maps");
+        assert_eq!(out.condition_type, "and");
+        let kids = out.conditions.as_ref().expect("children");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "defender_is_npc_hostile");
+        assert_eq!(kids[1].condition_type, "defender_ship_type_is");
+        assert_eq!(kids[1].ship_type.as_deref(), Some("explorer"));
+        resolve_lcars_condition(&out).expect("resolver accepts combined and");
+    }
+
+    #[test]
+    fn maps_enemy_armada_to_defender_ship_type_armada() {
+        let c = map_canonical_condition_token("EnemyArmada").expect("maps");
+        assert_eq!(c.condition_type, "defender_ship_type_is");
+        assert_eq!(c.ship_type.as_deref(), Some("armada"));
+        resolve_lcars_condition(&c).expect("resolver accepts");
     }
 
     #[test]

@@ -198,7 +198,18 @@ officers:
         - 0.5
         - 0.7
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -227,7 +238,7 @@ officers:
         - 3000.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -236,8 +247,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_npc_hostile
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -334,6 +367,17 @@ officers:
           tag: null
           ship_type: interceptor
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_hull_breach
           stat: null
           threshold_pct: null
@@ -395,6 +439,17 @@ officers:
           tag: null
           ship_type: battleship
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_burning
           stat: null
           threshold_pct: null
@@ -455,7 +510,18 @@ officers:
         - 2900.0
         - 3200.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -710,7 +776,18 @@ officers:
         - 9.0
         - 15.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -738,7 +815,18 @@ officers:
         - 0.3
         - 0.6
         - 1.0
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1104,7 +1192,18 @@ officers:
         - 0.5
         - 1.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1132,7 +1231,18 @@ officers:
         - 3.0
         - 3.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1246,7 +1356,18 @@ officers:
         - 0.07
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1359,7 +1480,18 @@ officers:
         - 4.0
         - 5.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1455,7 +1587,18 @@ officers:
         - 0.17
         - 0.25
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1845,7 +1988,18 @@ officers:
         - 0.05
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1896,7 +2050,18 @@ officers:
       trigger: on_combat_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shotsperattack:unmapped
@@ -1924,7 +2089,18 @@ officers:
         - 1.1
         - 1.3
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -1975,7 +2151,18 @@ officers:
         - 0.21
         - 0.25
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -2238,7 +2425,18 @@ officers:
         - 0.1
         - 0.15
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -2266,7 +2464,18 @@ officers:
         - 0.25
         - 0.3
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -2523,6 +2732,17 @@ officers:
           tag: null
           ship_type: interceptor
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_hull_breach
           stat: null
           threshold_pct: null
@@ -2583,6 +2803,17 @@ officers:
           min_members: null
           tag: null
           ship_type: interceptor
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -2666,7 +2897,18 @@ officers:
         - 1.02
         - 1.05
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -2726,7 +2968,18 @@ officers:
         - 0.03
         - 0.04
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -2814,7 +3067,18 @@ officers:
         - 3.5
         - 4.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -2937,7 +3201,18 @@ officers:
         - 0.65
         - 0.8
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3051,7 +3326,18 @@ officers:
       trigger: on_round_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: addrandomstate:unmapped
@@ -3079,7 +3365,18 @@ officers:
         - 1.8
         - 2.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3342,7 +3639,18 @@ officers:
         - 0.3
         - 0.4
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3409,7 +3717,18 @@ officers:
         - 0.1
         - 0.15
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3495,7 +3814,18 @@ officers:
         - 12.0
         - 16.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3523,7 +3853,18 @@ officers:
         - 0.65
         - 0.9
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3615,7 +3956,7 @@ officers:
         - 0.0
         chance_values: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -3624,8 +3965,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: survey
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: survey
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3653,7 +4016,18 @@ officers:
         - 1.8
         - 2.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3815,7 +4189,7 @@ officers:
       duration: permanent
       scaling: null
       condition:
-        type: morale_active
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -3825,7 +4199,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: shotsperattack:unmapped
@@ -3842,7 +4238,18 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: hullrepair:unmapped
@@ -3892,7 +4299,18 @@ officers:
         - 0.4
         - 0.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -3946,6 +4364,17 @@ officers:
           min_members: null
           tag: null
           ship_type: interceptor
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -4008,6 +4437,17 @@ officers:
           tag: null
           ship_type: interceptor
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_hull_breach
           stat: null
           threshold_pct: null
@@ -4069,7 +4509,18 @@ officers:
         - 3.5
         - 4.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4252,7 +4703,18 @@ officers:
         - 0.01
         - 0.02
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4280,7 +4742,18 @@ officers:
         - 0.2
         - 0.3
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4312,7 +4785,18 @@ officers:
         - 0.15
         - 0.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4452,7 +4936,18 @@ officers:
         - 2.25
         - 3.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4533,7 +5028,7 @@ officers:
         - 0.2
         - 0.4
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -4542,8 +5037,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: interceptor
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: interceptor
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4582,6 +5099,17 @@ officers:
           min_members: null
           tag: null
           ship_type: interceptor
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -4756,7 +5284,18 @@ officers:
         - 0.3
         - 0.6
         - 1.0
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4927,7 +5466,18 @@ officers:
         - 0.05
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -4955,7 +5505,18 @@ officers:
         - 0.75
         - 1.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5047,7 +5608,18 @@ officers:
         - 0.25
         - 0.25
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5082,7 +5654,7 @@ officers:
         - 12500.0
         chance_values: null
       condition:
-        type: defender_hull_breach
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -5092,7 +5664,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_hull_breach
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5120,7 +5714,18 @@ officers:
         - 1.15
         - 1.4
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5152,7 +5757,7 @@ officers:
         - 0.25
         chance_values: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -5161,8 +5766,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5224,6 +5851,17 @@ officers:
           tag: null
           ship_type: null
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5259,7 +5897,7 @@ officers:
         - 0.65
         chance_values: null
       condition:
-        type: defender_hull_breach
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -5269,7 +5907,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_hull_breach
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5297,7 +5957,18 @@ officers:
         - 21000.0
         - 25000.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5425,6 +6096,17 @@ officers:
           tag: null
           ship_type: null
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -5474,6 +6156,17 @@ officers:
           min_members: null
           tag: null
           ship_type: interceptor
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -6031,7 +6724,18 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -6059,7 +6763,18 @@ officers:
         - 0.3
         - 0.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -6342,7 +7057,18 @@ officers:
         - 0.25
         - 0.35
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -6487,7 +7213,7 @@ officers:
         - 1.1
         chance_values: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -6496,8 +7222,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: battleship
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: battleship
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -6525,7 +7273,18 @@ officers:
         - 0.15
         - 0.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -6621,7 +7380,18 @@ officers:
       trigger: on_combat_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: cptmaneuvereffect:unmapped
@@ -6638,7 +7408,18 @@ officers:
       trigger: on_combat_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: officerstatall:unmapped
@@ -6994,7 +7775,18 @@ officers:
         - 1000.0
         - 3500.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -7188,7 +7980,7 @@ officers:
         - 0.5
         chance_values: null
       condition:
-        type: defender_hull_breach
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -7198,7 +7990,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_hull_breach
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -7277,7 +8091,18 @@ officers:
         - 0.55
         - 0.7
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -7593,7 +8418,7 @@ officers:
         - 1.2
         chance_values: null
       condition:
-        type: morale_active
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -7603,7 +8428,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -7632,7 +8479,7 @@ officers:
         - 15000.0
         chance_values: null
       condition:
-        type: defender_burning
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -7642,7 +8489,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_burning
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -7793,7 +8662,18 @@ officers:
         - 0.08
         - 0.12
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -7883,7 +8763,18 @@ officers:
         - 3.0
         - 4.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8016,7 +8907,7 @@ officers:
         - 18750.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -8025,8 +8916,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: interceptor
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: interceptor
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8087,7 +9000,7 @@ officers:
         - 18750.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -8096,8 +9009,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: battleship
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: battleship
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8125,7 +9060,18 @@ officers:
         - 24.0
         - 36.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8157,7 +9103,18 @@ officers:
         - 1500.0
         - 1500.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8174,7 +9131,18 @@ officers:
       trigger: on_round_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shotsperattack:unmapped
@@ -8206,7 +9174,18 @@ officers:
         - 0.25
         - 0.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8234,7 +9213,18 @@ officers:
         - 22000.0
         - 30000.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8267,7 +9257,7 @@ officers:
         - 18750.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -8276,8 +9266,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8305,7 +9317,18 @@ officers:
         - 24.0
         - 36.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8340,7 +9363,18 @@ officers:
         - 0.8
         - 1.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8368,7 +9402,18 @@ officers:
         - 1600.0
         - 2000.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8403,7 +9448,7 @@ officers:
         - 1.2
         chance_values: null
       condition:
-        type: defender_burning
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -8413,7 +9458,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_burning
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8442,7 +9509,7 @@ officers:
         - 15000.0
         chance_values: null
       condition:
-        type: morale_active
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -8452,7 +9519,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8562,7 +9651,18 @@ officers:
         - 0.6
         - 0.7
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8790,7 +9890,18 @@ officers:
         - 0.3
         - 0.6
         - 1.0
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -8911,7 +10022,18 @@ officers:
         - 4000.0
         - 5000.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -9302,7 +10424,18 @@ officers:
         - 0.6
         - 0.7
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -9726,7 +10859,18 @@ officers:
         - 1.6
         - 2.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -9849,7 +10993,18 @@ officers:
         - 0.9
         - 0.01
         - 0.05
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -9878,7 +11033,7 @@ officers:
         - 31.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -9887,8 +11042,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -9923,7 +11100,18 @@ officers:
         - 0.06
         - 0.08
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10011,7 +11199,18 @@ officers:
         - 0.9
         - 0.01
         - 0.05
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10040,7 +11239,7 @@ officers:
         - 31.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -10049,8 +11248,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: battleship
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: battleship
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10082,7 +11303,18 @@ officers:
         - 0.9
         - 0.01
         - 0.05
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10111,7 +11343,7 @@ officers:
         - 31.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -10120,8 +11352,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: interceptor
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: interceptor
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10185,7 +11439,7 @@ officers:
       duration: permanent
       scaling: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -10194,8 +11448,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: allloadspeed:unmapped
@@ -10247,6 +11523,17 @@ officers:
           ship_type: explorer
           conditions: null
         - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
           stat: null
           threshold_pct: null
           min: null
@@ -10380,7 +11667,18 @@ officers:
         - 1.1
         - 1.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10408,7 +11706,18 @@ officers:
         - 0.55
         - 0.75
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10460,7 +11769,7 @@ officers:
         - 3000.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -10469,8 +11778,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: battleship
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_npc_hostile
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: battleship
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10707,7 +12038,7 @@ officers:
         - 2.0
         chance_values: null
       condition:
-        type: defender_burning
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -10717,7 +12048,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_burning
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10746,7 +12099,7 @@ officers:
         - 15000.0
         chance_values: null
       condition:
-        type: defender_hull_breach
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -10756,7 +12109,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_hull_breach
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10788,7 +12163,7 @@ officers:
         - 1.1
         chance_values: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -10797,8 +12172,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10826,7 +12223,18 @@ officers:
         - 1.15
         - 1.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10861,7 +12269,18 @@ officers:
         - 1.0
         - 1.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10889,7 +12308,18 @@ officers:
         - 0.7
         - 1.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10982,7 +12412,18 @@ officers:
         - 0.05
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11010,7 +12451,18 @@ officers:
         - 0.6
         - 0.7
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11121,7 +12573,18 @@ officers:
         - 0.05
         - 0.06
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11216,7 +12679,18 @@ officers:
         - 0.25
         - 0.3
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11244,7 +12718,18 @@ officers:
         - 0.3
         - 0.4
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11346,7 +12831,18 @@ officers:
         - 0.36
         - 0.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11463,6 +12959,17 @@ officers:
           tag: null
           ship_type: battleship
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_burning
           stat: null
           threshold_pct: null
@@ -11535,6 +13042,17 @@ officers:
           tag: null
           ship_type: null
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11584,7 +13102,18 @@ officers:
         - 1.15
         - 1.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11771,7 +13300,7 @@ officers:
         - 25.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -11780,8 +13309,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: survey
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_npc_hostile
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: survey
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11820,7 +13371,18 @@ officers:
       trigger: on_combat_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -11848,7 +13410,18 @@ officers:
         - 21.0
         - 36.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11920,7 +13493,18 @@ officers:
         - 15.0
         - 25.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -11948,7 +13532,18 @@ officers:
         - 0.08
         - 0.15
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12000,7 +13595,18 @@ officers:
         - 0.25
         - 0.4
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12031,7 +13637,18 @@ officers:
         - 0.05
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12082,6 +13699,17 @@ officers:
           tag: null
           ship_type: battleship
           conditions: null
+        - type: defender_is_npc_hostile
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_ship_type_is
           stat: null
           threshold_pct: null
@@ -12127,7 +13755,18 @@ officers:
         - 0.15
         - 0.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12177,7 +13816,18 @@ officers:
       trigger: on_combat_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -12194,7 +13844,18 @@ officers:
       trigger: on_combat_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -12226,7 +13887,18 @@ officers:
         - 0.05
         - 0.08
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12254,7 +13926,18 @@ officers:
         - 2.3
         - 3.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12348,7 +14031,18 @@ officers:
         - 0.05
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12399,6 +14093,17 @@ officers:
           tag: null
           ship_type: explorer
           conditions: null
+        - type: defender_is_npc_hostile
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_ship_type_is
           stat: null
           threshold_pct: null
@@ -12444,7 +14149,18 @@ officers:
         - 21.0
         - 25.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12492,7 +14208,18 @@ officers:
         - 0.05
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12543,6 +14270,17 @@ officers:
           tag: null
           ship_type: interceptor
           conditions: null
+        - type: defender_is_npc_hostile
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_ship_type_is
           stat: null
           threshold_pct: null
@@ -12585,7 +14323,18 @@ officers:
         - 1.75
         - 2.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12634,7 +14383,18 @@ officers:
         - 0.4
         - 0.1
         - 0.3
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12674,6 +14434,17 @@ officers:
         tag: null
         ship_type: null
         conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_ship_type_is
           stat: null
           threshold_pct: null
@@ -12730,6 +14501,17 @@ officers:
         tag: null
         ship_type: null
         conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_hull_breach
           stat: null
           threshold_pct: null
@@ -12779,7 +14561,18 @@ officers:
         - 0.8
         - 0.9
         - 1.0
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12873,7 +14666,18 @@ officers:
         - 0.4
         - 0.1
         - 0.3
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12914,6 +14718,17 @@ officers:
         ship_type: null
         conditions:
         - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
           stat: null
           threshold_pct: null
           min: null
@@ -13020,6 +14835,17 @@ officers:
           tag: null
           ship_type: battleship
           conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
         - type: defender_burning
           stat: null
           threshold_pct: null
@@ -13059,7 +14885,7 @@ officers:
         - 0.8
         - 0.9
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -13068,8 +14894,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: battleship
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: battleship
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -13102,7 +14950,7 @@ officers:
         - 0.1
         - 0.2
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -13111,8 +14959,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -13130,7 +15000,7 @@ officers:
       duration: permanent
       scaling: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -13139,8 +15009,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: battleship
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: battleship
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: allreloadspeed:unmapped
@@ -13164,7 +15056,7 @@ officers:
       duration: permanent
       scaling: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -13173,8 +15065,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: officerstatall:unmapped
@@ -13192,7 +15106,7 @@ officers:
       duration: permanent
       scaling: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -13201,8 +15115,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: battleship
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: battleship
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -13226,7 +15162,18 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: hullrepair:unmapped
@@ -13254,7 +15201,18 @@ officers:
         - 0.9
         - 1.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -13375,7 +15333,18 @@ officers:
         - 0.15
         - 0.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -13672,7 +15641,18 @@ officers:
         - 12.5
         - 20.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -13711,7 +15691,18 @@ officers:
       trigger: on_round_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shotsperattack:unmapped
@@ -13728,7 +15719,18 @@ officers:
       trigger: on_round_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: addrandomstate:unmapped
@@ -13800,7 +15802,18 @@ officers:
         - 0.05
         - 0.1
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14087,7 +16100,18 @@ officers:
         - 0.15
         - 0.25
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14115,7 +16139,18 @@ officers:
         - 4.0
         - 5.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14236,7 +16271,18 @@ officers:
         - 1.0
         - 1.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14269,7 +16315,7 @@ officers:
         - 0.5
         chance_values: null
       condition:
-        type: morale_active
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -14279,7 +16325,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14479,7 +16547,7 @@ officers:
         - 1.5
         chance_values: null
       condition:
-        type: morale_active
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -14489,7 +16557,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14615,7 +16705,7 @@ officers:
         - 1.0
         chance_values: null
       condition:
-        type: morale_active
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -14625,7 +16715,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14643,7 +16755,7 @@ officers:
       duration: permanent
       scaling: null
       condition:
-        type: morale_active
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -14653,7 +16765,29 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        conditions: null
+        conditions:
+        - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -14928,7 +17062,7 @@ officers:
         - 1.1
         chance_values: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -14937,8 +17071,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: interceptor
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: interceptor
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -14966,7 +17122,18 @@ officers:
         - 1.15
         - 1.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15017,7 +17184,18 @@ officers:
         - 1.15
         - 1.2
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15200,7 +17378,18 @@ officers:
         - 0.3
         - 0.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15251,7 +17440,18 @@ officers:
         - 2.5
         - 3.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15301,7 +17501,18 @@ officers:
         - 0.2
         - 0.3
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_player_ship
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15333,7 +17544,18 @@ officers:
         - 0.25
         - 0.5
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15383,7 +17605,7 @@ officers:
         - 0.1
         - 0.4
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -15392,8 +17614,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: explorer
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: explorer
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15434,6 +17678,17 @@ officers:
           ship_type: explorer
           conditions: null
         - type: morale_active
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_is_player_ship
           stat: null
           threshold_pct: null
           min: null
@@ -15503,7 +17758,18 @@ officers:
         - 3.5
         - 4.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15544,7 +17810,18 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -15579,7 +17856,7 @@ officers:
         - 75000.0
         chance_values: null
       condition:
-        type: attacker_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -15588,8 +17865,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: survey
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: attacker_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: survey
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15679,7 +17978,18 @@ officers:
         - 6.0
         - 8.0
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15741,7 +18051,18 @@ officers:
         - 0.5
         - 0.7
         chance_values: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -15781,7 +18102,18 @@ officers:
       trigger: on_combat_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -16168,7 +18500,18 @@ officers:
       trigger: on_round_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: defender_is_npc_hostile
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: addrandomstate:unmapped
@@ -16197,7 +18540,7 @@ officers:
         - 3000.0
         chance_values: null
       condition:
-        type: defender_ship_type_is
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -16206,8 +18549,30 @@ officers:
         group: null
         min_members: null
         tag: null
-        ship_type: interceptor
-        conditions: null
+        ship_type: null
+        conditions:
+        - type: defender_is_npc_hostile
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: interceptor
+          conditions: null
       chance: null
       multiplier: null
       tag: null

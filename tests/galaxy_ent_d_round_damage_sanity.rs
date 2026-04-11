@@ -17,7 +17,7 @@ use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::loader::resolve_ship_with_tier_level;
 use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::optimizer::monte_carlo::replay_optimize_iteration_with_registry;
+use kobayashi::optimizer::monte_carlo::{replay_optimize_iteration_with_registry, DefenderOpponent};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -126,6 +126,7 @@ fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
         Some(DEMO_PROFILE_ID),
         2_000_000,
         None,
+        DefenderOpponent::Hostile,
     );
 
     assert!(

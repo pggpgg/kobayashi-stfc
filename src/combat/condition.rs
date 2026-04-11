@@ -52,6 +52,8 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
         }
     }
 

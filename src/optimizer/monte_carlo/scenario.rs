@@ -51,6 +51,27 @@ use super::crew_resolution::{
 
 const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
 
+/// Who the defending combatant represents for canonical opponent-category conditions (`EnemyHostile` / `EnemyPlayer`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DefenderOpponent {
+    /// NPC hostile (default ship-vs-hostile optimizer); `EnemyHostile` gates pass.
+    #[default]
+    Hostile,
+    /// Player ship (“PvP-shaped” toggle); `EnemyPlayer` gates pass. Stats may still come from a hostile id until real PvP symmetry exists.
+    Player,
+}
+
+impl DefenderOpponent {
+    pub fn defender_is_npc_hostile(self) -> bool {
+        matches!(self, Self::Hostile)
+    }
+
+    pub fn defender_is_player_ship(self) -> bool {
+        matches!(self, Self::Player)
+    }
+}
+
 /// Append the ship [`ShipRecord`]'s optional `abilities` as [`CrewSeatContext`] rows
 /// (supported timing/`effect_type` only; see [`crate::data::ship_ability_resolve`]).
 /// Called after officer seats so hull abilities use the same engine phases as DESIGN.md §3.6.
@@ -323,6 +344,8 @@ pub(crate) struct SharedScenarioData {
     pub unknown_support_buff_ids: Vec<String>,
     /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
     pub research_derived_seats: Vec<CrewSeatContext>,
+    /// Canonical `EnemyHostile` / `EnemyPlayer` condition context for the defending side.
+    pub defender_opponent: DefenderOpponent,
 }
 
 impl SharedScenarioData {
@@ -922,6 +945,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
     ship: &str,
     hostile: &str,
     support_buffs_request: Option<&[String]>,
+    defender_opponent: DefenderOpponent,
 ) -> SharedScenarioData {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
@@ -1076,6 +1100,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         support_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
+        defender_opponent,
     }
 }
 
@@ -1088,6 +1113,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     ship_level: Option<u32>,
     profile_id: Option<&str>,
     support_buffs_request: Option<&[String]>,
+    defender_opponent: DefenderOpponent,
 ) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
 
@@ -1265,6 +1291,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         support_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
+        defender_opponent,
     }
 }
 
@@ -1466,6 +1493,7 @@ mod tests {
             Some(1),
             None,
             None,
+            DefenderOpponent::Hostile,
         );
 
         let ship = shared.ship_rec.as_ref().expect("ship record");
@@ -1713,6 +1741,7 @@ mod tests {
             support_static_buffs: HashMap::new(),
             unknown_support_buff_ids: vec![],
             research_derived_seats: vec![],
+            defender_opponent: DefenderOpponent::Hostile,
         };
 
         let candidate = CrewCandidate {
@@ -1874,6 +1903,7 @@ mod tests {
             None,
             Some(&entry.id),
             None,
+            DefenderOpponent::Hostile,
         );
 
         // Catalog rid 2232304457: weapon_damage +0.05 at L1, +0.07 at L2 → cumulative 0.12

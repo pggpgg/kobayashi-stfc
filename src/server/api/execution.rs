@@ -370,6 +370,7 @@ fn gather_optimize_simulation_results(
         request.ship_level,
         profile_id,
         request.support_buffs.as_deref(),
+        request.defender_opponent,
     )
     .using_placeholder_combatants;
 
@@ -389,6 +390,7 @@ fn gather_optimize_simulation_results(
             profile_id,
             request.support_buffs.as_deref(),
             chain_grind.clone(),
+            request.defender_opponent,
         );
         sink.on_heuristics_complete(heuristics_only, h_total, &results);
         results
@@ -420,6 +422,7 @@ fn gather_optimize_simulation_results(
             constraints: crew_constraints.clone(),
             support_buffs: request.support_buffs.clone().unwrap_or_default(),
             chain_grind: chain_grind.clone(),
+            defender_opponent: request.defender_opponent,
         };
         let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
             sink.on_optimize_tick(tick)

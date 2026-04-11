@@ -4,7 +4,7 @@
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::optimizer::monte_carlo::replay_optimize_iteration_with_registry;
+use kobayashi::optimizer::monte_carlo::{replay_optimize_iteration_with_registry, DefenderOpponent};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -53,6 +53,7 @@ fn hurak59_log_fixture_and_sim_calibration() {
         Some(DEMO_PROFILE_ID),
         2_000_000,
         None,
+        DefenderOpponent::Hostile,
     );
     assert!(
         !replay.using_placeholder_combatants,
@@ -85,6 +86,7 @@ fn hurak59_log_fixture_and_sim_calibration() {
         Some(DEMO_PROFILE_ID),
         2_000_000,
         None,
+        DefenderOpponent::Hostile,
     );
     std::env::set_var("KOBAYASHI_WEAPON_DAMAGE_ADDITIVE_POOL", "1");
     let replay_on = replay_optimize_iteration_with_registry(
@@ -99,6 +101,7 @@ fn hurak59_log_fixture_and_sim_calibration() {
         Some(DEMO_PROFILE_ID),
         2_000_000,
         None,
+        DefenderOpponent::Hostile,
     );
     std::env::remove_var("KOBAYASHI_WEAPON_DAMAGE_ADDITIVE_POOL");
     assert_eq!(

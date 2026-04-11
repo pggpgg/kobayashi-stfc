@@ -82,6 +82,12 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
             max: c.max.unwrap_or(100),
         }),
         "morale_active" | "attacker_morale" | "morale" => Ok(AbilityCondition::MoraleActive),
+        "defender_is_npc_hostile" | "defender_npc_hostile" | "enemy_hostile" => {
+            Ok(AbilityCondition::DefenderIsNpcHostile)
+        },
+        "defender_is_player_ship" | "defender_player_ship" | "enemy_player" => {
+            Ok(AbilityCondition::DefenderIsPlayerShip)
+        },
         "defender_burning" | "target_burning" | "burning" => Ok(AbilityCondition::DefenderBurning),
         "defender_hull_breach" | "target_hull_breach" | "hull_breach_active" => {
             Ok(AbilityCondition::DefenderHullBreach)
@@ -1027,6 +1033,8 @@ mod tests {
             defender_faction: OpponentFactionTag::Klingon,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
         };
         assert!(and_cond.evaluate(&ctx_ok));
         let ctx_no_morale = CombatContext {
@@ -1087,6 +1095,8 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Explorer,
             attacker_ship_type: ShipType::Battleship,
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
         };
         assert!(ac.evaluate(&ctx_bb));
         let ctx_int = CombatContext {
@@ -1094,6 +1104,62 @@ mod tests {
             ..ctx_bb
         };
         assert!(!ac.evaluate(&ctx_int));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_defender_opponent_kind_and_evaluates() {
+        let npc = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "defender_is_npc_hostile".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: None,
+        })
+        .expect("npc");
+        let player = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "defender_is_player_ship".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: None,
+        })
+        .expect("player");
+        let ctx_pve = CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: false,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            defender_faction: OpponentFactionTag::Unknown,
+            defender_ship_type: ShipType::Battleship,
+            attacker_ship_type: ShipType::Explorer,
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
+        };
+        assert!(npc.evaluate(&ctx_pve));
+        assert!(!player.evaluate(&ctx_pve));
+        let ctx_pvp = CombatContext {
+            defender_is_npc_hostile: false,
+            defender_is_player_ship: true,
+            ..ctx_pve
+        };
+        assert!(!npc.evaluate(&ctx_pvp));
+        assert!(player.evaluate(&ctx_pvp));
     }
 
     #[test]

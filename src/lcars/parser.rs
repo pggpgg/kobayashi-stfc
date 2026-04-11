@@ -199,6 +199,7 @@ pub struct LcarsCondition {
     pub tag: Option<String>,
     /// Hull class slug for ship-class conditions (`battleship`, `explorer`, `interceptor`, `survey`, `armada`).
     /// Used with `defender_ship_type_is` / `opponent_ship_class_is` (enemy) or `attacker_ship_type_is` / `self_ship_class_is` (player ship).
+    /// Opponent-category conditions (`defender_is_npc_hostile`, `defender_is_player_ship`) use no extra fields.
     #[serde(default)]
     pub ship_type: Option<String>,
     #[serde(default)]

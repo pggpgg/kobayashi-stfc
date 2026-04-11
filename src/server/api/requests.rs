@@ -10,6 +10,7 @@ use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };
 use crate::optimizer::crew_generator::{MAX_BELOW_DECKS_SLOTS, MIN_BELOW_DECKS_SLOTS};
+use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
 use crate::optimizer::OptimizerStrategy;
 
 pub const DEFAULT_SIMS: u32 = 5000;
@@ -87,6 +88,8 @@ pub struct ReplaySeedRequest {
     pub crew: ReplaySeedCrew,
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub defender_opponent: DefenderOpponent,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -116,6 +119,8 @@ pub struct OptimizeRequest {
     pub support_buffs: Option<Vec<String>>,
     #[serde(default)]
     pub chain: Option<ChainGrindRequest>,
+    #[serde(default)]
+    pub defender_opponent: DefenderOpponent,
 }
 
 /// JSON body for `OptimizeRequest.constraints`.

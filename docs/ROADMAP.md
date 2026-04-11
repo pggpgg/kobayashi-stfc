@@ -41,9 +41,26 @@ Planned features and priorities for Kobayashi.
 - **Canonical `AddState` attributes:** Rows use **`state=8` / `state=4` / `state=2` / `state=64`** (e.g. `num_rounds=1, state=8`). The generator previously looked for substrings like **`state8`**, so it fell through to a non-combat **`tag`** that [`resolve_effect`](../src/lcars/resolver.rs) skips. **Fix in code:** [`add_state_type_from_attributes`](../src/bin/generate_lcars.rs) parses the numeric id after `state=` (avoids e.g. `state=20` matching burning). **Fix in data:** canonical **`slot`: `below_decks`** where upstream says below-decks (kept in sync by [`scripts/normalize_officer_id_strings.py`](../scripts/normalize_officer_id_strings.py) when officer cache exists); then `cargo run --bin generate_lcars` refreshes **[`data/officers/officers.lcars.yaml`](../data/officers/officers.lcars.yaml)**.
 - **Officers corrected (canonical + monolith):** Any ability whose **`ability_id`** equals upstream **`below_decks_ability.id`** must use **`slot`: `below_decks`** so [`generate_lcars`](../src/bin/generate_lcars.rs) emits a real **`below_decks_ability`** block. A repo-wide pass fixed **72** officers that had that id under **`slot`: `officer`** (including **Harry Kim**, **B’Elanna Torres**, **Neelix**, Lower Decks / WOK / SNW / etc.). **Maintenance:** after refreshing cached per-officer JSON under `data/upstream/data-stfc-space/officers/`, run [`scripts/normalize_officer_id_strings.py`](../scripts/normalize_officer_id_strings.py) (it normalizes decimal ids **and** syncs below-decks slots from upstream), then `cargo run --bin generate_lcars --release` to rewrite [`data/officers/officers.lcars.yaml`](../data/officers/officers.lcars.yaml).
 
-### Roadmap / backlog
+### Implemented (canonical opponent-category)
 
-- **Canonical opponent-category conditions (`EnemyHostile`, `EnemyPlayer`, `EnemyArmada`):** Many abilities gate on these tokens in **[`officers.canonical.json`](../data/officers/officers.canonical.json)**. [`map_canonical_condition_token`](../src/bin/generate_lcars.rs) does **not** map them today, so `generate_lcars` **drops** them (stderr: skipping unmapped) and emitted LCARS conditions are **weaker** than in-game. **Next steps:** (1) Add LCARS condition types that the resolver can turn into [`AbilityCondition`](../src/combat/abilities.rs) variants. (2) Extend [`CombatContext`](../src/combat/abilities.rs) (or scenario input) with explicit **defender category** flags: non-player hostile, player, armada — sourced from hostile record / [`UpstreamHostileShipTypeProfile`](../src/data/upstream_hostile_ship_type.rs) / future PvP mode. (3) Map **`EnemyHostile`** → “defender is NPC hostile (not player)”; **`EnemyPlayer`** → “defender is player”; **`EnemyArmada`** → “defender is armada” (may overlap with existing **`defender_ship_type_is` / `ShipType::Armada`** when `ship_type` is mapped). (4) Re-run `generate_lcars` and spot-check officers that list these conditions (Kim, B’Elanna, Neelix, Zeph, etc.).
+- **Engine:** [`CombatContext`](../src/combat/abilities.rs) carries `defender_is_npc_hostile` and `defender_is_player_ship`; [`AbilityCondition::DefenderIsNpcHostile` / `DefenderIsPlayerShip`](../src/combat/abilities.rs) gate effects at runtime. [`simulate_combat_with_defender_faction_and_defender_crew`](../src/combat/engine.rs) takes these flags (defaults for ship-vs-hostile: NPC hostile, not player).
+- **LCARS:** [`resolve_lcars_condition`](../src/lcars/resolver.rs) accepts `defender_is_npc_hostile` / `defender_is_player_ship` (plus short aliases). [`map_canonical_condition_token`](../src/bin/generate_lcars.rs) maps **`EnemyHostile`**, **`EnemyPlayer`**, and **`EnemyArmada`**. **`EnemyArmada`** is emitted as existing `defender_ship_type_is` + `armada` (same signal as [`HostileRecord::ship_type_for_combat`](../src/data/hostile.rs) armada targets; distinct in-game “armada encounter” bits remain **uncertain** until battle evidence).
+- **Scenario / API:** [`DefenderOpponent`](../src/optimizer/monte_carlo/scenario.rs) (`hostile` \| `player`) on [`SharedScenarioData`](../src/optimizer/monte_carlo/scenario.rs); optimize/simulate/compare/replay JSON accept optional **`defender_opponent`** (default `hostile`). Player mode sets `defender_is_player_ship` for ability gates; stats may still use a hostile id until dedicated PvP stat symmetry exists.
+
+### Encounter spreadsheet labels (community curation) vs Kobayashi
+
+| Label (spreadsheet) | In Kobayashi today |
+|---------------------|--------------------|
+| PvP Space | `defender_opponent: player` on API (PvP-shaped toggle). |
+| PvP Station | Same player toggle; station-specific scope not modeled in default ship combat. |
+| Red Moving Space, Waves, QTrial, Mission Bosses | No per-hostile signal in [`HostileRecord`](../src/data/hostile.rs); treat as **unsupported** unless you add manual scenario tags or battlelog-driven context later. |
+| Group Armadas, Solo Armadas | Partially: `ShipType::Armada` + hostile stats; group vs solo not in normalized JSON. |
+| Invading Entities, Assaults | Unsupported without encounter ids in data. |
+| Outpost Armadas, Outpost Retaliation Attackers | [`HostileRecord::is_outpost`](../src/data/hostile.rs) exists; no LCARS condition wired yet—confirm in-game vs logs before adding `defender_is_outpost`-style gates. |
+
+### Roadmap / backlog (officers)
+
+- **More canonical condition tokens:** Many other strings in **`officers.canonical.json`** still log “skipping unmapped” during `generate_lcars` (for example `TargetNotArmada`, `CombatBattleType`, hull-line tokens). Map each only when the engine has an explicit, testable meaning.
 
 ---
 

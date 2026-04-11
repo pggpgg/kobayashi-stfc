@@ -17,6 +17,7 @@ use crate::optimizer::constraints::CrewSearchConstraints;
 use crate::optimizer::crew_generator::{
     build_officer_pools, CrewCandidate, OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
+use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_deduped, SimulationResult,
 };
@@ -71,6 +72,9 @@ pub struct GeneticConfig {
     pub support_buffs: Vec<String>,
 
     pub chain_grind: Option<ChainGrindParams>,
+
+    /// Defender is NPC hostile vs player ship (canonical `EnemyHostile` / `EnemyPlayer` context).
+    pub defender_opponent: DefenderOpponent,
 }
 
 impl Default for GeneticConfig {
@@ -92,6 +96,7 @@ impl Default for GeneticConfig {
             constraints: None,
             support_buffs: Vec::new(),
             chain_grind: None,
+            defender_opponent: DefenderOpponent::Hostile,
         }
     }
 }
@@ -497,6 +502,7 @@ pub fn run_genetic_optimizer(
             seed.wrapping_add(generation as u64),
             support_slice,
             config.chain_grind.clone(),
+            config.defender_opponent,
         );
         let fitness: Vec<f32> = sim_results.iter().map(fitness_from_result).collect();
 
@@ -592,6 +598,7 @@ pub fn run_genetic_optimizer_ranked(
         seed,
         support_slice,
         config.chain_grind.clone(),
+        config.defender_opponent,
     );
     rank_results(final_results)
 }

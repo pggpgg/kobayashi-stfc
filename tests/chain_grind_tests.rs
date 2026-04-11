@@ -6,7 +6,9 @@ use kobayashi::optimizer::chain::{
     ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary,
 };
 use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::optimizer::monte_carlo::{run_monte_carlo_with_registry, SimulationResult};
+use kobayashi::optimizer::monte_carlo::{
+    run_monte_carlo_with_registry, DefenderOpponent, SimulationResult,
+};
 use kobayashi::optimizer::ranking::rank_results;
 
 #[test]
@@ -35,6 +37,7 @@ fn chain_n1_primary_rate_matches_single_fight_win_rate() {
         Some(DEMO_PROFILE_ID),
         None,
         None,
+        DefenderOpponent::Hostile,
     );
     let (chain, ph2) = run_monte_carlo_with_registry(
         &registry,
@@ -51,6 +54,7 @@ fn chain_n1_primary_rate_matches_single_fight_win_rate() {
             kills_target: 1,
             secondary: ChainSecondaryObjective::MinHullDamage,
         }),
+        DefenderOpponent::Hostile,
     );
 
     assert!(

@@ -17,7 +17,7 @@ use std::hash::{Hash, Hasher};
 use super::crew_resolution::seeded_variance;
 use super::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    scenario_to_combat_input_from_shared, SharedScenarioData,
+    scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
 };
 
 #[derive(Debug, Clone)]
@@ -291,6 +291,8 @@ fn run_candidate_monte_carlo(
             defender_faction,
             defender_ship_type,
             attacker_ship_type,
+            shared.defender_opponent.defender_is_npc_hostile(),
+            shared.defender_opponent.defender_is_player_ship(),
             &input.defender_crew,
         );
         let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
@@ -427,6 +429,7 @@ pub fn run_monte_carlo(
     seed: u64,
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
 ) -> Vec<SimulationResult> {
     run_monte_carlo_with_parallelism(
         ship,
@@ -437,6 +440,7 @@ pub fn run_monte_carlo(
         false,
         support_buffs,
         chain_grind,
+        defender_opponent,
     )
 }
 
@@ -450,6 +454,7 @@ pub fn run_monte_carlo_parallel(
     seed: u64,
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
 ) -> Vec<SimulationResult> {
     run_monte_carlo_with_parallelism(
         ship,
@@ -460,6 +465,7 @@ pub fn run_monte_carlo_parallel(
         true,
         support_buffs,
         chain_grind,
+        defender_opponent,
     )
 }
 
@@ -473,6 +479,7 @@ pub fn run_monte_carlo_parallel_deduped(
     seed: u64,
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
 ) -> Vec<SimulationResult> {
     if candidates.is_empty() {
         return Vec::new();
@@ -500,6 +507,7 @@ pub fn run_monte_carlo_parallel_deduped(
         seed,
         support_buffs,
         chain_grind.clone(),
+        defender_opponent,
     );
 
     let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq_results.len());
@@ -559,6 +567,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     profile_id: Option<&str>,
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -568,6 +577,7 @@ pub fn run_monte_carlo_parallel_with_registry(
         ship_level,
         profile_id,
         support_buffs,
+        defender_opponent,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -591,6 +601,7 @@ pub fn run_monte_carlo_with_registry(
     profile_id: Option<&str>,
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -600,6 +611,7 @@ pub fn run_monte_carlo_with_registry(
         ship_level,
         profile_id,
         support_buffs,
+        defender_opponent,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -645,6 +657,7 @@ pub fn replay_optimize_iteration_with_registry(
     profile_id: Option<&str>,
     max_trace_events: usize,
     support_buffs: Option<&[String]>,
+    defender_opponent: DefenderOpponent,
 ) -> MonteCarloSeedReplay {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -654,6 +667,7 @@ pub fn replay_optimize_iteration_with_registry(
         ship_level,
         profile_id,
         support_buffs,
+        defender_opponent,
     );
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
     let iteration_seed = input.base_seed.wrapping_add(sim_index);
@@ -684,6 +698,8 @@ pub fn replay_optimize_iteration_with_registry(
         defender_faction,
         defender_ship_type,
         attacker_ship_type,
+        shared.defender_opponent.defender_is_npc_hostile(),
+        shared.defender_opponent.defender_is_player_ship(),
         &input.defender_crew,
     );
 
@@ -730,8 +746,10 @@ fn run_monte_carlo_with_parallelism(
     parallel: bool,
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
 ) -> Vec<SimulationResult> {
-    let shared = build_shared_scenario_data_standalone(ship, hostile, support_buffs);
+    let shared =
+        build_shared_scenario_data_standalone(ship, hostile, support_buffs, defender_opponent);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel, chain_grind)
 }
 
@@ -840,9 +858,26 @@ mod tests {
             below_decks: vec!["D".into(), "E".into(), "F".into()],
         };
         let pop = vec![a.clone(), a.clone()];
-        let full = run_monte_carlo_parallel("enterprise", "swarm", &pop, 8, 42, None, None);
-        let deduped =
-            run_monte_carlo_parallel_deduped("enterprise", "swarm", &pop, 8, 42, None, None);
+        let full = run_monte_carlo_parallel(
+            "enterprise",
+            "swarm",
+            &pop,
+            8,
+            42,
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
+        let deduped = run_monte_carlo_parallel_deduped(
+            "enterprise",
+            "swarm",
+            &pop,
+            8,
+            42,
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
         assert_eq!(full.len(), deduped.len());
         assert_eq!(full[0].win_rate, deduped[0].win_rate);
         assert_eq!(full[1].win_rate, deduped[1].win_rate);

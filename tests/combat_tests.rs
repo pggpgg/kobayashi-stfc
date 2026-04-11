@@ -436,6 +436,8 @@ fn defender_crew_can_modify_counter_fire_damage() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     let boosted = simulate_combat_with_defender_faction_and_defender_crew(
@@ -446,6 +448,8 @@ fn defender_crew_can_modify_counter_fire_damage() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         &defender_crew,
     );
 
@@ -540,6 +544,8 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     let with_sb = simulate_combat_with_defender_faction_and_defender_crew(
@@ -550,6 +556,8 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         &defender_crew_sb,
     );
 
@@ -1415,6 +1423,8 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         OpponentFactionTag::Unknown,
         ShipType::Explorer,
         ShipType::Battleship,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     let battleship = simulate_combat_with_defender_faction_and_defender_crew(
@@ -1425,6 +1435,8 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     assert!(
@@ -1432,6 +1444,106 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         "hull-class–gated attack multiplier should apply only when defender ship type matches"
     );
     approx_eq(explorer.total_damage, battleship.total_damage / 2.0, 1.0);
+}
+
+#[test]
+fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 19,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "vs_npc_hostile".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(1.0),
+                condition: Some(AbilityCondition::DefenderIsNpcHostile),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let empty = &CrewConfiguration { seats: vec![] };
+    let vs_npc = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        empty,
+    );
+    let vs_player = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        false,
+        true,
+        empty,
+    );
+    assert!(
+        vs_npc.total_damage > vs_player.total_damage,
+        "DefenderIsNpcHostile gate should apply only when scenario marks defender as NPC hostile"
+    );
+    approx_eq(vs_player.total_damage, vs_npc.total_damage / 2.0, 1.0);
 }
 
 #[test]
@@ -1511,6 +1623,8 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         OpponentFactionTag::Unknown,
         same_defender_type,
         ShipType::Battleship,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     let with_int = simulate_combat_with_defender_faction_and_defender_crew(
@@ -1521,6 +1635,8 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         OpponentFactionTag::Unknown,
         same_defender_type,
         ShipType::Interceptor,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     assert!(
@@ -1611,6 +1727,8 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         OpponentFactionTag::Unknown,
         ShipType::Explorer,
         ShipType::Battleship,
+        true,
+        false,
         empty,
     );
     let wrong_player_hull = simulate_combat_with_defender_faction_and_defender_crew(
@@ -1621,6 +1739,8 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         OpponentFactionTag::Unknown,
         ShipType::Explorer,
         ShipType::Interceptor,
+        true,
+        false,
         empty,
     );
     let wrong_hostile_hull = simulate_combat_with_defender_faction_and_defender_crew(
@@ -1631,6 +1751,8 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         empty,
     );
     assert!(
@@ -1745,6 +1867,8 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     let r_capped = simulate_combat_with_defender_faction_and_defender_crew(
@@ -1755,6 +1879,8 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Battleship,
+        true,
+        false,
         &CrewConfiguration { seats: vec![] },
     );
     assert!(

@@ -31,6 +31,7 @@ use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate, CrewGenerator,
     BRIDGE_SLOTS,
 };
+use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
 use crate::optimizer::monte_carlo::{
     compare_crews_monte_carlo_with_registry, replay_optimize_iteration_with_registry,
     run_monte_carlo_with_registry, SimulationResult,
@@ -348,6 +349,8 @@ pub struct SimulateRequest {
     pub support_buffs: Option<Vec<String>>,
     #[serde(default)]
     pub chain: Option<requests::ChainGrindRequest>,
+    #[serde(default)]
+    pub defender_opponent: DefenderOpponent,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -399,6 +402,8 @@ pub struct CompareCrewsRequest {
     pub proc_sample_trials: Option<u32>,
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub defender_opponent: DefenderOpponent,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -569,6 +574,7 @@ pub fn simulate_payload(
         profile_id,
         req.support_buffs.as_deref(),
         chain_grind,
+        req.defender_opponent,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {
@@ -703,6 +709,7 @@ pub fn compare_crews_payload(
         profile_id,
         proc_sample,
         req.support_buffs.as_deref(),
+        req.defender_opponent,
     );
 
     let mut warnings = Vec::new();
@@ -830,6 +837,7 @@ pub fn replay_optimize_seed_payload(
         profile_id,
         max_trace,
         req.support_buffs.as_deref(),
+        req.defender_opponent,
     );
 
     let mut warnings = Vec::new();

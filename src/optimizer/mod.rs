@@ -32,7 +32,7 @@ use crate::optimizer::crew_generator::{
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    scenario_to_combat_input_from_shared, SharedScenarioData,
+    scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry, SimulationResult,
@@ -166,6 +166,8 @@ pub struct OptimizationScenario<'a> {
     pub support_buffs: Vec<String>,
     /// Sequential chain grind (HHP carry-over, full SHP each link). When set, analytical prefilter is skipped.
     pub chain_grind: Option<ChainGrindParams>,
+    /// Defender is NPC hostile vs player ship for canonical opponent-category conditions.
+    pub defender_opponent: DefenderOpponent,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -189,6 +191,7 @@ impl Default for OptimizationScenario<'_> {
             constraints: None,
             support_buffs: Vec::new(),
             chain_grind: None,
+            defender_opponent: DefenderOpponent::Hostile,
         }
     }
 }
@@ -228,6 +231,7 @@ fn optimize_scenario_tiered_with_registry(
         None,
         scenario.profile_id,
         scenario_support_slice(scenario),
+        scenario.defender_opponent,
     );
     let (candidates, _) = analytical_prefilter_unless_chain(
         &shared_tiered,
@@ -250,6 +254,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.profile_id,
         scenario_support_slice(scenario),
         scenario.chain_grind.clone(),
+        scenario.defender_opponent,
         |_| true,
     )
 }
@@ -295,6 +300,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.ship_level,
         scenario.profile_id,
         scenario_support_slice(scenario),
+        scenario.defender_opponent,
     );
     let (candidates, _) = analytical_prefilter_unless_chain(
         &shared_ex,
@@ -315,6 +321,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.profile_id,
         scenario_support_slice(scenario),
         scenario.chain_grind.clone(),
+        scenario.defender_opponent,
     );
     rank_results(simulation_results)
 }
@@ -334,6 +341,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario.ship,
         scenario.hostile,
         scenario_support_slice(scenario),
+        scenario.defender_opponent,
     );
     let (candidates, _) = analytical_prefilter_unless_chain(
         &shared,
@@ -350,6 +358,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario.seed,
         scenario_support_slice(scenario),
         scenario.chain_grind.clone(),
+        scenario.defender_opponent,
     );
     rank_results(simulation_results)
 }
@@ -374,6 +383,7 @@ where
             constraints: scenario.constraints.clone(),
             support_buffs: scenario.support_buffs.clone(),
             chain_grind: scenario.chain_grind.clone(),
+            defender_opponent: scenario.defender_opponent,
             ..GeneticConfig::default()
         }
     } else {
@@ -383,6 +393,7 @@ where
         cfg.constraints = scenario.constraints.clone();
         cfg.support_buffs = scenario.support_buffs.clone();
         cfg.chain_grind = scenario.chain_grind.clone();
+        cfg.defender_opponent = scenario.defender_opponent;
         cfg
     };
     run_genetic_optimizer_ranked(
@@ -427,6 +438,7 @@ where
                 constraints: scenario.constraints.clone(),
                 support_buffs: scenario.support_buffs.clone(),
                 chain_grind: scenario.chain_grind.clone(),
+                defender_opponent: scenario.defender_opponent,
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -445,6 +457,7 @@ where
                 scenario.ship,
                 scenario.hostile,
                 scenario_support_slice(scenario),
+                scenario.defender_opponent,
             );
             let (candidates, _) = analytical_prefilter_unless_chain(
                 &shared,
@@ -481,6 +494,7 @@ where
                     scenario.seed,
                     scenario_support_slice(scenario),
                     scenario.chain_grind.clone(),
+                    scenario.defender_opponent,
                 );
                 all_results.extend(batch_results);
                 let partial_top = rank_results(all_results.clone())
@@ -544,6 +558,7 @@ where
                 scenario.ship_level,
                 scenario.profile_id,
                 scenario_support_slice(scenario),
+                scenario.defender_opponent,
             );
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
                 &shared,
@@ -566,6 +581,7 @@ where
                 scenario.profile_id,
                 scenario_support_slice(scenario),
                 scenario.chain_grind.clone(),
+                scenario.defender_opponent,
                 &mut on_progress,
             );
             OptimizeRunOutcome {
@@ -597,6 +613,7 @@ where
                 scenario.ship_level,
                 scenario.profile_id,
                 scenario_support_slice(scenario),
+                scenario.defender_opponent,
             );
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
                 &shared_ex,
@@ -643,6 +660,7 @@ where
                     scenario.profile_id,
                     scenario_support_slice(scenario),
                     scenario.chain_grind.clone(),
+                    scenario.defender_opponent,
                 );
                 all_results.extend(batch_results);
                 let partial_top = rank_results(all_results.clone())
@@ -703,6 +721,7 @@ pub fn optimize_crew(
         constraints: None,
         support_buffs: Vec::new(),
         chain_grind: None,
+        defender_opponent: DefenderOpponent::Hostile,
     })
 }
 
@@ -713,6 +732,7 @@ mod tests {
     };
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::crew_generator::DEFAULT_BELOW_DECKS_SLOTS;
+    use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
 
     #[test]
     fn genetic_strategy_returns_ranked_results_shape() {
@@ -735,6 +755,7 @@ mod tests {
             constraints: None,
             support_buffs: Vec::new(),
             chain_grind: None,
+            defender_opponent: DefenderOpponent::Hostile,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -769,6 +790,7 @@ mod tests {
             constraints: None,
             support_buffs: Vec::new(),
             chain_grind: None,
+            defender_opponent: DefenderOpponent::Hostile,
         };
         let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true);
         assert!(

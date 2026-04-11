@@ -12,6 +12,7 @@ mod simulation;
 pub use compare_crews::{
     compare_crews_monte_carlo_with_registry, CompareCrewDistribution, CompareCrewsOutcome,
 };
+pub use scenario::DefenderOpponent;
 pub use crew_resolution::crew_from_officer_names;
 pub use simulation::{
     crew_candidate_stable_hash, replay_optimize_iteration_with_registry, run_monte_carlo,

@@ -160,6 +160,10 @@ pub struct CombatContext {
     pub defender_ship_type: ShipType,
     /// Hull class of the attacking [`crate::combat::Combatant`] (player ship in PvE).
     pub attacker_ship_type: ShipType,
+    /// True when the defending side is an **NPC hostile** (canonical `EnemyHostile` / ship-vs-hostile optimizer).
+    pub defender_is_npc_hostile: bool,
+    /// True when the defending side is a **player ship** (PvP-shaped scenarios; canonical `EnemyPlayer`).
+    pub defender_is_player_ship: bool,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -189,6 +193,10 @@ pub enum AbilityCondition {
     DefenderShipTypeIs(ShipType),
     /// True when the attacking ship’s hull class matches (e.g. hostile hull abilities vs the player’s class).
     AttackerShipTypeIs(ShipType),
+    /// True when [`CombatContext::defender_is_npc_hostile`] (opponent is an NPC hostile, not another player).
+    DefenderIsNpcHostile,
+    /// True when [`CombatContext::defender_is_player_ship`] (opponent is a player ship).
+    DefenderIsPlayerShip,
     And(Vec<AbilityCondition>),
     Or(Vec<AbilityCondition>),
 }
@@ -211,6 +219,8 @@ impl AbilityCondition {
             Self::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
             Self::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
             Self::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
+            Self::DefenderIsNpcHostile => ctx.defender_is_npc_hostile,
+            Self::DefenderIsPlayerShip => ctx.defender_is_player_ship,
             Self::And(conds) => conds.iter().all(|c| c.evaluate(ctx)),
             Self::Or(conds) => conds.iter().any(|c| c.evaluate(ctx)),
         }

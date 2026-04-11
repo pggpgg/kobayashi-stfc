@@ -7,7 +7,9 @@
 use std::time::Instant;
 
 use kobayashi::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
-use kobayashi::optimizer::monte_carlo::{run_monte_carlo, run_monte_carlo_parallel};
+use kobayashi::optimizer::monte_carlo::{
+    run_monte_carlo, run_monte_carlo_parallel, DefenderOpponent,
+};
 use kobayashi::parallel::init_from_env;
 
 fn main() {
@@ -47,7 +49,16 @@ fn main() {
 
     // Sequential
     let t0 = Instant::now();
-    let results_seq = run_monte_carlo(ship, hostile, &candidates, iterations, seed, None, None);
+    let results_seq = run_monte_carlo(
+        ship,
+        hostile,
+        &candidates,
+        iterations,
+        seed,
+        None,
+        None,
+        DefenderOpponent::Hostile,
+    );
     let elapsed_seq = t0.elapsed();
     let seq_ms = elapsed_seq.as_secs_f64() * 1000.0;
     println!(
@@ -59,7 +70,16 @@ fn main() {
     // Parallel
     let t0 = Instant::now();
     let results_par =
-        run_monte_carlo_parallel(ship, hostile, &candidates, iterations, seed, None, None);
+        run_monte_carlo_parallel(
+            ship,
+            hostile,
+            &candidates,
+            iterations,
+            seed,
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
     let elapsed_par = t0.elapsed();
     let par_ms = elapsed_par.as_secs_f64() * 1000.0;
     println!(

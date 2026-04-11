@@ -95,6 +95,8 @@ pub(crate) fn run_chain_trial(
             defender_faction,
             defender_ship_type,
             attacker_ship_type,
+            shared.defender_opponent.defender_is_npc_hostile(),
+            shared.defender_opponent.defender_is_player_ship(),
             &input.defender_crew,
         );
 

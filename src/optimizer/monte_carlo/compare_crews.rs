@@ -13,7 +13,7 @@ use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::crew_resolution::seeded_variance;
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
-    CombatSimulationInput, SharedScenarioData,
+    CombatSimulationInput, DefenderOpponent, SharedScenarioData,
 };
 
 use serde::Serialize;
@@ -81,6 +81,8 @@ fn simulate_trial(
         defender_faction,
         defender_ship_type,
         attacker_ship_type,
+        shared.defender_opponent.defender_is_npc_hostile(),
+        shared.defender_opponent.defender_is_player_ship(),
         &input.defender_crew,
     )
 }
@@ -209,6 +211,7 @@ pub fn compare_crews_monte_carlo_with_registry(
     profile_id: Option<&str>,
     proc_sample_trials: u32,
     support_buffs: Option<&[String]>,
+    defender_opponent: DefenderOpponent,
 ) -> CompareCrewsOutcome {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -218,6 +221,7 @@ pub fn compare_crews_monte_carlo_with_registry(
         ship_level,
         profile_id,
         support_buffs,
+        defender_opponent,
     );
     let placeholder = shared.using_placeholder_combatants;
     let crews: Vec<CompareCrewDistribution> = candidates

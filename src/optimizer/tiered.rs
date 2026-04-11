@@ -4,7 +4,9 @@
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::crew_generator::CrewCandidate;
-use crate::optimizer::monte_carlo::scenario::build_shared_scenario_data_from_registry;
+use crate::optimizer::monte_carlo::scenario::{
+    build_shared_scenario_data_from_registry, DefenderOpponent,
+};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared, SimulationResult,
 };
@@ -34,6 +36,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     profile_id: Option<&str>,
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
@@ -64,6 +67,7 @@ where
         None,
         profile_id,
         support_buffs,
+        defender_opponent,
     );
 
     // Phase 1: scouting with few sims (Wilson early-stop may reduce per-crew iterations).

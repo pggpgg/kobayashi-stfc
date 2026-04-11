@@ -5,7 +5,9 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use kobayashi::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
-use kobayashi::optimizer::monte_carlo::{run_monte_carlo, run_monte_carlo_parallel};
+use kobayashi::optimizer::monte_carlo::{
+    run_monte_carlo, run_monte_carlo_parallel, DefenderOpponent,
+};
 use kobayashi::parallel::init_from_env;
 
 /// Build a candidate list: from CrewGenerator if data exists, else synthetic list so bench still runs.
@@ -52,6 +54,7 @@ fn bench_monte_carlo_sequential_vs_parallel(c: &mut Criterion) {
                 seed,
                 None,
                 None,
+                DefenderOpponent::Hostile,
             ))
         });
     });
@@ -66,6 +69,7 @@ fn bench_monte_carlo_sequential_vs_parallel(c: &mut Criterion) {
                 seed,
                 None,
                 None,
+                DefenderOpponent::Hostile,
             ))
         });
     });
