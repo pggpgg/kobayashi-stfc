@@ -1,9 +1,10 @@
 //! Structural invariants for combat traces ([`crate::combat::TraceMode::Events`]).
 //!
 //! [`check_trace_invariants`] validates stream ordering, numeric sanity on known [`CombatEvent`]
-//! kinds, mitigation multiplier consistency with documented engine behavior, and contiguity of
-//! per-shot `hit_index` groups. It does **not** assert parity with client combat logs or golden
-//! damage totals — use drift bands and recorded-fight calibration for numeric regression.
+//! kinds, mitigation multiplier consistency with documented engine behavior, contiguity of
+//! per-shot `hit_index` groups, and outbound `attack_roll` ↔ `crit_resolution` pairing (phase
+//! `attack`). It does **not** assert parity with client combat logs or golden damage totals — use
+//! drift bands and recorded-fight calibration for numeric regression.
 //!
 //! Use [`TraceInvariantContext`] to pass the simulation round cap and optional stricter checks
 //! (e.g. monotonic defender `running_hull_damage` when hull regen is impossible).
@@ -42,6 +43,7 @@ impl Default for TraceInvariantContext {
 }
 
 const MITIGATION_MULT_TOL: f64 = 1e-5;
+const CRIT_MULT_NON_UNIT_TOL: f64 = 1e-5;
 
 fn record(
     errs: &mut Vec<TraceInvariantViolation>,
@@ -66,6 +68,10 @@ fn optional_f64(v: &Value) -> Option<f64> {
 fn optional_u64(v: &Value) -> Option<u64> {
     v.as_u64()
         .or_else(|| v.as_i64().and_then(|x| (x >= 0).then_some(x as u64)))
+}
+
+fn optional_bool(v: &Value) -> Option<bool> {
+    v.as_bool()
 }
 
 fn require_finite_nonneg(
@@ -155,7 +161,96 @@ fn check_crit_resolution(
                     format!("{key} must be a JSON number"),
                 );
             }
+        } else {
+            record(
+                errs,
+                event_index,
+                "crit_missing_field",
+                format!("crit_resolution missing required field `{key}`"),
+            );
         }
+    }
+
+    let is_crit = match values.get("is_crit") {
+        Some(v) => match optional_bool(v) {
+            Some(b) => Some(b),
+            None => {
+                record(
+                    errs,
+                    event_index,
+                    "crit_is_crit_type",
+                    "is_crit must be a JSON boolean",
+                );
+                None
+            }
+        },
+        None => {
+            record(
+                errs,
+                event_index,
+                "crit_missing_field",
+                "crit_resolution missing required field `is_crit`",
+            );
+            None
+        }
+    };
+
+    match values.get("multiplier") {
+        Some(v) => {
+            if let Some(m) = optional_f64(v) {
+                if !m.is_finite() || m <= 0.0 {
+                    record(
+                        errs,
+                        event_index,
+                        "crit_multiplier_range",
+                        format!("multiplier must be finite and > 0, got {m}"),
+                    );
+                } else if let Some(false) = is_crit {
+                    if (m - 1.0).abs() > CRIT_MULT_NON_UNIT_TOL {
+                        record(
+                            errs,
+                            event_index,
+                            "crit_multiplier_noncrit",
+                            format!(
+                                "non-crit must have multiplier ≈ 1.0 (tol {CRIT_MULT_NON_UNIT_TOL}), got {m}"
+                            ),
+                        );
+                    }
+                }
+            } else {
+                record(
+                    errs,
+                    event_index,
+                    "crit_multiplier_type",
+                    "multiplier must be a JSON number",
+                );
+            }
+        }
+        None => record(
+            errs,
+            event_index,
+            "crit_missing_field",
+            "crit_resolution missing required field `multiplier`",
+        ),
+    }
+
+    match values.get("hull_breach_active") {
+        Some(v) => {
+            if optional_bool(v).is_none() {
+                record(
+                    errs,
+                    event_index,
+                    "crit_hull_breach_type",
+                    "hull_breach_active must be a JSON boolean",
+                );
+            }
+        }
+        None => record(
+            errs,
+            event_index,
+            "crit_missing_field",
+            "crit_resolution missing required field `hull_breach_active`",
+        ),
     }
 }
 
@@ -230,6 +325,8 @@ pub fn check_trace_invariants(
     let mut last_round: Option<u32> = None;
     let mut last_running_hull: Option<f64> = None;
     let mut hit_groups: HashMap<(String, u32, u32), Vec<u64>> = HashMap::new();
+    // Each outbound weapon hit: `attack_roll` (phase attack) then `crit_resolution` (phase attack).
+    let mut expect_outbound_crit_after_attack_roll = false;
 
     for (i, ev) in events.iter().enumerate() {
         if ev.round_index < 1 {
@@ -262,6 +359,29 @@ pub fn check_trace_invariants(
             }
         }
         last_round = Some(ev.round_index);
+
+        if ev.event_type == "attack_roll" && ev.phase == "attack" {
+            if expect_outbound_crit_after_attack_roll {
+                record(
+                    &mut errs,
+                    i,
+                    "crit_attack_pair",
+                    "attack_roll (phase attack) before crit_resolution for the previous outbound hit",
+                );
+            }
+            expect_outbound_crit_after_attack_roll = true;
+        }
+        if ev.event_type == "crit_resolution" && ev.phase == "attack" {
+            if !expect_outbound_crit_after_attack_roll {
+                record(
+                    &mut errs,
+                    i,
+                    "crit_attack_pair",
+                    "crit_resolution (phase attack) without a preceding attack_roll for this hit",
+                );
+            }
+            expect_outbound_crit_after_attack_roll = false;
+        }
 
         match ev.event_type.as_str() {
             "damage_application" => {
@@ -331,6 +451,15 @@ pub fn check_trace_invariants(
     }
 
     finalize_hit_groups(&mut errs, hit_groups);
+
+    if expect_outbound_crit_after_attack_roll {
+        record(
+            &mut errs,
+            events.len().saturating_sub(1),
+            "crit_attack_pair",
+            "trace ended after attack_roll (phase attack) without matching crit_resolution",
+        );
+    }
 
     if errs.is_empty() {
         Ok(())

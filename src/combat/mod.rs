@@ -1,6 +1,7 @@
 pub mod abilities;
 pub mod buffs;
 pub mod condition;
+pub mod crit;
 pub mod damage;
 pub mod effect_accumulator;
 pub mod engine;

@@ -2864,7 +2864,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     assert_eq!(first.events, second.events);
     assert_eq!(first.total_damage, second.total_damage);
 
-    assert_eq!(first.events.len(), 18);
+    assert_eq!(first.events.len(), 20);
     let expected_event_types = [
         "round_start",
         "attack_roll",
@@ -2874,12 +2874,15 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         "proc_triggers",
         "stack_resolution",
         "damage_application",
+        "crit_resolution",
         "end_of_round_effects",
     ];
     for (index, expected) in expected_event_types.iter().enumerate() {
         assert_eq!(first.events[index].event_type, *expected);
-        assert_eq!(first.events[index + 9].event_type, *expected);
+        assert_eq!(first.events[index + 10].event_type, *expected);
     }
+    assert_eq!(first.events[4].phase, "attack");
+    assert_eq!(first.events[8].phase, "counter");
 
     // Seed 7 (SplitMix64) produces deterministic rolls; exact values depend on RNG implementation.
     let round_one_crit = &first.events[4];
@@ -2901,8 +2904,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         Value::Bool(round_one_proc_roll < 0.4)
     );
 
-    let round_two_crit = &first.events[13];
-    let round_two_proc = &first.events[14];
+    let round_two_crit = &first.events[14];
+    let round_two_proc = &first.events[15];
     let round_two_crit_roll = round_two_crit.values["roll"]
         .as_f64()
         .expect("crit roll as f64");

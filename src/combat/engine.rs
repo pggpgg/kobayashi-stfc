@@ -22,8 +22,9 @@ use crate::combat::abilities::{
     ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
+use crate::combat::crit::resolve_vehicle_weapon_crit;
 use crate::combat::damage::{
-    apply_shield_hull_split, compute_apex_damage_factor, compute_crit_multiplier,
+    apply_shield_hull_split, compute_apex_damage_factor,
     compute_damage_through_factor, compute_isolytic_taken,
 };
 use crate::combat::effect_accumulator::{
@@ -716,15 +717,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     });
 
                     let hull_breach_active = hull_breach_rounds_remaining > 0;
-                    let effective_crit_chance = (attacker.weapon_crit_chance(weapon_index)
-                        + phase_effects.crit_chance_bonus())
-                    .clamp(0.0, 1.0);
-                    let crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                    let is_crit = crit_roll < effective_crit_chance;
-                    let base_crit_multiplier = attacker.weapon_crit_multiplier(weapon_index)
-                        * phase_effects.crit_damage_multiplier();
-                    let crit_multiplier =
-                        compute_crit_multiplier(is_crit, base_crit_multiplier, hull_breach_active);
+                    let crit = resolve_vehicle_weapon_crit(
+                        attacker.weapon_crit_chance(weapon_index),
+                        phase_effects.crit_chance_bonus(),
+                        attacker.weapon_crit_multiplier(weapon_index),
+                        phase_effects.crit_damage_multiplier(),
+                        hull_breach_active,
+                        &mut rng,
+                    );
+                    let crit_multiplier = crit.multiplier;
+                    let is_crit = crit.is_crit;
                     trace.record_if(|| CombatEvent {
                         event_type: "crit_resolution".to_string(),
                         round_index,
@@ -736,12 +738,12 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         },
                         weapon_index: None,
                         values: Map::from_iter([
-                            ("roll".to_string(), Value::from(round_f64(crit_roll))),
-                            ("is_crit".to_string(), Value::Bool(is_crit)),
+                            ("roll".to_string(), Value::from(round_f64(crit.roll))),
+                            ("is_crit".to_string(), Value::Bool(crit.is_crit)),
                             ("multiplier".to_string(), Value::from(crit_multiplier)),
                             (
                                 "effective_crit_chance".to_string(),
-                                Value::from(round_f64(effective_crit_chance)),
+                                Value::from(round_f64(crit.effective_crit_chance)),
                             ),
                             (
                                 "hull_breach_active".to_string(),
@@ -1192,15 +1194,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                             + defender_phase_effects.pre_attack_pierce_bonus(),
                         defender_phase_effects.defense_mitigation_bonus(),
                     );
-                    let def_effective_crit_chance = (defender.weapon_crit_chance(weapon_index)
-                        + defender_phase_effects.crit_chance_bonus())
-                    .clamp(0.0, 1.0);
-                    let def_crit_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                    let def_is_crit = def_crit_roll < def_effective_crit_chance;
-                    let def_base_crit_mult = defender.weapon_crit_multiplier(weapon_index)
-                        * defender_phase_effects.crit_damage_multiplier();
-                    let mut def_crit_mult =
-                        compute_crit_multiplier(def_is_crit, def_base_crit_mult, false);
+                    let def_crit = resolve_vehicle_weapon_crit(
+                        defender.weapon_crit_chance(weapon_index),
+                        defender_phase_effects.crit_chance_bonus(),
+                        defender.weapon_crit_multiplier(weapon_index),
+                        defender_phase_effects.crit_damage_multiplier(),
+                        false,
+                        &mut rng,
+                    );
+                    let def_is_crit = def_crit.is_crit;
+                    let mut def_crit_mult = def_crit.multiplier;
                     // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
                     if def_is_crit
                         && hostile_crit_reduction > 0.0
@@ -1208,6 +1211,26 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     {
                         def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
                     }
+                    trace.record_if(|| CombatEvent {
+                        event_type: "crit_resolution".to_string(),
+                        round_index,
+                        phase: "counter".to_string(),
+                        source: EventSource {
+                            hostile_ability_id: Some(format!("{}_counter_crit", defender.id)),
+                            ..EventSource::default()
+                        },
+                        weapon_index: Some(weapon_index as u32),
+                        values: Map::from_iter([
+                            ("roll".to_string(), Value::from(round_f64(def_crit.roll))),
+                            ("is_crit".to_string(), Value::Bool(def_is_crit)),
+                            ("multiplier".to_string(), Value::from(def_crit_mult)),
+                            (
+                                "effective_crit_chance".to_string(),
+                                Value::from(round_f64(def_crit.effective_crit_chance)),
+                            ),
+                            ("hull_breach_active".to_string(), Value::Bool(false)),
+                        ]),
+                    });
                     let def_w_proc = defender.weapon_proc_chance(weapon_index);
                     let (def_did_proc, _def_proc_roll) =
                         roll_weapon_intrinsic_proc(def_w_proc, &mut rng);

@@ -132,6 +132,23 @@ fn mitigation_multiplier_consistency_detects_mismatch() {
         .any(|e| e.code == "mitigation_multiplier_consistency"));
 }
 
+fn crit_resolution_attack_noncrit() -> CombatEvent {
+    CombatEvent {
+        event_type: "crit_resolution".into(),
+        round_index: 1,
+        phase: "attack".into(),
+        source: EventSource::default(),
+        values: Map::from_iter([
+            ("roll".into(), Value::from(0.5)),
+            ("effective_crit_chance".into(), Value::from(0.0)),
+            ("is_crit".into(), Value::Bool(false)),
+            ("multiplier".into(), Value::from(1.0)),
+            ("hull_breach_active".into(), Value::Bool(false)),
+        ]),
+        weapon_index: None,
+    }
+}
+
 #[test]
 fn hit_index_sequence_must_be_contiguous() {
     let mk = |hi: u64| -> CombatEvent {
@@ -144,11 +161,63 @@ fn hit_index_sequence_must_be_contiguous() {
             weapon_index: Some(0),
         }
     };
-    let events = vec![mk(0), mk(2)];
+    let events = vec![mk(0), crit_resolution_attack_noncrit(), mk(2)];
     let ctx = TraceInvariantContext {
         max_config_rounds: 5,
         ..Default::default()
     };
     let err = check_trace_invariants(&events, &ctx).unwrap_err();
     assert!(err.iter().any(|e| e.code == "hit_index_sequence"));
+}
+
+#[test]
+fn outbound_attack_roll_requires_following_crit_resolution() {
+    let events = vec![
+        CombatEvent {
+            event_type: "attack_roll".into(),
+            round_index: 1,
+            phase: "attack".into(),
+            source: EventSource::default(),
+            values: Map::from_iter([("hit_index".into(), Value::from(0u64))]),
+            weapon_index: Some(0),
+        },
+        CombatEvent {
+            event_type: "attack_roll".into(),
+            round_index: 1,
+            phase: "attack".into(),
+            source: EventSource::default(),
+            values: Map::from_iter([("hit_index".into(), Value::from(1u64))]),
+            weapon_index: Some(0),
+        },
+    ];
+    let ctx = TraceInvariantContext {
+        max_config_rounds: 5,
+        ..Default::default()
+    };
+    let err = check_trace_invariants(&events, &ctx).unwrap_err();
+    assert!(err.iter().any(|e| e.code == "crit_attack_pair"));
+}
+
+#[test]
+fn non_crit_crit_resolution_requires_unit_multiplier() {
+    let events = vec![CombatEvent {
+        event_type: "crit_resolution".into(),
+        round_index: 1,
+        phase: "counter".into(),
+        source: EventSource::default(),
+        values: Map::from_iter([
+            ("roll".into(), Value::from(0.1)),
+            ("effective_crit_chance".into(), Value::from(0.5)),
+            ("is_crit".into(), Value::Bool(false)),
+            ("multiplier".into(), Value::from(1.5)),
+            ("hull_breach_active".into(), Value::Bool(false)),
+        ]),
+        weapon_index: Some(0),
+    }];
+    let ctx = TraceInvariantContext {
+        max_config_rounds: 5,
+        ..Default::default()
+    };
+    let err = check_trace_invariants(&events, &ctx).unwrap_err();
+    assert!(err.iter().any(|e| e.code == "crit_multiplier_noncrit"));
 }
