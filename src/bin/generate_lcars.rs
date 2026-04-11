@@ -9,8 +9,9 @@
 //! resolved from `officer_ability_name` rows (`loca_id` in summary matches `id` in translations).
 //!
 //! Canonical `conditions` strings are mapped to LCARS when they match resolver-supported mechanics
-//! (enemy/self hull class, `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasMorale`). Unmapped
-//! tokens are skipped with a stderr line; emitted conditions may be weaker than in-game (subset `and`).
+//! (enemy/self hull class, armada synonyms, `TargetNotArmada` → LCARS `not`, burning/hull breach,
+//! morale, opponent kind). Unmapped tokens are skipped with a stderr line; emitted conditions may
+//! be weaker than in-game (subset `and`).
 
 use std::collections::HashMap;
 use std::fs;
@@ -451,6 +452,29 @@ fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
     }
 }
 
+fn lcars_defender_ship_type_is(slug: &str) -> LcarsCondition {
+    let mut c = lcars_cond_base("defender_ship_type_is");
+    c.ship_type = Some(slug.to_string());
+    c
+}
+
+/// LCARS `not` with exactly one child (see [`kobayashi::lcars::resolve_lcars_condition`]).
+fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
+    LcarsCondition {
+        condition_type: "not".to_string(),
+        stat: None,
+        threshold_pct: None,
+        min: None,
+        max: None,
+        faction: None,
+        group: None,
+        min_members: None,
+        tag: None,
+        ship_type: None,
+        conditions: Some(vec![inner]),
+    }
+}
+
 /// Maps one RawOfficers / canonical condition token to LCARS when the resolver already supports it.
 /// See [`resolve_lcars_condition`](kobayashi::lcars::resolve_lcars_condition).
 fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
@@ -468,10 +492,12 @@ fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         // Canonical opponent category: player ship (PvP-shaped API toggle).
         "EnemyPlayer" => return Some(lcars_cond_base("defender_is_player_ship")),
         // Canonical armada target: modeled as defender combat ship-type Armada (same signal as mitigation / upstream ship_type).
-        "EnemyArmada" => {
-            let mut c = lcars_cond_base("defender_ship_type_is");
-            c.ship_type = Some("armada".to_string());
-            return Some(c);
+        "EnemyArmada" | "TargetIsArmada" => {
+            return Some(lcars_defender_ship_type_is("armada"));
+        }
+        // Defender is not the Armada ship class (canonical alias used alongside other `Target*` tokens).
+        "TargetNotArmada" => {
+            return Some(lcars_not(lcars_defender_ship_type_is("armada")));
         }
         _ => {}
     }
@@ -821,6 +847,7 @@ fn scaling_from_ranks(
 #[cfg(test)]
 mod canonical_condition_tests {
     use super::*;
+    use kobayashi::combat::AbilityCondition;
     use kobayashi::lcars::resolve_lcars_condition;
 
     #[test]
@@ -840,7 +867,7 @@ mod canonical_condition_tests {
     }
 
     #[test]
-    fn mixed_tokens_map_enemy_hostile_and_explorer_to_and() {
+    fn mixed_tokens_map_enemy_hostile_not_armada_and_explorer_to_and() {
         let raw = vec![
             "EnemyHostile".to_string(),
             " TargetNotArmada".to_string(),
@@ -850,10 +877,15 @@ mod canonical_condition_tests {
         let out = canonical_conditions_to_lcars(&raw, "Alok", "test").expect("maps");
         assert_eq!(out.condition_type, "and");
         let kids = out.conditions.as_ref().expect("children");
-        assert_eq!(kids.len(), 2);
+        assert_eq!(kids.len(), 3);
         assert_eq!(kids[0].condition_type, "defender_is_npc_hostile");
-        assert_eq!(kids[1].condition_type, "defender_ship_type_is");
-        assert_eq!(kids[1].ship_type.as_deref(), Some("explorer"));
+        assert_eq!(kids[1].condition_type, "not");
+        let not_inner = kids[1].conditions.as_ref().expect("not inner");
+        assert_eq!(not_inner.len(), 1);
+        assert_eq!(not_inner[0].condition_type, "defender_ship_type_is");
+        assert_eq!(not_inner[0].ship_type.as_deref(), Some("armada"));
+        assert_eq!(kids[2].condition_type, "defender_ship_type_is");
+        assert_eq!(kids[2].ship_type.as_deref(), Some("explorer"));
         resolve_lcars_condition(&out).expect("resolver accepts combined and");
     }
 
@@ -863,6 +895,32 @@ mod canonical_condition_tests {
         assert_eq!(c.condition_type, "defender_ship_type_is");
         assert_eq!(c.ship_type.as_deref(), Some("armada"));
         resolve_lcars_condition(&c).expect("resolver accepts");
+    }
+
+    #[test]
+    fn maps_target_is_armada_same_as_enemy_armada() {
+        let a = map_canonical_condition_token("EnemyArmada").expect("maps");
+        let b = map_canonical_condition_token("TargetIsArmada").expect("maps");
+        assert_eq!(a.condition_type, b.condition_type);
+        assert_eq!(a.ship_type, b.ship_type);
+        resolve_lcars_condition(&b).expect("resolver accepts");
+    }
+
+    #[test]
+    fn maps_target_not_armada_to_not_defender_armada() {
+        let c = map_canonical_condition_token("TargetNotArmada").expect("maps");
+        assert_eq!(c.condition_type, "not");
+        let inner = c.conditions.as_ref().expect("inner");
+        assert_eq!(inner.len(), 1);
+        assert_eq!(inner[0].condition_type, "defender_ship_type_is");
+        assert_eq!(inner[0].ship_type.as_deref(), Some("armada"));
+        let ac = resolve_lcars_condition(&c).expect("resolves");
+        assert_eq!(
+            ac,
+            AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+                ShipType::Armada
+            )))
+        );
     }
 
     #[test]

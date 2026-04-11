@@ -29,7 +29,7 @@ Planned features and priorities for Kobayashi.
 
 ### Roadmap / backlog (officers)
 
-- **More canonical condition tokens:** Many other strings in `**officers.canonical.json`** still log “skipping unmapped” during `generate_lcars` (for example `TargetNotArmada`, `CombatBattleType`, hull-line tokens). Map each only when the engine has an explicit, testable meaning.
+- **More canonical condition tokens:** Many other strings in `**officers.canonical.json`** still log “skipping unmapped” during `generate_lcars` (for example `CombatBattleType`, hull-line tokens). Map each only when the engine has an explicit, testable meaning. Triage of unmapped tokens: [CANONICAL_CONDITIONS.md](CANONICAL_CONDITIONS.md).
 
 ---
 

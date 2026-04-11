@@ -106,6 +106,17 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
             })?;
             Ok(AbilityCondition::DefenderFactionIs(tag))
         }
+        "not" => {
+            let children = c.conditions.as_ref().ok_or_else(|| {
+                "`not` condition requires a `conditions` array".to_string()
+            })?;
+            if children.len() != 1 {
+                return Err("`not` condition must include exactly one sub-condition".to_string());
+            }
+            Ok(AbilityCondition::Not(Box::new(resolve_lcars_condition(
+                &children[0],
+            )?)))
+        }
         "defender_ship_type_is"
         | "defender_ship_class_is"
         | "opponent_ship_type_is"
@@ -864,7 +875,7 @@ mod tests {
     use super::*;
     use crate::combat::abilities::CombatContext;
     use crate::combat::{
-        AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag, TimingWindow,
+        AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag, ShipType, TimingWindow,
     };
     use crate::lcars::parser::{
         load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect, LcarsOfficer,
@@ -1160,6 +1171,57 @@ mod tests {
         };
         assert!(!npc.evaluate(&ctx_pvp));
         assert!(player.evaluate(&ctx_pvp));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_not_defender_armada_evaluates() {
+        let c = LcarsCondition {
+            condition_type: "not".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: Some(vec![LcarsCondition {
+                condition_type: "defender_ship_type_is".to_string(),
+                stat: None,
+                threshold_pct: None,
+                min: None,
+                max: None,
+                faction: None,
+                group: None,
+                min_members: None,
+                tag: None,
+                ship_type: Some("armada".to_string()),
+                conditions: None,
+            }]),
+        };
+        let ac = resolve_lcars_condition(&c).expect("maps");
+        let ctx_bb = CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: false,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            defender_faction: OpponentFactionTag::Unknown,
+            defender_ship_type: ShipType::Battleship,
+            attacker_ship_type: ShipType::Explorer,
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
+        };
+        assert!(ac.evaluate(&ctx_bb));
+        let ctx_armada = CombatContext {
+            defender_ship_type: ShipType::Armada,
+            ..ctx_bb
+        };
+        assert!(!ac.evaluate(&ctx_armada));
     }
 
     #[test]

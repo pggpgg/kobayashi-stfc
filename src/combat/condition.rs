@@ -66,6 +66,7 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
         AbilityCondition::DefenderIsNpcHostile => ctx.defender_is_npc_hostile,
         AbilityCondition::DefenderIsPlayerShip => ctx.defender_is_player_ship,
+        AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),
     }
@@ -204,6 +205,20 @@ mod tests {
             AbilityCondition::DefenderShipTypeIs(ShipType::Battleship),
         ]);
         assert_eq!(cond.evaluate(&ctx), evaluate_ability_condition(&cond, &ctx));
+    }
+
+    #[test]
+    fn not_defender_armada_true_when_defender_not_armada() {
+        let ctx = sample_ctx();
+        let cond = AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+            ShipType::Armada,
+        )));
+        assert!(evaluate_ability_condition(&cond, &ctx));
+        let ctx_armada = CombatContext {
+            defender_ship_type: ShipType::Armada,
+            ..sample_ctx()
+        };
+        assert!(!evaluate_ability_condition(&cond, &ctx_armada));
     }
 
     #[test]

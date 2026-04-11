@@ -269,6 +269,7 @@ Conditions gate whether an effect activates. They are predicates evaluated by th
 | `morale_active`         | —                         | Attacker succeeded on primary morale roll this round                                                                                                       |
 | `defender_burning`      | —                         | Opponent has burning                                                                                                                                       |
 | `defender_hull_breach`  | —                         | Opponent hull breached                                                                                                                                     |
+| `not`                   | `conditions` (one child)  | Negates a single sub-condition (e.g. opponent is not `armada`)                                                                                              |
 | `group_count`           | group, min_members        | *(not implemented in resolver)*                                                                                                                            |
 | `has_tag`               | tag                       | *(not implemented in resolver)*                                                                                                                            |
 
@@ -277,13 +278,13 @@ Hull slugs match `[ShipType::from_data_slug](src/combat/types.rs)`: `battleship`
 
 **Upstream hostile `ship_type` (data.stfc.space):** The JSON field `ship_type` is stored on `[HostileRecord](../src/data/hostile.rs)` as `upstream_ship_type`. It is **not** hull class (that comes from `hull_type` → `ship_class`). Kobayashi maps selected integers in `[upstream_hostile_ship_type_profile](../src/data/upstream_hostile_ship_type.rs)`; `[HostileRecord::ship_type_for_combat](../src/data/hostile.rs)` uses that mapping so the defender’s effective class can be `[ShipType::Armada](../src/combat/types.rs)` for **armada targets** (currently `upstream_ship_type == 1`, aligned with UI string “ARMADA TARGET”). Unmapped values fall back to hull-derived `ship_class` only. Ongoing reverse engineering and backlog items: [ROADMAP.md](ROADMAP.md) (section *Hostile upstream `ship_type`*).
 
-`kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction`, unknown slug, or empty `and` / `or`).
+`kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction`, unknown slug, empty `and` / `or`, or `not` without exactly one child).
 
 **Passive + permanent `stat_modify`** is merged into `static_buffs` at resolve time and **does not** evaluate `condition` today. Use ship-class (and other) gates on timed effects (e.g. `on_combat_start`) or extend the resolver/engine before conditioning passive stats such as `armor`.
 
 **Timed `armor` (`on_combat_start` / `on_round_start`):** resolved to `[AbilityEffect::MitigationAdditive](../src/combat/abilities.rs)`, summed from combat-begin officer rows and applied when **hostiles return fire** (increases effective player mitigation). LCARS magnitudes `|v| > 1` are treated as percent points (`v / 100`) for the mitigation fraction; this is an approximation of “all defenses” / sheet-style values, not a full armor–deflection–dodge split.
 
-Conditions are composable with `and` / `or`:
+Conditions are composable with `and` / `or` / `not` (exactly one child for `not`):
 
 ```yaml
 condition:
@@ -295,6 +296,16 @@ condition:
     - type: round_range
       min: 3
       max: 10
+```
+
+Negation (exactly one child):
+
+```yaml
+condition:
+  type: not
+  conditions:
+    - type: defender_ship_type_is
+      ship_type: armada
 ```
 
 Ship-class gate on the opponent (player officers vs hostiles):

@@ -196,6 +196,8 @@ pub enum AbilityCondition {
     DefenderIsNpcHostile,
     /// True when [`CombatContext::defender_is_player_ship`] (opponent is a player ship).
     DefenderIsPlayerShip,
+    /// Logical negation of a single sub-condition (LCARS `not`).
+    Not(Box<AbilityCondition>),
     And(Vec<AbilityCondition>),
     Or(Vec<AbilityCondition>),
 }
