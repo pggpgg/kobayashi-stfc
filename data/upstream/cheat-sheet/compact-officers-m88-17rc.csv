@@ -1,0 +1,563 @@
+,,,,,,,,,,,,,,,,,,,,
+,,,   Rarity,OfficerName,,PvP Space,PvP Station,Red Moving Space,Waves,QTrial,Mission Bosses,Group Armadas,Solo Armadas,Invading Entities,Assaults,Outpost Armadas,Outpost Retaliation Attackers,Reason,Loot,Utility
+,,,   E,KIRK,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasMorale,➖,➖
+,,,   E,KIRK,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,SPOCK,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,SPOCK,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasMorale,➖,➖
+,,,   R,BONES,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   R,BONES,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   U,SCOTTY,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,SCOTTY,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,SULU,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,SULU,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,"SelfHasMorale, ModuleEnergy",➖,➖
+,,,   U,ARKADY,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,ARKADY,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,UHURA,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,UHURA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,GORKON,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,GORKON,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,CHANG,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthBelow,➖,➖
+,,,   R,CHANG,OA,✴️,✴️,✴️,✴️,✴️,✴️,➖,➖,➖,➖,✴️,   ✴️,TargetHasHullBreach,➖,➖
+,,,   R,KERLA,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,KERLA,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,ModuleKinetic,➖,➖
+,,,   R,AZETBUR,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HitEnemyWithKinetic,➖,➖
+,,,   R,AZETBUR,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,KOTH,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,KOTH,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,"ModuleKinetic, TargetHasHullBreach",➖,➖
+,,,   U,WOTELN,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,EnemyBattleship,➖,➖
+,,,   U,WOTELN,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfInterceptor,➖,➖
+,,,   U,M'RAL,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,M'RAL,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,NERO,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,TargetHasBurning,➖,➖
+,,,   E,NERO,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,VEMET,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,VEMET,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,TargetHasBurning,➖,➖
+,,,   R,KUMAK,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,KUMAK,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,TargetHasBurning,➖,➖
+,,,   R,LIVIS,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,LIVIS,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfBattleship,➖,➖
+,,,   U,ARIX,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HitEnemyWithEnergy,➖,➖
+,,,   U,ARIX,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthBelowStartOfCombat,➖,➖
+,,,   U,VELLA,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,EnemyExplorer,➖,➖
+,,,   U,VELLA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,JAVAID,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,JAVAID,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfBattleship,➖,➖
+,,,   R,T'PRING,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,T'PRING,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,STONN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,STONN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,BAROT,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,BAROT,OA,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,when mining,➖,➖
+,,,   C,DOMITIA,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,DOMITIA,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,K'BISCH,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,K'BISCH,OA,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"docked on a node, on a Mining Node",➖,➖
+,,,   C,HELVIA,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,HELVIA,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,GONZALES,CM,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   U,GONZALES,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   U,CHEN,CM,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,✴️,➖,➖,   ➖,target level 51 or under,➖,➖
+,,,   U,CHEN,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"TargetMaxLevel, ModuleEnergy",➖,➖
+,,,   C,GAILA,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,GAILA,OA,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,✴️,➖,➖,   ➖,target level 70 or under,➖,➖
+,,,   C,SHEV,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,SHEV,OA,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,✴️,➖,➖,   ➖,ModuleEnergy,➖,➖
+,,,   C,T'LAAN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,T'LAAN,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"TargetMaxLevel, ModuleKinetic",➖,➖
+,,,   C,VEL,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,VEL,OA,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,✴️,➖,➖,   ➖,ModuleKinetic,➖,➖
+,,,   C,M'BENGA,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   C,M'BENGA,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,KURON,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,ModuleKinetic,➖,➖
+,,,   R,KURON,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,YAN'AGH,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,YAN'AGH,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Romulan,➖,➖
+,,,   R,TAL,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,EnemyBattleship,➖,➖
+,,,   R,TAL,OA,✴️,✴️,✴️,✴️,➖,✴️,➖,➖,➖,➖,✴️,   ✴️,"TargetMaxLevel, TargetHasBurning",➖,➖
+,,,   U,D'JAOKI,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,D'JAOKI,OA,✴️,✴️,✴️,✴️,✴️,✴️,➖,➖,➖,➖,✴️,   ✴️,TargetHasBurning,➖,➖
+,,,   R,KEENSER,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,KEENSER,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   U,718,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   U,718,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,MITCHELL,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,MITCHELL,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,KOMAL,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfBattleship,➖,➖
+,,,   C,KOMAL,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,ModuleKinetic,➖,➖
+,,,   C,VARTOQ,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfInterceptor,➖,➖
+,,,   C,VARTOQ,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,ModuleKinetic,➖,➖
+,,,   C,RUKOR,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfExplorer,➖,➖
+,,,   C,RUKOR,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,ModuleEnergy,➖,➖
+,,,   C,DARWIN,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   C,DARWIN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,LESLIE,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthBelowStartOfCombat,➖,➖
+,,,   U,LESLIE,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,DECIUS,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,EnemyStronger,➖,➖
+,,,   R,DECIUS,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,KANG,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,KANG,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,MARA,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,EnemyInterceptor,➖,➖
+,,,   R,MARA,OA,✴️,✴️,✴️,✴️,✴️,✴️,➖,➖,➖,➖,✴️,   ✴️,TargetHasHullBreach,➖,➖
+,,,   R,KRELL,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,KRELL,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Federation,➖,➖
+,,,   U,QA'UG,CM,✴️,✴️,✴️,✴️,✴️,✴️,➖,➖,➖,➖,✴️,   ✴️,SelfHasHullBreach,➖,➖
+,,,   U,QA'UG,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasHullBreach,➖,➖
+,,,   U,LINKASA,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,LINKASA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,CHARVANEK,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthBelowStartOfCombat,➖,➖
+,,,   E,CHARVANEK,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,MIREK,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,MIREK,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Federation,➖,➖
+,,,   U,L'NAR,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,L'NAR,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Klingon,➖,➖
+,,,   U,SEVERUS,CM,✴️,✴️,✴️,✴️,✴️,✴️,➖,➖,➖,➖,✴️,   ✴️,SelfHasBurning,➖,➖
+,,,   U,SEVERUS,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasBurning,➖,➖
+,,,   E,MARCUS,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthBelow,➖,➖
+,,,   E,MARCUS,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,YUKI,CM,✅,✅,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   R,YUKI,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Romulan,➖,➖
+,,,   R,HARRISON,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,"TargetMaxLevel, EnemyExplorer",➖,➖
+,,,   R,HARRISON,OA,✴️,✴️,✴️,✴️,✴️,✴️,➖,➖,➖,➖,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   R,DUPONT,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,DUPONT,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,ZHOU,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,ZHOU,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasMorale,➖,➖
+,,,   U,MÄKINEN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,MÄKINEN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,PIKE,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   E,PIKE,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,MOREAU,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,MOREAU,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,target level 70 or under,➖,➖
+,,,   U,HENDORFF,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthBelowStartOfCombat,➖,➖
+,,,   U,HENDORFF,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,HADLEY,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,HADLEY,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,CAROL,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,CAROL,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,ZAHRA,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   C,ZAHRA,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,KHAN,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,KHAN,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,JOACHIM,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,JOACHIM,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,MARLA,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,MARLA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,JOAQUIN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,JOAQUIN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,OTTO,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   U,OTTO,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,KATI,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   U,KATI,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,NAVI,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasHullBreach,➖,➖
+,,,   R,NAVI,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasHullBreach,➖,➖
+,,,   R,PAN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,PAN,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,RIMA,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasHullBreach,➖,➖
+,,,   R,RIMA,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfHasHullBreach,➖,➖
+,,,   E,MUDD,CM,➖,➖,➖,➖,➖,➖,✴️,✴️,➖,➖,➖,   ➖,target level 70 or under,➖,➖
+,,,   E,MUDD,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   E,EURYDICE,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   E,EURYDICE,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   C,SESHA,CM,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Eclipse,➖,➖
+,,,   C,SESHA,OA,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Eclipse,➖,➖
+,,,   R,RO MUDD,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,RO MUDD,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,GOON,CM,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   U,GOON,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,AHVIX,CM,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Eclipse,➖,➖
+,,,   R,AHVIX,OA,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Eclipse,➖,➖
+,,,   C,TIZA,CM,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Eclipse,➖,➖
+,,,   C,TIZA,OA,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Eclipse,➖,➖
+,,,   E,HARRY MUDD,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   E,HARRY MUDD,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   E,KRAS,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,KRAS,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   U,KLAA,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,KLAA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,VIXIS,CM,✅,✅,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   U,VIXIS,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,ModuleEnergy,➖,➖
+,,,   C,CADET KIRK,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,CADET KIRK,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,INSTR. SPOCK,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,INSTR. SPOCK,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,CADET MCCOY,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,CADET MCCOY,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,CADET SCOTTY,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,CADET SCOTTY,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   C,CADET UHURA,CM,✅,✅,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   C,CADET UHURA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,CADET SULU,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,CADET SULU,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,JAYLAH,CM,➖,➖,✴️,➖,➖,➖,✴️,✴️,✴️,➖,✴️,   ✴️,CombatPveRewards (on USS-Franklin(-A)),✅,➖
+,,,   E,JAYLAH,OA,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,"EnemyHullFaction, SelfHullFranklins",➖,➖
+,,,   R,ONE OF ELEVEN,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,ONE OF ELEVEN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,TWO OF ELEVEN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,TWO OF ELEVEN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,THREE OF ELEVEN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,THREE OF ELEVEN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,FOUR OF ELEVEN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,FOUR OF ELEVEN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,FIVE OF ELEVEN,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,FIVE OF ELEVEN,OA,➖,➖,✅,➖,➖,➖,✅,✅,✅,➖,✅,   ✅,,✅,➖
+,,,   E,SIX OF ELEVEN,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,SIX OF ELEVEN,OA,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SEVEN OF ELEVEN,CM,➖,➖,✴️,✴️,✴️,✴️,➖,➖,➖,✴️,➖,   ➖,Borg,➖,➖
+,,,   R,SEVEN OF ELEVEN,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,EIGHT OF ELEVEN,CM,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Borg,➖,➖
+,,,   U,EIGHT OF ELEVEN,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,NINE OF ELEVEN,CM,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Borg,➖,➖
+,,,   U,NINE OF ELEVEN,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,TEN OF ELEVEN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,TEN OF ELEVEN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,ORIGINS BURNHAM,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,ORIGINS BURNHAM,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,ORIGINS SARU,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,ORIGINS SARU,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,ORIGINS STAMETS,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,ORIGINS STAMETS,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,MICHAEL BURNHAM,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,MICHAEL BURNHAM,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SARU,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SARU,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,PAUL STAMETS,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,PAUL STAMETS,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,GEORGIOU,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,TargetHasBurning,➖,➖
+,,,   E,GEORGIOU,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,TILLY,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   U,TILLY,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,TYLER,CM,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"docked on a node, on a Capture Node",➖,➖
+,,,   R,TYLER,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,TargetHasBurning,➖,➖
+,,,   U,CULBER,CM,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"docked on a node, on a Capture Node",➖,➖
+,,,   U,CULBER,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,AIRIAM,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,AIRIAM,OA,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"docked on a node, on a Capture Node",➖,➖
+,,,   R,EMP. GEORGIOU,CM,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,during Takeover,➖,➖
+,,,   R,EMP. GEORGIOU,OA,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"docked on a node, on a Capture Node",➖,➖
+,,,   R,CAP. TILLY,CM,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"CombatBattleType, CombatGameContext, TargetHasHullBreach",➖,➖
+,,,   R,CAP. TILLY,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,TargetHasHullBreach,➖,➖
+,,,   E,LORCA,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetHasHullBreach,➖,➖
+,,,   E,LORCA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,TOS KIRK,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfHasMorale, ModuleEnergy",➖,➖
+,,,   E,TOS KIRK,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthAbove,➖,➖
+,,,   E,TOS SPOCK,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,TOS SPOCK,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfHasMorale,➖,➖
+,,,   R,TOS UHURA,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfHasMorale,➖,➖
+,,,   R,TOS UHURA,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfHasMorale,➖,➖
+,,,   R,TOS MCCOY,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,TOS MCCOY,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,SelfExplorer,➖,➖
+,,,   R,TOS SULU,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,TOS SULU,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,"SelfExplorer, SelfHasMorale",➖,➖
+,,,   R,TOS SCOTTY,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,TOS SCOTTY,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,TOS CHEKOV,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,TOS CHEKOV,OA,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,docked on a node,➖,➖
+,,,   C,NEXT GEN DATA,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN DATA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN TROI,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN TROI,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN CRUSHER,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN CRUSHER,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN LA FORGE,CM,✅,✅,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN LA FORGE,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN RIKER,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   C,NEXT GEN RIKER,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,DATA,CM,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,DATA,OA,➖,➖,✅,✅,✅,✅,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,BEVERLY CRUSHER,CM,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,BEVERLY CRUSHER,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,GEORDI LA FORGE,CM,➖,➖,➖,➖,➖,➖,✅,✅,✅,➖,✅,   ➖,,✅,➖
+,,,   E,GEORDI LA FORGE,OA,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,➖,➖,➖,   ➖,Klingon,➖,➖
+,,,   E,JEAN-LUC PICARD,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,target level 70 or under,➖,➖
+,,,   E,JEAN-LUC PICARD,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,WESLEY CRUSHER,CM,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,WESLEY CRUSHER,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,WILLIAM T. RIKER,CM,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,WILLIAM T. RIKER,OA,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,➖,➖,➖,   ➖,Federation,➖,➖
+,,,   E,DEANNA TROI,CM,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,DEANNA TROI,OA,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,➖,➖,➖,   ➖,Romulan,➖,➖
+,,,   R,WORF,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,WORF,OA,➖,➖,✅,✅,✅,✅,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,TASHA YAR,CM,➖,➖,➖,➖,✅,✅,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,TASHA YAR,OA,➖,➖,✅,✅,✅,✅,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,ELEVEN OF ELEVEN,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,ELEVEN OF ELEVEN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,HONORGUARD WORF,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,HONORGUARD WORF,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SELA,CM,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SELA,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,TOMALAK,CM,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,TOMALAK,OA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Klingon,➖,➖
+,,,   R,GOWRON,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,ModuleEnergy,➖,➖
+,,,   R,GOWRON,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,MARTOK,CM,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,ModuleKinetic,➖,➖
+,,,   R,MARTOK,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,GHRUSH,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,GHRUSH,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,BA'EL,CM,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,BA'EL,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,B'ETOR,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,B'ETOR,OA,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,Amalgam,➖,➖
+,,,   U,LURSA,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   U,LURSA,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,ARROCK,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,ARROCK,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,FESS,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,FESS,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,QUARK,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,QUARK,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,ROM,CM,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,ROM,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,CATH,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,CATH,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"TargetMaxLevel, ModuleKinetic",➖,➖
+,,,   E,BECKETT MARINER,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,BECKETT MARINER,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,BRAD BOIMLER,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,BRAD BOIMLER,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   U,BADGEY,OA,✅,✅,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   U,BADGEY,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,D'VANA TENDI,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,D'VANA TENDI,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,SAM RUTHERFORD,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,SAM RUTHERFORD,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,SNW PIKE,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW PIKE,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SNW SPOCK,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SNW SPOCK,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"SelfExplorer, EnemyInterceptor",➖,➖
+,,,   R,SNW LA'AN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,SNW LA'AN,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,REGINALD BARCLAY,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,REGINALD BARCLAY,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,SNW UNA,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW UNA,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,SNW UHURA,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SNW UHURA,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"SelfInterceptor, EnemyBattleship",➖,➖
+,,,   R,SNW ORTEGAS,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SNW ORTEGAS,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"SelfBattleship, EnemyExplorer",➖,➖
+,,,   E,SNW HEMMER,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,EnemySurvey,➖,➖
+,,,   E,SNW HEMMER,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,STRIKE TEAM LA'AN,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfBattleship, TargetHasBurning",➖,➖
+,,,   E,STRIKE TEAM LA'AN,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfBattleship,➖,➖
+,,,   R,STRIKE TEAM UNA,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,EnemyExplorer,➖,➖
+,,,   R,STRIKE TEAM UNA,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfBattleship,➖,➖
+,,,   R,STRIKE TEAM ORTEGAS,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,EnemyExplorer,➖,➖
+,,,   R,STRIKE TEAM ORTEGAS,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfBattleship,➖,➖
+,,,   E,MAVERY,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,MAVERY,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,GUL DUKAT,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfInterceptor,➖,➖
+,,,   E,GUL DUKAT,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfInterceptor, TargetHasHullBreach",➖,➖
+,,,   R,GARAK,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"ModuleKinetic, SelfInterceptor, TargetHasHullBreach",➖,➖
+,,,   R,GARAK,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfInterceptor, TargetHasHullBreach",➖,➖
+,,,   R,DAMAR,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfInterceptor, TargetHasHullBreach",➖,➖
+,,,   R,DAMAR,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfInterceptor, TargetHasHullBreach",➖,➖
+,,,   E,BENJAMIN SISKO,CM,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,BENJAMIN SISKO,OA,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   R,CHANGELING KIRA,CM,➖,➖,➖,➖,➖,➖,✴️,✴️,➖,➖,➖,   ➖,Cardassian,➖,➖
+,,,   R,CHANGELING KIRA,OA,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   R,MILES O'BRIEN,OA,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   R,MILES O'BRIEN,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,WEYOUN,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfExplorer,➖,➖
+,,,   E,WEYOUN,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfExplorer, SelfHasMorale",➖,➖
+,,,   R,IKAT’IKA,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfExplorer,➖,➖
+,,,   R,IKAT’IKA,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfExplorer, SelfHasMorale",➖,➖
+,,,   R,PON,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfExplorer,➖,➖
+,,,   R,PON,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfExplorer, SelfHasMorale",➖,➖
+,,,   E,JADZIA DAX,CM,➖,➖,➖,➖,➖,➖,➖,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,JADZIA DAX,OA,➖,➖,➖,➖,➖,➖,➖,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,ODO,OA,➖,➖,➖,➖,➖,➖,➖,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,ODO,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,JULIAN BASHIR,CM,➖,➖,➖,➖,➖,➖,➖,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   R,JULIAN BASHIR,OA,➖,➖,➖,➖,➖,➖,➖,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   R,KIRA NERYS,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,✅,➖,   ➖,,➖,➖
+,,,   R,KIRA NERYS,BDA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,HUGH,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,HUGH,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,GHALENAR,OA,➖,➖,✴️,➖,➖,➖,✴️,✴️,➖,➖,➖,   ➖,FactionPointsGain,✅,➖
+,,,   R,GHALENAR,BDA,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,ActianVenomAndNanoprobeLoot,✅,➖
+,,,   E,BORG QUEEN,OA,➖,➖,➖,➖,➖,➖,➖,✴️,➖,➖,➖,   ➖,Borg,➖,➖
+,,,   E,BORG QUEEN,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetHasAssimilated,➖,➖
+,,,   R,DEZOC,OA,➖,➖,➖,➖,➖,➖,➖,✴️,➖,➖,➖,   ➖,Borg,➖,➖
+,,,   R,DEZOC,BDA,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,✴️,   ✴️,HullHealthBelow,➖,➖
+,,,   R,GOSSA,OA,➖,➖,➖,➖,➖,➖,➖,✴️,➖,➖,➖,   ➖,Borg,➖,➖
+,,,   R,GOSSA,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetHasAssimilated,➖,➖
+,,,   E,PIC ADMIRAL PICARD,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,PIC ADMIRAL PICARD,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,EnemyExplorer,➖,➖
+,,,   R,PIC BEVERLY CRUSHER,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,PIC BEVERLY CRUSHER,BDA,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,BrokenShipPartsLoot,✅,➖
+,,,   E,PIC WORF,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,PIC WORF,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,EnemyInterceptor,➖,➖
+,,,   E,PIC RIKER,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,PIC RIKER,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,EnemyBattleship,➖,➖
+,,,   R,DIXON HILL,OA,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,on a Mining Node,➖,➖
+,,,   R,DIXON HILL,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,THE DOCTOR,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,THE DOCTOR,BDA,➖,➖,✅,➖,➖,➖,✅,✅,✅,➖,✅,   ✅,,✅,➖
+,,,   R,B'ELANNA TORRES,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,B'ELANNA TORRES,BDA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,KATHRYN JANEWAY,CM,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,KATHRYN JANEWAY,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,TOM PARIS,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,TOM PARIS,BDA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,HARRY KIM,OA,➖,➖,✴️,➖,➖,➖,✴️,✴️,➖,➖,➖,   ➖,FactionPointsGain,✅,➖
+,,,   R,HARRY KIM,BDA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,CHAKOTAY,CM,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,CHAKOTAY,OA,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   R,TUVOK,OA,➖,➖,➖,➖,➖,➖,✴️,➖,➖,➖,➖,   ➖,ArtifactTokenLoot,✅,➖
+,,,   R,TUVOK,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,SEVEN OF NINE,OA,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SEVEN OF NINE,BDA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,NEELIX,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,NEELIX,BDA,➖,➖,✴️,✴️,✴️,➖,✴️,✴️,✴️,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   E,CAROL FREEMAN,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,CAROL FREEMAN,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetStateAny,➖,➖
+,,,   E,JACK RANSOM,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfExplorer, SelfHasMorale",➖,➖
+,,,   E,JACK RANSOM,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfInterceptor, TargetHasHullBreach",➖,➖
+,,,   E,ANDY BILLUPS,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfInterceptor, TargetHasHullBreach",➖,➖
+,,,   E,ANDY BILLUPS,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfBattleship, TargetHasBurning",➖,➖
+,,,   E,SHAXS,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfBattleship, TargetHasBurning",➖,➖
+,,,   E,SHAXS,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfExplorer, SelfHasMorale",➖,➖
+,,,   E,DOCTOR T'ANA,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,DOCTOR T'ANA,BDA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,ALONZO FREEMAN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,ALONZO FREEMAN,BDA,➖,➖,✴️,➖,➖,➖,✴️,✴️,➖,➖,➖,   ➖,FactionPointsGain,✅,➖
+,,,   E,ENT-E PICARD,CM,➖,➖,✅,➖,➖,➖,✅,✅,✅,➖,✅,   ✅,,✅,➖
+,,,   E,ENT-E PICARD,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,ENT-E DATA,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,ENT-E DATA,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,ENT-E RIKER,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,ENT-E RIKER,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,ENT-E TROI,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,ENT-E TROI,BDA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,TRIP TUCKER,OA,✅,✅,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   E,TRIP TUCKER,BDA,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,HirogenRelicAndBiotoxinLoot,✅,➖
+,,,   R,T'POL,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,T'POL,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,JONATHAN ARCHER,CM,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,XindiHostileLoot,✅,➖
+,,,   E,JONATHAN ARCHER,OA,✅,✅,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   R,SHRAN,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,SHRAN,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,PIC HUGH,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,PIC HUGH,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   R,HOSHI SATO,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,HOSHI SATO,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,PHLOX,OA,✅,➖,✅,✅,✅,✅,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   E,PHLOX,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,SNW M’BENGA,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW M’BENGA,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SNW NURSE CHAPEL,OA,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,GornHostileVolatileLoot,✅,➖
+,,,   R,SNW NURSE CHAPEL,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW SAM KIRK,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW SAM KIRK,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW JAMES KIRK,CM,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW JAMES KIRK,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SNW PELIA,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SNW PELIA,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,MIRROR PICARD,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,MIRROR PICARD,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"TargetHasAssimilated, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,MIRROR DATA,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"EnemyInterceptor, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,MIRROR DATA,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,MIRROR KIRA,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   E,MIRROR KIRA,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetHasAssimilated,➖,➖
+,,,   R,MIRROR EZRI,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"EnemyBattleship, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,MIRROR EZRI,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"ModuleKinetic, TargetHasAssimilated",➖,➖
+,,,   R,MIRROR TROI,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"EnemyExplorer, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,MIRROR TROI,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"TargetHasAssimilated, ModuleEnergy",➖,➖
+,,,   R,LIEUTENANT PICARD,CM,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"TargetMaxLevel, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,LIEUTENANT PICARD,OA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,DEMARCO,OA,➖,➖,➖,➖,➖,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,DEMARCO,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetStateAny,➖,➖
+,,,   E,NESMITH,CM,➖,➖,➖,➖,➖,➖,➖,➖,✅,➖,➖,   ➖,,➖,➖
+,,,   E,NESMITH,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   R,DANE,OA,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TrelliumRewards,✅,➖
+,,,   R,DANE,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,LALIARI,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   R,LALIARI,BDA,➖,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   E,NAGA DELVOS,CM,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,NAGA DELVOS,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,NAGA DELVOS,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,DAJASH TOLRA,CM,➖,➖,✅,➖,➖,➖,✅,✅,✅,➖,✅,   ✅,,✅,➖
+,,,   E,DAJASH TOLRA,OA,➖,➖,➖,➖,➖,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,TOLI,OA,➖,➖,➖,➖,➖,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,TOLI,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,MASRIAD VAEL,OA,➖,➖,➖,➖,➖,➖,➖,➖,✅,➖,➖,   ➖,,➖,➖
+,,,   E,MASRIAD VAEL,BDA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,BYR CH'KELRER,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,BYR CH'KELRER,BDA,➖,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,✅,➖
+,,,   E,PHELLUN,OA,➖,➖,✴️,➖,➖,➖,✴️,✴️,➖,➖,➖,   ➖,FactionPointsGain,✅,➖
+,,,   E,PHELLUN,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,MIRROR UHURA,OA,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"TargetHasAssimilated, SelfOfficerTalNotOnBridge",➖,➖
+,,,   E,MIRROR UHURA,BDA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   E,STARFLEET Q,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,STARFLEET Q,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfHasMorale, EnemyInterceptor, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,MARIACHI Q,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfHasMorale,➖,➖
+,,,   R,MARIACHI Q,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"TargetHasBurning, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,FRENCH MARSHAL Q,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfHasMorale,➖,➖
+,,,   R,FRENCH MARSHAL Q,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetStateAny,➖,➖
+,,,   E,SORAN,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   E,SORAN,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"EnemyExplorer, TargetHasBurning, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,ROMI,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetHasBurning,➖,➖
+,,,   R,ROMI,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"TargetHasHullBreach, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,MISS Q,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetHasBurning,➖,➖
+,,,   R,MISS Q,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfHasMorale, SelfOfficerTalNotOnBridge",➖,➖
+,,,   E,SPECIALIST SEVEN,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"TargetHasHullBreach, EnemyBattleship",➖,➖
+,,,   E,SPECIALIST SEVEN,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,ICHEB,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"TargetHasHullBreach, SelfOfficerTalNotOnBridge",➖,➖
+,,,   R,ICHEB,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfStateNone,➖,➖
+,,,   R,INFILTRATOR TUVOK,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetHasHullBreach,➖,➖
+,,,   R,INFILTRATOR TUVOK,BDA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfStateNone, SelfOfficerTalNotOnBridge",➖,➖
+,,,   E,ANNORAX,CM,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,PveChestLootMultiplierLimitedResources,✅,➖
+,,,   E,ANNORAX,OA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   E,SESKA,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SESKA,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SUDER,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,SUDER,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,S31 GEORGIOU,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,S31 GEORGIOU,BDA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,RACHEL GARRETT,OA,➖,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,✅,➖
+,,,   R,RACHEL GARRETT,BDA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"SelfOfficerTalNotOnBridge, EnemyBattleship",➖,➖
+,,,   R,ZEPH,OA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   R,ZEPH,BDA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"EnemyInterceptor, SelfOfficerTalNotOnBridge",➖,➖
+,,,   E,QUASI,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,QUASI,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,ALOK SAHAR,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfHullJunker,➖,➖
+,,,   R,ALOK SAHAR,BDA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,"EnemyExplorer, SelfOfficerTalNotOnBridge",➖,➖
+,,,   E,WOK CAROL,OA,➖,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,WokAugmentAllLootRewards,✅,➖
+,,,   E,WOK CAROL,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,WOK MCCOY,OA,➖,➖,➖,✅,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,WOK MCCOY,BDA,➖,➖,✅,✅,✅,➖,✅,✅,✅,➖,➖,   ➖,,➖,➖
+,,,   E,WOK JOACHIM,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,"SelfSurveyor, SelfOfficerTalNotOnBridge",➖,➖
+,,,   E,WOK JOACHIM,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,WOK SCOTTY,OA,➖,➖,➖,➖,➖,➖,✅,✅,✅,➖,✅,   ➖,,✅,➖
+,,,   E,WOK SCOTTY,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,WOK SAAVIK,OA,➖,➖,➖,✅,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,WOK SAAVIK,BDA,➖,➖,✴️,✴️,✴️,➖,➖,➖,➖,➖,➖,   ➖,TargetStateAny,➖,➖
+,,,   E,SNW SCOTTY,OA,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Suliban,➖,➖
+,,,   E,SNW SCOTTY,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,SNW T'PRING,OA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,SNW T'PRING,BDA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,SNW D'CHOK,OA,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,✅
+,,,   E,SNW D'CHOK,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,BLACK OPS M'BENGA,OA,➖,➖,✴️,✴️,✴️,✴️,✴️,✴️,➖,✴️,➖,   ➖,Suliban,➖,➖
+,,,   E,BLACK OPS M'BENGA,BDA,➖,➖,✅,✅,✅,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   R,BLACK OPS CHAPEL,OA,➖,➖,✴️,➖,➖,➖,✴️,✴️,➖,➖,➖,   ➖,FactionPointsGain,✅,➖
+,,,   R,BLACK OPS CHAPEL,BDA,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,✅,   ✅,,➖,➖
+,,,   E,VIL WINN ADAMI,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,VIL WINN ADAMI,BDA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,VIL GUL DUKAT,OA,➖,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,VIL GUL DUKAT,BDA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,NOG,CM,➖,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfOfficerTalNotOnBridge,➖,➖
+,,,   E,NOG,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetStateAny,➖,➖
+,,,   E,THE HIERARCH,CM,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,THE HIERARCH,OA,✅,✅,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,EZRI DAX,CM,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,SelfSurveyor,➖,➖
+,,,   E,EZRI DAX,OA,✴️,✴️,➖,➖,➖,➖,➖,➖,➖,➖,➖,   ➖,TargetStateAny,➖,➖
+,,,   E,TMP HIKARU SULU,CM,➖,➖,✴️,✴️,➖,➖,➖,➖,➖,➖,✴️,   ✴️,"TargetMaxLevel, SelfOfficerTalNotOnBridge",➖,➖
+,,,   E,TMP HIKARU SULU,OA,➖,➖,✴️,✴️,➖,➖,➖,➖,➖,➖,✴️,   ✴️,TargetStateAny,➖,➖
+,,,   E,TMP NYOTA UHURA,OA,➖,➖,✅,✅,➖,➖,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   E,TMP NYOTA UHURA,BDA,➖,➖,✅,✅,➖,➖,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   E,V'GER ILIA,OA,➖,➖,✴️,✴️,➖,➖,➖,➖,➖,➖,✴️,   ✴️,TargetStateAny,➖,➖
+,,,   E,V'GER ILIA,BDA,➖,➖,✅,✅,➖,➖,➖,➖,➖,➖,✅,   ✅,,➖,➖
+,,,   E,FCM DATA,CM,➖,➖,➖,➖,➖,➖,✅,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,FCM DATA,OA,➖,➖,➖,➖,➖,➖,✅,✅,✅,➖,✅,   ➖,,✅,➖
+,,,   E,ZEPHRAM COCHRANE,OA,➖,➖,➖,➖,➖,➖,✅,➖,➖,➖,➖,   ➖,,➖,➖
+,,,   E,ZEPHRAM COCHRANE,BDA,➖,➖,➖,➖,➖,➖,✅,✅,➖,➖,➖,   ➖,,➖,➖
