@@ -35,7 +35,7 @@ This document outlines a strategy to import ship and hostile data from **data.st
 
 **Upstream aggregates and metadata (stfc.space; defaulting to `0` / empty for legacy files)**
 
-- `stat_health`, `stat_defense`, `stat_attack`, `dpr`, `stat_strength`: Mirrored composite stats from upstream `stats.*`
+- `stat_health`, `stat_defense`, `stat_attack`, `dpr`, `stat_strength`: Mirrored composite stats from upstream `stats.`*
 - `loca_id`, `faction`, `upstream_ship_type`, `hull_type_raw`, `rarity`, `is_scout`, `is_outpost`, `strength`, `systems`, `xp_amount`, `warp`, `warp_with_superhighway`
 
 **Raw payloads preserved for normalization and future mechanics**
@@ -90,45 +90,71 @@ This document outlines a strategy to import ship and hostile data from **data.st
 
 ### Ship Data Model (from `src/data/ship.rs`)
 
-**Ship Record** — Full stats for a player ship at a chosen tier:
+Ships are stored **on disk** under `data/ships_extended/` (extended schema: all tiers + per-level hull/shield bonuses). Those files are **produced by** `cargo run --bin normalize_data_stfc_space`, which reads cached per-ship JSON under `data/upstream/data-stfc-space/ships/` (see `src/bin/normalize_data_stfc_space.rs` and `scripts/fetch_stfcspace_ships.mjs` for the cache layout). The simulator loads an `ExtendedShipRecord` and resolves a flat `ShipRecord` for the requested **tier** and **level** via `ExtendedShipRecord::to_ship_record` (see `src/data/loader.rs` — the old flat `data/ships/` tree is removed).
 
-- `id`: Unique identifier (e.g., `amalgam`)
-- `ship_name`: Display name (e.g., `"AMALGAM"`)
-- `ship_class`: One of `battleship`, `explorer`, `interceptor`, `survey`, `armada`
-- `armor_piercing`: Weapon stat aggregated from components (f64)
-- `shield_piercing`: Weapon stat aggregated from components (f64)
-- `accuracy`: Weapon stat aggregated from components (f64)
-- `attack`: Representative damage/attack value per round (f64)
-- `crit_chance`: Critical strike probability (f64, 0.0–1.0)
-- `crit_damage`: Critical damage multiplier (f64, e.g., 1.5 = 150%)
-- `hull_health`: Total hull HP (f64)
-- `shield_health`: Total shield HP (f64)
-- `shield_mitigation`: Optional, fraction of damage sent to shields vs hull (default 0.8)
-- `apex_shred`: Optional, reduces defender's effective Apex Barrier (decimal, e.g., 0.1 = 10%)
-- `isolytic_damage`: Optional, bonus damage vs isolytic defense (decimal, e.g., 0.15 = 15%)
-- `weapons`: Optional, per-weapon attack values for sub-round resolution (Vec)
+**Extended ship record** (`ExtendedShipRecord`) — one JSON file per ship, e.g. `data/ships_extended/amalgam.json`:
 
-**Ship Index** — Lookup catalog in `data/ships/index.json`:
+- `id`, `ship_name`, `ship_class`: same meaning as on `ShipRecord`
+- `tiers`: `Vec<TierStats>` — combat scalars **per tier** (weapon aggregates, HP, optional `weapons` list)
+- `levels`: `Vec<LevelBonus>` — additive `shield` / `health` bonuses by ship **level** (merged into tier base HP when resolving)
+- `crew_slots`: Below-decks slot unlock schedule from upstream (`Vec<CrewSlotUnlock>`); optional, may be empty
+- `abilities`: Optional `Vec<ShipAbility>` — hull abilities from upstream (timing, effect type, conditions); resolved onto the flat `ShipRecord` at tier/level resolution
 
-- `data_version`: Semver or date string
-- `source_note`: Attribution
-- `ships[]`: Array of `ShipIndexEntry` (id, ship_name, ship_class)
+**Per tier** (`TierStats`): `tier`, `armor_piercing`, `shield_piercing`, `accuracy`, `attack`, `crit_chance`, `crit_damage`, `hull_health`, `shield_health`, optional `shield_mitigation`, optional `weapons` (`Vec<WeaponRecord>`).
 
-**Example ship record** (`data/ships/amalgam.json`):
+**Per weapon** (`WeaponRecord`): `attack`; optional `shots`, `pierce` (damage-through override), `armor_piercing`, `shield_piercing`, `accuracy` (per-weapon raw values for mitigation math), `crit_chance`, `crit_multiplier` (JSON name on the weapon row; tier-level scalar is still `crit_damage`), `proc_chance`, `proc_multiplier`.
+
+**Resolved ship record** (`ShipRecord`) — in-memory combat row for one **tier + level** choice:
+
+- `id`, `ship_name`, `ship_class`
+- `armor_piercing`, `shield_piercing`, `accuracy`, `attack`, `crit_chance`, `crit_damage`
+- `hull_health`, `shield_health` (tier base + level `health` / `shield` bonuses)
+- `shield_mitigation`: `Option<f64>` — fraction to shields when shields are up (often `0.8`)
+- `apex_shred`, `isolytic_damage`: `f64` (default `0.0`); resolving from `ExtendedShipRecord` currently sets both to `0.0` — hull abilities on `abilities` and profile/research merges in the optimizer scenario can supply non-zero combat values
+- `weapons`: `Option<Vec<WeaponRecord>>` — when present, drives `Combatant.weapons` / sub-rounds; when absent, a single implicit weapon uses scalar `attack`
+- `abilities`: `Option<Vec<ShipAbility>>` — copy of hull abilities for that resolution (level-scaled `values[]` curves folded into `value` where applicable)
+
+**Ship index** — `data/ships_extended/index.json` (`ExtendedShipIndex`): `data_version`, `source_note`, `ships[]` with `ExtendedShipIndexEntry` (`id`, `ship_name`, `ship_class`).
+
+**Example extended ship** (abbreviated from `data/ships_extended/amalgam.json`; one tier; shortened `levels` / `crew_slots`; hull `abilities` omitted in this snippet — the real file has the full tier ladder and optional `abilities`):
 
 ```json
 {
   "id": "amalgam",
   "ship_name": "AMALGAM",
   "ship_class": "survey",
-  "armor_piercing": 477.0,
-  "shield_piercing": 477.0,
-  "accuracy": 477.0,
-  "attack": 1814.5,
-  "crit_chance": 0.1,
-  "crit_damage": 1.5,
-  "hull_health": 19200.0,
-  "shield_health": 9600.0
+  "tiers": [
+    {
+      "tier": 1,
+      "armor_piercing": 477.0,
+      "shield_piercing": 477.0,
+      "accuracy": 477.0,
+      "attack": 1814.5,
+      "crit_chance": 0.1,
+      "crit_damage": 1.5,
+      "hull_health": 16612.0,
+      "shield_health": 9600.0,
+      "shield_mitigation": 0.8,
+      "weapons": [
+        {
+          "attack": 1814.5,
+          "shots": 1,
+          "armor_piercing": 477.0,
+          "shield_piercing": 477.0,
+          "accuracy": 477.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5
+        }
+      ]
+    }
+  ],
+  "levels": [
+    { "level": 1, "shield": 100.32, "health": 456.657 }
+  ],
+  "crew_slots": [
+    { "slots": "1", "unlock_level": 5 },
+    { "slots": "2", "unlock_level": 10 }
+  ]
 }
 ```
 
