@@ -8,31 +8,33 @@ See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, [`map_canonical_cond
 
 The table below lists **currently unmapped** tokens (57 unique strings in canonical; **42 remain unmapped** after the armada / `not` mappings). Counts are occurrences in `officers.canonical.json` (not officer cardinality).
 
-| Token | Count | Bucket | Note |
-| ----- | -----: | ------ | ---- |
-| `TargetNotASB` | 27 | deferred | No “anti-station” / ASB scenario in ship-vs-hostile core sim. |
-| `SelfOfficerTalNotOnBridge` | 26 | deferred | Roster / slot layout not modeled in combat. |
-| `EnemyHullFaction` | 25 | deferred | Needs explicit hostile faction + hull-line semantics beyond `OpponentFactionTag`. |
-| `TargetMaxLevel` | 21 | deferred | Hostile level gate not in `CombatContext`. |
-| `SelfDefending` | 16 | deferred | Station / defense context not modeled. |
-| `CombatBattleType` | 15 | deferred | No battle-type enum in scenario (would mis-gate if approximated). |
-| `ModuleKinetic` / `ModuleEnergy` | 11 / 8 | deferred | Weapon module context not in condition evaluation. |
-| `EnemySentinel` | 11 | deferred | Sentinel encounter type not represented. |
-| `SelfAtStation` / `SelfAtSoloArmada` / `SelfAtWaveDefenseChallenge` / `SelfAtAssault2` | 8 / 8 / 3 / 1 | deferred | Encounter location / mode not in `CombatContext`. |
-| `CombatGameContext` | 8 | deferred | Overworld / client context. |
-| `TargetHasAssimilated` | 7 | deferred | Assimilate debuff is tracked for **attacker** effectiveness, not exposed as “target has assimilated” on defender; mapping would need a defined PvE/PvP semantics pass. |
-| `TargetStateAny` | 7 | deferred | Composite state bundle not modeled as one predicate. |
-| `SelfAttacking` | 6 | deferred | Ambiguous vs default PvE attacker role. |
-| `SelfHasHullBreach` | 6 | deferred | No `attacker_hull_breach_active` in `CombatContext` (only defender hull breach). |
-| `HullHealthBelowStartOfCombat` / `HullHealthBelow` / `HullHealthAbove` | 4 / 3 / 1 | deferred | Canonical JSON does not carry thresholds per token; values live in prose — do not invent cutoffs. |
-| `TargetIsArmadaOrInvadingEntity` / `TargetIsInvadingEntity` / `TargetNotInvadingEntity` / `TargetNotPlayerStation` | 3 / 2 / 1 / 3 | deferred | Invading entity / station predicates not modeled. |
-| `SelfHull*` / `SelfMining` / `SelfCloaked` | various | deferred | Player hull identity / mining / cloak not in `CombatContext`. |
-| `SelfHasBurning` | 2 | deferred | No `attacker_burning_active` (burning rounds apply to defender in current loop). |
-| `SelfStateNone` | 2 | deferred | “No state” bundle not modeled. |
-| `HitEnemyWithEnergy` / `HitEnemyWithKinetic` | 1 each | deferred | Per-hit weapon type context not available at generic condition evaluation. |
-| `EnemyStronger` | 1 | deferred | Power comparison not in context. |
-| `CargoFull` / `CargoEmpty` | 1 each | deferred | Cargo not modeled. |
-| `EnemyNotToaTrialHostile` | 1 | deferred | Trial-specific hostile tag not modeled. |
+
+| Token                                                                                                              | Count         | Bucket   | Note                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------ | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TargetNotASB`                                                                                                     | 27            | deferred | No “anti-station” / ASB scenario in ship-vs-hostile core sim.                                                                                                          |
+| `SelfOfficerTalNotOnBridge`                                                                                        | 26            | deferred | Roster / slot layout not modeled in combat.                                                                                                                            |
+| `EnemyHullFaction`                                                                                                 | 25            | deferred | Needs explicit hostile faction + hull-line semantics beyond `OpponentFactionTag`.                                                                                      |
+| `TargetMaxLevel`                                                                                                   | 21            | deferred | Hostile level gate not in `CombatContext`.                                                                                                                             |
+| `SelfDefending`                                                                                                    | 16            | deferred | Station / defense context not modeled.                                                                                                                                 |
+| `CombatBattleType`                                                                                                 | 15            | deferred | No battle-type enum in scenario (would mis-gate if approximated).                                                                                                      |
+| `ModuleKinetic` / `ModuleEnergy`                                                                                   | 11 / 8        | deferred | Weapon module context not in condition evaluation.                                                                                                                     |
+| `EnemySentinel`                                                                                                    | 11            | deferred | Sentinel encounter type not represented.                                                                                                                               |
+| `SelfAtStation` / `SelfAtSoloArmada` / `SelfAtWaveDefenseChallenge` / `SelfAtAssault2`                             | 8 / 8 / 3 / 1 | deferred | Encounter location / mode not in `CombatContext`.                                                                                                                      |
+| `CombatGameContext`                                                                                                | 8             | deferred | Overworld / client context.                                                                                                                                            |
+| `TargetHasAssimilated`                                                                                             | 7             | deferred | Assimilate debuff is tracked for **attacker** effectiveness, not exposed as “target has assimilated” on defender; mapping would need a defined PvE/PvP semantics pass. |
+| `TargetStateAny`                                                                                                   | 7             | deferred | Composite state bundle not modeled as one predicate.                                                                                                                   |
+| `SelfAttacking`                                                                                                    | 6             | deferred | Ambiguous vs default PvE attacker role.                                                                                                                                |
+| `SelfHasHullBreach`                                                                                                | 6             | deferred | No `attacker_hull_breach_active` in `CombatContext` (only defender hull breach).                                                                                       |
+| `HullHealthBelowStartOfCombat` / `HullHealthBelow` / `HullHealthAbove`                                             | 4 / 3 / 1     | deferred | Canonical JSON does not carry thresholds per token; values live in prose — do not invent cutoffs.                                                                      |
+| `TargetIsArmadaOrInvadingEntity` / `TargetIsInvadingEntity` / `TargetNotInvadingEntity` / `TargetNotPlayerStation` | 3 / 2 / 1 / 3 | deferred | Invading entity / station predicates not modeled.                                                                                                                      |
+| `SelfHull*` / `SelfMining` / `SelfCloaked`                                                                         | various       | deferred | Player hull identity / mining / cloak not in `CombatContext`.                                                                                                          |
+| `SelfHasBurning`                                                                                                   | 2             | deferred | No `attacker_burning_active` (burning rounds apply to defender in current loop).                                                                                       |
+| `SelfStateNone`                                                                                                    | 2             | deferred | “No state” bundle not modeled.                                                                                                                                         |
+| `HitEnemyWithEnergy` / `HitEnemyWithKinetic`                                                                       | 1 each        | deferred | Per-hit weapon type context not available at generic condition evaluation.                                                                                             |
+| `EnemyStronger`                                                                                                    | 1             | deferred | Power comparison not in context.                                                                                                                                       |
+| `CargoFull` / `CargoEmpty`                                                                                         | 1 each        | deferred | Cargo not modeled.                                                                                                                                                     |
+| `EnemyNotToaTrialHostile`                                                                                          | 1             | deferred | Trial-specific hostile tag not modeled.                                                                                                                                |
+
 
 ## Mapped today (reference)
 
