@@ -2,6 +2,30 @@
 
 Planned features and priorities for Kobayashi.
 
+## Codex Speed Demon
+
+Speeding up crew discovery is primarily a search-efficiency problem, not a raw simulator-throughput problem. The simulator is already fast; the roadmap here is about spending Monte Carlo budget on the most promising crews first and learning from prior runs.
+
+### Near-term priorities
+
+- **Default broad searches to tiered optimization** — Use the existing scout → confirm flow as the default for large candidate sets so Kobayashi can rank many crews cheaply, then spend full Monte Carlo only on the top slice.
+- **Lean harder on analytical prefiltering** — Use the closed-form expected hull-damage proxy to shrink large candidate sets before Monte Carlo, and tune default `analytical_prefilter_keep` values by search size.
+- **Warm-start from heuristics and prior winners** — Expand heuristics seeding beyond static community files by persisting top crews from previous runs and replaying them as automatic seeds for similar ship/hostile/mode scenarios.
+- **Bias discovery around constraints early** — Push must-include, exclude, captain/bridge/below-decks seat rules, and officer-group constraints as early in the pipeline as possible so obviously irrelevant candidates never reach simulation.
+- **Stay anchored to the real roster** — Keep discovery flows tightly filtered to owned officers, legal seat eligibility, and unlocked below-decks slots so compute is not spent on impossible crews.
+
+### Next optimizer upgrades
+
+- **Adaptive simulation budgets** — Allocate sims dynamically based on scout-pass confidence and variance instead of giving every surviving crew the same budget.
+- **Matchup-aware pruning rules** — Add captain/bridge synergy priors, encounter-specific tags, and learned “family” priors from prior winning crews before expensive simulation.
+- **Novelty-aware ranking** — Reward crews that are both strong and materially different from already-known winners so discovery does not collapse into the same few lineages.
+- **Automatic local learning loop** — Persist search outcomes by ship, hostile, strategy, and constraints; use those outcomes to seed future searches and tune exploration limits.
+- **First-class fast-discovery mode** — Expose an opinionated pipeline in the API/UI: heuristics seeds → analytical prefilter → tiered scout → confirm top K → optional genetic refinement.
+
+### Operating principle
+
+The intended direction is: **seed + prune + scout + confirm + learn**, rather than trying to brute-force ever-larger search spaces with uniform simulation effort.
+
 ## Combat buffs support
 
 - **Data:** `[data/support_buffs.json](../data/support_buffs.json)` defines selectable ids (aligned with the workspace UI). Each entry may include `research_levels` (`rid` + `level`) merged in-memory via the same path as synced research, and optional `static_bonuses` (engine keys consumed by `apply_static_buffs_to_combatant` / mitigation). `exclusive_group` + `priority` resolve overlapping picks (e.g. Titan-A fort vs max).
