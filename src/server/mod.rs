@@ -77,8 +77,33 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
+    .with_graceful_shutdown(shutdown_signal())
     .await?;
+
+    eprintln!("kobayashi: server stopped.");
     Ok(())
+}
+
+/// Wait for Ctrl+C (all platforms) or SIGTERM (Unix) so `axum::serve` can shut down cleanly.
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        let _ = tokio::signal::ctrl_c().await;
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        use tokio::signal::unix::{signal, SignalKind};
+        let mut sig = signal(SignalKind::terminate()).expect("install SIGTERM handler");
+        sig.recv().await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {}
+        () = terminate => {}
+    }
 }
 
 /// Synchronous entry point: creates a tokio runtime and drives the async server.
