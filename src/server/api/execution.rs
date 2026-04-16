@@ -14,7 +14,7 @@ use crate::data::heuristics::{
 };
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
-    resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate, CrewGenerator,
+    resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
 };
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry, scenario::build_shared_scenario_data_from_registry,
@@ -22,8 +22,8 @@ use crate::optimizer::monte_carlo::{
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::{
-    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeProgressTick,
-    OptimizerStrategy,
+    count_effective_optimize_candidates, optimize_scenario_with_progress_with_registry,
+    OptimizationScenario, OptimizeProgressTick, OptimizerStrategy,
 };
 
 use super::requests::{
@@ -51,6 +51,7 @@ fn resolve_effective_optimize_strategy(
     heuristics_only: bool,
     seed: u64,
     profile_id: Option<&str>,
+    crew_constraints: Option<&CrewSearchConstraints>,
 ) -> (OptimizerStrategy, bool) {
     if let Some(ref raw) = request.strategy {
         return (parse_strategy(Some(raw)), false);
@@ -58,22 +59,36 @@ fn resolve_effective_optimize_strategy(
     if heuristics_only {
         return (OptimizerStrategy::Exhaustive, false);
     }
-    let generator = CrewGenerator::with_strategy(CandidateStrategy {
+    let warm_start: Vec<CrewCandidate> = request
+        .warm_start_crews
+        .as_ref()
+        .map(|v| {
+            v.iter()
+                .map(|dto| CrewCandidate {
+                    captain: dto.captain.trim().to_string(),
+                    bridge: dto.bridge.clone(),
+                    below_decks: dto.below_decks.clone(),
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let strat = CandidateStrategy {
         max_candidates: request.max_candidates.map(|n| n as usize),
         only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
         below_decks_slots,
+        constraints: crew_constraints.cloned(),
         ..CandidateStrategy::default()
-    });
-    // Must match the length of crews the optimizer will actually run (capped by max_candidates).
-    let n = generator
-        .generate_candidates_from_registry(
-            registry,
-            request.ship.trim(),
-            request.hostile.trim(),
-            seed,
-            profile_id,
-        )
-        .len();
+    };
+    // Must match crews after generation, warm-start prepend, and constraint filter.
+    let n = count_effective_optimize_candidates(
+        registry,
+        request.ship.trim(),
+        request.hostile.trim(),
+        seed,
+        profile_id,
+        strat,
+        &warm_start,
+    );
     let strategy = if n >= TIERED_AUTO_THRESHOLD {
         OptimizerStrategy::Tiered
     } else {
@@ -411,6 +426,7 @@ fn gather_optimize_simulation_results(
         heuristics_only,
         seed,
         profile_id,
+        crew_constraints.as_ref(),
     );
 
     let mut h_candidates = if heuristics_seeds_nonempty {

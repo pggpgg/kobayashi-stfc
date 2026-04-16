@@ -255,6 +255,27 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     );
 }
 
+/// Auto tiered vs exhaustive must use post-constraint candidate count (not raw generation).
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_auto_strategy_respects_constraints_on_effective_candidate_count() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":80,"seed":42,"max_candidates":600,"constraints":{"must_include":["___kobayashi_nonexistent_officer___"]}}"#;
+    let response = route_request("POST", "/api/optimize", body).await;
+    assert_eq!(response.status_code, 200, "body: {}", response.body);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["scenario"]["effective_strategy"], "exhaustive");
+    assert_eq!(payload["scenario"]["strategy_auto"], true);
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(
+        recommendations.is_empty(),
+        "impossible must_include should yield no crews"
+    );
+}
+
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_changes_with_seed() {

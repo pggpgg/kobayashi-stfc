@@ -162,6 +162,13 @@ export function useWorkspace() {
         optimizeBelowMust,
         optimizeGroupsJson,
       ].join("\u001f"),
+      defenderOpponent: "Hostile",
+      supportBuffIds: selectedSupportBuffs,
+      chainGrindEnabled: chainGrindEnabled,
+      chainKillsTarget: chainKillsTarget,
+      chainSecondary: chainSecondary,
+      prioritizeBelowDecksAbility,
+      belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
     });
 
   // Preset saving state

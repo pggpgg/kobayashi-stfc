@@ -221,6 +221,71 @@ fn prepend_warm_start_dedupe(warm: &[CrewCandidate], generated: Vec<CrewCandidat
     out
 }
 
+fn candidate_strategy_from_scenario(scenario: &OptimizationScenario<'_>) -> CandidateStrategy {
+    CandidateStrategy {
+        max_candidates: scenario.max_candidates,
+        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        below_decks_slots: scenario.below_decks_slots,
+        constraints: scenario.constraints.clone(),
+        ..CandidateStrategy::default()
+    }
+}
+
+/// Counts candidates the optimizer will run after generation, warm-start prepend, and constraint filter.
+/// Used by the API when `strategy` is omitted to auto-pick tiered vs exhaustive.
+pub fn count_effective_optimize_candidates(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    seed: u64,
+    profile_id: Option<&str>,
+    strategy: CandidateStrategy,
+    warm_start: &[CrewCandidate],
+) -> usize {
+    let constraints = strategy.constraints.clone();
+    let generator = CrewGenerator::with_strategy(strategy);
+    let candidates = generator.generate_candidates_from_registry(
+        registry,
+        ship,
+        hostile,
+        seed,
+        profile_id,
+    );
+    let candidates = prepend_warm_start_dedupe(warm_start, candidates);
+    match constraints.as_ref() {
+        Some(c) if !c.is_empty() => filter_candidates(candidates, c).len(),
+        _ => candidates.len(),
+    }
+}
+
+/// Automatic analytical prefilter cap when the client omitted `analytical_prefilter_keep`.
+/// Uses post-merge candidate count `n` and optional `max_candidates` for budget shaping.
+pub(crate) fn analytical_prefilter_keep_auto(
+    n: usize,
+    max_candidates: Option<usize>,
+    top_k: usize,
+) -> Option<usize> {
+    const MIN_N: usize = 400;
+    if n <= MIN_N {
+        return None;
+    }
+    let top_ref = top_k.max(1);
+    let mut keep = 25usize.saturating_mul(top_ref);
+    if let Some(mc) = max_candidates {
+        if mc > 0 {
+            let mc = mc.min(n);
+            keep = keep.min(mc.saturating_mul(4).max(top_ref.saturating_mul(10)));
+        }
+    }
+    keep = keep.clamp(256, 6000);
+    keep = keep.min(n);
+    if keep >= n {
+        None
+    } else {
+        Some(keep)
+    }
+}
+
 /// Request `analytical_prefilter_keep`, or an automatic cap when omitted (not for chain / genetic).
 fn resolved_analytical_prefilter_keep(
     scenario: &OptimizationScenario<'_>,
@@ -235,19 +300,11 @@ fn resolved_analytical_prefilter_keep(
     if let Some(k) = scenario.analytical_prefilter_keep {
         return Some(k);
     }
-    const MIN_N: usize = 400;
-    if n_after_merge <= MIN_N {
-        return None;
-    }
-    let top_ref = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K).max(1);
-    let mut keep = 25usize.saturating_mul(top_ref);
-    keep = keep.clamp(256, 6000);
-    keep = keep.min(n_after_merge);
-    if keep >= n_after_merge {
-        None
-    } else {
-        Some(keep)
-    }
+    analytical_prefilter_keep_auto(
+        n_after_merge,
+        scenario.max_candidates,
+        scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K).max(1),
+    )
 }
 
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
@@ -263,12 +320,7 @@ fn optimize_scenario_tiered_with_registry(
     registry: &DataRegistry,
     scenario: &OptimizationScenario<'_>,
 ) -> Vec<RankedCrewResult> {
-    let generator = CrewGenerator::with_strategy(CandidateStrategy {
-        max_candidates: scenario.max_candidates,
-        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-        below_decks_slots: scenario.below_decks_slots,
-        ..CandidateStrategy::default()
-    });
+    let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
     let candidates = generator.generate_candidates_from_registry(
         registry,
         scenario.ship,
@@ -336,13 +388,7 @@ fn optimize_scenario_exhaustive_with_registry(
     registry: &DataRegistry,
     scenario: &OptimizationScenario<'_>,
 ) -> Vec<RankedCrewResult> {
-    let generator =
-        CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
-            max_candidates: scenario.max_candidates,
-            only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-            below_decks_slots: scenario.below_decks_slots,
-            ..crate::optimizer::crew_generator::CandidateStrategy::default()
-        });
+    let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
     let candidates = generator.generate_candidates_from_registry(
         registry,
         scenario.ship,
@@ -389,13 +435,7 @@ fn optimize_scenario_exhaustive_with_registry(
 
 /// Exhaustive/sampled path: generator → Monte Carlo → rank.
 fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
-    let generator =
-        CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
-            max_candidates: scenario.max_candidates,
-            only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-            below_decks_slots: scenario.below_decks_slots,
-            ..crate::optimizer::crew_generator::CandidateStrategy::default()
-        });
+    let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
     let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
     let candidates = apply_crew_constraints(candidates, scenario);
@@ -507,13 +547,7 @@ where
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
         OptimizerStrategy::Exhaustive => {
-            let generator =
-                CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
-                    max_candidates: scenario.max_candidates,
-                    only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                    below_decks_slots: scenario.below_decks_slots,
-                    ..crate::optimizer::crew_generator::CandidateStrategy::default()
-                });
+            let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
             let candidates =
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
             let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
@@ -602,12 +636,7 @@ where
 {
     match scenario.strategy {
         OptimizerStrategy::Tiered => {
-            let generator = CrewGenerator::with_strategy(CandidateStrategy {
-                max_candidates: scenario.max_candidates,
-                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                below_decks_slots: scenario.below_decks_slots,
-                ..CandidateStrategy::default()
-            });
+            let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
             let candidates = generator.generate_candidates_from_registry(
                 registry,
                 scenario.ship,
@@ -660,13 +689,7 @@ where
             }
         }
         OptimizerStrategy::Exhaustive => {
-            let generator =
-                CrewGenerator::with_strategy(crate::optimizer::crew_generator::CandidateStrategy {
-                    max_candidates: scenario.max_candidates,
-                    only_below_decks_with_ability: scenario.only_below_decks_with_ability,
-                    below_decks_slots: scenario.below_decks_slots,
-                    ..crate::optimizer::crew_generator::CandidateStrategy::default()
-                });
+            let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
             let candidates = generator.generate_candidates_from_registry(
                 registry,
                 scenario.ship,
@@ -801,9 +824,12 @@ pub fn optimize_crew(
 #[cfg(test)]
 mod tests {
     use super::{
-        optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizerStrategy,
+        analytical_prefilter_keep_auto, count_effective_optimize_candidates,
+        optimize_scenario_with_progress_with_registry, CandidateStrategy, OptimizationScenario,
+        OptimizerStrategy,
     };
     use crate::data::data_registry::DataRegistry;
+    use crate::optimizer::constraints::CrewSearchConstraints;
     use crate::optimizer::crew_generator::{CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS};
     use crate::optimizer::monte_carlo::scenario::{
         build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
@@ -843,6 +869,42 @@ mod tests {
                 "each result must match scenario below_decks_slots"
             );
         }
+    }
+
+    #[test]
+    fn analytical_prefilter_keep_auto_skips_small_n() {
+        assert_eq!(analytical_prefilter_keep_auto(200, None, 20), None);
+    }
+
+    #[test]
+    fn analytical_prefilter_keep_auto_max_candidates_tightens_vs_unbounded() {
+        let unbounded = analytical_prefilter_keep_auto(20_000, None, 40).expect("keep");
+        let capped = analytical_prefilter_keep_auto(20_000, Some(150), 40).expect("keep");
+        assert!(capped < unbounded, "capped={capped} unbounded={unbounded}");
+    }
+
+    #[test]
+    fn count_effective_candidates_respects_must_include_filter() {
+        let registry = DataRegistry::load().expect("registry");
+        let strat = CandidateStrategy {
+            max_candidates: Some(2000),
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+            constraints: Some(CrewSearchConstraints {
+                must_include: vec!["___kobayashi_nonexistent_officer___".into()],
+                ..Default::default()
+            }),
+            ..CandidateStrategy::default()
+        };
+        let n = count_effective_optimize_candidates(
+            &registry,
+            "saladin",
+            "2918121098",
+            1,
+            None,
+            strat,
+            &[],
+        );
+        assert_eq!(n, 0);
     }
 
     #[test]

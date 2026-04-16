@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
+use crate::optimizer::constraints::{normalize_officer_name, CrewSearchConstraints};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
@@ -86,6 +87,7 @@ pub fn build_officer_pools_from_registry(
     only_below_decks_with_ability: bool,
     profile_id: Option<&str>,
     below_decks_slots: usize,
+    constraints: Option<&CrewSearchConstraints>,
 ) -> Option<OfficerPools> {
     let officers: Vec<Officer> = registry
         .officers()
@@ -148,11 +150,159 @@ pub fn build_officer_pools_from_registry(
         return None;
     }
 
-    Some(OfficerPools {
+    let pools = OfficerPools {
         captains,
         bridge,
         below_decks,
-    })
+    };
+    match constraints {
+        Some(c) if !c.is_empty() => {
+            narrow_officer_pools_for_constraints(registry, pools, c, below_decks_slots)
+        }
+        _ => Some(pools),
+    }
+}
+
+/// Registry officer name key (alphanumeric only, lowercase) — matches [`DataRegistry::officer_index`].
+#[inline]
+fn officer_lookup_key(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
+fn pool_display_name_norm(name: &str) -> String {
+    normalize_officer_name(name)
+}
+
+/// Tightens captain/bridge/below pools using search constraints so the generator
+/// does not enumerate crews that can never satisfy them. Conservative: group
+/// constraints are still enforced by post-generation [`crate::optimizer::constraints::filter_candidates`].
+pub fn narrow_officer_pools_for_constraints(
+    registry: &DataRegistry,
+    mut pools: OfficerPools,
+    constraints: &CrewSearchConstraints,
+    below_decks_slots: usize,
+) -> Option<OfficerPools> {
+    if constraints.is_empty() {
+        return Some(pools);
+    }
+    let index = registry.officer_index();
+
+    let exclude_set: HashSet<String> = constraints
+        .exclude
+        .iter()
+        .map(|s| pool_display_name_norm(s))
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    let strip_excluded = |pool: Vec<String>| -> Vec<String> {
+        pool.into_iter()
+            .filter(|n| !exclude_set.contains(&pool_display_name_norm(n)))
+            .collect()
+    };
+    pools.captains = strip_excluded(pools.captains);
+    pools.bridge = strip_excluded(pools.bridge);
+    pools.below_decks = strip_excluded(pools.below_decks);
+
+    if let Some(ref cap_rule) = constraints.captain_must_be {
+        let want = pool_display_name_norm(cap_rule);
+        if !want.is_empty() {
+            pools.captains.retain(|n| pool_display_name_norm(n) == want);
+        }
+    }
+
+    for b in &constraints.bridge_must_include {
+        let want = pool_display_name_norm(b);
+        if want.is_empty() {
+            continue;
+        }
+        let off = index.get(&officer_lookup_key(b))?;
+        if !can_fill_position(off, Position::Bridge) {
+            return None;
+        }
+        if !pools
+            .bridge
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want)
+        {
+            return None;
+        }
+    }
+
+    for b in &constraints.below_decks_must_include {
+        let want = pool_display_name_norm(b);
+        if want.is_empty() {
+            continue;
+        }
+        let off = index.get(&officer_lookup_key(b))?;
+        if !can_fill_position(off, Position::BelowDecks) {
+            return None;
+        }
+        if !pools
+            .below_decks
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want)
+        {
+            return None;
+        }
+    }
+
+    pools.captains.retain(|n| {
+        index
+            .get(&officer_lookup_key(n))
+            .map(is_captain_eligible)
+            .unwrap_or(false)
+    });
+    pools.bridge.retain(|n| {
+        index
+            .get(&officer_lookup_key(n))
+            .map(|o| can_fill_position(o, Position::Bridge))
+            .unwrap_or(false)
+    });
+    pools.below_decks.retain(|n| {
+        index
+            .get(&officer_lookup_key(n))
+            .map(|o| can_fill_position(o, Position::BelowDecks))
+            .unwrap_or(false)
+    });
+
+    for req in &constraints.must_include {
+        let want = pool_display_name_norm(req);
+        if want.is_empty() {
+            continue;
+        }
+        let off = index.get(&officer_lookup_key(req))?;
+        let on_cap = pools
+            .captains
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want);
+        let on_bridge = pools
+            .bridge
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want);
+        let on_bd = pools
+            .below_decks
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want);
+        let placeable = (is_captain_eligible(off) && on_cap)
+            || (can_fill_position(off, Position::Bridge) && on_bridge)
+            || (can_fill_position(off, Position::BelowDecks) && on_bd);
+        if !placeable {
+            return None;
+        }
+    }
+
+    if pools.captains.is_empty()
+        || pools.bridge.len() < BRIDGE_SLOTS
+        || pools.below_decks.len() < below_decks_slots
+    {
+        return None;
+    }
+
+    Some(pools)
 }
 
 /// Builds captain, bridge, and below-decks pools from loaded officers and roster filter.
@@ -252,6 +402,8 @@ pub struct CandidateStrategy {
     pub only_below_decks_with_ability: bool,
     /// Number of below-decks slots per generated crew (2–5).
     pub below_decks_slots: usize,
+    /// When set, officer pools are narrowed before enumeration (exclude, seat eligibility).
+    pub constraints: Option<CrewSearchConstraints>,
 }
 
 impl Default for CandidateStrategy {
@@ -264,6 +416,7 @@ impl Default for CandidateStrategy {
             use_seeded_shuffle: true,
             only_below_decks_with_ability: false,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+            constraints: None,
         }
     }
 }
@@ -315,6 +468,7 @@ impl CrewGenerator {
             self.strategy.only_below_decks_with_ability,
             profile_id,
             self.strategy.below_decks_slots,
+            self.strategy.constraints.as_ref(),
         ) {
             Some(p) => p,
             None => return Vec::new(),
@@ -392,6 +546,7 @@ impl CrewGenerator {
             self.strategy.only_below_decks_with_ability,
             profile_id,
             self.strategy.below_decks_slots,
+            self.strategy.constraints.as_ref(),
         ) {
             Some(p) => p,
             None => return 0,
@@ -414,6 +569,7 @@ impl CrewGenerator {
             self.strategy.only_below_decks_with_ability,
             profile_id,
             self.strategy.below_decks_slots,
+            self.strategy.constraints.as_ref(),
         ) {
             Some(p) => p,
             None => return 0,
@@ -830,9 +986,24 @@ fn mix_seed(seed: u64, ship: &str, hostile: &str) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::{
+        build_officer_pools_from_registry, narrow_officer_pools_for_constraints,
         resolve_below_decks_slots, CandidateStrategy, CrewGenerator, CrewSlotUnlock,
         MAX_BELOW_DECKS_SLOTS,
     };
+    use crate::data::data_registry::DataRegistry;
+    use crate::optimizer::constraints::CrewSearchConstraints;
+
+    #[test]
+    fn narrow_pools_returns_none_for_unknown_captain_must_be() {
+        let registry = DataRegistry::load().expect("registry");
+        let pools = build_officer_pools_from_registry(&registry, false, None, 3, None)
+            .expect("pools");
+        let c = CrewSearchConstraints {
+            captain_must_be: Some("NotARealCaptainNameForKobayashiTest".into()),
+            ..Default::default()
+        };
+        assert!(narrow_officer_pools_for_constraints(&registry, pools, &c, 3).is_none());
+    }
 
     #[test]
     fn resolve_below_decks_uses_explicit_or_tier_default() {

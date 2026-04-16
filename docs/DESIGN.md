@@ -615,7 +615,13 @@ Modeling every individual research node is a huge data entry burden and may not 
 
 ## 6. Optimizer Strategies
 
-**Current implementation:** The optimizer supports three strategies. **Exhaustive** (default): full candidate set from the crew generator, Monte Carlo, then rank. **Genetic:** implemented in `src/optimizer/genetic.rs`; use for large search spaces. Select via API request field `strategy: "genetic"` (or omit for exhaustive). **Tiered:** implemented in `src/optimizer/tiered.rs`; select via `strategy: "tiered"` (two-pass scouting → confirmation).
+**Current implementation:** The optimizer supports three strategies, chosen per request (and sometimes by the server when `strategy` is omitted — see below). **Exhaustive:** full (or `max_candidates`-capped) candidate set from the crew generator, full `sims` Monte Carlo per crew, then rank (`strategy: "exhaustive"`). **Genetic:** `src/optimizer/genetic.rs` for very large spaces (`strategy: "genetic"`). **Tiered:** `src/optimizer/tiered.rs` — scout each candidate with fewer simulations (server default **500** per crew, overridable with `tiered_scout_sims`), then run the request’s full `sims` on the top **K** (default **20**, overridable with `tiered_top_k`) (`strategy: "tiered"`). Tiered uses the request’s `ship_tier` / `ship_level` when building the shared scenario. Optional **`warm_start_crews`** prepends deduped crews before generated candidates (used by the SPA for local warm-start).
+
+**Pipeline (non-genetic, registry-backed):** `CrewGenerator` → optional **pool narrowing** from `CrewSearchConstraints` (`narrow_officer_pools_for_constraints` in `src/optimizer/crew_generator.rs`) → enumerate candidates → **`prepend_warm_start_dedupe`** → **`filter_candidates`** → optional **analytical prefilter** (`sort_and_analytical_prefilter` in `src/optimizer/mod.rs`) → Monte Carlo or tiered scout/confirm. Group constraints are enforced in **`filter_candidates`** after generation.
+
+**Omitting `strategy` on `POST /api/optimize` and `POST /api/optimize/start`:** the server counts **effective** candidates with **`count_effective_optimize_candidates`** (`src/optimizer/mod.rs`) — same steps as above through warm-start + constraint filter — and picks **tiered** vs **exhaustive** when that count is at least **`TIERED_AUTO_THRESHOLD`** (`src/server/api/execution.rs`). Raw generation length alone is not used. The optimize response scenario includes **`effective_strategy`**, **`strategy_auto`**, and **`requested_strategy`** so clients can tell what ran.
+
+**Analytical prefilter (auto cap):** If the client omits **`analytical_prefilter_keep`**, non-genetic paths may apply **`analytical_prefilter_keep_auto`**, which scales with candidate count and **`tiered_top_k`** and can tighten further when **`max_candidates`** is set (see `src/optimizer/mod.rs`).
 
 ### 6.1 Monte Carlo Simulation
 
@@ -629,12 +635,12 @@ Reduce combat to closed-form math: expected damage per round given stats. Skip s
 
 ```
 Phase 1: "Scouting"
-  - 100–500 sims per crew
+  - Default 500 sims per crew (optional `tiered_scout_sims`, capped server-side)
   - All synergy combos + random sample of others
-  - Keep top 5% by primary metric (e.g., R1 kill rate)
+  - Rank scouts; promote top K (default 20, optional `tiered_top_k`)
 
 Phase 2: "Confirmation"
-  - 5,000–50,000 sims per surviving crew
+  - Full `sims` (request) per promoted crew
   - Full statistical output (confidence intervals, percentiles)
   - Final ranking with error bars
 
@@ -672,7 +678,7 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 ### 6.8 Recommended Approach
 
-**Current:** Exhaustive (or sampled) sweep by default; use `strategy: "genetic"` for large rosters; use `strategy: "tiered"` for two-pass scouting → confirmation. Genetic algorithm is available for full below-decks optimization. **Planned:** analytical pre-filtering to prune obviously bad combos before any simulation runs (synergy prioritization within tiered remains open).
+**Current:** The workspace UI defaults to **tiered**; omitting `strategy` on optimize lets the **server auto-pick** tiered vs exhaustive from **effective** candidate count (after constraints and warm-start). Use **`strategy: "genetic"`** for huge below-decks exploration spaces. **Tiered** supports optional `tiered_scout_sims` / `tiered_top_k` and **`warm_start_crews`**. Non-genetic paths can apply **analytical prefilter** (explicit `analytical_prefilter_keep` or **`analytical_prefilter_keep_auto`** when omitted). The SPA persists last winning crews in **localStorage** with a versioned key (`frontend/src/lib/optimizeWarmStart.ts`, **SCHEMA** bumps invalidate stale entries). **Planned:** richer synergy ordering inside tiered and deeper “deep dive” tooling (§6.3 phase 3) as first-class UI.
 
 ---
 
@@ -759,14 +765,14 @@ Each simulation is independent — the problem is embarrassingly parallel. KOBAY
 
 ### 8.2 Scaling Estimates
 
-For ~280 officers with 3 crew slots. **Current optimizer:** exhaustive/sampled sweep (default) or genetic (`strategy: "genetic"`); tiered (scouting → confirmation) is available via `strategy: "tiered"` (implementation details may depend on registry/candidate context).
+For ~280 officers with 3 crew slots. **Current optimizer:** **tiered** (scout → confirm top K) is the usual path (UI default + server auto-routing when `strategy` is omitted); **exhaustive** / sampled sweep via `strategy: "exhaustive"`; **genetic** via `strategy: "genetic"` for very large spaces.
 
 
 | Scenario                   | Combos   | Sims                        | Total Sims | Time (16 cores)                     |
 | -------------------------- | -------- | --------------------------- | ---------- | ----------------------------------- |
 | Full sweep (current)       | ~800K    | user choice (e.g. 10K each) | e.g. 8B    | ~3 min typical                      |
-| Phase 1 scouting (planned) | ~800K    | 500 each                    | 400M       | ~8 sec                              |
-| Phase 2 top 5% (planned)   | ~40K     | 10K each                    | 400M       | ~8 sec                              |
+| Tiered scout (implemented) | ~800K    | default 500 each (tunable)  | ~400M      | order of ~8s scale (hardware-bound) |
+| Tiered confirm top K       | ≤K       | full `sims` each            | K × sims   | dominates wall time for large sims  |
 | With 5 below-decks         | billions | —                           | —          | genetic (use `strategy: "genetic"`) |
 
 
@@ -829,7 +835,7 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 | **SynergyGraph**      | Network visualization of officer synergies (nodes = officers, edges = synergy strength)   |
 | **RosterImportPanel** | Import player-owned officer list (tier/level) for personalization                         |
 | **PlayerProfile**     | Quick mode bonus entry + advanced mode source editor                                      |
-| **OptimizePanel**     | Configuration for optimization runs (strategy, sim count, constraints) with live progress |
+| **OptimizePanel**     | Optimization config (strategy, sims, max crews, tiered scout/top-K when tiered, constraints, chain grind) + live progress |
 
 
 ### 10.4 API

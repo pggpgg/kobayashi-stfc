@@ -8,10 +8,10 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 ### Near-term priorities
 
-- **Default broad searches to tiered optimization** — Use the existing scout → confirm flow as the default for large candidate sets so Kobayashi can rank many crews cheaply, then spend full Monte Carlo only on the top slice.
-- **Lean harder on analytical prefiltering** — Use the closed-form expected hull-damage proxy to shrink large candidate sets before Monte Carlo, and tune default `analytical_prefilter_keep` values by search size.
-- **Warm-start from heuristics and prior winners** — Expand heuristics seeding beyond static community files by persisting top crews from previous runs and replaying them as automatic seeds for similar ship/hostile/mode scenarios.
-- **Bias discovery around constraints early** — Push must-include, exclude, captain/bridge/below-decks seat rules, and officer-group constraints as early in the pipeline as possible so obviously irrelevant candidates never reach simulation.
+- **Default broad searches to tiered optimization** — *(Shipped: workspace defaults to tiered; when `strategy` is omitted the server picks tiered vs exhaustive from **effective** candidate count — same pipeline as optimize: generation + `warm_start_crews` prepend + constraint filter — threshold `TIERED_AUTO_THRESHOLD` in `src/server/api/execution.rs`; optional `tiered_scout_sims` / `tiered_top_k`.)* Continue tuning thresholds and UX so large searches reliably stay on the cheap scout path first.
+- **Lean harder on analytical prefiltering** — *(Shipped: closed-form expected hull-damage ranking before Monte Carlo; explicit `analytical_prefilter_keep` or automatic cap via `analytical_prefilter_keep_auto` in `src/optimizer/mod.rs`, which also considers `max_candidates` and `tiered_top_k` when the client omits a keep value.)* Further tuning by workload profile as needed.
+- **Warm-start from heuristics and prior winners** — *(Shipped: `warm_start_crews` on optimize + SPA localStorage; **warm-start cache key v2** (`SCHEMA` 2 in `frontend/src/lib/optimizeWarmStart.ts`) fingerprints defender default, sorted support buff ids, chain grind, prioritize-below-decks, and resolved below-decks slot count.)* Next — cross-session libraries and tighter coupling to heuristics seeds.
+- **Bias discovery around constraints early** — *(Shipped on registry path: `narrow_officer_pools_for_constraints` in `src/optimizer/crew_generator.rs` tightens pools from exclude / captain_must_be / seat must-includes before enumeration; group constraints still filtered post-generation.)* Further push rules earlier where sound without combinatorial blow-up.
 - **Stay anchored to the real roster** — Keep discovery flows tightly filtered to owned officers, legal seat eligibility, and unlocked below-decks slots so compute is not spent on impossible crews.
 
 ### Next optimizer upgrades

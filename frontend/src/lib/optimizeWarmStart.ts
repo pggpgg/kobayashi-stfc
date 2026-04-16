@@ -5,7 +5,7 @@
 
 import type { CrewRecommendation, WarmStartCrewBody } from "./api";
 
-const SCHEMA = 1;
+const SCHEMA = 2;
 const PREFIX = "kobayashi_opt_warm_v";
 
 export type WarmStartCrewPayload = WarmStartCrewBody;
@@ -23,11 +23,36 @@ export function buildOptimizeWarmStartKey(args: {
   shipLevel: number;
   maxCandidates: number | null;
   constraintsFingerprint: string;
+  /** Matches API `defender_opponent` when the UI exposes it; default hostile NPC. */
+  defenderOpponent?: string;
+  /** Support buff ids applied to the optimize scenario (sorted for stability). */
+  supportBuffIds?: readonly string[];
+  chainGrindEnabled?: boolean;
+  chainKillsTarget?: number;
+  chainSecondary?: string;
+  prioritizeBelowDecksAbility?: boolean;
+  /** Resolved below-decks slot count used for candidate generation. */
+  belowDecksSlots?: number;
 }): string {
   const mc =
     args.maxCandidates === null || args.maxCandidates <= 0
       ? "all"
       : String(args.maxCandidates);
+  const defender = (args.defenderOpponent ?? "Hostile").trim() || "Hostile";
+  const buffs = [...(args.supportBuffIds ?? [])]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .sort()
+    .join(",");
+  const chain =
+    args.chainGrindEnabled === true
+      ? `1:${args.chainKillsTarget ?? ""}:${(args.chainSecondary ?? "").trim()}`
+      : "0";
+  const pbd = args.prioritizeBelowDecksAbility === true ? "1" : "0";
+  const bdSlots =
+    args.belowDecksSlots != null && args.belowDecksSlots >= 0
+      ? String(args.belowDecksSlots)
+      : "";
   return stableKey([
     String(SCHEMA),
     args.profileId ?? "",
@@ -37,6 +62,11 @@ export function buildOptimizeWarmStartKey(args: {
     String(args.shipLevel),
     mc,
     args.constraintsFingerprint,
+    defender,
+    buffs,
+    chain,
+    pbd,
+    bdSlots,
   ]);
 }
 

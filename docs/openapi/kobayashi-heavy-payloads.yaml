@@ -305,6 +305,35 @@ components:
           items:
             type: string
 
+    WarmStartCrewDto:
+      type: object
+      required: [captain, bridge, below_decks]
+      properties:
+        captain:
+          type: string
+        bridge:
+          type: array
+          items:
+            type: string
+        below_decks:
+          type: array
+          items:
+            type: string
+
+    ChainGrindRequestDto:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        kills_target:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 50
+        secondary:
+          type: string
+          description: min_hull_damage (default) or max_loot_per_hull_proxy
+
     OptimizeRequest:
       type: object
       required: [ship, hostile]
@@ -332,7 +361,9 @@ components:
           format: int32
         strategy:
           type: string
-          description: exhaustive (default), genetic, or tiered
+          description: >-
+            Omit to let the server auto-pick tiered vs exhaustive from candidate count;
+            or set exhaustive, genetic, or tiered explicitly.
         prioritize_below_decks_ability:
           type: boolean
         heuristics_seeds:
@@ -349,6 +380,23 @@ components:
           format: int32
           minimum: 1
           description: Truncate candidates after analytical ranking (non-genetic paths)
+        tiered_scout_sims:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100000
+          description: Tiered only — scout-phase sims per crew (server default 500)
+        tiered_top_k:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 500
+          description: Tiered only — how many scout leaders get full confirmation sims (default 20)
+        warm_start_crews:
+          type: array
+          items:
+            $ref: "#/components/schemas/WarmStartCrewDto"
+          description: Prepended before generated candidates (deduped server-side)
         below_decks_slots:
           type: integer
           format: int32
@@ -356,6 +404,12 @@ components:
           maximum: 5
         constraints:
           $ref: "#/components/schemas/OptimizeConstraintsDto"
+        support_buffs:
+          type: array
+          items:
+            type: string
+        chain:
+          $ref: "#/components/schemas/ChainGrindRequestDto"
 
     ReplaySeedCrew:
       type: object
