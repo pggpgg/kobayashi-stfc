@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines a strategy to import ship and hostile data from **data.stfc.space** (the stfc.space backend API) into KOBAYASHI, replacing the outdated STFCcommunity baseline (3+ years old). We will build a **phased approach** that maintains backwards compatibility while progressively integrating fresher data.
+This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into **`data/ships_extended/`** and **`data/hostiles/`**, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs, optional CI), with the legacy **STFCcommunity** path kept optional for older baselines.
 
 ---
 
@@ -48,8 +48,8 @@ This document outlines a strategy to import ship and hostile data from **data.st
 
 **Hostile Index** — Lookup catalog in `data/hostiles/index.json`:
 
-- `data_version`: Semver or date string (e.g., `"stfcspace-2026-03-01"`)
-- `source_note`: Attribution (e.g., `"stfc.space API (data.stfc.space/hostile/summary.json)"`)
+- `data_version`: Opaque string (e.g. default hostile stamp `stfcspace-hostiles-YYYY-MM-DD`, or override via `STFCSPACE_HOSTILES_VERSION` — see Part 5)
+- `source_note`: Attribution (default hostile text points at cached upstream `hostiles/` — see Part 5)
 - `hostiles[]`: Array of `HostileIndexEntry` — required: `id`, `hostile_name`, `level`, `ship_class`; optional: `rarity`, `upstream_ship_type`, `loca_id`
 
 **Example hostile record** (abbreviated from `data/hostiles/111884576.json`; `components` / `ability` truncated):
@@ -208,7 +208,7 @@ These segments are fetched by `fetch_stfcspace_page_upstream.mjs` and written to
 
 **Batch driver:** `fetch_stfcspace_details.mjs --entities ships,hostiles,officers,research,forbidden_tech` runs the same detail logic as the per-entity scripts.
 
-**Buildings:** Kobayashi’s building importer (`import_stfcspace_buildings.mjs`) is driven by `**/building/summary.json`** (plus `translations-starbase_modules.json` for names). There is **no** separate `fetch_stfcspace_buildings.mjs` detail pass in tree; extend here if per-building detail URLs become necessary.
+**Buildings:** Kobayashi’s building importer (`import_stfcspace_buildings.mjs`) is driven by **`/building/summary.json`** (plus `translations-starbase_modules.json` for names). There is **no** separate `fetch_stfcspace_buildings.mjs` detail pass in tree; extend here if per-building detail URLs become necessary.
 
 ### Translation bundles (`/translations/en/{category}.json`)
 
@@ -252,19 +252,27 @@ Recompute anytime with: `node -e "console.log(require('./data/upstream/data-stfc
 Run from repo root unless a script says otherwise.
 
 1. **Pull catalogs + translations** (cheap, single sweep):
-  ```bash
+
+   ```bash
    node scripts/fetch_stfcspace_page_upstream.mjs
-  ```
+   ```
+
    Writes `data/upstream/data-stfc-space/summary-*.json`, `translations-*.json`, and (by default) one sample `ships/{id}.json`.
+
 2. **Pull detail JSON** for entities you care about (rate-limited; large):
-  ```bash
+
+   ```bash
    node scripts/fetch_stfcspace_details.mjs --entities ships,hostiles --missing-only
-  ```
+   ```
+
    Or the individual scripts in `scripts/fetch_stfcspace_*.mjs` (ships, hostiles, officers, research, forbidden_tech). Logs land in `data/import_logs/fetch-stfcspace-*-YYYY-MM-DD.json`.
+
 3. **Normalize into Kobayashi datasets** — either stepwise (`python3 scripts/build_ship_registry.py`, `cargo run --bin normalize_data_stfc_space`, `cargo run --bin normalize_hostiles_stfc_space`, `node scripts/import_stfcspace_buildings.mjs --from-upstream`, research import, etc.) or the orchestrated path:
-  ```bash
+
+   ```bash
    npm run data:refresh -- --stfcspace
-  ```
+   ```
+
    `data-refresh.mjs` **requires** `summary-ship.json` and `translations-ships.json` before it runs the ship pipeline; hostiles and research steps **skip** unless the corresponding cache directories / summaries exist (see comments in `scripts/data-refresh.mjs`).
 
 ### 3.2 Verification (prove the pipeline, not the browser)
@@ -331,7 +339,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 | `ability` (API key)                                                                                      | `ability`            | Same array preserved (combat interpretation still evolving)                                                                                       |
 
 
-`**stats` object** (all optional; default `0.0` when missing)
+**`stats` object** (all optional; default `0.0` when missing)
 
 
 | Upstream `stats.*`                               | KOBAYASHI field                                                      |
@@ -350,7 +358,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 
 **Not sourced from stfc.space today:** `apex_barrier`, `isolytic_defense`, mitigation floor/ceiling / mystery factor — left at defaults / `None` unless hand-edited in normalized JSON.
 
-`**components` weapons:** full JSON kept on disk; counter-attack weapon parsing for combat is in `HostileRecord::weapon_stats_from_component_data` (`src/data/hostile.rs`) — aggregate pierce lives on `AttackerStats`, not on each `WeaponStats.pierce`.
+**`components` weapons:** full JSON kept on disk; counter-attack weapon parsing for combat is in `HostileRecord::weapon_stats_from_component_data` (`src/data/hostile.rs`) — aggregate pierce lives on `AttackerStats`, not on each `WeaponStats.pierce`.
 
 **Hull type frequency** (from checked-in `summary-hostile.json`, **4,968** rows — recompute after refresh):
 
@@ -364,7 +372,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 | 5           | survey       | 598   |
 
 
-`**ship_type` frequency** (same summary snapshot; encounter category, **not** hull class):
+**`ship_type` frequency** (same summary snapshot; encounter category, **not** hull class):
 
 
 | `ship_type` | Count | `ship_type` | Count |
@@ -398,11 +406,11 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 
 **Fallbacks inside `extract_tier_combat`:** if no weapons produced positive damage, `attack` → `100.0`; if `shield_health` ≤ 0 → `1000.0`; if `hull_health` ≤ 0 → `2 × shield_health`. Empty weapon list → `weapons: None`; else `Some(Vec<WeaponRecord>)` with `pierce: None` at tier level.
 
-`**levels[]`:** each `{ level, shield, health }` → `LevelBonus` (additive shield/hull at that ship level).
+**`levels[]`:** each `{ level, shield, health }` → `LevelBonus` (additive shield/hull at that ship level).
 
-`**crew_slots[]`:** `{ slots?, unlock_level }` → `CrewSlotUnlock` list.
+**`crew_slots[]`:** `{ slots?, unlock_level }` → `CrewSlotUnlock` list.
 
-`**ability[]`:** only rows whose stringified `id` exists in `data/upstream/data-stfc-space/ship_ability_catalog.json` `entries` become `ShipAbility` (timing, effect type, percentage handling, conditions, optional `values_scale_with_ship_level` curves). Uncatalogued ids are skipped silently.
+**`ability[]`:** only rows whose stringified `id` exists in `data/upstream/data-stfc-space/ship_ability_catalog.json` `entries` become `ShipAbility` (timing, effect type, percentage handling, conditions, optional `values_scale_with_ship_level` curves). Uncatalogued ids are skipped silently.
 
 **Resolved `ShipRecord`:** built at runtime via `ExtendedShipRecord::to_ship_record(tier, level)` (`src/data/ship.rs`). API and optimizer accept **tier** and **level**; when omitted, loaders default to tier **1** and level **1** — not hard-coded to tier 1 only.
 
@@ -424,10 +432,10 @@ This section reflects **what the repo actually writes today**, not a future impo
 | -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `data/hostiles/index.json`       | `data_version`, `source_note`                                | Human-readable hostile dataset stamp                                                                                 |
 | `data/ships_extended/index.json` | `data_version`, `source_note`                                | Human-readable ship extended dataset stamp                                                                           |
-| `data/registry.json`             | Per-dataset `source`, `data_version`, `last_updated`, `path` | Loader-facing registry (`hostiles` → `hostiles/index.json`; `**ships`** entry points at `ships_extended/index.json`) |
+| `data/registry.json`             | Per-dataset `source`, `data_version`, `last_updated`, `path` | Loader-facing registry (`hostiles` → `hostiles/index.json`; `ships` key → path `ships_extended/index.json`) |
 
 
-There is **no** `data/ships/index.json` — flat ships were removed; ships live under `**data/ships_extended/`**.
+There is **no** `data/ships/index.json` — flat ships were removed; ships live under **`data/ships_extended/`**.
 
 ### `data_version` and `source_note` (implemented)
 
@@ -463,7 +471,7 @@ The following do **not** appear in index JSON or normalizers today:
 
 ## Part 6: Commands and automation (actual surface)
 
-There is **no** unified `kobayashi fetch-data` (or similar) subcommand. Upstream HTTP is handled by **Node** scripts using `fetch()`; normalization and combat data loading are **Rust** binaries. The `kobayashi` CLI (`src/cli.rs`) exposes `serve`, `simulate`, `optimize`, `import` (roster / Spock’s JSON only), `validate`, `resolve`, `mitigation-sensitivity`, etc.—**not** stfc.space bulk download.
+There is **no** unified `kobayashi fetch-data` (or similar) subcommand. Upstream HTTP is handled by **Node** scripts using `fetch()`; normalization and combat data loading are **Rust** binaries. The library CLI used in tests (`src/cli.rs`) exposes `serve`, `simulate`, `optimize`, `import` (roster / Spock’s JSON only), `validate`, `resolve`, `mitigation-sensitivity`—**not** stfc.space bulk download. The **release** binary (`src/main.rs`) adds `generate-lcars` and the same stfc.space–unrelated verbs; neither entry point implements upstream fetch.
 
 ### npm scripts (`package.json`)
 
