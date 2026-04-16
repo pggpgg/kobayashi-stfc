@@ -27,8 +27,12 @@ const baseProps = {
   onHeuristicsOnlyChange: vi.fn(),
   belowDecksStrategy: "ordered" as const,
   onBelowDecksStrategyChange: vi.fn(),
-  optimizerStrategy: "exhaustive" as const,
+  optimizerStrategy: "tiered" as const,
   onOptimizerStrategyChange: vi.fn(),
+  tieredScoutSims: null as number | null,
+  onTieredScoutSimsChange: vi.fn(),
+  tieredTopK: null as number | null,
+  onTieredTopKChange: vi.fn(),
   optimizeMustInclude: "",
   onOptimizeMustIncludeChange: vi.fn(),
   optimizeExclude: "",
@@ -148,5 +152,49 @@ describe("OptimizePanel", () => {
       />,
     );
     expect(screen.getByText(/Live: units 50 \/ 200/)).toBeTruthy();
+  });
+
+  it("shows tiered scout/top-K fields when strategy is tiered", () => {
+    render(<OptimizePanel {...baseProps} optimizerStrategy="tiered" />);
+    expect(screen.getByPlaceholderText("500 (default)")).toBeTruthy();
+    expect(screen.getByPlaceholderText("20 (default)")).toBeTruthy();
+  });
+
+  it("hides tiered scout/top-K fields when strategy is not tiered", () => {
+    render(<OptimizePanel {...baseProps} optimizerStrategy="exhaustive" />);
+    expect(screen.queryByPlaceholderText("500 (default)")).toBeNull();
+    expect(screen.queryByPlaceholderText("20 (default)")).toBeNull();
+  });
+
+  it("calls onTieredScoutSimsChange and clamps to 100,000", () => {
+    const fn = vi.fn();
+    render(
+      <OptimizePanel
+        {...baseProps}
+        onTieredScoutSimsChange={fn}
+        optimizerStrategy="tiered"
+      />,
+    );
+    const input = screen.getByPlaceholderText("500 (default)");
+    fireEvent.change(input, { target: { value: "2000" } });
+    expect(fn).toHaveBeenCalledWith(2000);
+    fireEvent.change(input, { target: { value: "999999" } });
+    expect(fn).toHaveBeenCalledWith(100_000);
+  });
+
+  it("clears tiered scout sims when input emptied", () => {
+    const fn = vi.fn();
+    render(
+      <OptimizePanel
+        {...baseProps}
+        tieredScoutSims={100}
+        onTieredScoutSimsChange={fn}
+        optimizerStrategy="tiered"
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("500 (default)"), {
+      target: { value: "" },
+    });
+    expect(fn).toHaveBeenCalledWith(null);
   });
 });

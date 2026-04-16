@@ -1,6 +1,10 @@
 import type { CSSProperties } from "react";
 import { formatOptimizePhaseLabel } from "../lib/api";
 
+/** Match server `MAX_TIERED_SCOUT_SIMS` / `MAX_TIERED_TOP_K` (see `src/server/api/requests.rs`). */
+const MAX_TIERED_SCOUT_SIMS_UI = 100_000;
+const MAX_TIERED_TOP_K_UI = 500;
+
 interface OptimizePanelProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -26,6 +30,12 @@ interface OptimizePanelProps {
   onOptimizerStrategyChange: (
     value: import("../lib/api").OptimizerStrategyType,
   ) => void;
+  /** Tiered only: scout sims per crew; null = server default (500). */
+  tieredScoutSims: number | null;
+  onTieredScoutSimsChange: (value: number | null) => void;
+  /** Tiered only: top K for confirmation; null = server default (20). */
+  tieredTopK: number | null;
+  onTieredTopKChange: (value: number | null) => void;
   optimizeMustInclude: string;
   onOptimizeMustIncludeChange: (value: string) => void;
   optimizeExclude: string;
@@ -89,6 +99,10 @@ export default function OptimizePanel({
   onBelowDecksStrategyChange,
   optimizerStrategy,
   onOptimizerStrategyChange,
+  tieredScoutSims,
+  onTieredScoutSimsChange,
+  tieredTopK,
+  onTieredTopKChange,
   optimizeMustInclude,
   onOptimizeMustIncludeChange,
   optimizeExclude,
@@ -275,6 +289,87 @@ export default function OptimizePanel({
           <option value="tiered">Tiered (scout → confirm)</option>
         </select>
       </label>
+
+      {optimizerStrategy === "tiered" && (
+        <>
+          <label style={{ fontSize: "0.85rem" }}>
+            Tiered scout sims / crew (optional)
+            <input
+              type="number"
+              min={1}
+              max={MAX_TIERED_SCOUT_SIMS_UI}
+              step={1}
+              placeholder="500 (default)"
+              value={tieredScoutSims ?? ""}
+              onChange={(e) => {
+                const raw = e.target.value.trim();
+                if (raw === "") {
+                  onTieredScoutSimsChange(null);
+                  return;
+                }
+                const n = parseInt(raw, 10);
+                if (!Number.isNaN(n) && n >= 1) {
+                  onTieredScoutSimsChange(
+                    Math.min(n, MAX_TIERED_SCOUT_SIMS_UI),
+                  );
+                }
+              }}
+              style={{
+                display: "block",
+                marginTop: 4,
+                width: "100%",
+                padding: "0.4rem",
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                borderRadius: 4,
+                color: "var(--text)",
+              }}
+            />
+          </label>
+          <label style={{ fontSize: "0.85rem" }}>
+            Tiered top K (optional)
+            <input
+              type="number"
+              min={1}
+              max={MAX_TIERED_TOP_K_UI}
+              step={1}
+              placeholder="20 (default)"
+              value={tieredTopK ?? ""}
+              onChange={(e) => {
+                const raw = e.target.value.trim();
+                if (raw === "") {
+                  onTieredTopKChange(null);
+                  return;
+                }
+                const n = parseInt(raw, 10);
+                if (!Number.isNaN(n) && n >= 1) {
+                  onTieredTopKChange(Math.min(n, MAX_TIERED_TOP_K_UI));
+                }
+              }}
+              style={{
+                display: "block",
+                marginTop: 4,
+                width: "100%",
+                padding: "0.4rem",
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                borderRadius: 4,
+                color: "var(--text)",
+              }}
+            />
+          </label>
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: "0.72rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            Leave blank for server defaults (500 scout sims, top 20). Max{" "}
+            {MAX_TIERED_SCOUT_SIMS_UI.toLocaleString()} / {MAX_TIERED_TOP_K_UI}.
+          </p>
+        </>
+      )}
 
       <div>
         <label style={checkboxLabelStyle}>

@@ -2,6 +2,7 @@ import type {
   ChainGrindRequestBody,
   OptimizeCrewConstraintsBody,
   OptimizerStrategyType,
+  WarmStartCrewBody,
 } from "./api";
 import type { SupportBuffId } from "./supportBuffs";
 import type { CrewState } from "./types";
@@ -147,6 +148,12 @@ export function buildWorkspaceOptimizeStartBody(args: {
   };
   /** Chain grind: sequential fights, hull carry-over, full shields each link. */
   chainGrind?: ChainGrindRequestBody;
+  /** Deduped crews prepended before generated candidates (localStorage warm-start). */
+  warmStartCrews?: WarmStartCrewBody[];
+  /** Tiered only: scout sims per crew (omit for server default 500). */
+  tieredScoutSims?: number | null;
+  /** Tiered only: crews promoted to full confirmation (omit for server default 20). */
+  tieredTopK?: number | null;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -187,6 +194,19 @@ export function buildWorkspaceOptimizeStartBody(args: {
               : {}),
           } satisfies ChainGrindRequestBody,
         }
+      : {}),
+    ...(args.warmStartCrews && args.warmStartCrews.length > 0
+      ? { warm_start_crews: args.warmStartCrews }
+      : {}),
+    ...(args.optimizerStrategy === "tiered" &&
+    args.tieredScoutSims != null &&
+    args.tieredScoutSims > 0
+      ? { tiered_scout_sims: args.tieredScoutSims }
+      : {}),
+    ...(args.optimizerStrategy === "tiered" &&
+    args.tieredTopK != null &&
+    args.tieredTopK > 0
+      ? { tiered_top_k: args.tieredTopK }
       : {}),
   };
 }

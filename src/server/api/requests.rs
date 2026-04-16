@@ -18,6 +18,9 @@ pub const MAX_SIMS: u32 = 100_000;
 pub const MAX_CANDIDATES: u32 = 2_000_000;
 /// Upper bound for `analytical_prefilter_keep` when set (must be ≥ 1 to truncate).
 pub const MAX_ANALYTICAL_PREFILTER_KEEP: u32 = 500_000;
+pub const MAX_TIERED_SCOUT_SIMS: u32 = 100_000;
+pub const MAX_TIERED_TOP_K: u32 = 500;
+pub const MAX_WARM_START_CREWS: usize = 24;
 
 pub const MAX_OPTIMIZE_CONSTRAINT_LIST_LEN: usize = 32;
 pub const MAX_OPTIMIZE_CONSTRAINT_GROUPS: usize = 8;
@@ -93,6 +96,13 @@ pub struct ReplaySeedRequest {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct WarmStartCrewDto {
+    pub captain: String,
+    pub bridge: Vec<String>,
+    pub below_decks: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct OptimizeRequest {
     pub ship: String,
     pub hostile: String,
@@ -108,8 +118,15 @@ pub struct OptimizeRequest {
     pub heuristics_seeds: Option<Vec<String>>,
     pub heuristics_only: Option<bool>,
     pub below_decks_strategy: Option<String>,
-    /// Keep only this many crews after approximate analytical ranking (closed-form expected hull damage) before Monte Carlo. Omitted = evaluate all generated candidates. Ignored for genetic strategy.
+    /// Keep only this many crews after approximate analytical ranking (closed-form expected hull damage) before Monte Carlo. Omitted = evaluate all generated candidates unless auto-cap applies. Ignored for genetic strategy.
     pub analytical_prefilter_keep: Option<u32>,
+    /// Tiered strategy: scouting-phase sims per crew (1..=MAX_TIERED_SCOUT_SIMS).
+    pub tiered_scout_sims: Option<u32>,
+    /// Tiered strategy: how many top scout crews receive full confirmation sims (1..=MAX_TIERED_TOP_K).
+    pub tiered_top_k: Option<u32>,
+    /// Optional crews prepended before generated candidates (deduped); e.g. UI warm-start persistence.
+    #[serde(default)]
+    pub warm_start_crews: Option<Vec<WarmStartCrewDto>>,
     /// Below-decks slot count (0–7). Omitted = resolved from ship level + `crew_slots` when present, else tier heuristic.
     pub below_decks_slots: Option<u32>,
     /// Optional crew search constraints (must-include, exclude, groups, seating).
@@ -219,6 +236,62 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
                 field: "analytical_prefilter_keep",
                 messages: vec![format!("must be at most {MAX_ANALYTICAL_PREFILTER_KEEP}")],
             });
+        }
+    }
+
+    if let Some(s) = request.tiered_scout_sims {
+        if !(1..=MAX_TIERED_SCOUT_SIMS).contains(&s) {
+            errors.push(ValidationIssue {
+                field: "tiered_scout_sims",
+                messages: vec![format!(
+                    "if set, must be between 1 and {MAX_TIERED_SCOUT_SIMS}"
+                )],
+            });
+        }
+    }
+    if let Some(k) = request.tiered_top_k {
+        if !(1..=MAX_TIERED_TOP_K).contains(&k) {
+            errors.push(ValidationIssue {
+                field: "tiered_top_k",
+                messages: vec![format!("if set, must be between 1 and {MAX_TIERED_TOP_K}")],
+            });
+        }
+    }
+
+    if let Some(ref crews) = request.warm_start_crews {
+        if crews.len() > MAX_WARM_START_CREWS {
+            errors.push(ValidationIssue {
+                field: "warm_start_crews",
+                messages: vec![format!("at most {MAX_WARM_START_CREWS} crews")],
+            });
+        } else {
+            for (idx, c) in crews.iter().enumerate() {
+                if c.captain.trim().is_empty() {
+                    errors.push(ValidationIssue {
+                        field: "warm_start_crews",
+                        messages: vec![format!("entry {idx}: captain must not be empty")],
+                    });
+                    break;
+                }
+                if c.bridge.len() != 2 {
+                    errors.push(ValidationIssue {
+                        field: "warm_start_crews",
+                        messages: vec![format!(
+                            "entry {idx}: bridge must contain exactly 2 officer names"
+                        )],
+                    });
+                    break;
+                }
+                if c.below_decks.len() > MAX_BELOW_DECKS_SLOTS {
+                    errors.push(ValidationIssue {
+                        field: "warm_start_crews",
+                        messages: vec![format!(
+                            "entry {idx}: at most {MAX_BELOW_DECKS_SLOTS} below_decks officers"
+                        )],
+                    });
+                    break;
+                }
+            }
         }
     }
 

@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  buildOptimizeWarmStartKey,
+  loadWarmStartCrews,
+  saveWarmStartFromRecommendations,
+} from "./optimizeWarmStart";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
 import {
@@ -107,7 +112,11 @@ export function useWorkspace() {
 
   // Optimizer strategy
   const [optimizerStrategy, setOptimizerStrategy] =
-    useState<import("./api").OptimizerStrategyType>("exhaustive");
+    useState<import("./api").OptimizerStrategyType>("tiered");
+  /** Tiered: scout sims per crew; null = omit (server default 500). */
+  const [tieredScoutSims, setTieredScoutSims] = useState<number | null>(null);
+  /** Tiered: top K for confirmation; null = omit (server default 20). */
+  const [tieredTopK, setTieredTopK] = useState<number | null>(null);
 
   // Alliance / ship support buffs (UI + request payload; combat application TBD)
   const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
@@ -136,6 +145,24 @@ export function useWorkspace() {
   const [optimizeBridgeMust, setOptimizeBridgeMust] = useState("");
   const [optimizeBelowMust, setOptimizeBelowMust] = useState("");
   const [optimizeGroupsJson, setOptimizeGroupsJson] = useState("");
+
+  const optimizeWarmStartCacheKey = () =>
+    buildOptimizeWarmStartKey({
+      profileId: activeProfileId,
+      shipId,
+      scenarioId,
+      shipTier,
+      shipLevel,
+      maxCandidates,
+      constraintsFingerprint: [
+        optimizeMustInclude,
+        optimizeExclude,
+        optimizeCaptainMust,
+        optimizeBridgeMust,
+        optimizeBelowMust,
+        optimizeGroupsJson,
+      ].join("\u001f"),
+    });
 
   // Preset saving state
   const [showSavePreset, setShowSavePreset] = useState(false);
@@ -311,6 +338,10 @@ export function useWorkspace() {
     sseAttemptRef.current = 0;
     if (status.status === "done" && status.result) {
       setRecommendations(status.result.recommendations ?? []);
+      saveWarmStartFromRecommendations(
+        optimizeWarmStartCacheKey(),
+        status.result.recommendations ?? [],
+      );
       setSimResult(null);
       if (status.result.duration_ms != null)
         setLastOptimizeDurationMs(status.result.duration_ms);
@@ -559,6 +590,10 @@ export function useWorkspace() {
                     : undefined,
               }
             : undefined,
+          warmStartCrews:
+            loadWarmStartCrews(optimizeWarmStartCacheKey()) ?? undefined,
+          tieredScoutSims,
+          tieredTopK,
         }),
         activeProfileId,
       );
@@ -701,6 +736,10 @@ export function useWorkspace() {
     setChainSecondary,
     optimizerStrategy,
     setOptimizerStrategy,
+    tieredScoutSims,
+    setTieredScoutSims,
+    tieredTopK,
+    setTieredTopK,
     optimizeMustInclude,
     setOptimizeMustInclude,
     optimizeExclude,

@@ -190,6 +190,10 @@ export default function Workspace() {
           onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
           optimizerStrategy={ws.optimizerStrategy}
           onOptimizerStrategyChange={ws.setOptimizerStrategy}
+          tieredScoutSims={ws.tieredScoutSims}
+          onTieredScoutSimsChange={ws.setTieredScoutSims}
+          tieredTopK={ws.tieredTopK}
+          onTieredTopKChange={ws.setTieredTopK}
           optimizeMustInclude={ws.optimizeMustInclude}
           onOptimizeMustIncludeChange={ws.setOptimizeMustInclude}
           optimizeExclude={ws.optimizeExclude}

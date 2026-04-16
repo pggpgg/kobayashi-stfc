@@ -13,7 +13,9 @@ use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
-use crate::optimizer::crew_generator::{resolve_below_decks_slots_for_ship, CrewCandidate};
+use crate::optimizer::crew_generator::{
+    resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate, CrewGenerator,
+};
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
@@ -28,6 +30,57 @@ use super::requests::{
     build_crew_search_constraints, chain_grind_params_from_request, parse_below_decks_strategy,
     parse_strategy, ChainGrindRequest, OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
 };
+
+/// When `strategy` is omitted, use tiered scout→confirm if the capped candidate count is at least this.
+const TIERED_AUTO_THRESHOLD: usize = 500;
+
+fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
+    match s {
+        OptimizerStrategy::Exhaustive => "exhaustive",
+        OptimizerStrategy::Genetic => "genetic",
+        OptimizerStrategy::Tiered => "tiered",
+    }
+}
+
+/// Resolve effective optimizer strategy; `strategy_auto` is true only when the client omitted `strategy`
+/// and we picked tiered vs exhaustive from candidate volume (not used for genetic or heuristics-only).
+fn resolve_effective_optimize_strategy(
+    registry: &DataRegistry,
+    request: &OptimizeRequest,
+    below_decks_slots: usize,
+    heuristics_only: bool,
+    seed: u64,
+    profile_id: Option<&str>,
+) -> (OptimizerStrategy, bool) {
+    if let Some(ref raw) = request.strategy {
+        return (parse_strategy(Some(raw)), false);
+    }
+    if heuristics_only {
+        return (OptimizerStrategy::Exhaustive, false);
+    }
+    let generator = CrewGenerator::with_strategy(CandidateStrategy {
+        max_candidates: request.max_candidates.map(|n| n as usize),
+        only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
+        below_decks_slots,
+        ..CandidateStrategy::default()
+    });
+    // Must match the length of crews the optimizer will actually run (capped by max_candidates).
+    let n = generator
+        .generate_candidates_from_registry(
+            registry,
+            request.ship.trim(),
+            request.hostile.trim(),
+            seed,
+            profile_id,
+        )
+        .len();
+    let strategy = if n >= TIERED_AUTO_THRESHOLD {
+        OptimizerStrategy::Tiered
+    } else {
+        OptimizerStrategy::Exhaustive
+    };
+    (strategy, true)
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CrewRecommendation {
@@ -132,6 +185,13 @@ pub struct ScenarioSummary {
     pub analytical_prefilter_kept: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chain: Option<ChainGrindRequest>,
+    /// Strategy actually run (`exhaustive`, `tiered`, or `genetic`).
+    pub effective_strategy: String,
+    /// True when `strategy` was omitted and the server chose tiered vs exhaustive from candidate count.
+    pub strategy_auto: bool,
+    /// Echo of the client `strategy` field when present.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub requested_strategy: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -176,6 +236,8 @@ pub fn load_heuristics_candidates(
 #[derive(Clone)]
 struct OptimizeGatherMeta {
     strategy: OptimizerStrategy,
+    /// True when `strategy` was omitted and the server auto-selected tiered vs exhaustive.
+    strategy_auto: bool,
     is_seeded_genetic: bool,
     heuristics_only: bool,
     heuristics_seeds_nonempty: bool,
@@ -331,7 +393,6 @@ fn gather_optimize_simulation_results(
         .chain
         .as_ref()
         .and_then(|c| chain_grind_params_from_request(c).ok().flatten());
-    let strategy = parse_strategy(request.strategy.as_ref());
     let heuristics_only = request.heuristics_only.unwrap_or(false);
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
@@ -343,6 +404,14 @@ fn gather_optimize_simulation_results(
         request.below_decks_slots,
     );
     let crew_constraints = build_crew_search_constraints(request);
+    let (strategy, strategy_auto) = resolve_effective_optimize_strategy(
+        registry,
+        request,
+        below_decks_slots,
+        heuristics_only,
+        seed,
+        profile_id,
+    );
 
     let mut h_candidates = if heuristics_seeds_nonempty {
         load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
@@ -399,6 +468,19 @@ fn gather_optimize_simulation_results(
     };
 
     let analytical_prefilter = if !heuristics_only {
+        let warm_start: Vec<CrewCandidate> = request
+            .warm_start_crews
+            .as_ref()
+            .map(|v| {
+                v.iter()
+                    .map(|dto| CrewCandidate {
+                        captain: dto.captain.trim().to_string(),
+                        bridge: dto.bridge.clone(),
+                        below_decks: dto.below_decks.clone(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: &request.hostile,
@@ -415,14 +497,15 @@ fn gather_optimize_simulation_results(
                 Vec::new()
             },
             profile_id,
-            tiered_scout_sims: None,
-            tiered_top_k: None,
+            tiered_scout_sims: request.tiered_scout_sims.map(|n| n as usize),
+            tiered_top_k: request.tiered_top_k.map(|n| n as usize),
             analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
             below_decks_slots,
             constraints: crew_constraints.clone(),
             support_buffs: request.support_buffs.clone().unwrap_or_default(),
             chain_grind: chain_grind.clone(),
             defender_opponent: request.defender_opponent,
+            warm_start,
         };
         let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
             sink.on_optimize_tick(tick)
@@ -444,6 +527,7 @@ fn gather_optimize_simulation_results(
 
     let meta = OptimizeGatherMeta {
         strategy,
+        strategy_auto,
         is_seeded_genetic,
         heuristics_only,
         heuristics_seeds_nonempty,
@@ -512,6 +596,24 @@ fn build_optimize_response(
         approximate_notes
             .push("analytical_prefilter_keep was skipped for chain grind mode.".to_string());
     }
+    if meta.strategy_auto {
+        approximate_notes.push(format!(
+            "Optimizer strategy was chosen automatically (effective: {}); tiered is used when capped candidate count is at least {}.",
+            optimizer_strategy_to_api_label(meta.strategy),
+            TIERED_AUTO_THRESHOLD
+        ));
+    }
+    if request.analytical_prefilter_keep.is_none()
+        && meta.analytical_prefilter.is_some()
+        && !meta.heuristics_only
+        && !matches!(meta.strategy, OptimizerStrategy::Genetic)
+        && !request.chain.as_ref().is_some_and(|c| c.enabled)
+    {
+        approximate_notes.push(
+            "analytical_prefilter_keep was derived automatically from candidate count (closed-form hull-damage proxy, not win rate)."
+                .to_string(),
+        );
+    }
 
     let mut warnings = Vec::new();
     if meta.using_placeholder_combatants {
@@ -535,6 +637,9 @@ fn build_optimize_response(
             analytical_prefilter_from: meta.analytical_prefilter.map(|(g, _)| g as u32),
             analytical_prefilter_kept: meta.analytical_prefilter.map(|(_, k)| k as u32),
             chain: request.chain.clone(),
+            effective_strategy: optimizer_strategy_to_api_label(meta.strategy).to_string(),
+            strategy_auto: meta.strategy_auto,
+            requested_strategy: request.strategy.clone(),
         },
         recommendations: ranked_results
             .iter()

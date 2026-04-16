@@ -447,6 +447,13 @@ export interface ChainGrindRequestBody {
   secondary?: "min_hull_damage" | "max_loot_per_hull_proxy";
 }
 
+/** Matches server `WarmStartCrewDto`; sent as `warm_start_crews` on optimize. */
+export type WarmStartCrewBody = {
+  captain: string;
+  bridge: string[];
+  below_decks: string[];
+};
+
 export interface OptimizeResponse {
   status: string;
   engine?: string;
@@ -471,6 +478,9 @@ export interface OptimizeResponse {
     analytical_prefilter_kept?: number;
     /** Echo of optimize request chain settings when present. */
     chain?: ChainGrindRequestBody;
+    effective_strategy: string;
+    strategy_auto: boolean;
+    requested_strategy?: string | null;
   };
   recommendations: CrewRecommendation[];
   duration_ms?: number;
@@ -639,6 +649,9 @@ export async function optimizeStart(
     constraints?: OptimizeCrewConstraintsBody;
     support_buffs?: string[];
     chain?: ChainGrindRequestBody;
+    warm_start_crews?: WarmStartCrewBody[];
+    tiered_scout_sims?: number;
+    tiered_top_k?: number;
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -692,6 +705,15 @@ export async function optimizeStart(
         ? { secondary: params.chain.secondary }
         : {}),
     };
+  }
+  if (params.warm_start_crews && params.warm_start_crews.length > 0) {
+    body.warm_start_crews = params.warm_start_crews;
+  }
+  if (params.tiered_scout_sims != null && params.tiered_scout_sims > 0) {
+    body.tiered_scout_sims = params.tiered_scout_sims;
+  }
+  if (params.tiered_top_k != null && params.tiered_top_k > 0) {
+    body.tiered_top_k = params.tiered_top_k;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: "POST",

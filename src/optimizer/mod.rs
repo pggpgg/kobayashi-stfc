@@ -9,19 +9,7 @@ pub mod tiered;
 
 pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
 
-fn analytical_prefilter_unless_chain(
-    shared: &SharedScenarioData,
-    candidates: Vec<CrewCandidate>,
-    seed: u64,
-    keep: Option<usize>,
-    chain_grind: &Option<ChainGrindParams>,
-) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
-    if chain_grind.is_some() {
-        (candidates, None)
-    } else {
-        sort_and_analytical_prefilter(shared, candidates, seed, keep)
-    }
-}
+use std::collections::HashSet;
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::analytical::expected_damage;
@@ -35,7 +23,8 @@ use crate::optimizer::monte_carlo::scenario::{
     scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry, SimulationResult,
+    crew_candidate_stable_hash, run_monte_carlo_parallel,
+    run_monte_carlo_parallel_with_registry, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
@@ -61,6 +50,20 @@ fn apply_crew_constraints(
     match &scenario.constraints {
         Some(c) => filter_candidates(candidates, c),
         None => candidates,
+    }
+}
+
+fn analytical_prefilter_unless_chain(
+    shared: &SharedScenarioData,
+    candidates: Vec<CrewCandidate>,
+    seed: u64,
+    keep: Option<usize>,
+    chain_grind: &Option<ChainGrindParams>,
+) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
+    if chain_grind.is_some() {
+        (candidates, None)
+    } else {
+        sort_and_analytical_prefilter(shared, candidates, seed, keep)
     }
 }
 
@@ -168,6 +171,8 @@ pub struct OptimizationScenario<'a> {
     pub chain_grind: Option<ChainGrindParams>,
     /// Defender is NPC hostile vs player ship for canonical opponent-category conditions.
     pub defender_opponent: DefenderOpponent,
+    /// Optional crews prepended before generated candidates (deduped by stable hash); e.g. warm-start from UI.
+    pub warm_start: Vec<CrewCandidate>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -192,7 +197,56 @@ impl Default for OptimizationScenario<'_> {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            warm_start: Vec::new(),
         }
+    }
+}
+
+fn prepend_warm_start_dedupe(warm: &[CrewCandidate], generated: Vec<CrewCandidate>) -> Vec<CrewCandidate> {
+    if warm.is_empty() {
+        return generated;
+    }
+    let mut seen: HashSet<u64> = HashSet::new();
+    let mut out = Vec::with_capacity(warm.len() + generated.len());
+    for c in warm {
+        if seen.insert(crew_candidate_stable_hash(c)) {
+            out.push(c.clone());
+        }
+    }
+    for c in generated {
+        if seen.insert(crew_candidate_stable_hash(&c)) {
+            out.push(c);
+        }
+    }
+    out
+}
+
+/// Request `analytical_prefilter_keep`, or an automatic cap when omitted (not for chain / genetic).
+fn resolved_analytical_prefilter_keep(
+    scenario: &OptimizationScenario<'_>,
+    n_after_merge: usize,
+) -> Option<usize> {
+    if scenario.chain_grind.is_some() {
+        return scenario.analytical_prefilter_keep;
+    }
+    if matches!(scenario.strategy, OptimizerStrategy::Genetic) {
+        return scenario.analytical_prefilter_keep;
+    }
+    if let Some(k) = scenario.analytical_prefilter_keep {
+        return Some(k);
+    }
+    const MIN_N: usize = 400;
+    if n_after_merge <= MIN_N {
+        return None;
+    }
+    let top_ref = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K).max(1);
+    let mut keep = 25usize.saturating_mul(top_ref);
+    keep = keep.clamp(256, 6000);
+    keep = keep.min(n_after_merge);
+    if keep >= n_after_merge {
+        None
+    } else {
+        Some(keep)
     }
 }
 
@@ -222,22 +276,24 @@ fn optimize_scenario_tiered_with_registry(
         scenario.seed,
         scenario.profile_id,
     );
+    let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
     let candidates = apply_crew_constraints(candidates, scenario);
     let shared_tiered = build_shared_scenario_data_from_registry(
         registry,
         scenario.ship,
         scenario.hostile,
-        None,
-        None,
+        scenario.ship_tier,
+        scenario.ship_level,
         scenario.profile_id,
         scenario_support_slice(scenario),
         scenario.defender_opponent,
     );
+    let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
         &shared_tiered,
         candidates,
         scenario.seed,
-        scenario.analytical_prefilter_keep,
+        keep,
         &scenario.chain_grind,
     );
     let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
@@ -246,6 +302,8 @@ fn optimize_scenario_tiered_with_registry(
         registry,
         scenario.ship,
         scenario.hostile,
+        scenario.ship_tier,
+        scenario.ship_level,
         candidates,
         scout_sims,
         scenario.simulation_count.max(1),
@@ -292,6 +350,8 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.seed,
         scenario.profile_id,
     );
+    let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
+    let candidates = apply_crew_constraints(candidates, scenario);
     let shared_ex = build_shared_scenario_data_from_registry(
         registry,
         scenario.ship,
@@ -302,11 +362,12 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario_support_slice(scenario),
         scenario.defender_opponent,
     );
+    let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
         &shared_ex,
         candidates,
         scenario.seed,
-        scenario.analytical_prefilter_keep,
+        keep,
         &scenario.chain_grind,
     );
     let (simulation_results, _) = run_monte_carlo_parallel_with_registry(
@@ -336,6 +397,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
             ..crate::optimizer::crew_generator::CandidateStrategy::default()
         });
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
+    let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
     let candidates = apply_crew_constraints(candidates, scenario);
     let shared = build_shared_scenario_data_standalone(
         scenario.ship,
@@ -343,11 +405,12 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario_support_slice(scenario),
         scenario.defender_opponent,
     );
+    let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
         &shared,
         candidates,
         scenario.seed,
-        scenario.analytical_prefilter_keep,
+        keep,
         &scenario.chain_grind,
     );
     let simulation_results = run_monte_carlo_parallel(
@@ -439,6 +502,7 @@ where
                 support_buffs: scenario.support_buffs.clone(),
                 chain_grind: scenario.chain_grind.clone(),
                 defender_opponent: scenario.defender_opponent,
+                warm_start: scenario.warm_start.clone(),
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -452,6 +516,7 @@ where
                 });
             let candidates =
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
+            let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
             let candidates = apply_crew_constraints(candidates, scenario);
             let shared = build_shared_scenario_data_standalone(
                 scenario.ship,
@@ -459,11 +524,12 @@ where
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
             );
+            let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, _) = analytical_prefilter_unless_chain(
                 &shared,
                 candidates,
                 scenario.seed,
-                scenario.analytical_prefilter_keep,
+                keep,
                 &scenario.chain_grind,
             );
             let total = candidates.len();
@@ -549,6 +615,7 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
             let candidates = apply_crew_constraints(candidates, scenario);
             let shared = build_shared_scenario_data_from_registry(
                 registry,
@@ -560,11 +627,12 @@ where
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
             );
+            let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
                 &shared,
                 candidates,
                 scenario.seed,
-                scenario.analytical_prefilter_keep,
+                keep,
                 &scenario.chain_grind,
             );
             let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
@@ -573,6 +641,8 @@ where
                 registry,
                 scenario.ship,
                 scenario.hostile,
+                scenario.ship_tier,
+                scenario.ship_level,
                 candidates,
                 scout_sims,
                 scenario.simulation_count.max(1),
@@ -604,6 +674,7 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
             let candidates = apply_crew_constraints(candidates, scenario);
             let shared_ex = build_shared_scenario_data_from_registry(
                 registry,
@@ -615,11 +686,12 @@ where
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
             );
+            let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
                 &shared_ex,
                 candidates,
                 scenario.seed,
-                scenario.analytical_prefilter_keep,
+                keep,
                 &scenario.chain_grind,
             );
             let total = candidates.len();
@@ -722,6 +794,7 @@ pub fn optimize_crew(
         support_buffs: Vec::new(),
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
+        warm_start: Vec::new(),
     })
 }
 
@@ -731,8 +804,11 @@ mod tests {
         optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizerStrategy,
     };
     use crate::data::data_registry::DataRegistry;
-    use crate::optimizer::crew_generator::DEFAULT_BELOW_DECKS_SLOTS;
-    use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
+    use crate::optimizer::crew_generator::{CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS};
+    use crate::optimizer::monte_carlo::scenario::{
+        build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
+        DefenderOpponent,
+    };
 
     #[test]
     fn genetic_strategy_returns_ranked_results_shape() {
@@ -756,6 +832,7 @@ mod tests {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            warm_start: Vec::new(),
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -791,6 +868,7 @@ mod tests {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            warm_start: Vec::new(),
         };
         let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true);
         assert!(
@@ -803,5 +881,53 @@ mod tests {
             .expect("truncation should be recorded");
         assert!(g > k, "generated {g} should exceed kept {k}");
         assert_eq!(k, 4);
+    }
+
+    /// Regression: tiered Monte Carlo must use the same resolved ship row as exhaustive when tier/level are set.
+    #[test]
+    fn tiered_shared_scenario_respects_ship_tier() {
+        let registry = DataRegistry::load().expect("data registry");
+        let hostile = "2918121098";
+        let candidate = CrewCandidate {
+            captain: "James T. Kirk".to_string(),
+            bridge: vec!["Spock".to_string(), "Leonard McCoy".to_string()],
+            below_decks: vec![
+                "Montgomery Scott".to_string(),
+                "Hikaru Sulu".to_string(),
+                "Nyota Uhura".to_string(),
+            ],
+        };
+        let shared_low = build_shared_scenario_data_from_registry(
+            &registry,
+            "amalgam",
+            hostile,
+            Some(1),
+            Some(1),
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
+        let shared_high = build_shared_scenario_data_from_registry(
+            &registry,
+            "amalgam",
+            hostile,
+            Some(5),
+            Some(1),
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
+        assert!(
+            !shared_low.using_placeholder_combatants && !shared_high.using_placeholder_combatants,
+            "expected real ship rows for amalgam"
+        );
+        let atk_low =
+            scenario_to_combat_input_from_shared(&shared_low, &candidate, 1).attacker.attack;
+        let atk_high =
+            scenario_to_combat_input_from_shared(&shared_high, &candidate, 1).attacker.attack;
+        assert!(
+            (atk_high - atk_low).abs() > 1.0,
+            "tier 1 vs 5 amalgam attacker attack should differ materially: {atk_low} vs {atk_high}"
+        );
     }
 }

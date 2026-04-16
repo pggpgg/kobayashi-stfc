@@ -189,6 +189,12 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     assert_eq!(payload["scenario"]["hostile"], "2918121098");
     assert_eq!(payload["scenario"]["sims"], 2000);
     assert_eq!(payload["scenario"]["seed"], 7);
+    assert_eq!(payload["scenario"]["effective_strategy"], "exhaustive");
+    assert_eq!(payload["scenario"]["strategy_auto"], true);
+    assert!(
+        payload["scenario"].get("requested_strategy").is_none()
+            || payload["scenario"]["requested_strategy"].is_null()
+    );
 
     let recommendations = payload["recommendations"]
         .as_array()

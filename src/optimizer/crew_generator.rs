@@ -399,6 +399,64 @@ impl CrewGenerator {
         self.count_candidates_from_pools(&mut pools, ship, hostile, seed)
     }
 
+    /// How many candidates [`Self::generate_candidates_from_registry`] would produce for this
+    /// strategy (including `max_candidates` early-stop). Used for optimize auto-routing.
+    pub fn effective_run_candidate_count_from_registry(
+        &self,
+        registry: &DataRegistry,
+        ship: &str,
+        hostile: &str,
+        seed: u64,
+        profile_id: Option<&str>,
+    ) -> usize {
+        let mut pools = match build_officer_pools_from_registry(
+            registry,
+            self.strategy.only_below_decks_with_ability,
+            profile_id,
+            self.strategy.below_decks_slots,
+        ) {
+            Some(p) => p,
+            None => return 0,
+        };
+        self.effective_run_candidate_count_from_pools(&mut pools, ship, hostile, seed)
+    }
+
+    fn effective_run_candidate_count_from_pools(
+        &self,
+        pools: &mut OfficerPools,
+        ship: &str,
+        hostile: &str,
+        seed: u64,
+    ) -> usize {
+        if self.strategy.use_seeded_shuffle {
+            let base_seed = mix_seed(seed, ship, hostile);
+            deterministic_shuffle(&mut pools.captains, base_seed);
+            deterministic_shuffle(&mut pools.bridge, base_seed ^ 0x9E37_79B9_7F4A_7C15);
+            deterministic_shuffle(&mut pools.below_decks, base_seed ^ 0x517C_C1B7_2722_0A95);
+        }
+
+        let min_pool = pools
+            .captains
+            .len()
+            .min(pools.bridge.len())
+            .min(pools.below_decks.len());
+        let k = self.strategy.below_decks_slots;
+        let max_c = self.strategy.max_candidates;
+        if min_pool <= self.strategy.exhaustive_pool_threshold {
+            exhaustive_count(&pools.captains, &pools.bridge, &pools.below_decks, max_c, k)
+        } else {
+            sampled_count(
+                &pools.captains,
+                &pools.bridge,
+                &pools.below_decks,
+                &self.strategy,
+                mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
+                max_c,
+                k,
+            )
+        }
+    }
+
     fn count_candidates_from_pools(
         &self,
         pools: &mut OfficerPools,
@@ -711,7 +769,11 @@ fn sampled_count(
                 if below_decks_slots > m {
                     continue;
                 }
+                let mut stop = false;
                 for_each_combination_indices(m, below_decks_slots, |pos| {
+                    if stop {
+                        return;
+                    }
                     let bd: Vec<String> = pos
                         .iter()
                         .map(|&pi| below_decks[below_indices[pi]].clone())
@@ -720,10 +782,13 @@ fn sampled_count(
                         return;
                     }
                     count += 1;
+                    if max_count.is_some_and(|cap| count >= cap) {
+                        stop = true;
+                    }
                 });
                 if let Some(cap) = max_count {
                     if count >= cap {
-                        return count;
+                        return cap;
                     }
                 }
                 if count >= ESTIMATE_CAP {

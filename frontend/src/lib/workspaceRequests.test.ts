@@ -143,6 +143,87 @@ describe("buildWorkspaceOptimizeStartBody", () => {
       groups: [{ officers: ["X", "Y"], min_count: 2 }],
     });
   });
+
+  it("includes warm_start_crews when non-empty", () => {
+    const warmStartCrews = [
+      { captain: "A", bridge: ["B", "C"], below_decks: ["D", "E", "F"] },
+    ];
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: 10,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      warmStartCrews,
+    });
+    expect(body.warm_start_crews).toEqual(warmStartCrews);
+  });
+
+  it("includes tiered_scout_sims and tiered_top_k when strategy is tiered and set", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      tieredScoutSims: 800,
+      tieredTopK: 40,
+    });
+    expect(body.tiered_scout_sims).toBe(800);
+    expect(body.tiered_top_k).toBe(40);
+  });
+
+  it("omits tiered fields when strategy is not tiered even if values are set", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "exhaustive",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      tieredScoutSims: 800,
+      tieredTopK: 40,
+    });
+    expect(body).not.toHaveProperty("tiered_scout_sims");
+    expect(body).not.toHaveProperty("tiered_top_k");
+  });
+
+  it("omits tiered fields when null, zero, or negative", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      tieredScoutSims: 0,
+      tieredTopK: null,
+    });
+    expect(body).not.toHaveProperty("tiered_scout_sims");
+    expect(body).not.toHaveProperty("tiered_top_k");
+  });
 });
 
 describe("buildOptimizeConstraintsFromForm", () => {

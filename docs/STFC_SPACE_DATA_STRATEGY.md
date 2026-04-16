@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into **`data/ships_extended/`** and **`data/hostiles/`**, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs, optional CI), with the legacy **STFCcommunity** path kept optional for older baselines.
+This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into `**data/ships_extended/`** and `**data/hostiles/**`, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs, optional CI), with the legacy **STFCcommunity** path kept optional for older baselines.
 
 ---
 
@@ -208,7 +208,7 @@ These segments are fetched by `fetch_stfcspace_page_upstream.mjs` and written to
 
 **Batch driver:** `fetch_stfcspace_details.mjs --entities ships,hostiles,officers,research,forbidden_tech` runs the same detail logic as the per-entity scripts.
 
-**Buildings:** Kobayashi’s building importer (`import_stfcspace_buildings.mjs`) is driven by **`/building/summary.json`** (plus `translations-starbase_modules.json` for names). There is **no** separate `fetch_stfcspace_buildings.mjs` detail pass in tree; extend here if per-building detail URLs become necessary.
+**Buildings:** Kobayashi’s building importer (`import_stfcspace_buildings.mjs`) is driven by `**/building/summary.json`** (plus `translations-starbase_modules.json` for names). There is **no** separate `fetch_stfcspace_buildings.mjs` detail pass in tree; extend here if per-building detail URLs become necessary.
 
 ### Translation bundles (`/translations/en/{category}.json`)
 
@@ -252,27 +252,19 @@ Recompute anytime with: `node -e "console.log(require('./data/upstream/data-stfc
 Run from repo root unless a script says otherwise.
 
 1. **Pull catalogs + translations** (cheap, single sweep):
-
-   ```bash
+  ```bash
    node scripts/fetch_stfcspace_page_upstream.mjs
-   ```
-
+  ```
    Writes `data/upstream/data-stfc-space/summary-*.json`, `translations-*.json`, and (by default) one sample `ships/{id}.json`.
-
 2. **Pull detail JSON** for entities you care about (rate-limited; large):
-
-   ```bash
+  ```bash
    node scripts/fetch_stfcspace_details.mjs --entities ships,hostiles --missing-only
-   ```
-
+  ```
    Or the individual scripts in `scripts/fetch_stfcspace_*.mjs` (ships, hostiles, officers, research, forbidden_tech). Logs land in `data/import_logs/fetch-stfcspace-*-YYYY-MM-DD.json`.
-
 3. **Normalize into Kobayashi datasets** — either stepwise (`python3 scripts/build_ship_registry.py`, `cargo run --bin normalize_data_stfc_space`, `cargo run --bin normalize_hostiles_stfc_space`, `node scripts/import_stfcspace_buildings.mjs --from-upstream`, research import, etc.) or the orchestrated path:
-
-   ```bash
+  ```bash
    npm run data:refresh -- --stfcspace
-   ```
-
+  ```
    `data-refresh.mjs` **requires** `summary-ship.json` and `translations-ships.json` before it runs the ship pipeline; hostiles and research steps **skip** unless the corresponding cache directories / summaries exist (see comments in `scripts/data-refresh.mjs`).
 
 ### 3.2 Verification (prove the pipeline, not the browser)
@@ -339,7 +331,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 | `ability` (API key)                                                                                      | `ability`            | Same array preserved (combat interpretation still evolving)                                                                                       |
 
 
-**`stats` object** (all optional; default `0.0` when missing)
+`**stats` object** (all optional; default `0.0` when missing)
 
 
 | Upstream `stats.*`                               | KOBAYASHI field                                                      |
@@ -358,7 +350,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 
 **Not sourced from stfc.space today:** `apex_barrier`, `isolytic_defense`, mitigation floor/ceiling / mystery factor — left at defaults / `None` unless hand-edited in normalized JSON.
 
-**`components` weapons:** full JSON kept on disk; counter-attack weapon parsing for combat is in `HostileRecord::weapon_stats_from_component_data` (`src/data/hostile.rs`) — aggregate pierce lives on `AttackerStats`, not on each `WeaponStats.pierce`.
+`**components` weapons:** full JSON kept on disk; counter-attack weapon parsing for combat is in `HostileRecord::weapon_stats_from_component_data` (`src/data/hostile.rs`) — aggregate pierce lives on `AttackerStats`, not on each `WeaponStats.pierce`.
 
 **Hull type frequency** (from checked-in `summary-hostile.json`, **4,968** rows — recompute after refresh):
 
@@ -372,7 +364,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 | 5           | survey       | 598   |
 
 
-**`ship_type` frequency** (same summary snapshot; encounter category, **not** hull class):
+`**ship_type` frequency** (same summary snapshot; encounter category, **not** hull class):
 
 
 | `ship_type` | Count | `ship_type` | Count |
@@ -406,11 +398,11 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 
 **Fallbacks inside `extract_tier_combat`:** if no weapons produced positive damage, `attack` → `100.0`; if `shield_health` ≤ 0 → `1000.0`; if `hull_health` ≤ 0 → `2 × shield_health`. Empty weapon list → `weapons: None`; else `Some(Vec<WeaponRecord>)` with `pierce: None` at tier level.
 
-**`levels[]`:** each `{ level, shield, health }` → `LevelBonus` (additive shield/hull at that ship level).
+`**levels[]`:** each `{ level, shield, health }` → `LevelBonus` (additive shield/hull at that ship level).
 
-**`crew_slots[]`:** `{ slots?, unlock_level }` → `CrewSlotUnlock` list.
+`**crew_slots[]`:** `{ slots?, unlock_level }` → `CrewSlotUnlock` list.
 
-**`ability[]`:** only rows whose stringified `id` exists in `data/upstream/data-stfc-space/ship_ability_catalog.json` `entries` become `ShipAbility` (timing, effect type, percentage handling, conditions, optional `values_scale_with_ship_level` curves). Uncatalogued ids are skipped silently.
+`**ability[]`:** only rows whose stringified `id` exists in `data/upstream/data-stfc-space/ship_ability_catalog.json` `entries` become `ShipAbility` (timing, effect type, percentage handling, conditions, optional `values_scale_with_ship_level` curves). Uncatalogued ids are skipped silently.
 
 **Resolved `ShipRecord`:** built at runtime via `ExtendedShipRecord::to_ship_record(tier, level)` (`src/data/ship.rs`). API and optimizer accept **tier** and **level**; when omitted, loaders default to tier **1** and level **1** — not hard-coded to tier 1 only.
 
@@ -428,14 +420,14 @@ This section reflects **what the repo actually writes today**, not a future impo
 ### Where version strings live
 
 
-| Location                         | Fields                                                       | Purpose                                                                                                              |
-| -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `data/hostiles/index.json`       | `data_version`, `source_note`                                | Human-readable hostile dataset stamp                                                                                 |
-| `data/ships_extended/index.json` | `data_version`, `source_note`                                | Human-readable ship extended dataset stamp                                                                           |
+| Location                         | Fields                                                       | Purpose                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `data/hostiles/index.json`       | `data_version`, `source_note`                                | Human-readable hostile dataset stamp                                                                        |
+| `data/ships_extended/index.json` | `data_version`, `source_note`                                | Human-readable ship extended dataset stamp                                                                  |
 | `data/registry.json`             | Per-dataset `source`, `data_version`, `last_updated`, `path` | Loader-facing registry (`hostiles` → `hostiles/index.json`; `ships` key → path `ships_extended/index.json`) |
 
 
-There is **no** `data/ships/index.json` — flat ships were removed; ships live under **`data/ships_extended/`**.
+There is **no** `data/ships/index.json` — flat ships were removed; ships live under `**data/ships_extended/`**.
 
 ### `data_version` and `source_note` (implemented)
 
@@ -457,7 +449,7 @@ The following do **not** appear in index JSON or normalizers today:
 - `last_imported_at`
 - `import_url`
 
-**`registry.json` `last_updated`:** set when hostile normalizer runs (`merge_registry_hostiles` uses the run date). The ships registry row is **not** automatically bumped by `normalize_data_stfc_space` in the same way—maintainers may update `data/registry.json` manually or via other tooling; do not assume ship and hostile `last_updated` move in lockstep.
+`**registry.json` `last_updated`:** set when hostile normalizer runs (`merge_registry_hostiles` uses the run date). The ships registry row is **not** automatically bumped by `normalize_data_stfc_space` in the same way—maintainers may update `data/registry.json` manually or via other tooling; do not assume ship and hostile `last_updated` move in lockstep.
 
 ### How “freshness” actually works
 
@@ -475,34 +467,40 @@ There is **no** unified `kobayashi fetch-data` (or similar) subcommand. Upstream
 
 ### npm scripts (`package.json`)
 
-| Script | What it runs |
-| --- | --- |
-| `npm run data:refresh` | `node scripts/data-refresh.mjs` — optional `--stfccommunity` / `--stfcspace` / `--all` (see Part 3) |
-| `npm run fetch:stfcspace:details` | `node scripts/fetch_stfcspace_details.mjs` — requires `--entities ships,hostiles,…` |
-| `npm run import:buildings:stfcspace` | Live `import_stfcspace_buildings.mjs` |
-| `npm run import:buildings:stfcspace:from-upstream` | Same importer with `--from-upstream` |
+
+| Script                                             | What it runs                                                                                        |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `npm run data:refresh`                             | `node scripts/data-refresh.mjs` — optional `--stfccommunity` / `--stfcspace` / `--all` (see Part 3) |
+| `npm run fetch:stfcspace:details`                  | `node scripts/fetch_stfcspace_details.mjs` — requires `--entities ships,hostiles,…`                 |
+| `npm run import:buildings:stfcspace`               | Live `import_stfcspace_buildings.mjs`                                                               |
+| `npm run import:buildings:stfcspace:from-upstream` | Same importer with `--from-upstream`                                                                |
+
 
 ### Node: fetch and import (direct)
 
 Run from repo root; see `--help` on each script.
 
-| Task | Typical command |
-| --- | --- |
-| Refresh summaries + EN translations + sample ship | `node scripts/fetch_stfcspace_page_upstream.mjs` |
-| Detail JSON (subset or full) | `node scripts/fetch_stfcspace_ships.mjs`, `fetch_stfcspace_hostiles.mjs`, `fetch_stfcspace_research.mjs`, `fetch_stfcspace_officers.mjs`, `fetch_stfcspace_forbidden_tech.mjs`, or `node scripts/fetch_stfcspace_details.mjs --entities …` |
-| Buildings → `data/buildings/` | `node scripts/import_stfcspace_buildings.mjs` or `--from-upstream` |
-| Research → `data/research_catalog.json` | `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` (after research cache exists) |
+
+| Task                                              | Typical command                                                                                                                                                                                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Refresh summaries + EN translations + sample ship | `node scripts/fetch_stfcspace_page_upstream.mjs`                                                                                                                                                                                           |
+| Detail JSON (subset or full)                      | `node scripts/fetch_stfcspace_ships.mjs`, `fetch_stfcspace_hostiles.mjs`, `fetch_stfcspace_research.mjs`, `fetch_stfcspace_officers.mjs`, `fetch_stfcspace_forbidden_tech.mjs`, or `node scripts/fetch_stfcspace_details.mjs --entities …` |
+| Buildings → `data/buildings/`                     | `node scripts/import_stfcspace_buildings.mjs` or `--from-upstream`                                                                                                                                                                         |
+| Research → `data/research_catalog.json`           | `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` (after research cache exists)                                                                                                                                       |
+
 
 Shared HTTP behavior is in `scripts/lib/stfcspace_detail_fetch.mjs` (`BASE_URL`, retries, delay between requests, JSON logs under `data/import_logs/`).
 
 ### Rust: normalize and validate
 
-| Binary | Command |
-| --- | --- |
-| Ships → `data/ships_extended/` | `cargo run --release --bin normalize_data_stfc_space` |
-| Hostiles → `data/hostiles/` + registry hostiles entry | `cargo run --release --bin normalize_hostiles_stfc_space` |
-| Optional env (hostiles index metadata) | `STFCSPACE_HOSTILES_VERSION`, `STFCSPACE_HOSTILES_SOURCE_NOTE` (Part 5) |
-| Dataset validation | `cargo run --release --bin validate_data` |
+
+| Binary                                                | Command                                                                 |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| Ships → `data/ships_extended/`                        | `cargo run --release --bin normalize_data_stfc_space`                   |
+| Hostiles → `data/hostiles/` + registry hostiles entry | `cargo run --release --bin normalize_hostiles_stfc_space`               |
+| Optional env (hostiles index metadata)                | `STFCSPACE_HOSTILES_VERSION`, `STFCSPACE_HOSTILES_SOURCE_NOTE` (Part 5) |
+| Dataset validation                                    | `cargo run --release --bin validate_data`                               |
+
 
 ### Why not a Rust `reqwest` importer?
 
@@ -521,17 +519,19 @@ Older drafts of this document described **phased delivery** of a Rust `fetch-dat
 - **Hostiles:** `normalize_hostiles_stfc_space` → `data/hostiles/` + `data/registry.json` (`hostiles` entry).
 - **Ships:** `normalize_data_stfc_space` → `data/ships_extended/` (extended tiers/levels, weapons, hull abilities via `ship_ability_catalog.json`).
 - **Other importers:** Buildings (`import_stfcspace_buildings.mjs`), research (`import_stfcspace_research.mjs`), optional officer/forbidden-tech caches — see **Part 4**.
-- **Combat mapping:** `hull_type` → `ship_class`; hostile `upstream_ship_type` → combat `ShipType` via `src/data/upstream_hostile_ship_type.rs` and `HostileRecord::ship_type_for_combat`; faction tags for LCARS via `opponent_faction_from_*` helpers in `hostile.rs`.
+- **Combat mapping:** `hull_type` → `ship_class`; hostile `upstream_ship_type` → combat `ShipType` via `src/data/upstream_hostile_ship_type.rs` and `HostileRecord::ship_type_for_combat`; faction tags for LCARS via `opponent_faction_from_`* helpers in `hostile.rs`.
 
 ### Backlog (highest value first)
 
-| Priority | Item | Notes |
-| --- | --- | --- |
-| 1 | **Hostile display names** | `loca_id` is stored; normalizer still sets `hostile_name` to `Hostile {id}`. Need a verified string source (translation category, game dump, or new upstream field). The standard translation fetch list has **no** `hostiles` category (Part 2). |
-| 2 | **Provenance parity** | `normalize_data_stfc_space` does not update `data/registry.json` “ships” row or `last_updated`; hostile normalizer does for `hostiles`. Optionally wire registry updates + env-driven `data_version` for ships extended (Part 5). |
-| 3 | **Hostile abilities in combat** | `ability[]` is stored on `HostileRecord`; full engine support may need entries in `data/upstream/data-stfc-space/hostile_ability_catalog.json` and resolver work (pattern after `ship_ability_catalog.json` + `ship_ability_resolve.rs`). |
-| 4 | **Research / buildings coverage** | Extend `BUFF_MAPPING` / buff-id maps and research importers as new STFC buff ids appear; use `--dump-unmapped` on research import. |
-| 5 | **Optional CI freshness** | No workflow in repo today. A lightweight check could: run `fetch_stfcspace_page_upstream.mjs --summaries-only`, compare row counts or checksums to committed `summary-*.json`, fail or warn on drift—without auto-opening PRs. |
+
+| Priority | Item                              | Notes                                                                                                                                                                                                                                             |
+| -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1        | **Hostile display names**         | `loca_id` is stored; normalizer still sets `hostile_name` to `Hostile {id}`. Need a verified string source (translation category, game dump, or new upstream field). The standard translation fetch list has **no** `hostiles` category (Part 2). |
+| 2        | **Provenance parity**             | `normalize_data_stfc_space` does not update `data/registry.json` “ships” row or `last_updated`; hostile normalizer does for `hostiles`. Optionally wire registry updates + env-driven `data_version` for ships extended (Part 5).                 |
+| 3        | **Hostile abilities in combat**   | `ability[]` is stored on `HostileRecord`; full engine support may need entries in `data/upstream/data-stfc-space/hostile_ability_catalog.json` and resolver work (pattern after `ship_ability_catalog.json` + `ship_ability_resolve.rs`).         |
+| 4        | **Research / buildings coverage** | Extend `BUFF_MAPPING` / buff-id maps and research importers as new STFC buff ids appear; use `--dump-unmapped` on research import.                                                                                                                |
+| 5        | **Optional CI freshness**         | No workflow in repo today. A lightweight check could: run `fetch_stfcspace_page_upstream.mjs --summaries-only`, compare row counts or checksums to committed `summary-*.json`, fail or warn on drift—without auto-opening PRs.                    |
+
 
 ### Explicitly deferred (see Part 6)
 
@@ -554,14 +554,14 @@ Mappings live in **code** (`normalize_hostiles_stfc_space`, `normalize_data_stfc
 
 ### Hostiles
 
-- **Naming:** `stats.absorption` → `shield_deflection`; other keys match Part 4. New `stats.*` keys need explicit handling in `RawStats` + `raw_to_record`.
+- **Naming:** `stats.absorption` → `shield_deflection`; other keys match Part 4. New `stats.`* keys need explicit handling in `RawStats` + `raw_to_record`.
 - **Mitigation extras:** `apex_barrier`, `isolytic_defense`, floor/ceiling — not in stfc.space export; remain defaults unless hand-edited per record.
-- **`ability[]`:** Stored verbatim; combat semantics may require `hostile_ability_catalog.json` entries (Part 7).
+- `**ability[]`:** Stored verbatim; combat semantics may require `hostile_ability_catalog.json` entries (Part 7).
 - **Unknown `hull_type`:** Falls back to `battleship` with a warning — add a mapping in `hull_type_raw_to_ship_class` if the game introduces a new hull line.
 
 ### Ships (extended)
 
-- **Tier combat:** `extract_tier_combat` derives tier scalars from `Weapon` / `Shield` / `Armor` components (Part 4). Per-weapon `attack` uses **mean of min/max damage** × **shots**; tier `crit_*` follows the **first** weapon by `order`.
+- **Tier combat:** `extract_tier_combat` derives tier scalars from `Weapon` / `Shield` / `Armor` components (Part 4). Per-weapon `attack` uses **mean of min/max damage** × **shots**; tier `crit_`* follows the **first** weapon by `order`.
 - **Fallbacks:** If damage sums to zero, attack defaults to `100.0`; empty shield → `1000.0` shield HP; empty hull → `2 × shield_health`. Document any change to these guards in the same PR as the code change.
 - **Hull abilities:** Only abilities with ids present in `ship_ability_catalog.json` are emitted; new upstream ability ids require catalog rows (and sometimes resolver work).
 
@@ -574,14 +574,16 @@ Mappings live in **code** (`normalize_hostiles_stfc_space`, `normalize_data_stfc
 
 ## Part 9: Risks and mitigation
 
-| Risk | Likelihood | Impact | Mitigation |
-| --- | --- | --- | --- |
-| **Upstream JSON shape changes** (new/renamed fields) | Medium | Normalizer skips or mis-parses rows | Re-run `validate_data`; add `serde` defaults; extend `RawStats` / `Value` walks; spot-check one detail file after refresh |
-| **Scale or unit surprises** (e.g. crit as percent vs fraction) | Medium | Wrong combat numbers | Compare to in-game or recorded fights; ship catalog already normalizes some `%` flags — mirror for new effect types |
-| **Rate limits / outages** | Low | Incomplete cache | Node fetchers retry with backoff; keep committed cache under `data/upstream/` so CI can run offline |
-| **Sparse or null stats** | Medium | Parse warnings, bad defaults | Normalizers log warnings; `validate_data` + manual review before merge |
-| **Merge conflicts** (hand-edited JSON vs regenerated) | Low | Lost edits | Prefer editing **catalogs** and **registry-driven ids**; document one-off overrides in commit messages; use `source_note` / `data_version` to mark provenance (Part 5) |
-| **Stale community baseline** | Low | Confusion about source of truth | Hostiles/ships for production sims come from **stfc.space pipeline** + `ships_extended` / `hostiles`; legacy STFCcommunity path is optional (`normalize_stfc_data`, Part 11) |
+
+| Risk                                                           | Likelihood | Impact                              | Mitigation                                                                                                                                                                   |
+| -------------------------------------------------------------- | ---------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Upstream JSON shape changes** (new/renamed fields)           | Medium     | Normalizer skips or mis-parses rows | Re-run `validate_data`; add `serde` defaults; extend `RawStats` / `Value` walks; spot-check one detail file after refresh                                                    |
+| **Scale or unit surprises** (e.g. crit as percent vs fraction) | Medium     | Wrong combat numbers                | Compare to in-game or recorded fights; ship catalog already normalizes some `%` flags — mirror for new effect types                                                          |
+| **Rate limits / outages**                                      | Low        | Incomplete cache                    | Node fetchers retry with backoff; keep committed cache under `data/upstream/` so CI can run offline                                                                          |
+| **Sparse or null stats**                                       | Medium     | Parse warnings, bad defaults        | Normalizers log warnings; `validate_data` + manual review before merge                                                                                                       |
+| **Merge conflicts** (hand-edited JSON vs regenerated)          | Low        | Lost edits                          | Prefer editing **catalogs** and **registry-driven ids**; document one-off overrides in commit messages; use `source_note` / `data_version` to mark provenance (Part 5)       |
+| **Stale community baseline**                                   | Low        | Confusion about source of truth     | Hostiles/ships for production sims come from **stfc.space pipeline** + `ships_extended` / `hostiles`; legacy STFCcommunity path is optional (`normalize_stfc_data`, Part 11) |
+
 
 ---
 
@@ -626,7 +628,7 @@ cargo run --release -- mitigation-sensitivity amalgam 2918121098
 
 ### Monitoring
 
-- **`data/import_logs/fetch-stfcspace-*.json`:** `fetched` / `skipped` / `failed` per segment; investigate non-zero `failed`.
+- `**data/import_logs/fetch-stfcspace-*.json`:** `fetched` / `skipped` / `failed` per segment; investigate non-zero `failed`.
 - **No automated weekly job** is required today; optional CI is listed in Part 7.
 
 ### Legacy STFCcommunity data
@@ -647,7 +649,7 @@ fetch_stfcspace_{ships,hostiles,...}.mjs  →  ships/*.json, hostiles/*.json (ca
 optional: import_stfcspace_buildings.mjs, import_stfcspace_research.mjs  →  data/buildings/, data/research_catalog.json
 ```
 
-Loader and API resolve ships from **`data/ships_extended/`** and hostiles from **`data/hostiles/`** (no flat `data/ships/`).
+Loader and API resolve ships from `**data/ships_extended/**` and hostiles from `**data/hostiles/**` (no flat `data/ships/`).
 
 ### Optional (STFCcommunity — older)
 
