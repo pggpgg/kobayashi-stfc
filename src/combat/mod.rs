@@ -16,9 +16,10 @@ pub mod stacking;
 pub mod types;
 
 pub use abilities::{
-    active_effects_for_timing, apply_duplicate_officer_policy, can_activate_in_seat, Ability,
-    AbilityClass, AbilityCondition, AbilityEffect, ActiveAbilityEffect, CombatContext,
-    CrewConfiguration, CrewSeat, CrewSeatContext, TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    active_effects_for_timing, apply_duplicate_officer_policy,
+    attacker_crew_tal_assigned_captain_or_bridge, can_activate_in_seat, Ability, AbilityClass,
+    AbilityCondition, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
+    CrewSeat, CrewSeatContext, TimingWindow, TAL_OFFICER_LCARS_ID, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 pub use damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,

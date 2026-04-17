@@ -167,6 +167,8 @@ pub struct CombatContext {
     pub defender_is_npc_hostile: bool,
     /// True when the defending side is a **player ship** (PvP-shaped scenarios; canonical `EnemyPlayer`).
     pub defender_is_player_ship: bool,
+    /// True when officer Tal ([`TAL_OFFICER_LCARS_ID`]) occupies a Captain or Bridge seat on the attacker crew.
+    pub attacker_tal_assigned_captain_or_bridge: bool,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -204,6 +206,8 @@ pub enum AbilityCondition {
     DefenderIsNpcHostile,
     /// True when [`CombatContext::defender_is_player_ship`] (opponent is a player ship).
     DefenderIsPlayerShip,
+    /// Canonical `SelfOfficerTalNotOnBridge`: true when Tal is not assigned Captain or Bridge on the attacker.
+    AttackerOfficerTalNotOnBridge,
     /// Logical negation of a single sub-condition (LCARS `not`).
     Not(Box<AbilityCondition>),
     And(Vec<AbilityCondition>),
@@ -311,6 +315,17 @@ pub fn apply_duplicate_officer_policy(crew: &CrewConfiguration) -> CrewConfigura
     }
 
     CrewConfiguration { seats: out }
+}
+
+/// LCARS officer id for Tal (`officers.lcars.yaml`); keep in sync with officer data.
+pub const TAL_OFFICER_LCARS_ID: &str = "tal-c3e4eb";
+
+/// True if Tal is assigned in a Captain or Bridge seat (canonical gate for `SelfOfficerTalNotOnBridge`).
+pub fn attacker_crew_tal_assigned_captain_or_bridge(crew: &CrewConfiguration) -> bool {
+    crew.seats.iter().any(|s| {
+        matches!(s.seat, CrewSeat::Captain | CrewSeat::Bridge)
+            && s.officer_id.as_deref() == Some(TAL_OFFICER_LCARS_ID)
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]

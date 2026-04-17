@@ -59,6 +59,9 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         // Player ship debuffs (from hostile procs / counter); must be before `Self` hull-class prefix.
         "SelfHasHullBreach" => return Some(lcars_cond_base("attacker_hull_breach")),
         "SelfHasBurning" => return Some(lcars_cond_base("attacker_burning")),
+        "SelfOfficerTalNotOnBridge" => {
+            return Some(lcars_cond_base("attacker_officer_tal_not_on_bridge"));
+        }
         // Canonical opponent category: NPC hostile (ship-vs-hostile optimizer default).
         "EnemyHostile" => return Some(lcars_cond_base("defender_is_npc_hostile")),
         // Canonical opponent category: player ship (PvP-shaped API toggle).
@@ -188,7 +191,7 @@ mod tests {
         let out = canonical_conditions_to_lcars(&raw, "Alok", "test").expect("maps");
         assert_eq!(out.condition_type, "and");
         let kids = out.conditions.as_ref().expect("children");
-        assert_eq!(kids.len(), 3);
+        assert_eq!(kids.len(), 4);
         assert_eq!(kids[0].condition_type, "defender_is_npc_hostile");
         assert_eq!(kids[1].condition_type, "not");
         let not_inner = kids[1].conditions.as_ref().expect("not inner");
@@ -197,6 +200,7 @@ mod tests {
         assert_eq!(not_inner[0].ship_type.as_deref(), Some("armada"));
         assert_eq!(kids[2].condition_type, "defender_ship_type_is");
         assert_eq!(kids[2].ship_type.as_deref(), Some("explorer"));
+        assert_eq!(kids[3].condition_type, "attacker_officer_tal_not_on_bridge");
         resolve_lcars_condition(&out).expect("resolver accepts combined and");
     }
 
@@ -276,6 +280,14 @@ mod tests {
         assert_eq!(ac, AbilityCondition::AttackerBurning);
     }
 
+    #[test]
+    fn maps_self_officer_tal_not_on_bridge() {
+        let c = map_canonical_condition_token("SelfOfficerTalNotOnBridge").unwrap();
+        assert_eq!(c.condition_type, "attacker_officer_tal_not_on_bridge");
+        let ac = resolve_lcars_condition(&c).unwrap();
+        assert_eq!(ac, AbilityCondition::AttackerOfficerTalNotOnBridge);
+    }
+
     // Task 2 audit: tokens below still lack a 1:1 AbilityCondition / CombatContext story (see
     // docs/CANONICAL_CONDITIONS.md). When engine support exists, map in map_canonical_condition_token
     // and remove the token from DEFERRED.
@@ -283,7 +295,6 @@ mod tests {
     fn task2_deferred_tokens_remain_unmapped() {
         const DEFERRED: &[&str] = &[
             "TargetNotASB",
-            "SelfOfficerTalNotOnBridge",
             "EnemyHullFaction",
             "TargetMaxLevel",
             "SelfDefending",

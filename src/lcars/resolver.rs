@@ -96,6 +96,9 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
         "attacker_hull_breach" | "self_hull_breach" | "player_hull_breach" => {
             Ok(AbilityCondition::AttackerHullBreach)
         }
+        "attacker_officer_tal_not_on_bridge" | "self_officer_tal_not_on_bridge" => {
+            Ok(AbilityCondition::AttackerOfficerTalNotOnBridge)
+        }
         "defender_faction_is"
         | "defender_faction"
         | "opponent_faction_is"
@@ -1052,6 +1055,7 @@ mod tests {
             attacker_ship_type: ShipType::Explorer,
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
         };
         assert!(and_cond.evaluate(&ctx_ok));
         let ctx_no_morale = CombatContext {
@@ -1150,6 +1154,7 @@ mod tests {
             attacker_ship_type: ShipType::Battleship,
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
         };
         assert!(ac.evaluate(&ctx_bb));
         let ctx_int = CombatContext {
@@ -1205,6 +1210,7 @@ mod tests {
             attacker_ship_type: ShipType::Explorer,
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
         };
         assert!(npc.evaluate(&ctx_pve));
         assert!(!player.evaluate(&ctx_pve));
@@ -1261,6 +1267,7 @@ mod tests {
             attacker_ship_type: ShipType::Explorer,
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
         };
         assert!(ac.evaluate(&ctx_bb));
         let ctx_armada = CombatContext {
@@ -1268,6 +1275,55 @@ mod tests {
             ..ctx_bb
         };
         assert!(!ac.evaluate(&ctx_armada));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_tal_not_on_bridge_and_evaluates() {
+        let c = LcarsCondition {
+            condition_type: "attacker_officer_tal_not_on_bridge".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: None,
+        };
+        let ac = resolve_lcars_condition(&c).expect("maps");
+        assert_eq!(ac, AbilityCondition::AttackerOfficerTalNotOnBridge);
+        let alias = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "self_officer_tal_not_on_bridge".to_string(),
+            ..c.clone()
+        })
+        .expect("alias maps");
+        assert_eq!(alias, ac);
+        let ctx_free = CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: false,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
+            defender_faction: OpponentFactionTag::Unknown,
+            defender_ship_type: ShipType::Battleship,
+            attacker_ship_type: ShipType::Explorer,
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
+        };
+        assert!(ac.evaluate(&ctx_free));
+        let ctx_blocked = CombatContext {
+            attacker_tal_assigned_captain_or_bridge: true,
+            ..ctx_free
+        };
+        assert!(!ac.evaluate(&ctx_blocked));
     }
 
     #[test]

@@ -68,6 +68,7 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
         AbilityCondition::DefenderIsNpcHostile => ctx.defender_is_npc_hostile,
         AbilityCondition::DefenderIsPlayerShip => ctx.defender_is_player_ship,
+        AbilityCondition::AttackerOfficerTalNotOnBridge => !ctx.attacker_tal_assigned_captain_or_bridge,
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),
@@ -155,6 +156,7 @@ mod tests {
             attacker_ship_type: ShipType::Explorer,
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
         }
     }
 
@@ -209,6 +211,21 @@ mod tests {
             AbilityCondition::DefenderShipTypeIs(ShipType::Battleship),
         ]);
         assert_eq!(cond.evaluate(&ctx), evaluate_ability_condition(&cond, &ctx));
+    }
+
+    #[test]
+    fn attacker_officer_tal_not_on_bridge_evaluates_from_context() {
+        let mut ctx = sample_ctx();
+        ctx.attacker_tal_assigned_captain_or_bridge = false;
+        assert!(evaluate_ability_condition(
+            &AbilityCondition::AttackerOfficerTalNotOnBridge,
+            &ctx
+        ));
+        ctx.attacker_tal_assigned_captain_or_bridge = true;
+        assert!(!evaluate_ability_condition(
+            &AbilityCondition::AttackerOfficerTalNotOnBridge,
+            &ctx
+        ));
     }
 
     #[test]

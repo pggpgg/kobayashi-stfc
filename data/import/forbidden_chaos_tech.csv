@@ -7,6 +7,117 @@ S31 Torpedo Pods,forbidden,12,473132032,dodge,0.08,add
 S31 Torpedo Pods,forbidden,12,473132032,hull_hp,0.12,add
 S31 Torpedo Pods,forbidden,12,473132032,pierce,0.06,add
 S31 Torpedo Pods,forbidden,12,473132032,weapon_damage,0.155,add
+Tetracyanate 622,forbidden,4,1941930528,weapon_damage,0.01,add
+Orion Seismic Charges,forbidden,4,3126332652,weapon_damage,0.007,add
+Transphasic Torpedoes,forbidden,6,2788591552,weapon_damage,0.012,add
+Transphasic Torpedoes,forbidden,6,2788591552,accuracy,0.003,add
+Transphasic Torpedoes,forbidden,6,2788591552,crit_damage,0.16,add
+Subnucleonic Beam,forbidden,6,1151304323,shield_hp,0.02,add
+Subnucleonic Beam,forbidden,6,1151304323,crit_chance,0.08,add
+Subnucleonic Beam,forbidden,6,1151304323,crit_chance,0.05,add
+Borg Nanoplating,forbidden,12,3044733190,crit_chance,0.2,add
+Borg Nanoplating,forbidden,12,3044733190,accuracy,0.12,add
+Borg Nanoplating,forbidden,12,3044733190,shield_mitigation,0.1,add
+Borg Nanoplating,forbidden,12,3044733190,crit_damage,1.65,add
+Romulan Mining Laser,forbidden,12,115391048,weapon_damage,0.11,add
+Malon Extractor,forbidden,12,2399101438,weapon_damage,0.11,add
+Klingon Mining Drill,forbidden,12,3510037081,weapon_damage,0.11,add
+Borg Alcove,forbidden,12,733381942,crit_chance,0.2,add
+Borg Alcove,forbidden,12,733381942,hull_hp,0.12,add
+Borg Alcove,forbidden,12,733381942,crit_damage,0.85,add
+Interphase Cloaking Device,forbidden,12,1848611163,weapon_damage,0.14,add
+Interphase Cloaking Device,forbidden,12,1848611163,shield_mitigation,0.15,add
+Interphase Cloaking Device,forbidden,12,1848611163,crit_chance,0.8,add
+Interphase Cloaking Device,forbidden,12,1848611163,crit_damage,0.022,add
+Thalaron Radiation,forbidden,12,1296092881,weapon_damage,0.1,add
+Thalaron Radiation,forbidden,12,1296092881,hull_hp,0.205,add
+Thalaron Radiation,forbidden,12,1296092881,crit_damage,0.04,add
+Thalaron Radiation,forbidden,12,1296092881,weapon_damage,0.175,add
+Red Matter,forbidden,12,2923149282,weapon_damage,0.1,add
+Red Matter,forbidden,12,2923149282,hull_hp,0.205,add
+Red Matter,forbidden,12,2923149282,shield_hp,0.02,add
+Red Matter,forbidden,12,2923149282,weapon_damage,0.175,add
+Time Crystal,forbidden,12,1930376004,weapon_damage,0.1,add
+Time Crystal,forbidden,12,1930376004,hull_hp,0.205,add
+Time Crystal,forbidden,12,1930376004,crit_damage,0.04,add
+Time Crystal,forbidden,12,1930376004,weapon_damage,0.175,add
+Metreon Cascade Warhead,forbidden,12,850351327,weapon_damage,0.15,add
+Metreon Cascade Warhead,forbidden,12,850351327,hull_hp,0.18,add
+Metreon Cascade Warhead,forbidden,12,850351327,crit_chance,0.3,add
+Metreon Cascade Warhead,forbidden,12,850351327,crit_damage,1.65,add
+Control Seeker Probes,forbidden,12,2423550592,shield_mitigation,0.08,add
+Control Seeker Probes,forbidden,12,2423550592,hull_hp,0.12,add
+Control Seeker Probes,forbidden,12,2423550592,accuracy,0.06,add
+Control Seeker Probes,forbidden,12,2423550592,weapon_damage,0.155,add
+Dual Photon Warheads,forbidden,12,1364700249,shield_mitigation,0.08,add
+Dual Photon Warheads,forbidden,12,1364700249,hull_hp,0.12,add
+Dual Photon Warheads,forbidden,12,1364700249,accuracy,0.06,add
+Dual Photon Warheads,forbidden,12,1364700249,weapon_damage,0.155,add
+The Hull Piercer,forbidden,12,1382120997,isolytic_damage,0.0017,add
+The Hull Piercer,forbidden,12,1382120997,accuracy,0.1,add
+The Hull Piercer,forbidden,12,1382120997,crit_damage,0.025,add
+The Hull Piercer,forbidden,12,1382120997,crit_chance,0.25,add
+Druoda Sentient Missile,forbidden,12,2088471777,isolytic_damage,0.0017,add
+Druoda Sentient Missile,forbidden,12,2088471777,accuracy,0.1,add
+Druoda Sentient Missile,forbidden,12,2088471777,crit_damage,0.025,add
+Druoda Sentient Missile,forbidden,12,2088471777,crit_chance,0.25,add
+Berserker Complex,forbidden,12,1206498925,isolytic_damage,0.0017,add
+Berserker Complex,forbidden,12,1206498925,accuracy,0.1,add
+Berserker Complex,forbidden,12,1206498925,crit_damage,0.025,add
+Berserker Complex,forbidden,12,1206498925,crit_chance,0.25,add
+Corrupted Cybernetic Implant,forbidden,12,3814128430,hull_hp,0.12,add
+Corrupted Cybernetic Implant,forbidden,12,3814128430,isolytic_damage,0.14,add
+Corrupted Cybernetic Implant,forbidden,12,3814128430,weapon_damage,0.18,add
+Orion Cargo Transporter,forbidden,12,1338824773,weapon_damage,0.04,add
+Ferengi Energy Whip,forbidden,12,747823611,weapon_damage,0.08,add
+Breen Energy Dampener,forbidden,12,1451787875,shield_mitigation,0.07,add
+Breen Energy Dampener,forbidden,12,1451787875,crit_damage,1,add
+AGIMUS,forbidden,12,1003489828,accuracy,0.09,add
+AGIMUS,forbidden,12,1003489828,crit_damage,0.0075,add
+AGIMUS,forbidden,12,1003489828,isolytic_damage,0.0014,add
+Tarka's Isolytic Weapon,forbidden,12,4187367166,hull_hp,0.2,add
+Tarka's Isolytic Weapon,forbidden,12,4187367166,isolytic_defense,0.56,add
+Tarka's Isolytic Weapon,forbidden,12,4187367166,weapon_damage,0.105,add
+Tantalus Field,forbidden,12,240329436,hull_hp,0.25,add
+Tantalus Field,forbidden,12,240329436,weapon_damage,0.282,add
+Tantalus Field,forbidden,12,240329436,apex_barrier,5000,add
+Tantalus Field,forbidden,12,240329436,isolytic_damage,0.44,add
+Agony Booth,forbidden,12,3289179957,apex_barrier,1700,add
+Agony Booth,forbidden,12,3289179957,hull_hp,0.21,add
+Agony Booth,forbidden,12,3289179957,weapon_damage,0.16,add
+Quantum Slipstream Drive,forbidden,12,2439729135,crit_chance,0.16,add
+Quantum Slipstream Drive,forbidden,12,2439729135,shield_mitigation,0.15,add
+Quantum Slipstream Drive,forbidden,12,2439729135,shield_hp,0.195,add
+[PRO] Romulan Mines,forbidden,12,3861775054,apex_barrier,15000,add
+[PRO] Romulan Mines,forbidden,12,3861775054,apex_shred,0.25,add
+[PRO] Romulan Mines,forbidden,12,3861775054,shield_mitigation,0.15,add
+[PRO] Romulan Mines,forbidden,12,3861775054,crit_damage,0.021,add
+[PRO] Counterplay Device,forbidden,12,1978548115,apex_barrier,15000,add
+[PRO] Counterplay Device,forbidden,12,1978548115,apex_shred,0.25,add
+[PRO] Counterplay Device,forbidden,12,1978548115,shield_mitigation,0.15,add
+[PRO] Counterplay Device,forbidden,12,1978548115,isolytic_defense,0.021,add
+[PRO] Self-Replicating Mines,forbidden,12,4243652761,apex_barrier,15000,add
+[PRO] Self-Replicating Mines,forbidden,12,4243652761,apex_shred,0.25,add
+[PRO] Self-Replicating Mines,forbidden,12,4243652761,shield_mitigation,0.15,add
+[PRO] Self-Replicating Mines,forbidden,12,4243652761,isolytic_damage,0.021,add
+[PRO] Harvester,forbidden,12,1032632179,weapon_damage,0.0825,add
+[PRO] Orion Syndicate Bomb,forbidden,12,3620586365,weapon_damage,0.017,add
+[PRO] M-5 Multitronic Unit,forbidden,12,3980484968,crit_chance,0.45,add
+[PRO] M-5 Multitronic Unit,forbidden,12,3980484968,weapon_damage,0.063,add
+[PRO] M-5 Multitronic Unit,forbidden,12,3980484968,apex_barrier,5000,add
+[PRO] Stasis Field Generator,forbidden,12,3246756421,crit_chance,0.45,add
+[PRO] Stasis Field Generator,forbidden,12,3246756421,weapon_damage,0.063,add
+[PRO] Stasis Field Generator,forbidden,12,3246756421,apex_barrier,5000,add
+[PRO] Transwarp Computer,forbidden,12,2933290933,weapon_damage,0.22,add
+[PRO] Transwarp Computer,forbidden,12,2933290933,shield_hp,0.35,add
+[PRO] Transwarp Computer,forbidden,12,2933290933,apex_barrier,2250,add
+[PRO] Transwarp Computer,forbidden,12,2933290933,isolytic_damage,0.2,add
+[PRO] Neural Neutralizer,forbidden,12,1490549096,crit_chance,0.45,add
+[PRO] Neural Neutralizer,forbidden,12,1490549096,weapon_damage,0.063,add
+[PRO] Neural Neutralizer,forbidden,12,1490549096,apex_barrier,5000,add
+[PRO] Borg Operating Table,forbidden,12,3042210440,crit_damage,1.2,add
+[PRO] Borg Operating Table,forbidden,12,3042210440,crit_damage,1.25,add
+Interplexing Beacon,forbidden,12,2527878020,shield_mitigation,0.11,add
 Q Cannon,chaos,12,704754072,weapon_damage,0.07,add
 Temporal Conduit,chaos,12,258464522,apex_barrier,23000,add
 Thought Maker,chaos,4,1024185972,apex_barrier,100,add

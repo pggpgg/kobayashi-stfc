@@ -17,7 +17,8 @@ pub use crate::combat::types::{
 use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
-    active_effects_for_timing, apply_duplicate_officer_policy, filter_effects_by_condition,
+    active_effects_for_timing, apply_duplicate_officer_policy,
+    attacker_crew_tal_assigned_captain_or_bridge, filter_effects_by_condition,
     hostile_crit_damage_reduction_from_crew, sum_mitigation_additive, AbilityEffect,
     ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
@@ -228,6 +229,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 ) -> SimulationResult {
     let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
     let defender_crew = apply_duplicate_officer_policy(defender_crew);
+    let attacker_tal_assigned_captain_or_bridge =
+        attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
     let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
         hostile_crit_damage_reduction_from_crew(&attacker_crew);
@@ -264,6 +267,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         attacker_ship_type,
         defender_is_npc_hostile,
         defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge,
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
@@ -351,6 +355,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             attacker_ship_type,
             defender_is_npc_hostile,
             defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge,
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -1164,6 +1169,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     attacker_ship_type,
                     defender_is_npc_hostile,
                     defender_is_player_ship,
+                    attacker_tal_assigned_captain_or_bridge: combat_ctx
+                        .attacker_tal_assigned_captain_or_bridge,
                 };
                 let defender_combat_begin_filtered =
                     filter_effects_by_condition(&defender_combat_begin_effects, &defender_ctx);
@@ -1580,6 +1587,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 attacker_ship_type,
                 defender_is_npc_hostile,
                 defender_is_player_ship,
+                attacker_tal_assigned_captain_or_bridge: combat_ctx
+                    .attacker_tal_assigned_captain_or_bridge,
             };
             let after_subround_filtered =
                 filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
@@ -1655,6 +1664,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             attacker_ship_type,
             defender_is_npc_hostile,
             defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge: combat_ctx
+                .attacker_tal_assigned_captain_or_bridge,
         };
         let round_end_burn_filtered =
             filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
@@ -1765,6 +1776,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 attacker_ship_type,
                 defender_is_npc_hostile,
                 defender_is_player_ship,
+                attacker_tal_assigned_captain_or_bridge: combat_ctx
+                    .attacker_tal_assigned_captain_or_bridge,
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
@@ -1823,6 +1836,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         attacker_ship_type,
         defender_is_npc_hostile,
         defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge,
     };
     let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(
