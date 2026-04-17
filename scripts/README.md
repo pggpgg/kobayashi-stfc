@@ -51,6 +51,8 @@ python3 scripts/fetch_stfcspace_page_upstream.py
 | `node scripts/fetch_stfcspace_research.mjs` | `research/` (tracked) | `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` |
 | `node scripts/fetch_stfcspace_forbidden_tech.mjs` | `forbidden_tech/` | Manual / CSV workflows (see `data/README.md` § Forbidden tech) |
 
+**Unknown mappings report:** `cargo run --bin report_unknown_mappings` lists canonical `conditions` tokens that do not map to LCARS yet and hostile `upstream_ship_type` values from `data/hostiles/index.json` (see [docs/CANONICAL_CONDITIONS.md](../docs/CANONICAL_CONDITIONS.md) § Regenerate unknown-mappings report).
+
 **Orchestrator** (same flags; **`--entities` required** — comma-separated subset):
 
 ```bash

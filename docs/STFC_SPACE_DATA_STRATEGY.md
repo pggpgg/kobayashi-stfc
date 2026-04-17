@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into `**data/ships_extended/`** and `**data/hostiles/**`, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs, optional CI), with the legacy **STFCcommunity** path kept optional for older baselines.
+This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into `**data/ships_extended/`** and `**data/hostiles/`**, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs, optional CI), with the legacy **STFCcommunity** path kept optional for older baselines.
 
 ---
 
@@ -334,7 +334,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 `**stats` object** (all optional; default `0.0` when missing)
 
 
-| Upstream `stats.*`                               | KOBAYASHI field                                                      |
+| Upstream `stats.`*                               | KOBAYASHI field                                                      |
 | ------------------------------------------------ | -------------------------------------------------------------------- |
 | `armor`                                          | `armor`                                                              |
 | `absorption`                                     | `shield_deflection`                                                  |
@@ -519,7 +519,7 @@ Older drafts of this document described **phased delivery** of a Rust `fetch-dat
 - **Hostiles:** `normalize_hostiles_stfc_space` → `data/hostiles/` + `data/registry.json` (`hostiles` entry).
 - **Ships:** `normalize_data_stfc_space` → `data/ships_extended/` (extended tiers/levels, weapons, hull abilities via `ship_ability_catalog.json`).
 - **Other importers:** Buildings (`import_stfcspace_buildings.mjs`), research (`import_stfcspace_research.mjs`), optional officer/forbidden-tech caches — see **Part 4**.
-- **Combat mapping:** `hull_type` → `ship_class`; hostile `upstream_ship_type` → combat `ShipType` via `src/data/upstream_hostile_ship_type.rs` and `HostileRecord::ship_type_for_combat`; faction tags for LCARS via `opponent_faction_from_`* helpers in `hostile.rs`.
+- **Combat mapping:** `hull_type` → `ship_class`; hostile `upstream_ship_type` → combat `ShipType` via `src/data/upstream_hostile_ship_type.rs` and `HostileRecord::ship_type_for_combat`; faction tags for LCARS via `opponent_faction_from`_* helpers in `hostile.rs`.
 
 ### Backlog (highest value first)
 

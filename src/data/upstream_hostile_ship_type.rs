@@ -26,6 +26,13 @@ impl Default for UpstreamHostileShipTypeProfile {
     }
 }
 
+/// True when [`upstream_hostile_ship_type_profile`] uses a dedicated `match` arm (not the `_` fallback).
+///
+/// Keep this aligned with every non-`_` arm in [`upstream_hostile_ship_type_profile`].
+pub fn upstream_ship_type_is_explicitly_mapped(ship_type: u32) -> bool {
+    matches!(ship_type, 1)
+}
+
 /// Resolve combat semantics for the upstream hostile `ship_type` field (`HostileRecord::upstream_ship_type`).
 pub fn upstream_hostile_ship_type_profile(ship_type: u32) -> UpstreamHostileShipTypeProfile {
     match ship_type {
@@ -51,5 +58,12 @@ mod tests {
     fn ship_type_zero_unmapped() {
         let p = upstream_hostile_ship_type_profile(0);
         assert!(!p.is_armada_target);
+    }
+
+    #[test]
+    fn explicit_mapping_matches_profile_arms() {
+        assert!(upstream_ship_type_is_explicitly_mapped(1));
+        assert!(!upstream_ship_type_is_explicitly_mapped(0));
+        assert!(!upstream_ship_type_is_explicitly_mapped(2));
     }
 }

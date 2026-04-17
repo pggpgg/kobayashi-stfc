@@ -45,6 +45,10 @@ name = "generate_lcars"
 path = "src/bin/generate_lcars.rs"
 
 [[bin]]
+name = "report_unknown_mappings"
+path = "src/bin/report_unknown_mappings.rs"
+
+[[bin]]
 name = "benchmark_simulator"
 path = "src/bin/benchmark_simulator.rs"
 

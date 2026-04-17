@@ -2,7 +2,7 @@
 
 `data/officers/officers.canonical.json` stores PascalCase `conditions` on abilities. `generate_lcars` maps each token to an LCARS `condition` tree when the combat engine can evaluate it; unmapped tokens log `skipping unmapped canonical condition` and the emitted ability may be **weaker** than in-game (subset `and` of only the mapped arms).
 
-See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, [`map_canonical_condition_token`](../src/bin/generate_lcars.rs), and [`resolve_lcars_condition`](../src/lcars/resolver.rs).
+See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs), and [`resolve_lcars_condition`](../src/lcars/resolver.rs).
 
 ## Triage (frequency × feasibility)
 
@@ -35,12 +35,27 @@ The table below lists **currently unmapped** tokens (57 unique strings in canoni
 | `CargoFull` / `CargoEmpty`                                                                                         | 1 each        | deferred | Cargo not modeled.                                                                                                                                                     |
 | `EnemyNotToaTrialHostile`                                                                                          | 1             | deferred | Trial-specific hostile tag not modeled.                                                                                                                                |
 
+### Task 2 audit (engine-ready mappings only)
+
+Re-checked every **unmapped** token from `cargo run --bin report_unknown_mappings` against existing [`resolve_lcars_condition`](../src/lcars/resolver.rs) types and [`AbilityCondition`](../src/combat/abilities.rs) evaluation. **None** of the remaining tokens have a safe 1:1 mapping without new `CombatContext` fields or new condition variants (same rationale as the “deferred” column above). No changes were made to [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs) for Task 2.
+
+Regression: [`task2_deferred_tokens_remain_unmapped`](../src/lcars/canonical_conditions.rs) asserts this deferred set stays unmapped until engine work lands; remove a token from that test when you add a deliberate mapping.
 
 ## Mapped today (reference)
 
-Handled in [`map_canonical_condition_token`](../src/bin/generate_lcars.rs): `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasMorale`, `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, **`TargetIsArmada`** (same as `EnemyArmada`), **`TargetNotArmada`** (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes.
+Handled in [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs): `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasMorale`, `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada**` (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes.
 
 ## Updates (engine + LCARS)
 
-- **`not`**: [`AbilityCondition::Not`](../src/combat/abilities.rs) + LCARS `type: not` with exactly one child ([`resolve_lcars_condition`](../src/lcars/resolver.rs)).
-- **`TargetIsArmada` / `TargetNotArmada`**: canonical aliases for armada gating (see roadmap “canonical condition tokens”).
+- `**not**`: `[AbilityCondition::Not](../src/combat/abilities.rs)` + LCARS `type: not` with exactly one child (`[resolve_lcars_condition](../src/lcars/resolver.rs)`).
+- `**TargetIsArmada` / `TargetNotArmada**`: canonical aliases for armada gating (see roadmap “canonical condition tokens”).
+
+## Regenerate unknown-mappings report
+
+Machine-readable Markdown (unmapped canonical tokens + hostile `upstream_ship_type` coverage from `data/hostiles/index.json`):
+
+```bash
+cargo run --bin report_unknown_mappings -- --output path/to/report.md
+```
+
+Omit `--output` to print to stdout. Paths default to `data/officers/officers.canonical.json` and `data/hostiles/index.json` (relative to the crate root). Run `cargo run --bin report_unknown_mappings -- --help` for flags.

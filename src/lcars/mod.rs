@@ -3,9 +3,13 @@
 //! Parses officer ability definitions from YAML and resolves them into a
 //! [BuffSet] for the combat engine (static buffs + per-round/triggered effects).
 
+mod canonical_conditions;
 mod parser;
 mod resolver;
 
+pub use canonical_conditions::{
+    canonical_conditions_to_lcars, is_canonical_condition_mapped, map_canonical_condition_token,
+};
 pub use parser::{
     load_lcars_dir, load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect,
     LcarsFile, LcarsOfficer, LcarsScaling,
