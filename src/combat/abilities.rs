@@ -137,6 +137,12 @@ pub enum AbilityEffect {
         reduction: f64,
         duration_rounds: u32,
     },
+    /// Reduces the **defender's** shield-mitigation fraction cumulatively each round (Slipstream-style).
+    /// Engine applies `min(per_round * round_index, cap)` as a negative add to defender shield mitigation.
+    CumulativeOpponentShieldMitigationDebuff {
+        per_round: f64,
+        cap: f64,
+    },
 }
 
 /// Combat context for condition evaluation at runtime.
@@ -157,12 +163,16 @@ pub struct CombatContext {
     pub attacker_burning_active: bool,
     /// True when the attacker still has a Hull Breach duration (e.g. from hostile counter fire).
     pub attacker_hull_breach_active: bool,
+    /// True when the defender (opponent) has an active Assimilate self-debuff duration (e.g. PvP vs Borg).
+    pub defender_assimilated_active: bool,
     /// Faction of the defending ship (hostile) in PvE; used for "against Klingon" style abilities.
     pub defender_faction: OpponentFactionTag,
     /// Hull class of the defending [`crate::combat::Combatant`] (hostile in PvE).
     pub defender_ship_type: ShipType,
     /// Hull class of the attacking [`crate::combat::Combatant`] (player ship in PvE).
     pub attacker_ship_type: ShipType,
+    /// Attacking ship id slug (same as [`crate::combat::Combatant::id`], e.g. `uss_voyager`).
+    pub attacker_ship_id: String,
     /// True when the defending side is an **NPC hostile** (canonical `EnemyHostile` / ship-vs-hostile optimizer).
     pub defender_is_npc_hostile: bool,
     /// True when the defending side is a **player ship** (PvP-shaped scenarios; canonical `EnemyPlayer`).
@@ -196,12 +206,16 @@ pub enum AbilityCondition {
     AttackerBurning,
     /// True when [CombatContext::attacker_hull_breach_active] (player ship hull breached).
     AttackerHullBreach,
+    /// True when [CombatContext::defender_assimilated_active] (opponent has Assimilate debuff; PvP).
+    DefenderAssimilated,
     /// True when the defending hostile’s faction matches (see [`CombatContext::defender_faction`]).
     DefenderFactionIs(OpponentFactionTag),
     /// True when the defending ship’s hull class matches (player hull abilities vs a hostile of that class).
     DefenderShipTypeIs(ShipType),
     /// True when the attacking ship’s hull class matches (e.g. hostile hull abilities vs the player’s class).
     AttackerShipTypeIs(ShipType),
+    /// True when the attacking ship’s id slug matches (e.g. Borg Alcove bonuses on U.S.S. Voyager only).
+    AttackerShipIdIs(String),
     /// True when [`CombatContext::defender_is_npc_hostile`] (opponent is an NPC hostile, not another player).
     DefenderIsNpcHostile,
     /// True when [`CombatContext::defender_is_player_ship`] (opponent is a player ship).

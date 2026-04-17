@@ -25,10 +25,12 @@ use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
     apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
-    apply_static_buffs_to_combatant, forbidden_tech_level_tier_scaling_enabled_from_env,
+    apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
+    forbidden_tech_derived_attack_phase_seats, forbidden_tech_level_tier_scaling_enabled_from_env,
+    quantum_slipstream_forbidden_tech_round_start_seats,
     load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
     merge_tech_fids_into_profile_with_level_tier, research_derived_attack_phase_seats,
-    resolve_effective_tech_fids, PlayerProfile,
+    resolve_effective_tech_fids, PlayerProfile, USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -344,6 +346,11 @@ pub(crate) struct SharedScenarioData {
     pub unknown_support_buff_ids: Vec<String>,
     /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
     pub research_derived_seats: Vec<CrewSeatContext>,
+    /// Borg Alcove attack-phase crit seats, Quantum Slipstream round-start debuff seat; hull is handled via
+    /// [`Self::borg_alcove_hull_hp_bonus`].
+    pub forbidden_tech_derived_seats: Vec<CrewSeatContext>,
+    /// Borg Alcove hull catalog bonus (fraction) when tech is equipped; multiply Voyager hull only in scenario build.
+    pub borg_alcove_hull_hp_bonus: Option<f64>,
     /// Canonical `EnemyHostile` / `EnemyPlayer` condition context for the defending side.
     pub defender_opponent: DefenderOpponent,
 }
@@ -482,6 +489,13 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             },
             &shared.profile,
         );
+        if shared.ship == USS_VOYAGER_SHIP_ID {
+            if let Some(h) = shared.borg_alcove_hull_hp_bonus {
+                if h.is_finite() && h != 0.0 {
+                    attacker.hull_health *= 1.0 + h;
+                }
+            }
+        }
         if !merged_static.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
         }
@@ -491,6 +505,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         extend_crew_with_research_derived_attack_phase_seats(
             &mut seats,
             &shared.research_derived_seats,
+        );
+        extend_crew_with_research_derived_attack_phase_seats(
+            &mut seats,
+            &shared.forbidden_tech_derived_seats,
         );
         let weapon_damage_profile_additive_pool =
             weapon_damage_profile_additive_pool_from_env(&shared.profile);
@@ -536,6 +554,13 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         },
         &shared.profile,
     );
+    if shared.ship == USS_VOYAGER_SHIP_ID {
+        if let Some(h) = shared.borg_alcove_hull_hp_bonus {
+            if h.is_finite() && h != 0.0 {
+                attacker.hull_health *= 1.0 + h;
+            }
+        }
+    }
     if !merged_static.is_empty() {
         attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
     }
@@ -546,6 +571,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     extend_crew_with_research_derived_attack_phase_seats(
         &mut seats,
         &shared.research_derived_seats,
+    );
+    extend_crew_with_research_derived_attack_phase_seats(
+        &mut seats,
+        &shared.forbidden_tech_derived_seats,
     );
 
     let weapon_damage_profile_additive_pool =
@@ -960,6 +989,8 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .to_string();
     let mut profile = load_profile(&profile_path_str);
     let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
+    let mut forbidden_tech_derived_seats: Vec<CrewSeatContext> = Vec::new();
+    let mut borg_alcove_hull_hp_bonus: Option<f64> = None;
     if let Some(catalog) =
         forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH)
     {
@@ -970,6 +1001,24 @@ pub(crate) fn build_shared_scenario_data_standalone(
                 &mut profile,
                 &effective_fids,
                 &ft_entries,
+                &catalog,
+                scale_by_level_tier,
+            );
+            forbidden_tech_derived_seats = forbidden_tech_derived_attack_phase_seats(
+                &ft_entries,
+                &effective_fids,
+                &catalog,
+                scale_by_level_tier,
+            );
+            forbidden_tech_derived_seats.extend(quantum_slipstream_forbidden_tech_round_start_seats(
+                &ft_entries,
+                &effective_fids,
+                &catalog,
+                scale_by_level_tier,
+            ));
+            borg_alcove_hull_hp_bonus = borg_alcove_hull_hp_bonus_fraction(
+                &ft_entries,
+                &effective_fids,
                 &catalog,
                 scale_by_level_tier,
             );
@@ -1100,6 +1149,8 @@ pub(crate) fn build_shared_scenario_data_standalone(
         support_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
+        forbidden_tech_derived_seats,
+        borg_alcove_hull_hp_bonus,
         defender_opponent,
     }
 }
@@ -1134,6 +1185,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     // 3) research (by rid) — requires research catalog
     let mut profile = load_profile(&profile_path_str);
     let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
+    let mut forbidden_tech_derived_seats: Vec<CrewSeatContext> = Vec::new();
+    let mut borg_alcove_hull_hp_bonus: Option<f64> = None;
     if let Some(catalog) = registry.forbidden_chaos_catalog() {
         let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, catalog);
         if !effective_fids.is_empty() {
@@ -1142,6 +1195,24 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 &mut profile,
                 &effective_fids,
                 &ft_entries,
+                catalog,
+                scale_by_level_tier,
+            );
+            forbidden_tech_derived_seats = forbidden_tech_derived_attack_phase_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+                scale_by_level_tier,
+            );
+            forbidden_tech_derived_seats.extend(quantum_slipstream_forbidden_tech_round_start_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+                scale_by_level_tier,
+            ));
+            borg_alcove_hull_hp_bonus = borg_alcove_hull_hp_bonus_fraction(
+                &ft_entries,
+                &effective_fids,
                 catalog,
                 scale_by_level_tier,
             );
@@ -1291,6 +1362,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         support_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
+        forbidden_tech_derived_seats,
+        borg_alcove_hull_hp_bonus,
         defender_opponent,
     }
 }
@@ -1741,6 +1814,8 @@ mod tests {
             support_static_buffs: HashMap::new(),
             unknown_support_buff_ids: vec![],
             research_derived_seats: vec![],
+            forbidden_tech_derived_seats: vec![],
+            borg_alcove_hull_hp_bonus: None,
             defender_opponent: DefenderOpponent::Hostile,
         };
 

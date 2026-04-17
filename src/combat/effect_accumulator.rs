@@ -662,6 +662,21 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap } => {
+                    if matches!(timing, TimingWindow::RoundStart) {
+                        let r = round_index as f64;
+                        let debuff = (per_round * r).min(cap);
+                        if debuff.is_finite() && debuff > 0.0 {
+                            self.add_stack_flat_traced(
+                                EffectStatKey::ShieldMitigationBonus,
+                                -debuff,
+                                timing,
+                                source,
+                                "CumulativeOpponentShieldMitigationDebuff",
+                            );
+                        }
+                    }
+                }
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
                     growth_per_round,
                     ceiling,
@@ -795,6 +810,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
             // Same stacking rules as AttackPhase; evaluated once per sub-round end for carry into later weapons.
@@ -908,6 +924,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
             TimingWindow::DefensePhase => match effect {
@@ -999,6 +1016,7 @@ impl EffectAccumulator {
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. }
                 | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
+                | AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. }
                 | AbilityEffect::MitigationAdditive(_) => {}
             },
             // Resolved in the engine only after all weapon sub-rounds for the same round
@@ -1128,6 +1146,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
             TimingWindow::ShieldBreak
@@ -1255,6 +1274,7 @@ impl EffectAccumulator {
                         value - 1.0,
                     );
                 }
+                AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
             },
         }
@@ -1433,5 +1453,6 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             AbilityEffect::MitigationAdditive(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
+        AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
     }
 }

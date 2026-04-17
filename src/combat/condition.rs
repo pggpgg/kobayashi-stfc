@@ -63,9 +63,11 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::DefenderHullBreach => ctx.defender_hull_breach_active,
         AbilityCondition::AttackerBurning => ctx.attacker_burning_active,
         AbilityCondition::AttackerHullBreach => ctx.attacker_hull_breach_active,
+        AbilityCondition::DefenderAssimilated => ctx.defender_assimilated_active,
         AbilityCondition::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
         AbilityCondition::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
         AbilityCondition::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
+        AbilityCondition::AttackerShipIdIs(expected) => ctx.attacker_ship_id == *expected,
         AbilityCondition::DefenderIsNpcHostile => ctx.defender_is_npc_hostile,
         AbilityCondition::DefenderIsPlayerShip => ctx.defender_is_player_ship,
         AbilityCondition::AttackerOfficerTalNotOnBridge => !ctx.attacker_tal_assigned_captain_or_bridge,
@@ -151,9 +153,11 @@ mod tests {
             defender_hull_breach_active: false,
             attacker_burning_active: false,
             attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
+            attacker_ship_id: "test_ship".to_string(),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
@@ -244,6 +248,21 @@ mod tests {
         ctx.attacker_hull_breach_active = true;
         assert!(evaluate_ability_condition(
             &AbilityCondition::AttackerHullBreach,
+            &ctx
+        ));
+    }
+
+    #[test]
+    fn defender_assimilated_evaluates_from_context() {
+        let mut ctx = sample_ctx();
+        ctx.defender_assimilated_active = false;
+        assert!(!evaluate_ability_condition(
+            &AbilityCondition::DefenderAssimilated,
+            &ctx
+        ));
+        ctx.defender_assimilated_active = true;
+        assert!(evaluate_ability_condition(
+            &AbilityCondition::DefenderAssimilated,
             &ctx
         ));
     }

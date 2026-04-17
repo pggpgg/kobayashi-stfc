@@ -96,6 +96,7 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
         "attacker_hull_breach" | "self_hull_breach" | "player_hull_breach" => {
             Ok(AbilityCondition::AttackerHullBreach)
         }
+        "defender_assimilated" | "target_assimilated" => Ok(AbilityCondition::DefenderAssimilated),
         "attacker_officer_tal_not_on_bridge" | "self_officer_tal_not_on_bridge" => {
             Ok(AbilityCondition::AttackerOfficerTalNotOnBridge)
         }
@@ -1050,9 +1051,11 @@ mod tests {
             defender_hull_breach_active: false,
             attacker_burning_active: false,
             attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Klingon,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
+            attacker_ship_id: String::new(),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
@@ -1097,6 +1100,40 @@ mod tests {
         })
         .unwrap();
         assert_eq!(hb, AbilityCondition::AttackerHullBreach);
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_defender_assimilated() {
+        let c = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "defender_assimilated".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: None,
+        })
+        .unwrap();
+        assert_eq!(c, AbilityCondition::DefenderAssimilated);
+        let alias = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "target_assimilated".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: None,
+        })
+        .unwrap();
+        assert_eq!(alias, c);
     }
 
     #[test]
@@ -1149,9 +1186,11 @@ mod tests {
             defender_hull_breach_active: false,
             attacker_burning_active: false,
             attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Explorer,
             attacker_ship_type: ShipType::Battleship,
+            attacker_ship_id: String::new(),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
@@ -1205,9 +1244,11 @@ mod tests {
             defender_hull_breach_active: false,
             attacker_burning_active: false,
             attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
+            attacker_ship_id: String::new(),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
@@ -1262,9 +1303,11 @@ mod tests {
             defender_hull_breach_active: false,
             attacker_burning_active: false,
             attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
+            attacker_ship_id: String::new(),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
@@ -1311,9 +1354,11 @@ mod tests {
             defender_hull_breach_active: false,
             attacker_burning_active: false,
             attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
+            attacker_ship_id: String::new(),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,

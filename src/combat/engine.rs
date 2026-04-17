@@ -85,6 +85,50 @@ fn roll_burning_triggers(
     }
 }
 
+/// Extends attacker or defender Assimilate duration from pre-filtered effects (matches legacy inline proc rules).
+fn roll_assimilated_extensions_from_effects(
+    effects: &[ActiveAbilityEffect],
+    assimilated_active_for_scale: bool,
+    rng: &mut Rng,
+    trace: &mut TraceCollector,
+    round_index: u32,
+    phase: &'static str,
+    ship_id_for_trace: &str,
+    assimilated_rounds: &mut u32,
+) {
+    for effect in effects {
+        let effective_effect = scale_effect(effect.effect, assimilated_active_for_scale);
+        if let AbilityEffect::Assimilated {
+            chance,
+            duration_rounds,
+        } = effective_effect
+        {
+            let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                *assimilated_rounds = (*assimilated_rounds).max(duration_rounds.max(1));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "assimilated_trigger".to_string(),
+                round_index,
+                phase: phase.to_string(),
+                source: EventSource {
+                    officer_id: Some(ship_id_for_trace.to_string()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
+}
+
 /// `on_hull_breach` / [`TimingWindow::HullBreach`] effects run when the defender **enters** the hull-breached
 /// state (first stack of [`AbilityEffect::HullBreach`] duration), not from a hull HP fraction threshold.
 #[allow(clippy::too_many_arguments)]
@@ -248,6 +292,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let mut attacker_hull_breach_rounds = 0_u32;
     let mut attacker_burning_rounds = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
+    let mut defender_assimilated_rounds_remaining = 0_u32;
     // Active shots bonuses: (bonus_pct, expires_round). B_shots(r) = sum of bonus where expires_round >= r.
     let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
     let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
@@ -262,9 +307,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_hull_breach_active: false,
         attacker_burning_active: false,
         attacker_hull_breach_active: false,
+        defender_assimilated_active: false,
         defender_faction,
         defender_ship_type,
         attacker_ship_type,
+        attacker_ship_id: attacker.id.clone(),
         defender_is_npc_hostile,
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,
@@ -330,29 +377,72 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
 
-        let mut combat_ctx = CombatContext {
+        let defender_hull_pct_round =
+            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+        let defender_shield_pct_round = if defender.shield_health > 0.0 {
+            defender_shield_remaining / defender.shield_health
+        } else {
+            1.0
+        };
+        let attacker_hull_pct_round =
+            1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+        let attacker_shield_pct_round = if attacker.shield_health > 0.0 {
+            attacker_shield_remaining / attacker.shield_health
+        } else {
+            1.0
+        };
+
+        // Defender RoundStart assimilate procs before attacker `combat_ctx` so `TargetHasAssimilated` gates see them.
+        let ctx_def_round_start = CombatContext {
             round_index,
-            defender_hull_pct: 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
-            defender_shield_pct: if defender.shield_health > 0.0 {
-                defender_shield_remaining / defender.shield_health
-            } else {
-                1.0
-            },
-            attacker_hull_pct: 1.0
-                - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
-            attacker_shield_pct: if attacker.shield_health > 0.0 {
-                attacker_shield_remaining / attacker.shield_health
-            } else {
-                1.0
-            },
+            defender_hull_pct: defender_hull_pct_round,
+            defender_shield_pct: defender_shield_pct_round,
+            attacker_hull_pct: attacker_hull_pct_round,
+            attacker_shield_pct: attacker_shield_pct_round,
             attacker_morale_active: false,
             defender_burning_active: defender_burning_rounds > 0,
             defender_hull_breach_active: defender_hull_breach_rounds > 0,
             attacker_burning_active: attacker_burning_rounds > 0,
             attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
             defender_faction,
             defender_ship_type,
             attacker_ship_type,
+            attacker_ship_id: attacker.id.clone(),
+            defender_is_npc_hostile,
+            defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge,
+        };
+        let defender_rs_for_assim =
+            filter_effects_by_condition(&defender_round_start_effects, &ctx_def_round_start);
+        let def_rs_assim_active = defender_assimilated_rounds_remaining > 0;
+        roll_assimilated_extensions_from_effects(
+            &defender_rs_for_assim,
+            def_rs_assim_active,
+            &mut rng,
+            &mut trace,
+            round_index,
+            "round_start",
+            &defender.id,
+            &mut defender_assimilated_rounds_remaining,
+        );
+
+        let mut combat_ctx = CombatContext {
+            round_index,
+            defender_hull_pct: defender_hull_pct_round,
+            defender_shield_pct: defender_shield_pct_round,
+            attacker_hull_pct: attacker_hull_pct_round,
+            attacker_shield_pct: attacker_shield_pct_round,
+            attacker_morale_active: false,
+            defender_burning_active: defender_burning_rounds > 0,
+            defender_hull_breach_active: defender_hull_breach_rounds > 0,
+            attacker_burning_active: attacker_burning_rounds > 0,
+            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
+            defender_faction,
+            defender_ship_type,
+            attacker_ship_type,
+            attacker_ship_id: attacker.id.clone(),
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
@@ -1164,9 +1254,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     defender_hull_breach_active: false,
                     attacker_burning_active: combat_ctx.attacker_burning_active,
                     attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
+                    defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
                     defender_faction,
                     defender_ship_type,
                     attacker_ship_type,
+                    attacker_ship_id: attacker.id.clone(),
                     defender_is_npc_hostile,
                     defender_is_player_ship,
                     attacker_tal_assigned_captain_or_bridge: combat_ctx
@@ -1220,6 +1312,19 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 let mut counter_hull_damage_this_subround = false;
 
                 for _hit_index in 0..def_effective_shots {
+                    let defender_attack_phase_assimilated =
+                        defender_assimilated_rounds_remaining > 0;
+                    roll_assimilated_extensions_from_effects(
+                        &defender_attack_filtered,
+                        defender_attack_phase_assimilated,
+                        &mut rng,
+                        &mut trace,
+                        round_index,
+                        "attack",
+                        &defender.id,
+                        &mut defender_assimilated_rounds_remaining,
+                    );
+
                     let mut defender_phase_effects = defender_phase_template.clone();
                     defender_phase_effects.set_trace_contributions(trace.is_enabled());
 
@@ -1582,9 +1687,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 defender_hull_breach_active: defender_hull_breach_rounds > 0,
                 attacker_burning_active: attacker_burning_rounds > 0,
                 attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
                 defender_faction,
                 defender_ship_type,
                 attacker_ship_type,
+                attacker_ship_id: attacker.id.clone(),
                 defender_is_npc_hostile,
                 defender_is_player_ship,
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
@@ -1659,9 +1766,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
             attacker_burning_active: combat_ctx.attacker_burning_active,
             attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
+            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
             defender_faction,
             defender_ship_type,
             attacker_ship_type,
+            attacker_ship_id: attacker.id.clone(),
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge: combat_ctx
@@ -1717,6 +1826,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         attacker_burning_rounds = attacker_burning_rounds.saturating_sub(1);
         attacker_hull_breach_rounds = attacker_hull_breach_rounds.saturating_sub(1);
         assimilated_rounds_remaining = assimilated_rounds_remaining.saturating_sub(1);
+        defender_assimilated_rounds_remaining =
+            defender_assimilated_rounds_remaining.saturating_sub(1);
 
         trace.record_if(|| CombatEvent {
             event_type: "end_of_round_effects".to_string(),
@@ -1771,9 +1882,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
                 attacker_burning_active: combat_ctx.attacker_burning_active,
                 attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
+                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
                 defender_faction,
                 defender_ship_type,
                 attacker_ship_type,
+                attacker_ship_id: attacker.id.clone(),
                 defender_is_npc_hostile,
                 defender_is_player_ship,
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
@@ -1831,9 +1944,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_hull_breach_active: false,
         attacker_burning_active: false,
         attacker_hull_breach_active: false,
+        defender_assimilated_active: false,
         defender_faction,
         defender_ship_type,
         attacker_ship_type,
+        attacker_ship_id: attacker.id.clone(),
         defender_is_npc_hostile,
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,

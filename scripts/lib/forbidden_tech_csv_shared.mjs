@@ -52,6 +52,19 @@ export function mapStatFromBuffText(text) {
   if (t.includes("critical hit chance") || t.includes("crit chance")) return "crit_chance";
   if (t.includes("accuracy")) return "accuracy";
   if (t.includes("pierce") || t.includes("penetration")) return "pierce";
+  // Opponent-only cumulative debuff (e.g. Quantum Slipstream) — not a player profile shield_mitigation bonus.
+  if (
+    (t.includes("opponent") || t.includes("opponent's")) &&
+    (t.includes("decrease") ||
+      t.includes("decreases") ||
+      t.includes("reduce") ||
+      t.includes("reduces") ||
+      t.includes("lower") ||
+      t.includes("lowers")) &&
+    (t.includes("shield mitigation") || t.includes("shield deflection"))
+  ) {
+    return null;
+  }
   if (t.includes("shield mitigation") || t.includes("shield deflection"))
     return "shield_mitigation";
   if (t.includes("dodge")) return "dodge";

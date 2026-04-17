@@ -2,6 +2,12 @@
 //! Keys match engine/LCARS stats: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce,
 //! accuracy (scales ship AttackerStats for dodge mitigation), apex_shred, apex_barrier, isolytic_*, etc.
 //! Bonuses from synced forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
+//! **Borg Alcove** ([`BORG_ALCOVE_FORBIDDEN_TECH_FID`]) is an exception: Voyager/NPC-gated combat stats use
+//! [`forbidden_tech_derived_attack_phase_seats`] and [`borg_alcove_hull_hp_bonus_fraction`] instead of flat `bonuses`.
+//! **Quantum Slipstream Drive** ([`QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID`]): opponent cumulative shield-mitigation
+//! debuff is [`AbilityEffect::CumulativeOpponentShieldMitigationDebuff`] via
+//! [`quantum_slipstream_forbidden_tech_round_start_seats`]; catalog `shield_mitigation` is a **cap** source only
+//! (skipped in [`merge_tech_fids_into_profile`] / [`merge_tech_fids_into_profile_with_level_tier`]).
 //! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
 //! Bonuses from synced research (by rid) are merged in when [merge_research_bonuses_into_profile] is used.
 
@@ -12,8 +18,8 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant, CrewSeat, CrewSeatContext,
-    TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewSeat,
+    CrewSeatContext, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::ability_condition_from_research_bonus_key;
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
@@ -142,10 +148,16 @@ pub fn merge_tech_fids_into_profile(
         .filter_map(|r| r.fid.map(|id| (id, r)))
         .collect();
     for &fid in fids {
+        if is_borg_alcove_forbidden_tech_fid(fid) {
+            continue;
+        }
         let Some(record) = by_fid.get(&fid) else {
             continue;
         };
         for bonus in &record.bonuses {
+            if skip_forbidden_tech_profile_bonus_for_fid(fid, &bonus.stat) {
+                continue;
+            }
             let op = if bonus.operator.is_empty() {
                 "add"
             } else {
@@ -238,6 +250,9 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
         imported_ft.iter().map(|e| (e.fid, e)).collect();
 
     for &fid in fids {
+        if is_borg_alcove_forbidden_tech_fid(fid) {
+            continue;
+        }
         let Some(record) = by_fid.get(&fid) else {
             continue;
         };
@@ -253,16 +268,16 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
                 bonus.operator.as_str()
             };
 
-            let value = if scale_by_level_tier {
-                scale_forbidden_tech_bonus_value_linear_by_level_tier(
-                    bonus.value,
-                    record.tier,
-                    imported.tier,
-                    imported.level,
-                )
-            } else {
-                bonus.value
-            };
+            if skip_forbidden_tech_profile_bonus_for_fid(fid, &bonus.stat) {
+                continue;
+            }
+
+            let value = forbidden_tech_bonus_value_for_imported_entry(
+                bonus,
+                record,
+                Some(imported),
+                scale_by_level_tier,
+            );
 
             if value == 0.0 {
                 continue;
@@ -270,6 +285,258 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
             accumulate_forbidden_tech_bonus(&mut profile.bonuses, &bonus.stat, op, value);
         }
     }
+}
+
+/// Game fid for **Borg Alcove** forbidden tech. Combat bonuses are **not** applied as unconditional
+/// [`PlayerProfile::bonuses`]; see [`forbidden_tech_derived_attack_phase_seats`] and
+/// [`borg_alcove_hull_hp_bonus_fraction`].
+pub const BORG_ALCOVE_FORBIDDEN_TECH_FID: i64 = 733381942;
+
+/// Quantum Slipstream Drive — opponent mitigation debuff is modeled in combat, not as additive player
+/// [`PlayerProfile::bonuses`] `shield_mitigation`.
+pub const QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID: i64 = 2439729135;
+
+/// When catalog omits `shield_mitigation` (e.g. CSV regen maps opponent lines to null), cap debuff magnitude.
+const QUANTUM_SLIPSTREAM_OPPONENT_MITIGATION_CAP_DEFAULT: f64 = 0.15;
+
+/// Placeholder spread until in-game cumulative cadence is confirmed (cap reached over this many rounds).
+const QUANTUM_SLIPSTREAM_MITIGATION_DEBUFF_ROUND_SPREAD: f64 = 3.0;
+
+/// Data ship id for U.S.S. Voyager (`data/ships_extended/uss_voyager.json`).
+pub const USS_VOYAGER_SHIP_ID: &str = "uss_voyager";
+
+#[inline]
+fn is_borg_alcove_forbidden_tech_fid(fid: i64) -> bool {
+    fid == BORG_ALCOVE_FORBIDDEN_TECH_FID
+}
+
+#[inline]
+fn is_quantum_slipstream_forbidden_tech_fid(fid: i64) -> bool {
+    fid == QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID
+}
+
+/// Bonuses that exist in the catalog for sync/scaling but must not become unconditional profile modifiers.
+#[inline]
+fn skip_forbidden_tech_profile_bonus_for_fid(fid: i64, stat: &str) -> bool {
+    stat == "shield_mitigation" && is_quantum_slipstream_forbidden_tech_fid(fid)
+}
+
+fn forbidden_tech_bonus_value_for_imported_entry(
+    bonus: &crate::data::forbidden_chaos::BonusEntry,
+    record: &crate::data::forbidden_chaos::ForbiddenChaosRecord,
+    imported: Option<&ForbiddenTechEntry>,
+    scale_by_level_tier: bool,
+) -> f64 {
+    if !scale_by_level_tier {
+        return bonus.value;
+    }
+    let Some(imported) = imported else {
+        return bonus.value;
+    };
+    scale_forbidden_tech_bonus_value_linear_by_level_tier(
+        bonus.value,
+        record.tier,
+        imported.tier,
+        imported.level,
+    )
+}
+
+/// Scaled `hull_hp` catalog bonus for Borg Alcove when that tech is active (apply only on
+/// [`USS_VOYAGER_SHIP_ID`] in scenario build).
+pub fn borg_alcove_hull_hp_bonus_fraction(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+) -> Option<f64> {
+    if !effective_fids
+        .iter()
+        .any(|&f| is_borg_alcove_forbidden_tech_fid(f))
+    {
+        return None;
+    }
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let record = *by_fid.get(&BORG_ALCOVE_FORBIDDEN_TECH_FID)?;
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let imported = imported_by_fid.get(&BORG_ALCOVE_FORBIDDEN_TECH_FID).copied();
+    for bonus in &record.bonuses {
+        if bonus.stat != "hull_hp" {
+            continue;
+        }
+        let v = forbidden_tech_bonus_value_for_imported_entry(
+            bonus,
+            record,
+            imported,
+            scale_by_level_tier,
+        );
+        if v.is_finite() && v != 0.0 {
+            return Some(v);
+        }
+    }
+    None
+}
+
+/// Borg Alcove: crit stats as attack-phase ship seats (Voyager + NPC for crit chance; NPC-only for
+/// crit damage). **Delta Quadrant** scoping from in-game copy is not modeled (no regional hostile tag).
+pub fn forbidden_tech_derived_attack_phase_seats(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+) -> Vec<CrewSeatContext> {
+    if !effective_fids
+        .iter()
+        .any(|&f| is_borg_alcove_forbidden_tech_fid(f))
+    {
+        return Vec::new();
+    }
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let Some(record) = by_fid.get(&BORG_ALCOVE_FORBIDDEN_TECH_FID).copied() else {
+        return Vec::new();
+    };
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let imported = imported_by_fid.get(&BORG_ALCOVE_FORBIDDEN_TECH_FID).copied();
+
+    let voyager_and_npc = AbilityCondition::And(vec![
+        AbilityCondition::AttackerShipIdIs(USS_VOYAGER_SHIP_ID.to_string()),
+        AbilityCondition::DefenderIsNpcHostile,
+    ]);
+    let npc_only = AbilityCondition::DefenderIsNpcHostile;
+
+    let mut out: Vec<CrewSeatContext> = Vec::new();
+    let mut idx = 0u32;
+    for bonus in &record.bonuses {
+        let v = forbidden_tech_bonus_value_for_imported_entry(
+            bonus,
+            record,
+            imported,
+            scale_by_level_tier,
+        );
+        if !v.is_finite() || v == 0.0 {
+            continue;
+        }
+        match bonus.stat.as_str() {
+            "crit_chance" => {
+                idx = idx.saturating_add(1);
+                out.push(CrewSeatContext {
+                    seat: CrewSeat::Ship,
+                    ability: Ability {
+                        name: format!("forbidden_tech_borg_alcove_crit_chance_{idx}"),
+                        class: AbilityClass::ShipAbility,
+                        timing: TimingWindow::AttackPhase,
+                        boostable: false,
+                        effect: AbilityEffect::CritChanceBonus(
+                            crate::data::ship_ability_resolve::normalize_probability(v),
+                        ),
+                        condition: Some(voyager_and_npc.clone()),
+                    },
+                    boosted: false,
+                    officer_id: None,
+                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                });
+            }
+            "crit_damage" => {
+                idx = idx.saturating_add(1);
+                out.push(CrewSeatContext {
+                    seat: CrewSeat::Ship,
+                    ability: Ability {
+                        name: format!("forbidden_tech_borg_alcove_crit_damage_{idx}"),
+                        class: AbilityClass::ShipAbility,
+                        timing: TimingWindow::AttackPhase,
+                        boostable: false,
+                        effect: AbilityEffect::CritDamageMultiplier((1.0 + v).max(EPSILON)),
+                        condition: Some(npc_only.clone()),
+                    },
+                    boosted: false,
+                    officer_id: None,
+                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                });
+            }
+            "hull_hp" => {}
+            _ => {}
+        }
+    }
+    out
+}
+
+/// Quantum Slipstream: cumulative debuff to **opponent** shield mitigation (NPC hostiles only).
+/// Catalog `shield_mitigation` supplies the debuff cap when present (scaled like other bonuses); otherwise
+/// a conservative default is used.
+pub fn quantum_slipstream_forbidden_tech_round_start_seats(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+) -> Vec<CrewSeatContext> {
+    if !effective_fids
+        .iter()
+        .any(|&f| is_quantum_slipstream_forbidden_tech_fid(f))
+    {
+        return Vec::new();
+    }
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let Some(record) = by_fid.get(&QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID).copied() else {
+        return Vec::new();
+    };
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let imported = imported_by_fid
+        .get(&QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID)
+        .copied();
+
+    let mut cap: Option<f64> = None;
+    for bonus in &record.bonuses {
+        if bonus.stat != "shield_mitigation" {
+            continue;
+        }
+        let v = forbidden_tech_bonus_value_for_imported_entry(
+            bonus,
+            record,
+            imported,
+            scale_by_level_tier,
+        );
+        if v.is_finite() && v > 0.0 {
+            cap = Some(v);
+            break;
+        }
+    }
+    let cap = cap.unwrap_or(QUANTUM_SLIPSTREAM_OPPONENT_MITIGATION_CAP_DEFAULT);
+    if !cap.is_finite() || cap <= 0.0 {
+        return Vec::new();
+    }
+    let per_round = (cap / QUANTUM_SLIPSTREAM_MITIGATION_DEBUFF_ROUND_SPREAD).max(0.0);
+    if per_round <= 0.0 {
+        return Vec::new();
+    }
+
+    vec![CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: "forbidden_tech_quantum_slipstream_opponent_shield_mitigation_debuff".to_string(),
+            class: AbilityClass::ShipAbility,
+            timing: TimingWindow::RoundStart,
+            boostable: false,
+            effect: AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap },
+            condition: Some(AbilityCondition::DefenderIsNpcHostile),
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    }]
 }
 
 fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
@@ -1061,6 +1328,138 @@ mod tests {
         merge_tech_fids_into_profile_with_level_tier(&mut profile, &[1], &imported, &catalog, true);
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.1));
+    }
+
+    #[test]
+    fn borg_alcove_skips_flat_profile_and_exposes_hull_fraction_and_crit_seats() {
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(super::BORG_ALCOVE_FORBIDDEN_TECH_FID),
+                name: "Borg Alcove".into(),
+                tech_type: "forbidden".into(),
+                tier: Some(12),
+                bonuses: vec![
+                    BonusEntry {
+                        stat: "crit_chance".into(),
+                        value: 0.2,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "hull_hp".into(),
+                        value: 0.12,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "crit_damage".into(),
+                        value: 0.85,
+                        operator: "add".into(),
+                    },
+                ],
+            }],
+        };
+        let imported = vec![ForbiddenTechEntry {
+            fid: super::BORG_ALCOVE_FORBIDDEN_TECH_FID,
+            tier: 12,
+            level: 60,
+            shard_count: 0,
+        }];
+        let effective = vec![super::BORG_ALCOVE_FORBIDDEN_TECH_FID];
+
+        let mut profile = PlayerProfile::default();
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &effective,
+            &imported,
+            &catalog,
+            false,
+        );
+        assert!(profile.bonuses.get("crit_chance").is_none());
+        assert!(profile.bonuses.get("hull_hp").is_none());
+        assert!(profile.bonuses.get("crit_damage").is_none());
+
+        let seats = super::forbidden_tech_derived_attack_phase_seats(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+        );
+        assert_eq!(seats.len(), 2);
+
+        let hull = super::borg_alcove_hull_hp_bonus_fraction(&imported, &effective, &catalog, false);
+        assert!((hull.unwrap() - 0.12).abs() < 1e-12);
+    }
+
+    #[test]
+    fn quantum_slipstream_skips_profile_shield_mitigation_and_emits_debuff_seat() {
+        use crate::combat::AbilityEffect;
+
+        let fid = super::QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID;
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(fid),
+                name: "Quantum Slipstream Drive".into(),
+                tech_type: "forbidden".into(),
+                tier: Some(12),
+                bonuses: vec![
+                    BonusEntry {
+                        stat: "crit_chance".into(),
+                        value: 0.16,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "shield_mitigation".into(),
+                        value: 0.15,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "shield_hp".into(),
+                        value: 0.195,
+                        operator: "add".into(),
+                    },
+                ],
+            }],
+        };
+        let imported = vec![ForbiddenTechEntry {
+            fid,
+            tier: 12,
+            level: 60,
+            shard_count: 0,
+        }];
+        let effective = vec![fid];
+
+        let mut profile = PlayerProfile::default();
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &effective,
+            &imported,
+            &catalog,
+            false,
+        );
+        assert_eq!(profile.bonuses.get("crit_chance"), Some(&0.16));
+        assert_eq!(profile.bonuses.get("shield_hp"), Some(&0.195));
+        assert!(profile.bonuses.get("shield_mitigation").is_none());
+
+        let seats = super::quantum_slipstream_forbidden_tech_round_start_seats(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+        );
+        assert_eq!(seats.len(), 1);
+        match &seats[0].ability.effect {
+            AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
+                per_round,
+                cap,
+            } => {
+                assert!((cap - 0.15).abs() < 1e-12);
+                assert!((per_round - 0.05).abs() < 1e-12);
+            }
+            _ => panic!("expected cumulative opponent shield mitigation debuff"),
+        }
     }
 
     fn tiny_catalog(items: Vec<ForbiddenChaosRecord>) -> ForbiddenChaosList {

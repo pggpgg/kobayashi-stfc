@@ -54,6 +54,7 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
 
     match t {
         "TargetHasBurning" => return Some(lcars_cond_base("defender_burning")),
+        "TargetHasAssimilated" => return Some(lcars_cond_base("defender_assimilated")),
         "TargetHasHullBreach" => return Some(lcars_cond_base("defender_hull_breach")),
         "SelfHasMorale" => return Some(lcars_cond_base("morale_active")),
         // Player ship debuffs (from hostile procs / counter); must be before `Self` hull-class prefix.
@@ -258,6 +259,14 @@ mod tests {
     }
 
     #[test]
+    fn target_has_assimilated_maps_to_defender_assimilated() {
+        let c = map_canonical_condition_token("TargetHasAssimilated").unwrap();
+        assert_eq!(c.condition_type, "defender_assimilated");
+        let ac = resolve_lcars_condition(&c).unwrap();
+        assert_eq!(ac, AbilityCondition::DefenderAssimilated);
+    }
+
+    #[test]
     fn self_has_morale_not_swallowed_by_self_hull_prefix() {
         let c = map_canonical_condition_token("SelfHasMorale").unwrap();
         assert_eq!(c.condition_type, "morale_active");
@@ -305,7 +314,6 @@ mod tests {
             "ModuleEnergy",
             "SelfAtSoloArmada",
             "SelfAtStation",
-            "TargetHasAssimilated",
             "TargetStateAny",
             "SelfAttacking",
             "HullHealthBelowStartOfCombat",

@@ -6,7 +6,7 @@
 4. [ ] Add validation checks to flag normalized hostiles with unmapped `upstream_ship_type`.
 5. [ ] Add `bid` coverage (or fallback mapping) to the building index to improve import/sync resolution.
 6. [ ] Implement a strict validation report for unmapped building buffs and unsupported building conditions.
-7. [ ] Audit forbidden/chaos tech catalog `fid` coverage and fill missing ids to keep sync application complete.
+7. [x] Audit forbidden/chaos tech catalog `fid` coverage and fill missing ids to keep sync application complete.
 8. [ ] Re-run and review chaos-tech row generation (`build_chaos_tech_csv_rows.mjs`) and fix high-impact heuristic gaps.
 9. [ ] Refresh research catalog from upstream and resolve unmapped buff/location ids in mapping files.
 10. [ ] Extend research stat wiring for any newly mapped combat stats in normalization and combat application paths.
