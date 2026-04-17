@@ -65,7 +65,8 @@ fn get_csv_field<'a>(headers: &'a csv::StringRecord, record: &'a csv::StringReco
 /// Aligns with [`crate::bin::generate_lcars::map_modifier`] where there is a single primary stat.
 /// `AllDefenses` maps to [`AbilityModifierSpec::Armor`] (the “add” branch); `MultiplySub` rows are
 /// still folded to [`AbilityModifierSpec::Add`] via [`map_stfc_cc_operation`], so mitigation-specific
-/// sign handling is lossy here. Composite modifiers such as `OfficerStatAll` stay unmapped.
+/// sign handling is lossy here. Composite `OfficerStatAll` maps to [`AbilityModifierSpec::TagOnly`]
+/// (same bucket as `generate_lcars` tag / non-single-stat modifiers).
 pub fn map_stfc_cc_modifier(raw: &str) -> Result<AbilityModifierSpec, String> {
     let s = raw.trim();
     if s.is_empty() {
@@ -106,7 +107,9 @@ pub fn map_stfc_cc_modifier(raw: &str) -> Result<AbilityModifierSpec, String> {
         | "ArtifactTokenLoot" | "VoyagerAsaCE" | "HirogenRelicAndBiotoxinLoot" | "XindiHostileLoot"
         | "SkillCuttingBeamAbilityCost" | "GornHostileVolatileLoot" | "TrelliumRewards"
         | "PveChestLootMultiplierLimitedResources" | "WokAugmentAllLootRewards" | "Omega13Cooldown"
-        | "SkillCuttingBeamPvPBaseDamagePercentage" | "CombatScavenger" => Ok(AbilityModifierSpec::TagOnly),
+        | "SkillCuttingBeamPvPBaseDamagePercentage" | "CombatScavenger" | "OfficerStatAll" => {
+            Ok(AbilityModifierSpec::TagOnly)
+        }
         _ => Err(format!("unmapped_modifier:{s}")),
     }
 }
@@ -539,14 +542,16 @@ mod tests {
     }
 
     #[test]
-    fn kirk_officer_stat_all_is_unmapped_modifier() {
+    fn kirk_officer_stat_all_maps_to_tag_only() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
             "KIRK", "CM", "OfficerStatAll", "SelfHasMorale", "RoundStart", "SelfAll", "MultiplyAdd",
             "4102716881", "0.4",
         ]);
-        let err = try_stfc_cc_string_record_to_spec(&rec, &h).unwrap_err();
-        assert!(err.iter().any(|e| e.starts_with("unmapped_modifier:")));
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.modifier, AbilityModifierSpec::TagOnly);
+        assert_eq!(spec.conditions.len(), 1);
+        assert!(matches!(spec.conditions[0], AbilityConditionSpec::MoraleActive));
     }
 
     #[test]
@@ -704,6 +709,10 @@ mod tests {
             .expect("open bundled cheat-sheet (run tests from crate root)");
         let s = scan_stfc_cc_cheat_sheet_csv(f).expect("scan");
         assert!(s.rows_total > 100);
-        assert!(s.rows_full_convert > 0);
+        assert_eq!(
+            s.rows_full_convert, s.rows_total,
+            "expected every bundled cheat-sheet row to convert; diagnostics: {:?}",
+            s.top_diagnostics(15)
+        );
     }
 }
