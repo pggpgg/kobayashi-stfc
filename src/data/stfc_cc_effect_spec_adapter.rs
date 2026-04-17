@@ -131,7 +131,18 @@ pub fn map_stfc_cc_operation(raw: &str) -> Result<AbilityOperationSpec, String> 
     }
 }
 
-fn map_condition_token(token: &str) -> Result<AbilityConditionSpec, String> {
+/// Parse `faction_id=…` from cheat-sheet `AbilityAttributes` (comma-separated `key=value` segments).
+fn faction_id_from_ability_attributes(attrs: &str) -> Option<i64> {
+    for segment in attrs.split(',') {
+        let s = segment.trim();
+        if let Some(rest) = s.strip_prefix("faction_id=") {
+            return rest.trim().parse::<i64>().ok();
+        }
+    }
+    None
+}
+
+fn map_condition_token(token: &str, ability_attributes: Option<&str>) -> Result<AbilityConditionSpec, String> {
     let t = token.trim();
     if t.is_empty() {
         return Err("unmapped_condition:<empty>".into());
@@ -172,6 +183,9 @@ fn map_condition_token(token: &str) -> Result<AbilityConditionSpec, String> {
         "EnemyInterceptor" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
             ship_type: "interceptor".into(),
         }),
+        "EnemySurvey" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
+            ship_type: "survey".into(),
+        }),
         "TargetIsArmada" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
             ship_type: "armada".into(),
         }),
@@ -183,12 +197,26 @@ fn map_condition_token(token: &str) -> Result<AbilityConditionSpec, String> {
                 ship_type: "armada".into(),
             }),
         }),
+        "EnemyHullFaction" => {
+            let Some(attrs) = ability_attributes.map(str::trim).filter(|s| !s.is_empty()) else {
+                return Err("unmapped_condition:EnemyHullFaction".into());
+            };
+            let id = faction_id_from_ability_attributes(attrs)
+                .ok_or_else(|| "unmapped_condition:EnemyHullFaction".to_string())?;
+            Ok(AbilityConditionSpec::DefenderHullFactionIdIs { faction_id: id })
+        }
         _ => Err(format!("unmapped_condition:{t}")),
     }
 }
 
 /// Parse comma-separated `AbilityConditions` cells into condition specs. Empty string → `Ok(vec![])`.
-pub fn parse_stfc_cc_conditions(raw: &str) -> Result<Vec<AbilityConditionSpec>, StfcCcDiagnostics> {
+///
+/// When the cell includes `EnemyHullFaction`, pass the `AbilityAttributes` column so
+/// `faction_id=…` can be resolved to `DefenderHullFactionIdIs`.
+pub fn parse_stfc_cc_conditions(
+    raw: &str,
+    ability_attributes: Option<&str>,
+) -> Result<Vec<AbilityConditionSpec>, StfcCcDiagnostics> {
     let raw = raw.trim();
     if raw.is_empty() {
         return Ok(Vec::new());
@@ -200,7 +228,7 @@ pub fn parse_stfc_cc_conditions(raw: &str) -> Result<Vec<AbilityConditionSpec>, 
         if p.is_empty() {
             continue;
         }
-        match map_condition_token(p) {
+        match map_condition_token(p, ability_attributes) {
             Ok(c) => out.push(c),
             Err(e) => errs.push(e),
         }
@@ -258,7 +286,8 @@ pub fn try_stfc_cc_string_record_to_spec(
         }
     };
 
-    let conditions = match parse_stfc_cc_conditions(conditions_s) {
+    let attrs_for_conditions = get_csv_field(headers, record, "AbilityAttributes");
+    let conditions = match parse_stfc_cc_conditions(conditions_s, attrs_for_conditions) {
         Ok(c) => c,
         Err(mut e) => {
             diags.append(&mut e);
@@ -358,6 +387,21 @@ mod tests {
         ])
     }
 
+    fn headers_with_attributes() -> csv::StringRecord {
+        csv::StringRecord::from(vec![
+            "OfficerName",
+            "AbilityType",
+            "AbilityModifier",
+            "AbilityConditions",
+            "AbilityTrigger",
+            "AbilityTarget",
+            "AbilityOperation",
+            "AbilityID",
+            "AbilityValue_1",
+            "AbilityAttributes",
+        ])
+    }
+
     #[test]
     fn spock_accuracy_row_converts() {
         let h = headers_sample();
@@ -412,6 +456,42 @@ mod tests {
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.conditions.len(), 1);
         assert!(matches!(spec.conditions[0], AbilityConditionSpec::MoraleActive));
+    }
+
+    #[test]
+    fn enemy_hull_faction_maps_with_ability_attributes_faction_id() {
+        let h = headers_with_attributes();
+        let rec = StringRecord::from(vec![
+            "SESHA",
+            "OA",
+            "WeaponDamage",
+            "EnemyHullFaction",
+            "AttackPhase",
+            "SelfShip",
+            "MultiplyAdd",
+            "123",
+            "0.05",
+            "faction_id=1750120904",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.conditions.len(), 1);
+        match &spec.conditions[0] {
+            AbilityConditionSpec::DefenderHullFactionIdIs { faction_id } => {
+                assert_eq!(*faction_id, 1_750_120_904);
+            }
+            _ => panic!("expected DefenderHullFactionIdIs"),
+        }
+    }
+
+    #[test]
+    fn enemy_hull_faction_without_attributes_column_fails() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "SESHA", "OA", "WeaponDamage", "EnemyHullFaction", "AttackPhase", "SelfShip", "MultiplyAdd", "123",
+            "0.05",
+        ]);
+        let err = try_stfc_cc_string_record_to_spec(&rec, &h).unwrap_err();
+        assert!(err.iter().any(|e| e.contains("EnemyHullFaction")));
     }
 
     #[test]
