@@ -8,10 +8,14 @@
 //! debuff is [`AbilityEffect::CumulativeOpponentShieldMitigationDebuff`] via
 //! [`quantum_slipstream_forbidden_tech_round_start_seats`]; catalog `shield_mitigation` is a **cap** source only
 //! (skipped in [`merge_tech_fids_into_profile`] / [`merge_tech_fids_into_profile_with_level_tier`]).
+//! **Ship-class + hostile-gated torpedo family** (S31 Battleship, Control Seeker Probes Explorer, Dual Photon
+//! Warheads Interceptor): combat stats are not merged as unconditional [`PlayerProfile::bonuses`]; see
+//! [`ship_class_gated_torpedo_family_derived_seats`], [`ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship`],
+//! and scenario-side hostile shield / accuracy patches.
 //! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
 //! Bonuses from synced research (by rid) are merged in when [merge_research_bonuses_into_profile] is used.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -19,7 +23,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewSeat,
-    CrewSeatContext, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    CrewSeatContext, ShipType, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::ability_condition_from_research_bonus_key;
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
@@ -28,6 +32,7 @@ use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
 use crate::data::research::{
     cumulative_conditional_research_bonuses, cumulative_research_bonuses, ResearchCatalog,
 };
+use crate::data::ship::ShipRecord;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlayerProfile {
@@ -148,7 +153,9 @@ pub fn merge_tech_fids_into_profile(
         .filter_map(|r| r.fid.map(|id| (id, r)))
         .collect();
     for &fid in fids {
-        if is_borg_alcove_forbidden_tech_fid(fid) {
+        if is_borg_alcove_forbidden_tech_fid(fid)
+            || is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid)
+        {
             continue;
         }
         let Some(record) = by_fid.get(&fid) else {
@@ -250,7 +257,9 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
         imported_ft.iter().map(|e| (e.fid, e)).collect();
 
     for &fid in fids {
-        if is_borg_alcove_forbidden_tech_fid(fid) {
+        if is_borg_alcove_forbidden_tech_fid(fid)
+            || is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid)
+        {
             continue;
         }
         let Some(record) = by_fid.get(&fid) else {
@@ -296,6 +305,16 @@ pub const BORG_ALCOVE_FORBIDDEN_TECH_FID: i64 = 733381942;
 /// [`PlayerProfile::bonuses`] `shield_mitigation`.
 pub const QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID: i64 = 2439729135;
 
+/// S31 Torpedo Pods — upstream copy is **Battleship**-scoped; hostile-only lines use [`AbilityCondition`]
+/// with [`AbilityCondition::DefenderIsNpcHostile`].
+pub const S31_TORPEDO_PODS_FORBIDDEN_TECH_FID: i64 = 473132032;
+
+/// Control Seeker Probes — **Explorer**-scoped torpedo family (same tier template as S31).
+pub const CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID: i64 = 2423550592;
+
+/// Dual Photon Warheads — **Interceptor**-scoped torpedo family (same tier template as S31).
+pub const DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID: i64 = 1364700249;
+
 /// When catalog omits `shield_mitigation` (e.g. CSV regen maps opponent lines to null), cap debuff magnitude.
 const QUANTUM_SLIPSTREAM_OPPONENT_MITIGATION_CAP_DEFAULT: f64 = 0.15;
 
@@ -313,6 +332,23 @@ fn is_borg_alcove_forbidden_tech_fid(fid: i64) -> bool {
 #[inline]
 fn is_quantum_slipstream_forbidden_tech_fid(fid: i64) -> bool {
     fid == QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID
+}
+
+/// Hull-class + hostile-gated "torpedo family" forbidden tech: catalog bonuses apply only when the resolved
+/// attacker ship matches the tech's hull class and the defender is an NPC hostile (see derived seats / scenario).
+#[inline]
+pub fn ship_class_gated_torpedo_family_attacker_ship_type(fid: i64) -> Option<ShipType> {
+    match fid {
+        S31_TORPEDO_PODS_FORBIDDEN_TECH_FID => Some(ShipType::Battleship),
+        CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID => Some(ShipType::Explorer),
+        DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID => Some(ShipType::Interceptor),
+        _ => None,
+    }
+}
+
+#[inline]
+fn is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid: i64) -> bool {
+    ship_class_gated_torpedo_family_attacker_ship_type(fid).is_some()
 }
 
 /// Bonuses that exist in the catalog for sync/scaling but must not become unconditional profile modifiers.
@@ -537,6 +573,290 @@ pub fn quantum_slipstream_forbidden_tech_round_start_seats(
         officer_id: None,
         contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
     }]
+}
+
+fn torpedo_family_hostile_accuracy_fraction_for_record(
+    record: &crate::data::forbidden_chaos::ForbiddenChaosRecord,
+    imported: Option<&ForbiddenTechEntry>,
+    scale_by_level_tier: bool,
+) -> Option<f64> {
+    for bonus in &record.bonuses {
+        if bonus.stat != "accuracy" {
+            continue;
+        }
+        let v = forbidden_tech_bonus_value_for_imported_entry(
+            bonus,
+            record,
+            imported,
+            scale_by_level_tier,
+        );
+        if v.is_finite() && v > 0.0 {
+            return Some(v);
+        }
+    }
+    for bonus in &record.bonuses {
+        if bonus.stat != "pierce" {
+            continue;
+        }
+        let v = forbidden_tech_bonus_value_for_imported_entry(
+            bonus,
+            record,
+            imported,
+            scale_by_level_tier,
+        );
+        if v.is_finite() && v > 0.0 {
+            return Some(v);
+        }
+    }
+    None
+}
+
+/// Sum of catalog `hull_hp` bonuses for torpedo-family techs whose hull gate matches `ship_rec`.
+/// Returns [`None`] when the ship is unknown so hull is not scaled unconditionally.
+pub fn ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+    ship_rec: Option<&ShipRecord>,
+) -> Option<f64> {
+    let sr = ship_rec?;
+    let st = sr.ship_type();
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let mut seen: HashSet<i64> = HashSet::new();
+    let mut sum = 0.0_f64;
+    for &fid in effective_fids {
+        if !seen.insert(fid) {
+            continue;
+        }
+        if ship_class_gated_torpedo_family_attacker_ship_type(fid) != Some(st) {
+            continue;
+        }
+        let Some(record) = by_fid.get(&fid).copied() else {
+            continue;
+        };
+        let imported = imported_by_fid.get(&fid).copied();
+        for bonus in &record.bonuses {
+            if bonus.stat != "hull_hp" {
+                continue;
+            }
+            let v = forbidden_tech_bonus_value_for_imported_entry(
+                bonus,
+                record,
+                imported,
+                scale_by_level_tier,
+            );
+            if v.is_finite() && v > 0.0 {
+                sum += v;
+            }
+        }
+    }
+    (sum.is_finite() && sum > 0.0).then_some(sum)
+}
+
+/// Additive shield deflection for the player combatant; scenario applies vs hostiles only.
+pub fn ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+    ship_rec: Option<&ShipRecord>,
+) -> Option<f64> {
+    let sr = ship_rec?;
+    let st = sr.ship_type();
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let mut seen: HashSet<i64> = HashSet::new();
+    let mut sum = 0.0_f64;
+    for &fid in effective_fids {
+        if !seen.insert(fid) {
+            continue;
+        }
+        if ship_class_gated_torpedo_family_attacker_ship_type(fid) != Some(st) {
+            continue;
+        }
+        let Some(record) = by_fid.get(&fid).copied() else {
+            continue;
+        };
+        let imported = imported_by_fid.get(&fid).copied();
+        for bonus in &record.bonuses {
+            if bonus.stat != "shield_mitigation" {
+                continue;
+            }
+            let v = forbidden_tech_bonus_value_for_imported_entry(
+                bonus,
+                record,
+                imported,
+                scale_by_level_tier,
+            );
+            if v.is_finite() && v > 0.0 {
+                sum += v;
+            }
+        }
+    }
+    (sum.is_finite() && sum > 0.0).then_some(sum)
+}
+
+/// Sum of catalog hostile-accuracy fractions (`accuracy` row, else `pierce`) for matching-hull family techs.
+/// Profile layer uses [`apply_profile_accuracy_to_attacker_stats`].
+pub fn ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+    ship_rec: Option<&ShipRecord>,
+) -> Option<f64> {
+    let sr = ship_rec?;
+    let st = sr.ship_type();
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let mut seen: HashSet<i64> = HashSet::new();
+    let mut sum = 0.0_f64;
+    for &fid in effective_fids {
+        if !seen.insert(fid) {
+            continue;
+        }
+        if ship_class_gated_torpedo_family_attacker_ship_type(fid) != Some(st) {
+            continue;
+        }
+        let Some(record) = by_fid.get(&fid).copied() else {
+            continue;
+        };
+        let imported = imported_by_fid.get(&fid).copied();
+        if let Some(a) =
+            torpedo_family_hostile_accuracy_fraction_for_record(record, imported, scale_by_level_tier)
+        {
+            sum += a;
+        }
+    }
+    (sum.is_finite() && sum > 0.0).then_some(sum)
+}
+
+/// Per equipped family fid: armor+dodge (return-fire mitigation), pierce, weapon damage — gated on hull class + hostile.
+/// Shield mitigation and hull are applied in [`crate::optimizer::monte_carlo::scenario`].
+pub fn ship_class_gated_torpedo_family_derived_seats(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+) -> Vec<CrewSeatContext> {
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let mut seen: HashSet<i64> = HashSet::new();
+    let mut out: Vec<CrewSeatContext> = Vec::new();
+    for &fid in effective_fids {
+        if !seen.insert(fid) {
+            continue;
+        }
+        let Some(ship_gate) = ship_class_gated_torpedo_family_attacker_ship_type(fid) else {
+            continue;
+        };
+        let Some(record) = by_fid.get(&fid).copied() else {
+            continue;
+        };
+        let imported = imported_by_fid.get(&fid).copied();
+        let mut armor = 0.0_f64;
+        let mut dodge = 0.0_f64;
+        let mut pierce: Option<f64> = None;
+        let mut weapon_damage: Option<f64> = None;
+        for bonus in &record.bonuses {
+            let v = forbidden_tech_bonus_value_for_imported_entry(
+                bonus,
+                record,
+                imported,
+                scale_by_level_tier,
+            );
+            if !v.is_finite() || v == 0.0 {
+                continue;
+            }
+            match bonus.stat.as_str() {
+                "armor" => armor = v,
+                "dodge" => dodge = v,
+                "pierce" => pierce = Some(v),
+                "weapon_damage" => weapon_damage = Some(v),
+                _ => {}
+            }
+        }
+        let gated = AbilityCondition::And(vec![
+            AbilityCondition::AttackerShipTypeIs(ship_gate),
+            AbilityCondition::DefenderIsNpcHostile,
+        ]);
+        let mitigation_packed = armor + dodge;
+        if mitigation_packed.is_finite() && mitigation_packed > 0.0 {
+            out.push(CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: format!("forbidden_tech_ship_class_torpedo_family_{fid}_armor_dodge_return_fire"),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::MitigationAdditive(mitigation_packed),
+                    condition: Some(gated.clone()),
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            });
+        }
+        if let Some(p) = pierce {
+            if p.is_finite() && p > 0.0 {
+                out.push(CrewSeatContext {
+                    seat: CrewSeat::Ship,
+                    ability: Ability {
+                        name: format!("forbidden_tech_ship_class_torpedo_family_{fid}_pierce"),
+                        class: AbilityClass::ShipAbility,
+                        timing: TimingWindow::CombatBegin,
+                        boostable: false,
+                        effect: AbilityEffect::PierceBonus(p),
+                        condition: Some(gated.clone()),
+                    },
+                    boosted: false,
+                    officer_id: None,
+                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                });
+            }
+        }
+        if let Some(wd) = weapon_damage {
+            if wd.is_finite() && wd > 0.0 {
+                out.push(CrewSeatContext {
+                    seat: CrewSeat::Ship,
+                    ability: Ability {
+                        name: format!("forbidden_tech_ship_class_torpedo_family_{fid}_weapon_damage"),
+                        class: AbilityClass::ShipAbility,
+                        timing: TimingWindow::AttackPhase,
+                        boostable: false,
+                        effect: AbilityEffect::AttackMultiplier(wd),
+                        condition: Some(gated),
+                    },
+                    boosted: false,
+                    officer_id: None,
+                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                });
+            }
+        }
+    }
+    out
 }
 
 fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
@@ -906,6 +1226,7 @@ mod tests {
     use crate::data::forbidden_chaos::{BonusEntry, ForbiddenChaosList, ForbiddenChaosRecord};
     use crate::data::import::BuildingEntry;
     use crate::data::import::ForbiddenTechEntry;
+    use crate::data::ship::ShipRecord;
 
     use super::*;
 
@@ -1460,6 +1781,233 @@ mod tests {
             }
             _ => panic!("expected cumulative opponent shield mitigation debuff"),
         }
+    }
+
+    #[test]
+    fn ship_class_torpedo_family_s31_skips_flat_profile_and_exposes_gated_seats_and_hull_fraction() {
+        use crate::combat::AbilityCondition;
+        use crate::combat::ShipType;
+
+        let fid = super::S31_TORPEDO_PODS_FORBIDDEN_TECH_FID;
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(fid),
+                name: "S31 Torpedo Pods".into(),
+                tech_type: "forbidden".into(),
+                tier: Some(12),
+                bonuses: vec![
+                    BonusEntry {
+                        stat: "armor".into(),
+                        value: 0.08,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "shield_mitigation".into(),
+                        value: 0.08,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "dodge".into(),
+                        value: 0.08,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "hull_hp".into(),
+                        value: 0.12,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "pierce".into(),
+                        value: 0.06,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "weapon_damage".into(),
+                        value: 0.155,
+                        operator: "add".into(),
+                    },
+                ],
+            }],
+        };
+        let imported = vec![ForbiddenTechEntry {
+            fid,
+            tier: 12,
+            level: 60,
+            shard_count: 0,
+        }];
+        let effective = vec![fid];
+
+        let mut profile = PlayerProfile::default();
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &effective,
+            &imported,
+            &catalog,
+            false,
+        );
+        assert!(profile.bonuses.is_empty());
+
+        assert!(super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+            None,
+        )
+        .is_none());
+
+        let ship_bb = ShipRecord {
+            id: "t".into(),
+            ship_name: "T".into(),
+            ship_class: "battleship".into(),
+            armor_piercing: 0.0,
+            shield_piercing: 0.0,
+            accuracy: 100.0,
+            attack: 1.0,
+            crit_chance: 0.0,
+            crit_damage: 1.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: None,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: None,
+            abilities: None,
+        };
+        let hull = super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+            Some(&ship_bb),
+        );
+        assert!((hull.unwrap() - 0.12).abs() < 1e-12);
+        let sm = super::ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+            Some(&ship_bb),
+        );
+        assert!((sm.unwrap() - 0.08).abs() < 1e-12);
+        let acc = super::ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+            Some(&ship_bb),
+        );
+        assert!((acc.unwrap() - 0.06).abs() < 1e-12);
+
+        let seats = super::ship_class_gated_torpedo_family_derived_seats(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+        );
+        assert_eq!(seats.len(), 3);
+        let expected_gate = AbilityCondition::And(vec![
+            AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+            AbilityCondition::DefenderIsNpcHostile,
+        ]);
+        for s in &seats {
+            assert_eq!(s.ability.condition.as_ref(), Some(&expected_gate));
+        }
+    }
+
+    #[test]
+    fn ship_class_torpedo_family_control_seeker_matches_explorer_hull_only() {
+        let fid = super::CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID;
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(fid),
+                name: "Control Seeker Probes".into(),
+                tech_type: "forbidden".into(),
+                tier: Some(12),
+                bonuses: vec![
+                    BonusEntry {
+                        stat: "hull_hp".into(),
+                        value: 0.12,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "shield_mitigation".into(),
+                        value: 0.08,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "accuracy".into(),
+                        value: 0.06,
+                        operator: "add".into(),
+                    },
+                ],
+            }],
+        };
+        let imported = vec![ForbiddenTechEntry {
+            fid,
+            tier: 12,
+            level: 60,
+            shard_count: 0,
+        }];
+        let effective = vec![fid];
+
+        let ship_explorer = ShipRecord {
+            id: "e".into(),
+            ship_name: "E".into(),
+            ship_class: "explorer".into(),
+            armor_piercing: 0.0,
+            shield_piercing: 0.0,
+            accuracy: 100.0,
+            attack: 1.0,
+            crit_chance: 0.0,
+            crit_damage: 1.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: None,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: None,
+            abilities: None,
+        };
+        let ship_bb = ShipRecord {
+            id: "b".into(),
+            ship_name: "B".into(),
+            ship_class: "battleship".into(),
+            armor_piercing: 0.0,
+            shield_piercing: 0.0,
+            accuracy: 100.0,
+            attack: 1.0,
+            crit_chance: 0.0,
+            crit_damage: 1.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: None,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: None,
+            abilities: None,
+        };
+
+        let h_ex = super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+            Some(&ship_explorer),
+        );
+        assert!((h_ex.unwrap() - 0.12).abs() < 1e-12);
+        assert!(super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+            &imported,
+            &effective,
+            &catalog,
+            false,
+            Some(&ship_bb),
+        )
+        .is_none());
     }
 
     fn tiny_catalog(items: Vec<ForbiddenChaosRecord>) -> ForbiddenChaosList {

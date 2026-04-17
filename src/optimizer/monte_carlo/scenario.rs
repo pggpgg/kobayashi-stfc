@@ -28,6 +28,10 @@ use crate::data::profile::{
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     forbidden_tech_derived_attack_phase_seats, forbidden_tech_level_tier_scaling_enabled_from_env,
     quantum_slipstream_forbidden_tech_round_start_seats,
+    ship_class_gated_torpedo_family_derived_seats,
+    ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
+    ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
+    ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
     merge_tech_fids_into_profile_with_level_tier, research_derived_attack_phase_seats,
     resolve_effective_tech_fids, PlayerProfile, USS_VOYAGER_SHIP_ID,
@@ -72,6 +76,26 @@ impl DefenderOpponent {
     pub fn defender_is_player_ship(self) -> bool {
         matches!(self, Self::Player)
     }
+}
+
+/// Ship-class torpedo family: add summed catalog accuracy fractions to [`PlayerProfile::bonuses`] when the
+/// scenario defender is a hostile (per-fid values are resolved in profile helpers using `ship_rec`).
+fn apply_class_gated_torpedo_family_hostile_accuracy_to_profile(
+    profile: &mut PlayerProfile,
+    defender_opponent: DefenderOpponent,
+    acc_frac_sum: Option<f64>,
+) {
+    let Some(a) = acc_frac_sum else {
+        return;
+    };
+    if defender_opponent != DefenderOpponent::Hostile {
+        return;
+    }
+    if !a.is_finite() || a <= 0.0 {
+        return;
+    }
+    let cur = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
+    profile.bonuses.insert("accuracy".to_string(), cur + a);
 }
 
 /// Append the ship [`ShipRecord`]'s optional `abilities` as [`CrewSeatContext`] rows
@@ -346,11 +370,16 @@ pub(crate) struct SharedScenarioData {
     pub unknown_support_buff_ids: Vec<String>,
     /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
     pub research_derived_seats: Vec<CrewSeatContext>,
-    /// Borg Alcove attack-phase crit seats, Quantum Slipstream round-start debuff seat; hull is handled via
-    /// [`Self::borg_alcove_hull_hp_bonus`].
+    /// Borg Alcove attack-phase crit seats, Quantum Slipstream round-start debuff, ship-class torpedo family
+    /// (S31 / Control Seeker / Dual Photon) combat-begin / attack-phase seats; hull extras via
+    /// [`Self::borg_alcove_hull_hp_bonus`] and [`Self::class_gated_torpedo_family_hull_hp_bonus`].
     pub forbidden_tech_derived_seats: Vec<CrewSeatContext>,
     /// Borg Alcove hull catalog bonus (fraction) when tech is equipped; multiply Voyager hull only in scenario build.
     pub borg_alcove_hull_hp_bonus: Option<f64>,
+    /// Sum of hull catalog bonuses for equipped torpedo-family techs matching the resolved ship hull class.
+    pub class_gated_torpedo_family_hull_hp_bonus: Option<f64>,
+    /// Sum of shield deflection adds for matching-hull family techs; applied vs **hostile** (`defender_opponent`).
+    pub class_gated_torpedo_family_hostile_shield_mitigation_sum: Option<f64>,
     /// Canonical `EnemyHostile` / `EnemyPlayer` condition context for the defending side.
     pub defender_opponent: DefenderOpponent,
 }
@@ -496,6 +525,18 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 }
             }
         }
+        if let Some(h) = shared.class_gated_torpedo_family_hull_hp_bonus {
+            if h.is_finite() && h != 0.0 {
+                attacker.hull_health *= 1.0 + h;
+            }
+        }
+        if shared.defender_opponent == DefenderOpponent::Hostile {
+            if let Some(d) = shared.class_gated_torpedo_family_hostile_shield_mitigation_sum {
+                if d.is_finite() && d != 0.0 {
+                    attacker.shield_mitigation = (attacker.shield_mitigation + d).clamp(0.0, 1.0);
+                }
+            }
+        }
         if !merged_static.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
         }
@@ -558,6 +599,18 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         if let Some(h) = shared.borg_alcove_hull_hp_bonus {
             if h.is_finite() && h != 0.0 {
                 attacker.hull_health *= 1.0 + h;
+            }
+        }
+    }
+    if let Some(h) = shared.class_gated_torpedo_family_hull_hp_bonus {
+        if h.is_finite() && h != 0.0 {
+            attacker.hull_health *= 1.0 + h;
+        }
+    }
+    if shared.defender_opponent == DefenderOpponent::Hostile {
+        if let Some(d) = shared.class_gated_torpedo_family_hostile_shield_mitigation_sum {
+            if d.is_finite() && d != 0.0 {
+                attacker.shield_mitigation = (attacker.shield_mitigation + d).clamp(0.0, 1.0);
             }
         }
     }
@@ -991,35 +1044,44 @@ pub(crate) fn build_shared_scenario_data_standalone(
     let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
     let mut forbidden_tech_derived_seats: Vec<CrewSeatContext> = Vec::new();
     let mut borg_alcove_hull_hp_bonus: Option<f64> = None;
-    if let Some(catalog) =
-        forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH)
-    {
-        let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, &catalog);
+    let forbidden_catalog =
+        forbidden_chaos::load_forbidden_chaos(forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH);
+    let scale_by_level_tier = forbidden_tech_level_tier_scaling_enabled_from_env();
+    let effective_fids: Vec<i64> = forbidden_catalog
+        .as_ref()
+        .map(|c| resolve_effective_tech_fids(&profile, &ft_entries, c))
+        .unwrap_or_default();
+    if let Some(ref catalog) = forbidden_catalog {
         if !effective_fids.is_empty() {
-            let scale_by_level_tier = forbidden_tech_level_tier_scaling_enabled_from_env();
             merge_tech_fids_into_profile_with_level_tier(
                 &mut profile,
                 &effective_fids,
                 &ft_entries,
-                &catalog,
+                catalog,
                 scale_by_level_tier,
             );
             forbidden_tech_derived_seats = forbidden_tech_derived_attack_phase_seats(
                 &ft_entries,
                 &effective_fids,
-                &catalog,
+                catalog,
                 scale_by_level_tier,
             );
             forbidden_tech_derived_seats.extend(quantum_slipstream_forbidden_tech_round_start_seats(
                 &ft_entries,
                 &effective_fids,
-                &catalog,
+                catalog,
+                scale_by_level_tier,
+            ));
+            forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
                 scale_by_level_tier,
             ));
             borg_alcove_hull_hp_bonus = borg_alcove_hull_hp_bonus_fraction(
                 &ft_entries,
                 &effective_fids,
-                &catalog,
+                catalog,
                 scale_by_level_tier,
             );
         }
@@ -1088,6 +1150,49 @@ pub(crate) fn build_shared_scenario_data_standalone(
     let ship_rec = resolve_ship(ship);
     let hostile_rec = resolve_hostile(hostile);
 
+    let class_gated_tp_hull = forbidden_catalog.as_ref().and_then(|cat| {
+        if effective_fids.is_empty() {
+            return None;
+        }
+        ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+            &ft_entries,
+            &effective_fids,
+            cat,
+            scale_by_level_tier,
+            ship_rec.as_ref(),
+        )
+    });
+    let class_gated_tp_shield_mit = forbidden_catalog.as_ref().and_then(|cat| {
+        if effective_fids.is_empty() {
+            return None;
+        }
+        ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship(
+            &ft_entries,
+            &effective_fids,
+            cat,
+            scale_by_level_tier,
+            ship_rec.as_ref(),
+        )
+    });
+    let class_gated_tp_accuracy = forbidden_catalog.as_ref().and_then(|cat| {
+        if effective_fids.is_empty() {
+            return None;
+        }
+        ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship(
+            &ft_entries,
+            &effective_fids,
+            cat,
+            scale_by_level_tier,
+            ship_rec.as_ref(),
+        )
+    });
+
+    apply_class_gated_torpedo_family_hostile_accuracy_to_profile(
+        &mut profile,
+        defender_opponent,
+        class_gated_tp_accuracy,
+    );
+
     let (
         cached_defender,
         cached_rounds,
@@ -1151,6 +1256,8 @@ pub(crate) fn build_shared_scenario_data_standalone(
         research_derived_seats,
         forbidden_tech_derived_seats,
         borg_alcove_hull_hp_bonus,
+        class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
+        class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
     }
 }
@@ -1187,10 +1294,13 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
     let mut forbidden_tech_derived_seats: Vec<CrewSeatContext> = Vec::new();
     let mut borg_alcove_hull_hp_bonus: Option<f64> = None;
+    let scale_by_level_tier = forbidden_tech_level_tier_scaling_enabled_from_env();
+    let effective_fids: Vec<i64> = registry
+        .forbidden_chaos_catalog()
+        .map(|c| resolve_effective_tech_fids(&profile, &ft_entries, c))
+        .unwrap_or_default();
     if let Some(catalog) = registry.forbidden_chaos_catalog() {
-        let effective_fids = resolve_effective_tech_fids(&profile, &ft_entries, catalog);
         if !effective_fids.is_empty() {
-            let scale_by_level_tier = forbidden_tech_level_tier_scaling_enabled_from_env();
             merge_tech_fids_into_profile_with_level_tier(
                 &mut profile,
                 &effective_fids,
@@ -1205,6 +1315,12 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 scale_by_level_tier,
             );
             forbidden_tech_derived_seats.extend(quantum_slipstream_forbidden_tech_round_start_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+                scale_by_level_tier,
+            ));
+            forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,
                 catalog,
@@ -1301,6 +1417,49 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     let ship_rec = registry.resolve_ship_with_tier_level(ship, ship_tier, ship_level);
     let hostile_rec = registry.resolve_hostile(hostile);
 
+    let class_gated_tp_hull = registry.forbidden_chaos_catalog().and_then(|cat| {
+        if effective_fids.is_empty() {
+            return None;
+        }
+        ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+            &ft_entries,
+            &effective_fids,
+            cat,
+            scale_by_level_tier,
+            ship_rec.as_ref(),
+        )
+    });
+    let class_gated_tp_shield_mit = registry.forbidden_chaos_catalog().and_then(|cat| {
+        if effective_fids.is_empty() {
+            return None;
+        }
+        ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship(
+            &ft_entries,
+            &effective_fids,
+            cat,
+            scale_by_level_tier,
+            ship_rec.as_ref(),
+        )
+    });
+    let class_gated_tp_accuracy = registry.forbidden_chaos_catalog().and_then(|cat| {
+        if effective_fids.is_empty() {
+            return None;
+        }
+        ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship(
+            &ft_entries,
+            &effective_fids,
+            cat,
+            scale_by_level_tier,
+            ship_rec.as_ref(),
+        )
+    });
+
+    apply_class_gated_torpedo_family_hostile_accuracy_to_profile(
+        &mut profile,
+        defender_opponent,
+        class_gated_tp_accuracy,
+    );
+
     let (
         cached_defender,
         cached_rounds,
@@ -1364,6 +1523,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         research_derived_seats,
         forbidden_tech_derived_seats,
         borg_alcove_hull_hp_bonus,
+        class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
+        class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
     }
 }
@@ -1816,6 +1977,8 @@ mod tests {
             research_derived_seats: vec![],
             forbidden_tech_derived_seats: vec![],
             borg_alcove_hull_hp_bonus: None,
+            class_gated_torpedo_family_hull_hp_bonus: None,
+            class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
         };
 

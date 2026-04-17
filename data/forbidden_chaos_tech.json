@@ -50,13 +50,28 @@
       "tier": 12,
       "bonuses": [
         {
+          "stat": "armor",
+          "value": 0.08,
+          "operator": "add"
+        },
+        {
           "stat": "shield_mitigation",
+          "value": 0.08,
+          "operator": "add"
+        },
+        {
+          "stat": "dodge",
           "value": 0.08,
           "operator": "add"
         },
         {
           "stat": "hull_hp",
           "value": 0.12,
+          "operator": "add"
+        },
+        {
+          "stat": "pierce",
+          "value": 0.06,
           "operator": "add"
         },
         {
@@ -246,13 +261,28 @@
       "tier": 12,
       "bonuses": [
         {
+          "stat": "armor",
+          "value": 0.08,
+          "operator": "add"
+        },
+        {
           "stat": "shield_mitigation",
+          "value": 0.08,
+          "operator": "add"
+        },
+        {
+          "stat": "dodge",
           "value": 0.08,
           "operator": "add"
         },
         {
           "stat": "hull_hp",
           "value": 0.12,
+          "operator": "add"
+        },
+        {
+          "stat": "pierce",
+          "value": 0.06,
           "operator": "add"
         },
         {
