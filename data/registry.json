@@ -1,10 +1,4 @@
 {
-  "hostiles": {
-    "source": "data-stfc-space",
-    "data_version": "stfcspace-hostiles-2026-03-21",
-    "last_updated": "2026-03-21",
-    "path": "hostiles/index.json"
-  },
   "ships": {
     "source": "data-stfc-space",
     "data_version": "data-stfc-space",
@@ -15,5 +9,11 @@
     "source": "community_spreadsheet",
     "last_updated": "2026-04-17",
     "path": "syndicate_reputation.json"
+  },
+  "hostiles": {
+    "source": "data-stfc-space",
+    "data_version": "stfcspace-hostiles-2026-04-17",
+    "last_updated": "2026-04-17",
+    "path": "hostiles/index.json"
   }
 }

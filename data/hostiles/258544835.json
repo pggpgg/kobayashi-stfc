@@ -2,7 +2,7 @@
   "id": "258544835",
   "hostile_name": "Hostile 258544835",
   "level": 15,
-  "ship_class": "battleship",
+  "ship_class": "interceptor",
   "armor": 100.0,
   "shield_deflection": 100.0,
   "dodge": 400.0,
