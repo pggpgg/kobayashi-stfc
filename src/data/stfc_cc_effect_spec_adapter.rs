@@ -9,6 +9,49 @@ use crate::data::combat_effect_spec::{
     AbilityTriggerSpec, CombatEffectSpec, EffectCategory, EffectSource, ValueSpec,
 };
 
+/// Upstream cheat-sheet tokens with no [`crate::combat::abilities::AbilityCondition`] equivalent yet;
+/// ingested as [`AbilityConditionSpec::StfcCcToken`]. See `docs/CANONICAL_CONDITIONS.md` deferred list.
+const STFC_CC_DEFERRED_CONDITION_TOKENS: &[&str] = &[
+    "CargoEmpty",
+    "CargoFull",
+    "CombatBattleType",
+    "CombatGameContext",
+    "EnemyNotToaTrialHostile",
+    "EnemySentinel",
+    "EnemyStronger",
+    "HitEnemyWithEnergy",
+    "HitEnemyWithKinetic",
+    "HullHealthAbove",
+    "HullHealthBelow",
+    "HullHealthBelowStartOfCombat",
+    "ModuleEnergy",
+    "ModuleKinetic",
+    "SelfAtAssault2",
+    "SelfAtSoloArmada",
+    "SelfAtStation",
+    "SelfAtWaveDefenseChallenge",
+    "SelfAttacking",
+    "SelfCloaked",
+    "SelfDefending",
+    "SelfHullAmalgam",
+    "SelfHullBorgCube",
+    "SelfHullDiscovery",
+    "SelfHullFranklins",
+    "SelfHullJunker",
+    "SelfHullNseaProtector",
+    "SelfHullVoyager",
+    "SelfMining",
+    "SelfStateNone",
+    "TargetIsArmadaOrInvadingEntity",
+    "TargetIsInvadingEntity",
+    "TargetMaxLevel",
+    "TargetNotASB",
+    "TargetNotInvadingEntity",
+    "TargetNotPlayerStation",
+    "TargetNotSoloArmada",
+    "TargetStateAny",
+];
+
 /// Stable diagnostic strings (prefix `unmapped_*:`) for rows that cannot be fully converted.
 pub type StfcCcDiagnostics = Vec<String>;
 
@@ -89,6 +132,8 @@ pub fn map_stfc_cc_trigger(raw: &str) -> Result<AbilityTriggerSpec, String> {
         "OnShieldBreak" | "OnEnemyShieldBreak" | "ShieldsDepleted" => Ok(AbilityTriggerSpec::ShieldBreak),
         "OnOwnShieldBreak" => Ok(AbilityTriggerSpec::SelfShieldBreak),
         "CriticalShotTaken" => Ok(AbilityTriggerSpec::DefensePhase),
+        "ShipRecalled" => Ok(AbilityTriggerSpec::CombatEnd),
+        "TargetShieldsDepleted" => Ok(AbilityTriggerSpec::ShieldBreak),
         _ => Err(format!("unmapped_trigger:{s}")),
     }
 }
@@ -107,8 +152,11 @@ pub fn map_stfc_cc_target(raw: &str) -> Result<AbilityTargetSpec, String> {
         "AttackerSelf" => Ok(AbilityTargetSpec::AttackerSelf),
         "DefenderOpponent" => Ok(AbilityTargetSpec::DefenderOpponent),
         // AoE / seat shorthand from cheat-sheet columns.
-        "EnemyAllShips" => Ok(AbilityTargetSpec::DefenderTeam),
+        "EnemyAllShips" | "EnemyAll" => Ok(AbilityTargetSpec::DefenderTeam),
         "SelfCaptain" => Ok(AbilityTargetSpec::AttackerSelf),
+        "EnemyBridge" | "EnemyCaptain" => Ok(AbilityTargetSpec::EnemyShip),
+        "SelfAllShips" => Ok(AbilityTargetSpec::AttackerTeam),
+        "SelfOfficer" => Ok(AbilityTargetSpec::AttackerSelf),
         _ => Err(format!("unmapped_target:{s}")),
     }
 }
@@ -140,6 +188,47 @@ fn faction_id_from_ability_attributes(attrs: &str) -> Option<i64> {
         }
     }
     None
+}
+
+/// Merge parsed `AbilityAttributes` key/value pairs into [`CombatEffectSpec::attributes`] under `stfc_cc_ability_attributes`.
+fn merge_stfc_cc_ability_attributes(raw: &str, out: &mut serde_json::Map<String, serde_json::Value>) {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return;
+    }
+    let mut obj = serde_json::Map::new();
+    for segment in raw.split(',') {
+        let s = segment.trim();
+        if s.is_empty() {
+            continue;
+        }
+        let Some((k, v)) = s.split_once('=') else {
+            continue;
+        };
+        let k = k.trim();
+        if k.is_empty() {
+            continue;
+        }
+        let v = v.trim();
+        let val = if v.starts_with('[') || v.starts_with('{') {
+            serde_json::from_str::<serde_json::Value>(v).unwrap_or_else(|_| serde_json::Value::String(v.to_string()))
+        } else if let Ok(n) = v.parse::<i64>() {
+            serde_json::json!(n)
+        } else if let Ok(f) = v.parse::<f64>() {
+            serde_json::Number::from_f64(f)
+                .map(serde_json::Value::Number)
+                .unwrap_or_else(|| serde_json::Value::String(v.to_string()))
+        } else {
+            serde_json::Value::String(v.to_string())
+        };
+        obj.insert(k.to_string(), val);
+    }
+    if !obj.is_empty() {
+        out.insert(
+            "stfc_cc_ability_attributes".to_string(),
+            serde_json::Value::Object(obj),
+        );
+    }
 }
 
 fn map_condition_token(token: &str, ability_attributes: Option<&str>) -> Result<AbilityConditionSpec, String> {
@@ -205,7 +294,15 @@ fn map_condition_token(token: &str, ability_attributes: Option<&str>) -> Result<
                 .ok_or_else(|| "unmapped_condition:EnemyHullFaction".to_string())?;
             Ok(AbilityConditionSpec::DefenderHullFactionIdIs { faction_id: id })
         }
-        _ => Err(format!("unmapped_condition:{t}")),
+        _ => {
+            if STFC_CC_DEFERRED_CONDITION_TOKENS.iter().any(|&x| x == t) {
+                Ok(AbilityConditionSpec::StfcCcToken {
+                    token: t.to_string(),
+                })
+            } else {
+                Err(format!("unmapped_condition:{t}"))
+            }
+        }
     }
 }
 
@@ -301,6 +398,11 @@ pub fn try_stfc_cc_string_record_to_spec(
         unit: None,
     });
 
+    let mut attributes = serde_json::Map::new();
+    if let Some(attrs) = attrs_for_conditions {
+        merge_stfc_cc_ability_attributes(attrs, &mut attributes);
+    }
+
     Ok(CombatEffectSpec {
         id: format!("stfc_cc:{officer}:{ability_type}:{ability_id}"),
         source: EffectSource::StfcCcCheatSheet,
@@ -314,7 +416,7 @@ pub fn try_stfc_cc_string_record_to_spec(
         chance: None,
         duration: None,
         conditions,
-        attributes: serde_json::Map::new(),
+        attributes,
         stacking: None,
         category: Some(EffectCategory::Combat),
         confidence: None,
@@ -481,6 +583,43 @@ mod tests {
             }
             _ => panic!("expected DefenderHullFactionIdIs"),
         }
+        let attrs = spec
+            .attributes
+            .get("stfc_cc_ability_attributes")
+            .and_then(|v| v.as_object())
+            .expect("merged ability attributes");
+        assert_eq!(
+            attrs.get("faction_id").and_then(|v| v.as_i64()),
+            Some(1_750_120_904)
+        );
+    }
+
+    #[test]
+    fn target_not_asb_is_stfc_cc_token_with_merged_attributes() {
+        let h = headers_with_attributes();
+        let rec = StringRecord::from(vec![
+            "X",
+            "OA",
+            "AllReloadSpeed",
+            "TargetNotArmada, TargetNotASB, TargetHasHullBreach",
+            "CriticalShotFired",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
+            "0.1",
+            "num_rounds=1",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert!(spec.conditions.iter().any(|c| matches!(
+            c,
+            AbilityConditionSpec::StfcCcToken { token } if token == "TargetNotASB"
+        )));
+        let n = spec
+            .attributes
+            .get("stfc_cc_ability_attributes")
+            .and_then(|v| v.get("num_rounds"))
+            .and_then(|v| v.as_i64());
+        assert_eq!(n, Some(1));
     }
 
     #[test]

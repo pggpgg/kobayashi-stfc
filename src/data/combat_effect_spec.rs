@@ -231,6 +231,11 @@ pub enum AbilityConditionSpec {
     Or {
         any: Vec<AbilityConditionSpec>,
     },
+    /// stfc.cc / upstream token with no [`crate::combat::abilities::AbilityCondition`] mapping yet.
+    /// [`crate::combat::effect_spec_compile::compile_condition`] returns an error for this variant.
+    StfcCcToken {
+        token: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -347,6 +352,16 @@ mod tests {
                     inner: Box::new(AbilityConditionSpec::DefenderBurning),
                 },
             ],
+        };
+        let j = serde_json::to_string(&c).unwrap();
+        let back: AbilityConditionSpec = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, c);
+    }
+
+    #[test]
+    fn serde_stfc_cc_token_roundtrip() {
+        let c = AbilityConditionSpec::StfcCcToken {
+            token: "TargetNotASB".into(),
         };
         let j = serde_json::to_string(&c).unwrap();
         let back: AbilityConditionSpec = serde_json::from_str(&j).unwrap();

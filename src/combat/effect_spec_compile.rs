@@ -25,6 +25,9 @@ pub enum EffectSpecCompileError {
     UnknownFactionSlug(String),
     UnknownShipTypeSlug(String),
     EmptyConditionParts,
+    StfcCcTokenNotCompilable {
+        token: String,
+    },
 }
 
 impl std::fmt::Display for EffectSpecCompileError {
@@ -41,6 +44,10 @@ impl std::fmt::Display for EffectSpecCompileError {
             Self::UnknownFactionSlug(s) => write!(f, "unknown defender faction slug '{s}'"),
             Self::UnknownShipTypeSlug(s) => write!(f, "unknown ship class slug '{s}'"),
             Self::EmptyConditionParts => write!(f, "condition list produced no runtime gates"),
+            Self::StfcCcTokenNotCompilable { token } => write!(
+                f,
+                "stfc.cc condition token has no AbilityCondition mapping yet: {token}"
+            ),
         }
     }
 }
@@ -144,6 +151,9 @@ pub fn compile_condition(spec: &AbilityConditionSpec) -> Result<AbilityCondition
             }
             Ok(AbilityCondition::Or(parts))
         }
+        AbilityConditionSpec::StfcCcToken { token } => Err(EffectSpecCompileError::StfcCcTokenNotCompilable {
+            token: token.clone(),
+        }),
     }
 }
 
@@ -244,6 +254,15 @@ mod tests {
     fn compile_condition_tal_not_on_bridge() {
         let c = compile_condition(&AbilityConditionSpec::AttackerOfficerTalNotOnBridge).unwrap();
         assert!(matches!(c, AbilityCondition::AttackerOfficerTalNotOnBridge));
+    }
+
+    #[test]
+    fn compile_condition_stfc_cc_token_errors() {
+        let e = compile_condition(&AbilityConditionSpec::StfcCcToken {
+            token: "TargetMaxLevel".into(),
+        })
+        .unwrap_err();
+        assert!(matches!(e, EffectSpecCompileError::StfcCcTokenNotCompilable { .. }));
     }
 
     #[test]
