@@ -133,7 +133,12 @@ This checklist turns the draft in [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md)
 ### Acceptance criteria
 
 - [x] Can convert sample rows from [data/upstream/cheat-sheet/raw-officers-m88-17rc.csv](../data/upstream/cheat-sheet/raw-officers-m88-17rc.csv)
-- [x] Reports unmapped tokens with stable diagnostics
+- [x] Reports unmapped tokens with stable diagnostics (`unmapped_*:` prefixes)
+- [x] Bundled cheat sheet: **561/561** rows full-convert (`scan_stfc_cc_cheat_sheet_csv`); unit test locks `rows_full_convert == rows_total`
+- [x] `EnemyHullFaction` + `AbilityAttributes` (`faction_id=…`) → `DefenderHullFactionIdIs`; attributes merged under `CombatEffectSpec.attributes["stfc_cc_ability_attributes"]`
+- [x] Deferred upstream condition tokens → `AbilityConditionSpec::StfcCcToken` (not compilable to `AbilityCondition` until modeled in engine)
+- [x] Composite `OfficerStatAll` → `AbilityModifierSpec::TagOnly` (aligned with `generate_lcars` multi-stat bucket)
+- [x] CLI [`src/bin/stfc_cc_cheat_sheet_report.rs`](../src/bin/stfc_cc_cheat_sheet_report.rs): `--json` output; human mode prints `coverage: full` when complete
 
 ## Phase 6 - Parity harness and cutover
 
@@ -170,7 +175,8 @@ This checklist turns the draft in [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md)
 
 ### Milestone C (ecosystem hardening)
 
-- [ ] Phase 5 + 6 complete
+- [x] Phase 5 complete (stfc.cc adapter; bundled CSV 561/561)
+- [ ] Phase 6 complete (golden parity harness, optional debug)
 - [ ] Default flip completed and legacy retired
 
 ## Tracking notes template
