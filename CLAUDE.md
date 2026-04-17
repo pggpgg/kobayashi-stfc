@@ -97,7 +97,7 @@ cargo run --bin normalize_data_stfc_space
 
 ### Hostile data (data.stfc.space cache)
 
-Populate upstream detail JSON from the API (default: only **missing** files; **`--full`** re-downloads every id in `summary-hostile.json`):
+Populate upstream detail JSON from the API (default: only **missing** files; `**--full`** re-downloads every id in `summary-hostile.json`):
 
 ```bash
 node scripts/fetch_stfcspace_hostiles.mjs
@@ -127,14 +127,13 @@ node scripts/import_stfcspace_research.mjs --from-upstream --limit 0   # reads l
 
 The library is at `src/lib.rs` and exposes these modules:
 
-- **`src/combat/`** — Core fight loop (`engine.rs`). This is the hot path: zero allocations, no dynamic dispatch, SplitMix64 PRNG. `abilities.rs` evaluates effects per round; `buffs.rs` implements stacking rules; `stacking.rs` handles the base→flat→pct→multiply→cap resolution order.
-- **`src/lcars/`** — LCARS YAML parser (`parser.rs`) and resolver (`resolver.rs`) that collapses officer definitions into a `BuffSet` (static buffs + per-round effects + triggered effects). Only files matching `*.lcars.yaml` are loaded from a directory.
-- **`src/optimizer/`** — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates (optional **pool narrowing** from search constraints on the registry path); `genetic.rs` is the GA strategy (`strategy: "genetic"`); `tiered.rs` is scout → confirm top K (`strategy: "tiered"`, optional `tiered_scout_sims` / `tiered_top_k`, respects `ship_tier`/`ship_level`). Omitting `strategy` on optimize auto-picks tiered vs exhaustive from **effective** candidate count after warm-start + constraints (`count_effective_optimize_candidates`, `src/server/api/execution.rs`). `warm_start_crews` prepends deduped crews before generation. Omitted **`analytical_prefilter_keep`** may use **`analytical_prefilter_keep_auto`** (`src/optimizer/mod.rs`). `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
-- **`src/data/`** — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is the maintainer-curated catalog; `officers.lcars.yaml` is generated from it (`generate_lcars`) and is the combat YAML the sim loads. `loader.rs` resolves by id (e.g. data.stfc.space numeric string `2918121098`) or by normalized hostile name + level (e.g. `hostile_2918121098_81` for placeholder display names).
-- **`src/server/`** — Axum HTTP server with Tokio async runtime. Heavy operations (simulate, optimize) are offloaded via `spawn_blocking`. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
-- **`src/server/`** — Async HTTP server built on Tokio + Axum 0.7. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers; CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present.
-- **`src/parallel/`** — Rayon thread pool integration; each thread owns its PRNG instance.
-- **`src/cli.rs`** — CLI dispatch (used by tests via `run_with_args`); `src/main.rs` is the binary entry point.
+- `**src/combat/**` — Core fight loop (`engine.rs`). This is the hot path: zero allocations, no dynamic dispatch, SplitMix64 PRNG. `abilities.rs` evaluates effects per round; `buffs.rs` implements stacking rules; `stacking.rs` handles the base→flat→pct→multiply→cap resolution order.
+- `**src/lcars/**` — LCARS YAML parser (`parser.rs`) and resolver (`resolver.rs`) that collapses officer definitions into a `BuffSet` (static buffs + per-round effects + triggered effects). Only files matching `*.lcars.yaml` are loaded from a directory.
+- `**src/optimizer/**` — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates (optional **pool narrowing** from search constraints on the registry path); `genetic.rs` is the GA strategy (`strategy: "genetic"`); `tiered.rs` is scout → confirm top K (`strategy: "tiered"`, optional `tiered_scout_sims` / `tiered_top_k`, respects `ship_tier`/`ship_level`). Omitting `strategy` on optimize auto-picks tiered vs exhaustive from **effective** candidate count after warm-start + constraints (`count_effective_optimize_candidates`, `src/server/api/execution.rs`). `warm_start_crews` prepends deduped crews before generation. Omitted `**analytical_prefilter_keep`** may use `**analytical_prefilter_keep_auto**` (`src/optimizer/mod.rs`). `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
+- `**src/data/**` — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is the maintainer-curated catalog; `officers.lcars.yaml` is generated from it (`generate_lcars`) and is the combat YAML the sim loads. `loader.rs` resolves by id (e.g. data.stfc.space numeric string `2918121098`) or by normalized hostile name + level (e.g. `hostile_2918121098_81` for placeholder display names).
+- `**src/server/**` — Tokio + Axum 0.7 HTTP server. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers. CPU-bound work (simulate, optimize) uses `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
+- `**src/parallel/**` — Rayon thread pool integration; each thread owns its PRNG instance.
+- `**src/cli.rs**` — CLI dispatch (used by tests via `run_with_args`); `src/main.rs` is the binary entry point.
 
 **Key constraint:** Always run the server from the project root so it resolves `frontend/dist` and `data/` correctly.
 
@@ -157,6 +156,7 @@ data/
 ### Frontend (React + Vite + TypeScript)
 
 SPA at `frontend/src/`. Key components in `frontend/src/components/`:
+
 - `CrewBuilder.tsx` — officer slot selection
 - `OptimizePanel.tsx` — optimization run configuration
 - `SimResults.tsx` — ranked crew results table
@@ -198,18 +198,18 @@ Unknown effect types are skipped with a warning (graceful degradation).
 
 Community-known crew lists stored in `data/heuristics/*.txt`. Format: `label:Captain,Bridge1,Bridge2:BD1,BD2,...` (lines starting with `#` are comments). These are simulated first before the normal optimizer runs.
 
-- **`src/data/heuristics.rs`** — parser, name resolution (alias lookup → exact → substring), and BD expansion logic
+- `**src/data/heuristics.rs**` — parser, name resolution (alias lookup → exact → substring), and BD expansion logic
 - **BD strategies**: `Ordered` (take first k from list) or `Exploration` (try all C(n,k) combinations) — passed as `below_decks_strategy: "ordered"|"exploration"` in the API request
-- **`GET /api/heuristics`** — lists available seed file stems from `data/heuristics/`
-- **`POST /api/optimize/start`** — same body as `/api/optimize`: `heuristics_seeds`, `heuristics_only`, `below_decks_strategy`; optional `tiered_scout_sims`, `tiered_top_k` (tiered), `warm_start_crews` (deduped prepend), `chain`, `support_buffs`, `analytical_prefilter_keep`, etc.
+- `**GET /api/heuristics`** — lists available seed file stems from `data/heuristics/`
+- `**POST /api/optimize/start**` — same body as `/api/optimize`: `heuristics_seeds`, `heuristics_only`, `below_decks_strategy`; optional `tiered_scout_sims`, `tiered_top_k` (tiered), `warm_start_crews` (deduped prepend), `chain`, `support_buffs`, `analytical_prefilter_keep`, etc.
 - Officer names in seed files are resolved case-insensitively via `data/officers/name_aliases.json` then fuzzy substring match
 
 ## Key architectural decisions that were made before and that Claude can challenge
 
-- **Axum + Tokio**: the server uses Axum 0.7 with a multi-threaded Tokio runtime. CPU-heavy operations (simulate, optimize) are offloaded to a blocking thread pool via `spawn_blocking`. Single-user for now; concurrent optimize jobs are not queued yet (future: add job queue or semaphore).
+- **Axum + Tokio**: Axum 0.7 on a multi-threaded Tokio runtime. CPU-heavy handlers (simulate, optimize) use `spawn_blocking` so they do not stall other requests. The public `run_server()` entry point is synchronous and creates the runtime internally, keeping the CLI unchanged. Single-user for now; concurrent optimize jobs are not queued yet (future: add job queue or semaphore).
 - **Data freshness**: ship and hostile data is sourced from community databases and may lag behind in-game updates. `data.stfc.space` provides raw game JSON (e.g. `/hostile/summary.json`, `/hostile/{id}.json`) and is a promising avenue for automated data refresh.
-- **Tokio + Axum server**: the server uses an async Tokio multi-thread runtime with Axum 0.7. CPU-bound handlers (optimize, simulate) call `tokio::task::spawn_blocking` so they don't stall other requests. The public `run_server()` entry point is synchronous and creates the runtime internally, keeping the CLI interface unchanged.
 - **Optimizer strategies**: the SPA defaults to **tiered**; omitting `strategy` on optimize lets the server **auto-route** tiered vs exhaustive from **effective** candidate count (warm-start + constraints; response exposes `effective_strategy` / `strategy_auto`). Explicit `strategy: "exhaustive"`, `"genetic"`, or `"tiered"` still supported. Tiered uses optional `tiered_scout_sims` / `tiered_top_k` and `warm_start_crews`. SPA warm-start persistence uses a versioned localStorage key (`frontend/src/lib/optimizeWarmStart.ts`, schema bumps invalidate old cache).
 - **LCARS as source of truth**: officer abilities are defined in YAML, not code. The engine resolves YAML → `BuffSet` before the fight loop; only dynamic effects (decay, accumulate, proc) are evaluated inside the loop.
 - **SplitMix64 PRNG**: deterministic per seed, one instance per Rayon thread. Same seed → same fight outcome.
 - **Data provenance**: `ships_extended/index.json` and `hostiles/index.json` carry `data_version` and `source_note` fields documenting the upstream source.
+
