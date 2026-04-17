@@ -74,6 +74,8 @@ const ALLOWED_COMBAT_STATS = new Set([
   "dodge",
   "damage_reduction",
   "accuracy",
+  "apex_shred",
+  "apex_barrier",
 ]);
 
 const FROM_UPSTREAM =
@@ -182,12 +184,18 @@ function inferCombatStatFromDescription(text) {
     if (/\b(damage|attack|potency|offense)\b/.test(t)) return "isolytic_damage";
     return null;
   }
-  if (/damage reduction|reduces? (the )?damage taken|incoming damage|less damage from/.test(t)) {
+  if (/\bapex barrier\b/.test(t)) return "apex_barrier";
+  if (/\bapex shred\b/.test(t)) return "apex_shred";
+  if (
+    /damage reduction|reduces? (the )?damage taken|reduces base damage taken|incoming damage|less damage from/.test(
+      t
+    )
+  ) {
     return "damage_reduction";
   }
   if (
     /\baccuracy\b/.test(t) &&
-    /\b(increased|improved|bonus|enhanced)\b/.test(t) &&
+    /\b(increases|increase|increased|improved|bonus|enhanced)\b/.test(t) &&
     !/\bofficer\b/.test(t)
   ) {
     return "accuracy";
@@ -196,7 +204,11 @@ function inferCombatStatFromDescription(text) {
   if (/critical hit chance|critical chance|crit chance|chance to (land|score|deal) (a )?critical/.test(t)) {
     return "crit_chance";
   }
-  if (/shield piercing|armor piercing|shield penetration|shield pen\b| pierce |piercing against|pierces the/.test(t)) {
+  if (
+    /shield piercing|armor piercing|shield penetration|shield pen\b| pierce |piercing against|pierces the|base piercing stats|shield pierce.*armor pierce/.test(
+      t
+    )
+  ) {
     return "pierce";
   }
   if (/shield mitigation/.test(t)) return "shield_mitigation";
@@ -241,6 +253,7 @@ function inferCombatStatFromProjectName(name) {
   if (/damage reduction|critical damage reduction|resilience vs/.test(t)) return "damage_reduction";
   if (/critical damage|crit damage/.test(t)) return "crit_damage";
   if (/critical chance|crit chance/.test(t)) return "crit_chance";
+  if (/\bdirect hit\b/.test(t)) return "weapon_damage";
   if (/\btargeting array\b/.test(t)) return "accuracy";
   if (/shield piercing|armor piercing|penetration/.test(t)) return "pierce";
   if (/shield mitigation/.test(t)) return "shield_mitigation";
@@ -368,6 +381,8 @@ const NON_PCT_DECIMAL_STATS = new Set([
   "damage_reduction",
   "dodge",
   "accuracy",
+  "apex_shred",
+  "apex_barrier",
 ]);
 
 function normalizeBonusValue(buff, mapping, rawValue) {
