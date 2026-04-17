@@ -44,7 +44,7 @@ This document describes how Kobayashi imports ship and hostile data from **data.
 - `ability`: Full upstream `ability` array
 - `resources`: Parsed drop ranges from upstream `resources[]`
 
-**Upstream `ship_type` (u32):** Separate from hull line (`hull_type` → `ship_class`). Kobayashi maintains a reverse-engineered mapping in `src/data/upstream_hostile_ship_type.rs` and applies it at combat time via `HostileRecord::ship_type_for_combat` (e.g. value `1` = armada target). See [ROADMAP.md](ROADMAP.md) § *Hostile upstream `ship_type`* and [DESIGN.md](DESIGN.md) §3 (LCARS conditions / defender class note).
+**Upstream `ship_type` (u32):** Separate from hull line (`hull_type` → `ship_class`). Kobayashi maintains a reverse-engineered mapping in `src/data/upstream_hostile_ship_type.rs` and applies it at combat time via `HostileRecord::ship_type_for_combat` (e.g. value `1` = armada target). Enumerated ids and evidence: [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md). See also [ROADMAP.md](ROADMAP.md) § *Hostile upstream `ship_type`* and [DESIGN.md](DESIGN.md) §3 (LCARS conditions / defender class note).
 
 **Hostile Index** — Lookup catalog in `data/hostiles/index.json`:
 
@@ -59,7 +59,7 @@ This document describes how Kobayashi imports ship and hostile data from **data.
   "id": "111884576",
   "hostile_name": "Hostile 111884576",
   "level": 18,
-  "ship_class": "explorer",
+  "ship_class": "battleship",
   "armor": 689.0,
   "shield_deflection": 172.0,
   "dodge": 172.0,
@@ -310,7 +310,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 
 ### Hostile mapping (stfc.space → `HostileRecord`)
 
-**Input:** one cached detail file per numeric id (same `id` as in `summary-hostile.json`). **Implementation:** `src/bin/normalize_hostiles_stfc_space.rs` + `hull_type_raw_to_ship_class` in `src/data/hostile.rs`.
+**Input:** one cached detail file per numeric id (same `id` as in `summary-hostile.json`). **Implementation:** `src/bin/normalize_hostiles_stfc_space.rs` + [`hostile_hull_type_raw_to_ship_class`](../src/data/hostile.rs) in `src/data/hostile.rs` (player ships use [`player_hull_type_raw_to_ship_class`](../src/data/hostile.rs) in `scripts/normalize_stfcspace_ships.mjs` via the same integer→class table).
 
 **Top-level fields**
 
@@ -320,7 +320,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 | `id` (number)                                                                                            | `id`                 | **Decimal string**, e.g. `"2918121098"` — same id as stfc.space, not a legacy `explorer_30` slug                                                  |
 | —                                                                                                        | `hostile_name`       | Placeholder `Hostile {id}` until `loca_id` → name pipeline exists (Part 2 / Part 3)                                                               |
 | `level`                                                                                                  | `level`              | Coerced to `u32`                                                                                                                                  |
-| `hull_type`                                                                                              | `ship_class`         | Via `hull_type_raw_to_ship_class`: `0` battleship, `1` survey, `2` interceptor, `3` explorer, `5` survey; unknown → `battleship` + stderr warning |
+| `hull_type`                                                                                              | `ship_class`         | Via [`hostile_hull_type_raw_to_ship_class`](../src/data/hostile.rs) (aligned with client combat triangle): `0` interceptor, `1` survey, `2` explorer, `3` battleship, `4`/`5` survey; unknown → `battleship` + stderr warning |
 | `hull_type`                                                                                              | `hull_type_raw`      | Raw copy                                                                                                                                          |
 | `ship_type`                                                                                              | `upstream_ship_type` | Hostile **category** enum (armada/swarm/etc. semantics in `upstream_hostile_ship_type.rs`), distinct from hull line                               |
 | `faction`                                                                                                | `faction`            | `HostileFactionRef { id, loca_id }` passthrough                                                                                                   |
@@ -355,13 +355,13 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 **Hull type frequency** (from checked-in `summary-hostile.json`, **4,968** rows — recompute after refresh):
 
 
-| `hull_type` | `ship_class` | Count |
-| ----------- | ------------ | ----- |
-| 0           | battleship   | 1,414 |
-| 1           | survey       | 369   |
-| 2           | interceptor  | 1,373 |
-| 3           | explorer     | 1,214 |
-| 5           | survey       | 598   |
+| `hull_type` | `ship_class` (after mapping) | Count |
+| ----------- | ---------------------------- | ----- |
+| 0           | interceptor                  | 1,414 |
+| 1           | survey                       | 369   |
+| 2           | explorer                     | 1,373 |
+| 3           | battleship                   | 1,214 |
+| 5           | survey                       | 598   |
 
 
 `**ship_type` frequency** (same summary snapshot; encounter category, **not** hull class):
@@ -557,7 +557,7 @@ Mappings live in **code** (`normalize_hostiles_stfc_space`, `normalize_data_stfc
 - **Naming:** `stats.absorption` → `shield_deflection`; other keys match Part 4. New `stats.`* keys need explicit handling in `RawStats` + `raw_to_record`.
 - **Mitigation extras:** `apex_barrier`, `isolytic_defense`, floor/ceiling — not in stfc.space export; remain defaults unless hand-edited per record.
 - `**ability[]`:** Stored verbatim; combat semantics may require `hostile_ability_catalog.json` entries (Part 7).
-- **Unknown `hull_type`:** Falls back to `battleship` with a warning — add a mapping in `hull_type_raw_to_ship_class` if the game introduces a new hull line.
+- **Unknown `hull_type`:** Falls back to `battleship` with a warning — add a mapping in `player_hull_type_raw_to_ship_class` / `hostile_hull_type_raw_to_ship_class` if the game introduces a new hull line.
 
 ### Ships (extended)
 

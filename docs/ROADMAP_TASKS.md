@@ -2,7 +2,7 @@
 
 1. [x] Build an "unknown mapping" report for canonical officer condition tokens and hostile `upstream_ship_type` values.
 2. [ ] Add missing canonical condition token mappings that already have explicit, testable engine meaning.
-3. [ ] Enumerate and document all known hostile `ship_type` ids; add missing `match` arms and profile fields where needed.
+3. [x] Enumerate and document all known hostile `ship_type` ids; add missing `match` arms and profile fields where needed.
 4. [ ] Add validation checks to flag normalized hostiles with unmapped `upstream_ship_type`.
 5. [ ] Add `bid` coverage (or fallback mapping) to the building index to improve import/sync resolution.
 6. [ ] Implement a strict validation report for unmapped building buffs and unsupported building conditions.

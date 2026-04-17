@@ -9,7 +9,8 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use kobayashi::data::hostile::{
-    hull_type_raw_to_ship_class, HostileFactionRef, HostileIndex, HostileIndexEntry, HostileRecord,
+    hostile_hull_type_raw_to_ship_class, HostileFactionRef, HostileIndex, HostileIndexEntry,
+    HostileRecord,
     HostileResourceDrop,
 };
 use kobayashi::data::registry::{DataSetEntry, Registry};
@@ -139,7 +140,7 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     let strength = value_to_u64(&raw.strength).unwrap_or(0);
     let systems = systems_from_values(&raw.systems);
 
-    let ship_class = match hull_type_raw_to_ship_class(raw.hull_type) {
+    let ship_class = match hostile_hull_type_raw_to_ship_class(raw.hull_type) {
         Some(c) => c.to_string(),
         None => {
             *unknown_hull += 1;

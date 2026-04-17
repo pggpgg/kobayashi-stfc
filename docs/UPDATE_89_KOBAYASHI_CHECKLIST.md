@@ -6,7 +6,7 @@ Track implementation against **STFC Update 89** (First Contact Part 2). Source: 
 
 ## Data & catalog
 
-- [x] Add **Borg Sphere** extended ship data: upstream `ships/2251018025.json` + summary/translations → canonical `borg_sphere` in `data/ships_extended/` (numeric id `2251018025`; upstream `hull_type` 3 → `ship_class` explorer in registry)
+- [x] Add **Borg Sphere** extended ship data: upstream `ships/2251018025.json` + summary/translations → canonical `borg_sphere` in `data/ships_extended/` (numeric id `2251018025`; upstream `hull_type` 3 → `ship_class` battleship per `player_hull_type_raw_to_ship_class`)
 - [ ] Borg Sphere **combat-relevant passives** (Omicron Particle Charge, Apex Dispersion Field, Quantum Nullification Pulse)
 - [ ] Add Borg Sphere refit **Assimilation Protocol** (Assimilate for two rounds at PvP combat start) if/when PvP scenarios are in scope
 - [ ] Add **Conqueror Borg Suppressor** & **Conqueror Borg Obliterator** hostiles (G5–G7) with **Evolutionary Assimilation** scaling

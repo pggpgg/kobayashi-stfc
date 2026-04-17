@@ -475,16 +475,29 @@ pub fn ship_class_to_type(ship_class: &str) -> ShipType {
     }
 }
 
-/// Maps data.stfc.space `hull_type` to KOBAYASHI `ship_class` string.
-pub fn hull_type_raw_to_ship_class(hull_type: u32) -> Option<&'static str> {
+/// Maps data.stfc.space **`hull_type` on player ships** to Kobayashi `ship_class` (combat triangle +
+/// survey). Verified against live client hull-line labels (not the old 0=battleship / 3=explorer swap).
+///
+/// See also [`hostile_hull_type_raw_to_ship_class`] for hostile NPC detail JSON — split so NPC encoding
+/// can diverge without touching player normalization.
+pub fn player_hull_type_raw_to_ship_class(hull_type: u32) -> Option<&'static str> {
     match hull_type {
-        0 => Some("battleship"),
+        0 => Some("interceptor"),
         1 => Some("survey"),
-        2 => Some("interceptor"),
-        3 => Some("explorer"),
+        2 => Some("explorer"),
+        3 => Some("battleship"),
+        4 => Some("survey"),
         5 => Some("survey"),
         _ => None,
     }
+}
+
+/// Maps data.stfc.space hostile detail **`hull_type`** to Kobayashi `ship_class`.
+///
+/// Today this delegates to [`player_hull_type_raw_to_ship_class`]. Override the body here if datamine
+/// shows NPC `hull_type` enums do not match player ships.
+pub fn hostile_hull_type_raw_to_ship_class(hull_type: u32) -> Option<&'static str> {
+    player_hull_type_raw_to_ship_class(hull_type)
 }
 
 pub const DEFAULT_HOSTILES_INDEX_PATH: &str = "data/hostiles/index.json";
@@ -607,7 +620,7 @@ mod tests {
 
     #[test]
     fn hostile_record_deserializes_extended_fields() {
-        let j = r#"{"id":"2918121098","hostile_name":"Hostile 2918121098","level":81,"ship_class":"explorer","armor":1.0,"shield_deflection":2.0,"dodge":3.0,"hull_health":10.0,"shield_health":5.0,"upstream_ship_type":2,"hull_type_raw":3,"components":[{"k":1}],"ability":[]}"#;
+        let j = r#"{"id":"2918121098","hostile_name":"Hostile 2918121098","level":81,"ship_class":"battleship","armor":1.0,"shield_deflection":2.0,"dodge":3.0,"hull_health":10.0,"shield_health":5.0,"upstream_ship_type":2,"hull_type_raw":3,"components":[{"k":1}],"ability":[]}"#;
         let r: HostileRecord = serde_json::from_str(j).expect("extended hostile JSON");
         assert_eq!(r.components.len(), 1);
     }
@@ -621,10 +634,20 @@ mod tests {
     }
 
     #[test]
-    fn hull_type_raw_mapping_known_values() {
-        assert_eq!(hull_type_raw_to_ship_class(0), Some("battleship"));
-        assert_eq!(hull_type_raw_to_ship_class(3), Some("explorer"));
-        assert_eq!(hull_type_raw_to_ship_class(99), None);
+    fn player_hull_type_raw_matches_client_triangle() {
+        assert_eq!(player_hull_type_raw_to_ship_class(0), Some("interceptor"));
+        assert_eq!(player_hull_type_raw_to_ship_class(1), Some("survey"));
+        assert_eq!(player_hull_type_raw_to_ship_class(2), Some("explorer"));
+        assert_eq!(player_hull_type_raw_to_ship_class(3), Some("battleship"));
+        assert_eq!(player_hull_type_raw_to_ship_class(99), None);
+    }
+
+    #[test]
+    fn hostile_hull_type_delegates_until_npc_specific_map_exists() {
+        assert_eq!(
+            hostile_hull_type_raw_to_ship_class(3),
+            player_hull_type_raw_to_ship_class(3)
+        );
     }
 
     #[test]

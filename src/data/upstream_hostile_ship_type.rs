@@ -1,10 +1,15 @@
 //! Reverse-engineered mapping from data.stfc.space hostile `ship_type` (integer) to combat semantics.
 //!
 //! This is **not** hull class (battleship / explorer / interceptor); those come from upstream
-//! `hull_type` → normalized `ship_class`. The JSON field `ship_type` is a separate game enum whose
+//! `hull_type` → normalized `ship_class` via [`crate::data::hostile::hostile_hull_type_raw_to_ship_class`].
+//! The JSON field `ship_type` is a separate game enum whose
 //! labels are mostly in client localization (e.g. `armada_target_label` → "ARMADA TARGET" for `1`).
 //!
-//! Add new `match` arms here as ids are identified; unmapped values use [`UpstreamHostileShipTypeProfile::default`].
+//! Maintainer enumeration of ids observed in the hostile index (labels, evidence, row counts):
+//! `docs/UPSTREAM_HOSTILE_SHIP_TYPES.md`.
+//!
+//! Add new `match` arms here only when combat semantics are confirmed; unmapped values use
+//! [`UpstreamHostileShipTypeProfile::default`].
 
 /// Per-upstream-`ship_type` flags for simulator behavior.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -45,13 +45,13 @@ const dryRun = args.includes("--dry-run");
 const tierIdx = args.indexOf("--tier");
 const forceTier = tierIdx !== -1 ? parseInt(args[tierIdx + 1], 10) : null;
 
-// ── Hull type → ship class ────────────────────────────────────────────────────
+// ── Hull type → ship class (player ships; matches `player_hull_type_raw_to_ship_class` in Rust) ──
 const HULL_TYPE_MAP = {
-  0: "battleship",
+  0: "interceptor",
   1: "survey",
-  2: "interceptor",
-  3: "explorer",
-  4: "survey",   // variant — treat as survey until confirmed otherwise
+  2: "explorer",
+  3: "battleship",
+  4: "survey",
   5: "survey",
 };
 

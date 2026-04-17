@@ -89,7 +89,7 @@ data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normali
 
 ### Roadmap / backlog
 
-- **Enumerate ids** — Cross-check `summary-hostile.json`, stfc.space UI, and in-game copy to document additional `ship_type` values and add `match` arms (and new `UpstreamHostileShipTypeProfile` fields if mechanics need more than `is_armada_target`).
+- **Enumerate ids** — Maintainer reference: [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md). Cross-check `summary-hostile.json`, stfc.space UI, and in-game copy when adding `match` arms (and new `UpstreamHostileShipTypeProfile` fields if mechanics need more than `is_armada_target`).
 - **Unknown values** — Optional validation or a small report: list normalized hostiles whose `upstream_ship_type` is not in the mapping (for triage).
 - **Overlap with `EnemyTypes`** — If future categories do not fit `[EnemyType](../src/combat/types.rs)` / `ShipType` (e.g. multi-tag engagements), decide whether to thread `[EnemyTypes](../src/combat/types.rs)` through scenario vs growing the upstream profile struct.
 
