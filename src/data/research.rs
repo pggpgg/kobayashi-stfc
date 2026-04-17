@@ -9,7 +9,9 @@
 //! Bonuses with [`ResearchBonusConditionKey`] fields set (ship class, faction, morale, burning, etc.)
 //! are **excluded** from flat profile merge for attack-scoped stats: conditional `crit_chance` /
 //! `crit_damage` and conditional `weapon_damage` feed [`crate::data::profile::research_derived_attack_phase_seats`]
-//! (gated attack-phase effects; see `docs/DESIGN.md` research section).
+//! (gated attack-phase effects; see `docs/DESIGN.md` research section). By default those seats are built via
+//! [`crate::data::combat_effect_spec::CombatEffectSpec`] + [`crate::combat::effect_spec_compile`]
+//! (see [`crate::data::research_effect_spec_adapter`]). Set `KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1` to force the legacy path.
 
 use std::collections::HashMap;
 use std::fs;

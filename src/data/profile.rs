@@ -873,7 +873,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 /// | Conditional `weapon_damage`, `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
 ///
 /// Aliases: `armor_pierce`, `shield_pierce` → `pierce`.
-fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
+pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
     match stat {
         "weapon_damage" => Some("weapon_damage"),
         "hull_hp" => Some("hull_hp"),
@@ -954,7 +954,7 @@ pub fn merge_building_bonuses_into_profile(
 }
 
 /// Per-`rid` research level from sync import: duplicate rows use **max** level for that `rid`.
-fn research_levels_by_rid_from_import(imported_research: &[ResearchEntry]) -> HashMap<i64, u32> {
+pub(crate) fn research_levels_by_rid_from_import(imported_research: &[ResearchEntry]) -> HashMap<i64, u32> {
     let mut levels_by_rid: HashMap<i64, u32> = HashMap::new();
     for entry in imported_research {
         let level = if entry.level > 0 {
@@ -979,6 +979,21 @@ fn research_levels_by_rid_from_import(imported_research: &[ResearchEntry]) -> Ha
 /// Unconditional `crit_*` and unconditional `weapon_damage` rows stay in
 /// [`merge_research_bonuses_into_profile`] / `profile.bonuses`.
 pub fn research_derived_attack_phase_seats(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+) -> Vec<CrewSeatContext> {
+    // Default: CombatEffectSpec adapter + compiler; see [`crate::data::combat_effect_spec::combat_effect_spec_enabled`].
+    if crate::data::combat_effect_spec::combat_effect_spec_enabled() {
+        crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
+            imported_research,
+            catalog,
+        )
+    } else {
+        research_derived_attack_phase_seats_legacy(imported_research, catalog)
+    }
+}
+
+pub(crate) fn research_derived_attack_phase_seats_legacy(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
 ) -> Vec<CrewSeatContext> {
@@ -2324,5 +2339,48 @@ mod tests {
             resolve_effective_tech_fids(&profile, &imported, &catalog),
             vec![1, 200]
         );
+    }
+
+    #[test]
+    fn research_derived_attack_phase_seats_spec_matches_legacy() {
+        use crate::data::import::ResearchEntry;
+        use crate::data::research::{
+            ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+        };
+
+        let record = ResearchRecord {
+            rid: 5001,
+            name: None,
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "weapon_damage".to_string(),
+                    value: 0.02,
+                    operator: "add".to_string(),
+                    condition: crate::data::research::ResearchBonusConditionKey {
+                        requires_defender_burning: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        };
+        let catalog = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![record],
+        };
+        let imported = vec![ResearchEntry {
+            rid: 5001,
+            level: 1,
+        }];
+        let legacy = research_derived_attack_phase_seats_legacy(&imported, &catalog);
+        let via_spec =
+            crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
+                &imported,
+                &catalog,
+            );
+        assert_eq!(legacy, via_spec);
     }
 }

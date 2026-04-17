@@ -5,9 +5,10 @@ This checklist turns the draft in [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md)
 ## Phase 0 - Guardrails and scope lock
 
 - [ ] Add a short "Phase 1 scope" section to [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md): officers + research only, no behavior changes intended.
-- [ ] Define migration flag strategy:
-  - `KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE=0|1`
-  - default `0` until parity gates pass.
+- [x] Define migration flag strategy:
+  - Default **on** (spec + compiler for research attack-phase seats).
+  - `KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1` (or `true`/`yes`) forces the legacy path.
+  - `KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE=0` / `false` / `no` also disables the spec path.
 - [ ] Add explicit non-goals for Phase 1 in [docs/ROADMAP.md](ROADMAP.md) (no engine timing changes, no new mechanics).
 
 ## Phase 1 - Canonical IR types and serde
@@ -118,21 +119,21 @@ This checklist turns the draft in [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md)
 
 ### New files
 
-- [ ] Create [src/data/stfc_cc_effect_spec_adapter.rs](../src/data/stfc_cc_effect_spec_adapter.rs)
+- [x] Create [src/data/stfc_cc_effect_spec_adapter.rs](../src/data/stfc_cc_effect_spec_adapter.rs)
   - Parse stfc.cc columns (`AbilityModifier`, `AbilityConditions`, `AbilityTrigger`, etc.)
   - Map to canonical tokens
   - Emit explicit "unmapped token" diagnostics
 
 ### Existing files to update
 
-- [ ] Add a non-default import utility (bin or script) entrypoint:
-  - [src/bin/](../src/bin/) new CLI for one-off conversion/reporting
-- [ ] Keep this ingestion path optional and not required by core simulation
+- [x] Add a non-default import utility (bin or script) entrypoint:
+  - [src/bin/stfc_cc_cheat_sheet_report.rs](../src/bin/stfc_cc_cheat_sheet_report.rs)
+- [x] Keep this ingestion path optional and not required by core simulation
 
 ### Acceptance criteria
 
-- [ ] Can convert sample rows from [data/upstream/cheat-sheet/raw-officers-m88-17rc.csv](../data/upstream/cheat-sheet/raw-officers-m88-17rc.csv)
-- [ ] Reports unmapped tokens with stable diagnostics
+- [x] Can convert sample rows from [data/upstream/cheat-sheet/raw-officers-m88-17rc.csv](../data/upstream/cheat-sheet/raw-officers-m88-17rc.csv)
+- [x] Reports unmapped tokens with stable diagnostics
 
 ## Phase 6 - Parity harness and cutover
 
@@ -146,7 +147,7 @@ This checklist turns the draft in [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md)
 
 ### CI requirements
 
-- [ ] Add a CI job variant with `KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE=1`
+- [x] Add a CI job variant that runs tests with `KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1` (legacy path)
 - [ ] Require parity suite green before default flip
 
 ### Default flip

@@ -64,6 +64,10 @@ path = "src/bin/merge_lcars.rs"
 name = "generate_officer_scorecard"
 path = "src/bin/generate_officer_scorecard.rs"
 
+[[bin]]
+name = "stfc_cc_cheat_sheet_report"
+path = "src/bin/stfc_cc_cheat_sheet_report.rs"
+
 [[bench]]
 name = "simulator"
 harness = false

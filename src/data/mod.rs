@@ -1,3 +1,5 @@
+pub mod combat_effect_spec;
+pub mod combat_effect_spec_validate;
 pub mod building;
 pub mod building_bid_resolver;
 pub mod building_summary;
@@ -15,6 +17,8 @@ pub mod profile;
 pub mod profile_index;
 pub mod registry;
 pub mod research;
+pub mod research_effect_spec_adapter;
+pub mod stfc_cc_effect_spec_adapter;
 pub mod research_summary;
 pub mod ship;
 pub mod ship_ability_resolve;

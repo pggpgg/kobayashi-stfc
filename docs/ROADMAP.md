@@ -73,6 +73,11 @@ Current state: officer effects are LCARS-native, while research uses stat rows p
 - Spec draft: [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md).
 - Implementation checklist: [COMBAT_EFFECT_SPEC_CHECKLIST.md](COMBAT_EFFECT_SPEC_CHECKLIST.md).
 
+### Phase 1 non-goals (while the spec flag is rolling out)
+
+- No changes to combat **timing windows**, **round structure**, or **core damage formulas** solely for the spec migration.
+- No removal of the LCARS resolver until **LCARS ↔ spec parity** is proven for representative fixtures.
+
 ### Roadmap / backlog
 
 - **IR model:** Add typed `CombatEffectSpec` structs + serde in Rust with source provenance fields (officer/research/ship/hostile/stfc.cc).

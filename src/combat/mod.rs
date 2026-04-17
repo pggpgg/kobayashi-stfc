@@ -1,4 +1,5 @@
 pub mod abilities;
+pub mod effect_spec_compile;
 pub mod buffs;
 pub mod condition;
 pub mod crit;

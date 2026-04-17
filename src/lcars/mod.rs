@@ -4,6 +4,7 @@
 //! [BuffSet] for the combat engine (static buffs + per-round/triggered effects).
 
 mod canonical_conditions;
+pub mod effect_spec_adapter;
 mod parser;
 mod resolver;
 
@@ -18,4 +19,7 @@ pub use resolver::{
     index_lcars_officers_by_id, lcars_effect_coverage, resolve_crew_to_buff_set,
     resolve_lcars_condition, resolve_officer_ability, BuffSet, LcarsEffectCoverage,
     MechanicCoverageTier, ResolveOptions,
+};
+pub use effect_spec_adapter::{
+    lcars_condition_to_spec, lcars_effect_to_combat_effect_spec, lcars_trigger_str_to_spec,
 };

@@ -243,6 +243,8 @@ Treat as ingestion aliases:
 
 Important: stfc.cc naming is input vocabulary, not runtime contract.
 
+**Implementation:** [`src/data/stfc_cc_effect_spec_adapter.rs`](../src/data/stfc_cc_effect_spec_adapter.rs) maps cheat-sheet columns to [`CombatEffectSpec`] where tokens are known; unknown modifiers/triggers/targets/operations/conditions emit stable `unmapped_*:` diagnostics. CLI: `cargo run --bin stfc_cc_cheat_sheet_report` (optional report on `data/upstream/cheat-sheet/raw-officers-m88-17rc.csv`).
+
 ## Compile target
 
 Compiler emits existing engine structures:
@@ -304,6 +306,10 @@ No immediate engine rewrite is required.
 6. Keep old paths temporarily behind a feature flag; remove after parity confidence.
 
 Detailed implementation checklist: [COMBAT_EFFECT_SPEC_CHECKLIST.md](COMBAT_EFFECT_SPEC_CHECKLIST.md).
+
+## Phase 1 scope (implementation)
+
+Phase 1 delivers the **canonical IR + serde**, a **compiler to existing engine structs**, and the **research-derived attack-phase seat** path (enabled **by default**; use `KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1` to force the legacy implementation). Officers remain resolved through LCARS as today; a **lossy LCARS → spec** adapter exists for tooling and future parity. **No intended combat timing or formula changes** in Phase 1: the spec path must match the legacy path for covered fixtures.
 
 ## Non-goals
 
