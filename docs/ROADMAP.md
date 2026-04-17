@@ -57,6 +57,32 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 
 ---
 
+## Unified CombatEffectSpec (cross-source normalization)
+
+Current state: officer effects are LCARS-native, while research uses stat rows plus targeted Rust routing for conditional attack-phase behavior. This split increases drift risk and special-case maintenance.
+
+### Decision direction
+
+- **Standardize to a single canonical effect IR** (`CombatEffectSpec`) compiled into existing engine types (`AbilityEffect`, `AbilityCondition`, `TimingWindow`).
+- **Keep LCARS as officer authoring DSL**; do not remove LCARS files.
+- **Use stfc.cc terminology as ingestion aliases**, not as the engine runtime contract.
+  - Concretely: fields such as `AbilityModifier`, `AbilityConditions`, `AbilityTrigger`, `AbilityTarget`, `AbilityOperation`, `AbilityAttributes`, `AbilityChances`, and `AbilityValues` should map into canonical IR fields.
+
+### Draft schema
+
+- Spec draft: [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md).
+- Implementation checklist: [COMBAT_EFFECT_SPEC_CHECKLIST.md](COMBAT_EFFECT_SPEC_CHECKLIST.md).
+
+### Roadmap / backlog
+
+- **IR model:** Add typed `CombatEffectSpec` structs + serde in Rust with source provenance fields (officer/research/ship/hostile/stfc.cc).
+- **Adapters:** Implement LCARS -> spec and research -> spec adapters first; stfc.cc CSV -> spec as optional ingestion path.
+- **Compiler:** Compile spec -> current engine runtime objects (no immediate engine rewrite).
+- **Parity harness:** Add fixtures that assert compiled spec behavior matches current officer and research behavior.
+- **Cutover:** Move research conditional seat generation onto spec compiler output, then progressively migrate officer and ability routing paths.
+
+---
+
 ## Hostile upstream `ship_type` (reverse engineering)
 
 data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normalized `data/hostiles/{id}.json`) includes `**ship_type` as a u32**: a **game category enum**, separate from `**hull_type`** (which the normalizer maps to `ship_class`: battleship / explorer / interceptor / survey). Labels for many values live only in client localization (e.g. `translations-navigation.json` key `armada_target_label` → “ARMADA TARGET” for value **1**).
