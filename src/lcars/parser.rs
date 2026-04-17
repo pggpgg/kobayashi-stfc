@@ -203,6 +203,9 @@ pub struct LcarsCondition {
     /// `attacker_officer_tal_not_on_bridge` use no extra fields.
     #[serde(default)]
     pub ship_type: Option<String>,
+    /// Upstream hostile `faction.id` for `defender_hull_faction_id` / canonical `EnemyHullFaction`.
+    #[serde(default)]
+    pub faction_id: Option<i64>,
     #[serde(default)]
     pub conditions: Option<Vec<LcarsCondition>>,
 }

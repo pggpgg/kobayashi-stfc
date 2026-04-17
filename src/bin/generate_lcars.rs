@@ -10,7 +10,7 @@
 //!
 //! Canonical `conditions` strings are mapped to LCARS when they match resolver-supported mechanics
 //! (enemy/self hull class, armada synonyms, `TargetNotArmada` → LCARS `not`, burning/hull breach,
-//! morale, opponent kind). Unmapped tokens are skipped with a stderr line; emitted conditions may
+//! morale, opponent kind, `EnemyHullFaction` via attributes `faction_id`). Unmapped tokens are skipped with a stderr line; emitted conditions may
 //! be weaker than in-game (subset `and`). Token mapping is implemented in
 //! `kobayashi::lcars::canonical_conditions` (`map_canonical_condition_token`, `canonical_conditions_to_lcars`).
 
@@ -442,7 +442,59 @@ fn effect_condition_from_canonical(
     officer_name: &str,
     ability_label: &str,
 ) -> Option<LcarsCondition> {
-    canonical_conditions_to_lcars(&a.conditions, officer_name, ability_label)
+    let attrs = a.attributes.as_deref().unwrap_or("");
+    let wants_hull_faction = a
+        .conditions
+        .iter()
+        .any(|c| c.trim().eq_ignore_ascii_case("EnemyHullFaction"));
+    let filtered: Vec<String> = a
+        .conditions
+        .iter()
+        .filter(|c| !c.trim().eq_ignore_ascii_case("EnemyHullFaction"))
+        .cloned()
+        .collect();
+    let base = canonical_conditions_to_lcars(&filtered, officer_name, ability_label);
+    if !wants_hull_faction {
+        return base;
+    }
+    let Some(fid) = faction_id_from_canonical_attributes(attrs) else {
+        eprintln!(
+            "generate_lcars: EnemyHullFaction without parseable faction_id in attributes \
+             (officer {officer_name:?}, ability {ability_label:?})"
+        );
+        return base;
+    };
+    let hull = LcarsCondition {
+        condition_type: "defender_hull_faction_id".to_string(),
+        stat: None,
+        threshold_pct: None,
+        min: None,
+        max: None,
+        faction: None,
+        group: None,
+        min_members: None,
+        tag: None,
+        ship_type: None,
+        faction_id: Some(fid),
+        conditions: None,
+    };
+    match base {
+        None => Some(hull),
+        Some(b) => Some(LcarsCondition {
+            condition_type: "and".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            conditions: Some(vec![b, hull]),
+        }),
+    }
 }
 
 fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option<LcarsEffect> {
@@ -551,6 +603,23 @@ enum StateType {
 
 /// Canonical `attributes` use `state=8` (Morale), `state=4` (Hull Breach), etc.
 /// Parse the numeric id so `state=2` does not match `state=20`.
+/// Parse `faction_id=<i64>` from canonical ability `attributes` (comma-separated `key=value` pairs).
+fn faction_id_from_canonical_attributes(raw: &str) -> Option<i64> {
+    for part in raw.split(',') {
+        let mut it = part.trim().splitn(2, '=');
+        let key = it.next()?.trim();
+        if !key.eq_ignore_ascii_case("faction_id") {
+            continue;
+        }
+        let val = it.next()?.trim();
+        if val.is_empty() {
+            return None;
+        }
+        return val.parse::<i64>().ok();
+    }
+    None
+}
+
 fn add_state_type_from_attributes(raw: &str) -> Option<StateType> {
     let attrs = raw.to_lowercase();
     if let Some(idx) = attrs.find("state=") {
@@ -722,6 +791,40 @@ mod canonical_condition_tests {
     #[test]
     fn add_state_does_not_treat_state_20_as_burning() {
         assert_eq!(add_state_type_from_attributes("state=20"), None);
+    }
+
+    #[test]
+    fn faction_id_from_attributes_parses_typical_row() {
+        assert_eq!(
+            super::faction_id_from_canonical_attributes("faction_id=1750120904, officer_stat=3"),
+            Some(1750120904_i64)
+        );
+        assert_eq!(
+            super::faction_id_from_canonical_attributes("officer_stat=3"),
+            None
+        );
+    }
+
+    #[test]
+    fn enemy_hull_faction_merges_with_mapped_conditions() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "modifier": "AllDamage",
+            "operation": "MultiplyAdd",
+            "trigger": "CombatStart",
+            "target": "SelfShip",
+            "conditions": ["EnemyHullFaction", "EnemyHostile"],
+            "attributes": "faction_id=1750120904",
+            "value_by_rank": [1.0],
+            "chance_by_rank": []
+        }))
+        .unwrap();
+        let c = super::effect_condition_from_canonical(&a, "Test", "AllDamage").expect("cond");
+        assert_eq!(c.condition_type, "and");
+        let kids = c.conditions.as_ref().expect("children");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "defender_is_npc_hostile");
+        assert_eq!(kids[1].condition_type, "defender_hull_faction_id");
+        assert_eq!(kids[1].faction_id, Some(1750120904));
     }
 
     #[test]

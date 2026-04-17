@@ -68,6 +68,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
 
@@ -141,6 +142,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     assert!(
@@ -197,6 +199,7 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &crew);
 
@@ -292,6 +295,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
     };
     let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let with_regen = simulate_combat(&attacker, &defender, config, &with_kill_regen);

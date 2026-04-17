@@ -17,6 +17,7 @@ fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
         min_members: None,
         tag: None,
         ship_type: None,
+        faction_id: None,
         conditions: None,
     }
 }
@@ -40,6 +41,7 @@ fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
         min_members: None,
         tag: None,
         ship_type: None,
+        faction_id: None,
         conditions: Some(vec![inner]),
     }
 }
@@ -154,6 +156,7 @@ pub fn canonical_conditions_to_lcars(
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: Some(mapped),
         }),
     }
@@ -297,6 +300,14 @@ mod tests {
         assert_eq!(ac, AbilityCondition::AttackerOfficerTalNotOnBridge);
     }
 
+    #[test]
+    fn enemy_hull_faction_token_not_mapped_without_attributes() {
+        assert!(
+            map_canonical_condition_token("EnemyHullFaction").is_none(),
+            "EnemyHullFaction is merged in generate_lcars from ability attributes, not token-only map"
+        );
+    }
+
     // Task 2 audit: tokens below still lack a 1:1 AbilityCondition / CombatContext story (see
     // docs/CANONICAL_CONDITIONS.md). When engine support exists, map in map_canonical_condition_token
     // and remove the token from DEFERRED.
@@ -304,7 +315,6 @@ mod tests {
     fn task2_deferred_tokens_remain_unmapped() {
         const DEFERRED: &[&str] = &[
             "TargetNotASB",
-            "EnemyHullFaction",
             "TargetMaxLevel",
             "SelfDefending",
             "CombatBattleType",

@@ -85,6 +85,11 @@ pub(crate) fn run_chain_trial(
             initial_attacker_hull_damage: initial_hull_damage,
             weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+            defender_hull_faction_id: shared
+                .hostile_rec
+                .as_ref()
+                .and_then(|h| h.faction.as_ref().map(|f| f.id))
+                .unwrap_or(0),
         };
 
         let result = simulate_combat_with_defender_faction_and_defender_crew(

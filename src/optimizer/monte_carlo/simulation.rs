@@ -270,6 +270,11 @@ fn run_candidate_monte_carlo(
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+        defender_hull_faction_id: shared
+            .hostile_rec
+            .as_ref()
+            .and_then(|h| h.faction.as_ref().map(|f| f.id))
+            .unwrap_or(0),
     };
 
     let mut n_done = 0usize;
@@ -688,6 +693,11 @@ pub fn replay_optimize_iteration_with_registry(
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+        defender_hull_faction_id: shared
+            .hostile_rec
+            .as_ref()
+            .and_then(|h| h.faction.as_ref().map(|f| f.id))
+            .unwrap_or(0),
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(

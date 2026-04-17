@@ -7,7 +7,10 @@ use crate::combat::{
     SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
 };
 use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
-use crate::data::loader::{defender_faction_for_cli_simulate, resolve_hostile, resolve_ship};
+use crate::data::loader::{
+    defender_faction_for_cli_simulate, defender_hull_faction_id_for_cli_simulate, resolve_hostile,
+    resolve_ship,
+};
 use crate::data::profile::{apply_profile_to_attacker, load_profile};
 use crate::data::profile_index::{
     ensure_profile_index_bootstrap, profile_data_dir, profile_path,
@@ -196,6 +199,8 @@ fn handle_simulate(args: &[String]) -> i32 {
                 return 2;
             }
         };
+    let defender_hull_faction_id =
+        defender_hull_faction_id_for_cli_simulate(hostile_lookup.as_deref());
 
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let profile_path_str = profile_path(&profile_id, PROFILE_JSON)
@@ -255,6 +260,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id,
         },
         &CrewConfiguration::default(),
         defender_faction,

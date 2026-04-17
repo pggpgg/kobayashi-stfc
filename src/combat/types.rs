@@ -273,6 +273,9 @@ pub struct SimulationConfig {
     /// [`crate::combat::abilities::AbilityEffect::GalaxyAdditiveWeaponDamageGrowth`] as `×(1+g/(1+p))`.
     #[serde(default)]
     pub profile_weapon_damage_fraction: f64,
+    /// Upstream defender hostile `faction.id` for canonical `EnemyHullFaction` / [`crate::combat::abilities::AbilityCondition::DefenderHullFactionIdIs`]. `0` when unknown or not loaded.
+    #[serde(default)]
+    pub defender_hull_faction_id: i64,
 }
 
 impl Default for SimulationConfig {
@@ -284,6 +287,7 @@ impl Default for SimulationConfig {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         }
     }
 }

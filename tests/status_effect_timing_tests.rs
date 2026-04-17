@@ -91,6 +91,7 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         },
         &crew,
     );
@@ -160,6 +161,7 @@ fn burning_round_end_trigger_precedes_end_of_round_effects_in_event_order() {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         },
         &crew,
     );
@@ -240,6 +242,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         },
         &crew,
     );
@@ -330,6 +333,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         },
         &crew,
     );
@@ -403,6 +407,7 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
     };
 
     let mut chosen = None;
@@ -499,6 +504,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         },
         &crew,
     );

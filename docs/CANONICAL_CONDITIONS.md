@@ -6,13 +6,12 @@ See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, `[map_canonical_cond
 
 ## Triage (frequency × feasibility)
 
-The table below lists **currently unmapped** tokens (57 unique strings in canonical; **38 remain unmapped** after armada / `not` / attacker breach-burn / Tal-bridge / assimilated-target mappings). Counts are occurrences in `officers.canonical.json` (not officer cardinality).
+The table below lists **currently unmapped** tokens (57 unique strings in canonical; **37 remain unmapped** after armada / `not` / attacker breach-burn / Tal-bridge / assimilated-target / `EnemyHullFaction` mappings). Counts are occurrences in `officers.canonical.json` (not officer cardinality).
 
 
 | Token                                                                                                              | Count         | Bucket   | Note                                                                                                                                                                   |
 | ------------------------------------------------------------------------------------------------------------------ | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TargetNotASB`                                                                                                     | 27            | deferred | No “anti-station” / ASB scenario in ship-vs-hostile core sim.                                                                                                          |
-| `EnemyHullFaction`                                                                                                 | 25            | deferred | Needs explicit hostile faction + hull-line semantics beyond `OpponentFactionTag`.                                                                                      |
 | `TargetMaxLevel`                                                                                                   | 21            | deferred | Hostile level gate not in `CombatContext`.                                                                                                                             |
 | `SelfDefending`                                                                                                    | 16            | deferred | Station / defense context not modeled.                                                                                                                                 |
 | `CombatBattleType`                                                                                                 | 15            | deferred | No battle-type enum in scenario (would mis-gate if approximated).                                                                                                      |
@@ -40,13 +39,14 @@ Regression: `[task2_deferred_tokens_remain_unmapped](../src/lcars/canonical_cond
 
 ## Mapped today (reference)
 
-Handled in `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)`: `TargetHasBurning`, `TargetHasAssimilated` (LCARS `defender_assimilated`), `TargetHasHullBreach`, `SelfHasBurning` (LCARS `attacker_burning`), `SelfHasHullBreach` (LCARS `attacker_hull_breach`), `SelfHasMorale`, `SelfOfficerTalNotOnBridge` (LCARS `attacker_officer_tal_not_on_bridge`), `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada`** (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes (explorer, …; not `SelfHas`* breach/burn, which are explicit tokens above).
+Handled in `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)` and/or **`generate_lcars` attribute merge** (see `[effect_condition_from_canonical](../src/bin/generate_lcars.rs)`): `TargetHasBurning`, `TargetHasAssimilated` (LCARS `defender_assimilated`), `TargetHasHullBreach`, `SelfHasBurning` (LCARS `attacker_burning`), `SelfHasHullBreach` (LCARS `attacker_hull_breach`), `SelfHasMorale`, `SelfOfficerTalNotOnBridge` (LCARS `attacker_officer_tal_not_on_bridge`), **`EnemyHullFaction`** (LCARS `defender_hull_faction_id` with `faction_id` parsed from ability `attributes`; evaluated against `[CombatContext::defender_hull_faction_id](../src/combat/abilities.rs)` from hostile `faction.id` via `[SimulationConfig::defender_hull_faction_id](../src/combat/types.rs)`), `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada`** (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes (explorer, …; not `SelfHas`* breach/burn, which are explicit tokens above).
 
 ## Updates (engine + LCARS)
 
 - `**not`**: `[AbilityCondition::Not](../src/combat/abilities.rs)` + LCARS `type: not` with exactly one child (`[resolve_lcars_condition](../src/lcars/resolver.rs)`).
 - `**TargetIsArmada` / `TargetNotArmada`**: canonical aliases for armada gating (see roadmap “canonical condition tokens”).
 - `**TargetHasAssimilated`**: LCARS `defender_assimilated`; opponent-side assimilate duration (`defender_assimilated_active`), driven by defender crew assimilate procs in `[engine.rs](../src/combat/engine.rs)` (canonical data pairs with `EnemyPlayer` for PvP vs assimilating opponents).
+- **`EnemyHullFaction`**: not in `map_canonical_condition_token` alone; `generate_lcars` strips the token, reads `faction_id=` from `attributes`, and emits LCARS `defender_hull_faction_id`. This matches upstream hostile `faction.id` exactly (distinct from coarse `[OpponentFactionTag](../src/combat/types.rs)` / `defender_faction_is`, where e.g. Eclipse may be `Unknown`).
 
 ## Regenerate unknown-mappings report
 

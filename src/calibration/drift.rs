@@ -189,6 +189,7 @@ pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::Simulat
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
     };
     simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
 }
@@ -204,6 +205,7 @@ pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
     };
     simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
 }

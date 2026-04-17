@@ -168,9 +168,20 @@ pub fn defender_faction_for_cli_simulate(
     Ok(OpponentFactionTag::Unknown)
 }
 
+/// Upstream `faction.id` from a resolved hostile (`--hostile`), or `0` when not applicable.
+pub fn defender_hull_faction_id_for_cli_simulate(hostile_lookup: Option<&str>) -> i64 {
+    let Some(key) = hostile_lookup.map(|s| s.trim()).filter(|s| !s.is_empty()) else {
+        return 0;
+    };
+    resolve_hostile(key)
+        .and_then(|rec| rec.faction.map(|f| f.id))
+        .unwrap_or(0)
+}
+
 #[cfg(test)]
 mod defender_faction_cli_tests {
     use super::defender_faction_for_cli_simulate;
+    use super::defender_hull_faction_id_for_cli_simulate;
     use crate::combat::OpponentFactionTag;
 
     #[test]
@@ -213,5 +224,11 @@ mod defender_faction_cli_tests {
             tag.is_ok(),
             "bundled hostiles should resolve default optimize id: {tag:?}"
         );
+    }
+
+    #[test]
+    fn hostile_lookup_sets_defender_hull_faction_id_when_present() {
+        let id = defender_hull_faction_id_for_cli_simulate(Some("2918121098"));
+        assert_ne!(id, 0, "bundled hostile should carry faction.id");
     }
 }

@@ -65,6 +65,9 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::AttackerHullBreach => ctx.attacker_hull_breach_active,
         AbilityCondition::DefenderAssimilated => ctx.defender_assimilated_active,
         AbilityCondition::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
+        AbilityCondition::DefenderHullFactionIdIs(expected) => {
+            ctx.defender_hull_faction_id == *expected
+        }
         AbilityCondition::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
         AbilityCondition::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
         AbilityCondition::AttackerShipIdIs(expected) => ctx.attacker_ship_id == *expected,
@@ -155,6 +158,7 @@ mod tests {
             attacker_hull_breach_active: false,
             defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: "test_ship".to_string(),
@@ -248,6 +252,20 @@ mod tests {
         ctx.attacker_hull_breach_active = true;
         assert!(evaluate_ability_condition(
             &AbilityCondition::AttackerHullBreach,
+            &ctx
+        ));
+    }
+
+    #[test]
+    fn defender_hull_faction_id_is_evaluates_from_context() {
+        let mut ctx = sample_ctx();
+        ctx.defender_hull_faction_id = 1750120904;
+        assert!(evaluate_ability_condition(
+            &AbilityCondition::DefenderHullFactionIdIs(1750120904),
+            &ctx
+        ));
+        assert!(!evaluate_ability_condition(
+            &AbilityCondition::DefenderHullFactionIdIs(2943562711),
             &ctx
         ));
     }

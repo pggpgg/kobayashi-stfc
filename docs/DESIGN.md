@@ -263,6 +263,7 @@ Conditions gate whether an effect activates. They are predicates evaluated by th
 | `stat_below`            | stat, threshold_pct       | Shields below 50%                                                                                                                                          |
 | `stat_above`            | stat, threshold_pct       | Hull above 80%                                                                                                                                             |
 | `defender_faction_is`   | `faction` or `tag` (slug) | Against Romulan hostiles (aliases: `opponent_faction_is`, `faction_is`, …)                                                                                 |
+| `defender_hull_faction_id` | `faction_id` (integer) | Upstream hostile `faction.id` equals `faction_id` (canonical `EnemyHullFaction` + attributes; aliases: `enemy_hull_faction`, `enemy_hull_faction_id`)        |
 | `defender_ship_type_is` | `ship_type` hull slug     | Enemy hull is explorer / battleship / interceptor / survey / armada (aliases: `defender_ship_class_is`, `opponent_ship_type_is`, `opponent_ship_class_is`) |
 | `attacker_ship_type_is` | `ship_type` hull slug     | Player’s ship hull matches (aliases: `attacker_ship_class_is`, `self_ship_type_is`, `self_ship_class_is`)                                                  |
 | `round_range`           | min, max                  | Only rounds 1–3                                                                                                                                            |
@@ -280,7 +281,7 @@ Hull slugs match `[ShipType::from_data_slug](src/combat/types.rs)`: `battleship`
 
 **Upstream hostile `ship_type` (data.stfc.space):** The JSON field `ship_type` is stored on `[HostileRecord](../src/data/hostile.rs)` as `upstream_ship_type`. It is **not** hull class (that comes from `hull_type` → `ship_class`). Kobayashi maps selected integers in `[upstream_hostile_ship_type_profile](../src/data/upstream_hostile_ship_type.rs)`; `[HostileRecord::ship_type_for_combat](../src/data/hostile.rs)` uses that mapping so the defender’s effective class can be `[ShipType::Armada](../src/combat/types.rs)` for **armada targets** (currently `upstream_ship_type == 1`, aligned with UI string “ARMADA TARGET”). Unmapped values fall back to hull-derived `ship_class` only. Ongoing reverse engineering and backlog items: [ROADMAP.md](ROADMAP.md) (section *Hostile upstream `ship_type`*).
 
-`kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction`, unknown slug, empty `and` / `or`, or `not` without exactly one child).
+`kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction` / `faction_id` where required, unknown slug, empty `and` / `or`, or `not` without exactly one child).
 
 **Passive + permanent `stat_modify`** is merged into `static_buffs` at resolve time and **does not** evaluate `condition` today. Use ship-class (and other) gates on timed effects (e.g. `on_combat_start`) or extend the resolver/engine before conditioning passive stats such as `armor`.
 

@@ -167,6 +167,8 @@ pub struct CombatContext {
     pub defender_assimilated_active: bool,
     /// Faction of the defending ship (hostile) in PvE; used for "against Klingon" style abilities.
     pub defender_faction: OpponentFactionTag,
+    /// Upstream STFC `faction.id` on the defending hostile (canonical `EnemyHullFaction`); `0` when missing or unset (e.g. PvP without metadata).
+    pub defender_hull_faction_id: i64,
     /// Hull class of the defending [`crate::combat::Combatant`] (hostile in PvE).
     pub defender_ship_type: ShipType,
     /// Hull class of the attacking [`crate::combat::Combatant`] (player ship in PvE).
@@ -210,6 +212,8 @@ pub enum AbilityCondition {
     DefenderAssimilated,
     /// True when the defending hostile’s faction matches (see [`CombatContext::defender_faction`]).
     DefenderFactionIs(OpponentFactionTag),
+    /// True when the defending hostile’s upstream `faction.id` matches (canonical `EnemyHullFaction` + `faction_id` in attributes).
+    DefenderHullFactionIdIs(i64),
     /// True when the defending ship’s hull class matches (player hull abilities vs a hostile of that class).
     DefenderShipTypeIs(ShipType),
     /// True when the attacking ship’s hull class matches (e.g. hostile hull abilities vs the player’s class).

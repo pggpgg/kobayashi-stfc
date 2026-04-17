@@ -114,6 +114,12 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
             })?;
             Ok(AbilityCondition::DefenderFactionIs(tag))
         }
+        "defender_hull_faction_id" | "enemy_hull_faction" | "enemy_hull_faction_id" => {
+            let id = c.faction_id.ok_or_else(|| {
+                format!("{ty} condition requires integer `faction_id` (upstream hostile faction.id)")
+            })?;
+            Ok(AbilityCondition::DefenderHullFactionIdIs(id))
+        }
         "not" => {
             let children = c.conditions.as_ref().ok_or_else(|| {
                 "`not` condition requires a `conditions` array".to_string()
@@ -922,6 +928,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         }
     }
@@ -975,6 +982,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: Some(vec![lcars_condition("morale_active"), fc.clone()]),
         };
         let ability = LcarsAbility {
@@ -1053,6 +1061,7 @@ mod tests {
             attacker_hull_breach_active: false,
             defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Klingon,
+            defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1069,6 +1078,50 @@ mod tests {
     }
 
     #[test]
+    fn resolve_lcars_condition_maps_defender_hull_faction_id_and_evaluates() {
+        let c = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "defender_hull_faction_id".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: Some(1750120904),
+            conditions: None,
+        })
+        .unwrap();
+        assert_eq!(c, AbilityCondition::DefenderHullFactionIdIs(1750120904));
+        let mut ctx = CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: false,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
+            defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 1750120904,
+            defender_ship_type: ShipType::Battleship,
+            attacker_ship_type: ShipType::Explorer,
+            attacker_ship_id: String::new(),
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
+        };
+        assert!(c.evaluate(&ctx));
+        ctx.defender_hull_faction_id = 0;
+        assert!(!c.evaluate(&ctx));
+    }
+
+    #[test]
     fn resolve_lcars_condition_maps_attacker_burning_and_self_hull_breach() {
         let burn = resolve_lcars_condition(&LcarsCondition {
             condition_type: "attacker_burning".to_string(),
@@ -1081,6 +1134,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1096,6 +1150,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1115,6 +1170,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1130,6 +1186,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1149,6 +1206,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: Some("explorer".to_string()),
+            faction_id: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1168,6 +1226,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: Some("battleship".to_string()),
+            faction_id: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1188,6 +1247,7 @@ mod tests {
             attacker_hull_breach_active: false,
             defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Explorer,
             attacker_ship_type: ShipType::Battleship,
             attacker_ship_id: String::new(),
@@ -1216,6 +1276,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         })
         .expect("npc");
@@ -1230,6 +1291,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         })
         .expect("player");
@@ -1246,6 +1308,7 @@ mod tests {
             attacker_hull_breach_active: false,
             defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1277,6 +1340,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: Some(vec![LcarsCondition {
                 condition_type: "defender_ship_type_is".to_string(),
                 stat: None,
@@ -1288,6 +1352,7 @@ mod tests {
                 min_members: None,
                 tag: None,
                 ship_type: Some("armada".to_string()),
+                faction_id: None,
                 conditions: None,
             }]),
         };
@@ -1305,6 +1370,7 @@ mod tests {
             attacker_hull_breach_active: false,
             defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1333,6 +1399,7 @@ mod tests {
             min_members: None,
             tag: None,
             ship_type: None,
+            faction_id: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1356,6 +1423,7 @@ mod tests {
             attacker_hull_breach_active: false,
             defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),

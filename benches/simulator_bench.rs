@@ -70,6 +70,7 @@ fn bench_simulator(c: &mut Criterion) {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
@@ -91,6 +92,7 @@ fn bench_simulator(c: &mut Criterion) {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
@@ -112,6 +114,7 @@ fn bench_simulator(c: &mut Criterion) {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_hull_faction_id: 0,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
