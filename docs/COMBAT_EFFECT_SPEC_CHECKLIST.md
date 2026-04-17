@@ -144,10 +144,10 @@ This checklist turns the draft in [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md)
 
 ### Existing files to update
 
-- [ ] Add golden parity tests under [tests/](../tests/)
-  - Research scenarios
-  - LCARS fixtures
-  - Mixed crew + research scenarios
+- [x] Add golden parity tests under [tests/](../tests/)
+  - [x] Research: [tests/combat_effect_spec_research_parity_tests.rs](../tests/combat_effect_spec_research_parity_tests.rs) — legacy (`KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1`) vs `research_derived_attack_phase_seats_from_spec` (order-independent seat signatures)
+  - [ ] LCARS fixtures (resolver vs spec compiler)
+  - [ ] Mixed crew + research scenarios
 - [ ] Add optional debug endpoint/flag in server layer (if useful) to dump compiled spec effects for investigation
 
 ### CI requirements
