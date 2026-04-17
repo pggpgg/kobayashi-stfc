@@ -129,7 +129,8 @@ Temporal Conduit,chaos,12,258464522,apex_barrier,23000,add
 Thought Maker,chaos,4,1024185972,apex_barrier,100,add
 Electromagnetic Lute,chaos,12,1212779022,isolytic_damage,0.07,add
 Electromagnetic Lute,chaos,12,1212779022,apex_barrier,4600,add
-Interphasic Mirror,chaos,6,2820752375,isolytic_damage,0.3,add
+Interphasic Mirror,chaos,6,2820752375,isolytic_damage,0.001,add
+Interphasic Mirror,chaos,6,2820752375,isolytic_defense,0.3,add
 Soran's Trilithium,chaos,12,3266867064,apex_barrier,5000,add
 Soran's Trilithium,chaos,12,3266867064,shield_hp,0.037,add
 Enaran Execution Post,chaos,12,3838074426,isolytic_damage,0.55,add

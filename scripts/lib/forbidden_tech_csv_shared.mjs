@@ -17,7 +17,15 @@ export function mapStatFromBuffText(text) {
   )
     return null;
   if (t.includes("mining") || t.includes("loot")) return null;
-  if (t.includes("armada") && t.includes("shots")) return null;
+  // Armada-only "shots" bonuses (e.g. SS Revenant vs Borg armadas). Do not match the generic
+  // disclaimer "(Weapons with multiple shots will only trigger…)" which also mentions Armada + shots.
+  if (
+    t.includes("armada") &&
+    t.includes("shots") &&
+    !t.includes("weapons with multiple shots")
+  ) {
+    return null;
+  }
   // Armada-scoped crit / damage lines are not global ship combat bonuses in Kobayashi merge.
   if (
     t.includes("armada") &&
@@ -42,6 +50,17 @@ export function mapStatFromBuffText(text) {
   if (t.includes("apex barrier")) return "apex_barrier";
   if (t.includes("apex shred")) return "apex_shred";
   if (t.includes("isolytic") && t.includes("defense")) return "isolytic_defense";
+  // Incoming isolytic (mitigation), not outgoing isolytic damage dealt.
+  if (
+    t.includes("isolytic") &&
+    (t.includes("received") ||
+      t.includes("you take") ||
+      (t.includes("reduces") &&
+        t.includes("damage") &&
+        (t.includes("received") || t.includes("from"))))
+  ) {
+    return "isolytic_defense";
+  }
   if (t.includes("isolytic") && t.includes("damage")) return "isolytic_damage";
   if (
     t.includes("critical damage") ||
