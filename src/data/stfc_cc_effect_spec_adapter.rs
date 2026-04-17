@@ -74,6 +74,8 @@ pub fn map_stfc_cc_target(raw: &str) -> Result<AbilityTargetSpec, String> {
     }
     match s {
         "SelfShip" | "SelfAll" => Ok(AbilityTargetSpec::SelfShip),
+        // SelfBridge: officers on the attacking ship’s bridge — map to attacker self.
+        "SelfBridge" => Ok(AbilityTargetSpec::AttackerSelf),
         "EnemyShip" | "TargetShip" => Ok(AbilityTargetSpec::EnemyShip),
         "AttackerSelf" => Ok(AbilityTargetSpec::AttackerSelf),
         "DefenderOpponent" => Ok(AbilityTargetSpec::DefenderOpponent),
@@ -89,6 +91,8 @@ pub fn map_stfc_cc_operation(raw: &str) -> Result<AbilityOperationSpec, String> 
     }
     match s {
         "Add" | "MultiplyAdd" | "MultiplyBaseAdd" => Ok(AbilityOperationSpec::Add),
+        // MultiplySub / Sub: cheat-sheet naming; fold to Add for canonical IR (values still raw).
+        "MultiplySub" | "Sub" => Ok(AbilityOperationSpec::Add),
         "Multiply" | "Mul" => Ok(AbilityOperationSpec::Multiply),
         "Set" => Ok(AbilityOperationSpec::Set),
         "Min" => Ok(AbilityOperationSpec::Min),
@@ -111,6 +115,11 @@ fn map_condition_token(token: &str) -> Result<AbilityConditionSpec, String> {
         "TargetAssimilated" | "DefenderAssimilated" => Ok(AbilityConditionSpec::DefenderAssimilated),
         "DefenderNpcHostile" | "EnemyHostile" => Ok(AbilityConditionSpec::DefenderIsNpcHostile),
         "DefenderPlayerShip" | "EnemyPlayer" => Ok(AbilityConditionSpec::DefenderIsPlayerShip),
+        "TargetNotArmada" => Ok(AbilityConditionSpec::Not {
+            inner: Box::new(AbilityConditionSpec::DefenderShipTypeIs {
+                ship_type: "armada".into(),
+            }),
+        }),
         _ => Err(format!("unmapped_condition:{t}")),
     }
 }
@@ -320,6 +329,33 @@ mod tests {
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.conditions.len(), 1);
         assert!(matches!(spec.conditions[0], AbilityConditionSpec::MoraleActive));
+    }
+
+    #[test]
+    fn target_not_armada_condition_parses() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "X", "OA", "Accuracy", "TargetNotArmada", "RoundStart", "SelfShip", "MultiplyAdd", "1", "0.1",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.conditions.len(), 1);
+        match &spec.conditions[0] {
+            AbilityConditionSpec::Not { inner } => match inner.as_ref() {
+                AbilityConditionSpec::DefenderShipTypeIs { ship_type } => assert_eq!(ship_type, "armada"),
+                _ => panic!("expected DefenderShipTypeIs inside Not"),
+            },
+            _ => panic!("expected Not"),
+        }
+    }
+
+    #[test]
+    fn self_bridge_maps_to_attacker_self() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "X", "OA", "Accuracy", "", "RoundStart", "SelfBridge", "MultiplyAdd", "1", "0.1",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.target, AbilityTargetSpec::AttackerSelf);
     }
 
     #[test]
