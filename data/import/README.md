@@ -46,6 +46,8 @@ Multiple rows with the same name are merged into one record with multiple bonuse
 
 **Chaos tech (`tech_type: chaos`):** Maintainer script [`../../scripts/build_chaos_tech_csv_rows.mjs`](../../scripts/build_chaos_tech_csv_rows.mjs) fetches per-fid JSON from data.stfc.space and emits CSV rows (heuristic stat mapping from `translations-forbidden_tech.json`). Merge output into `forbidden_chaos_tech.csv`, then `cargo run --bin import_forbidden_chaos`.
 
+**Forbidden tech (`tech_type: forbidden`):** [`../../scripts/build_forbidden_tech_csv_rows.mjs`](../../scripts/build_forbidden_tech_csv_rows.mjs) reads cached `data/upstream/data-stfc-space/forbidden_tech/{id}.json` (same heuristics as the chaos script; use `--missing-only` to append only fids not yet in `data/forbidden_chaos_tech.json`). **Coverage audit:** [`../../scripts/report_forbidden_chaos_fid_coverage.mjs`](../../scripts/report_forbidden_chaos_fid_coverage.mjs) lists summary ids missing from the catalog; add `--strict` to exit non-zero when any upstream summary row is absent (optional CI gate).
+
 **Forbidden tech scaling env (see also `src/data/profile.rs`):**
 
 - `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` — scale catalog bonuses by synced forbidden-tech tier/level (opt-in; formula is approximate).
