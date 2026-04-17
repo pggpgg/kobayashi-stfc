@@ -18,6 +18,11 @@ fn get_csv_field<'a>(headers: &'a csv::StringRecord, record: &'a csv::StringReco
 }
 
 /// Map cheat-sheet `AbilityModifier` cell → canonical modifier.
+///
+/// Aligns with [`crate::bin::generate_lcars::map_modifier`] where there is a single primary stat.
+/// `AllDefenses` maps to [`AbilityModifierSpec::Armor`] (the “add” branch); `MultiplySub` rows are
+/// still folded to [`AbilityModifierSpec::Add`] via [`map_stfc_cc_operation`], so mitigation-specific
+/// sign handling is lossy here. Composite modifiers such as `OfficerStatAll` stay unmapped.
 pub fn map_stfc_cc_modifier(raw: &str) -> Result<AbilityModifierSpec, String> {
     let s = raw.trim();
     if s.is_empty() {
@@ -26,18 +31,39 @@ pub fn map_stfc_cc_modifier(raw: &str) -> Result<AbilityModifierSpec, String> {
     match s {
         "Accuracy" => Ok(AbilityModifierSpec::Accuracy),
         "WeaponDamage" | "OfficerWeaponDamage" => Ok(AbilityModifierSpec::WeaponDamage),
+        "AllDamage" | "OfficerStatAttack" => Ok(AbilityModifierSpec::WeaponDamage),
         "CritChance" => Ok(AbilityModifierSpec::CritChance),
         "CritDamage" => Ok(AbilityModifierSpec::CritDamage),
-        "Pierce" | "ArmorPierce" | "ShieldPierce" => Ok(AbilityModifierSpec::Pierce),
+        "Pierce" | "ArmorPierce" | "ArmorPiercing" | "ShieldPierce" | "ShieldPiercing" | "AllPiercing" => {
+            Ok(AbilityModifierSpec::Pierce)
+        }
         "ShieldMitigation" => Ok(AbilityModifierSpec::ShieldMitigation),
-        "Armor" => Ok(AbilityModifierSpec::Armor),
-        "Dodge" => Ok(AbilityModifierSpec::Dodge),
-        "HullHP" | "HullHealth" => Ok(AbilityModifierSpec::HullHp),
-        "ShieldHP" | "ShieldHealth" | "ShieldHPRepair" => Ok(AbilityModifierSpec::ShieldHp),
+        "Armor" | "ShipArmor" | "OfficerStatDefense" | "AllDefenses" => Ok(AbilityModifierSpec::Armor),
+        "Dodge" | "ShipDodge" => Ok(AbilityModifierSpec::Dodge),
+        "HullHP" | "HullHealth" | "HullHPRepair" | "HullRegen" | "OfficerStatHealth" => {
+            Ok(AbilityModifierSpec::HullHp)
+        }
+        "HullHPMax" => Ok(AbilityModifierSpec::HullHp),
+        "ShieldHP" | "ShieldHealth" | "ShieldHPRepair" | "ShieldRegen" => Ok(AbilityModifierSpec::ShieldHp),
+        "ShieldHPMax" => Ok(AbilityModifierSpec::ShieldHp),
+        "ShotsPerAttack" => Ok(AbilityModifierSpec::ShotsBonus),
         "IsolyticDamage" => Ok(AbilityModifierSpec::IsolyticDamage),
         "IsolyticDefense" => Ok(AbilityModifierSpec::IsolyticDefense),
+        "IsolyticCascade" | "IsolyticCascadeDamage" => Ok(AbilityModifierSpec::IsolyticCascadeDamage),
         "ApexShred" => Ok(AbilityModifierSpec::ApexShred),
         "ApexBarrier" => Ok(AbilityModifierSpec::ApexBarrier),
+        // State / proc / loot / economy rows: represented in IR for coverage; runtime LCARS uses tags.
+        "AddState" | "AddRandomState" => Ok(AbilityModifierSpec::TagOnly),
+        "MiningRate" | "MiningReward" | "CargoCapacity" | "CargoProtection" | "WarpSpeed" | "ImpulseSpeed"
+        | "WarpDistance" | "JumpAndTowCostEff" | "RepairCostsPost" | "RepairTime" | "HullRepair"
+        | "CombatXPReward" | "CombatPveRewards" | "FactionPointsGain" | "AllReloadSpeed" | "AllLoadSpeed"
+        | "HostileLoot" | "ArmadaLoot" | "OffAbilityEffect" | "CptManeuverEffect" | "CombatParsteelReward"
+        | "CombatTritaniumReward" | "CombatDilithiumReward" | "Shields" | "SkillCloakingDuration"
+        | "SkillCloakingCooldown" | "ActianVenomAndNanoprobeLoot" | "BrokenShipPartsLoot"
+        | "ArtifactTokenLoot" | "VoyagerAsaCE" | "HirogenRelicAndBiotoxinLoot" | "XindiHostileLoot"
+        | "SkillCuttingBeamAbilityCost" | "GornHostileVolatileLoot" | "TrelliumRewards"
+        | "PveChestLootMultiplierLimitedResources" | "WokAugmentAllLootRewards" | "Omega13Cooldown"
+        | "SkillCuttingBeamPvPBaseDamagePercentage" | "CombatScavenger" => Ok(AbilityModifierSpec::TagOnly),
         _ => Err(format!("unmapped_modifier:{s}")),
     }
 }
@@ -60,8 +86,9 @@ pub fn map_stfc_cc_trigger(raw: &str) -> Result<AbilityTriggerSpec, String> {
         "OnHullBreach" | "HullDamageTaken" => Ok(AbilityTriggerSpec::HullBreach),
         "OnReceiveDamage" | "ShieldDamageTaken" => Ok(AbilityTriggerSpec::ReceiveDamage),
         "OnCombatEnd" => Ok(AbilityTriggerSpec::CombatEnd),
-        "OnShieldBreak" | "OnEnemyShieldBreak" => Ok(AbilityTriggerSpec::ShieldBreak),
+        "OnShieldBreak" | "OnEnemyShieldBreak" | "ShieldsDepleted" => Ok(AbilityTriggerSpec::ShieldBreak),
         "OnOwnShieldBreak" => Ok(AbilityTriggerSpec::SelfShieldBreak),
+        "CriticalShotTaken" => Ok(AbilityTriggerSpec::DefensePhase),
         _ => Err(format!("unmapped_trigger:{s}")),
     }
 }
@@ -79,6 +106,9 @@ pub fn map_stfc_cc_target(raw: &str) -> Result<AbilityTargetSpec, String> {
         "EnemyShip" | "TargetShip" => Ok(AbilityTargetSpec::EnemyShip),
         "AttackerSelf" => Ok(AbilityTargetSpec::AttackerSelf),
         "DefenderOpponent" => Ok(AbilityTargetSpec::DefenderOpponent),
+        // AoE / seat shorthand from cheat-sheet columns.
+        "EnemyAllShips" => Ok(AbilityTargetSpec::DefenderTeam),
+        "SelfCaptain" => Ok(AbilityTargetSpec::AttackerSelf),
         _ => Err(format!("unmapped_target:{s}")),
     }
 }
@@ -92,7 +122,7 @@ pub fn map_stfc_cc_operation(raw: &str) -> Result<AbilityOperationSpec, String> 
     match s {
         "Add" | "MultiplyAdd" | "MultiplyBaseAdd" => Ok(AbilityOperationSpec::Add),
         // MultiplySub / Sub: cheat-sheet naming; fold to Add for canonical IR (values still raw).
-        "MultiplySub" | "Sub" => Ok(AbilityOperationSpec::Add),
+        "MultiplySub" | "MultiplyBaseSub" | "Sub" => Ok(AbilityOperationSpec::Add),
         "Multiply" | "Mul" => Ok(AbilityOperationSpec::Multiply),
         "Set" => Ok(AbilityOperationSpec::Set),
         "Min" => Ok(AbilityOperationSpec::Min),
@@ -108,11 +138,43 @@ fn map_condition_token(token: &str) -> Result<AbilityConditionSpec, String> {
     }
     match t {
         "SelfHasMorale" | "AttackerMorale" | "Morale" => Ok(AbilityConditionSpec::MoraleActive),
-        "TargetBurning" | "DefenderBurning" | "Burning" => Ok(AbilityConditionSpec::DefenderBurning),
-        "TargetHullBreach" | "DefenderHullBreach" => Ok(AbilityConditionSpec::DefenderHullBreach),
-        "SelfBurning" | "AttackerBurning" => Ok(AbilityConditionSpec::AttackerBurning),
-        "SelfHullBreach" | "AttackerHullBreach" => Ok(AbilityConditionSpec::AttackerHullBreach),
-        "TargetAssimilated" | "DefenderAssimilated" => Ok(AbilityConditionSpec::DefenderAssimilated),
+        "TargetBurning" | "DefenderBurning" | "Burning" | "TargetHasBurning" => {
+            Ok(AbilityConditionSpec::DefenderBurning)
+        }
+        "TargetHullBreach" | "DefenderHullBreach" | "TargetHasHullBreach" => {
+            Ok(AbilityConditionSpec::DefenderHullBreach)
+        }
+        "SelfBurning" | "AttackerBurning" | "SelfHasBurning" => Ok(AbilityConditionSpec::AttackerBurning),
+        "SelfHullBreach" | "AttackerHullBreach" | "SelfHasHullBreach" => {
+            Ok(AbilityConditionSpec::AttackerHullBreach)
+        }
+        "TargetAssimilated" | "DefenderAssimilated" | "TargetHasAssimilated" => {
+            Ok(AbilityConditionSpec::DefenderAssimilated)
+        }
+        "SelfExplorer" => Ok(AbilityConditionSpec::AttackerShipTypeIs {
+            ship_type: "explorer".into(),
+        }),
+        "SelfBattleship" => Ok(AbilityConditionSpec::AttackerShipTypeIs {
+            ship_type: "battleship".into(),
+        }),
+        "SelfInterceptor" => Ok(AbilityConditionSpec::AttackerShipTypeIs {
+            ship_type: "interceptor".into(),
+        }),
+        "SelfSurveyor" => Ok(AbilityConditionSpec::AttackerShipTypeIs {
+            ship_type: "survey".into(),
+        }),
+        "EnemyExplorer" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
+            ship_type: "explorer".into(),
+        }),
+        "EnemyBattleship" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
+            ship_type: "battleship".into(),
+        }),
+        "EnemyInterceptor" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
+            ship_type: "interceptor".into(),
+        }),
+        "TargetIsArmada" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
+            ship_type: "armada".into(),
+        }),
         "DefenderNpcHostile" | "EnemyHostile" => Ok(AbilityConditionSpec::DefenderIsNpcHostile),
         "DefenderPlayerShip" | "EnemyPlayer" => Ok(AbilityConditionSpec::DefenderIsPlayerShip),
         "SelfOfficerTalNotOnBridge" => Ok(AbilityConditionSpec::AttackerOfficerTalNotOnBridge),
@@ -311,6 +373,26 @@ mod tests {
     }
 
     #[test]
+    fn all_damage_maps_to_weapon_damage() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "X", "OA", "AllDamage", "", "ShipLaunched", "SelfShip", "MultiplyAdd", "1", "0.12",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.modifier, AbilityModifierSpec::WeaponDamage);
+    }
+
+    #[test]
+    fn add_state_maps_to_tag_only() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "X", "OA", "AddState", "", "RoundStart", "SelfShip", "MultiplyAdd", "1", "0.5",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.modifier, AbilityModifierSpec::TagOnly);
+    }
+
+    #[test]
     fn kirk_officer_stat_all_is_unmapped_modifier() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
@@ -345,6 +427,29 @@ mod tests {
             spec.conditions[0],
             AbilityConditionSpec::AttackerOfficerTalNotOnBridge
         ));
+    }
+
+    #[test]
+    fn self_explorer_and_target_has_burning_parse() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "X",
+            "OA",
+            "Accuracy",
+            "SelfExplorer,TargetHasBurning",
+            "RoundStart",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
+            "0.1",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.conditions.len(), 2);
+        assert!(matches!(
+            &spec.conditions[0],
+            AbilityConditionSpec::AttackerShipTypeIs { ship_type } if ship_type == "explorer"
+        ));
+        assert!(matches!(spec.conditions[1], AbilityConditionSpec::DefenderBurning));
     }
 
     #[test]
