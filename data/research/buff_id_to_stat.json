@@ -1,4 +1,8 @@
 {
   "3957763486": "accuracy",
-  "3089064337": "accuracy"
+  "3089064337": "accuracy",
+  "1898558353": {
+    "stat": "weapon_damage",
+    "requires_defender_burning": true
+  }
 }

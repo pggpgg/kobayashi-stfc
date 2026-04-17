@@ -867,10 +867,10 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 ///
 /// | Key | Flat merge into `profile.bonuses` | Applied via |
 /// |-----|-----------------------------------|---------------|
-/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `apex_shred`, `apex_barrier` | yes (unless conditional crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] |
+/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] |
 /// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
 /// | `isolytic_damage_morale` | yes | `scenario.rs` — `extend_crew_with_morale_gated_profile_bonuses` (round-start seat, morale gate) |
-/// | Conditional `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
+/// | Conditional `weapon_damage`, `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
 ///
 /// Aliases: `armor_pierce`, `shield_pierce` → `pierce`.
 fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
@@ -973,9 +973,11 @@ fn research_levels_by_rid_from_import(imported_research: &[ResearchEntry]) -> Ha
 }
 
 /// Conditional research rows (hull class, faction, morale, burning, hull breach) for `crit_chance` /
-/// `crit_damage` become attack-phase ship seats so crit rolls respect gates (see `research.rs`).
+/// `crit_damage`, and conditional `weapon_damage`, become attack-phase ship seats so outbound damage
+/// and crit rolls respect gates (see `research.rs`).
 ///
-/// Unconditional `crit_*` rows stay in [`merge_research_bonuses_into_profile`] / `profile.bonuses`.
+/// Unconditional `crit_*` and unconditional `weapon_damage` rows stay in
+/// [`merge_research_bonuses_into_profile`] / `profile.bonuses`.
 pub fn research_derived_attack_phase_seats(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
@@ -1007,7 +1009,7 @@ pub fn research_derived_attack_phase_seats(
         let Some(norm) = normalize_profile_combat_stat(&stat) else {
             continue;
         };
-        if norm != "crit_chance" && norm != "crit_damage" {
+        if norm != "crit_chance" && norm != "crit_damage" && norm != "weapon_damage" {
             continue;
         }
         let Some(condition) = ability_condition_from_research_bonus_key(&key) else {
@@ -1018,6 +1020,7 @@ pub fn research_derived_attack_phase_seats(
                 crate::data::ship_ability_resolve::normalize_probability(value),
             ),
             "crit_damage" => AbilityEffect::CritDamageMultiplier((1.0 + value).max(EPSILON)),
+            "weapon_damage" => AbilityEffect::AttackMultiplier(value),
             _ => continue,
         };
         idx = idx.saturating_add(1);

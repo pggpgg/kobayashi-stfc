@@ -7153,8 +7153,9 @@
           "bonuses": [
             {
               "stat": "weapon_damage",
-              "value": 1,
-              "operator": "add"
+              "value": 0.01,
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7163,8 +7164,9 @@
           "bonuses": [
             {
               "stat": "weapon_damage",
-              "value": 1.45,
-              "operator": "add"
+              "value": 0.0145,
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7174,7 +7176,8 @@
             {
               "stat": "weapon_damage",
               "value": 0.0215,
-              "operator": "add"
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7183,8 +7186,9 @@
           "bonuses": [
             {
               "stat": "weapon_damage",
-              "value": 0.028999999999999998,
-              "operator": "add"
+              "value": 0.029,
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7194,7 +7198,8 @@
             {
               "stat": "weapon_damage",
               "value": 0.038,
-              "operator": "add"
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7204,7 +7209,8 @@
             {
               "stat": "weapon_damage",
               "value": 0.0475,
-              "operator": "add"
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7214,7 +7220,8 @@
             {
               "stat": "weapon_damage",
               "value": 0.057,
-              "operator": "add"
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7224,7 +7231,8 @@
             {
               "stat": "weapon_damage",
               "value": 0.0675,
-              "operator": "add"
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7234,7 +7242,8 @@
             {
               "stat": "weapon_damage",
               "value": 0.0785,
-              "operator": "add"
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         },
@@ -7244,7 +7253,8 @@
             {
               "stat": "weapon_damage",
               "value": 0.09,
-              "operator": "add"
+              "operator": "add",
+              "requires_defender_burning": true
             }
           ]
         }

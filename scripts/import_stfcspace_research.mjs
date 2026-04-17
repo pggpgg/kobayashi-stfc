@@ -235,6 +235,18 @@ function inferCombatStatFromDescription(text) {
   if (/shield health|shield hit points|shield capacity|shield strength|max shield/.test(t)) {
     if (/all ships|your ships|ship/.test(t)) return "shield_hp";
   }
+  // NS Burning Damage (loca 70106): bonus weapon damage only while the target has Burning.
+  if (
+    /weapon damage|base damage dealt|damage dealt to hostiles|damage dealt to hostile|offensive damage|increases base damage|increases base weapon|bonus to base weapon damage/.test(
+      t
+    ) &&
+    /opponent has burning|while your opponent has burning|target has burning|while the target has burning/.test(
+      t
+    ) &&
+    !/defense platform|station|away team/.test(t)
+  ) {
+    return { stat: "weapon_damage", requires_defender_burning: true };
+  }
   if (
     /weapon damage|base damage dealt|damage dealt to hostiles|damage dealt to hostile|offensive damage|increases base damage|bonus to base weapon damage/.test(
       t
@@ -300,9 +312,39 @@ function statEntryFromJsonValue(v, defaultOp) {
   if (v == null) return null;
   if (typeof v === "string") return { stat: v, operator: defaultOp ?? "add" };
   if (typeof v === "object" && typeof v.stat === "string") {
-    return { stat: v.stat, operator: v.operator ?? defaultOp ?? "add" };
+    const out = { stat: v.stat, operator: v.operator ?? defaultOp ?? "add" };
+    if (v.requires_defender_burning) out.requires_defender_burning = true;
+    if (v.requires_morale) out.requires_morale = true;
+    if (v.requires_defender_hull_breach) out.requires_defender_hull_breach = true;
+    if (typeof v.defender_ship_class === "string")
+      out.defender_ship_class = v.defender_ship_class;
+    if (typeof v.defender_faction === "string") out.defender_faction = v.defender_faction;
+    return out;
   }
   return null;
+}
+
+/** Normalize inferCombatStatFromDescription / inferCombatStatFromProjectName return values. */
+function coerceStatMapping(inferred) {
+  if (inferred == null) return null;
+  if (typeof inferred === "string") return { stat: inferred, operator: "add" };
+  return {
+    stat: inferred.stat,
+    operator: inferred.operator ?? "add",
+    ...(inferred.requires_defender_burning
+      ? { requires_defender_burning: true }
+      : {}),
+    ...(inferred.requires_morale ? { requires_morale: true } : {}),
+    ...(inferred.requires_defender_hull_breach
+      ? { requires_defender_hull_breach: true }
+      : {}),
+    ...(typeof inferred.defender_ship_class === "string"
+      ? { defender_ship_class: inferred.defender_ship_class }
+      : {}),
+    ...(typeof inferred.defender_faction === "string"
+      ? { defender_faction: inferred.defender_faction }
+      : {}),
+  };
 }
 
 function resolveBuffStat(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId) {
@@ -331,23 +373,27 @@ function resolveBuffStat(buff, descriptionByLocaId, projectLocaId, projectNamesB
     if (typeof buff.loca_id === "number") {
       const t = descriptionByLocaId.get(buff.loca_id);
       const inferred = inferCombatStatFromDescription(t);
-      if (inferred) return { stat: inferred, operator: "add" };
+      const coerced = coerceStatMapping(inferred);
+      if (coerced) return coerced;
     }
     if (typeof projectLocaId === "number") {
       const t = descriptionByLocaId.get(projectLocaId);
       const inferred = inferCombatStatFromDescription(t);
-      if (inferred) return { stat: inferred, operator: "add" };
+      const coerced = coerceStatMapping(inferred);
+      if (coerced) return coerced;
     }
   }
 
   if (projectNamesByLocaId && projectNamesByLocaId.size > 0) {
     if (typeof buff.loca_id === "number") {
       const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(buff.loca_id));
-      if (inferred) return { stat: inferred, operator: "add" };
+      const coerced = coerceStatMapping(inferred);
+      if (coerced) return coerced;
     }
     if (typeof projectLocaId === "number") {
       const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(projectLocaId));
-      if (inferred) return { stat: inferred, operator: "add" };
+      const coerced = coerceStatMapping(inferred);
+      if (coerced) return coerced;
     }
   }
 
@@ -402,6 +448,11 @@ const NON_PCT_DECIMAL_STATS = new Set([
 
 function normalizeBonusValue(buff, mapping, rawValue) {
   let value = rawValue;
+  // NS Burning Damage buff: upstream uses percentage points (1 = +1% weapon damage).
+  // The generic branch below would keep 1.0 as literal +100% for `value_is_percentage` rows ≤ 1.5.
+  if (buff?.id === 1898558353 && mapping?.stat === "weapon_damage" && buff.value_is_percentage) {
+    return value / 100;
+  }
   if (buff.value_is_percentage) {
     value = value >= 0 && value <= 1.5 ? value : value / 100;
     return value;
@@ -461,11 +512,20 @@ function buildLevelsFromDetail(detail, opts) {
       if (!raw || typeof raw.value !== "number") continue;
       const value = normalizeBonusValue(buff, mapping, raw.value);
       if (value == null || value === 0 || !Number.isFinite(value)) continue;
-      bonuses.push({
+      const bonus = {
         stat: mapping.stat,
         value,
         operator: mapping.operator ?? "add",
-      });
+      };
+      if (mapping.requires_defender_burning) bonus.requires_defender_burning = true;
+      if (mapping.requires_morale) bonus.requires_morale = true;
+      if (mapping.requires_defender_hull_breach)
+        bonus.requires_defender_hull_breach = true;
+      if (typeof mapping.defender_ship_class === "string")
+        bonus.defender_ship_class = mapping.defender_ship_class;
+      if (typeof mapping.defender_faction === "string")
+        bonus.defender_faction = mapping.defender_faction;
+      bonuses.push(bonus);
     }
     if (bonuses.length > 0) {
       levels.push({ level, bonuses });

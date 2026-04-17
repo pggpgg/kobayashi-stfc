@@ -6,9 +6,10 @@
 //! additively in [`cumulative_research_bonuses`] (then added into `profile.bonuses`). Multiply
 //! operators apply only within a single project's level chain, in ascending level order.
 //!
-//! Bonuses with [`ResearchBonusConditionKey`] fields set (ship class, faction, morale, etc.) are
-//! **excluded** from flat profile merge; [`crate::data::profile::research_derived_attack_phase_seats`]
-//! turns them into gated attack-phase crit effects (see `docs/DESIGN.md` research section).
+//! Bonuses with [`ResearchBonusConditionKey`] fields set (ship class, faction, morale, burning, etc.)
+//! are **excluded** from flat profile merge for attack-scoped stats: conditional `crit_chance` /
+//! `crit_damage` and conditional `weapon_damage` feed [`crate::data::profile::research_derived_attack_phase_seats`]
+//! (gated attack-phase effects; see `docs/DESIGN.md` research section).
 
 use std::collections::HashMap;
 use std::fs;
@@ -87,10 +88,16 @@ fn is_crit_seat_research_stat(stat: &str) -> bool {
     matches!(stat, "crit_chance" | "crit_damage")
 }
 
-/// Conditional **crit** rows are modeled as attack-phase seats; they must not also merge into `profile.bonuses`.
-/// Other conditional stats (if they appear in the catalog) still use the flat profile layer until we add seats.
+/// Stats that, when conditional on [`ResearchBonusConditionKey`], are modeled as attack-phase seats
+/// (not flat [`PlayerProfile::bonuses`] merge).
+fn is_conditional_attack_seat_research_stat(stat: &str) -> bool {
+    is_crit_seat_research_stat(stat) || stat == "weapon_damage"
+}
+
+/// Conditional **crit** and conditional **weapon_damage** rows are modeled as attack-phase seats; they
+/// must not also merge into `profile.bonuses`. Other conditional stats still use the flat profile layer.
 pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry) -> bool {
-    research_bonus_is_conditional(bonus) && is_crit_seat_research_stat(&bonus.stat)
+    research_bonus_is_conditional(bonus) && is_conditional_attack_seat_research_stat(&bonus.stat)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -219,7 +226,7 @@ pub fn cumulative_research_level_conditional_bonuses(
             if !research_bonus_is_conditional(bonus) {
                 continue;
             }
-            if !is_crit_seat_research_stat(&bonus.stat) {
+            if !is_conditional_attack_seat_research_stat(&bonus.stat) {
                 continue;
             }
             let op = if bonus.operator.is_empty() {
@@ -441,7 +448,7 @@ mod tests {
     }
 
     #[test]
-    fn conditional_non_crit_still_in_flat_level_bonuses() {
+    fn conditional_weapon_damage_not_in_flat_level_bonuses() {
         let r = ResearchRecord {
             rid: 502,
             name: None,
@@ -461,8 +468,16 @@ mod tests {
             }],
         };
         let flat = cumulative_research_level_bonuses(&r, 1);
-        assert_eq!(flat.get("weapon_damage").copied(), Some(0.04));
-        assert!(cumulative_research_level_conditional_bonuses(&r, 1).is_empty());
+        assert!(
+            flat.get("weapon_damage").is_none(),
+            "conditional weapon_damage must not merge into flat level bonuses"
+        );
+        let key = ResearchBonusConditionKey {
+            defender_ship_class: Some("battleship".into()),
+            ..Default::default()
+        };
+        let cond = cumulative_research_level_conditional_bonuses(&r, 1);
+        assert_eq!(cond.get(&(key, "weapon_damage".into())).copied(), Some(0.04));
     }
 
     #[test]
@@ -502,5 +517,37 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(cond.get(&(key, "crit_chance".into())).copied(), Some(0.05));
+    }
+
+    #[test]
+    fn conditional_weapon_damage_burning_not_in_flat_conditional_map() {
+        let r = ResearchRecord {
+            rid: 503,
+            name: None,
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "weapon_damage".into(),
+                    value: 0.01,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        requires_defender_burning: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        };
+        assert!(cumulative_research_level_bonuses(&r, 1).is_empty());
+        let key = ResearchBonusConditionKey {
+            requires_defender_burning: true,
+            ..Default::default()
+        };
+        let cond = cumulative_research_level_conditional_bonuses(&r, 1);
+        assert_eq!(
+            cond.get(&(key, "weapon_damage".into())).copied(),
+            Some(0.01)
+        );
     }
 }

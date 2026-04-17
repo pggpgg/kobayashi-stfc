@@ -217,3 +217,51 @@ fn merge_research_conditional_crit_is_attack_phase_seat_not_profile_crit() {
         Some(AbilityCondition::DefenderShipTypeIs(ShipType::Explorer))
     );
 }
+
+#[test]
+fn merge_research_ns_burning_damage_is_burning_gated_attack_multiplier_not_flat_weapon() {
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: 365419690,
+            name: Some("NS Burning Damage".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "weapon_damage".into(),
+                    value: 0.01,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        requires_defender_burning: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry {
+        rid: 365419690,
+        level: 1,
+    }];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    assert!(
+        !profile.bonuses.contains_key("weapon_damage"),
+        "burning-gated weapon_damage must not merge into profile.bonuses"
+    );
+
+    let seats = research_derived_attack_phase_seats(&imported, &catalog);
+    assert_eq!(seats.len(), 1);
+    assert_eq!(seats[0].ability.timing, TimingWindow::AttackPhase);
+    match seats[0].ability.effect {
+        AbilityEffect::AttackMultiplier(v) => assert!((v - 0.01).abs() < 1e-12),
+        ref e => panic!("expected AttackMultiplier, got {e:?}"),
+    }
+    assert_eq!(
+        seats[0].ability.condition,
+        Some(AbilityCondition::DefenderBurning)
+    );
+}
