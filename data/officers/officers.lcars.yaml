@@ -10481,7 +10481,18 @@ officers:
         - 0.1
         - 0.2
         chance_values: null
-      condition: null
+      condition:
+        type: attacker_hull_breach
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -10509,7 +10520,18 @@ officers:
         - 1.1
         - 1.4
         chance_values: null
-      condition: null
+      condition:
+        type: attacker_hull_breach
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12357,7 +12379,7 @@ officers:
         - -0.2
         chance_values: null
       condition:
-        type: not
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -12368,7 +12390,7 @@ officers:
         tag: null
         ship_type: null
         conditions:
-        - type: defender_ship_type_is
+        - type: attacker_hull_breach
           stat: null
           threshold_pct: null
           min: null
@@ -12377,8 +12399,30 @@ officers:
           group: null
           min_members: null
           tag: null
-          ship_type: armada
+          ship_type: null
           conditions: null
+        - type: not
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions:
+          - type: defender_ship_type_is
+            stat: null
+            threshold_pct: null
+            min: null
+            max: null
+            faction: null
+            group: null
+            min_members: null
+            tag: null
+            ship_type: armada
+            conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12395,7 +12439,18 @@ officers:
       trigger: on_round_start
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_hull_breach
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: accuracy:unmapped
@@ -12741,7 +12796,18 @@ officers:
         - 1.1
         - 1.2
         chance_values: null
-      condition: null
+      condition:
+        type: attacker_hull_breach
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -12769,7 +12835,18 @@ officers:
         - 0.15
         - 0.2
         chance_values: null
-      condition: null
+      condition:
+        type: attacker_hull_breach
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -13864,7 +13941,7 @@ officers:
         - 0.05
         chance_values: null
       condition:
-        type: not
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -13875,7 +13952,7 @@ officers:
         tag: null
         ship_type: null
         conditions:
-        - type: defender_ship_type_is
+        - type: attacker_burning
           stat: null
           threshold_pct: null
           min: null
@@ -13884,8 +13961,30 @@ officers:
           group: null
           min_members: null
           tag: null
-          ship_type: armada
+          ship_type: null
           conditions: null
+        - type: not
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          conditions:
+          - type: defender_ship_type_is
+            stat: null
+            threshold_pct: null
+            min: null
+            max: null
+            faction: null
+            group: null
+            min_members: null
+            tag: null
+            ship_type: armada
+            conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -13913,7 +14012,18 @@ officers:
         - 1.5
         - 1.6
         chance_values: null
-      condition: null
+      condition:
+        type: attacker_burning
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null

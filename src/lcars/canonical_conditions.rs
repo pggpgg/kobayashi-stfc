@@ -56,6 +56,9 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         "TargetHasBurning" => return Some(lcars_cond_base("defender_burning")),
         "TargetHasHullBreach" => return Some(lcars_cond_base("defender_hull_breach")),
         "SelfHasMorale" => return Some(lcars_cond_base("morale_active")),
+        // Player ship debuffs (from hostile procs / counter); must be before `Self` hull-class prefix.
+        "SelfHasHullBreach" => return Some(lcars_cond_base("attacker_hull_breach")),
+        "SelfHasBurning" => return Some(lcars_cond_base("attacker_burning")),
         // Canonical opponent category: NPC hostile (ship-vs-hostile optimizer default).
         "EnemyHostile" => return Some(lcars_cond_base("defender_is_npc_hostile")),
         // Canonical opponent category: player ship (PvP-shaped API toggle).
@@ -257,6 +260,22 @@ mod tests {
         resolve_lcars_condition(&c).unwrap();
     }
 
+    #[test]
+    fn self_has_hull_breach_maps_to_attacker_hull_breach() {
+        let c = map_canonical_condition_token("SelfHasHullBreach").unwrap();
+        assert_eq!(c.condition_type, "attacker_hull_breach");
+        let ac = resolve_lcars_condition(&c).unwrap();
+        assert_eq!(ac, AbilityCondition::AttackerHullBreach);
+    }
+
+    #[test]
+    fn self_has_burning_maps_to_attacker_burning() {
+        let c = map_canonical_condition_token("SelfHasBurning").unwrap();
+        assert_eq!(c.condition_type, "attacker_burning");
+        let ac = resolve_lcars_condition(&c).unwrap();
+        assert_eq!(ac, AbilityCondition::AttackerBurning);
+    }
+
     // Task 2 audit: tokens below still lack a 1:1 AbilityCondition / CombatContext story (see
     // docs/CANONICAL_CONDITIONS.md). When engine support exists, map in map_canonical_condition_token
     // and remove the token from DEFERRED.
@@ -278,14 +297,12 @@ mod tests {
             "TargetHasAssimilated",
             "TargetStateAny",
             "SelfAttacking",
-            "SelfHasHullBreach",
             "HullHealthBelowStartOfCombat",
             "HullHealthBelow",
             "SelfAtWaveDefenseChallenge",
             "TargetIsArmadaOrInvadingEntity",
             "TargetNotPlayerStation",
             "SelfCloaked",
-            "SelfHasBurning",
             "SelfHullBorgCube",
             "SelfHullDiscovery",
             "SelfHullFranklins",

@@ -92,6 +92,10 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
         "defender_hull_breach" | "target_hull_breach" | "hull_breach_active" => {
             Ok(AbilityCondition::DefenderHullBreach)
         }
+        "attacker_burning" | "self_burning" | "player_burning" => Ok(AbilityCondition::AttackerBurning),
+        "attacker_hull_breach" | "self_hull_breach" | "player_hull_breach" => {
+            Ok(AbilityCondition::AttackerHullBreach)
+        }
         "defender_faction_is"
         | "defender_faction"
         | "opponent_faction_is"
@@ -1041,6 +1045,8 @@ mod tests {
             attacker_morale_active: true,
             defender_burning_active: false,
             defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
             defender_faction: OpponentFactionTag::Klingon,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
@@ -1053,6 +1059,40 @@ mod tests {
             ..ctx_ok
         };
         assert!(!and_cond.evaluate(&ctx_no_morale));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_attacker_burning_and_self_hull_breach() {
+        let burn = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "attacker_burning".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: None,
+        })
+        .unwrap();
+        assert_eq!(burn, AbilityCondition::AttackerBurning);
+        let hb = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "self_hull_breach".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            conditions: None,
+        })
+        .unwrap();
+        assert_eq!(hb, AbilityCondition::AttackerHullBreach);
     }
 
     #[test]
@@ -1103,6 +1143,8 @@ mod tests {
             attacker_morale_active: false,
             defender_burning_active: false,
             defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Explorer,
             attacker_ship_type: ShipType::Battleship,
@@ -1156,6 +1198,8 @@ mod tests {
             attacker_morale_active: false,
             defender_burning_active: false,
             defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
@@ -1210,6 +1254,8 @@ mod tests {
             attacker_morale_active: false,
             defender_burning_active: false,
             defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,

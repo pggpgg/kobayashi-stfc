@@ -153,6 +153,10 @@ pub struct CombatContext {
     pub defender_burning_active: bool,
     /// True when the defender still has a Hull Breach duration from the attacker's procs.
     pub defender_hull_breach_active: bool,
+    /// True when the attacker (player ship) has a Burning duration (e.g. from hostile procs / receive damage).
+    pub attacker_burning_active: bool,
+    /// True when the attacker still has a Hull Breach duration (e.g. from hostile counter fire).
+    pub attacker_hull_breach_active: bool,
     /// Faction of the defending ship (hostile) in PvE; used for "against Klingon" style abilities.
     pub defender_faction: OpponentFactionTag,
     /// Hull class of the defending [`crate::combat::Combatant`] (hostile in PvE).
@@ -186,6 +190,10 @@ pub enum AbilityCondition {
     DefenderBurning,
     /// True when [CombatContext::defender_hull_breach_active].
     DefenderHullBreach,
+    /// True when [CombatContext::attacker_burning_active] (player ship burning).
+    AttackerBurning,
+    /// True when [CombatContext::attacker_hull_breach_active] (player ship hull breached).
+    AttackerHullBreach,
     /// True when the defending hostile’s faction matches (see [`CombatContext::defender_faction`]).
     DefenderFactionIs(OpponentFactionTag),
     /// True when the defending ship’s hull class matches (player hull abilities vs a hostile of that class).

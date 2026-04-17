@@ -6,7 +6,7 @@ See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, [`map_canonical_cond
 
 ## Triage (frequency × feasibility)
 
-The table below lists **currently unmapped** tokens (57 unique strings in canonical; **42 remain unmapped** after the armada / `not` mappings). Counts are occurrences in `officers.canonical.json` (not officer cardinality).
+The table below lists **currently unmapped** tokens (57 unique strings in canonical; **40 remain unmapped** after armada / `not` / attacker breach-burn mappings). Counts are occurrences in `officers.canonical.json` (not officer cardinality).
 
 
 | Token                                                                                                              | Count         | Bucket   | Note                                                                                                                                                                   |
@@ -24,11 +24,9 @@ The table below lists **currently unmapped** tokens (57 unique strings in canoni
 | `TargetHasAssimilated`                                                                                             | 7             | deferred | Assimilate debuff is tracked for **attacker** effectiveness, not exposed as “target has assimilated” on defender; mapping would need a defined PvE/PvP semantics pass. |
 | `TargetStateAny`                                                                                                   | 7             | deferred | Composite state bundle not modeled as one predicate.                                                                                                                   |
 | `SelfAttacking`                                                                                                    | 6             | deferred | Ambiguous vs default PvE attacker role.                                                                                                                                |
-| `SelfHasHullBreach`                                                                                                | 6             | deferred | No `attacker_hull_breach_active` in `CombatContext` (only defender hull breach).                                                                                       |
 | `HullHealthBelowStartOfCombat` / `HullHealthBelow` / `HullHealthAbove`                                             | 4 / 3 / 1     | deferred | Canonical JSON does not carry thresholds per token; values live in prose — do not invent cutoffs.                                                                      |
 | `TargetIsArmadaOrInvadingEntity` / `TargetIsInvadingEntity` / `TargetNotInvadingEntity` / `TargetNotPlayerStation` | 3 / 2 / 1 / 3 | deferred | Invading entity / station predicates not modeled.                                                                                                                      |
 | `SelfHull*` / `SelfMining` / `SelfCloaked`                                                                         | various       | deferred | Player hull identity / mining / cloak not in `CombatContext`.                                                                                                          |
-| `SelfHasBurning`                                                                                                   | 2             | deferred | No `attacker_burning_active` (burning rounds apply to defender in current loop).                                                                                       |
 | `SelfStateNone`                                                                                                    | 2             | deferred | “No state” bundle not modeled.                                                                                                                                         |
 | `HitEnemyWithEnergy` / `HitEnemyWithKinetic`                                                                       | 1 each        | deferred | Per-hit weapon type context not available at generic condition evaluation.                                                                                             |
 | `EnemyStronger`                                                                                                    | 1             | deferred | Power comparison not in context.                                                                                                                                       |
@@ -37,13 +35,13 @@ The table below lists **currently unmapped** tokens (57 unique strings in canoni
 
 ### Task 2 audit (engine-ready mappings only)
 
-Re-checked every **unmapped** token from `cargo run --bin report_unknown_mappings` against existing [`resolve_lcars_condition`](../src/lcars/resolver.rs) types and [`AbilityCondition`](../src/combat/abilities.rs) evaluation. **None** of the remaining tokens have a safe 1:1 mapping without new `CombatContext` fields or new condition variants (same rationale as the “deferred” column above). No changes were made to [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs) for Task 2.
+Re-checked **unmapped** tokens from `cargo run --bin report_unknown_mappings` against resolver / `AbilityCondition` evaluation. **`SelfHasHullBreach`** and **`SelfHasBurning`** were later implemented: [`CombatContext`](../src/combat/abilities.rs) exposes `attacker_hull_breach_active` / `attacker_burning_active`, counter and receive-damage paths update attacker debuff counters, and canonical maps them to LCARS `attacker_hull_breach` / `attacker_burning` (see [`task2_deferred_tokens_remain_unmapped`](../src/lcars/canonical_conditions.rs) for the still-deferred set).
 
-Regression: [`task2_deferred_tokens_remain_unmapped`](../src/lcars/canonical_conditions.rs) asserts this deferred set stays unmapped until engine work lands; remove a token from that test when you add a deliberate mapping.
+Regression: [`task2_deferred_tokens_remain_unmapped`](../src/lcars/canonical_conditions.rs) asserts the remaining deferred tokens stay unmapped until engine work lands; remove a token from that test when you add a deliberate mapping.
 
 ## Mapped today (reference)
 
-Handled in [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs): `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasMorale`, `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada**` (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes.
+Handled in [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs): `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasBurning` (LCARS `attacker_burning`), `SelfHasHullBreach` (LCARS `attacker_hull_breach`), `SelfHasMorale`, `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada**` (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes (explorer, …; not `SelfHas*` breach/burn, which are explicit tokens above).
 
 ## Updates (engine + LCARS)
 

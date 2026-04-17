@@ -61,6 +61,8 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::MoraleActive => ctx.attacker_morale_active,
         AbilityCondition::DefenderBurning => ctx.defender_burning_active,
         AbilityCondition::DefenderHullBreach => ctx.defender_hull_breach_active,
+        AbilityCondition::AttackerBurning => ctx.attacker_burning_active,
+        AbilityCondition::AttackerHullBreach => ctx.attacker_hull_breach_active,
         AbilityCondition::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
         AbilityCondition::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
         AbilityCondition::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
@@ -146,6 +148,8 @@ mod tests {
             attacker_morale_active: true,
             defender_burning_active: false,
             defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
             defender_faction: OpponentFactionTag::Unknown,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
@@ -205,6 +209,26 @@ mod tests {
             AbilityCondition::DefenderShipTypeIs(ShipType::Battleship),
         ]);
         assert_eq!(cond.evaluate(&ctx), evaluate_ability_condition(&cond, &ctx));
+    }
+
+    #[test]
+    fn attacker_burning_and_hull_breach_evaluate_from_context() {
+        let mut ctx = sample_ctx();
+        ctx.attacker_burning_active = true;
+        ctx.attacker_hull_breach_active = false;
+        assert!(evaluate_ability_condition(
+            &AbilityCondition::AttackerBurning,
+            &ctx
+        ));
+        assert!(!evaluate_ability_condition(
+            &AbilityCondition::AttackerHullBreach,
+            &ctx
+        ));
+        ctx.attacker_hull_breach_active = true;
+        assert!(evaluate_ability_condition(
+            &AbilityCondition::AttackerHullBreach,
+            &ctx
+        ));
     }
 
     #[test]
