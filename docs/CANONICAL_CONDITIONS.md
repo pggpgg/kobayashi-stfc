@@ -2,7 +2,7 @@
 
 `data/officers/officers.canonical.json` stores PascalCase `conditions` on abilities. `generate_lcars` maps each token to an LCARS `condition` tree when the combat engine can evaluate it; unmapped tokens log `skipping unmapped canonical condition` and the emitted ability may be **weaker** than in-game (subset `and` of only the mapped arms).
 
-See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs), and [`resolve_lcars_condition`](../src/lcars/resolver.rs).
+See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)`, and `[resolve_lcars_condition](../src/lcars/resolver.rs)`.
 
 ## Triage (frequency × feasibility)
 
@@ -33,15 +33,16 @@ The table below lists **currently unmapped** tokens (57 unique strings in canoni
 | `CargoFull` / `CargoEmpty`                                                                                         | 1 each        | deferred | Cargo not modeled.                                                                                                                                                     |
 | `EnemyNotToaTrialHostile`                                                                                          | 1             | deferred | Trial-specific hostile tag not modeled.                                                                                                                                |
 
+
 ### Task 2 audit (engine-ready mappings only)
 
-Re-checked **unmapped** tokens from `cargo run --bin report_unknown_mappings` against resolver / `AbilityCondition` evaluation. **`SelfHasHullBreach`** and **`SelfHasBurning`** were later implemented: [`CombatContext`](../src/combat/abilities.rs) exposes `attacker_hull_breach_active` / `attacker_burning_active`, counter and receive-damage paths update attacker debuff counters, and canonical maps them to LCARS `attacker_hull_breach` / `attacker_burning` (see [`task2_deferred_tokens_remain_unmapped`](../src/lcars/canonical_conditions.rs) for the still-deferred set).
+Re-checked **unmapped** tokens from `cargo run --bin report_unknown_mappings` against resolver / `AbilityCondition` evaluation. `**SelfHasHullBreach`** and `**SelfHasBurning**` were later implemented: `[CombatContext](../src/combat/abilities.rs)` exposes `attacker_hull_breach_active` / `attacker_burning_active`, counter and receive-damage paths update attacker debuff counters, and canonical maps them to LCARS `attacker_hull_breach` / `attacker_burning` (see `[task2_deferred_tokens_remain_unmapped](../src/lcars/canonical_conditions.rs)` for the still-deferred set).
 
-Regression: [`task2_deferred_tokens_remain_unmapped`](../src/lcars/canonical_conditions.rs) asserts the remaining deferred tokens stay unmapped until engine work lands; remove a token from that test when you add a deliberate mapping.
+Regression: `[task2_deferred_tokens_remain_unmapped](../src/lcars/canonical_conditions.rs)` asserts the remaining deferred tokens stay unmapped until engine work lands; remove a token from that test when you add a deliberate mapping.
 
 ## Mapped today (reference)
 
-Handled in [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs): `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasBurning` (LCARS `attacker_burning`), `SelfHasHullBreach` (LCARS `attacker_hull_breach`), `SelfHasMorale`, `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada**` (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes (explorer, …; not `SelfHas*` breach/burn, which are explicit tokens above).
+Handled in `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)`: `TargetHasBurning`, `TargetHasHullBreach`, `SelfHasBurning` (LCARS `attacker_burning`), `SelfHasHullBreach` (LCARS `attacker_hull_breach`), `SelfHasMorale`, `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada`** (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes (explorer, …; not `SelfHas*` breach/burn, which are explicit tokens above).
 
 ## Updates (engine + LCARS)
 
