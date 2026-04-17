@@ -84,6 +84,9 @@ pub fn compile_condition(spec: &AbilityConditionSpec) -> Result<AbilityCondition
         AbilityConditionSpec::DefenderAssimilated => Ok(AbilityCondition::DefenderAssimilated),
         AbilityConditionSpec::DefenderIsNpcHostile => Ok(AbilityCondition::DefenderIsNpcHostile),
         AbilityConditionSpec::DefenderIsPlayerShip => Ok(AbilityCondition::DefenderIsPlayerShip),
+        AbilityConditionSpec::AttackerOfficerTalNotOnBridge => {
+            Ok(AbilityCondition::AttackerOfficerTalNotOnBridge)
+        },
         AbilityConditionSpec::DefenderShipTypeIs { ship_type } => {
             let st = ShipType::from_data_slug(ship_type).ok_or_else(|| {
                 EffectSpecCompileError::UnknownShipTypeSlug(ship_type.clone())
@@ -234,7 +237,14 @@ pub fn compile_research_attack_phase_spec_to_seat(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::combat::abilities::AbilityCondition;
     use crate::data::combat_effect_spec::{CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource};
+
+    #[test]
+    fn compile_condition_tal_not_on_bridge() {
+        let c = compile_condition(&AbilityConditionSpec::AttackerOfficerTalNotOnBridge).unwrap();
+        assert!(matches!(c, AbilityCondition::AttackerOfficerTalNotOnBridge));
+    }
 
     #[test]
     fn ship_launched_maps_to_combat_begin() {

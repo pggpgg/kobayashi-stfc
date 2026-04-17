@@ -115,6 +115,7 @@ fn map_condition_token(token: &str) -> Result<AbilityConditionSpec, String> {
         "TargetAssimilated" | "DefenderAssimilated" => Ok(AbilityConditionSpec::DefenderAssimilated),
         "DefenderNpcHostile" | "EnemyHostile" => Ok(AbilityConditionSpec::DefenderIsNpcHostile),
         "DefenderPlayerShip" | "EnemyPlayer" => Ok(AbilityConditionSpec::DefenderIsPlayerShip),
+        "SelfOfficerTalNotOnBridge" => Ok(AbilityConditionSpec::AttackerOfficerTalNotOnBridge),
         "TargetNotArmada" => Ok(AbilityConditionSpec::Not {
             inner: Box::new(AbilityConditionSpec::DefenderShipTypeIs {
                 ship_type: "armada".into(),
@@ -329,6 +330,21 @@ mod tests {
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.conditions.len(), 1);
         assert!(matches!(spec.conditions[0], AbilityConditionSpec::MoraleActive));
+    }
+
+    #[test]
+    fn self_officer_tal_not_on_bridge_condition_parses() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "X", "OA", "Accuracy", "SelfOfficerTalNotOnBridge", "RoundStart", "SelfShip", "MultiplyAdd", "1",
+            "0.1",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.conditions.len(), 1);
+        assert!(matches!(
+            spec.conditions[0],
+            AbilityConditionSpec::AttackerOfficerTalNotOnBridge
+        ));
     }
 
     #[test]

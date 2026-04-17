@@ -84,9 +84,9 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
             Ok(AbilityConditionSpec::AttackerHullBreach)
         }
         "defender_assimilated" | "target_assimilated" => Ok(AbilityConditionSpec::DefenderAssimilated),
-        "attacker_officer_tal_not_on_bridge" | "self_officer_tal_not_on_bridge" => Err(
-            "tal_not_on_bridge is engine-resolved; not represented in CombatEffectSpec yet".into(),
-        ),
+        "attacker_officer_tal_not_on_bridge" | "self_officer_tal_not_on_bridge" => {
+            Ok(AbilityConditionSpec::AttackerOfficerTalNotOnBridge)
+        }
         "defender_faction_is"
         | "defender_faction"
         | "opponent_faction_is"
@@ -301,8 +301,28 @@ pub fn lcars_effect_to_combat_effect_spec(
 mod tests {
     use super::*;
     use crate::combat::abilities::{AbilityClass, AbilityEffect, CrewSeat};
-    use crate::lcars::parser::{LcarsAbility, LcarsOfficer};
+    use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsOfficer};
     use crate::lcars::resolver::{resolve_officer_ability, ResolveOptions};
+
+    #[test]
+    fn lcars_self_officer_tal_not_on_bridge_maps_to_spec() {
+        let c = LcarsCondition {
+            condition_type: "self_officer_tal_not_on_bridge".into(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            conditions: None,
+        };
+        let spec = lcars_condition_to_spec(&c).expect("spec");
+        assert_eq!(spec, AbilityConditionSpec::AttackerOfficerTalNotOnBridge);
+    }
 
     #[test]
     fn lcars_stat_modify_maps_to_spec() {

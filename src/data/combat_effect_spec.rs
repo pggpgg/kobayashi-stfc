@@ -207,6 +207,8 @@ pub enum AbilityConditionSpec {
     DefenderAssimilated,
     DefenderIsNpcHostile,
     DefenderIsPlayerShip,
+    /// Matches [`crate::combat::abilities::AbilityCondition::AttackerOfficerTalNotOnBridge`].
+    AttackerOfficerTalNotOnBridge,
     DefenderShipTypeIs { ship_type: String },
     AttackerShipTypeIs { ship_type: String },
     DefenderFactionIs { faction: String },
