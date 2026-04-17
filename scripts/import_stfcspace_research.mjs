@@ -59,12 +59,19 @@ const RESEARCH_LOCA_ID_TO_STAT_PATH = path.join(
 );
 const BASE_URL = "https://data.stfc.space";
 
-/** Stats merged into PlayerProfile via normalize_profile_combat_stat (see src/data/profile.rs). */
+/**
+ * Stats merged into PlayerProfile via normalize_profile_combat_stat (see `normalize_profile_combat_stat` in
+ * src/data/profile.rs). Must match that function's engine keys (aliases like armor_pierce fold in Rust only).
+ *
+ * `isolytic_damage_morale` is rarely inferred; when description text ties isolytic offense to Morale,
+ * inferCombatStatFromDescription maps it so the scenario can apply a morale-gated seat instead of flat isolytic_damage.
+ */
 const ALLOWED_COMBAT_STATS = new Set([
   "weapon_damage",
   "hull_hp",
   "shield_hp",
   "isolytic_damage",
+  "isolytic_damage_morale",
   "isolytic_defense",
   "crit_chance",
   "crit_damage",
@@ -181,6 +188,12 @@ function inferCombatStatFromDescription(text) {
   }
   if (/\bisolytic\b/.test(t)) {
     if (/\b(defense|defence|resist|mitigation against isolytic)\b/.test(t)) return "isolytic_defense";
+    if (
+      /\bmorale\b/.test(t) &&
+      /\b(damage|attack|potency|offense)\b/.test(t)
+    ) {
+      return "isolytic_damage_morale";
+    }
     if (/\b(damage|attack|potency|offense)\b/.test(t)) return "isolytic_damage";
     return null;
   }
@@ -248,6 +261,7 @@ function inferCombatStatFromProjectName(name) {
   }
   if (/\bisolytic\b/.test(t)) {
     if (/\b(defense|defence|resist)\b/.test(t)) return "isolytic_defense";
+    if (/\bmorale\b/.test(t)) return "isolytic_damage_morale";
     return "isolytic_damage";
   }
   if (/damage reduction|critical damage reduction|resilience vs/.test(t)) return "damage_reduction";
@@ -371,6 +385,7 @@ const NON_PCT_DECIMAL_STATS = new Set([
   "armor",
   "weapon_damage",
   "isolytic_damage",
+  "isolytic_damage_morale",
   "isolytic_defense",
   "hull_hp",
   "shield_hp",

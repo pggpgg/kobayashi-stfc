@@ -1,4 +1,9 @@
+use kobayashi::combat::Combatant;
 use kobayashi::data::data_registry::DataRegistry;
+use kobayashi::data::import::ResearchEntry;
+use kobayashi::data::profile::{
+    apply_profile_to_attacker, merge_research_bonuses_into_profile, PlayerProfile,
+};
 use kobayashi::data::profile_index::{
     create_profile, delete_profile, load_profile_index, profile_path, RESEARCH_IMPORTED,
 };
@@ -143,4 +148,87 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
     // Cleanup: remove the test profile so we don't leave clutter in profiles/.
     let mut index = load_profile_index();
     let _ = delete_profile(&mut index, &profile_id);
+}
+
+/// Picks a catalog `rid` with `apex_shred` at level 1 and checks merge + `apply_profile_to_attacker`.
+#[test]
+fn catalog_apex_research_round_trips_through_profile_combatant() {
+    let _guard = SCENARIO_RESEARCH_TEST_LOCK.lock().unwrap();
+
+    let registry = DataRegistry::load().expect("data registry required for scenario tests");
+    let catalog = match registry.research_catalog() {
+        Some(c) if !c.items.is_empty() => c,
+        _ => {
+            if strict_research_catalog_required() {
+                panic!(
+                    "research catalog missing or empty (data/research_catalog.json). {RESEARCH_CATALOG_HELP}"
+                );
+            }
+            eprintln!("skipping catalog_apex test: research catalog missing or empty");
+            return;
+        }
+    };
+
+    let mut chosen_rid: Option<i64> = None;
+    let mut expected_apex: Option<f64> = None;
+    for rec in &catalog.items {
+        let bonuses = cumulative_research_level_bonuses(rec, 1);
+        if let Some(v) = bonuses.get("apex_shred").copied() {
+            if v > 0.0 {
+                chosen_rid = Some(rec.rid);
+                expected_apex = Some(v);
+                break;
+            }
+        }
+    }
+
+    let (rid, apex_val) = match (chosen_rid, expected_apex) {
+        (Some(r), Some(v)) => (r, v),
+        _ => {
+            eprintln!("skipping catalog_apex test: no rid with apex_shred at level 1");
+            return;
+        }
+    };
+
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(
+        &mut profile,
+        &[ResearchEntry { rid, level: 1 }],
+        catalog,
+    );
+
+    let merged = profile.bonuses.get("apex_shred").copied().unwrap_or(0.0);
+    assert!(
+        (merged - apex_val).abs() < 1e-6,
+        "expected profile apex_shred {} from rid {}, got {}",
+        apex_val,
+        rid,
+        merged
+    );
+
+    let attacker = Combatant {
+        id: "test".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.01,
+        weapons: vec![],
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+    };
+    let out = apply_profile_to_attacker(attacker, &profile);
+    assert!(
+        (out.apex_shred - (0.01 + apex_val)).abs() < 1e-6,
+        "expected combatant apex_shred base 0.01 + research {}",
+        apex_val
+    );
 }

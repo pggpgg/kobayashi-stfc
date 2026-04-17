@@ -5096,7 +5096,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.2,
               "operator": "add"
             }
@@ -71916,7 +71916,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.01,
               "operator": "add"
             }
@@ -71926,7 +71926,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.014,
               "operator": "add"
             }
@@ -71936,7 +71936,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.018,
               "operator": "add"
             }
@@ -71946,7 +71946,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.022,
               "operator": "add"
             }
@@ -71956,7 +71956,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.026,
               "operator": "add"
             }
@@ -71966,7 +71966,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.03,
               "operator": "add"
             }
@@ -71976,7 +71976,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.034,
               "operator": "add"
             }
@@ -71986,7 +71986,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.038,
               "operator": "add"
             }
@@ -71996,7 +71996,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.042,
               "operator": "add"
             }
@@ -72006,7 +72006,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.046,
               "operator": "add"
             }
@@ -72016,7 +72016,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.05,
               "operator": "add"
             }
@@ -72026,7 +72026,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.054,
               "operator": "add"
             }
@@ -72036,7 +72036,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.058,
               "operator": "add"
             }
@@ -72046,7 +72046,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.063,
               "operator": "add"
             }
@@ -72056,7 +72056,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.07,
               "operator": "add"
             }
@@ -72066,7 +72066,7 @@
           "level": 16,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.072,
               "operator": "add"
             }
@@ -72076,7 +72076,7 @@
           "level": 17,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.074,
               "operator": "add"
             }
@@ -72086,7 +72086,7 @@
           "level": 18,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.076,
               "operator": "add"
             }
@@ -72096,7 +72096,7 @@
           "level": 19,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.078,
               "operator": "add"
             }
@@ -72106,7 +72106,7 @@
           "level": 20,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.08,
               "operator": "add"
             }
@@ -78952,7 +78952,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.05,
               "operator": "add"
             }
@@ -78962,7 +78962,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.06,
               "operator": "add"
             }
@@ -78972,7 +78972,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.07,
               "operator": "add"
             }
@@ -78982,7 +78982,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.09,
               "operator": "add"
             }
@@ -78992,7 +78992,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.1,
               "operator": "add"
             }
@@ -79002,7 +79002,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.12,
               "operator": "add"
             }
@@ -79012,7 +79012,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.14,
               "operator": "add"
             }
@@ -79022,7 +79022,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.16,
               "operator": "add"
             }
@@ -79032,7 +79032,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.18,
               "operator": "add"
             }
@@ -79042,7 +79042,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "isolytic_damage",
+              "stat": "isolytic_damage_morale",
               "value": 0.2,
               "operator": "add"
             }

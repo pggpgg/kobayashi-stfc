@@ -859,6 +859,20 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
     out
 }
 
+/// Research / building / forbidden-tech bonus `stat` strings are normalized here before merging into
+/// [`PlayerProfile::bonuses`]. Keep in sync with `ALLOWED_COMBAT_STATS` in `scripts/import_stfcspace_research.mjs`
+/// (same engine keys; importer also allows aliases that fold here, e.g. `armor_pierce` → `pierce`).
+///
+/// **Where each normalized key affects combat**
+///
+/// | Key | Flat merge into `profile.bonuses` | Applied via |
+/// |-----|-----------------------------------|---------------|
+/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `apex_shred`, `apex_barrier` | yes (unless conditional crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] |
+/// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
+/// | `isolytic_damage_morale` | yes | `scenario.rs` — `extend_crew_with_morale_gated_profile_bonuses` (round-start seat, morale gate) |
+/// | Conditional `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
+///
+/// Aliases: `armor_pierce`, `shield_pierce` → `pierce`.
 fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
     match stat {
         "weapon_damage" => Some("weapon_damage"),
@@ -1179,6 +1193,7 @@ pub fn apply_profile_accuracy_to_attacker_stats(
 /// Keys: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce (additive),
 /// shield_mitigation (additive to base), armor/dodge/damage_reduction (additive to mitigation),
 /// isolytic_damage / isolytic_defense, apex_shred / apex_barrier (additive; counter-attack uses player apex_barrier).
+/// `isolytic_damage_morale` stays in `profile.bonuses` for the scenario morale seat (not added to flat `isolytic_damage` here).
 pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -> Combatant {
     if profile.bonuses.is_empty() {
         return attacker;
@@ -1402,6 +1417,123 @@ mod tests {
         merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
         assert_eq!(profile.bonuses.get("apex_shred"), Some(&0.25));
         assert_eq!(profile.bonuses.get("apex_barrier"), Some(&500.0));
+    }
+
+    #[test]
+    fn merge_research_bonuses_into_profile_merges_isolytic_damage_morale() {
+        use crate::data::research::{
+            ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+        };
+
+        let imported_research = vec![ResearchEntry { rid: 4133019450, level: 1 }];
+        let catalog = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid: 4133019450,
+                name: Some("NS Morale Isolytic Damage".to_string()),
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "isolytic_damage_morale".to_string(),
+                        value: 0.05,
+                        operator: "add".to_string(),
+                        condition: Default::default(),
+                    }],
+                }],
+            }],
+        };
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        assert_eq!(profile.bonuses.get("isolytic_damage_morale"), Some(&0.05));
+        assert!(!profile.bonuses.contains_key("isolytic_damage"));
+    }
+
+    #[test]
+    fn merge_research_then_apply_profile_carries_apex_to_combatant() {
+        use crate::data::research::{
+            ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+        };
+
+        let imported_research = vec![ResearchEntry { rid: 7, level: 1 }];
+        let catalog = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid: 7,
+                name: None,
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "apex_shred".to_string(),
+                        value: 0.12,
+                        operator: "add".to_string(),
+                        condition: Default::default(),
+                    }],
+                }],
+            }],
+        };
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+
+        let attacker = Combatant {
+            id: "test".to_string(),
+            attack: 100.0,
+            mitigation: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            apex_barrier: 0.0,
+            apex_shred: 0.03,
+            weapons: vec![],
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+        };
+        let out = apply_profile_to_attacker(attacker, &profile);
+        assert!((out.apex_shred - 0.15).abs() < 1e-9, "expected 0.03 + 0.12");
+    }
+
+    #[test]
+    fn apply_profile_to_attacker_does_not_flat_merge_isolytic_damage_morale() {
+        let attacker = Combatant {
+            id: "test".to_string(),
+            attack: 100.0,
+            mitigation: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            weapons: vec![],
+            isolytic_damage: 2.0,
+            isolytic_defense: 0.0,
+        };
+        let mut profile = PlayerProfile::default();
+        profile
+            .bonuses
+            .insert("isolytic_damage_morale".to_string(), 0.5);
+        let out = apply_profile_to_attacker(attacker, &profile);
+        assert!(
+            (out.isolytic_damage - 2.0).abs() < 1e-9,
+            "morale-gated isolytic must not add to flat Combatant.isolytic_damage"
+        );
+        assert!((out.apex_shred - 0.0).abs() < 1e-9);
     }
 
     #[test]
