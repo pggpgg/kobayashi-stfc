@@ -1,0 +1,361 @@
+//! Matchup-aware tie-breakers for analytical prefilter ranking (see docs/DESIGN.md §6.2).
+//!
+//! Closed-form [`crate::optimizer::analytical::expected_damage`] ignores conditional abilities; we add a
+//! small **prior** so crews with gates that match this fight (hull class, faction, PvE/PvP, Tal) and
+//! crews overlapping UI warm-start winners sort ahead when truncating before Monte Carlo.
+
+use std::collections::HashSet;
+
+use crate::combat::{
+    attacker_crew_tal_assigned_captain_or_bridge, AbilityCondition, CrewConfiguration,
+    OpponentFactionTag,
+};
+use crate::optimizer::analytical::expected_damage;
+use crate::optimizer::constraints::normalize_officer_name;
+use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS};
+use crate::optimizer::monte_carlo::scenario::{
+    CombatSimulationInput, DefenderOpponent, SharedScenarioData,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StaticGate {
+    Pass,
+    Fail,
+    Unknown,
+}
+
+/// Hull-class / faction / PvE / ship-id / Tal gates only; morale and stateful arms stay [`StaticGate::Unknown`].
+fn eval_static_gate(
+    cond: &AbilityCondition,
+    shared: &SharedScenarioData,
+    crew: &CrewConfiguration,
+) -> StaticGate {
+    match cond {
+        AbilityCondition::DefenderShipTypeIs(st) => {
+            if *st == shared.defender_ship_type_for_combat() {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
+        AbilityCondition::DefenderFactionIs(expected) => {
+            let actual = shared
+                .hostile_rec
+                .as_ref()
+                .map(|h| h.opponent_faction_tag())
+                .unwrap_or(OpponentFactionTag::Unknown);
+            if actual == OpponentFactionTag::Unknown {
+                StaticGate::Unknown
+            } else if *expected == actual {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
+        AbilityCondition::DefenderHullFactionIdIs(id) => {
+            let actual = shared
+                .hostile_rec
+                .as_ref()
+                .and_then(|h| h.faction.as_ref().map(|f| f.id))
+                .unwrap_or(0);
+            if actual == 0 {
+                StaticGate::Unknown
+            } else if *id == actual {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
+        AbilityCondition::AttackerShipTypeIs(st) => {
+            if *st == shared.attacker_ship_type_for_combat() {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
+        AbilityCondition::AttackerShipIdIs(id) => {
+            if shared.ship == *id {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
+        AbilityCondition::DefenderIsNpcHostile => match shared.defender_opponent {
+            DefenderOpponent::Hostile => StaticGate::Pass,
+            DefenderOpponent::Player => StaticGate::Fail,
+        },
+        AbilityCondition::DefenderIsPlayerShip => match shared.defender_opponent {
+            DefenderOpponent::Player => StaticGate::Pass,
+            DefenderOpponent::Hostile => StaticGate::Fail,
+        },
+        AbilityCondition::AttackerOfficerTalNotOnBridge => {
+            if attacker_crew_tal_assigned_captain_or_bridge(crew) {
+                StaticGate::Fail
+            } else {
+                StaticGate::Pass
+            }
+        }
+        AbilityCondition::Not(inner) => match eval_static_gate(inner, shared, crew) {
+            StaticGate::Pass => StaticGate::Fail,
+            StaticGate::Fail => StaticGate::Pass,
+            StaticGate::Unknown => StaticGate::Unknown,
+        },
+        AbilityCondition::And(parts) => {
+            let mut any_unknown = false;
+            for p in parts {
+                match eval_static_gate(p, shared, crew) {
+                    StaticGate::Fail => return StaticGate::Fail,
+                    StaticGate::Unknown => any_unknown = true,
+                    StaticGate::Pass => {}
+                }
+            }
+            if any_unknown {
+                StaticGate::Unknown
+            } else {
+                StaticGate::Pass
+            }
+        }
+        AbilityCondition::Or(parts) => {
+            let mut any_unknown = false;
+            for p in parts {
+                match eval_static_gate(p, shared, crew) {
+                    StaticGate::Pass => return StaticGate::Pass,
+                    StaticGate::Unknown => any_unknown = true,
+                    StaticGate::Fail => {}
+                }
+            }
+            if any_unknown {
+                StaticGate::Unknown
+            } else {
+                StaticGate::Fail
+            }
+        }
+        _ => StaticGate::Unknown,
+    }
+}
+
+fn static_matchup_gate_score(shared: &SharedScenarioData, crew: &CrewConfiguration) -> f32 {
+    let mut score = 0.0f32;
+    for seat in &crew.seats {
+        if let Some(ref cond) = seat.ability.condition {
+            match eval_static_gate(cond, shared, crew) {
+                StaticGate::Pass => score += 1.0,
+                StaticGate::Fail => score -= 0.65,
+                StaticGate::Unknown => {}
+            }
+        }
+    }
+    score
+}
+
+/// Light heuristic: upstream `is_scout` / `is_outpost` with ability name hints (LCARS slug text).
+fn encounter_tag_score(shared: &SharedScenarioData, crew: &CrewConfiguration) -> f32 {
+    let Some(h) = shared.hostile_rec.as_ref() else {
+        return 0.0;
+    };
+    if !h.is_scout && !h.is_outpost {
+        return 0.0;
+    }
+    let mut s = 0.0f32;
+    for seat in &crew.seats {
+        let name = seat.ability.name.to_lowercase();
+        if h.is_outpost && name.contains("outpost") {
+            s += 1.0;
+        }
+        if h.is_scout && name.contains("scout") {
+            s += 1.0;
+        }
+    }
+    s.min(2.0)
+}
+
+fn officer_material_set(c: &CrewCandidate) -> HashSet<String> {
+    let mut s = HashSet::with_capacity(1 + c.bridge.len() + c.below_decks.len());
+    s.insert(normalize_officer_name(&c.captain));
+    for o in &c.bridge {
+        s.insert(normalize_officer_name(o));
+    }
+    for o in &c.below_decks {
+        s.insert(normalize_officer_name(o));
+    }
+    s.retain(|k| !k.is_empty());
+    s
+}
+
+/// Best Jaccard overlap between `candidate` and any warm-start crew (material officers).
+fn warm_start_family_score(candidate: &CrewCandidate, warm_start: &[CrewCandidate]) -> f32 {
+    if warm_start.is_empty() {
+        return 0.0;
+    }
+    let cand = officer_material_set(candidate);
+    if cand.is_empty() {
+        return 0.0;
+    }
+    let mut best = 0.0f32;
+    for w in warm_start {
+        let wset = officer_material_set(w);
+        if wset.is_empty() {
+            continue;
+        }
+        let inter = cand.intersection(&wset).count() as f32;
+        let union = cand.union(&wset).count() as f32;
+        if union > 0.0 {
+            best = best.max(inter / union);
+        }
+    }
+    best
+}
+
+/// Same captain as a warm-start crew: fraction of bridge officers shared with that crew (best over warm starts).
+fn captain_bridge_warm_score(candidate: &CrewCandidate, warm_start: &[CrewCandidate]) -> f32 {
+    if warm_start.is_empty() {
+        return 0.0;
+    }
+    let cap = normalize_officer_name(&candidate.captain);
+    if cap.is_empty() {
+        return 0.0;
+    }
+    let mut best = 0.0f32;
+    let denom = BRIDGE_SLOTS.max(1) as f32;
+    for w in warm_start {
+        if normalize_officer_name(&w.captain) != cap {
+            continue;
+        }
+        let mut hit = 0_u32;
+        for b in &candidate.bridge {
+            let bn = normalize_officer_name(b);
+            if bn.is_empty() {
+                continue;
+            }
+            if w.bridge.iter().any(|x| normalize_officer_name(x) == bn) {
+                hit += 1;
+            }
+        }
+        best = best.max(hit as f32 / denom);
+    }
+    best
+}
+
+// Weights: keep priors subordinate to [`expected_damage`] scale (typically 1e3–1e5 hull proxy).
+const W_GATE: f32 = 8.0;
+const W_ENCOUNTER: f32 = 6.0;
+const W_WARM_JACCARD: f32 = 18.0;
+const W_WARM_CAP_BRIDGE: f32 = 14.0;
+
+/// Scalar for sorting candidates before analytical truncation (higher explores first).
+pub(crate) fn analytical_prefilter_rank_score(
+    shared: &SharedScenarioData,
+    input: &CombatSimulationInput,
+    candidate: &CrewCandidate,
+    warm_start: &[CrewCandidate],
+) -> f32 {
+    let base = expected_damage(input);
+    let gate = static_matchup_gate_score(shared, &input.crew);
+    let enc = encounter_tag_score(shared, &input.crew);
+    let warm = warm_start_family_score(candidate, warm_start);
+    let cap_br = captain_bridge_warm_score(candidate, warm_start);
+    base + W_GATE * gate + W_ENCOUNTER * enc + W_WARM_JACCARD * warm + W_WARM_CAP_BRIDGE * cap_br
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::combat::{Ability, AbilityClass, CrewSeat, CrewSeatContext, ShipType, TimingWindow};
+    use crate::data::hostile::HostileRecord;
+
+    fn minimal_shared_with_hostile(h: HostileRecord) -> SharedScenarioData {
+        SharedScenarioData {
+            ship: "test_ship".to_string(),
+            hostile: "test_hostile".to_string(),
+            officer_index: Default::default(),
+            profile: Default::default(),
+            lcars_data: None,
+            resolve_options: Default::default(),
+            ship_rec: None,
+            hostile_rec: Some(h),
+            cached_defender: None,
+            cached_rounds: None,
+            cached_defender_hull: None,
+            cached_pierce: None,
+            cached_defender_mitigation: None,
+            using_placeholder_combatants: false,
+            resolved_support_buffs: vec![],
+            support_static_buffs: Default::default(),
+            unknown_support_buff_ids: vec![],
+            research_derived_seats: vec![],
+            forbidden_tech_derived_seats: vec![],
+            borg_alcove_hull_hp_bonus: None,
+            class_gated_torpedo_family_hull_hp_bonus: None,
+            class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
+            defender_opponent: DefenderOpponent::Hostile,
+        }
+    }
+
+    fn seat_with_condition(cond: AbilityCondition) -> CrewSeatContext {
+        CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "test_ability".to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::AttackPhase,
+                boostable: false,
+                effect: crate::combat::AbilityEffect::AttackMultiplier(1.05),
+                condition: Some(cond),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: crate::combat::NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }
+    }
+
+    #[test]
+    fn static_gate_passes_for_matching_defender_ship_type() {
+        let h: HostileRecord = serde_json::from_value(serde_json::json!({
+            "id": "h1",
+            "hostile_name": "H",
+            "level": 1,
+            "ship_class": "Battleship",
+            "armor": 0.0,
+            "shield_deflection": 0.0,
+            "dodge": 0.0,
+            "hull_health": 100.0,
+            "shield_health": 0.0,
+            "faction": { "id": 42 }
+        }))
+        .unwrap();
+        let shared = minimal_shared_with_hostile(h);
+        let crew = CrewConfiguration {
+            seats: vec![seat_with_condition(AbilityCondition::DefenderShipTypeIs(
+                ShipType::Battleship,
+            ))],
+        };
+        assert!(static_matchup_gate_score(&shared, &crew) > 0.0);
+    }
+
+    #[test]
+    fn warm_start_jaccard_boosts_identical_crew() {
+        let c = CrewCandidate {
+            captain: "A".into(),
+            bridge: vec!["B".into(), "C".into()],
+            below_decks: vec!["D".into()],
+        };
+        let warm = vec![c.clone()];
+        assert!((warm_start_family_score(&c, &warm) - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn captain_bridge_warm_counts_shared_bridge() {
+        let c = CrewCandidate {
+            captain: "Picard".into(),
+            bridge: vec!["Riker".into(), "Data".into()],
+            below_decks: vec![],
+        };
+        let warm = vec![CrewCandidate {
+            captain: "Picard".into(),
+            bridge: vec!["Riker".into(), "Worf".into()],
+            below_decks: vec![],
+        }];
+        let s = captain_bridge_warm_score(&c, &warm);
+        assert!((s - 0.5).abs() < 1e-5, "got {s}");
+    }
+}

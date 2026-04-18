@@ -29,6 +29,15 @@ pub const MAX_OPTIMIZE_CONSTRAINT_GROUPS: usize = 8;
 pub const MAX_OPTIMIZE_GROUP_OFFICERS: usize = 32;
 pub const MAX_CHAIN_KILLS_TARGET: u32 = 50;
 
+/// Split `captain_must_be` request field on commas/semicolons (captain may be any listed officer).
+fn parse_captain_must_be_tokens(s: &str) -> Vec<String> {
+    s.split(|c: char| c == ',' || c == ';')
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
 /// Chain grinding: N sequential fights, HHP carry-over, full SHP each link (optimizer / simulate).
 #[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 pub struct ChainGrindRequest {
@@ -466,13 +475,18 @@ fn validate_optimize_constraints(request: &OptimizeRequest, errors: &mut Vec<Val
         }
     }
 
-    if let Some(ref cap) = dto.captain_must_be {
-        let n = normalize_officer_name(cap);
-        if !n.is_empty() && exclude_n.contains(&n) {
-            errors.push(ValidationIssue {
-                field: "constraints.captain_must_be",
-                messages: vec!["captain_must_be cannot be listed in exclude".to_string()],
-            });
+    if let Some(ref cap_raw) = dto.captain_must_be {
+        for alt in parse_captain_must_be_tokens(cap_raw) {
+            let n = normalize_officer_name(&alt);
+            if !n.is_empty() && exclude_n.contains(&n) {
+                errors.push(ValidationIssue {
+                    field: "constraints.captain_must_be",
+                    messages: vec![
+                        "captain_must_be cannot list an officer who is also in exclude".to_string(),
+                    ],
+                });
+                break;
+            }
         }
     }
 
@@ -548,14 +562,11 @@ pub fn build_crew_search_constraints(request: &OptimizeRequest) -> Option<CrewSe
         must_include: trim_vec(&dto.must_include),
         exclude: trim_vec(&dto.exclude),
         groups,
-        captain_must_be: dto.captain_must_be.as_ref().and_then(|s| {
-            let t = s.trim();
-            if t.is_empty() {
-                None
-            } else {
-                Some(t.to_string())
-            }
-        }),
+        captain_must_be: dto
+            .captain_must_be
+            .as_ref()
+            .map(|s| parse_captain_must_be_tokens(s))
+            .unwrap_or_default(),
         bridge_must_include: trim_vec(&dto.bridge_must_include),
         below_decks_must_include: trim_vec(&dto.below_decks_must_include),
     };

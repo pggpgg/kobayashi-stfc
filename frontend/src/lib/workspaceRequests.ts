@@ -49,12 +49,20 @@ export function buildWorkspaceSimulateParams(args: {
   };
 }
 
-function splitOfficerList(s: string | undefined): string[] {
+export function splitOfficerList(s: string | undefined): string[] {
   if (!s?.trim()) return [];
   return s
     .split(/[,;]+/)
     .map((x) => x.trim())
     .filter(Boolean);
+}
+
+/** Join officer display names for comma-separated optimize form fields / API `captain_must_be`. */
+export function joinOfficerList(names: string[]): string {
+  return names
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .join(", ");
 }
 
 function parseGroupsJson(
@@ -99,15 +107,16 @@ export function buildOptimizeConstraintsFromForm(args: {
   const exclude = splitOfficerList(args.excludeComma);
   const bridge_must_include = splitOfficerList(args.bridgeMustComma);
   const below_decks_must_include = splitOfficerList(args.belowMustComma);
-  const captain_raw = args.captainMust?.trim();
-  const captain_must_be = captain_raw || undefined;
+  const captainList = splitOfficerList(args.captainMust);
+  const captain_must_be =
+    captainList.length > 0 ? joinOfficerList(captainList) : undefined;
   const groups = parseGroupsJson(args.groupsJson);
   if (
     !must_include.length &&
     !exclude.length &&
     !bridge_must_include.length &&
     !below_decks_must_include.length &&
-    !captain_must_be &&
+    captainList.length === 0 &&
     !groups?.length
   ) {
     return undefined;

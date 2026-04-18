@@ -12,6 +12,7 @@ const emptyCrew: CrewState = {
 const baseProps = {
   collapsed: false,
   onToggleCollapsed: vi.fn(),
+  officerOptions: [] as import("../lib/api").OfficerListItem[],
   crew: emptyCrew,
   loadingOptimize: false,
   optimizeCrewsDone: null as number | null,
@@ -83,9 +84,15 @@ describe("OptimizePanel", () => {
     expect(screen.getByText("borg-crews")).toBeTruthy();
   });
 
-  it("does not show heuristic seeds when empty", () => {
+  it("shows heuristics seeds heading and hint when no seeds", () => {
     render(<OptimizePanel {...baseProps} availableSeeds={[]} />);
-    expect(screen.queryByText("Heuristics seeds")).toBeNull();
+    expect(screen.getByText("Heuristics seeds")).toBeTruthy();
+    expect(
+      screen.getByRole("note", {
+        name: /data\/heuristics/i,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(/No seeds were returned/i)).toBeTruthy();
   });
 
   it("shows below-decks strategy when seeds are selected", () => {

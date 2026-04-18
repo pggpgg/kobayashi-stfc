@@ -159,9 +159,12 @@ pub fn build_officer_pools_from_registry(
         below_decks,
     };
     match constraints {
-        Some(c) if !c.is_empty() => {
-            narrow_officer_pools_for_constraints(registry.officer_index(), pools, c, below_decks_slots)
-        }
+        Some(c) if !c.is_empty() => narrow_officer_pools_for_constraints(
+            registry.officer_index(),
+            pools,
+            c,
+            below_decks_slots,
+        ),
         _ => Some(pools),
     }
 }
@@ -192,12 +195,7 @@ fn bipartite_max_matching(adj: &[Vec<usize>], n_right: usize) -> usize {
     let n_left = adj.len();
     let mut match_r: Vec<Option<usize>> = vec![None; n_right];
 
-    fn dfs(
-        v: usize,
-        adj: &[Vec<usize>],
-        match_r: &mut [Option<usize>],
-        seen: &mut [bool],
-    ) -> bool {
+    fn dfs(v: usize, adj: &[Vec<usize>], match_r: &mut [Option<usize>], seen: &mut [bool]) -> bool {
         for &u in &adj[v] {
             if u >= seen.len() || seen[u] {
                 continue;
@@ -356,11 +354,14 @@ pub fn narrow_officer_pools_for_constraints(
     pools.bridge = strip_excluded(pools.bridge);
     pools.below_decks = strip_excluded(pools.below_decks);
 
-    if let Some(ref cap_rule) = constraints.captain_must_be {
-        let want = pool_display_name_norm(cap_rule);
-        if !want.is_empty() {
-            pools.captains.retain(|n| pool_display_name_norm(n) == want);
-        }
+    if !constraints.captain_must_be.is_empty() {
+        let wants: HashSet<String> = constraints
+            .captain_must_be
+            .iter()
+            .map(|s| pool_display_name_norm(s))
+            .filter(|s| !s.is_empty())
+            .collect();
+        pools.captains.retain(|n| wants.contains(&pool_display_name_norm(n)));
     }
 
     for b in &constraints.bridge_must_include {
@@ -1185,10 +1186,12 @@ mod tests {
         )
         .expect("pools");
         let c = CrewSearchConstraints {
-            captain_must_be: Some("NotARealCaptainNameForKobayashiTest".into()),
+            captain_must_be: vec!["NotARealCaptainNameForKobayashiTest".into()],
             ..Default::default()
         };
-        assert!(narrow_officer_pools_for_constraints(registry.officer_index(), pools, &c, 3).is_none());
+        assert!(
+            narrow_officer_pools_for_constraints(registry.officer_index(), pools, &c, 3).is_none()
+        );
     }
 
     #[test]
@@ -1210,7 +1213,9 @@ mod tests {
             }],
             ..Default::default()
         };
-        assert!(narrow_officer_pools_for_constraints(registry.officer_index(), pools, &c, 3).is_none());
+        assert!(
+            narrow_officer_pools_for_constraints(registry.officer_index(), pools, &c, 3).is_none()
+        );
     }
 
     #[test]

@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react";
-import { formatOptimizePhaseLabel } from "../lib/api";
+import type { CSSProperties, ReactNode } from "react";
+import { formatOptimizePhaseLabel, type OfficerListItem } from "../lib/api";
+import OfficerNameMultiSelect from "./OfficerNameMultiSelect";
 
 /** Match server `MAX_TIERED_SCOUT_SIMS` / `MAX_TIERED_TOP_K` (see `src/server/api/requests.rs`). */
 const MAX_TIERED_SCOUT_SIMS_UI = 100_000;
@@ -8,6 +9,8 @@ const MAX_TIERED_TOP_K_UI = 500;
 interface OptimizePanelProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  /** Officer catalog for searchable constraint multiselects (same source as crew builder). */
+  officerOptions: OfficerListItem[];
   crew: import("../lib/types").CrewState;
   loadingOptimize: boolean;
   optimizeCrewsDone: number | null;
@@ -77,9 +80,59 @@ const checkboxLabelStyle: CSSProperties = {
   cursor: "pointer",
 };
 
+const labelWithHintRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  marginBottom: 4,
+};
+
+function HelpHint({ text }: { text: string }) {
+  return (
+    <span
+      title={text}
+      role="note"
+      aria-label={text}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 14,
+        height: 14,
+        fontSize: 10,
+        fontWeight: 700,
+        lineHeight: 1,
+        borderRadius: "50%",
+        border: "1px solid var(--border)",
+        color: "var(--text-muted)",
+        cursor: "help",
+        flexShrink: 0,
+      }}
+    >
+      ?
+    </span>
+  );
+}
+
+function FieldLabelWithHint({
+  children,
+  hint,
+}: {
+  children: ReactNode;
+  hint: string;
+}) {
+  return (
+    <div style={labelWithHintRowStyle}>
+      {children}
+      <HelpHint text={hint} />
+    </div>
+  );
+}
+
 export default function OptimizePanel({
   collapsed,
   onToggleCollapsed,
+  officerOptions,
   loadingOptimize,
   optimizeCrewsDone,
   optimizeTotalCrews,
@@ -203,13 +256,18 @@ export default function OptimizePanel({
       </div>
 
       {/* ── Heuristics seeds ─────────────────────────────────────── */}
-      {availableSeeds.length > 0 && (
-        <div>
-          <div
-            style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}
-          >
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 600 }}>
             Heuristics seeds
           </div>
+          <HelpHint
+            text={
+              "Named starter crew lists the optimizer evaluates before the broader search, so you can steer results toward lineups you already trust. Add seed files under data/heuristics in this repository (the server exposes discovered seed names here)."
+            }
+          />
+        </div>
+        {availableSeeds.length > 0 ? (
           <div
             style={{
               display: "flex",
@@ -220,6 +278,7 @@ export default function OptimizePanel({
               border: "1px solid var(--border)",
               borderRadius: 4,
               padding: "0.4rem",
+              marginTop: 4,
             }}
           >
             {availableSeeds.map((seed) => (
@@ -234,8 +293,20 @@ export default function OptimizePanel({
               </label>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: "0.75rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            No seeds were returned. Add lists under{" "}
+            <code style={{ fontSize: "0.7rem" }}>data/heuristics</code> in the
+            project tree.
+          </p>
+        )}
+      </div>
 
       {/* ── Below-decks strategy (shown when seeds selected) ─────── */}
       {selectedSeeds.length > 0 && (
@@ -273,8 +344,14 @@ export default function OptimizePanel({
       )}
 
       {/* ── Optimizer strategy ───────────────────────────────────── */}
-      <label style={{ fontSize: "0.85rem" }}>
-        Optimizer strategy
+      <div style={{ fontSize: "0.85rem" }}>
+        <FieldLabelWithHint
+          hint={
+            "Exhaustive: generate candidate crews from officer pools (respecting Max crews when set), then run your full Sims per crew on each. Genetic: evolve populations of crews for very large spaces; ignores the Max crews cap. Tiered: a fast scouting pass with fewer sims per crew ranks candidates, then your full sim count runs only on the best Top K crews."
+          }
+        >
+          <span>Optimizer strategy</span>
+        </FieldLabelWithHint>
         <select
           value={optimizerStrategy}
           onChange={(e) =>
@@ -288,12 +365,18 @@ export default function OptimizePanel({
           <option value="genetic">Genetic</option>
           <option value="tiered">Tiered (scout → confirm)</option>
         </select>
-      </label>
+      </div>
 
       {optimizerStrategy === "tiered" && (
         <>
-          <label style={{ fontSize: "0.85rem" }}>
-            Tiered scout sims / crew (optional)
+          <div style={{ fontSize: "0.85rem" }}>
+            <FieldLabelWithHint
+              hint={
+                "Number of Monte Carlo trials per crew during the tiered scouting phase (always fewer than your main Sims per crew). Lower is faster but ranks candidates more noisily. Leave blank for the server default (typically 500)."
+              }
+            >
+              <span>Tiered scout sims / crew (optional)</span>
+            </FieldLabelWithHint>
             <input
               type="number"
               min={1}
@@ -325,9 +408,15 @@ export default function OptimizePanel({
                 color: "var(--text)",
               }}
             />
-          </label>
-          <label style={{ fontSize: "0.85rem" }}>
-            Tiered top K (optional)
+          </div>
+          <div style={{ fontSize: "0.85rem" }}>
+            <FieldLabelWithHint
+              hint={
+                "How many top crews from the scout pass are promoted to the confirmation phase, where each receives your full Sims per crew. Leave blank for the server default (typically 20)."
+              }
+            >
+              <span>Tiered top K (optional)</span>
+            </FieldLabelWithHint>
             <input
               type="number"
               min={1}
@@ -357,7 +446,7 @@ export default function OptimizePanel({
                 color: "var(--text)",
               }}
             />
-          </label>
+          </div>
           <p
             style={{
               margin: "4px 0 0",
@@ -379,11 +468,15 @@ export default function OptimizePanel({
             onChange={(e) => onChainGrindEnabledChange(e.target.checked)}
             style={{ margin: 0 }}
           />
-          <span>Chain grind (N wins, hull carries, shields full each fight)</span>
+          <span>
+            Chain grind (N wins, hull carries, shields full each fight)
+          </span>
         </label>
         {chainGrindEnabled && (
           <>
-            <label style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}>
+            <label
+              style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}
+            >
               Kills target (N)
               <input
                 type="number"
@@ -407,7 +500,9 @@ export default function OptimizePanel({
                 }}
               />
             </label>
-            <label style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}>
+            <label
+              style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}
+            >
               Secondary (tie-break after chain success rate)
               <select
                 value={chainSecondary}
@@ -452,7 +547,8 @@ export default function OptimizePanel({
         Search constraints
       </div>
       <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-muted)" }}>
-        Comma-separated names. Optional JSON array for groups, e.g.{" "}
+        Officer filters use searchable lists (names sent to the server match
+        your catalog). Optional JSON array for groups, e.g.{" "}
         <code style={{ fontSize: "0.7rem" }}>
           [{`{"officers":["A","B"],"min_count":2}`}]
         </code>
@@ -476,78 +572,31 @@ export default function OptimizePanel({
           }}
         />
       </label>
-      <label style={{ fontSize: "0.8rem" }}>
-        Exclude
-        <input
-          type="text"
-          value={optimizeExclude}
-          onChange={(e) => onOptimizeExcludeChange(e.target.value)}
-          style={{
-            display: "block",
-            marginTop: 4,
-            width: "100%",
-            padding: "0.35rem",
-            background: "var(--bg)",
-            border: "1px solid var(--border)",
-            borderRadius: 4,
-            color: "var(--text)",
-          }}
-        />
-      </label>
-      <label style={{ fontSize: "0.8rem" }}>
-        Captain must be
-        <input
-          type="text"
-          value={optimizeCaptainMust}
-          onChange={(e) => onOptimizeCaptainMustChange(e.target.value)}
-          style={{
-            display: "block",
-            marginTop: 4,
-            width: "100%",
-            padding: "0.35rem",
-            background: "var(--bg)",
-            border: "1px solid var(--border)",
-            borderRadius: 4,
-            color: "var(--text)",
-          }}
-        />
-      </label>
-      <label style={{ fontSize: "0.8rem" }}>
-        Bridge must include
-        <input
-          type="text"
-          value={optimizeBridgeMust}
-          onChange={(e) => onOptimizeBridgeMustChange(e.target.value)}
-          style={{
-            display: "block",
-            marginTop: 4,
-            width: "100%",
-            padding: "0.35rem",
-            background: "var(--bg)",
-            border: "1px solid var(--border)",
-            borderRadius: 4,
-            color: "var(--text)",
-          }}
-        />
-      </label>
-      <label style={{ fontSize: "0.8rem" }}>
-        Below-decks must include
-        <input
-          type="text"
-          value={optimizeBelowMust}
-          onChange={(e) => onOptimizeBelowMustChange(e.target.value)}
-          style={{
-            display: "block",
-            marginTop: 4,
-            width: "100%",
-            padding: "0.35rem",
-            background: "var(--bg)",
-            border: "1px solid var(--border)",
-            borderRadius: 4,
-            color: "var(--text)",
-          }}
-        />
-      </label>
+      <OfficerNameMultiSelect
+        label={<span>Exclude</span>}
+        officers={officerOptions}
+        valueComma={optimizeExclude}
+        onChangeComma={onOptimizeExcludeChange}
+      />
+      <OfficerNameMultiSelect
+        label={<span>Captain must be</span>}
+        officers={officerOptions}
+        valueComma={optimizeCaptainMust}
+        onChangeComma={onOptimizeCaptainMustChange}
+        placeholder="Search; multiple names mean captain can be any of them"
+      />
+      <OfficerNameMultiSelect
+        label={<span>Bridge must include</span>}
+        officers={officerOptions}
+        valueComma={optimizeBridgeMust}
+        onChangeComma={onOptimizeBridgeMustChange}
+      />
+      <OfficerNameMultiSelect
+        label={<span>Below-decks must include</span>}
+        officers={officerOptions}
+        valueComma={optimizeBelowMust}
+        onChangeComma={onOptimizeBelowMustChange}
+      />
       <label style={{ fontSize: "0.8rem" }}>
         Groups (JSON)
         <textarea

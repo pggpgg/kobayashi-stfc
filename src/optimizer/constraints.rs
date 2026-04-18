@@ -21,7 +21,8 @@ pub struct CrewSearchConstraints {
     pub must_include: Vec<String>,
     pub exclude: Vec<String>,
     pub groups: Vec<OfficerGroupConstraint>,
-    pub captain_must_be: Option<String>,
+    /// Captain must be one of these officers (OR). Parsed from API `captain_must_be` comma/semicolon lists.
+    pub captain_must_be: Vec<String>,
     pub bridge_must_include: Vec<String>,
     pub below_decks_must_include: Vec<String>,
 }
@@ -31,7 +32,7 @@ impl CrewSearchConstraints {
         self.must_include.is_empty()
             && self.exclude.is_empty()
             && self.groups.is_empty()
-            && self.captain_must_be.is_none()
+            && self.captain_must_be.is_empty()
             && self.bridge_must_include.is_empty()
             && self.below_decks_must_include.is_empty()
     }
@@ -79,9 +80,12 @@ impl CrewSearchConstraints {
             }
         }
 
-        if let Some(ref cap_rule) = self.captain_must_be {
-            let want = normalize_officer_name(cap_rule);
-            if !want.is_empty() && cap_n != want {
+        if !self.captain_must_be.is_empty() {
+            let ok = self.captain_must_be.iter().any(|rule| {
+                let want = normalize_officer_name(rule);
+                !want.is_empty() && cap_n == want
+            });
+            if !ok {
                 return false;
             }
         }
@@ -167,7 +171,7 @@ mod tests {
     #[test]
     fn captain_and_seat_rules() {
         let c = CrewSearchConstraints {
-            captain_must_be: Some("Picard".into()),
+            captain_must_be: vec!["Picard".into()],
             bridge_must_include: vec!["Riker".into()],
             below_decks_must_include: vec!["Data".into()],
             ..Default::default()
@@ -187,6 +191,17 @@ mod tests {
             &["Troi", "Worf"],
             &["Data", "La Forge", "Crusher"]
         )));
+    }
+
+    #[test]
+    fn captain_must_be_alternatives_or() {
+        let c = CrewSearchConstraints {
+            captain_must_be: vec!["Picard".into(), "Riker".into()],
+            ..Default::default()
+        };
+        assert!(c.satisfies(&crew("Picard", &["A", "B"], &["C", "D", "E"])));
+        assert!(c.satisfies(&crew("Riker", &["A", "B"], &["C", "D", "E"])));
+        assert!(!c.satisfies(&crew("Data", &["A", "B"], &["C", "D", "E"])));
     }
 
     #[test]

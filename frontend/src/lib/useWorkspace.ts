@@ -108,7 +108,7 @@ export function useWorkspace() {
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
   const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] =
-    useState(false);
+    useState(true);
 
   // Optimizer strategy
   const [optimizerStrategy, setOptimizerStrategy] =

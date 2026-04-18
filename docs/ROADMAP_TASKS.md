@@ -17,6 +17,6 @@
 15. [x] Tune analytical prefilter auto-keep behavior by workload profile and candidate counts.
 16. [x] Tune tiered optimization auto-thresholds and default scout/confirm budgets for large candidate searches.
 17. [x] Implement adaptive simulation budget allocation based on scout confidence and variance.
-18. [ ] Add matchup-aware pruning priors (captain/bridge synergies, encounter tags, family priors from winners).
+18. [x] Add matchup-aware pruning priors (captain/bridge synergies, encounter tags, family priors from winners).
 19. [x] Add novelty-aware ranking so top suggestions balance strength with material diversity.
 20. [ ] Ship a first-class fast-discovery pipeline (heuristic seeds -> analytical prefilter -> tiered scout -> confirm top K -> optional refinement) with API/UI exposure.

@@ -3,6 +3,7 @@ pub mod chain;
 pub mod constraints;
 pub mod crew_generator;
 pub mod genetic;
+pub mod matchup_priors;
 pub mod monte_carlo;
 pub mod ranking;
 pub mod tiered;
@@ -12,12 +13,12 @@ pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummar
 use std::collections::HashSet;
 
 use crate::data::data_registry::DataRegistry;
-use crate::optimizer::analytical::expected_damage;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, DEFAULT_BELOW_DECKS_SLOTS,
 };
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
+use crate::optimizer::matchup_priors::analytical_prefilter_rank_score;
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
     scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
@@ -100,11 +101,12 @@ fn analytical_prefilter_unless_chain(
     seed: u64,
     keep: Option<usize>,
     chain_grind: &Option<ChainGrindParams>,
+    warm_start: &[CrewCandidate],
 ) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
     if chain_grind.is_some() {
         (candidates, None)
     } else {
-        sort_and_analytical_prefilter(shared, candidates, seed, keep)
+        sort_and_analytical_prefilter(shared, candidates, seed, keep, warm_start)
     }
 }
 
@@ -114,11 +116,14 @@ fn sort_candidates_by_analytical_expected_damage(
     shared: &SharedScenarioData,
     candidates: Vec<CrewCandidate>,
     seed: u64,
+    warm_start: &[CrewCandidate],
 ) -> Vec<CrewCandidate> {
     let mut indexed: Vec<(usize, CrewCandidate)> = candidates.into_iter().enumerate().collect();
     indexed.sort_by(|(ia, ca), (ib, cb)| {
-        let sa = expected_damage(&scenario_to_combat_input_from_shared(shared, ca, seed));
-        let sb = expected_damage(&scenario_to_combat_input_from_shared(shared, cb, seed));
+        let input_a = scenario_to_combat_input_from_shared(shared, ca, seed);
+        let input_b = scenario_to_combat_input_from_shared(shared, cb, seed);
+        let sa = analytical_prefilter_rank_score(shared, &input_a, ca, warm_start);
+        let sb = analytical_prefilter_rank_score(shared, &input_b, cb, warm_start);
         sb.total_cmp(&sa).then_with(|| ia.cmp(ib))
     });
     indexed.into_iter().map(|(_, c)| c).collect()
@@ -131,9 +136,11 @@ pub(crate) fn sort_and_analytical_prefilter(
     candidates: Vec<CrewCandidate>,
     seed: u64,
     keep: Option<usize>,
+    warm_start: &[CrewCandidate],
 ) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
     let generated = candidates.len();
-    let mut sorted = sort_candidates_by_analytical_expected_damage(shared, candidates, seed);
+    let mut sorted =
+        sort_candidates_by_analytical_expected_damage(shared, candidates, seed, warm_start);
     let Some(k) = keep.filter(|n| *n > 0) else {
         return (sorted, None);
     };
@@ -368,12 +375,7 @@ fn resolved_analytical_prefilter_keep(
             }
         })
         .max(1);
-    analytical_prefilter_keep_auto(
-        n_after_merge,
-        scenario.max_candidates,
-        top_ref,
-        workload,
-    )
+    analytical_prefilter_keep_auto(n_after_merge, scenario.max_candidates, top_ref, workload)
 }
 
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
@@ -416,6 +418,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.seed,
         keep,
         &scenario.chain_grind,
+        &scenario.warm_start,
     );
     let n_tiered = candidates.len();
     let scout_sims = scenario
@@ -491,6 +494,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.seed,
         keep,
         &scenario.chain_grind,
+        &scenario.warm_start,
     );
     let (simulation_results, _) = run_monte_carlo_parallel_with_registry(
         registry,
@@ -528,6 +532,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario.seed,
         keep,
         &scenario.chain_grind,
+        &scenario.warm_start,
     );
     let simulation_results = run_monte_carlo_parallel(
         scenario.ship,
@@ -644,6 +649,7 @@ where
                 scenario.seed,
                 keep,
                 &scenario.chain_grind,
+                &scenario.warm_start,
             );
             let total = candidates.len();
             if total == 0 {
@@ -743,6 +749,7 @@ where
                 scenario.seed,
                 keep,
                 &scenario.chain_grind,
+                &scenario.warm_start,
             );
             let n_tiered = candidates.len();
             let scout_sims = scenario
@@ -804,6 +811,7 @@ where
                 scenario.seed,
                 keep,
                 &scenario.chain_grind,
+                &scenario.warm_start,
             );
             let total = candidates.len();
             if total == 0 {

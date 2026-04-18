@@ -1,13 +1,31 @@
+import { useEffect, useState } from "react";
 import CrewBuilder from "../components/CrewBuilder";
 import OptimizePanel from "../components/OptimizePanel";
 import SavePresetModal from "../components/SavePresetModal";
 import SimResults from "../components/SimResults";
 import WorkspaceHeader from "../components/WorkspaceHeader";
+import { useProfile } from "../contexts/ProfileContext";
+import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
+import type { OfficerListItem } from "../lib/api";
+import { fetchOfficers } from "../lib/api";
 import { belowDeckSlotCount } from "../lib/types";
 import { useWorkspace } from "../lib/useWorkspace";
 
 export default function Workspace() {
   const ws = useWorkspace();
+  const { activeProfileId } = useProfile();
+  const { ownedOnly } = useWorkspaceMode();
+  const [officerOptions, setOfficerOptions] = useState<OfficerListItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchOfficers(ownedOnly, activeProfileId).then((list) => {
+      if (!cancelled) setOfficerOptions(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownedOnly, activeProfileId]);
   const compareWorkspace =
     ws.shipId && ws.scenarioId
       ? {
@@ -168,6 +186,7 @@ export default function Workspace() {
           onToggleCollapsed={() =>
             ws.setRightPanelCollapsed(!ws.rightPanelCollapsed)
           }
+          officerOptions={officerOptions}
           crew={ws.crew}
           loadingOptimize={ws.loadingOptimize}
           optimizeCrewsDone={ws.optimizeCrewsDone}

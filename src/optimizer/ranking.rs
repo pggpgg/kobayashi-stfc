@@ -213,12 +213,7 @@ pub fn apply_novelty_mmr_if_configured(
 mod novelty_tests {
     use super::*;
 
-    fn dummy(
-        captain: &str,
-        bridge: [&str; 2],
-        below: &[&str],
-        win_rate: f64,
-    ) -> RankedCrewResult {
+    fn dummy(captain: &str, bridge: [&str; 2], below: &[&str], win_rate: f64) -> RankedCrewResult {
         RankedCrewResult {
             captain: captain.to_string(),
             bridge: bridge.iter().map(|s| (*s).to_string()).collect(),
@@ -241,7 +236,9 @@ mod novelty_tests {
             avg_defender_hull_remaining: 0.0,
             avg_defender_hull_remaining_ci_low: 0.0,
             avg_defender_hull_remaining_ci_high: 0.0,
-            score: RankingScore { value: win_rate as f32 },
+            score: RankingScore {
+                value: win_rate as f32,
+            },
             chain: None,
         }
     }

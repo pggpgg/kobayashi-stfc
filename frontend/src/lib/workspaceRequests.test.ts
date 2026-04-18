@@ -144,6 +144,31 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     });
   });
 
+  it("joins multiple captain alternatives for captain_must_be", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "exhaustive",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      optimizeConstraints: {
+        mustIncludeComma: "",
+        excludeComma: "",
+        captainMust: "Alice , Bob; Carol",
+        bridgeMustComma: "",
+        belowMustComma: "",
+        groupsJson: "",
+      },
+    });
+    expect(body.constraints?.captain_must_be).toBe("Alice, Bob, Carol");
+  });
+
   it("includes warm_start_crews when non-empty", () => {
     const warmStartCrews = [
       { captain: "A", bridge: ["B", "C"], below_decks: ["D", "E", "F"] },

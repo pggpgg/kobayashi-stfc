@@ -174,7 +174,7 @@ fn summarize_constraints(
         must_include: c.must_include.len(),
         exclude: c.exclude.len(),
         groups: c.groups.len(),
-        captain_must_be: c.captain_must_be.is_some(),
+        captain_must_be: !c.captain_must_be.is_empty(),
         bridge_must_include: c.bridge_must_include.len(),
         below_decks_must_include: c.below_decks_must_include.len(),
     })
