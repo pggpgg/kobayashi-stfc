@@ -36,7 +36,9 @@ cargo clippy --all-targets
 # CPU footprint (process-wide; restart server after changing):
 #   KOBAYASHI_RAYON_THREADS=<n> — cap Rayon’s global pool (Monte Carlo / optimizer). Omit or 0 = all logical CPUs.
 #   KOBAYASHI_LOW_PRIORITY=1 — Windows only: SetPriorityClass(BELOW_NORMAL) for the whole process (keeps UI snappier; does not replace a thread cap).
-#   KOBAYASHI_MAX_CONCURRENT_CPU_JOBS=<n> — server: max concurrent blocking /api/simulate + /api/optimize handlers (default 1).
+#   KOBAYASHI_MAX_CONCURRENT_CPU_JOBS=<n> — server: max concurrent CPU-heavy routes at once (simulate, compare, optimize, replay-seed, optimize/start thread; default 1).
+#   Raising this above 1 runs multiple optimizers/simulations in parallel; they still share one global Rayon pool — tune KOBAYASHI_RAYON_THREADS to avoid CPU oversubscription.
+#   KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS=<n> — optional: read at server start; if set to a positive millisecond value, acquiring a CPU slot waits at most that long, then returns HTTP 503 with code cpu_busy and Retry-After. Unset or 0 = wait indefinitely (backward compatible). Restart after changing.
 # Background optimize jobs use POST /api/optimize/start (detached thread); they still share the same Rayon pool and process priority as the server.
 # Integration tests and Criterion benches that use Rayon before init_from_env runs cannot change the thread count; use default or run those binaries in isolation.
 

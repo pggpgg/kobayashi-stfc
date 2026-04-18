@@ -47,6 +47,9 @@ use std::sync::Arc;
 pub fn health_payload(
     registry: &DataRegistry,
     started_at_utc: chrono::DateTime<chrono::Utc>,
+    cpu_jobs: &tokio::sync::Semaphore,
+    cpu_job_queue_wait: Option<std::time::Duration>,
+    cpu_job_queue_wait_env_present: bool,
 ) -> Result<String, serde_json::Error> {
     let git_short = env!("KOBAYASHI_GIT_SHA_SHORT");
     let git_sha_short = if git_short.is_empty() {
@@ -58,6 +61,10 @@ pub fn health_payload(
     let hostile_index = registry.hostile_index();
     let ship_index = registry.ship_index();
     let max_cpu = super::max_concurrent_cpu_jobs_from_env();
+    let permits_available = cpu_jobs.available_permits() as u64;
+    let queue_wait_ms_json = cpu_job_queue_wait
+        .map(|d| serde_json::Value::from(d.as_millis() as u64))
+        .unwrap_or(serde_json::Value::Null);
     let officer_count = registry.officers().len();
 
     serde_json::to_string_pretty(&serde_json::json!({
@@ -71,6 +78,10 @@ pub fn health_payload(
             "started_at_utc": started_at_utc.to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
             "max_concurrent_cpu_jobs": max_cpu,
             "max_concurrent_cpu_jobs_from_env": std::env::var("KOBAYASHI_MAX_CONCURRENT_CPU_JOBS").is_ok(),
+            "cpu_job_permits_available": permits_available,
+            "cpu_job_permits_total": max_cpu,
+            "cpu_job_queue_wait_ms": queue_wait_ms_json,
+            "cpu_job_queue_wait_ms_from_env": cpu_job_queue_wait_env_present,
         },
         "data": {
             "officer_count": officer_count,

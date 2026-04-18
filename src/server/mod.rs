@@ -1,5 +1,6 @@
 pub mod api;
 pub mod api_key;
+pub(crate) mod cpu_admission;
 pub mod openapi;
 pub mod profile_backup;
 pub mod routes;

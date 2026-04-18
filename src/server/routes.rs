@@ -5,7 +5,8 @@
 //! simulate) are offloaded to a blocking thread pool via
 //! `tokio::task::spawn_blocking` so that the async runtime stays responsive.
 //! `/api/simulate` and synchronous `/api/optimize` share a semaphore
-//! (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`, default 1).
+//! (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`, default 1). Optional bounded queue wait:
+//! `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS` (>0) returns HTTP 503 with `code: cpu_busy` when saturated.
 
 use axum::{
     body::Bytes,
@@ -24,7 +25,7 @@ use std::convert::Infallible;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Semaphore;
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use tokio_stream::wrappers::ReceiverStream;
 use tower_http::compression::CompressionLayer;
 
@@ -32,6 +33,7 @@ use crate::data::data_registry::DataRegistry;
 use crate::mechanics::coverage::mechanics_coverage_json;
 use crate::server::api;
 use crate::server::api_key;
+use crate::server::cpu_admission;
 use crate::server::openapi;
 use crate::server::profile_backup;
 use crate::server::sync;
@@ -42,6 +44,10 @@ pub struct AppState {
     pub registry: Arc<DataRegistry>,
     /// Limits concurrent CPU-heavy `spawn_blocking` tasks (`/api/simulate`, `/api/optimize`).
     pub cpu_jobs: Arc<Semaphore>,
+    /// Bounded wait for a CPU permit (from `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS` at router build).
+    pub cpu_job_queue_wait: Option<Duration>,
+    /// Whether `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS` was set at router build (including `0`).
+    pub cpu_job_queue_wait_env_present: bool,
     /// Wall-clock time when this server process built router state (after data validation).
     pub started_at_utc: chrono::DateTime<chrono::Utc>,
 }
@@ -81,6 +87,43 @@ fn error_json(status: StatusCode, message: &str) -> JsonResponse {
     JsonResponse { status, body }
 }
 
+fn cpu_busy_response(retry_after_ms: u64) -> Response {
+    let body = serde_json::json!({
+        "status": "error",
+        "code": "cpu_busy",
+        "message": "Server CPU capacity is saturated; retry later.",
+        "retry_after_ms": retry_after_ms,
+    });
+    let body_str = serde_json::to_string_pretty(&body)
+        .unwrap_or_else(|_| "{\"status\":\"error\",\"code\":\"cpu_busy\"}".to_string());
+    let secs = retry_after_ms.div_ceil(1000).max(1);
+    let retry = HeaderValue::from_str(&secs.to_string())
+        .unwrap_or_else(|_| HeaderValue::from_static("1"));
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/json"),
+    );
+    headers.insert(header::RETRY_AFTER, retry);
+    (StatusCode::SERVICE_UNAVAILABLE, headers, body_str).into_response()
+}
+
+async fn acquire_cpu_or_response(state: &AppState) -> Result<OwnedSemaphorePermit, Response> {
+    match cpu_admission::acquire_cpu_permit(Arc::clone(&state.cpu_jobs), state.cpu_job_queue_wait)
+        .await
+    {
+        Ok(p) => Ok(p),
+        Err(cpu_admission::AcquireCpuPermitError::SemaphoreClosed) => Err(error_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "CPU job semaphore closed",
+        )
+        .into_response()),
+        Err(cpu_admission::AcquireCpuPermitError::QueueTimeout { retry_after_ms }) => {
+            Err(cpu_busy_response(retry_after_ms))
+        }
+    }
+}
+
 /// Extract profile id from X-Profile-Id header or ?profile= query.
 fn profile_id_from_request(headers: &HeaderMap, query: &HashMap<String, String>) -> Option<String> {
     headers
@@ -116,11 +159,15 @@ const BODY_LIMIT_SMALL_JSON: usize = 512 * 1024;
 const BODY_LIMIT_PROFILE_BACKUP: usize = 32 * 1024 * 1024;
 
 pub fn build_router(registry: Arc<DataRegistry>) -> Router {
+    let (cpu_job_queue_wait, cpu_job_queue_wait_env_present) =
+        cpu_admission::cpu_job_queue_wait_config_from_env();
     let state = AppState {
         registry,
         cpu_jobs: Arc::new(Semaphore::new(
             crate::server::max_concurrent_cpu_jobs_from_env(),
         )),
+        cpu_job_queue_wait,
+        cpu_job_queue_wait_env_present,
         started_at_utc: chrono::Utc::now(),
     };
 
@@ -389,7 +436,13 @@ async fn handle_openapi_json() -> impl IntoResponse {
 }
 
 async fn handle_health(State(state): State<AppState>) -> impl IntoResponse {
-    match api::health_payload(state.registry.as_ref(), state.started_at_utc) {
+    match api::health_payload(
+        state.registry.as_ref(),
+        state.started_at_utc,
+        state.cpu_jobs.as_ref(),
+        state.cpu_job_queue_wait,
+        state.cpu_job_queue_wait_env_present,
+    ) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
@@ -667,15 +720,9 @@ async fn handle_simulate(
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
-    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+    let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(_) => {
-            return error_json(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "CPU job semaphore closed",
-            )
-            .into_response();
-        }
+        Err(resp) => return resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -709,15 +756,9 @@ async fn handle_compare_crews(
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
-    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+    let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(_) => {
-            return error_json(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "CPU job semaphore closed",
-            )
-            .into_response();
-        }
+        Err(resp) => return resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -751,15 +792,9 @@ async fn handle_optimize(
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
-    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+    let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(_) => {
-            return error_json(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "CPU job semaphore closed",
-            )
-            .into_response();
-        }
+        Err(resp) => return resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -791,15 +826,9 @@ async fn handle_optimize_replay_seed(
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
-    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+    let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(_) => {
-            return error_json(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "CPU job semaphore closed",
-            )
-            .into_response();
-        }
+        Err(resp) => return resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -855,15 +884,9 @@ async fn handle_optimize_start(
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
-    let permit = match Arc::clone(&state.cpu_jobs).acquire_owned().await {
+    let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(_) => {
-            return error_json(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "CPU job semaphore closed",
-            )
-            .into_response();
-        }
+        Err(resp) => return resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     match api::optimize_start_payload(permit, state.registry.clone(), &body, profile_id.as_deref())
@@ -900,13 +923,8 @@ async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResp
     tokio::spawn(async move {
         let job_id = job_id.clone();
         loop {
-            let result = tokio::task::spawn_blocking({
-                let job_id = job_id.clone();
-                move || api::get_job_status(&job_id)
-            })
-            .await;
-            match result {
-                Ok(Ok(response)) => {
+            match api::get_job_status(&job_id) {
+                Ok(response) => {
                     let done = response.status == "done" || response.status == "error";
                     let payload = match serde_json::to_string(&response) {
                         Ok(s) => s,
@@ -925,19 +943,18 @@ async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResp
                         break;
                     }
                 }
-                Ok(Err(api::OptimizeStatusError::NotFound)) => {
+                Err(api::OptimizeStatusError::NotFound) => {
                     let event =
                         Event::default().data(r#"{"status":"error","error":"Job not found"}"#);
                     let _ = tx.send(Ok(event)).await;
                     break;
                 }
-                Ok(Err(api::OptimizeStatusError::Serialize(_))) => {
+                Err(api::OptimizeStatusError::Serialize(_)) => {
                     let event = Event::default()
                         .data(r#"{"status":"error","error":"Serialization error"}"#);
                     let _ = tx.send(Ok(event)).await;
                     break;
                 }
-                Err(_) => break,
             }
             tokio::time::sleep(Duration::from_millis(300)).await;
         }

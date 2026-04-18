@@ -72,9 +72,25 @@ async fn health_endpoint_returns_ok_json() {
     assert!(p["server"]["started_at_utc"].as_str().is_some());
     assert_eq!(p["server"]["max_concurrent_cpu_jobs"], 1);
     assert_eq!(p["server"]["max_concurrent_cpu_jobs_from_env"], false);
+    assert_eq!(p["server"]["cpu_job_permits_total"], 1);
+    assert_eq!(p["server"]["cpu_job_permits_available"], 1);
+    assert!(p["server"]["cpu_job_queue_wait_ms"].is_null());
+    assert_eq!(p["server"]["cpu_job_queue_wait_ms_from_env"], false);
     assert!(p["data"]["officer_count"].as_u64().is_some());
     assert!(p["data"]["hostile_index_loaded"].is_boolean());
     assert!(p["data"]["ship_index_loaded"].is_boolean());
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn health_reports_cpu_job_queue_wait_when_env_set() {
+    std::env::set_var("KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS", "250");
+    let response = route_request("GET", "/api/health", "").await;
+    std::env::remove_var("KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS");
+    assert_eq!(response.status_code, 200);
+    let p: serde_json::Value = serde_json::from_str(&response.body).expect("health json");
+    assert_eq!(p["server"]["cpu_job_queue_wait_ms"], 250);
+    assert_eq!(p["server"]["cpu_job_queue_wait_ms_from_env"], true);
 }
 
 #[serial_test::serial]
