@@ -27,6 +27,7 @@ fn heavy_payload_dtos_accept_documented_minimal_shapes() {
         "ship": "Saladin",
         "hostile": "2918121098",
         "sims": 1000,
+        "fast_discovery": true,
         "constraints": {
             "must_include": [],
             "exclude": [],

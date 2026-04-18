@@ -205,6 +205,8 @@ export default function Workspace() {
           onSelectedSeedsChange={ws.setSelectedSeeds}
           heuristicsOnly={ws.heuristicsOnly}
           onHeuristicsOnlyChange={ws.setHeuristicsOnly}
+          fastDiscovery={ws.fastDiscovery}
+          onFastDiscoveryChange={ws.setFastDiscovery}
           belowDecksStrategy={ws.belowDecksStrategy}
           onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
           optimizerStrategy={ws.optimizerStrategy}

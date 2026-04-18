@@ -5,7 +5,7 @@
 
 import type { CrewRecommendation, WarmStartCrewBody } from "./api";
 
-const SCHEMA = 2;
+const SCHEMA = 3;
 const PREFIX = "kobayashi_opt_warm_v";
 
 export type WarmStartCrewPayload = WarmStartCrewBody;
@@ -33,6 +33,8 @@ export function buildOptimizeWarmStartKey(args: {
   prioritizeBelowDecksAbility?: boolean;
   /** Resolved below-decks slot count used for candidate generation. */
   belowDecksSlots?: number;
+  /** Fast discovery merges heuristic seeds into warm-start; affects which persisted wins apply. */
+  fastDiscovery?: boolean;
 }): string {
   const mc =
     args.maxCandidates === null || args.maxCandidates <= 0
@@ -53,6 +55,7 @@ export function buildOptimizeWarmStartKey(args: {
     args.belowDecksSlots != null && args.belowDecksSlots >= 0
       ? String(args.belowDecksSlots)
       : "";
+  const fd = args.fastDiscovery === true ? "1" : "0";
   return stableKey([
     String(SCHEMA),
     args.profileId ?? "",
@@ -67,6 +70,7 @@ export function buildOptimizeWarmStartKey(args: {
     chain,
     pbd,
     bdSlots,
+    fd,
   ]);
 }
 

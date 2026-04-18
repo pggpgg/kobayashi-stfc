@@ -35,12 +35,45 @@ use super::requests::{
 /// Tuned so medium/large roster searches default to two-phase MC instead of full sims on every crew.
 const TIERED_AUTO_THRESHOLD: usize = 400;
 
+/// Cap on heuristic-expanded crews merged into warm-start for `fast_discovery` (below-decks exploration can explode).
+const FAST_DISCOVERY_MAX_HEURISTIC_WARM: usize = 480;
+
 fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
     match s {
         OptimizerStrategy::Exhaustive => "exhaustive",
         OptimizerStrategy::Genetic => "genetic",
         OptimizerStrategy::Tiered => "tiered",
     }
+}
+
+fn warm_start_crews_from_request_dtos(request: &OptimizeRequest) -> Vec<CrewCandidate> {
+    request
+        .warm_start_crews
+        .as_ref()
+        .map(|v| {
+            v.iter()
+                .map(|dto| CrewCandidate {
+                    captain: dto.captain.trim().to_string(),
+                    bridge: dto.bridge.clone(),
+                    below_decks: dto.below_decks.clone(),
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Heuristic template crews first, then client `warm_start_crews` (dedupe happens later in the optimizer).
+fn merge_fast_discovery_warm_start(
+    mut heuristic_crews: Vec<CrewCandidate>,
+    dto_warm: Vec<CrewCandidate>,
+) -> (Vec<CrewCandidate>, bool) {
+    let cap_hit = heuristic_crews.len() > FAST_DISCOVERY_MAX_HEURISTIC_WARM;
+    if cap_hit {
+        heuristic_crews.truncate(FAST_DISCOVERY_MAX_HEURISTIC_WARM);
+    }
+    let mut out = heuristic_crews;
+    out.extend(dto_warm);
+    (out, cap_hit)
 }
 
 /// Resolve effective optimizer strategy; `strategy_auto` is true only when the client omitted `strategy`
@@ -53,6 +86,7 @@ fn resolve_effective_optimize_strategy(
     seed: u64,
     profile_id: Option<&str>,
     crew_constraints: Option<&CrewSearchConstraints>,
+    warm_start_for_count: &[CrewCandidate],
 ) -> (OptimizerStrategy, bool) {
     if let Some(ref raw) = request.strategy {
         return (parse_strategy(Some(raw)), false);
@@ -60,19 +94,6 @@ fn resolve_effective_optimize_strategy(
     if heuristics_only {
         return (OptimizerStrategy::Exhaustive, false);
     }
-    let warm_start: Vec<CrewCandidate> = request
-        .warm_start_crews
-        .as_ref()
-        .map(|v| {
-            v.iter()
-                .map(|dto| CrewCandidate {
-                    captain: dto.captain.trim().to_string(),
-                    bridge: dto.bridge.clone(),
-                    below_decks: dto.below_decks.clone(),
-                })
-                .collect()
-        })
-        .unwrap_or_default();
     let strat = CandidateStrategy {
         max_candidates: request.max_candidates.map(|n| n as usize),
         only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
@@ -88,7 +109,7 @@ fn resolve_effective_optimize_strategy(
         seed,
         profile_id,
         strat,
-        &warm_start,
+        warm_start_for_count,
     );
     let strategy = if n >= TIERED_AUTO_THRESHOLD {
         OptimizerStrategy::Tiered
@@ -214,6 +235,9 @@ pub struct ScenarioSummary {
     pub novelty_diverse_top: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub novelty_pool: Option<u32>,
+    /// When true, heuristic seed crews were merged into warm-start for the main optimize path.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fast_discovery: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -263,6 +287,12 @@ struct OptimizeGatherMeta {
     is_seeded_genetic: bool,
     heuristics_only: bool,
     heuristics_seeds_nonempty: bool,
+    /// Client asked for `fast_discovery` but every heuristic line resolved to zero crews after filters.
+    fast_discovery_no_resolved_crews: bool,
+    /// Heuristic seeds merged into warm-start (`fast_discovery`); no standalone all-seed Monte Carlo pass.
+    fast_discovery: bool,
+    /// True when heuristic warm-start merge hit [`FAST_DISCOVERY_MAX_HEURISTIC_WARM`].
+    fast_discovery_heuristic_cap_hit: bool,
     using_placeholder_combatants: bool,
     /// `Some((generated, kept))` when analytical pre-filter truncated the candidate list.
     analytical_prefilter: Option<(usize, usize)>,
@@ -279,6 +309,8 @@ enum OptimizeProgressSink {
         heuristics_seeds_nonempty: bool,
         /// Filled by [`gather_optimize_simulation_results`] once candidates are loaded.
         is_seeded_genetic: bool,
+        /// When true, skip the 0–10% progress slice reserved for standalone heuristic Monte Carlo.
+        skip_heuristic_standalone_mc: bool,
     },
 }
 
@@ -326,11 +358,15 @@ impl OptimizeProgressSink {
                 cancel,
                 heuristics_seeds_nonempty,
                 is_seeded_genetic,
+                skip_heuristic_standalone_mc,
             } => {
                 if cancel.load(Ordering::Relaxed) {
                     return false;
                 }
-                let base_progress = if *heuristics_seeds_nonempty && !*is_seeded_genetic {
+                let base_progress = if *heuristics_seeds_nonempty
+                    && !*is_seeded_genetic
+                    && !*skip_heuristic_standalone_mc
+                {
                     10u8
                 } else {
                     0u8
@@ -426,15 +462,6 @@ fn gather_optimize_simulation_results(
         request.below_decks_slots,
     );
     let crew_constraints = build_crew_search_constraints(request);
-    let (strategy, strategy_auto) = resolve_effective_optimize_strategy(
-        registry,
-        request,
-        below_decks_slots,
-        heuristics_only,
-        seed,
-        profile_id,
-        crew_constraints.as_ref(),
-    );
 
     let mut h_candidates = if heuristics_seeds_nonempty {
         load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
@@ -444,14 +471,42 @@ fn gather_optimize_simulation_results(
     if let Some(ref c) = crew_constraints {
         h_candidates = filter_candidates(h_candidates, c);
     }
+
+    let dto_warm = warm_start_crews_from_request_dtos(request);
+    let fast_discovery_requested = request.fast_discovery == Some(true)
+        && heuristics_seeds_nonempty
+        && !heuristics_only;
+    let fast_discovery_no_resolved_crews =
+        fast_discovery_requested && h_candidates.is_empty();
+    let fast_discovery = fast_discovery_requested && !h_candidates.is_empty();
+
+    let (scenario_warm_start, fast_discovery_heuristic_cap_hit) = if fast_discovery {
+        merge_fast_discovery_warm_start(h_candidates.clone(), dto_warm)
+    } else {
+        (dto_warm, false)
+    };
+
+    let (strategy, strategy_auto) = resolve_effective_optimize_strategy(
+        registry,
+        request,
+        below_decks_slots,
+        heuristics_only,
+        seed,
+        profile_id,
+        crew_constraints.as_ref(),
+        &scenario_warm_start,
+    );
+
     let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
 
     if let OptimizeProgressSink::Job {
         is_seeded_genetic: sink_sg,
+        skip_heuristic_standalone_mc: sink_skip,
         ..
     } = sink
     {
         *sink_sg = is_seeded_genetic;
+        *sink_skip = fast_discovery && !is_seeded_genetic;
     }
 
     let using_placeholder_combatants = build_shared_scenario_data_from_registry(
@@ -466,7 +521,9 @@ fn gather_optimize_simulation_results(
     )
     .using_placeholder_combatants;
 
-    let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty && !is_seeded_genetic
+    let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty
+        && !is_seeded_genetic
+        && !fast_discovery
     {
         let h_total = h_candidates.len() as u32;
         sink.on_heuristics_start(h_total);
@@ -491,19 +548,6 @@ fn gather_optimize_simulation_results(
     };
 
     let analytical_prefilter = if !heuristics_only {
-        let warm_start: Vec<CrewCandidate> = request
-            .warm_start_crews
-            .as_ref()
-            .map(|v| {
-                v.iter()
-                    .map(|dto| CrewCandidate {
-                        captain: dto.captain.trim().to_string(),
-                        bridge: dto.bridge.clone(),
-                        below_decks: dto.below_decks.clone(),
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: &request.hostile,
@@ -528,7 +572,7 @@ fn gather_optimize_simulation_results(
             support_buffs: request.support_buffs.clone().unwrap_or_default(),
             chain_grind: chain_grind.clone(),
             defender_opponent: request.defender_opponent,
-            warm_start,
+            warm_start: scenario_warm_start,
         };
         let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
             sink.on_optimize_tick(tick)
@@ -554,6 +598,9 @@ fn gather_optimize_simulation_results(
         is_seeded_genetic,
         heuristics_only,
         heuristics_seeds_nonempty,
+        fast_discovery_no_resolved_crews,
+        fast_discovery,
+        fast_discovery_heuristic_cap_hit,
         using_placeholder_combatants,
         analytical_prefilter,
         below_decks_slots,
@@ -598,6 +645,11 @@ fn build_optimize_response(
     ];
     if meta.is_seeded_genetic {
         notes.insert(0, "GA population seeded with heuristics crews.");
+    } else if meta.fast_discovery {
+        notes.insert(
+            0,
+            "Fast discovery: heuristic seed crews were merged into the main optimize warm-start list (approximate analytical rank, then Monte Carlo with your chosen strategy).",
+        );
     } else if meta.heuristics_seeds_nonempty {
         notes.insert(0, "Heuristics crews were evaluated first.");
     }
@@ -608,6 +660,12 @@ fn build_optimize_response(
     }
 
     let mut approximate_notes = Vec::new();
+    if meta.fast_discovery {
+        approximate_notes.push(
+            "fast_discovery: seed template crews skip the standalone all-seed Monte Carlo pass; they compete with generated candidates through the same approximate rank then Monte Carlo path."
+                .to_string(),
+        );
+    }
     if let Some((generated, kept)) = meta.analytical_prefilter {
         approximate_notes.push(format!(
             "Approximate analytical pre-filter (closed-form expected hull damage to defender, not win rate) kept {kept} of {generated} crews before Monte Carlo."
@@ -653,6 +711,17 @@ fn build_optimize_response(
     }
 
     let mut warnings = Vec::new();
+    if meta.fast_discovery_no_resolved_crews {
+        warnings.push(
+            "fast_discovery was requested but no heuristic crews resolved after filters; falling back to standard heuristic handling (if any) without warm-start merge."
+                .to_string(),
+        );
+    }
+    if meta.fast_discovery_heuristic_cap_hit {
+        warnings.push(format!(
+            "fast_discovery merged at most {FAST_DISCOVERY_MAX_HEURISTIC_WARM} heuristic-expanded crews into warm-start; additional seed combinations were truncated."
+        ));
+    }
     if meta.using_placeholder_combatants {
         warnings.push(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats. Results do not reflect real ship/hostile values."
@@ -680,6 +749,7 @@ fn build_optimize_response(
             novelty_lambda: request.novelty_lambda,
             novelty_diverse_top: request.novelty_diverse_top,
             novelty_pool: request.novelty_pool,
+            fast_discovery: meta.fast_discovery.then_some(true),
         },
         recommendations: ranked_results
             .iter()
@@ -904,6 +974,7 @@ pub fn start_optimize_job(
             cancel: cancel_flag.clone(),
             heuristics_seeds_nonempty,
             is_seeded_genetic: false,
+            skip_heuristic_standalone_mc: false,
         };
         let gather = gather_optimize_simulation_results(
             registry.as_ref(),

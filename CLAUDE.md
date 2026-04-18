@@ -201,7 +201,7 @@ Community-known crew lists stored in `data/heuristics/*.txt`. Format: `label:Cap
 - `**src/data/heuristics.rs**` — parser, name resolution (alias lookup → exact → substring), and BD expansion logic
 - **BD strategies**: `Ordered` (take first k from list) or `Exploration` (try all C(n,k) combinations) — passed as `below_decks_strategy: "ordered"|"exploration"` in the API request
 - `**GET /api/heuristics`** — lists available seed file stems from `data/heuristics/`
-- `**POST /api/optimize/start**` — same body as `/api/optimize`: `heuristics_seeds`, `heuristics_only`, `below_decks_strategy`; optional `tiered_scout_sims`, `tiered_top_k` (tiered), `warm_start_crews` (deduped prepend), `chain`, `support_buffs`, `analytical_prefilter_keep`, etc.
+- `**POST /api/optimize/start**` — same body as `/api/optimize`: `heuristics_seeds`, `heuristics_only`, `below_decks_strategy`, optional `fast_discovery` (merge expanded seeds into warm-start for the main optimize path); optional `tiered_scout_sims`, `tiered_top_k` (tiered), `warm_start_crews` (deduped prepend), `chain`, `support_buffs`, `analytical_prefilter_keep`, etc.
 - Officer names in seed files are resolved case-insensitively via `data/officers/name_aliases.json` then fuzzy substring match
 
 ## Key architectural decisions that were made before and that Claude can challenge

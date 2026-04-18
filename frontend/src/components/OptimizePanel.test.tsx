@@ -26,6 +26,8 @@ const baseProps = {
   onSelectedSeedsChange: vi.fn(),
   heuristicsOnly: false,
   onHeuristicsOnlyChange: vi.fn(),
+  fastDiscovery: false,
+  onFastDiscoveryChange: vi.fn(),
   belowDecksStrategy: "ordered" as const,
   onBelowDecksStrategyChange: vi.fn(),
   optimizerStrategy: "tiered" as const,
@@ -105,6 +107,22 @@ describe("OptimizePanel", () => {
     );
     expect(screen.getByText("Below-decks strategy")).toBeTruthy();
     expect(screen.getByText(/Heuristics only/)).toBeTruthy();
+    expect(screen.getByText(/Fast discovery/)).toBeTruthy();
+  });
+
+  it("disables fast discovery when strategy is genetic", () => {
+    render(
+      <OptimizePanel
+        {...baseProps}
+        availableSeeds={["swarm-crews"]}
+        selectedSeeds={["swarm-crews"]}
+        optimizerStrategy="genetic"
+      />,
+    );
+    const fd = screen.getByRole("checkbox", {
+      name: /Fast discovery: merge seed crews into main optimize pipeline/,
+    });
+    expect((fd as HTMLInputElement).disabled).toBe(true);
   });
 
   it("calls onMaxCandidatesChange when input changes", () => {

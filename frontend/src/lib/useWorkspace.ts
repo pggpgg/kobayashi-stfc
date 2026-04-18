@@ -127,6 +127,8 @@ export function useWorkspace() {
   const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
   const [selectedSeeds, setSelectedSeeds] = useState<string[]>([]);
   const [heuristicsOnly, setHeuristicsOnly] = useState(false);
+  /** Merge selected heuristic seeds into main optimize warm-start (API `fast_discovery`). */
+  const [fastDiscovery, setFastDiscovery] = useState(false);
   const [belowDecksStrategy, setBelowDecksStrategy] = useState<
     "ordered" | "exploration"
   >("ordered");
@@ -169,6 +171,7 @@ export function useWorkspace() {
       chainSecondary: chainSecondary,
       prioritizeBelowDecksAbility,
       belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
+      fastDiscovery,
     });
 
   // Preset saving state
@@ -278,6 +281,14 @@ export function useWorkspace() {
       .then(setAvailableSeeds)
       .catch(() => setAvailableSeeds([]));
   }, []);
+
+  useEffect(() => {
+    if (optimizerStrategy === "genetic" && fastDiscovery) setFastDiscovery(false);
+  }, [optimizerStrategy, fastDiscovery]);
+
+  useEffect(() => {
+    if (heuristicsOnly && fastDiscovery) setFastDiscovery(false);
+  }, [heuristicsOnly, fastDiscovery]);
 
   // Sync crew/pins with ship level and per-ship below-decks unlock schedule
   useEffect(() => {
@@ -601,6 +612,8 @@ export function useWorkspace() {
             loadWarmStartCrews(optimizeWarmStartCacheKey()) ?? undefined,
           tieredScoutSims,
           tieredTopK,
+          fastDiscovery:
+            fastDiscovery && selectedSeeds.length > 0 ? true : undefined,
         }),
         activeProfileId,
       );
@@ -733,6 +746,8 @@ export function useWorkspace() {
     setSelectedSeeds,
     heuristicsOnly,
     setHeuristicsOnly,
+    fastDiscovery,
+    setFastDiscovery,
     belowDecksStrategy,
     setBelowDecksStrategy,
     chainGrindEnabled,

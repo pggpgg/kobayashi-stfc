@@ -149,6 +149,11 @@ pub struct OptimizeRequest {
     pub chain: Option<ChainGrindRequest>,
     #[serde(default)]
     pub defender_opponent: DefenderOpponent,
+    /// When true with non-empty `heuristics_seeds`, expanded heuristic crews are merged into the
+    /// optimizer warm-start list so they flow through analytical prefilter and tiered (or exhaustive)
+    /// Monte Carlo instead of a separate full-sim pass on every seed crew first.
+    #[serde(default)]
+    pub fast_discovery: Option<bool>,
     /// Maximal marginal relevance blend (0, 1]; when set, reorders the recommendation head for materially diverse officer sets.
     pub novelty_lambda: Option<f32>,
     /// How many leading recommendations use MMR (optional; server defaults when `novelty_lambda` is set).
@@ -374,6 +379,37 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
             errors.push(ValidationIssue {
                 field: "chain",
                 messages: vec![msg],
+            });
+        }
+    }
+
+    if request.fast_discovery == Some(true) {
+        if request.heuristics_only == Some(true) {
+            errors.push(ValidationIssue {
+                field: "fast_discovery",
+                messages: vec![
+                    "cannot be used together with heuristics_only (no main optimize pass)".to_string(),
+                ],
+            });
+        }
+        if request
+            .heuristics_seeds
+            .as_ref()
+            .map(|s| s.is_empty())
+            .unwrap_or(true)
+        {
+            errors.push(ValidationIssue {
+                field: "fast_discovery",
+                messages: vec!["requires non-empty heuristics_seeds".to_string()],
+            });
+        }
+        if request.strategy.as_deref() == Some("genetic") {
+            errors.push(ValidationIssue {
+                field: "fast_discovery",
+                messages: vec![
+                    "cannot be used with strategy genetic (use heuristics_seeds without fast_discovery for seeded GA)"
+                        .to_string(),
+                ],
             });
         }
     }

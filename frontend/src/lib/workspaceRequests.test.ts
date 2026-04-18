@@ -86,6 +86,24 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     expect(body.below_decks_strategy).toBe("exploration");
   });
 
+  it("includes fast_discovery when enabled", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: 50,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: ["meta"],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      fastDiscovery: true,
+    });
+    expect(body.fast_discovery).toBe(true);
+  });
+
   it("includes chain when chainGrind.enabled with kills_target", () => {
     const body = buildWorkspaceOptimizeStartBody({
       shipId: "S",

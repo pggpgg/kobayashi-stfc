@@ -163,6 +163,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   tieredScoutSims?: number | null;
   /** Tiered only: crews promoted to full confirmation (omit for server default 20). */
   tieredTopK?: number | null;
+  /** Merge heuristic seeds into main optimize warm-start (requires non-empty selected seeds). */
+  fastDiscovery?: boolean;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -217,5 +219,6 @@ export function buildWorkspaceOptimizeStartBody(args: {
     args.tieredTopK > 0
       ? { tiered_top_k: args.tieredTopK }
       : {}),
+    ...(args.fastDiscovery === true ? { fast_discovery: true } : {}),
   };
 }

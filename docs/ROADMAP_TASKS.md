@@ -19,4 +19,4 @@
 17. [x] Implement adaptive simulation budget allocation based on scout confidence and variance.
 18. [x] Add matchup-aware pruning priors (captain/bridge synergies, encounter tags, family priors from winners).
 19. [x] Add novelty-aware ranking so top suggestions balance strength with material diversity.
-20. [ ] Ship a first-class fast-discovery pipeline (heuristic seeds -> analytical prefilter -> tiered scout -> confirm top K -> optional refinement) with API/UI exposure.
+20. [x] Ship a first-class fast-discovery pipeline (heuristic seeds -> analytical prefilter -> tiered scout -> confirm top K -> optional refinement) with API/UI exposure.

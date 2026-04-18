@@ -27,6 +27,8 @@ interface OptimizePanelProps {
   onSelectedSeedsChange: (seeds: string[]) => void;
   heuristicsOnly: boolean;
   onHeuristicsOnlyChange: (value: boolean) => void;
+  fastDiscovery: boolean;
+  onFastDiscoveryChange: (value: boolean) => void;
   belowDecksStrategy: "ordered" | "exploration";
   onBelowDecksStrategyChange: (value: "ordered" | "exploration") => void;
   optimizerStrategy: import("../lib/api").OptimizerStrategyType;
@@ -148,6 +150,8 @@ export default function OptimizePanel({
   onSelectedSeedsChange,
   heuristicsOnly,
   onHeuristicsOnlyChange,
+  fastDiscovery,
+  onFastDiscoveryChange,
   belowDecksStrategy,
   onBelowDecksStrategyChange,
   optimizerStrategy,
@@ -339,6 +343,32 @@ export default function OptimizePanel({
               style={{ margin: 0 }}
             />
             <span>Heuristics only (skip broader search)</span>
+          </label>
+
+          <label
+            style={{
+              ...checkboxLabelStyle,
+              opacity: optimizerStrategy === "genetic" ? 0.45 : 1,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={fastDiscovery}
+              disabled={optimizerStrategy === "genetic"}
+              onChange={(e) => onFastDiscoveryChange(e.target.checked)}
+              aria-label="Fast discovery: merge seed crews into main optimize pipeline"
+              style={{ margin: 0 }}
+            />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              Fast discovery (merge seeds into main pipeline)
+              <HelpHint
+                text={
+                  optimizerStrategy === "genetic"
+                    ? "Not available with genetic strategy (use seeds without this option for seeded GA)."
+                    : "Seed crews are prepended to the optimizer warm-start list so they go through the same approximate analytical rank and Monte Carlo path as generated crews, instead of a separate full-sim pass on every seed combination first."
+                }
+              />
+            </span>
           </label>
         </>
       )}

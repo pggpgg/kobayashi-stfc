@@ -485,6 +485,8 @@ export interface OptimizeResponse {
     novelty_lambda?: number | null;
     novelty_diverse_top?: number | null;
     novelty_pool?: number | null;
+    /** True when the server merged heuristic seeds into warm-start (fast discovery pipeline). */
+    fast_discovery?: boolean | null;
   };
   recommendations: CrewRecommendation[];
   duration_ms?: number;
@@ -656,6 +658,7 @@ export async function optimizeStart(
     warm_start_crews?: WarmStartCrewBody[];
     tiered_scout_sims?: number;
     tiered_top_k?: number;
+    fast_discovery?: boolean;
   },
   profileId?: string | null,
 ): Promise<OptimizeStartResponse> {
@@ -718,6 +721,9 @@ export async function optimizeStart(
   }
   if (params.tiered_top_k != null && params.tiered_top_k > 0) {
     body.tiered_top_k = params.tiered_top_k;
+  }
+  if (params.fast_discovery === true) {
+    body.fast_discovery = true;
   }
   const res = await fetch(`${API_BASE}/api/optimize/start`, {
     method: "POST",

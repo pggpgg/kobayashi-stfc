@@ -571,6 +571,55 @@ async fn optimize_validation_error_has_expected_schema() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn optimize_rejects_fast_discovery_without_heuristic_seeds() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":100,"seed":1,"max_candidates":32,"strategy":"tiered","fast_discovery":true}"#;
+    let response = route_request("POST", "/api/optimize", body).await;
+    assert_eq!(response.status_code, 400, "{}", response.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let fields: Vec<&str> = payload["errors"]
+        .as_array()
+        .expect("errors array")
+        .iter()
+        .filter_map(|e| e["field"].as_str())
+        .collect();
+    assert!(
+        fields.iter().any(|f| *f == "fast_discovery"),
+        "expected fast_discovery validation issue: {:?}",
+        payload
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_fast_discovery_echoes_in_scenario_and_notes() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":400,"seed":3,"max_candidates":48,"strategy":"tiered","heuristics_seeds":["heuristics-seed"],"fast_discovery":true}"#;
+    let response = route_request("POST", "/api/optimize", body).await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["scenario"]["fast_discovery"], true);
+    let notes = payload["notes"].as_array().expect("notes array");
+    assert!(
+        notes.iter().any(|n| {
+            n.as_str()
+                .is_some_and(|s| s.contains("Fast discovery") && s.contains("warm-start"))
+        }),
+        "expected fast discovery note: {:?}",
+        notes
+    );
+    let approx = payload["approximate_notes"]
+        .as_array()
+        .expect("approximate_notes array");
+    assert!(
+        approx.iter().any(|n| n.as_str().is_some_and(|s| s.contains("fast_discovery"))),
+        "expected fast_discovery approximate note: {:?}",
+        approx
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn async_optimize_start_poll_completes_with_recommendations() {
     let body =
         r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":42,"max_candidates":16}"#;
