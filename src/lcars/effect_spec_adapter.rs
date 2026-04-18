@@ -75,15 +75,21 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
         "defender_is_player_ship" | "defender_player_ship" | "enemy_player" => {
             Ok(AbilityConditionSpec::DefenderIsPlayerShip)
         }
-        "defender_burning" | "target_burning" | "burning" => Ok(AbilityConditionSpec::DefenderBurning),
+        "defender_burning" | "target_burning" | "burning" => {
+            Ok(AbilityConditionSpec::DefenderBurning)
+        }
         "defender_hull_breach" | "target_hull_breach" | "hull_breach_active" => {
             Ok(AbilityConditionSpec::DefenderHullBreach)
         }
-        "attacker_burning" | "self_burning" | "player_burning" => Ok(AbilityConditionSpec::AttackerBurning),
+        "attacker_burning" | "self_burning" | "player_burning" => {
+            Ok(AbilityConditionSpec::AttackerBurning)
+        }
         "attacker_hull_breach" | "self_hull_breach" | "player_hull_breach" => {
             Ok(AbilityConditionSpec::AttackerHullBreach)
         }
-        "defender_assimilated" | "target_assimilated" => Ok(AbilityConditionSpec::DefenderAssimilated),
+        "defender_assimilated" | "target_assimilated" => {
+            Ok(AbilityConditionSpec::DefenderAssimilated)
+        }
         "attacker_officer_tal_not_on_bridge" | "self_officer_tal_not_on_bridge" => {
             Ok(AbilityConditionSpec::AttackerOfficerTalNotOnBridge)
         }
@@ -93,7 +99,8 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
         | "opponent_faction"
         | "faction_is" => {
             let slug = c.faction.as_deref().or(c.tag.as_deref()).ok_or_else(|| {
-                "faction condition requires `faction` or `tag` with a known faction slug".to_string()
+                "faction condition requires `faction` or `tag` with a known faction slug"
+                    .to_string()
             })?;
             Ok(AbilityConditionSpec::DefenderFactionIs {
                 faction: slug.to_string(),
@@ -101,7 +108,9 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
         }
         "defender_hull_faction_id" | "enemy_hull_faction" | "enemy_hull_faction_id" => {
             let id = c.faction_id.ok_or_else(|| {
-                format!("{ty} condition requires integer `faction_id` (upstream hostile faction.id)")
+                format!(
+                    "{ty} condition requires integer `faction_id` (upstream hostile faction.id)"
+                )
             })?;
             Ok(AbilityConditionSpec::DefenderHullFactionIdIs { faction_id: id })
         }
@@ -150,10 +159,9 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
             })
         }
         "and" => {
-            let children = c
-                .conditions
-                .as_ref()
-                .ok_or_else(|| "`and` condition requires non-empty `conditions` array".to_string())?;
+            let children = c.conditions.as_ref().ok_or_else(|| {
+                "`and` condition requires non-empty `conditions` array".to_string()
+            })?;
             if children.is_empty() {
                 return Err("`and` condition must include at least one sub-condition".to_string());
             }
@@ -164,10 +172,9 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
             Ok(AbilityConditionSpec::And { all })
         }
         "or" => {
-            let children = c
-                .conditions
-                .as_ref()
-                .ok_or_else(|| "`or` condition requires non-empty `conditions` array".to_string())?;
+            let children = c.conditions.as_ref().ok_or_else(|| {
+                "`or` condition requires non-empty `conditions` array".to_string()
+            })?;
             if children.is_empty() {
                 return Err("`or` condition must include at least one sub-condition".to_string());
             }
@@ -177,7 +184,10 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
             }
             Ok(AbilityConditionSpec::Or { any })
         }
-        _ => Err(format!("unknown LCARS condition type '{}'", c.condition_type.trim())),
+        _ => Err(format!(
+            "unknown LCARS condition type '{}'",
+            c.condition_type.trim()
+        )),
     }
 }
 
@@ -263,7 +273,11 @@ pub fn lcars_effect_to_combat_effect_spec(
         Some(c) => vec![lcars_condition_to_spec(c).ok()?],
         None => Vec::new(),
     };
-    let target = match effect.target.as_deref().map(|s| s.trim().to_ascii_lowercase()) {
+    let target = match effect
+        .target
+        .as_deref()
+        .map(|s| s.trim().to_ascii_lowercase())
+    {
         Some(ref t) if t == "enemy" => AbilityTargetSpec::DefenderOpponent,
         Some(ref t) if t == "self" || t.is_empty() => AbilityTargetSpec::AttackerSelf,
         None => AbilityTargetSpec::AttackerSelf,
@@ -356,7 +370,9 @@ mod tests {
             operator: Some("add".into()),
             value: Some(0.1),
             trigger: Some("passive".into()),
-            duration: Some(crate::lcars::parser::LcarsDuration::Permanent("permanent".into())),
+            duration: Some(crate::lcars::parser::LcarsDuration::Permanent(
+                "permanent".into(),
+            )),
             scaling: None,
             condition: None,
             chance: None,
@@ -402,13 +418,10 @@ mod tests {
             name: "strike".into(),
             effects: vec![effect.clone()],
         };
-        let spec = lcars_effect_to_combat_effect_spec(&effect, "parity:id", "parity_officer", "strike")
-            .expect("spec");
-        let raw = spec
-            .value
-            .as_ref()
-            .and_then(|v| v.scalar)
-            .expect("scalar");
+        let spec =
+            lcars_effect_to_combat_effect_spec(&effect, "parity:id", "parity_officer", "strike")
+                .expect("spec");
+        let raw = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
         let contexts = resolve_officer_ability(
             &officer,
             &ability,

@@ -2,8 +2,8 @@
 //!
 //! Used by `generate_lcars` and reporting tools. See [`crate::lcars::resolve_lcars_condition`].
 
-use crate::combat::ShipType;
 use super::LcarsCondition;
+use crate::combat::ShipType;
 
 fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
     LcarsCondition {

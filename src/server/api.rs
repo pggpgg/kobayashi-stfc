@@ -1122,6 +1122,131 @@ pub fn officer_resolved_payload(
     serde_json::to_string_pretty(&response).map_err(OfficerResolveError::Serialize)
 }
 
+#[derive(Debug)]
+pub enum CombatEffectSpecDebugError {
+    Disabled,
+    /// [`DataRegistry::lcars_officers`] is empty because `KOBAYASHI_OFFICER_SOURCE` was not `lcars` at startup.
+    LcarsOfficersNotLoaded,
+    NotFound,
+    Serialize(serde_json::Error),
+}
+
+impl fmt::Display for CombatEffectSpecDebugError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Disabled => write!(
+                f,
+                "CombatEffectSpec HTTP debug disabled (set KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1)"
+            ),
+            Self::LcarsOfficersNotLoaded => write!(
+                f,
+                "LCARS officers not loaded (set KOBAYASHI_OFFICER_SOURCE=lcars before starting the server)"
+            ),
+            Self::NotFound => write!(f, "Officer not found"),
+            Self::Serialize(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for CombatEffectSpecDebugError {}
+
+/// JSON payload for `GET /api/debug/combat-effect-spec/officers/:id` when
+/// [`crate::data::combat_effect_spec::combat_effect_spec_debug_http_enabled`] is true.
+/// Each LCARS effect row includes an optional [`crate::data::combat_effect_spec::CombatEffectSpec`] when
+/// [`crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec`] maps it.
+pub fn combat_effect_spec_debug_officer_payload(
+    registry: &DataRegistry,
+    officer_id: &str,
+) -> Result<String, CombatEffectSpecDebugError> {
+    use crate::data::combat_effect_spec::CombatEffectSpec;
+    use crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec;
+
+    if !crate::data::combat_effect_spec::combat_effect_spec_debug_http_enabled() {
+        return Err(CombatEffectSpecDebugError::Disabled);
+    }
+
+    let lcars_officers = registry
+        .lcars_officers()
+        .ok_or(CombatEffectSpecDebugError::LcarsOfficersNotLoaded)?;
+
+    let officer = lcars_officers
+        .iter()
+        .find(|o| o.id == officer_id)
+        .or_else(|| {
+            let lower = officer_id.to_lowercase();
+            lcars_officers
+                .iter()
+                .find(|o| o.name.to_lowercase() == lower)
+        })
+        .ok_or(CombatEffectSpecDebugError::NotFound)?;
+
+    #[derive(Serialize)]
+    struct EffectRow {
+        index: usize,
+        #[serde(rename = "type")]
+        effect_type: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        spec: Option<CombatEffectSpec>,
+    }
+
+    #[derive(Serialize)]
+    struct AbilityBlock {
+        slot: &'static str,
+        name: String,
+        effects: Vec<EffectRow>,
+    }
+
+    #[derive(Serialize)]
+    struct Payload {
+        officer_id: String,
+        officer_name: String,
+        combat_effect_spec_enabled: bool,
+        abilities: Vec<AbilityBlock>,
+    }
+
+    fn map_ability(
+        officer_id: &str,
+        slot: &'static str,
+        ability: &crate::lcars::LcarsAbility,
+    ) -> AbilityBlock {
+        let mut effects = Vec::with_capacity(ability.effects.len());
+        for (i, e) in ability.effects.iter().enumerate() {
+            let stable_id = format!("{}:{}:{}", officer_id, ability.name, i);
+            let spec = lcars_effect_to_combat_effect_spec(e, &stable_id, officer_id, &ability.name);
+            effects.push(EffectRow {
+                index: i,
+                effect_type: e.effect_type.clone(),
+                spec,
+            });
+        }
+        AbilityBlock {
+            slot,
+            name: ability.name.clone(),
+            effects,
+        }
+    }
+
+    let mut abilities = Vec::new();
+    if let Some(ref a) = officer.captain_ability {
+        abilities.push(map_ability(&officer.id, "captain", a));
+    }
+    if let Some(ref a) = officer.bridge_ability {
+        abilities.push(map_ability(&officer.id, "bridge", a));
+    }
+    if let Some(ref a) = officer.below_decks_ability {
+        abilities.push(map_ability(&officer.id, "below_decks", a));
+    }
+
+    let payload = Payload {
+        officer_id: officer.id.clone(),
+        officer_name: officer.name.clone(),
+        combat_effect_spec_enabled: crate::data::combat_effect_spec::combat_effect_spec_enabled(),
+        abilities,
+    };
+
+    serde_json::to_string_pretty(&payload).map_err(CombatEffectSpecDebugError::Serialize)
+}
+
 fn presets_dir_for_profile(profile_id: &str) -> std::path::PathBuf {
     profile_path(profile_id, PRESETS_SUBDIR)
 }

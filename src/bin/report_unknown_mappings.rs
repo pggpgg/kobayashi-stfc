@@ -150,7 +150,9 @@ struct ShipTypeAgg {
     sample_ids: Vec<String>,
 }
 
-fn scan_hostile_index(path: &Path) -> Result<BTreeMap<u32, ShipTypeAgg>, Box<dyn std::error::Error>> {
+fn scan_hostile_index(
+    path: &Path,
+) -> Result<BTreeMap<u32, ShipTypeAgg>, Box<dyn std::error::Error>> {
     let text = fs::read_to_string(path)?;
     let idx: HostileIndex = serde_json::from_str(&text)?;
     let mut map: BTreeMap<u32, ShipTypeAgg> = BTreeMap::new();
@@ -239,7 +241,11 @@ fn render_report(
             value,
             agg.count,
             if mapped { "yes" } else { "no" },
-            if profile.is_armada_target { "yes" } else { "no" },
+            if profile.is_armada_target {
+                "yes"
+            } else {
+                "no"
+            },
             md_escape_cell(profile.note),
             ids
         ));

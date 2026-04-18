@@ -48,10 +48,8 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: cargo test
+        # Includes CombatEffectSpec integration tests (research / LCARS / mixed).
         run: cargo test
-
-      - name: cargo test (CombatEffectSpec legacy research path)
-        run: KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1 cargo test
 
       - name: cargo build --release
         run: cargo build --release

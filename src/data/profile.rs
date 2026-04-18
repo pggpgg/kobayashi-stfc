@@ -21,11 +21,11 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
+use crate::combat::condition::ability_condition_from_research_bonus_key;
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewSeat,
     CrewSeatContext, ShipType, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
-use crate::combat::condition::ability_condition_from_research_bonus_key;
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
@@ -399,7 +399,9 @@ pub fn borg_alcove_hull_hp_bonus_fraction(
     let record = *by_fid.get(&BORG_ALCOVE_FORBIDDEN_TECH_FID)?;
     let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
         imported_ft.iter().map(|e| (e.fid, e)).collect();
-    let imported = imported_by_fid.get(&BORG_ALCOVE_FORBIDDEN_TECH_FID).copied();
+    let imported = imported_by_fid
+        .get(&BORG_ALCOVE_FORBIDDEN_TECH_FID)
+        .copied();
     for bonus in &record.bonuses {
         if bonus.stat != "hull_hp" {
             continue;
@@ -441,7 +443,9 @@ pub fn forbidden_tech_derived_attack_phase_seats(
     };
     let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
         imported_ft.iter().map(|e| (e.fid, e)).collect();
-    let imported = imported_by_fid.get(&BORG_ALCOVE_FORBIDDEN_TECH_FID).copied();
+    let imported = imported_by_fid
+        .get(&BORG_ALCOVE_FORBIDDEN_TECH_FID)
+        .copied();
 
     let voyager_and_npc = AbilityCondition::And(vec![
         AbilityCondition::AttackerShipIdIs(USS_VOYAGER_SHIP_ID.to_string()),
@@ -739,9 +743,11 @@ pub fn ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship(
             continue;
         };
         let imported = imported_by_fid.get(&fid).copied();
-        if let Some(a) =
-            torpedo_family_hostile_accuracy_fraction_for_record(record, imported, scale_by_level_tier)
-        {
+        if let Some(a) = torpedo_family_hostile_accuracy_fraction_for_record(
+            record,
+            imported,
+            scale_by_level_tier,
+        ) {
             sum += a;
         }
     }
@@ -807,7 +813,9 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
             out.push(CrewSeatContext {
                 seat: CrewSeat::Ship,
                 ability: Ability {
-                    name: format!("forbidden_tech_ship_class_torpedo_family_{fid}_armor_dodge_return_fire"),
+                    name: format!(
+                        "forbidden_tech_ship_class_torpedo_family_{fid}_armor_dodge_return_fire"
+                    ),
                     class: AbilityClass::ShipAbility,
                     timing: TimingWindow::CombatBegin,
                     boostable: false,
@@ -842,7 +850,9 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
-                        name: format!("forbidden_tech_ship_class_torpedo_family_{fid}_weapon_damage"),
+                        name: format!(
+                            "forbidden_tech_ship_class_torpedo_family_{fid}_weapon_damage"
+                        ),
                         class: AbilityClass::ShipAbility,
                         timing: TimingWindow::AttackPhase,
                         boostable: false,
@@ -954,7 +964,9 @@ pub fn merge_building_bonuses_into_profile(
 }
 
 /// Per-`rid` research level from sync import: duplicate rows use **max** level for that `rid`.
-pub(crate) fn research_levels_by_rid_from_import(imported_research: &[ResearchEntry]) -> HashMap<i64, u32> {
+pub(crate) fn research_levels_by_rid_from_import(
+    imported_research: &[ResearchEntry],
+) -> HashMap<i64, u32> {
     let mut levels_by_rid: HashMap<i64, u32> = HashMap::new();
     for entry in imported_research {
         let level = if entry.level > 0 {
@@ -982,79 +994,10 @@ pub fn research_derived_attack_phase_seats(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
 ) -> Vec<CrewSeatContext> {
-    // Default: CombatEffectSpec adapter + compiler; see [`crate::data::combat_effect_spec::combat_effect_spec_enabled`].
-    if crate::data::combat_effect_spec::combat_effect_spec_enabled() {
-        crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
-            imported_research,
-            catalog,
-        )
-    } else {
-        research_derived_attack_phase_seats_legacy(imported_research, catalog)
-    }
-}
-
-pub(crate) fn research_derived_attack_phase_seats_legacy(
-    imported_research: &[ResearchEntry],
-    catalog: &ResearchCatalog,
-) -> Vec<CrewSeatContext> {
-    if imported_research.is_empty() || catalog.items.is_empty() {
-        return Vec::new();
-    }
-    let levels_by_rid = research_levels_by_rid_from_import(imported_research);
-    if levels_by_rid.is_empty() {
-        return Vec::new();
-    }
-
-    let records: Vec<&crate::data::research::ResearchRecord> = catalog
-        .items
-        .iter()
-        .filter(|r| levels_by_rid.contains_key(&r.rid))
-        .collect();
-    if records.is_empty() {
-        return Vec::new();
-    }
-
-    let conditional = cumulative_conditional_research_bonuses(&records, &levels_by_rid);
-    let mut out: Vec<CrewSeatContext> = Vec::new();
-    let mut idx = 0u32;
-    for ((key, stat), value) in conditional {
-        if !value.is_finite() || value == 0.0 {
-            continue;
-        }
-        let Some(norm) = normalize_profile_combat_stat(&stat) else {
-            continue;
-        };
-        if norm != "crit_chance" && norm != "crit_damage" && norm != "weapon_damage" {
-            continue;
-        }
-        let Some(condition) = ability_condition_from_research_bonus_key(&key) else {
-            continue;
-        };
-        let effect = match norm {
-            "crit_chance" => AbilityEffect::CritChanceBonus(
-                crate::data::ship_ability_resolve::normalize_probability(value),
-            ),
-            "crit_damage" => AbilityEffect::CritDamageMultiplier((1.0 + value).max(EPSILON)),
-            "weapon_damage" => AbilityEffect::AttackMultiplier(value),
-            _ => continue,
-        };
-        idx = idx.saturating_add(1);
-        out.push(CrewSeatContext {
-            seat: CrewSeat::Ship,
-            ability: Ability {
-                name: format!("research_{norm}_{idx}"),
-                class: AbilityClass::ShipAbility,
-                timing: TimingWindow::AttackPhase,
-                boostable: false,
-                effect,
-                condition: Some(condition),
-            },
-            boosted: false,
-            officer_id: None,
-            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
-        });
-    }
-    out
+    crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
+        imported_research,
+        catalog,
+    )
 }
 
 /// Effective combat stat bonuses from synced research only (engine keys after normalization).
@@ -1443,7 +1386,10 @@ mod tests {
             ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
         };
 
-        let imported_research = vec![ResearchEntry { rid: 4133019450, level: 1 }];
+        let imported_research = vec![ResearchEntry {
+            rid: 4133019450,
+            level: 1,
+        }];
         let catalog = ResearchCatalog {
             source: None,
             last_updated: None,
@@ -1851,14 +1797,12 @@ mod tests {
         assert!(profile.bonuses.get("crit_damage").is_none());
 
         let seats = super::forbidden_tech_derived_attack_phase_seats(
-            &imported,
-            &effective,
-            &catalog,
-            false,
+            &imported, &effective, &catalog, false,
         );
         assert_eq!(seats.len(), 2);
 
-        let hull = super::borg_alcove_hull_hp_bonus_fraction(&imported, &effective, &catalog, false);
+        let hull =
+            super::borg_alcove_hull_hp_bonus_fraction(&imported, &effective, &catalog, false);
         assert!((hull.unwrap() - 0.12).abs() < 1e-12);
     }
 
@@ -1915,17 +1859,11 @@ mod tests {
         assert!(profile.bonuses.get("shield_mitigation").is_none());
 
         let seats = super::quantum_slipstream_forbidden_tech_round_start_seats(
-            &imported,
-            &effective,
-            &catalog,
-            false,
+            &imported, &effective, &catalog, false,
         );
         assert_eq!(seats.len(), 1);
         match &seats[0].ability.effect {
-            AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
-                per_round,
-                cap,
-            } => {
+            AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap } => {
                 assert!((cap - 0.15).abs() < 1e-12);
                 assert!((per_round - 0.05).abs() < 1e-12);
             }
@@ -1934,7 +1872,8 @@ mod tests {
     }
 
     #[test]
-    fn ship_class_torpedo_family_s31_skips_flat_profile_and_exposes_gated_seats_and_hull_fraction() {
+    fn ship_class_torpedo_family_s31_skips_flat_profile_and_exposes_gated_seats_and_hull_fraction()
+    {
         use crate::combat::AbilityCondition;
         use crate::combat::ShipType;
 
@@ -1999,14 +1938,12 @@ mod tests {
         );
         assert!(profile.bonuses.is_empty());
 
-        assert!(super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
-            &imported,
-            &effective,
-            &catalog,
-            false,
-            None,
-        )
-        .is_none());
+        assert!(
+            super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+                &imported, &effective, &catalog, false, None,
+            )
+            .is_none()
+        );
 
         let ship_bb = ShipRecord {
             id: "t".into(),
@@ -2034,13 +1971,14 @@ mod tests {
             Some(&ship_bb),
         );
         assert!((hull.unwrap() - 0.12).abs() < 1e-12);
-        let sm = super::ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship(
-            &imported,
-            &effective,
-            &catalog,
-            false,
-            Some(&ship_bb),
-        );
+        let sm =
+            super::ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship(
+                &imported,
+                &effective,
+                &catalog,
+                false,
+                Some(&ship_bb),
+            );
         assert!((sm.unwrap() - 0.08).abs() < 1e-12);
         let acc = super::ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship(
             &imported,
@@ -2052,10 +1990,7 @@ mod tests {
         assert!((acc.unwrap() - 0.06).abs() < 1e-12);
 
         let seats = super::ship_class_gated_torpedo_family_derived_seats(
-            &imported,
-            &effective,
-            &catalog,
-            false,
+            &imported, &effective, &catalog, false,
         );
         assert_eq!(seats.len(), 3);
         let expected_gate = AbilityCondition::And(vec![
@@ -2150,14 +2085,16 @@ mod tests {
             Some(&ship_explorer),
         );
         assert!((h_ex.unwrap() - 0.12).abs() < 1e-12);
-        assert!(super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
-            &imported,
-            &effective,
-            &catalog,
-            false,
-            Some(&ship_bb),
-        )
-        .is_none());
+        assert!(
+            super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
+                &imported,
+                &effective,
+                &catalog,
+                false,
+                Some(&ship_bb),
+            )
+            .is_none()
+        );
     }
 
     fn tiny_catalog(items: Vec<ForbiddenChaosRecord>) -> ForbiddenChaosList {
@@ -2342,7 +2279,7 @@ mod tests {
     }
 
     #[test]
-    fn research_derived_attack_phase_seats_spec_matches_legacy() {
+    fn research_derived_attack_phase_seats_matches_spec_adapter() {
         use crate::data::import::ResearchEntry;
         use crate::data::research::{
             ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
@@ -2375,12 +2312,12 @@ mod tests {
             rid: 5001,
             level: 1,
         }];
-        let legacy = research_derived_attack_phase_seats_legacy(&imported, &catalog);
+        let via_public = research_derived_attack_phase_seats(&imported, &catalog);
         let via_spec =
             crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
                 &imported,
                 &catalog,
             );
-        assert_eq!(legacy, via_spec);
+        assert_eq!(via_public, via_spec);
     }
 }

@@ -25,8 +25,8 @@ use crate::combat::abilities::{
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::crit::resolve_vehicle_weapon_crit;
 use crate::combat::damage::{
-    apply_shield_hull_split, compute_apex_damage_factor,
-    compute_damage_through_factor, compute_isolytic_taken,
+    apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
+    compute_isolytic_taken,
 };
 use crate::combat::effect_accumulator::{
     record_ability_activations, scale_effect, sum_on_kill_hull_regen, EffectAccumulator,
@@ -781,14 +781,12 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     let pre_mult = phase_effects.pre_attack_multiplier();
                     let g_galaxy = phase_effects.galaxy_additive_weapon_frac();
                     let p_prof = config.profile_weapon_damage_fraction;
-                    let galaxy_dilution = if g_galaxy > 0.0
-                        && g_galaxy.is_finite()
-                        && (1.0 + p_prof) > 1e-12
-                    {
-                        1.0 + g_galaxy / (1.0 + p_prof)
-                    } else {
-                        1.0
-                    };
+                    let galaxy_dilution =
+                        if g_galaxy > 0.0 && g_galaxy.is_finite() && (1.0 + p_prof) > 1e-12 {
+                            1.0 + g_galaxy / (1.0 + p_prof)
+                        } else {
+                            1.0
+                        };
                     let effective_attack = match config.weapon_damage_profile_additive_pool {
                         Some(p) if p > 0.0 && p.is_finite() => {
                             // Experimental: one additive pool for profile weapon_damage + dynamic pre-attack sum.
@@ -1026,8 +1024,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     }
 
                     let w_proc_chance = attacker.weapon_proc_chance(weapon_index);
-                    let (did_proc, proc_roll) =
-                        roll_weapon_intrinsic_proc(w_proc_chance, &mut rng);
+                    let (did_proc, proc_roll) = roll_weapon_intrinsic_proc(w_proc_chance, &mut rng);
                     let proc_multiplier = if did_proc {
                         attacker.weapon_proc_multiplier(weapon_index)
                     } else {
@@ -1477,21 +1474,20 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                 let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
                                 let breach_before = attacker_hull_breach_rounds;
                                 if triggered {
-                                    attacker_hull_breach_rounds = attacker_hull_breach_rounds
-                                        .max(duration_rounds.max(1));
+                                    attacker_hull_breach_rounds =
+                                        attacker_hull_breach_rounds.max(duration_rounds.max(1));
                                 }
                                 if breach_before == 0 && attacker_hull_breach_rounds > 0 {
                                     let mut ctx_hb = combat_ctx.clone();
                                     ctx_hb.attacker_hull_pct = 1.0
                                         - (total_attacker_hull_damage
                                             / attacker.hull_health.max(0.0))
-                                            .min(1.0);
-                                    ctx_hb.attacker_shield_pct =
-                                        if attacker.shield_health > 0.0 {
-                                            attacker_shield_remaining / attacker.shield_health
-                                        } else {
-                                            0.0
-                                        };
+                                        .min(1.0);
+                                    ctx_hb.attacker_shield_pct = if attacker.shield_health > 0.0 {
+                                        attacker_shield_remaining / attacker.shield_health
+                                    } else {
+                                        0.0
+                                    };
                                     apply_attacker_hull_breach_timing_window(
                                         &mut trace,
                                         round_index,
@@ -1518,10 +1514,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                     },
                                     weapon_index: Some(weapon_index as u32),
                                     values: Map::from_iter([
-                                        ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
+                                        (
+                                            "roll".to_string(),
+                                            Value::from(round_f64(hull_breach_roll)),
+                                        ),
                                         ("triggered".to_string(), Value::Bool(triggered)),
                                         ("chance".to_string(), Value::from(round_f64(chance))),
-                                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                                        (
+                                            "duration_rounds".to_string(),
+                                            Value::from(duration_rounds),
+                                        ),
                                         (
                                             "requires_critical".to_string(),
                                             Value::Bool(requires_critical),

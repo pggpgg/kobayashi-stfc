@@ -20,6 +20,13 @@ Goal: normalize **officers (LCARS)**, **research**, **ship abilities**, and opti
 
 All of these adapt into `CombatEffectSpec`.
 
+### Phase 1 delivery scope (implemented)
+
+The first shipped slice focused on **parity and migration safety**, not a full rewrite of combat:
+
+- **In scope:** typed IR + serde + validation; compiler to existing engine types; research → spec → attack-phase seats (sole path in `research_derived_attack_phase_seats`); optional `KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE=0` for diagnostics; LCARS → spec adapter for tooling and parity; optional HTTP debug for LCARS rows (`GET /api/debug/combat-effect-spec/officers/:id` when `KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1`).
+- **Out of scope for that slice:** replacing every LCARS code path in the live resolver in one step; changing engine timing windows or damage formulas for migration convenience (see [ROADMAP.md](ROADMAP.md) non-goals).
+
 ## Canonical schema
 
 ```ts
@@ -309,7 +316,7 @@ Detailed implementation checklist: [COMBAT_EFFECT_SPEC_CHECKLIST.md](COMBAT_EFFE
 
 ## Phase 1 scope (implementation)
 
-Phase 1 delivers the **canonical IR + serde**, a **compiler to existing engine structs**, and the **research-derived attack-phase seat** path (enabled **by default**; use `KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1` to force the legacy implementation). Officers remain resolved through LCARS as today; a **lossy LCARS → spec** adapter exists for tooling and future parity. **No intended combat timing or formula changes** in Phase 1: the spec path must match the legacy path for covered fixtures.
+Phase 1 delivers the **canonical IR + serde**, a **compiler to existing engine structs**, and the **research-derived attack-phase seat** path (always via the spec adapter + compiler in-tree). Officers remain resolved through LCARS as today; a **lossy LCARS → spec** adapter exists for tooling and parity tests. **No intended combat timing or formula changes** for migration: golden tests lock adapter output against the public API.
 
 ## Non-goals
 

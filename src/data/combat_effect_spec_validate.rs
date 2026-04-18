@@ -31,7 +31,10 @@ impl std::fmt::Display for CombatEffectSpecValidationError {
 
 impl std::error::Error for CombatEffectSpecValidationError {}
 
-fn validate_chance_spec(ch: &ChanceSpec, field: &'static str) -> Result<(), CombatEffectSpecValidationError> {
+fn validate_chance_spec(
+    ch: &ChanceSpec,
+    field: &'static str,
+) -> Result<(), CombatEffectSpecValidationError> {
     if let Some(s) = ch.scalar {
         if !s.is_finite() || !(0.0..=1.0).contains(&s) {
             return Err(CombatEffectSpecValidationError::ChanceOutOfRange { field, value: s });
@@ -54,11 +57,16 @@ fn validate_value_spec(v: &ValueSpec) -> Result<(), CombatEffectSpecValidationEr
     Ok(())
 }
 
-fn validate_condition_tree(c: &AbilityConditionSpec) -> Result<(), CombatEffectSpecValidationError> {
+fn validate_condition_tree(
+    c: &AbilityConditionSpec,
+) -> Result<(), CombatEffectSpecValidationError> {
     match c {
         AbilityConditionSpec::RoundRange { min, max } => {
             if min > max {
-                return Err(CombatEffectSpecValidationError::RoundRangeInverted { min: *min, max: *max });
+                return Err(CombatEffectSpecValidationError::RoundRangeInverted {
+                    min: *min,
+                    max: *max,
+                });
             }
         }
         AbilityConditionSpec::And { all } => {
@@ -84,7 +92,9 @@ fn validate_condition_tree(c: &AbilityConditionSpec) -> Result<(), CombatEffectS
 }
 
 /// Validate ids, chance ranges, round ranges, and non-empty `and`/`or` nodes.
-pub fn validate_combat_effect_spec(spec: &CombatEffectSpec) -> Result<(), CombatEffectSpecValidationError> {
+pub fn validate_combat_effect_spec(
+    spec: &CombatEffectSpec,
+) -> Result<(), CombatEffectSpecValidationError> {
     if spec.id.trim().is_empty() {
         return Err(CombatEffectSpecValidationError::EmptyId);
     }
@@ -104,8 +114,8 @@ pub fn validate_combat_effect_spec(spec: &CombatEffectSpec) -> Result<(), Combat
 mod tests {
     use super::*;
     use crate::data::combat_effect_spec::{
-        AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec, AbilityTriggerSpec, ChanceSpec,
-        CombatEffectSpec, EffectSource, ValueSpec,
+        AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec, AbilityTriggerSpec,
+        ChanceSpec, CombatEffectSpec, EffectSource, ValueSpec,
     };
 
     fn minimal_spec() -> CombatEffectSpec {

@@ -73,7 +73,9 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::AttackerShipIdIs(expected) => ctx.attacker_ship_id == *expected,
         AbilityCondition::DefenderIsNpcHostile => ctx.defender_is_npc_hostile,
         AbilityCondition::DefenderIsPlayerShip => ctx.defender_is_player_ship,
-        AbilityCondition::AttackerOfficerTalNotOnBridge => !ctx.attacker_tal_assigned_captain_or_bridge,
+        AbilityCondition::AttackerOfficerTalNotOnBridge => {
+            !ctx.attacker_tal_assigned_captain_or_bridge
+        }
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),

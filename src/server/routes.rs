@@ -129,6 +129,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/openapi.json", get(handle_openapi_json))
         .route("/api/health", get(handle_health))
         .route("/api/mechanics/coverage", get(handle_mechanics_coverage))
+        .route(
+            "/api/debug/combat-effect-spec/officers/:id",
+            get(handle_combat_effect_spec_debug_officer),
+        )
         .route("/api/officers", get(handle_officers))
         .route("/api/officers/:id/resolved", get(handle_officer_resolved))
         .route("/api/ships", get(handle_ships))
@@ -625,6 +629,31 @@ async fn handle_officer_resolved(
     match api::officer_resolved_payload(state.registry.as_ref(), &id) {
         Ok(body) => ok_json(body).into_response(),
         Err(api::OfficerResolveError::NotFound) => {
+            error_json(StatusCode::NOT_FOUND, "Officer not found").into_response()
+        }
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+/// `GET /api/debug/combat-effect-spec/officers/:id` — optional LCARS → [`CombatEffectSpec`] dump when
+/// `KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1`. Returns **404** when disabled or officer missing.
+async fn handle_combat_effect_spec_debug_officer(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    match api::combat_effect_spec_debug_officer_payload(state.registry.as_ref(), &id) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(api::CombatEffectSpecDebugError::Disabled) => error_json(
+            StatusCode::NOT_FOUND,
+            "CombatEffectSpec HTTP debug disabled (set KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1)",
+        )
+        .into_response(),
+        Err(api::CombatEffectSpecDebugError::LcarsOfficersNotLoaded) => error_json(
+            StatusCode::NOT_FOUND,
+            "LCARS officers not loaded (set KOBAYASHI_OFFICER_SOURCE=lcars before starting the server)",
+        )
+        .into_response(),
+        Err(api::CombatEffectSpecDebugError::NotFound) => {
             error_json(StatusCode::NOT_FOUND, "Officer not found").into_response()
         }
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),

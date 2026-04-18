@@ -27,14 +27,14 @@ use crate::data::profile::{
     apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     forbidden_tech_derived_attack_phase_seats, forbidden_tech_level_tier_scaling_enabled_from_env,
-    quantum_slipstream_forbidden_tech_round_start_seats,
-    ship_class_gated_torpedo_family_derived_seats,
-    ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
+    load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
+    merge_tech_fids_into_profile_with_level_tier,
+    quantum_slipstream_forbidden_tech_round_start_seats, research_derived_attack_phase_seats,
+    resolve_effective_tech_fids, ship_class_gated_torpedo_family_derived_seats,
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
-    load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    merge_tech_fids_into_profile_with_level_tier, research_derived_attack_phase_seats,
-    resolve_effective_tech_fids, PlayerProfile, USS_VOYAGER_SHIP_ID,
+    ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship, PlayerProfile,
+    USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -1066,12 +1066,14 @@ pub(crate) fn build_shared_scenario_data_standalone(
                 catalog,
                 scale_by_level_tier,
             );
-            forbidden_tech_derived_seats.extend(quantum_slipstream_forbidden_tech_round_start_seats(
-                &ft_entries,
-                &effective_fids,
-                catalog,
-                scale_by_level_tier,
-            ));
+            forbidden_tech_derived_seats.extend(
+                quantum_slipstream_forbidden_tech_round_start_seats(
+                    &ft_entries,
+                    &effective_fids,
+                    catalog,
+                    scale_by_level_tier,
+                ),
+            );
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,
@@ -1314,12 +1316,14 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 catalog,
                 scale_by_level_tier,
             );
-            forbidden_tech_derived_seats.extend(quantum_slipstream_forbidden_tech_round_start_seats(
-                &ft_entries,
-                &effective_fids,
-                catalog,
-                scale_by_level_tier,
-            ));
+            forbidden_tech_derived_seats.extend(
+                quantum_slipstream_forbidden_tech_round_start_seats(
+                    &ft_entries,
+                    &effective_fids,
+                    catalog,
+                    scale_by_level_tier,
+                ),
+            );
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,

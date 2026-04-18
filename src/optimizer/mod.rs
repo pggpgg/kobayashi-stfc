@@ -23,8 +23,8 @@ use crate::optimizer::monte_carlo::scenario::{
     scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
-    crew_candidate_stable_hash, run_monte_carlo_parallel,
-    run_monte_carlo_parallel_with_registry, SimulationResult,
+    crew_candidate_stable_hash, run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry,
+    SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
@@ -202,7 +202,10 @@ impl Default for OptimizationScenario<'_> {
     }
 }
 
-fn prepend_warm_start_dedupe(warm: &[CrewCandidate], generated: Vec<CrewCandidate>) -> Vec<CrewCandidate> {
+fn prepend_warm_start_dedupe(
+    warm: &[CrewCandidate],
+    generated: Vec<CrewCandidate>,
+) -> Vec<CrewCandidate> {
     if warm.is_empty() {
         return generated;
     }
@@ -244,13 +247,8 @@ pub fn count_effective_optimize_candidates(
 ) -> usize {
     let constraints = strategy.constraints.clone();
     let generator = CrewGenerator::with_strategy(strategy);
-    let candidates = generator.generate_candidates_from_registry(
-        registry,
-        ship,
-        hostile,
-        seed,
-        profile_id,
-    );
+    let candidates =
+        generator.generate_candidates_from_registry(registry, ship, hostile, seed, profile_id);
     let candidates = prepend_warm_start_dedupe(warm_start, candidates);
     match constraints.as_ref() {
         Some(c) if !c.is_empty() => filter_candidates(candidates, c).len(),
@@ -547,7 +545,8 @@ where
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
         OptimizerStrategy::Exhaustive => {
-            let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
+            let generator =
+                CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
             let candidates =
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
             let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
@@ -636,7 +635,8 @@ where
 {
     match scenario.strategy {
         OptimizerStrategy::Tiered => {
-            let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
+            let generator =
+                CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
             let candidates = generator.generate_candidates_from_registry(
                 registry,
                 scenario.ship,
@@ -689,7 +689,8 @@ where
             }
         }
         OptimizerStrategy::Exhaustive => {
-            let generator = CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
+            let generator =
+                CrewGenerator::with_strategy(candidate_strategy_from_scenario(scenario));
             let candidates = generator.generate_candidates_from_registry(
                 registry,
                 scenario.ship,
@@ -983,10 +984,12 @@ mod tests {
             !shared_low.using_placeholder_combatants && !shared_high.using_placeholder_combatants,
             "expected real ship rows for amalgam"
         );
-        let atk_low =
-            scenario_to_combat_input_from_shared(&shared_low, &candidate, 1).attacker.attack;
-        let atk_high =
-            scenario_to_combat_input_from_shared(&shared_high, &candidate, 1).attacker.attack;
+        let atk_low = scenario_to_combat_input_from_shared(&shared_low, &candidate, 1)
+            .attacker
+            .attack;
+        let atk_high = scenario_to_combat_input_from_shared(&shared_high, &candidate, 1)
+            .attacker
+            .attack;
         assert!(
             (atk_high - atk_low).abs() > 1.0,
             "tier 1 vs 5 amalgam attacker attack should differ materially: {atk_low} vs {atk_high}"

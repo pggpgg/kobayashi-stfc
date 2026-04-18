@@ -14,23 +14,25 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Whether the CombatEffectSpec adapter + compiler path is used for supported flows (research-derived
-/// attack-phase seats). **Default: enabled.** Set `KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1` (or `true`/`yes`)
-/// to force the legacy Rust path, or `KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE=0` / `false` / `no` to disable.
+/// Whether CombatEffectSpec-based research routing is considered “on” for diagnostics (HTTP debug, etc.).
+/// Research-derived attack-phase seats **always** use the spec adapter + compiler in this codebase.
+/// Set `KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE=0` / `false` / `no` to report disabled for tooling.
 pub fn combat_effect_spec_enabled() -> bool {
-    if std::env::var("KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE")
-        .ok()
-        .as_deref()
-        .is_some_and(env_truthy)
-    {
-        return false;
-    }
     if let Ok(v) = std::env::var("KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE") {
         if env_falsy(&v) {
             return false;
         }
     }
     true
+}
+
+/// When set, the API exposes `GET /api/debug/combat-effect-spec/officers/:id` (see server routes).
+/// **Off by default** — enable only for local investigation (`KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1`).
+pub fn combat_effect_spec_debug_http_enabled() -> bool {
+    std::env::var("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG")
+        .ok()
+        .as_deref()
+        .is_some_and(env_truthy)
 }
 
 fn env_truthy(s: &str) -> bool {
@@ -209,11 +211,22 @@ pub enum AbilityConditionSpec {
     DefenderIsPlayerShip,
     /// Matches [`crate::combat::abilities::AbilityCondition::AttackerOfficerTalNotOnBridge`].
     AttackerOfficerTalNotOnBridge,
-    DefenderShipTypeIs { ship_type: String },
-    AttackerShipTypeIs { ship_type: String },
-    DefenderFactionIs { faction: String },
-    DefenderHullFactionIdIs { faction_id: i64 },
-    RoundRange { min: u32, max: u32 },
+    DefenderShipTypeIs {
+        ship_type: String,
+    },
+    AttackerShipTypeIs {
+        ship_type: String,
+    },
+    DefenderFactionIs {
+        faction: String,
+    },
+    DefenderHullFactionIdIs {
+        faction_id: i64,
+    },
+    RoundRange {
+        min: u32,
+        max: u32,
+    },
     StatBelow {
         stat: String,
         threshold_pct: f64,

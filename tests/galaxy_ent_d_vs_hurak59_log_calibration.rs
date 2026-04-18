@@ -4,7 +4,9 @@
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::optimizer::monte_carlo::{replay_optimize_iteration_with_registry, DefenderOpponent};
+use kobayashi::optimizer::monte_carlo::{
+    replay_optimize_iteration_with_registry, DefenderOpponent,
+};
 use serde::Deserialize;
 use std::sync::Arc;
 

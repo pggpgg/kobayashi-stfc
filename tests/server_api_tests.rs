@@ -89,6 +89,9 @@ async fn openapi_yaml_and_json_served() {
     );
     assert!(yaml.body.contains("openapi: 3.0.3"));
     assert!(yaml.body.contains("/api/simulate:"));
+    assert!(yaml
+        .body
+        .contains("/api/debug/combat-effect-spec/officers/{id}:"));
 
     let json = route_request("GET", "/api/openapi.json", "").await;
     assert_eq!(json.status_code, 200);
@@ -746,4 +749,58 @@ async fn api_key_bearer_allows_non_loopback_when_configured() {
     assert_eq!(response.status_code, 200, "{}", response.body);
     std::env::remove_var("KOBAYASHI_API_KEY");
     std::env::remove_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK");
+}
+
+struct CombatEffectSpecDebugEnvGuard {
+    key: &'static str,
+    previous: Option<std::ffi::OsString>,
+}
+
+impl CombatEffectSpecDebugEnvGuard {
+    fn set(key: &'static str, value: &str) -> Self {
+        let previous = std::env::var_os(key);
+        std::env::set_var(key, value);
+        Self { key, previous }
+    }
+}
+
+impl Drop for CombatEffectSpecDebugEnvGuard {
+    fn drop(&mut self) {
+        match &self.previous {
+            None => std::env::remove_var(self.key),
+            Some(v) => std::env::set_var(self.key, v),
+        }
+    }
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn combat_effect_spec_debug_returns_404_when_disabled() {
+    let path = "/api/debug/combat-effect-spec/officers/718-0-2509d7";
+    let response = route_request("GET", path, "").await;
+    assert_eq!(response.status_code, 404);
+    assert!(
+        response.body.contains("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG"),
+        "{}",
+        response.body
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn combat_effect_spec_debug_returns_officer_specs_when_enabled() {
+    let _g_debug = CombatEffectSpecDebugEnvGuard::set("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG", "1");
+    let _g_lcars = CombatEffectSpecDebugEnvGuard::set("KOBAYASHI_OFFICER_SOURCE", "lcars");
+    let path = "/api/debug/combat-effect-spec/officers/718-0-2509d7";
+    let response = route_request("GET", path, "").await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+    assert!(
+        response.content_type.contains("json"),
+        "{}",
+        response.content_type
+    );
+    let v: serde_json::Value = serde_json::from_str(&response.body).expect("json");
+    assert_eq!(v["officer_id"], "718-0-2509d7");
+    assert!(v["abilities"].as_array().is_some_and(|a| !a.is_empty()));
+    assert!(v["combat_effect_spec_enabled"].is_boolean());
 }

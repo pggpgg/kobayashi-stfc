@@ -4,7 +4,7 @@
 //! post-morale filter, `roll_burning_triggers` vs burn tick, end-of-round decrements).
 
 use kobayashi::combat::{
-    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CombatEvent,
+    simulate_combat, Ability, AbilityClass, AbilityEffect, CombatEvent, Combatant,
     CrewConfiguration, CrewSeat, CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
@@ -118,7 +118,8 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
         }
     }
     assert_eq!(
-        positive_ticks, duration,
+        positive_ticks,
+        duration,
         "expected {duration} burning ticks, events: {:?}",
         r.events
             .iter()
@@ -412,12 +413,7 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
 
     let mut chosen = None;
     for seed in 0u64..2000 {
-        let r = simulate_combat(
-            &attacker,
-            &huge_defender(),
-            cfg(seed),
-            &crew,
-        );
+        let r = simulate_combat(&attacker, &huge_defender(), cfg(seed), &crew);
         let t1 = round_start_hull_breach_triggered(&r.events, 1);
         let t2 = round_start_hull_breach_triggered(&r.events, 2);
         if t1 == Some(true) && t2 == Some(false) {
@@ -512,9 +508,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
         .events
         .iter()
         .position(|e| {
-            e.event_type == "hull_breach_trigger"
-                && e.phase == "round_start"
-                && e.round_index == 1
+            e.event_type == "hull_breach_trigger" && e.phase == "round_start" && e.round_index == 1
         })
         .expect("hull_breach_trigger");
     let idx_crit = r

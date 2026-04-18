@@ -36,7 +36,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             path = Some(a);
         }
     }
-    let path = path.unwrap_or_else(|| "data/upstream/cheat-sheet/raw-officers-m88-17rc.csv".to_string());
+    let path =
+        path.unwrap_or_else(|| "data/upstream/cheat-sheet/raw-officers-m88-17rc.csv".to_string());
     let f = File::open(&path)?;
     let summary = scan_stfc_cc_cheat_sheet_csv(f)?;
     let full_coverage = summary.rows_full_convert == summary.rows_total;

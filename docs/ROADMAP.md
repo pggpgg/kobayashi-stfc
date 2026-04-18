@@ -80,11 +80,11 @@ Current state: officer effects are LCARS-native, while research uses stat rows p
 
 ### Roadmap / backlog
 
-- **IR model:** Add typed `CombatEffectSpec` structs + serde in Rust with source provenance fields (officer/research/ship/hostile/stfc.cc).
-- **Adapters:** Implement LCARS -> spec and research -> spec adapters first; stfc.cc CSV -> spec as optional ingestion path.
-- **Compiler:** Compile spec -> current engine runtime objects (no immediate engine rewrite).
-- **Parity harness:** Add fixtures that assert compiled spec behavior matches current officer and research behavior.
-- **Cutover:** Move research conditional seat generation onto spec compiler output, then progressively migrate officer and ability routing paths.
+- **IR model:** *(Shipped: `src/data/combat_effect_spec.rs`, validation in `combat_effect_spec_validate.rs`.)*
+- **Adapters:** *(Shipped: `research_effect_spec_adapter.rs`, `lcars/effect_spec_adapter.rs`, `stfc_cc_effect_spec_adapter.rs`.)*
+- **Compiler:** *(Shipped: `src/combat/effect_spec_compile.rs`.)*
+- **Parity harness:** *(Shipped: `tests/combat_effect_spec_research_parity_tests.rs`, `tests/lcars_combat_effect_spec_parity_tests.rs`, `tests/mixed_crew_research_combat_effect_spec_parity_tests.rs`.)*
+- **Cutover:** Research conditional seats use **only** the CombatEffectSpec adapter path (`research_derived_attack_phase_seats` delegates to `research_derived_attack_phase_seats_from_spec`). **Next:** progressive LCARS resolver migration only where parity and performance allow.
 
 ---
 

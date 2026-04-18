@@ -3,8 +3,9 @@
 use crate::combat::effect_spec_compile::compile_research_attack_phase_spec_to_seat;
 use crate::combat::CrewSeatContext;
 use crate::data::combat_effect_spec::{
-    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec, AbilityTriggerSpec,
-    CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource, ValueSpec,
+    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
+    AbilityTriggerSpec, CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource,
+    ValueSpec,
 };
 use crate::data::combat_effect_spec_validate::validate_combat_effect_spec;
 use crate::data::import::ResearchEntry;
@@ -15,7 +16,9 @@ use crate::data::research::{
 
 /// Map [`ResearchBonusConditionKey`] to spec condition nodes (same order as
 /// [`crate::combat::condition::ability_condition_from_research_bonus_key`]).
-pub fn research_bonus_key_to_condition_specs(key: &ResearchBonusConditionKey) -> Option<Vec<AbilityConditionSpec>> {
+pub fn research_bonus_key_to_condition_specs(
+    key: &ResearchBonusConditionKey,
+) -> Option<Vec<AbilityConditionSpec>> {
     let mut parts: Vec<AbilityConditionSpec> = Vec::new();
     if key.requires_morale {
         parts.push(AbilityConditionSpec::MoraleActive);
@@ -52,7 +55,8 @@ fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
     }
 }
 
-/// Same selection rules as [`crate::data::profile::research_derived_attack_phase_seats_legacy`],
+/// Same selection rules as the historical inline research seat builder (conditional bonuses only;
+/// `weapon_damage` / `crit_*` with [`ResearchBonusConditionKey`]).
 /// implemented via `CombatEffectSpec` + [`compile_research_attack_phase_spec`].
 pub fn research_derived_attack_phase_seats_from_spec(
     imported_research: &[ResearchEntry],

@@ -1,7 +1,6 @@
-//! Golden parity: [`kobayashi::data::profile::research_derived_attack_phase_seats`] legacy path
-//! (`KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1`) must match
+//! Golden fixtures: [`kobayashi::data::profile::research_derived_attack_phase_seats`] must match
 //! [`kobayashi::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec`]
-//! for the same catalog + import. Run under `#[serial_test::serial]` so env overrides do not race.
+//! (order-independent seat signatures). The public API delegates to the adapter; these tests lock behavior.
 
 use kobayashi::data::import::ResearchEntry;
 use kobayashi::data::profile::research_derived_attack_phase_seats;
@@ -10,28 +9,6 @@ use kobayashi::data::research::{
 };
 use kobayashi::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec;
 
-struct EnvVarGuard {
-    key: &'static str,
-    previous: Option<std::ffi::OsString>,
-}
-
-impl EnvVarGuard {
-    fn set(key: &'static str, value: &str) -> Self {
-        let previous = std::env::var_os(key);
-        std::env::set_var(key, value);
-        Self { key, previous }
-    }
-}
-
-impl Drop for EnvVarGuard {
-    fn drop(&mut self) {
-        match &self.previous {
-            None => std::env::remove_var(self.key),
-            Some(v) => std::env::set_var(self.key, v),
-        }
-    }
-}
-
 fn seat_signature(c: &kobayashi::combat::CrewSeatContext) -> String {
     format!(
         "{:?}|{:?}|{:?}|{:?}",
@@ -39,25 +16,21 @@ fn seat_signature(c: &kobayashi::combat::CrewSeatContext) -> String {
     )
 }
 
-fn assert_legacy_matches_spec(imported: &[ResearchEntry], catalog: &ResearchCatalog) {
-    let legacy = {
-        let _g = EnvVarGuard::set("KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE", "1");
-        research_derived_attack_phase_seats(imported, catalog)
-    };
+fn assert_public_matches_adapter(imported: &[ResearchEntry], catalog: &ResearchCatalog) {
+    let public = research_derived_attack_phase_seats(imported, catalog);
     let via_spec = research_derived_attack_phase_seats_from_spec(imported, catalog);
-    assert_eq!(legacy.len(), via_spec.len(), "seat count mismatch");
-    let mut legacy_sigs: Vec<String> = legacy.iter().map(seat_signature).collect();
-    let mut spec_sigs: Vec<String> = via_spec.iter().map(seat_signature).collect();
-    legacy_sigs.sort();
-    spec_sigs.sort();
+    assert_eq!(public.len(), via_spec.len(), "seat count mismatch");
+    let mut a: Vec<String> = public.iter().map(seat_signature).collect();
+    let mut b: Vec<String> = via_spec.iter().map(seat_signature).collect();
+    a.sort();
+    b.sort();
     assert_eq!(
-        legacy_sigs, spec_sigs,
-        "legacy vs CombatEffectSpec path: same attack-phase effects & conditions (ability.name order may differ)"
+        a, b,
+        "research_derived_attack_phase_seats vs from_spec: same attack-phase effects & conditions"
     );
 }
 
 #[test]
-#[serial_test::serial]
 fn parity_empty_import_yields_no_seats() {
     let catalog = ResearchCatalog {
         source: None,
@@ -81,11 +54,10 @@ fn parity_empty_import_yields_no_seats() {
             }],
         }],
     };
-    assert_legacy_matches_spec(&[], &catalog);
+    assert_public_matches_adapter(&[], &catalog);
 }
 
 #[test]
-#[serial_test::serial]
 fn parity_crit_damage_morale_gated() {
     let catalog = ResearchCatalog {
         source: None,
@@ -113,11 +85,10 @@ fn parity_crit_damage_morale_gated() {
         rid: 88001001,
         level: 1,
     }];
-    assert_legacy_matches_spec(&imported, &catalog);
+    assert_public_matches_adapter(&imported, &catalog);
 }
 
 #[test]
-#[serial_test::serial]
 fn parity_weapon_damage_burning_and_explorer_and_faction() {
     let catalog = ResearchCatalog {
         source: None,
@@ -147,11 +118,10 @@ fn parity_weapon_damage_burning_and_explorer_and_faction() {
         rid: 88001002,
         level: 1,
     }];
-    assert_legacy_matches_spec(&imported, &catalog);
+    assert_public_matches_adapter(&imported, &catalog);
 }
 
 #[test]
-#[serial_test::serial]
 fn parity_two_rids_two_conditional_rows() {
     let catalog = ResearchCatalog {
         source: None,
@@ -205,11 +175,10 @@ fn parity_two_rids_two_conditional_rows() {
             level: 1,
         },
     ];
-    assert_legacy_matches_spec(&imported, &catalog);
+    assert_public_matches_adapter(&imported, &catalog);
 }
 
 #[test]
-#[serial_test::serial]
 fn parity_cumulative_level_stacks_same_rid() {
     let catalog = ResearchCatalog {
         source: None,
@@ -251,5 +220,5 @@ fn parity_cumulative_level_stacks_same_rid() {
         rid: 88001005,
         level: 2,
     }];
-    assert_legacy_matches_spec(&imported, &catalog);
+    assert_public_matches_adapter(&imported, &catalog);
 }

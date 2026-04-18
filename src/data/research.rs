@@ -11,7 +11,7 @@
 //! `crit_damage` and conditional `weapon_damage` feed [`crate::data::profile::research_derived_attack_phase_seats`]
 //! (gated attack-phase effects; see `docs/DESIGN.md` research section). By default those seats are built via
 //! [`crate::data::combat_effect_spec::CombatEffectSpec`] + [`crate::combat::effect_spec_compile`]
-//! (see [`crate::data::research_effect_spec_adapter`]). Set `KOBAYASHI_COMBAT_EFFECT_SPEC_DISABLE=1` to force the legacy path.
+//! (see [`crate::data::research_effect_spec_adapter`]).
 
 use std::collections::HashMap;
 use std::fs;
@@ -479,7 +479,10 @@ mod tests {
             ..Default::default()
         };
         let cond = cumulative_research_level_conditional_bonuses(&r, 1);
-        assert_eq!(cond.get(&(key, "weapon_damage".into())).copied(), Some(0.04));
+        assert_eq!(
+            cond.get(&(key, "weapon_damage".into())).copied(),
+            Some(0.04)
+        );
     }
 
     #[test]

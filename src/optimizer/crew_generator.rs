@@ -3,10 +3,10 @@ use std::collections::HashSet;
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
-use crate::optimizer::constraints::{normalize_officer_name, CrewSearchConstraints};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
+use crate::optimizer::constraints::{normalize_officer_name, CrewSearchConstraints};
 use crate::perf_log;
 
 /// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
@@ -996,8 +996,8 @@ mod tests {
     #[test]
     fn narrow_pools_returns_none_for_unknown_captain_must_be() {
         let registry = DataRegistry::load().expect("registry");
-        let pools = build_officer_pools_from_registry(&registry, false, None, 3, None)
-            .expect("pools");
+        let pools =
+            build_officer_pools_from_registry(&registry, false, None, 3, None).expect("pools");
         let c = CrewSearchConstraints {
             captain_must_be: Some("NotARealCaptainNameForKobayashiTest".into()),
             ..Default::default()

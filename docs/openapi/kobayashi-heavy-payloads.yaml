@@ -8,7 +8,8 @@ info:
   description: |
     Request and error shapes for CPU-heavy routes and large mod-sync ingress.
     Mutating routes may require `Authorization: Bearer` or `X-Api-Key` when `KOBAYASHI_API_KEY` is set;
-    `/api/sync/ingress` uses `stfc-sync-token` instead. This document does not list every read-only GET.
+    `/api/sync/ingress` uses `stfc-sync-token` instead. Optional debug GETs (e.g. CombatEffectSpec dump)
+    are listed only when they are env-gated and useful for investigation. This document does not list every read-only GET.
   version: 0.1.0
 
 servers:
@@ -20,6 +21,7 @@ tags:
   - name: optimize
   - name: compare
   - name: sync
+  - name: debug
 
 paths:
   /api/simulate:
@@ -137,6 +139,28 @@ paths:
           description: Trace JSON
         "400":
           description: Invalid request
+
+  /api/debug/combat-effect-spec/officers/{id}:
+    get:
+      tags: [debug]
+      summary: Optional LCARS → CombatEffectSpec JSON (local investigation)
+      description: |
+        Returns **404** unless the server was started with `KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1`
+        (truthy). LCARS officers must be loaded (`KOBAYASHI_OFFICER_SOURCE=lcars` at startup), or the
+        handler responds **404** with a distinct message. When enabled, each LCARS effect row may
+        include an optional `spec` object when `lcars_effect_to_combat_effect_spec` maps the row.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Officer id or case-insensitive name match (same as `/api/officers/:id/resolved`)
+      responses:
+        "200":
+          description: JSON with officer_id, combat_effect_spec_enabled, abilities[].effects[].spec
+        "404":
+          description: Debug disabled, LCARS not loaded, or officer not found
 
   /api/sync/ingress:
     post:

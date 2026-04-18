@@ -55,7 +55,11 @@ const STFC_CC_DEFERRED_CONDITION_TOKENS: &[&str] = &[
 /// Stable diagnostic strings (prefix `unmapped_*:`) for rows that cannot be fully converted.
 pub type StfcCcDiagnostics = Vec<String>;
 
-fn get_csv_field<'a>(headers: &'a csv::StringRecord, record: &'a csv::StringRecord, name: &str) -> Option<&'a str> {
+fn get_csv_field<'a>(
+    headers: &'a csv::StringRecord,
+    record: &'a csv::StringRecord,
+    name: &str,
+) -> Option<&'a str> {
     let idx = headers.iter().position(|h| h == name)?;
     record.get(idx).map(str::trim).filter(|s| !s.is_empty())
 }
@@ -78,38 +82,72 @@ pub fn map_stfc_cc_modifier(raw: &str) -> Result<AbilityModifierSpec, String> {
         "AllDamage" | "OfficerStatAttack" => Ok(AbilityModifierSpec::WeaponDamage),
         "CritChance" => Ok(AbilityModifierSpec::CritChance),
         "CritDamage" => Ok(AbilityModifierSpec::CritDamage),
-        "Pierce" | "ArmorPierce" | "ArmorPiercing" | "ShieldPierce" | "ShieldPiercing" | "AllPiercing" => {
-            Ok(AbilityModifierSpec::Pierce)
-        }
+        "Pierce" | "ArmorPierce" | "ArmorPiercing" | "ShieldPierce" | "ShieldPiercing"
+        | "AllPiercing" => Ok(AbilityModifierSpec::Pierce),
         "ShieldMitigation" => Ok(AbilityModifierSpec::ShieldMitigation),
-        "Armor" | "ShipArmor" | "OfficerStatDefense" | "AllDefenses" => Ok(AbilityModifierSpec::Armor),
+        "Armor" | "ShipArmor" | "OfficerStatDefense" | "AllDefenses" => {
+            Ok(AbilityModifierSpec::Armor)
+        }
         "Dodge" | "ShipDodge" => Ok(AbilityModifierSpec::Dodge),
         "HullHP" | "HullHealth" | "HullHPRepair" | "HullRegen" | "OfficerStatHealth" => {
             Ok(AbilityModifierSpec::HullHp)
         }
         "HullHPMax" => Ok(AbilityModifierSpec::HullHp),
-        "ShieldHP" | "ShieldHealth" | "ShieldHPRepair" | "ShieldRegen" => Ok(AbilityModifierSpec::ShieldHp),
+        "ShieldHP" | "ShieldHealth" | "ShieldHPRepair" | "ShieldRegen" => {
+            Ok(AbilityModifierSpec::ShieldHp)
+        }
         "ShieldHPMax" => Ok(AbilityModifierSpec::ShieldHp),
         "ShotsPerAttack" => Ok(AbilityModifierSpec::ShotsBonus),
         "IsolyticDamage" => Ok(AbilityModifierSpec::IsolyticDamage),
         "IsolyticDefense" => Ok(AbilityModifierSpec::IsolyticDefense),
-        "IsolyticCascade" | "IsolyticCascadeDamage" => Ok(AbilityModifierSpec::IsolyticCascadeDamage),
+        "IsolyticCascade" | "IsolyticCascadeDamage" => {
+            Ok(AbilityModifierSpec::IsolyticCascadeDamage)
+        }
         "ApexShred" => Ok(AbilityModifierSpec::ApexShred),
         "ApexBarrier" => Ok(AbilityModifierSpec::ApexBarrier),
         // State / proc / loot / economy rows: represented in IR for coverage; runtime LCARS uses tags.
         "AddState" | "AddRandomState" => Ok(AbilityModifierSpec::TagOnly),
-        "MiningRate" | "MiningReward" | "CargoCapacity" | "CargoProtection" | "WarpSpeed" | "ImpulseSpeed"
-        | "WarpDistance" | "JumpAndTowCostEff" | "RepairCostsPost" | "RepairTime" | "HullRepair"
-        | "CombatXPReward" | "CombatPveRewards" | "FactionPointsGain" | "AllReloadSpeed" | "AllLoadSpeed"
-        | "HostileLoot" | "ArmadaLoot" | "OffAbilityEffect" | "CptManeuverEffect" | "CombatParsteelReward"
-        | "CombatTritaniumReward" | "CombatDilithiumReward" | "Shields" | "SkillCloakingDuration"
-        | "SkillCloakingCooldown" | "ActianVenomAndNanoprobeLoot" | "BrokenShipPartsLoot"
-        | "ArtifactTokenLoot" | "VoyagerAsaCE" | "HirogenRelicAndBiotoxinLoot" | "XindiHostileLoot"
-        | "SkillCuttingBeamAbilityCost" | "GornHostileVolatileLoot" | "TrelliumRewards"
-        | "PveChestLootMultiplierLimitedResources" | "WokAugmentAllLootRewards" | "Omega13Cooldown"
-        | "SkillCuttingBeamPvPBaseDamagePercentage" | "CombatScavenger" | "OfficerStatAll" => {
-            Ok(AbilityModifierSpec::TagOnly)
-        }
+        "MiningRate"
+        | "MiningReward"
+        | "CargoCapacity"
+        | "CargoProtection"
+        | "WarpSpeed"
+        | "ImpulseSpeed"
+        | "WarpDistance"
+        | "JumpAndTowCostEff"
+        | "RepairCostsPost"
+        | "RepairTime"
+        | "HullRepair"
+        | "CombatXPReward"
+        | "CombatPveRewards"
+        | "FactionPointsGain"
+        | "AllReloadSpeed"
+        | "AllLoadSpeed"
+        | "HostileLoot"
+        | "ArmadaLoot"
+        | "OffAbilityEffect"
+        | "CptManeuverEffect"
+        | "CombatParsteelReward"
+        | "CombatTritaniumReward"
+        | "CombatDilithiumReward"
+        | "Shields"
+        | "SkillCloakingDuration"
+        | "SkillCloakingCooldown"
+        | "ActianVenomAndNanoprobeLoot"
+        | "BrokenShipPartsLoot"
+        | "ArtifactTokenLoot"
+        | "VoyagerAsaCE"
+        | "HirogenRelicAndBiotoxinLoot"
+        | "XindiHostileLoot"
+        | "SkillCuttingBeamAbilityCost"
+        | "GornHostileVolatileLoot"
+        | "TrelliumRewards"
+        | "PveChestLootMultiplierLimitedResources"
+        | "WokAugmentAllLootRewards"
+        | "Omega13Cooldown"
+        | "SkillCuttingBeamPvPBaseDamagePercentage"
+        | "CombatScavenger"
+        | "OfficerStatAll" => Ok(AbilityModifierSpec::TagOnly),
         _ => Err(format!("unmapped_modifier:{s}")),
     }
 }
@@ -125,14 +163,18 @@ pub fn map_stfc_cc_trigger(raw: &str) -> Result<AbilityTriggerSpec, String> {
         "ShipLaunched" | "ShipLaunch" => Ok(AbilityTriggerSpec::ShipLaunched),
         "RoundStart" | "OnRoundStart" => Ok(AbilityTriggerSpec::RoundStart),
         "RoundEnd" | "OnRoundEnd" => Ok(AbilityTriggerSpec::RoundEnd),
-        "OnAttack" | "AttackPhase" | "CriticalShotFired" | "EnemyTakesHit" => Ok(AbilityTriggerSpec::AttackPhase),
+        "OnAttack" | "AttackPhase" | "CriticalShotFired" | "EnemyTakesHit" => {
+            Ok(AbilityTriggerSpec::AttackPhase)
+        }
         "AfterShot" | "OnAfterShot" | "AfterWeapon" => Ok(AbilityTriggerSpec::AfterSubround),
         "OnDefense" | "HitTaken" => Ok(AbilityTriggerSpec::DefensePhase),
         "OnKill" | "BattleWon" => Ok(AbilityTriggerSpec::Kill),
         "OnHullBreach" | "HullDamageTaken" => Ok(AbilityTriggerSpec::HullBreach),
         "OnReceiveDamage" | "ShieldDamageTaken" => Ok(AbilityTriggerSpec::ReceiveDamage),
         "OnCombatEnd" => Ok(AbilityTriggerSpec::CombatEnd),
-        "OnShieldBreak" | "OnEnemyShieldBreak" | "ShieldsDepleted" => Ok(AbilityTriggerSpec::ShieldBreak),
+        "OnShieldBreak" | "OnEnemyShieldBreak" | "ShieldsDepleted" => {
+            Ok(AbilityTriggerSpec::ShieldBreak)
+        }
         "OnOwnShieldBreak" => Ok(AbilityTriggerSpec::SelfShieldBreak),
         "CriticalShotTaken" => Ok(AbilityTriggerSpec::DefensePhase),
         "ShipRecalled" => Ok(AbilityTriggerSpec::CombatEnd),
@@ -194,7 +236,10 @@ fn faction_id_from_ability_attributes(attrs: &str) -> Option<i64> {
 }
 
 /// Merge parsed `AbilityAttributes` key/value pairs into [`CombatEffectSpec::attributes`] under `stfc_cc_ability_attributes`.
-fn merge_stfc_cc_ability_attributes(raw: &str, out: &mut serde_json::Map<String, serde_json::Value>) {
+fn merge_stfc_cc_ability_attributes(
+    raw: &str,
+    out: &mut serde_json::Map<String, serde_json::Value>,
+) {
     let raw = raw.trim();
     if raw.is_empty() {
         return;
@@ -214,7 +259,8 @@ fn merge_stfc_cc_ability_attributes(raw: &str, out: &mut serde_json::Map<String,
         }
         let v = v.trim();
         let val = if v.starts_with('[') || v.starts_with('{') {
-            serde_json::from_str::<serde_json::Value>(v).unwrap_or_else(|_| serde_json::Value::String(v.to_string()))
+            serde_json::from_str::<serde_json::Value>(v)
+                .unwrap_or_else(|_| serde_json::Value::String(v.to_string()))
         } else if let Ok(n) = v.parse::<i64>() {
             serde_json::json!(n)
         } else if let Ok(f) = v.parse::<f64>() {
@@ -234,7 +280,10 @@ fn merge_stfc_cc_ability_attributes(raw: &str, out: &mut serde_json::Map<String,
     }
 }
 
-fn map_condition_token(token: &str, ability_attributes: Option<&str>) -> Result<AbilityConditionSpec, String> {
+fn map_condition_token(
+    token: &str,
+    ability_attributes: Option<&str>,
+) -> Result<AbilityConditionSpec, String> {
     let t = token.trim();
     if t.is_empty() {
         return Err("unmapped_condition:<empty>".into());
@@ -247,7 +296,9 @@ fn map_condition_token(token: &str, ability_attributes: Option<&str>) -> Result<
         "TargetHullBreach" | "DefenderHullBreach" | "TargetHasHullBreach" => {
             Ok(AbilityConditionSpec::DefenderHullBreach)
         }
-        "SelfBurning" | "AttackerBurning" | "SelfHasBurning" => Ok(AbilityConditionSpec::AttackerBurning),
+        "SelfBurning" | "AttackerBurning" | "SelfHasBurning" => {
+            Ok(AbilityConditionSpec::AttackerBurning)
+        }
         "SelfHullBreach" | "AttackerHullBreach" | "SelfHasHullBreach" => {
             Ok(AbilityConditionSpec::AttackerHullBreach)
         }
@@ -367,24 +418,25 @@ pub fn try_stfc_cc_string_record_to_spec(
     let target_r = map_stfc_cc_target(target_s);
     let operation_r = map_stfc_cc_operation(operation_s);
 
-    let (modifier, trigger, target, operation) = match (modifier_r, trigger_r, target_r, operation_r) {
-        (Ok(m), Ok(t), Ok(ta), Ok(o)) => (m, t, ta, o),
-        (a, b, c, d) => {
-            if let Err(e) = a {
-                diags.push(e);
+    let (modifier, trigger, target, operation) =
+        match (modifier_r, trigger_r, target_r, operation_r) {
+            (Ok(m), Ok(t), Ok(ta), Ok(o)) => (m, t, ta, o),
+            (a, b, c, d) => {
+                if let Err(e) = a {
+                    diags.push(e);
+                }
+                if let Err(e) = b {
+                    diags.push(e);
+                }
+                if let Err(e) = c {
+                    diags.push(e);
+                }
+                if let Err(e) = d {
+                    diags.push(e);
+                }
+                return Err(diags);
             }
-            if let Err(e) = b {
-                diags.push(e);
-            }
-            if let Err(e) = c {
-                diags.push(e);
-            }
-            if let Err(e) = d {
-                diags.push(e);
-            }
-            return Err(diags);
-        }
-    };
+        };
 
     let attrs_for_conditions = get_csv_field(headers, record, "AbilityAttributes");
     let conditions = match parse_stfc_cc_conditions(conditions_s, attrs_for_conditions) {
@@ -466,7 +518,11 @@ pub struct StfcCcScanSummary {
 impl StfcCcScanSummary {
     /// Top N diagnostic keys by frequency (for CLI / reports).
     pub fn top_diagnostics(&self, n: usize) -> Vec<(String, usize)> {
-        let mut v: Vec<_> = self.diagnostic_counts.iter().map(|(k, c)| (k.clone(), *c)).collect();
+        let mut v: Vec<_> = self
+            .diagnostic_counts
+            .iter()
+            .map(|(k, c)| (k.clone(), *c))
+            .collect();
         v.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         v.truncate(n);
         v
@@ -511,7 +567,15 @@ mod tests {
     fn spock_accuracy_row_converts() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "SPOCK", "OA", "Accuracy", "", "RoundStart", "SelfShip", "MultiplyAdd", "869555258", "0.15",
+            "SPOCK",
+            "OA",
+            "Accuracy",
+            "",
+            "RoundStart",
+            "SelfShip",
+            "MultiplyAdd",
+            "869555258",
+            "0.15",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.modifier, AbilityModifierSpec::Accuracy);
@@ -525,7 +589,15 @@ mod tests {
     fn all_damage_maps_to_weapon_damage() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "X", "OA", "AllDamage", "", "ShipLaunched", "SelfShip", "MultiplyAdd", "1", "0.12",
+            "X",
+            "OA",
+            "AllDamage",
+            "",
+            "ShipLaunched",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
+            "0.12",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.modifier, AbilityModifierSpec::WeaponDamage);
@@ -535,7 +607,15 @@ mod tests {
     fn add_state_maps_to_tag_only() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "X", "OA", "AddState", "", "RoundStart", "SelfShip", "MultiplyAdd", "1", "0.5",
+            "X",
+            "OA",
+            "AddState",
+            "",
+            "RoundStart",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
+            "0.5",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.modifier, AbilityModifierSpec::TagOnly);
@@ -545,24 +625,45 @@ mod tests {
     fn kirk_officer_stat_all_maps_to_tag_only() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "KIRK", "CM", "OfficerStatAll", "SelfHasMorale", "RoundStart", "SelfAll", "MultiplyAdd",
-            "4102716881", "0.4",
+            "KIRK",
+            "CM",
+            "OfficerStatAll",
+            "SelfHasMorale",
+            "RoundStart",
+            "SelfAll",
+            "MultiplyAdd",
+            "4102716881",
+            "0.4",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.modifier, AbilityModifierSpec::TagOnly);
         assert_eq!(spec.conditions.len(), 1);
-        assert!(matches!(spec.conditions[0], AbilityConditionSpec::MoraleActive));
+        assert!(matches!(
+            spec.conditions[0],
+            AbilityConditionSpec::MoraleActive
+        ));
     }
 
     #[test]
     fn self_has_morale_condition_parses() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "X", "OA", "Accuracy", "SelfHasMorale", "RoundStart", "SelfShip", "MultiplyAdd", "1", "0.1",
+            "X",
+            "OA",
+            "Accuracy",
+            "SelfHasMorale",
+            "RoundStart",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
+            "0.1",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.conditions.len(), 1);
-        assert!(matches!(spec.conditions[0], AbilityConditionSpec::MoraleActive));
+        assert!(matches!(
+            spec.conditions[0],
+            AbilityConditionSpec::MoraleActive
+        ));
     }
 
     #[test]
@@ -631,7 +732,14 @@ mod tests {
     fn enemy_hull_faction_without_attributes_column_fails() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "SESHA", "OA", "WeaponDamage", "EnemyHullFaction", "AttackPhase", "SelfShip", "MultiplyAdd", "123",
+            "SESHA",
+            "OA",
+            "WeaponDamage",
+            "EnemyHullFaction",
+            "AttackPhase",
+            "SelfShip",
+            "MultiplyAdd",
+            "123",
             "0.05",
         ]);
         let err = try_stfc_cc_string_record_to_spec(&rec, &h).unwrap_err();
@@ -642,7 +750,14 @@ mod tests {
     fn self_officer_tal_not_on_bridge_condition_parses() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "X", "OA", "Accuracy", "SelfOfficerTalNotOnBridge", "RoundStart", "SelfShip", "MultiplyAdd", "1",
+            "X",
+            "OA",
+            "Accuracy",
+            "SelfOfficerTalNotOnBridge",
+            "RoundStart",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
             "0.1",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
@@ -673,20 +788,33 @@ mod tests {
             &spec.conditions[0],
             AbilityConditionSpec::AttackerShipTypeIs { ship_type } if ship_type == "explorer"
         ));
-        assert!(matches!(spec.conditions[1], AbilityConditionSpec::DefenderBurning));
+        assert!(matches!(
+            spec.conditions[1],
+            AbilityConditionSpec::DefenderBurning
+        ));
     }
 
     #[test]
     fn target_not_armada_condition_parses() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "X", "OA", "Accuracy", "TargetNotArmada", "RoundStart", "SelfShip", "MultiplyAdd", "1", "0.1",
+            "X",
+            "OA",
+            "Accuracy",
+            "TargetNotArmada",
+            "RoundStart",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
+            "0.1",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.conditions.len(), 1);
         match &spec.conditions[0] {
             AbilityConditionSpec::Not { inner } => match inner.as_ref() {
-                AbilityConditionSpec::DefenderShipTypeIs { ship_type } => assert_eq!(ship_type, "armada"),
+                AbilityConditionSpec::DefenderShipTypeIs { ship_type } => {
+                    assert_eq!(ship_type, "armada")
+                }
                 _ => panic!("expected DefenderShipTypeIs inside Not"),
             },
             _ => panic!("expected Not"),
@@ -697,7 +825,15 @@ mod tests {
     fn self_bridge_maps_to_attacker_self() {
         let h = headers_sample();
         let rec = StringRecord::from(vec![
-            "X", "OA", "Accuracy", "", "RoundStart", "SelfBridge", "MultiplyAdd", "1", "0.1",
+            "X",
+            "OA",
+            "Accuracy",
+            "",
+            "RoundStart",
+            "SelfBridge",
+            "MultiplyAdd",
+            "1",
+            "0.1",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert_eq!(spec.target, AbilityTargetSpec::AttackerSelf);
@@ -710,7 +846,8 @@ mod tests {
         let s = scan_stfc_cc_cheat_sheet_csv(f).expect("scan");
         assert!(s.rows_total > 100);
         assert_eq!(
-            s.rows_full_convert, s.rows_total,
+            s.rows_full_convert,
+            s.rows_total,
             "expected every bundled cheat-sheet row to convert; diagnostics: {:?}",
             s.top_diagnostics(15)
         );

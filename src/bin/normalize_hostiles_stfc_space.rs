@@ -10,8 +10,7 @@ use serde_json::Value;
 
 use kobayashi::data::hostile::{
     hostile_hull_type_raw_to_ship_class, HostileFactionRef, HostileIndex, HostileIndexEntry,
-    HostileRecord,
-    HostileResourceDrop,
+    HostileRecord, HostileResourceDrop,
 };
 use kobayashi::data::registry::{DataSetEntry, Registry};
 

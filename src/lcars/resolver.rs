@@ -84,15 +84,17 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
         "morale_active" | "attacker_morale" | "morale" => Ok(AbilityCondition::MoraleActive),
         "defender_is_npc_hostile" | "defender_npc_hostile" | "enemy_hostile" => {
             Ok(AbilityCondition::DefenderIsNpcHostile)
-        },
+        }
         "defender_is_player_ship" | "defender_player_ship" | "enemy_player" => {
             Ok(AbilityCondition::DefenderIsPlayerShip)
-        },
+        }
         "defender_burning" | "target_burning" | "burning" => Ok(AbilityCondition::DefenderBurning),
         "defender_hull_breach" | "target_hull_breach" | "hull_breach_active" => {
             Ok(AbilityCondition::DefenderHullBreach)
         }
-        "attacker_burning" | "self_burning" | "player_burning" => Ok(AbilityCondition::AttackerBurning),
+        "attacker_burning" | "self_burning" | "player_burning" => {
+            Ok(AbilityCondition::AttackerBurning)
+        }
         "attacker_hull_breach" | "self_hull_breach" | "player_hull_breach" => {
             Ok(AbilityCondition::AttackerHullBreach)
         }
@@ -116,14 +118,17 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
         }
         "defender_hull_faction_id" | "enemy_hull_faction" | "enemy_hull_faction_id" => {
             let id = c.faction_id.ok_or_else(|| {
-                format!("{ty} condition requires integer `faction_id` (upstream hostile faction.id)")
+                format!(
+                    "{ty} condition requires integer `faction_id` (upstream hostile faction.id)"
+                )
             })?;
             Ok(AbilityCondition::DefenderHullFactionIdIs(id))
         }
         "not" => {
-            let children = c.conditions.as_ref().ok_or_else(|| {
-                "`not` condition requires a `conditions` array".to_string()
-            })?;
+            let children = c
+                .conditions
+                .as_ref()
+                .ok_or_else(|| "`not` condition requires a `conditions` array".to_string())?;
             if children.len() != 1 {
                 return Err("`not` condition must include exactly one sub-condition".to_string());
             }
