@@ -67,7 +67,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let Some(obj) = entry.as_object() else {
             continue;
         };
-        let Some(id) = obj.get("id").and_then(Value::as_str).filter(|s| !s.is_empty()) else {
+        let Some(id) = obj
+            .get("id")
+            .and_then(Value::as_str)
+            .filter(|s| !s.is_empty())
+        else {
             continue;
         };
         let file_stem = obj

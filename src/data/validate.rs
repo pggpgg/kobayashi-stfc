@@ -7,11 +7,11 @@ use serde_json::{Map, Value};
 
 use crate::data::building::DEFAULT_BUILDINGS_INDEX_PATH;
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
-use crate::data::upstream_hostile_ship_type::upstream_ship_type_is_known_category;
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
 use crate::data::ship::{
     ExtendedShipIndex, ExtendedShipRecord, ShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
+use crate::data::upstream_hostile_ship_type::upstream_ship_type_is_known_category;
 use crate::lcars;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

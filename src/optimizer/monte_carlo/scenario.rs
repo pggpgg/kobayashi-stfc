@@ -116,7 +116,9 @@ fn extend_crew_with_ship_abilities(
 /// Pull isolytic cascade fractions from merged LCARS/support static buffs so they are not dropped by
 /// [`apply_static_buffs_to_combatant`] (which has no [`Combatant`] field for cascade).
 fn take_isolytic_cascade_static_bonus(static_buffs: &mut HashMap<String, f64>) -> f64 {
-    let a = static_buffs.remove("isolytic_cascade_damage").unwrap_or(0.0);
+    let a = static_buffs
+        .remove("isolytic_cascade_damage")
+        .unwrap_or(0.0);
     let b = static_buffs.remove("isolytic_cascade").unwrap_or(0.0);
     let s = a + b;
     if s.is_finite() {
@@ -985,11 +987,7 @@ pub(crate) fn scenario_to_combat_input(
     let mut seats = crew_seats.clone();
     extend_crew_with_ship_abilities(&mut seats, resolve_ship(ship).as_ref());
     extend_crew_with_morale_gated_profile_bonuses(&mut seats, profile);
-    extend_crew_with_isolytic_cascade_profile_and_static(
-        &mut seats,
-        profile,
-        static_cascade_bonus,
-    );
+    extend_crew_with_isolytic_cascade_profile_and_static(&mut seats, profile, static_cascade_bonus);
 
     let defender_crew = CrewConfiguration { seats: Vec::new() };
     let weapon_damage_profile_additive_pool = weapon_damage_profile_additive_pool_from_env(profile);

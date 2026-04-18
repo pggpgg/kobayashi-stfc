@@ -31,6 +31,46 @@ use crate::optimizer::tiered::{
     run_tiered_with_registry_with_progress, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
 };
 
+/// Reference full Monte Carlo count for auto prefilter scaling (matches [`OptimizationScenario`] default).
+const ANALYTICAL_PREFILTER_REF_FULL_SIMS: usize = 5000;
+
+/// Which per-crew simulation cost should shape automatic analytical prefilter keep.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum AnalyticalPrefilterWorkload {
+    /// Tiered strategy: scouting pass uses this many simulations per crew.
+    Tiered { scout_sims_per_crew: usize },
+    /// Exhaustive (or tiered fallback without registry): full MC uses this many per crew.
+    Exhaustive { full_sims_per_crew: usize },
+}
+
+impl AnalyticalPrefilterWorkload {
+    fn ref_and_actual_sims(self) -> (usize, usize) {
+        match self {
+            AnalyticalPrefilterWorkload::Tiered {
+                scout_sims_per_crew,
+            } => (DEFAULT_SCOUT_SIMS, scout_sims_per_crew.max(1)),
+            AnalyticalPrefilterWorkload::Exhaustive { full_sims_per_crew } => (
+                ANALYTICAL_PREFILTER_REF_FULL_SIMS,
+                full_sims_per_crew.max(1),
+            ),
+        }
+    }
+}
+
+/// Scale `keep` by `ref_sims / actual_sims`, clamping the ratio to \[0.5, 2\] so extreme API values
+/// do not explode or collapse the search space.
+fn scale_keep_for_per_crew_sims(keep: usize, ref_sims: usize, actual_sims: usize) -> usize {
+    let denom = actual_sims.max(1);
+    let mut numer = ref_sims;
+    if numer > 2 * denom {
+        numer = 2 * denom;
+    }
+    if numer * 2 < denom {
+        numer = (denom / 2).max(1);
+    }
+    keep.saturating_mul(numer) / denom
+}
+
 fn scenario_support_slice<'a>(scenario: &'a OptimizationScenario<'_>) -> Option<&'a [String]> {
     if scenario.support_buffs.is_empty() {
         None
@@ -258,11 +298,13 @@ pub fn count_effective_optimize_candidates(
 }
 
 /// Automatic analytical prefilter cap when the client omitted `analytical_prefilter_keep`.
-/// Uses post-merge candidate count `n` and optional `max_candidates` for budget shaping.
+/// Uses post-merge candidate count `n`, optional `max_candidates`, and per-crew sim workload
+/// (tiered scout sims vs exhaustive full sims) so expensive runs keep fewer crews before MC.
 pub(crate) fn analytical_prefilter_keep_auto(
     n: usize,
     max_candidates: Option<usize>,
     top_k: usize,
+    workload: AnalyticalPrefilterWorkload,
 ) -> Option<usize> {
     const MIN_N: usize = 400;
     if n <= MIN_N {
@@ -277,6 +319,10 @@ pub(crate) fn analytical_prefilter_keep_auto(
         }
     }
     keep = keep.clamp(256, 6000);
+    let (ref_sims, actual_sims) = workload.ref_and_actual_sims();
+    keep = scale_keep_for_per_crew_sims(keep, ref_sims, actual_sims);
+    let min_keep = top_ref.saturating_mul(6).max(128).min(n);
+    keep = keep.clamp(min_keep, 6000);
     keep = keep.min(n);
     if keep >= n {
         None
@@ -299,10 +345,23 @@ fn resolved_analytical_prefilter_keep(
     if let Some(k) = scenario.analytical_prefilter_keep {
         return Some(k);
     }
+    let workload = if matches!(scenario.strategy, OptimizerStrategy::Tiered) {
+        AnalyticalPrefilterWorkload::Tiered {
+            scout_sims_per_crew: scenario
+                .tiered_scout_sims
+                .unwrap_or(DEFAULT_SCOUT_SIMS)
+                .max(1),
+        }
+    } else {
+        AnalyticalPrefilterWorkload::Exhaustive {
+            full_sims_per_crew: scenario.simulation_count.max(1),
+        }
+    };
     analytical_prefilter_keep_auto(
         n_after_merge,
         scenario.max_candidates,
         scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K).max(1),
+        workload,
     )
 }
 
@@ -829,8 +888,8 @@ pub fn optimize_crew(
 mod tests {
     use super::{
         analytical_prefilter_keep_auto, count_effective_optimize_candidates,
-        optimize_scenario_with_progress_with_registry, CandidateStrategy, OptimizationScenario,
-        OptimizerStrategy,
+        optimize_scenario_with_progress_with_registry, AnalyticalPrefilterWorkload,
+        CandidateStrategy, OptimizationScenario, OptimizerStrategy,
     };
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
@@ -877,14 +936,79 @@ mod tests {
 
     #[test]
     fn analytical_prefilter_keep_auto_skips_small_n() {
-        assert_eq!(analytical_prefilter_keep_auto(200, None, 20), None);
+        assert_eq!(
+            analytical_prefilter_keep_auto(
+                200,
+                None,
+                20,
+                AnalyticalPrefilterWorkload::Exhaustive {
+                    full_sims_per_crew: 5000
+                }
+            ),
+            None
+        );
     }
 
     #[test]
     fn analytical_prefilter_keep_auto_max_candidates_tightens_vs_unbounded() {
-        let unbounded = analytical_prefilter_keep_auto(20_000, None, 40).expect("keep");
-        let capped = analytical_prefilter_keep_auto(20_000, Some(150), 40).expect("keep");
+        let wl = AnalyticalPrefilterWorkload::Exhaustive {
+            full_sims_per_crew: 5000,
+        };
+        let unbounded = analytical_prefilter_keep_auto(20_000, None, 40, wl).expect("keep");
+        let capped = analytical_prefilter_keep_auto(20_000, Some(150), 40, wl).expect("keep");
         assert!(capped < unbounded, "capped={capped} unbounded={unbounded}");
+    }
+
+    #[test]
+    fn analytical_prefilter_keep_auto_tiered_heavy_scout_tightens_keep() {
+        let light = analytical_prefilter_keep_auto(
+            20_000,
+            None,
+            40,
+            AnalyticalPrefilterWorkload::Tiered {
+                scout_sims_per_crew: 500,
+            },
+        )
+        .expect("keep");
+        let heavy = analytical_prefilter_keep_auto(
+            20_000,
+            None,
+            40,
+            AnalyticalPrefilterWorkload::Tiered {
+                scout_sims_per_crew: 2000,
+            },
+        )
+        .expect("keep");
+        assert!(
+            heavy < light,
+            "heavy_scout_keep={heavy} light_scout_keep={light}"
+        );
+    }
+
+    #[test]
+    fn analytical_prefilter_keep_auto_exhaustive_high_sims_tightens_keep() {
+        let baseline = analytical_prefilter_keep_auto(
+            20_000,
+            None,
+            40,
+            AnalyticalPrefilterWorkload::Exhaustive {
+                full_sims_per_crew: 5000,
+            },
+        )
+        .expect("keep");
+        let expensive = analytical_prefilter_keep_auto(
+            20_000,
+            None,
+            40,
+            AnalyticalPrefilterWorkload::Exhaustive {
+                full_sims_per_crew: 10_000,
+            },
+        )
+        .expect("keep");
+        assert!(
+            expensive < baseline,
+            "expensive_sims_keep={expensive} baseline_keep={baseline}"
+        );
     }
 
     #[test]

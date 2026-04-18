@@ -6,7 +6,9 @@ use kobayashi::combat::{
     simulate_combat_with_defender_faction, Combatant, CrewConfiguration, HostileMitigationBaseline,
     SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
 };
-use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to, load_imported_battlelogs};
+use kobayashi::data::import::{
+    import_roster_csv_to, import_spocks_export_to, load_imported_battlelogs,
+};
 use kobayashi::data::loader::{defender_faction_for_cli_simulate, resolve_hostile, resolve_ship};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
 use kobayashi::data::profile_index::{
@@ -661,8 +663,8 @@ fn battlelogs_command(args: &[String]) -> Result<(), String> {
     }
     if parse_battlelogs_flags(args) {
         let last = logs.last().expect("non-empty");
-        let sample = serde_json::to_string_pretty(last)
-            .map_err(|e| format!("serialize sample: {e}"))?;
+        let sample =
+            serde_json::to_string_pretty(last).map_err(|e| format!("serialize sample: {e}"))?;
         println!("newest entry (last in file):\n{sample}");
     }
     Ok(())

@@ -919,10 +919,8 @@ mod battlelogs_loader_tests {
 
     #[test]
     fn load_imported_battlelogs_reads_battlelogs_array() {
-        let dir = std::env::temp_dir().join(format!(
-            "kobayashi_battlelogs_test_{}",
-            std::process::id()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("kobayashi_battlelogs_test_{}", std::process::id()));
         fs::create_dir_all(&dir).expect("mkdir");
         let path = dir.join("battlelogs.imported.json");
         let mut f = fs::File::create(&path).expect("create");

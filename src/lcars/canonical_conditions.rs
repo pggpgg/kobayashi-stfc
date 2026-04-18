@@ -415,7 +415,9 @@ mod tests {
             is_canonical_officer_condition_resolved("EnemyHullFaction"),
             "officer LCARS pipeline still resolves EnemyHullFaction via attributes merge"
         );
-        assert!(is_canonical_officer_condition_resolved(" enemyHullFaction "));
+        assert!(is_canonical_officer_condition_resolved(
+            " enemyHullFaction "
+        ));
     }
 
     // Task 2 audit: tokens below still lack a 1:1 AbilityCondition / CombatContext story (see

@@ -177,7 +177,9 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
                 .map(str::trim)
                 .filter(|s| !s.is_empty())
                 .ok_or_else(|| {
-                    format!("{ty} condition requires non-empty `ship_id` (Kobayashi ships_extended id)")
+                    format!(
+                        "{ty} condition requires non-empty `ship_id` (Kobayashi ships_extended id)"
+                    )
                 })?;
             Ok(AbilityCondition::AttackerShipIdIs(id.to_string()))
         }

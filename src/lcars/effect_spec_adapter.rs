@@ -164,9 +164,7 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
                 .as_deref()
                 .map(str::trim)
                 .filter(|s| !s.is_empty())
-                .ok_or_else(|| {
-                    format!("{ty} condition requires non-empty `ship_id`")
-                })?;
+                .ok_or_else(|| format!("{ty} condition requires non-empty `ship_id`"))?;
             Ok(AbilityConditionSpec::AttackerShipIdIs {
                 ship_id: id.to_string(),
             })

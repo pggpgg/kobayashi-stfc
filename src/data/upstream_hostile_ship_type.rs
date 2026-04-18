@@ -35,14 +35,15 @@ impl Default for UpstreamHostileShipTypeProfile {
 ///
 /// When a hostile refresh introduces a new category id, extend this slice and the doc together.
 /// Numeric **9** is intentionally omitted until it appears in upstream data.
-pub const KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES: &[u32] = &[
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14,
-];
+pub const KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES: &[u32] =
+    &[0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14];
 
 /// True when `ship_type` is a maintainer-documented hostile category (not necessarily a dedicated combat `match` arm).
 #[inline]
 pub fn upstream_ship_type_is_known_category(ship_type: u32) -> bool {
-    KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES.binary_search(&ship_type).is_ok()
+    KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES
+        .binary_search(&ship_type)
+        .is_ok()
 }
 
 /// True when [`upstream_hostile_ship_type_profile`] uses a dedicated `match` arm (not the `_` fallback).
@@ -89,7 +90,10 @@ mod tests {
     #[test]
     fn known_categories_sorted_unique() {
         for w in KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES.windows(2) {
-            assert!(w[0] < w[1], "KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES must be sorted unique");
+            assert!(
+                w[0] < w[1],
+                "KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES must be sorted unique"
+            );
         }
     }
 
