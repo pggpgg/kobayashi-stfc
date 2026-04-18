@@ -1,11 +1,13 @@
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use std::fs;
 use std::path::Path;
 
 use serde_json::{Map, Value};
 
+use crate::data::building::DEFAULT_BUILDINGS_INDEX_PATH;
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
+use crate::data::upstream_hostile_ship_type::upstream_ship_type_is_known_category;
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
 use crate::data::ship::{
     ExtendedShipIndex, ExtendedShipRecord, ShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
@@ -569,7 +571,12 @@ fn normalize_building_condition(raw: &str) -> String {
     raw.trim().to_ascii_lowercase().replace(['-', ' '], "_")
 }
 
-fn is_known_building_condition(raw: &str) -> bool {
+/// Whether `raw` matches a **documented** `BonusEntry.conditions` tag after the same normalization
+/// as building data (`trim`, lower case, `-` / space → `_`).
+///
+/// Other strings may still flow through [`crate::data::building`] mode matching; this allowlist is for
+/// validation triage and maintainer reports.
+pub fn is_known_building_condition(raw: &str) -> bool {
     matches!(
         normalize_building_condition(raw).as_str(),
         "ship_combat"
@@ -774,6 +781,7 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
     let mut missing_files: usize = 0;
     let mut parse_errors: usize = 0;
     let mut bad_stats: usize = 0;
+    let mut unknown_upstream_ship_type: BTreeMap<u32, (usize, Vec<String>)> = BTreeMap::new();
 
     for (idx, entry) in index.hostiles.iter().enumerate() {
         let ctx = format!("hostiles[{idx}] id='{}'", entry.id);
@@ -801,6 +809,15 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
             .and_then(|raw| serde_json::from_str::<HostileRecord>(&raw).map_err(|e| e.to_string()))
         {
             Ok(record) => {
+                if !upstream_ship_type_is_known_category(record.upstream_ship_type) {
+                    let slot = unknown_upstream_ship_type
+                        .entry(record.upstream_ship_type)
+                        .or_insert_with(|| (0, Vec::new()));
+                    slot.0 += 1;
+                    if slot.1.len() < 4 {
+                        slot.1.push(entry.id.clone());
+                    }
+                }
                 if record.hull_health <= 0.0 {
                     bad_stats += 1;
                 }
@@ -833,6 +850,16 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
             ValidationSeverity::Error,
             "hostiles.records",
             format!("{bad_stats} hostile record(s) have hull_health ≤ 0"),
+        );
+    }
+    for (ty, (count, sample_ids)) in unknown_upstream_ship_type {
+        let samples = sample_ids.join(", ");
+        report.push(
+            ValidationSeverity::Error,
+            "hostiles.upstream_ship_type",
+            format!(
+                "upstream_ship_type {ty} is not a documented category ({count} hostile row(s); sample id(s): {samples}) — extend KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES and docs/UPSTREAM_HOSTILE_SHIP_TYPES.md"
+            ),
         );
     }
 
@@ -907,6 +934,11 @@ pub fn validate_all_startup_data() -> Result<(), String> {
         process_report("hostiles", r, &mut error_count, &mut warning_count);
     }
 
+    if Path::new(DEFAULT_BUILDINGS_INDEX_PATH).is_file() {
+        let r = validate_buildings_dataset("data/buildings");
+        process_report("buildings", r, &mut error_count, &mut warning_count);
+    }
+
     if error_count == 0 {
         Ok(())
     } else {
@@ -918,6 +950,10 @@ pub fn validate_all_startup_data() -> Result<(), String> {
 
 /// Validate building index + per-building files for basic structure and provenance.
 /// `path` should be the directory containing `index.json` (typically `data/buildings`).
+///
+/// **Mapping coverage:** Opaque `buff_*` bonus stats and unknown `conditions` values are summarized
+/// as a small number of warnings (not one per bonus row). For the full distinct-value table, run
+/// `cargo run --bin report_building_mapping_gaps`.
 pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String> {
     let base = Path::new(path);
     let index_path = base.join("index.json");
@@ -947,6 +983,9 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
     };
 
     let mut seen_ids = HashSet::new();
+    let mut opaque_buff_stats: BTreeMap<String, (usize, Vec<String>)> = BTreeMap::new();
+    let mut unknown_conditions: BTreeMap<String, (usize, Vec<String>)> = BTreeMap::new();
+
     for (idx, entry) in buildings.iter().enumerate() {
         let ctx = format!("buildings.index.buildings[{idx}]");
         let Some(obj) = entry.as_object() else {
@@ -1073,25 +1112,29 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
 
                         if let Some(stat) = bonus_obj.get("stat").and_then(Value::as_str) {
                             if stat.starts_with("buff_") {
-                                report.push(
-                                    ValidationSeverity::Warning,
-                                    format!("{}.stat", bonus_ctx),
-                                    format!("opaque building buff '{stat}' is ignored by most combat/profile paths until mapped"),
-                                );
+                                let slot = opaque_buff_stats
+                                    .entry(stat.to_string())
+                                    .or_insert_with(|| (0, Vec::new()));
+                                slot.0 += 1;
+                                if slot.1.len() < 4 && !slot.1.contains(&id) {
+                                    slot.1.push(id.clone());
+                                }
                             }
                         }
 
                         if let Some(conditions) =
                             bonus_obj.get("conditions").and_then(Value::as_array)
                         {
-                            for (condition_index, condition) in conditions.iter().enumerate() {
+                            for condition in conditions.iter() {
                                 if let Some(condition) = condition.as_str() {
                                     if !is_known_building_condition(condition) {
-                                        report.push(
-                                            ValidationSeverity::Warning,
-                                            format!("{}.conditions[{condition_index}]", bonus_ctx),
-                                            format!("unknown building condition '{condition}'"),
-                                        );
+                                        let slot = unknown_conditions
+                                            .entry(condition.to_string())
+                                            .or_insert_with(|| (0, Vec::new()));
+                                        slot.0 += 1;
+                                        if slot.1.len() < 4 && !slot.1.contains(&id) {
+                                            slot.1.push(id.clone());
+                                        }
                                     }
                                 }
                             }
@@ -1106,6 +1149,29 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
                 );
             }
         }
+    }
+
+    if !opaque_buff_stats.is_empty() {
+        let distinct = opaque_buff_stats.len();
+        let total_rows: usize = opaque_buff_stats.values().map(|(n, _)| *n).sum();
+        report.push(
+            ValidationSeverity::Warning,
+            "buildings.bonuses.opaque_buff",
+            format!(
+                "{distinct} distinct buff_* stats ({total_rows} bonus rows) are not merged into combat profile via normalize_profile_combat_stat; run `cargo run --bin report_building_mapping_gaps` for the full table"
+            ),
+        );
+    }
+    if !unknown_conditions.is_empty() {
+        let distinct = unknown_conditions.len();
+        let total: usize = unknown_conditions.values().map(|(n, _)| *n).sum();
+        report.push(
+            ValidationSeverity::Warning,
+            "buildings.bonuses.conditions",
+            format!(
+                "{distinct} unrecognized condition value(s) ({total} occurrence(s)); run `cargo run --bin report_building_mapping_gaps` for the full list (extend is_known_building_condition when semantics are confirmed)"
+            ),
+        );
     }
 
     Ok(report)

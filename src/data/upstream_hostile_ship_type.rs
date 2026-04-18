@@ -31,6 +31,20 @@ impl Default for UpstreamHostileShipTypeProfile {
     }
 }
 
+/// Distinct `upstream_ship_type` values documented in `docs/UPSTREAM_HOSTILE_SHIP_TYPES.md`.
+///
+/// When a hostile refresh introduces a new category id, extend this slice and the doc together.
+/// Numeric **9** is intentionally omitted until it appears in upstream data.
+pub const KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES: &[u32] = &[
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14,
+];
+
+/// True when `ship_type` is a maintainer-documented hostile category (not necessarily a dedicated combat `match` arm).
+#[inline]
+pub fn upstream_ship_type_is_known_category(ship_type: u32) -> bool {
+    KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES.binary_search(&ship_type).is_ok()
+}
+
 /// True when [`upstream_hostile_ship_type_profile`] uses a dedicated `match` arm (not the `_` fallback).
 ///
 /// Keep this aligned with every non-`_` arm in [`upstream_hostile_ship_type_profile`].
@@ -70,5 +84,20 @@ mod tests {
         assert!(upstream_ship_type_is_explicitly_mapped(1));
         assert!(!upstream_ship_type_is_explicitly_mapped(0));
         assert!(!upstream_ship_type_is_explicitly_mapped(2));
+    }
+
+    #[test]
+    fn known_categories_sorted_unique() {
+        for w in KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES.windows(2) {
+            assert!(w[0] < w[1], "KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES must be sorted unique");
+        }
+    }
+
+    #[test]
+    fn known_category_examples() {
+        assert!(upstream_ship_type_is_known_category(0));
+        assert!(upstream_ship_type_is_known_category(14));
+        assert!(!upstream_ship_type_is_known_category(9));
+        assert!(!upstream_ship_type_is_known_category(99));
     }
 }
