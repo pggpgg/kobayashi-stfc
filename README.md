@@ -220,13 +220,14 @@ kobayashi/
 │   ├── combat/              # Combat engine (the hot loop), PRNG, buff system
 │   ├── optimizer/           # Monte Carlo, tiered sim, genetic algo, ranking
 │   ├── parallel/            # Rayon thread pool, batch distribution, progress
-│   └── server/              # Custom HTTP server, REST API (no WebSocket)
+│   └── server/              # Axum HTTP server; REST + SSE (optimize job stream); no WebSocket
 ├── data/
-│   ├── officers/            # LCARS officer definitions (.lcars.yaml)
-│   ├── ships.json           # Ship stat sheets
-│   ├── hostiles.json        # Hostile stat sheets
-│   ├── synergies.json       # Synergy definitions
-│   └── profiles/            # Player profiles
+│   ├── officers/            # LCARS officer definitions (.lcars.yaml), canonical JSON, registries
+│   ├── ships_extended/      # Ship combat stats (index + per-id JSON, tiers/levels)
+│   ├── hostiles/            # Hostile index + per-id JSON
+│   ├── buildings/           # Building index + per-building JSON
+│   ├── registry.json        # Top-level data registry (and related JSON under data/)
+│   └── heuristics/          # Optional optimizer seed lists (.txt)
 ├── profiles/                # Per-player sync + imports (see profiles/README.md); roster CSV sources can live next to each profile (e.g. profiles/default/my_roster.txt)
 ├── frontend/                # Web UI (React); build with npm, served from frontend/dist
 └── tests/                   # Combat validation, LCARS parsing, optimizer regression
@@ -234,7 +235,7 @@ kobayashi/
 
 ### Architecture (actual)
 
-The server uses **Tokio + Axum 0.7**: an async multi-threaded runtime with an Axum router in `src/server/routes.rs`. CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking`, keeping the runtime responsive to concurrent requests. The API is **REST only**; there is no WebSocket support. The **frontend is not embedded** in the binary: the SPA is built with `npm run build` in `frontend/` and served from the filesystem (`frontend/dist`) when the server is run from the project root. Run the server from the project root so it can find `frontend/dist` and `data/`.
+The server uses **Tokio + Axum 0.7**: an async multi-threaded runtime with an Axum router in `src/server/routes.rs`. CPU-bound work (optimize, simulate) is offloaded via `tokio::task::spawn_blocking`, keeping the runtime responsive to concurrent requests. The API is **REST-first**, with **Server-Sent Events** for long-running optimize job progress (`GET /api/optimize/jobs/:job_id/stream`); there is **no WebSocket** support. The **frontend is not embedded** in the binary: the SPA is built with `npm run build` in `frontend/` and served from the filesystem (`frontend/dist`) when the server is run from the project root. Run the server from the project root so it can find `frontend/dist` and `data/`.
 
 **Ops:** `GET /api/health` returns JSON with `build` (crate version, optional `git_sha_short` when built from git), `server` (`started_at_utc`, effective `max_concurrent_cpu_jobs`, whether `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS` was set, `cpu_job_permits_available` / `cpu_job_permits_total`, optional bounded-queue settings `cpu_job_queue_wait_ms` and `cpu_job_queue_wait_ms_from_env` for `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`), and `data` (officer count, ship/hostile index `data_version` strings when present, load flags). When `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS` is a positive value at server start and all CPU slots are busy, those routes return **503** with `code: cpu_busy` and a `Retry-After` header instead of waiting forever (restart to apply changes). Raising `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS` above 1 increases parallel CPU work; tune `KOBAYASHI_RAYON_THREADS` so the process does not oversubscribe cores.
 

@@ -133,7 +133,7 @@ The library is at `src/lib.rs` and exposes these modules:
 - `**src/lcars/**` — LCARS YAML parser (`parser.rs`) and resolver (`resolver.rs`) that collapses officer definitions into a `BuffSet` (static buffs + per-round effects + triggered effects). Only files matching `*.lcars.yaml` are loaded from a directory.
 - `**src/optimizer/**` — `monte_carlo.rs` runs N simulations per crew; `crew_generator.rs` enumerates candidates (optional **pool narrowing** from search constraints on the registry path); `genetic.rs` is the GA strategy (`strategy: "genetic"`); `tiered.rs` is scout → confirm top K (`strategy: "tiered"`, optional `tiered_scout_sims` / `tiered_top_k`, respects `ship_tier`/`ship_level`). Omitting `strategy` on optimize auto-picks tiered vs exhaustive from **effective** candidate count after warm-start + constraints (`count_effective_optimize_candidates`, `src/server/api/execution.rs`). `warm_start_crews` prepends deduped crews before generation. Omitted `**analytical_prefilter_keep`** may use `**analytical_prefilter_keep_auto**` (`src/optimizer/mod.rs`). `ranking.rs` scores by win_rate, hull_remaining, r1_kill_rate.
 - `**src/data/**` — Data loading/validation. Ships from `data/ships_extended/` (extended schema with tiers/levels, Option B); hostiles from `data/hostiles/index.json` + per-hostile JSON; buildings from `data/buildings/index.json`. Officers: `officers.canonical.json` is the maintainer-curated catalog; `officers.lcars.yaml` is generated from it (`generate_lcars`) and is the combat YAML the sim loads. `loader.rs` resolves by id (e.g. data.stfc.space numeric string `2918121098`) or by normalized hostile name + level (e.g. `hostile_2918121098_81` for placeholder display names).
-- `**src/server/**` — Tokio + Axum 0.7 HTTP server. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers. CPU-bound work (simulate, optimize) uses `tokio::task::spawn_blocking` so the runtime stays responsive. REST only — no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
+- `**src/server/**` — Tokio + Axum 0.7 HTTP server. `mod.rs` spins up a multi-thread Tokio runtime; `routes.rs` defines the Axum `Router` with async handlers. CPU-bound work uses `tokio::task::spawn_blocking`; a process-wide semaphore (`cpu_admission.rs`, `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`) limits concurrent CPU-heavy routes, with optional bounded wait → HTTP 503 `cpu_busy` (`KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`). **REST-first** plus **SSE** for optimize job progress (`GET /api/optimize/jobs/:job_id/stream`); no WebSocket. Serves the React SPA from `frontend/dist` when present. API routes in `routes.rs`; handler logic in `api.rs`; sync ingress in `sync.rs`.
 - `**src/parallel/**` — Rayon thread pool integration; each thread owns its PRNG instance.
 - `**src/cli.rs**` — CLI dispatch (used by tests via `run_with_args`); `src/main.rs` is the binary entry point.
 
@@ -166,9 +166,10 @@ SPA at `frontend/src/`. Key components in `frontend/src/components/`:
 
 API base URL is configurable at build time via `VITE_API_BASE` (e.g. `VITE_API_BASE=/api npm run build`). By default the SPA and API are served from the same origin.
 
-### REST API surface
+### HTTP API surface (REST + SSE)
 
 ```
+GET  /api/health
 GET  /api/officers          POST /api/simulate
 GET  /api/ships             POST /api/optimize   (strategy optional → auto tiered|exhaustive; or "tiered"|"genetic"|"exhaustive")
 GET  /api/hostiles          GET  /api/heuristics
@@ -176,6 +177,8 @@ GET  /api/profile           PUT  /api/profile
 GET  /api/profile/buildings-summary
 POST /api/officers/import   POST /api/optimize/start  (async job)
                             GET  /api/optimize/status/:job_id
+                            GET  /api/optimize/jobs/:job_id/stream   (SSE)
+                            POST /api/optimize/jobs/:job_id/cancel
 GET  /api/sync/status       POST /api/sync/ingress
 GET  /api/optimize/estimate
 GET  /api/data/version
@@ -208,7 +211,7 @@ Community-known crew lists stored in `data/heuristics/*.txt`. Format: `label:Cap
 
 ## Key architectural decisions that were made before and that Claude can challenge
 
-- **Axum + Tokio**: Axum 0.7 on a multi-threaded Tokio runtime. CPU-heavy handlers (simulate, optimize) use `spawn_blocking` so they do not stall other requests. The public `run_server()` entry point is synchronous and creates the runtime internally, keeping the CLI unchanged. Single-user for now; concurrent optimize jobs are not queued yet (future: add job queue or semaphore).
+- **Axum + Tokio**: Axum 0.7 on a multi-threaded Tokio runtime. CPU-heavy handlers use `spawn_blocking` so they do not stall other requests. The public `run_server()` entry point is synchronous and creates the runtime internally, keeping the CLI unchanged. Concurrent CPU-heavy work is **admission-controlled**: a shared `Semaphore` (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`, default 1) limits how many simulate/optimize/compare/replay-seed routes (and the optimize/start worker thread) run at once; optional `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS` caps wait time for a slot and returns **503** `cpu_busy` with **Retry-After** when set positive. This is not a durable multi-tenant job queue—background optimize jobs remain detached threads with JSON/SSE status polling.
 - **Data freshness**: ship and hostile data is sourced from community databases and may lag behind in-game updates. `data.stfc.space` provides raw game JSON (e.g. `/hostile/summary.json`, `/hostile/{id}.json`) and is a promising avenue for automated data refresh.
 - **Optimizer strategies**: the SPA defaults to **tiered**; omitting `strategy` on optimize lets the server **auto-route** tiered vs exhaustive from **effective** candidate count (warm-start + constraints; response exposes `effective_strategy` / `strategy_auto`). Explicit `strategy: "exhaustive"`, `"genetic"`, or `"tiered"` still supported. Tiered uses optional `tiered_scout_sims` / `tiered_top_k` and `warm_start_crews`. SPA warm-start persistence uses a versioned localStorage key (`frontend/src/lib/optimizeWarmStart.ts`, schema bumps invalidate old cache).
 - **LCARS as source of truth**: officer abilities are defined in YAML, not code. The engine resolves YAML → `BuffSet` before the fight loop; only dynamic effects (decay, accumulate, proc) are evaluated inside the loop.

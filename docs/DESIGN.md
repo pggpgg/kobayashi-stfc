@@ -38,7 +38,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ### Design Principles
 
-- **Local server + Web UI**: Rust backend using **Tokio + Axum** (`src/server/`). CPU-heavy handlers offload work with `tokio::task::spawn_blocking` so the async runtime stays responsive. The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) when the server is run from the project root (via `tower-http` static serving and SPA fallback). No Docker; run from project root so the server finds `frontend/dist` and `data/`.
+- **Local server + Web UI**: Rust backend using **Tokio + Axum** (`src/server/`). CPU-heavy handlers offload work with `tokio::task::spawn_blocking` and share a process-wide **semaphore** (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`) so many concurrent requests do not oversubscribe the machine; optional bounded queue wait returns HTTP 503 when saturated (`KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`). The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) when the server is run from the project root (via `tower-http` static serving and SPA fallback). No Docker; run from project root so the server finds `frontend/dist` and `data/`.
 - **Community-driven data**: Officers defined in LCARS (YAML), hostiles and ships in JSON. Community contributes definitions via pull requests. Schema validation catches errors automatically.
 - **Graceful degradation**: Unknown ability types are logged and skipped, not crashed on. Accuracy improves incrementally as more mechanics are supported.
 - **Performance-first**: The combat engine is the hot loop. Zero allocations, no dynamic dispatch, pre-computed buffs. Target: 2–5M simulations/sec/core.
@@ -47,7 +47,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ## 2. Architecture
 
-**Actual stack:** Tokio + Axum 0.7 (`src/server/mod.rs` + `routes.rs`). Multi-threaded async runtime; CPU-bound work (optimize, simulate) offloaded via `tokio::task::spawn_blocking`. The API is **REST-first**; there is **no WebSocket**. Long-running optimize jobs can be tracked with **JSON polling** (`GET /api/optimize/status/:job_id`) or **Server-Sent Events** (`GET /api/optimize/jobs/:job_id/stream`). Frontend is served from the filesystem (`frontend/dist`) when present, not embedded in the binary.
+**Actual stack:** Tokio + Axum 0.7 (`src/server/mod.rs` + `routes.rs`). Multi-threaded async runtime; CPU-bound work (optimize, simulate) offloaded via `tokio::task::spawn_blocking` and gated by a shared **Tokio semaphore** (`cpu_admission`, env `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`). The API is **REST-first**; there is **no WebSocket**. Long-running optimize jobs can be tracked with **JSON polling** (`GET /api/optimize/status/:job_id`) or **Server-Sent Events** (`GET /api/optimize/jobs/:job_id/stream`). Optional `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS` bounds how long a handler waits for a CPU slot; when exceeded, the server responds with **503** and `code: cpu_busy` (plus `Retry-After`). Frontend is served from the filesystem (`frontend/dist`) when present, not embedded in the binary.
 
 ```
 ┌─────────────────────────────────────────────────────┐

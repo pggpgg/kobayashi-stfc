@@ -7,12 +7,17 @@ export const API_BASE =
     ? String(import.meta.env.VITE_API_BASE).replace(/\/$/, "")
     : "";
 
+/** Categorical code when the server returns HTTP 503 `code: cpu_busy` (CPU admission). */
+export const API_ERROR_CPU_BUSY = "CPU_BUSY";
+
 /** Structured error from the API (status code + server message when available). */
 export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
     public readonly code: string,
+    /** From `retry_after_ms` JSON or `Retry-After` header when `code` is {@link API_ERROR_CPU_BUSY}. */
+    public readonly retryAfterMs?: number,
   ) {
     super(message);
     this.name = "ApiError";
@@ -27,27 +32,82 @@ function codeFromStatus(status: number): string {
   return "ERROR";
 }
 
+function retryAfterMsFromRetryAfterHeader(res: Response): number | undefined {
+  const raw = res.headers.get("Retry-After");
+  if (raw == null || raw === "") return undefined;
+  const secs = Number.parseInt(raw, 10);
+  if (!Number.isFinite(secs) || secs < 1) return undefined;
+  return secs * 1000;
+}
+
 /** Parse error response body; returns an ApiError with server message when JSON has status/message. */
 export async function parseApiError(
   res: Response,
   bodyText: string,
 ): Promise<ApiError> {
   let message = bodyText || res.statusText;
-  const code = codeFromStatus(res.status);
+  let code = codeFromStatus(res.status);
+  let retryAfterMs: number | undefined;
+
   try {
-    const json = JSON.parse(bodyText) as { message?: string; status?: string };
+    const json = JSON.parse(bodyText) as {
+      message?: string;
+      status?: string;
+      code?: string;
+      retry_after_ms?: unknown;
+    };
     if (typeof json.message === "string" && json.message.trim()) {
       message = json.message.trim();
+    }
+    if (typeof json.code === "string" && json.code.trim() === "cpu_busy") {
+      code = API_ERROR_CPU_BUSY;
+      const raw = json.retry_after_ms;
+      if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+        retryAfterMs = raw;
+      } else if (
+        typeof raw === "string" &&
+        Number.isFinite(Number.parseFloat(raw)) &&
+        Number.parseFloat(raw) > 0
+      ) {
+        retryAfterMs = Number.parseFloat(raw);
+      }
+      if (retryAfterMs == null) {
+        retryAfterMs = retryAfterMsFromRetryAfterHeader(res);
+      }
     }
   } catch {
     // keep message as bodyText or statusText
   }
-  return new ApiError(message, res.status, code);
+
+  if (code === API_ERROR_CPU_BUSY && retryAfterMs == null) {
+    retryAfterMs = retryAfterMsFromRetryAfterHeader(res);
+  }
+
+  return new ApiError(message, res.status, code, retryAfterMs);
 }
+
+const MAX_CPU_BUSY_WAIT_MS = 120_000;
 
 /** Format any thrown value for user display; adds retry hint for server errors. */
 export function formatApiError(e: unknown): string {
   const message = e instanceof Error ? e.message : String(e);
+  if (e instanceof ApiError && e.code === API_ERROR_CPU_BUSY) {
+    const capDisplaySec = 300;
+    if (
+      e.retryAfterMs != null &&
+      Number.isFinite(e.retryAfterMs) &&
+      e.retryAfterMs > 0
+    ) {
+      const displayMs = Math.min(e.retryAfterMs, capDisplaySec * 1000);
+      const sec = Math.max(1, Math.round(displayMs / 1000));
+      const suffix =
+        e.retryAfterMs > capDisplaySec * 1000
+          ? ` Try again in about ${sec}s (server suggested a longer wait).`
+          : ` Try again in about ${sec}s.`;
+      return `${message}${suffix}`;
+    }
+    return `${message} The server is busy with another simulation or optimization; try again in a few seconds.`;
+  }
   if (e instanceof ApiError && e.code === "SERVER_ERROR") {
     return `${message} Try again later.`;
   }
@@ -58,6 +118,46 @@ async function checkOk(res: Response): Promise<void> {
   if (res.ok) return;
   const text = await res.text();
   throw await parseApiError(res, text);
+}
+
+/** One `fetch` retry after a bounded wait when the server returns 503 `cpu_busy`. */
+async function fetchWithOneCpuBusyRetry(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  let res = await fetch(url, init);
+  if (res.ok) return res;
+
+  async function toParsedError(r: Response): Promise<ApiError> {
+    const text = await r.text();
+    return parseApiError(
+      new Response(text, {
+        status: r.status,
+        statusText: r.statusText,
+        headers: r.headers,
+      }),
+      text,
+    );
+  }
+
+  if (res.status !== 503) {
+    await checkOk(res);
+    return res;
+  }
+
+  const err = await toParsedError(res);
+  if (err.code !== API_ERROR_CPU_BUSY) throw err;
+
+  const waitMs =
+    err.retryAfterMs != null && err.retryAfterMs > 0
+      ? Math.min(err.retryAfterMs, MAX_CPU_BUSY_WAIT_MS)
+      : 0;
+  if (waitMs === 0) throw err;
+
+  await new Promise((r) => setTimeout(r, waitMs));
+  res = await fetch(url, init);
+  await checkOk(res);
+  return res;
 }
 
 /** Build headers with X-Profile-Id when profileId is provided. */
@@ -297,7 +397,7 @@ export async function simulate(
   if (params.support_buffs && params.support_buffs.length > 0) {
     body.support_buffs = params.support_buffs;
   }
-  const res = await fetch(`${API_BASE}/api/simulate`, {
+  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/simulate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -305,7 +405,6 @@ export async function simulate(
     },
     body: JSON.stringify(body),
   });
-  await checkOk(res);
   return res.json();
 }
 
@@ -387,7 +486,7 @@ export async function compareCrewsDistributions(
   if (params.support_buffs && params.support_buffs.length > 0) {
     body.support_buffs = params.support_buffs;
   }
-  const res = await fetch(`${API_BASE}/api/compare/crews`, {
+  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/compare/crews`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -395,7 +494,6 @@ export async function compareCrewsDistributions(
     },
     body: JSON.stringify(body),
   });
-  await checkOk(res);
   return res.json();
 }
 
@@ -573,7 +671,7 @@ export async function optimize(
   if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
-  const res = await fetch(`${API_BASE}/api/optimize`, {
+  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/optimize`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -581,7 +679,6 @@ export async function optimize(
     },
     body: JSON.stringify(body),
   });
-  await checkOk(res);
   return res.json();
 }
 
@@ -725,7 +822,7 @@ export async function optimizeStart(
   if (params.fast_discovery === true) {
     body.fast_discovery = true;
   }
-  const res = await fetch(`${API_BASE}/api/optimize/start`, {
+  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/optimize/start`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -733,7 +830,6 @@ export async function optimizeStart(
     },
     body: JSON.stringify(body),
   });
-  await checkOk(res);
   return res.json();
 }
 
