@@ -12,7 +12,7 @@
 10. [ ] Extend research stat wiring for any newly mapped combat stats in normalization and combat application paths.
 11. [ ] Add/expand recorded-fight fixtures to validate research and forbidden-tech effects against observed outcomes.
 12. [ ] Wire stored sync battlelogs into one concrete consumer path (calibration, replay seed, or analysis CLI).
-13. [ ] Tighten default "real roster" filters in discovery flows (owned officers, legal seats, unlocked below-decks slots).
+13. [x] Tighten default "real roster" filters in discovery flows (owned officers, legal seats, unlocked below-decks slots).
 14. [ ] Push additional sound constraint-aware narrowing earlier in crew generation without combinatorial blow-up.
 15. [ ] Tune analytical prefilter auto-keep behavior by workload profile and candidate counts.
 16. [ ] Tune tiered optimization auto-thresholds and default scout/confirm budgets for large candidate searches.
@@ -20,3 +20,4 @@
 18. [ ] Add matchup-aware pruning priors (captain/bridge synergies, encounter tags, family priors from winners).
 19. [ ] Add novelty-aware ranking so top suggestions balance strength with material diversity.
 20. [ ] Ship a first-class fast-discovery pipeline (heuristic seeds -> analytical prefilter -> tiered scout -> confirm top K -> optional refinement) with API/UI exposure.
+

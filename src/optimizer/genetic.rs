@@ -75,6 +75,9 @@ pub struct GeneticConfig {
 
     /// Defender is NPC hostile vs player ship (canonical `EnemyHostile` / `EnemyPlayer` context).
     pub defender_opponent: DefenderOpponent,
+
+    /// Profile id for `roster.imported.json` when building officer pools (`None` = default API profile).
+    pub roster_profile_id: Option<String>,
 }
 
 impl Default for GeneticConfig {
@@ -97,6 +100,7 @@ impl Default for GeneticConfig {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            roster_profile_id: None,
         }
     }
 }
@@ -462,7 +466,11 @@ pub fn run_genetic_optimizer(
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
 ) -> Vec<CrewCandidate> {
     let bd_slots = config.below_decks_slots;
-    let pools = match build_officer_pools(config.only_below_decks_with_ability, bd_slots) {
+    let pools = match build_officer_pools(
+        config.only_below_decks_with_ability,
+        bd_slots,
+        config.roster_profile_id.as_deref(),
+    ) {
         Some(p) => p,
         None => return Vec::new(),
     };

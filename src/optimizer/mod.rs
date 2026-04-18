@@ -230,6 +230,7 @@ fn candidate_strategy_from_scenario(scenario: &OptimizationScenario<'_>) -> Cand
         only_below_decks_with_ability: scenario.only_below_decks_with_ability,
         below_decks_slots: scenario.below_decks_slots,
         constraints: scenario.constraints.clone(),
+        roster_profile_id: scenario.profile_id.map(String::from),
         ..CandidateStrategy::default()
     }
 }
@@ -485,6 +486,7 @@ where
             support_buffs: scenario.support_buffs.clone(),
             chain_grind: scenario.chain_grind.clone(),
             defender_opponent: scenario.defender_opponent,
+            roster_profile_id: scenario.profile_id.map(String::from),
             ..GeneticConfig::default()
         }
     } else {
@@ -495,6 +497,7 @@ where
         cfg.support_buffs = scenario.support_buffs.clone();
         cfg.chain_grind = scenario.chain_grind.clone();
         cfg.defender_opponent = scenario.defender_opponent;
+        cfg.roster_profile_id = scenario.profile_id.map(String::from);
         cfg
     };
     run_genetic_optimizer_ranked(

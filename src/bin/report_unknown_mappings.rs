@@ -1,4 +1,5 @@
-//! Maintainer report: canonical officer `conditions` tokens without LCARS mapping, and
+//! Maintainer report: canonical officer `conditions` tokens not resolved for the officer LCARS
+//! pipeline (`kobayashi::lcars::is_canonical_officer_condition_resolved`), and
 //! hostile `upstream_ship_type` values from `data/hostiles/index.json`.
 //!
 //! Run: `cargo run --bin report_unknown_mappings`
@@ -12,7 +13,7 @@ use std::path::{Path, PathBuf};
 use kobayashi::data::upstream_hostile_ship_type::{
     upstream_hostile_ship_type_profile, upstream_ship_type_is_explicitly_mapped,
 };
-use kobayashi::lcars::is_canonical_condition_mapped;
+use kobayashi::lcars::is_canonical_officer_condition_resolved;
 use serde::Deserialize;
 
 const DEFAULT_CANONICAL: &str = "data/officers/officers.canonical.json";
@@ -180,7 +181,7 @@ fn render_report(
 
     for (tok, agg) in token_map {
         distinct += 1;
-        if is_canonical_condition_mapped(tok) {
+        if is_canonical_officer_condition_resolved(tok) {
             mapped_tokens += 1;
         } else {
             unmapped_rows.push((tok.clone(), agg.count, agg.examples.clone()));
@@ -200,7 +201,7 @@ fn render_report(
 
     out.push_str("## Canonical condition tokens\n\n");
     out.push_str(&format!(
-        "- Distinct non-empty tokens: **{}**\n- Mapped to LCARS: **{}**\n- Unmapped: **{}**\n\n",
+        "- Distinct non-empty tokens: **{}**\n- Resolved for officer LCARS (`map_canonical_condition_token` and `generate_lcars` merges): **{}**\n- Still unmapped: **{}**\n\n",
         distinct,
         mapped_tokens,
         unmapped_rows.len()

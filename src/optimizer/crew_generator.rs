@@ -9,6 +9,17 @@ use crate::data::ship::CrewSlotUnlock;
 use crate::optimizer::constraints::{normalize_officer_name, CrewSearchConstraints};
 use crate::perf_log;
 
+/// Path to `roster.imported.json` for the given API profile id (or default profile when `None`).
+fn roster_import_json_path_for_profile(profile_id: Option<&str>) -> String {
+    let pid = profile_id
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+        .unwrap_or_else(|| resolve_profile_id_for_api(None));
+    profile_path(&pid, ROSTER_IMPORTED)
+        .to_string_lossy()
+        .into_owned()
+}
+
 /// Number of bridge officer slots (in addition to captain). Players typically crew 1 captain + 2 bridge.
 pub const BRIDGE_SLOTS: usize = 2;
 /// Default below-decks slots when not overridden (matches mid/high-tier STFC ships).
@@ -82,6 +93,10 @@ fn has_below_decks_ability(officer: &Officer) -> bool {
 }
 
 /// Builds officer pools from registry (no officer reload). Still loads roster for filter.
+///
+/// When `roster.imported.json` exists and parses, **unlocked** roster ids always restrict the
+/// officer list (even if fewer than needed to fill a legal crew), so discovery does not silently
+/// expand to the full canonical catalog.
 pub fn build_officer_pools_from_registry(
     registry: &DataRegistry,
     only_below_decks_with_ability: bool,
@@ -96,27 +111,22 @@ pub fn build_officer_pools_from_registry(
         .cloned()
         .collect();
 
-    let min_officers = 1 + BRIDGE_SLOTS + below_decks_slots;
     let mut officers = officers;
-    let roster_path = profile_path(&resolve_profile_id_for_api(profile_id), ROSTER_IMPORTED)
-        .to_string_lossy()
-        .to_string();
+    let roster_path = roster_import_json_path_for_profile(profile_id);
     if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(&roster_path) {
-        if roster_ids.len() >= min_officers {
-            officers.retain(|officer| roster_ids.contains(&officer.id));
-        }
+        officers.retain(|officer| roster_ids.contains(&officer.id));
     }
 
     if officers.is_empty() {
         return None;
     }
 
-    let mut captains: Vec<String> = officers
+    let captains: Vec<String> = officers
         .iter()
         .filter(|officer| is_captain_eligible(officer))
         .map(|o| o.name.clone())
         .collect();
-    let mut bridge: Vec<String> = officers
+    let bridge: Vec<String> = officers
         .iter()
         .filter(|officer| can_fill_position(officer, Position::Bridge))
         .map(|o| o.name.clone())
@@ -135,15 +145,6 @@ pub fn build_officer_pools_from_registry(
             })
             .map(|o| o.name.clone())
             .collect();
-    } else if below_decks.is_empty() {
-        below_decks = officers.iter().map(|o| o.name.clone()).collect();
-    }
-
-    if captains.is_empty() {
-        captains = officers.iter().map(|o| o.name.clone()).collect();
-    }
-    if bridge.is_empty() {
-        bridge = officers.iter().map(|o| o.name.clone()).collect();
     }
 
     if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < below_decks_slots {
@@ -307,11 +308,16 @@ pub fn narrow_officer_pools_for_constraints(
 
 /// Builds captain, bridge, and below-decks pools from loaded officers and roster filter.
 /// When `only_below_decks_with_ability` is true, the below-decks pool is restricted to officers
-/// that have a below-decks ability; no fallback to all officers is applied in that case.
+/// that have a below-decks ability.
+///
+/// Roster: when `roster.imported.json` exists and parses, unlocked ids always apply (even if the
+/// set is smaller than a full crew). There is no fallback that assigns officers to seats they
+/// cannot legally fill.
 /// Returns `None` if there are not enough officers to form any valid crew.
 pub fn build_officer_pools(
     only_below_decks_with_ability: bool,
     below_decks_slots: usize,
+    roster_profile_id: Option<&str>,
 ) -> Option<OfficerPools> {
     let mut officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .map(|loaded| {
@@ -322,26 +328,21 @@ pub fn build_officer_pools(
         })
         .unwrap_or_default();
 
-    let min_officers = 1 + BRIDGE_SLOTS + below_decks_slots;
-    let roster_path = profile_path(&resolve_profile_id_for_api(None), ROSTER_IMPORTED)
-        .to_string_lossy()
-        .to_string();
+    let roster_path = roster_import_json_path_for_profile(roster_profile_id);
     if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(&roster_path) {
-        if roster_ids.len() >= min_officers {
-            officers.retain(|officer| roster_ids.contains(&officer.id));
-        }
+        officers.retain(|officer| roster_ids.contains(&officer.id));
     }
 
     if officers.is_empty() {
         return None;
     }
 
-    let mut captains: Vec<String> = officers
+    let captains: Vec<String> = officers
         .iter()
         .filter(|officer| is_captain_eligible(officer))
         .map(|o| o.name.clone())
         .collect();
-    let mut bridge: Vec<String> = officers
+    let bridge: Vec<String> = officers
         .iter()
         .filter(|officer| can_fill_position(officer, Position::Bridge))
         .map(|o| o.name.clone())
@@ -360,16 +361,6 @@ pub fn build_officer_pools(
             })
             .map(|o| o.name.clone())
             .collect();
-        // Do not fallback to all officers when user requested this filter.
-    } else if below_decks.is_empty() {
-        below_decks = officers.iter().map(|o| o.name.clone()).collect();
-    }
-
-    if captains.is_empty() {
-        captains = officers.iter().map(|o| o.name.clone()).collect();
-    }
-    if bridge.is_empty() {
-        bridge = officers.iter().map(|o| o.name.clone()).collect();
     }
 
     if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < below_decks_slots {
@@ -404,6 +395,9 @@ pub struct CandidateStrategy {
     pub below_decks_slots: usize,
     /// When set, officer pools are narrowed before enumeration (exclude, seat eligibility).
     pub constraints: Option<CrewSearchConstraints>,
+    /// Profile id whose `roster.imported.json` restricts officer pools (`None` = API default profile).
+    /// Unit tests may set a synthetic id with no roster file to use the full canonical officer list.
+    pub roster_profile_id: Option<String>,
 }
 
 impl Default for CandidateStrategy {
@@ -417,6 +411,7 @@ impl Default for CandidateStrategy {
             only_below_decks_with_ability: false,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
+            roster_profile_id: None,
         }
     }
 }
@@ -447,6 +442,7 @@ impl CrewGenerator {
         let mut pools = match build_officer_pools(
             self.strategy.only_below_decks_with_ability,
             self.strategy.below_decks_slots,
+            self.strategy.roster_profile_id.as_deref(),
         ) {
             Some(p) => p,
             None => return Vec::new(),
@@ -525,6 +521,7 @@ impl CrewGenerator {
         let mut pools = match build_officer_pools(
             self.strategy.only_below_decks_with_ability,
             self.strategy.below_decks_slots,
+            self.strategy.roster_profile_id.as_deref(),
         ) {
             Some(p) => p,
             None => return 0,
@@ -993,11 +990,20 @@ mod tests {
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
 
+    /// Profile id with no `profiles/<id>/roster.imported.json` in the repo → roster filter skipped.
+    const NO_ROSTER_PROFILE_FOR_TESTS: &str = "__kobayashi_test_profile_without_roster_dir__";
+
     #[test]
     fn narrow_pools_returns_none_for_unknown_captain_must_be() {
         let registry = DataRegistry::load().expect("registry");
-        let pools =
-            build_officer_pools_from_registry(&registry, false, None, 3, None).expect("pools");
+        let pools = build_officer_pools_from_registry(
+            &registry,
+            false,
+            Some(NO_ROSTER_PROFILE_FOR_TESTS),
+            3,
+            None,
+        )
+        .expect("pools");
         let c = CrewSearchConstraints {
             captain_must_be: Some("NotARealCaptainNameForKobayashiTest".into()),
             ..Default::default()
@@ -1057,6 +1063,7 @@ mod tests {
     fn generation_is_deterministic_for_same_seed() {
         let generator = CrewGenerator::with_strategy(CandidateStrategy {
             max_candidates: Some(32),
+            roster_profile_id: Some(NO_ROSTER_PROFILE_FOR_TESTS.into()),
             ..CandidateStrategy::default()
         });
 
@@ -1073,6 +1080,7 @@ mod tests {
             max_candidates: Some(24),
             large_pool_captain_limit: 5,
             large_pool_bridge_limit: 6,
+            roster_profile_id: Some(NO_ROSTER_PROFILE_FOR_TESTS.into()),
             ..CandidateStrategy::default()
         });
 
@@ -1089,6 +1097,7 @@ mod tests {
         let generator = CrewGenerator::with_strategy(CandidateStrategy {
             below_decks_slots: 2,
             max_candidates: Some(24),
+            roster_profile_id: Some(NO_ROSTER_PROFILE_FOR_TESTS.into()),
             ..CandidateStrategy::default()
         });
         let candidates = generator.generate_candidates("defiant", "romulan", 11);

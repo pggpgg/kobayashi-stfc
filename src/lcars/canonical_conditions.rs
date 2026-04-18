@@ -118,6 +118,26 @@ pub fn is_canonical_condition_mapped(token: &str) -> bool {
     map_canonical_condition_token(token).is_some()
 }
 
+/// Condition tokens that are not handled by [`map_canonical_condition_token`] but are still merged
+/// into officer LCARS by `generate_lcars` (typically from the ability `attributes` string).
+const OFFICER_LCARS_ATTRIBUTE_MERGED_CONDITION_TOKENS: &[&str] = &["EnemyHullFaction"];
+
+/// True when canonical `conditions` need no triage for the officer LCARS pipeline: either
+/// [`map_canonical_condition_token`] returns LCARS, or `generate_lcars` merges the token from
+/// attributes (e.g. `EnemyHullFaction` + `faction_id=`).
+///
+/// Maintainer reports should use this (not [`is_canonical_condition_mapped`] alone) so
+/// attribute-merged tokens are not listed as unknown.
+pub fn is_canonical_officer_condition_resolved(token: &str) -> bool {
+    if is_canonical_condition_mapped(token) {
+        return true;
+    }
+    let t = token.trim();
+    OFFICER_LCARS_ATTRIBUTE_MERGED_CONDITION_TOKENS
+        .iter()
+        .any(|&known| t.eq_ignore_ascii_case(known))
+}
+
 /// Converts canonical `conditions` to a single LCARS condition (`and` when multiple tokens map).
 /// Logs unmapped tokens to stderr. Returns `None` if nothing maps (or the list is empty).
 pub fn canonical_conditions_to_lcars(
@@ -306,6 +326,11 @@ mod tests {
             map_canonical_condition_token("EnemyHullFaction").is_none(),
             "EnemyHullFaction is merged in generate_lcars from ability attributes, not token-only map"
         );
+        assert!(
+            is_canonical_officer_condition_resolved("EnemyHullFaction"),
+            "officer LCARS pipeline still resolves EnemyHullFaction via attributes merge"
+        );
+        assert!(is_canonical_officer_condition_resolved(" enemyHullFaction "));
     }
 
     // Task 2 audit: tokens below still lack a 1:1 AbilityCondition / CombatContext story (see
