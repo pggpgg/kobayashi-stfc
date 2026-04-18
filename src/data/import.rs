@@ -8,6 +8,7 @@ use csv::ReaderBuilder;
 use serde::{Deserialize, Serialize};
 
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
+use serde_json::Value;
 
 const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
 const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canonical.json";
@@ -865,6 +866,21 @@ pub fn load_imported_forbidden_tech(path: &str) -> Option<Vec<ForbiddenTechEntry
     Some(payload.forbidden_tech)
 }
 
+/// Loads the `battlelogs` array from `battlelogs.imported.json` (Community Mod rolling sync).
+///
+/// Returns `None` if the file is missing or JSON is invalid. Returns `Some(empty)` when the file
+/// parses but has no `battlelogs` array (or it is empty).
+pub fn load_imported_battlelogs(path: &str) -> Option<Vec<Value>> {
+    let raw = fs::read_to_string(path).ok()?;
+    let v: Value = serde_json::from_str(&raw).ok()?;
+    Some(
+        v.get("battlelogs")
+            .and_then(|b| b.as_array())
+            .cloned()
+            .unwrap_or_default(),
+    )
+}
+
 #[cfg(test)]
 mod roster_import_diag_tests {
     use super::*;
@@ -893,5 +909,31 @@ mod roster_import_diag_tests {
     fn tier_level_diagnostic_level_above_tier_cap() {
         let d = roster_tier_level_diagnostics(0, "Test", Some(1), Some(99));
         assert!(d.iter().any(|x| x.code == "level_above_tier_cap"));
+    }
+}
+
+#[cfg(test)]
+mod battlelogs_loader_tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn load_imported_battlelogs_reads_battlelogs_array() {
+        let dir = std::env::temp_dir().join(format!(
+            "kobayashi_battlelogs_test_{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).expect("mkdir");
+        let path = dir.join("battlelogs.imported.json");
+        let mut f = fs::File::create(&path).expect("create");
+        write!(
+            f,
+            r#"{{"source_path":"unit_test","battlelogs":[{{"type":"battlelogs","seq":1}},{{"k":"v"}}]}}"#
+        )
+        .expect("write");
+        let logs = load_imported_battlelogs(path.to_str().unwrap()).expect("parse");
+        assert_eq!(logs.len(), 2);
+        let _ = fs::remove_file(&path);
+        let _ = fs::remove_dir(&dir);
     }
 }

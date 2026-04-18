@@ -6,13 +6,13 @@ use kobayashi::combat::{
     simulate_combat_with_defender_faction, Combatant, CrewConfiguration, HostileMitigationBaseline,
     SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
 };
-use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to};
+use kobayashi::data::import::{import_roster_csv_to, import_spocks_export_to, load_imported_battlelogs};
 use kobayashi::data::loader::{defender_faction_for_cli_simulate, resolve_hostile, resolve_ship};
 use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
 use kobayashi::data::profile_index::{
     ensure_profile_index_bootstrap, profile_data_dir, profile_path,
     prune_ephemeral_scenario_test_profiles, resolve_profile_id_for_api,
-    sync_profile_index_with_disk, PROFILE_JSON, ROSTER_IMPORTED,
+    sync_profile_index_with_disk, BATTLELOGS_IMPORTED, PROFILE_JSON, ROSTER_IMPORTED,
 };
 use kobayashi::data::validate::{validate_officer_dataset, ValidationSeverity};
 use kobayashi::server;
@@ -26,6 +26,7 @@ enum Command {
     Validate,
     GenerateLcars,
     MitigationSensitivity,
+    Battlelogs,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -62,6 +63,7 @@ fn parse_command() -> Option<Command> {
         Some("validate") => Some(Command::Validate),
         Some("generate-lcars") => Some(Command::GenerateLcars),
         Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
+        Some("battlelogs") => Some(Command::Battlelogs),
         _ => None,
     }
 }
@@ -622,15 +624,60 @@ fn mitigation_sensitivity_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+fn parse_battlelogs_flags(args: &[String]) -> bool {
+    args.iter().any(|a| a == "--sample")
+}
+
+fn battlelogs_command(args: &[String]) -> Result<(), String> {
+    let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
+    let path = profile_path(&profile_id, BATTLELOGS_IMPORTED);
+    let path_str = path
+        .to_str()
+        .ok_or_else(|| "battlelogs path is not valid UTF-8".to_string())?;
+    let Some(logs) = load_imported_battlelogs(path_str) else {
+        println!("(no file or invalid JSON)\npath: {path_str}");
+        return Ok(());
+    };
+    println!("path: {path_str}");
+    println!("entries: {}", logs.len());
+    if logs.is_empty() {
+        return Ok(());
+    }
+    let mut type_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
+    for entry in &logs {
+        let key = entry
+            .get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("<no type>")
+            .to_string();
+        *type_counts.entry(key).or_insert(0) += 1;
+    }
+    let mut pairs: Vec<_> = type_counts.into_iter().collect();
+    pairs.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    println!("by `type` field:");
+    for (k, n) in pairs {
+        println!("  {k}: {n}");
+    }
+    if parse_battlelogs_flags(args) {
+        let last = logs.last().expect("non-empty");
+        let sample = serde_json::to_string_pretty(last)
+            .map_err(|e| format!("serialize sample: {e}"))?;
+        println!("newest entry (last in file):\n{sample}");
+    }
+    Ok(())
+}
+
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars|mitigation-sensitivity> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars|mitigation-sensitivity|battlelogs> [args]\n\
 simulate: kobayashi simulate <rounds> <seed> [--profile <id>] [--defender-faction <slug>] [--hostile <id>]\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--defender-faction <slug>] [--hostile <id>] [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
   or kobayashi optimize --ship <id> --hostile <id> --sims <u32> [--max-candidates <u32>] [--profile <id>]\n\
 import: kobayashi import <path> [--profile <id>]\n\
-mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]"
+mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]\n\
+battlelogs: kobayashi battlelogs [--profile <id>] [--sample]"
     );
 }
 
@@ -679,6 +726,13 @@ fn main() {
         Some(Command::MitigationSensitivity) => {
             if let Err(err) = mitigation_sensitivity_command(&command_args) {
                 eprintln!("mitigation-sensitivity error: {err}");
+                print_usage();
+                exit_code = 2;
+            }
+        }
+        Some(Command::Battlelogs) => {
+            if let Err(err) = battlelogs_command(&command_args) {
+                eprintln!("battlelogs error: {err}");
                 print_usage();
                 exit_code = 2;
             }

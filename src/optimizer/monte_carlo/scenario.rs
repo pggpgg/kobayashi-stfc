@@ -113,6 +113,50 @@ fn extend_crew_with_ship_abilities(
     ));
 }
 
+/// Pull isolytic cascade fractions from merged LCARS/support static buffs so they are not dropped by
+/// [`apply_static_buffs_to_combatant`] (which has no [`Combatant`] field for cascade).
+fn take_isolytic_cascade_static_bonus(static_buffs: &mut HashMap<String, f64>) -> f64 {
+    let a = static_buffs.remove("isolytic_cascade_damage").unwrap_or(0.0);
+    let b = static_buffs.remove("isolytic_cascade").unwrap_or(0.0);
+    let s = a + b;
+    if s.is_finite() {
+        s.max(0.0)
+    } else {
+        0.0
+    }
+}
+
+/// Profile + static isolytic cascade bonuses as one always-on attack-phase seat (additive with officer cascade).
+fn extend_crew_with_isolytic_cascade_profile_and_static(
+    seats: &mut Vec<CrewSeatContext>,
+    profile: &PlayerProfile,
+    static_cascade: f64,
+) {
+    let p = profile
+        .bonuses
+        .get("isolytic_cascade_damage")
+        .copied()
+        .unwrap_or(0.0);
+    let v = p + static_cascade;
+    if !v.is_finite() || v <= 0.0 {
+        return;
+    }
+    seats.push(CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: "profile_isolytic_cascade_damage".to_string(),
+            class: AbilityClass::ShipAbility,
+            timing: TimingWindow::AttackPhase,
+            boostable: false,
+            effect: AbilityEffect::IsolyticCascadeDamageBonus(v),
+            condition: None,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    });
+}
+
 /// Research / profile bonuses that only apply while Morale is active (see [AbilityCondition::MoraleActive]).
 fn extend_crew_with_morale_gated_profile_bonuses(
     seats: &mut Vec<CrewSeatContext>,
@@ -446,8 +490,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared.lcars_data.as_ref(),
         &resolve_opts,
     );
-    let merged_static =
+    let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
+    let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
 
     let hostile_ability_catalog =
         load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
@@ -543,6 +588,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         let mut seats = crew_seats.clone();
         extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
         extend_crew_with_morale_gated_profile_bonuses(&mut seats, &shared.profile);
+        extend_crew_with_isolytic_cascade_profile_and_static(
+            &mut seats,
+            &shared.profile,
+            static_cascade_bonus,
+        );
         extend_crew_with_research_derived_attack_phase_seats(
             &mut seats,
             &shared.research_derived_seats,
@@ -621,6 +671,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     let mut seats = crew_seats.clone();
     extend_crew_with_ship_abilities(&mut seats, shared.ship_rec.as_ref());
     extend_crew_with_morale_gated_profile_bonuses(&mut seats, &shared.profile);
+    extend_crew_with_isolytic_cascade_profile_and_static(
+        &mut seats,
+        &shared.profile,
+        static_cascade_bonus,
+    );
     extend_crew_with_research_derived_attack_phase_seats(
         &mut seats,
         &shared.research_derived_seats,
@@ -818,8 +873,9 @@ pub(crate) fn scenario_to_combat_input(
     );
 
     let resolve_opts = ResolveOptions::default();
-    let (crew_seats, static_buffs, proc_chance, proc_multiplier) =
+    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier) =
         build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
+    let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let hostile_ability_catalog =
@@ -868,6 +924,12 @@ pub(crate) fn scenario_to_combat_input(
         }
         let mut seats = crew_seats.clone();
         extend_crew_with_ship_abilities(&mut seats, Some(&ship_rec));
+        extend_crew_with_morale_gated_profile_bonuses(&mut seats, profile);
+        extend_crew_with_isolytic_cascade_profile_and_static(
+            &mut seats,
+            profile,
+            static_cascade_bonus,
+        );
         let weapon_damage_profile_additive_pool =
             weapon_damage_profile_additive_pool_from_env(profile);
         let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
@@ -922,6 +984,12 @@ pub(crate) fn scenario_to_combat_input(
 
     let mut seats = crew_seats.clone();
     extend_crew_with_ship_abilities(&mut seats, resolve_ship(ship).as_ref());
+    extend_crew_with_morale_gated_profile_bonuses(&mut seats, profile);
+    extend_crew_with_isolytic_cascade_profile_and_static(
+        &mut seats,
+        profile,
+        static_cascade_bonus,
+    );
 
     let defender_crew = CrewConfiguration { seats: Vec::new() };
     let weapon_damage_profile_additive_pool = weapon_damage_profile_additive_pool_from_env(profile);

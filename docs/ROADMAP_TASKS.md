@@ -9,9 +9,9 @@
 7. [x] Audit forbidden/chaos tech catalog `fid` coverage and fill missing ids to keep sync application complete.
 8. [x] Re-run and review chaos-tech row generation (`build_chaos_tech_csv_rows.mjs`) and fix high-impact heuristic gaps.
 9. [x] Refresh research catalog from upstream and resolve unmapped buff/location ids in mapping files.
-10. [ ] Extend research stat wiring for any newly mapped combat stats in normalization and combat application paths.
+10. [x] Extend research stat wiring for any newly mapped combat stats in normalization and combat application paths.
 11. [ ] Add/expand recorded-fight fixtures to validate research and forbidden-tech effects against observed outcomes.
-12. [ ] Wire stored sync battlelogs into one concrete consumer path (calibration, replay seed, or analysis CLI).
+12. [x] Wire stored sync battlelogs into one concrete consumer path (calibration, replay seed, or analysis CLI).
 13. [x] Tighten default "real roster" filters in discovery flows (owned officers, legal seats, unlocked below-decks slots).
 14. [ ] Push additional sound constraint-aware narrowing earlier in crew generation without combinatorial blow-up.
 15. [ ] Tune analytical prefilter auto-keep behavior by workload profile and candidate counts.

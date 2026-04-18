@@ -877,7 +877,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 ///
 /// | Key | Flat merge into `profile.bonuses` | Applied via |
 /// |-----|-----------------------------------|---------------|
-/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] |
+/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` (alias `isolytic_cascade`), `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] for most keys; `isolytic_cascade_damage` is merged into `profile.bonuses` but applied in Monte Carlo scenario build as an attack-phase `IsolyticCascadeDamageBonus` seat (with LCARS static buff keys of the same name), not as a [`Combatant`] field |
 /// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
 /// | `isolytic_damage_morale` | yes | `scenario.rs` — `extend_crew_with_morale_gated_profile_bonuses` (round-start seat, morale gate) |
 /// | Conditional `weapon_damage`, `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
@@ -892,6 +892,9 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         // Morale-gated isolytic (research NS Morale Isolytic Damage, rid 4133019450): scenario injects a round-start seat.
         "isolytic_damage_morale" => Some("isolytic_damage_morale"),
         "isolytic_defense" => Some("isolytic_defense"),
+        // Isolytic cascade stacks in the isolytic damage leg (see `mitigation::isolytic_damage`); applied
+        // from profile/buildings/research/FT via scenario attack-phase seat, not as a Combatant scalar.
+        "isolytic_cascade_damage" | "isolytic_cascade" => Some("isolytic_cascade_damage"),
         // Apex: same units as Combatant / engine (shred decimal; barrier pool vs hostile barrier formula).
         "apex_shred" => Some("apex_shred"),
         "apex_barrier" => Some("apex_barrier"),
@@ -1155,6 +1158,7 @@ pub fn apply_profile_accuracy_to_attacker_stats(
 /// shield_mitigation (additive to base), armor/dodge/damage_reduction (additive to mitigation),
 /// isolytic_damage / isolytic_defense, apex_shred / apex_barrier (additive; counter-attack uses player apex_barrier).
 /// `isolytic_damage_morale` stays in `profile.bonuses` for the scenario morale seat (not added to flat `isolytic_damage` here).
+/// `isolytic_cascade_damage` stays in `profile.bonuses` for the scenario attack-phase cascade seat.
 pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -> Combatant {
     if profile.bonuses.is_empty() {
         return attacker;
@@ -1205,6 +1209,18 @@ mod tests {
     use crate::data::ship::ShipRecord;
 
     use super::*;
+
+    #[test]
+    fn normalize_profile_combat_stat_maps_isolytic_cascade_aliases() {
+        assert_eq!(
+            normalize_profile_combat_stat("isolytic_cascade"),
+            Some("isolytic_cascade_damage")
+        );
+        assert_eq!(
+            normalize_profile_combat_stat("isolytic_cascade_damage"),
+            Some("isolytic_cascade_damage")
+        );
+    }
 
     #[test]
     fn merge_building_bonuses_into_profile_adds_only_combat_keys() {

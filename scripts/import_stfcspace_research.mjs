@@ -71,6 +71,8 @@ const ALLOWED_COMBAT_STATS = new Set([
   "hull_hp",
   "shield_hp",
   "isolytic_damage",
+  "isolytic_cascade",
+  "isolytic_cascade_damage",
   "isolytic_damage_morale",
   "isolytic_defense",
   "crit_chance",
