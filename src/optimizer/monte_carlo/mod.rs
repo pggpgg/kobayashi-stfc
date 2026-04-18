@@ -20,4 +20,6 @@ pub use simulation::{
     run_monte_carlo_parallel_with_registry, run_monte_carlo_with_registry, MonteCarloSeedReplay,
     SimulationResult,
 };
-pub(crate) use simulation::{run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared};
+pub(crate) use simulation::{
+    run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared_variable_iterations,
+};

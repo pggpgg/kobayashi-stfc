@@ -32,7 +32,8 @@ use super::requests::{
 };
 
 /// When `strategy` is omitted, use tiered scout→confirm if the capped candidate count is at least this.
-const TIERED_AUTO_THRESHOLD: usize = 500;
+/// Tuned so medium/large roster searches default to two-phase MC instead of full sims on every crew.
+const TIERED_AUTO_THRESHOLD: usize = 400;
 
 fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
     match s {

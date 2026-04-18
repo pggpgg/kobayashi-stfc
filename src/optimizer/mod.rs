@@ -28,7 +28,8 @@ use crate::optimizer::monte_carlo::{
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
-    run_tiered_with_registry_with_progress, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
+    run_tiered_with_registry_with_progress, tiered_scout_sims_for_workload,
+    tiered_top_k_for_workload, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
 };
 
 /// Reference full Monte Carlo count for auto prefilter scaling (matches [`OptimizationScenario`] default).
@@ -195,9 +196,9 @@ pub struct OptimizationScenario<'a> {
     pub seed_population: Vec<CrewCandidate>,
     /// Profile id for roster/profile/forbidden-tech paths. None = use default profile.
     pub profile_id: Option<&'a str>,
-    /// Tiered only: sims per crew in scouting pass. None = use default (500).
+    /// Tiered only: sims per crew in scouting pass. None = workload-aware default (see [`crate::optimizer::tiered::tiered_scout_sims_for_workload`]).
     pub tiered_scout_sims: Option<usize>,
-    /// Tiered only: number of top crews to run full confirmation. None = use default (20).
+    /// Tiered only: number of top crews to run full confirmation. None = workload-aware default (see [`crate::optimizer::tiered::tiered_top_k_for_workload`]).
     pub tiered_top_k: Option<usize>,
     /// When set, keep only this many crews after analytical expected-hull-damage ranking before Monte Carlo. Genetic ignores this.
     pub analytical_prefilter_keep: Option<usize>,
@@ -349,7 +350,7 @@ fn resolved_analytical_prefilter_keep(
         AnalyticalPrefilterWorkload::Tiered {
             scout_sims_per_crew: scenario
                 .tiered_scout_sims
-                .unwrap_or(DEFAULT_SCOUT_SIMS)
+                .unwrap_or_else(|| tiered_scout_sims_for_workload(n_after_merge))
                 .max(1),
         }
     } else {
@@ -357,10 +358,20 @@ fn resolved_analytical_prefilter_keep(
             full_sims_per_crew: scenario.simulation_count.max(1),
         }
     };
+    let top_ref = scenario
+        .tiered_top_k
+        .unwrap_or_else(|| {
+            if matches!(scenario.strategy, OptimizerStrategy::Tiered) {
+                tiered_top_k_for_workload(n_after_merge)
+            } else {
+                DEFAULT_TOP_K
+            }
+        })
+        .max(1);
     analytical_prefilter_keep_auto(
         n_after_merge,
         scenario.max_candidates,
-        scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K).max(1),
+        top_ref,
         workload,
     )
 }
@@ -406,8 +417,15 @@ fn optimize_scenario_tiered_with_registry(
         keep,
         &scenario.chain_grind,
     );
-    let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
-    let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
+    let n_tiered = candidates.len();
+    let scout_sims = scenario
+        .tiered_scout_sims
+        .unwrap_or_else(|| tiered_scout_sims_for_workload(n_tiered))
+        .max(1);
+    let top_k = scenario
+        .tiered_top_k
+        .unwrap_or_else(|| tiered_top_k_for_workload(n_tiered))
+        .max(1);
     run_tiered_with_registry_with_progress(
         registry,
         scenario.ship,
@@ -726,8 +744,15 @@ where
                 keep,
                 &scenario.chain_grind,
             );
-            let scout_sims = scenario.tiered_scout_sims.unwrap_or(DEFAULT_SCOUT_SIMS);
-            let top_k = scenario.tiered_top_k.unwrap_or(DEFAULT_TOP_K);
+            let n_tiered = candidates.len();
+            let scout_sims = scenario
+                .tiered_scout_sims
+                .unwrap_or_else(|| tiered_scout_sims_for_workload(n_tiered))
+                .max(1);
+            let top_k = scenario
+                .tiered_top_k
+                .unwrap_or_else(|| tiered_top_k_for_workload(n_tiered))
+                .max(1);
             let ranked = run_tiered_with_registry_with_progress(
                 registry,
                 scenario.ship,

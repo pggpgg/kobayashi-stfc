@@ -15,9 +15,8 @@
 13. [x] Tighten default "real roster" filters in discovery flows (owned officers, legal seats, unlocked below-decks slots).
 14. [ ] Push additional sound constraint-aware narrowing earlier in crew generation without combinatorial blow-up.
 15. [x] Tune analytical prefilter auto-keep behavior by workload profile and candidate counts.
-16. [ ] Tune tiered optimization auto-thresholds and default scout/confirm budgets for large candidate searches.
-17. [ ] Implement adaptive simulation budget allocation based on scout confidence and variance.
+16. [x] Tune tiered optimization auto-thresholds and default scout/confirm budgets for large candidate searches.
+17. [x] Implement adaptive simulation budget allocation based on scout confidence and variance.
 18. [ ] Add matchup-aware pruning priors (captain/bridge synergies, encounter tags, family priors from winners).
 19. [ ] Add novelty-aware ranking so top suggestions balance strength with material diversity.
 20. [ ] Ship a first-class fast-discovery pipeline (heuristic seeds -> analytical prefilter -> tiered scout -> confirm top K -> optional refinement) with API/UI exposure.
-

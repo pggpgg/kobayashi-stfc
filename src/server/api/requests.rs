@@ -120,9 +120,9 @@ pub struct OptimizeRequest {
     pub below_decks_strategy: Option<String>,
     /// Keep only this many crews after approximate analytical ranking (closed-form expected hull damage) before Monte Carlo. Omitted = evaluate all generated candidates unless auto-cap applies. Ignored for genetic strategy.
     pub analytical_prefilter_keep: Option<u32>,
-    /// Tiered strategy: scouting-phase sims per crew (1..=MAX_TIERED_SCOUT_SIMS).
+    /// Tiered strategy: scouting-phase sims per crew (1..=MAX_TIERED_SCOUT_SIMS). Omitted = scaled from candidate count.
     pub tiered_scout_sims: Option<u32>,
-    /// Tiered strategy: how many top scout crews receive full confirmation sims (1..=MAX_TIERED_TOP_K).
+    /// Tiered strategy: how many top scout crews receive full confirmation sims (1..=MAX_TIERED_TOP_K). Omitted = scaled from candidate count.
     pub tiered_top_k: Option<u32>,
     /// Optional crews prepended before generated candidates (deduped); e.g. UI warm-start persistence.
     #[serde(default)]

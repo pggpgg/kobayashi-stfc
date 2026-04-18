@@ -838,6 +838,76 @@ fn run_monte_carlo_inner(
     }
 }
 
+/// Like [`run_monte_carlo_with_shared`] but uses a per-candidate iteration count (e.g. tiered
+/// confirmation after adaptive budgeting from scout-phase confidence).
+fn run_monte_carlo_inner_variable_iterations(
+    shared: SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations_per_crew: &[usize],
+    seed: u64,
+    parallel: bool,
+    chain_grind: Option<ChainGrindParams>,
+) -> Vec<SimulationResult> {
+    debug_assert_eq!(candidates.len(), iterations_per_crew.len());
+    let run_at = |idx: usize, candidate: &CrewCandidate| {
+        let it = iterations_per_crew.get(idx).copied().unwrap_or(1).max(1);
+        match chain_grind.as_ref() {
+            None => run_candidate_monte_carlo(&shared, candidate, seed, it, None),
+            Some(c) => run_candidate_chain_monte_carlo(&shared, candidate, seed, it, c, None),
+        }
+    };
+
+    if parallel {
+        candidates
+            .par_iter()
+            .enumerate()
+            .map(|(i, c)| run_at(i, c))
+            .collect()
+    } else {
+        candidates
+            .iter()
+            .enumerate()
+            .map(|(i, c)| run_at(i, c))
+            .collect()
+    }
+}
+
+/// Run Monte Carlo with per-candidate iteration counts; `iterations_per_crew.len()` must match `candidates`.
+pub(crate) fn run_monte_carlo_with_shared_variable_iterations(
+    shared: SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations_per_crew: &[usize],
+    seed: u64,
+    parallel: bool,
+    chain_grind: Option<ChainGrindParams>,
+) -> Vec<SimulationResult> {
+    if candidates.is_empty() {
+        return Vec::new();
+    }
+    assert_eq!(
+        candidates.len(),
+        iterations_per_crew.len(),
+        "iterations_per_crew must match candidates"
+    );
+    let t0 = perf_log::perf_start();
+    let out = run_monte_carlo_inner_variable_iterations(
+        shared,
+        candidates,
+        iterations_per_crew,
+        seed,
+        parallel,
+        chain_grind,
+    );
+    perf_log::log_duration(
+        &format!(
+            "monte_carlo.with_shared_variable(candidates={}, parallel={parallel})",
+            candidates.len(),
+        ),
+        t0,
+    );
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
