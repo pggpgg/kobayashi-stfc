@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
@@ -6,7 +6,9 @@ use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
-use crate::optimizer::constraints::{normalize_officer_name, CrewSearchConstraints};
+use crate::optimizer::constraints::{
+    normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
+};
 use crate::perf_log;
 
 /// Path to `roster.imported.json` for the given API profile id (or default profile when `None`).
@@ -158,7 +160,7 @@ pub fn build_officer_pools_from_registry(
     };
     match constraints {
         Some(c) if !c.is_empty() => {
-            narrow_officer_pools_for_constraints(registry, pools, c, below_decks_slots)
+            narrow_officer_pools_for_constraints(registry.officer_index(), pools, c, below_decks_slots)
         }
         _ => Some(pools),
     }
@@ -178,11 +180,157 @@ fn pool_display_name_norm(name: &str) -> String {
     normalize_officer_name(name)
 }
 
+fn officer_index_from_officers(officers: &[Officer]) -> HashMap<String, Officer> {
+    officers
+        .iter()
+        .map(|o| (officer_lookup_key(&o.name), o.clone()))
+        .collect()
+}
+
+/// Maximum cardinality bipartite matching; `adj[i]` lists right-node indices incident to left `i`.
+fn bipartite_max_matching(adj: &[Vec<usize>], n_right: usize) -> usize {
+    let n_left = adj.len();
+    let mut match_r: Vec<Option<usize>> = vec![None; n_right];
+
+    fn dfs(
+        v: usize,
+        adj: &[Vec<usize>],
+        match_r: &mut [Option<usize>],
+        seen: &mut [bool],
+    ) -> bool {
+        for &u in &adj[v] {
+            if u >= seen.len() || seen[u] {
+                continue;
+            }
+            seen[u] = true;
+            if match_r[u].is_none()
+                || dfs(match_r[u].expect("set when recursive"), adj, match_r, seen)
+            {
+                match_r[u] = Some(v);
+                return true;
+            }
+        }
+        false
+    }
+
+    let mut seen = vec![false; n_right];
+    let mut size = 0_usize;
+    for v in 0..n_left {
+        seen.fill(false);
+        if dfs(v, adj, &mut match_r, &mut seen) {
+            size += 1;
+        }
+    }
+    size
+}
+
+/// True if each officer in `keys` can be assigned to a distinct slot (1 captain, 2 bridge, k below).
+fn officer_keys_simultaneously_placeable(
+    index: &HashMap<String, Officer>,
+    pools: &OfficerPools,
+    keys: &[&str],
+    below_decks_slots: usize,
+) -> bool {
+    if keys.is_empty() {
+        return true;
+    }
+    let n_slots = 1 + 2 + below_decks_slots;
+    if keys.len() > n_slots {
+        return false;
+    }
+    let mut adj: Vec<Vec<usize>> = Vec::with_capacity(keys.len());
+    for lk in keys {
+        let Some(off) = index.get(*lk) else {
+            return false;
+        };
+        let want = pool_display_name_norm(&off.name);
+        let mut edges = Vec::new();
+        if pools
+            .captains
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want)
+            && is_captain_eligible(off)
+        {
+            edges.push(0);
+        }
+        if pools
+            .bridge
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want)
+            && can_fill_position(off, Position::Bridge)
+        {
+            edges.push(1);
+            edges.push(2);
+        }
+        if pools
+            .below_decks
+            .iter()
+            .any(|n| pool_display_name_norm(n) == want)
+            && can_fill_position(off, Position::BelowDecks)
+        {
+            for s in 3..n_slots {
+                edges.push(s);
+            }
+        }
+        if edges.is_empty() {
+            return false;
+        }
+        adj.push(edges);
+    }
+    bipartite_max_matching(&adj, n_slots) == keys.len()
+}
+
+/// Maximum score achievable for `group` with [`CrewSearchConstraints::satisfies`] counting rules
+/// (duplicate names in the group list each contribute if that officer appears on the crew).
+fn max_achievable_group_coverage(
+    index: &HashMap<String, Officer>,
+    pools: &OfficerPools,
+    group: &OfficerGroupConstraint,
+    below_decks_slots: usize,
+) -> u32 {
+    let mut weight_by_lookup_key: HashMap<String, u32> = HashMap::new();
+    for entry in &group.officers {
+        let lk = officer_lookup_key(entry);
+        if lk.is_empty() {
+            continue;
+        }
+        *weight_by_lookup_key.entry(lk).or_insert(0) += 1;
+    }
+    if weight_by_lookup_key.is_empty() {
+        return 0;
+    }
+    let lookup_keys: Vec<String> = weight_by_lookup_key.keys().cloned().collect();
+    let u = lookup_keys.len();
+    // Subset enumeration stays cheap; very large groups skip early infeasibility detection here
+    // (post-generation [`filter_candidates`] remains authoritative — avoids false negatives).
+    const MAX_EXACT_UNIQUE: usize = 16;
+    if u > MAX_EXACT_UNIQUE {
+        return u32::MAX;
+    }
+
+    let mut best = 0_u32;
+    for mask in 0..(1_u32 << u) {
+        let mut subset: Vec<&str> = Vec::new();
+        let mut score = 0_u32;
+        for i in 0..u {
+            if (mask & (1 << i)) != 0 {
+                subset.push(&lookup_keys[i]);
+                score = score.saturating_add(weight_by_lookup_key[&lookup_keys[i]]);
+            }
+        }
+        if officer_keys_simultaneously_placeable(index, pools, &subset, below_decks_slots) {
+            best = best.max(score);
+        }
+    }
+    best
+}
+
 /// Tightens captain/bridge/below pools using search constraints so the generator
-/// does not enumerate crews that can never satisfy them. Conservative: group
-/// constraints are still enforced by post-generation [`crate::optimizer::constraints::filter_candidates`].
+/// does not enumerate crews that can never satisfy them. Group rules use a
+/// simultaneous-placement check aligned with [`CrewSearchConstraints::satisfies`]; post-generation
+/// [`crate::optimizer::constraints::filter_candidates`] remains the source of truth.
 pub fn narrow_officer_pools_for_constraints(
-    registry: &DataRegistry,
+    officer_index: &HashMap<String, Officer>,
     mut pools: OfficerPools,
     constraints: &CrewSearchConstraints,
     below_decks_slots: usize,
@@ -190,7 +338,7 @@ pub fn narrow_officer_pools_for_constraints(
     if constraints.is_empty() {
         return Some(pools);
     }
-    let index = registry.officer_index();
+    let index = officer_index;
 
     let exclude_set: HashSet<String> = constraints
         .exclude
@@ -296,6 +444,12 @@ pub fn narrow_officer_pools_for_constraints(
         }
     }
 
+    for g in &constraints.groups {
+        if max_achievable_group_coverage(index, &pools, g, below_decks_slots) < g.min_count {
+            return None;
+        }
+    }
+
     if pools.captains.is_empty()
         || pools.bridge.len() < BRIDGE_SLOTS
         || pools.below_decks.len() < below_decks_slots
@@ -319,6 +473,22 @@ pub fn build_officer_pools(
     below_decks_slots: usize,
     roster_profile_id: Option<&str>,
 ) -> Option<OfficerPools> {
+    build_officer_pools_with_constraints(
+        only_below_decks_with_ability,
+        below_decks_slots,
+        roster_profile_id,
+        None,
+    )
+}
+
+/// Like [`build_officer_pools`], but applies [`narrow_officer_pools_for_constraints`] when
+/// `constraints` is non-empty (same registry-free officer load path).
+pub fn build_officer_pools_with_constraints(
+    only_below_decks_with_ability: bool,
+    below_decks_slots: usize,
+    roster_profile_id: Option<&str>,
+    constraints: Option<&CrewSearchConstraints>,
+) -> Option<OfficerPools> {
     let mut officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .map(|loaded| {
             loaded
@@ -336,6 +506,8 @@ pub fn build_officer_pools(
     if officers.is_empty() {
         return None;
     }
+
+    let officer_index = officer_index_from_officers(&officers);
 
     let captains: Vec<String> = officers
         .iter()
@@ -367,11 +539,17 @@ pub fn build_officer_pools(
         return None;
     }
 
-    Some(OfficerPools {
+    let pools = OfficerPools {
         captains,
         bridge,
         below_decks,
-    })
+    };
+    match constraints {
+        Some(c) if !c.is_empty() => {
+            narrow_officer_pools_for_constraints(&officer_index, pools, c, below_decks_slots)
+        }
+        _ => Some(pools),
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -439,10 +617,11 @@ impl CrewGenerator {
     }
 
     pub fn generate_candidates(&self, ship: &str, hostile: &str, seed: u64) -> Vec<CrewCandidate> {
-        let mut pools = match build_officer_pools(
+        let mut pools = match build_officer_pools_with_constraints(
             self.strategy.only_below_decks_with_ability,
             self.strategy.below_decks_slots,
             self.strategy.roster_profile_id.as_deref(),
+            self.strategy.constraints.as_ref(),
         ) {
             Some(p) => p,
             None => return Vec::new(),
@@ -518,10 +697,11 @@ impl CrewGenerator {
     /// Returns the number of crew combinations without allocating candidates.
     /// Used for estimate when no cap is set. Uses same exhaustive/sampled branch as generate_candidates.
     pub fn count_candidates(&self, ship: &str, hostile: &str, seed: u64) -> usize {
-        let mut pools = match build_officer_pools(
+        let mut pools = match build_officer_pools_with_constraints(
             self.strategy.only_below_decks_with_ability,
             self.strategy.below_decks_slots,
             self.strategy.roster_profile_id.as_deref(),
+            self.strategy.constraints.as_ref(),
         ) {
             Some(p) => p,
             None => return 0,
@@ -988,7 +1168,7 @@ mod tests {
         MAX_BELOW_DECKS_SLOTS,
     };
     use crate::data::data_registry::DataRegistry;
-    use crate::optimizer::constraints::CrewSearchConstraints;
+    use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
 
     /// Profile id with no `profiles/<id>/roster.imported.json` in the repo → roster filter skipped.
     const NO_ROSTER_PROFILE_FOR_TESTS: &str = "__kobayashi_test_profile_without_roster_dir__";
@@ -1008,7 +1188,29 @@ mod tests {
             captain_must_be: Some("NotARealCaptainNameForKobayashiTest".into()),
             ..Default::default()
         };
-        assert!(narrow_officer_pools_for_constraints(&registry, pools, &c, 3).is_none());
+        assert!(narrow_officer_pools_for_constraints(registry.officer_index(), pools, &c, 3).is_none());
+    }
+
+    #[test]
+    fn narrow_pools_returns_none_when_group_min_count_unreachable() {
+        let registry = DataRegistry::load().expect("registry");
+        let pools = build_officer_pools_from_registry(
+            &registry,
+            false,
+            Some(NO_ROSTER_PROFILE_FOR_TESTS),
+            3,
+            None,
+        )
+        .expect("pools");
+        let one_officer = registry.officers()[0].name.clone();
+        let c = CrewSearchConstraints {
+            groups: vec![OfficerGroupConstraint {
+                officers: vec![one_officer],
+                min_count: 99,
+            }],
+            ..Default::default()
+        };
+        assert!(narrow_officer_pools_for_constraints(registry.officer_index(), pools, &c, 3).is_none());
     }
 
     #[test]

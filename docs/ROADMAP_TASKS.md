@@ -13,7 +13,7 @@
 11. [x] Add/expand recorded-fight fixtures to validate research and forbidden-tech effects against observed outcomes.
 12. [x] Wire stored sync battlelogs into one concrete consumer path (calibration, replay seed, or analysis CLI).
 13. [x] Tighten default "real roster" filters in discovery flows (owned officers, legal seats, unlocked below-decks slots).
-14. [ ] Push additional sound constraint-aware narrowing earlier in crew generation without combinatorial blow-up.
+14. [x] Push additional sound constraint-aware narrowing earlier in crew generation without combinatorial blow-up.
 15. [x] Tune analytical prefilter auto-keep behavior by workload profile and candidate counts.
 16. [x] Tune tiered optimization auto-thresholds and default scout/confirm budgets for large candidate searches.
 17. [x] Implement adaptive simulation budget allocation based on scout confidence and variance.
