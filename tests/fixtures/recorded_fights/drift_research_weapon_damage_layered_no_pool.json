@@ -1,0 +1,38 @@
+{
+  "id": "drift_research_weapon_damage_layered_no_pool",
+  "description": "Same combatants/seed/crew as drift_research_weapon_damage_additive_pool but weapon_damage_profile_additive_pool unset (layered (1+p)×pre_attack path). total_damage should exceed the pooled fixture when pre_attack_multiplier > 1.",
+  "synthetic_crew": {
+    "round_start_attack_multiplier": 0.5
+  },
+  "attacker": {
+    "id": "research_pool_att",
+    "attack": 0,
+    "mitigation": 0,
+    "pierce": 0,
+    "crit_chance": 0,
+    "hull_health": 8000,
+    "shield_health": 0,
+    "shield_mitigation": 0.8,
+    "weapons": [{ "attack": 200, "shots": 1, "crit_chance": 0 }]
+  },
+  "defender": {
+    "id": "research_pool_def",
+    "attack": 0,
+    "mitigation": 0.2,
+    "hull_health": 8000,
+    "shield_health": 0,
+    "shield_mitigation": 0.8
+  },
+  "simulation": {
+    "rounds": 40,
+    "seed": 91331,
+    "profile_weapon_damage_fraction": 0.25
+  },
+  "bands": {
+    "total_damage": [8140.0, 8180.0],
+    "rounds_simulated": [34.0, 34.0],
+    "defender_hull_remaining": [0.0, 0.0],
+    "attacker_hull_remaining": [7999.0, 8000.0]
+  },
+  "expect_attacker_won": true
+}

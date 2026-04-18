@@ -52,6 +52,26 @@ fn drift_harness_all_fixtures_within_bands() {
 }
 
 #[test]
+fn drift_research_weapon_damage_pool_orders_below_layered_total_damage() {
+    let dir = fixtures_dir();
+    let pool_spec = load_drift_fixture(&dir.join("drift_research_weapon_damage_additive_pool.json"))
+        .expect("load pooled research-style drift");
+    let layered_spec =
+        load_drift_fixture(&dir.join("drift_research_weapon_damage_layered_no_pool.json"))
+            .expect("load layered research-style drift");
+    let pooled = simulate_drift_fixture(&pool_spec);
+    let layered = simulate_drift_fixture(&layered_spec);
+    assert!(
+        layered.total_damage > pooled.total_damage,
+        "layered profile_weapon_damage path should deal strictly more total_damage than additive pool when pre_attack_multiplier>1 (layered={} pooled={})",
+        layered.total_damage,
+        pooled.total_damage
+    );
+    assert_eq!(pooled.rounds_simulated, 36);
+    assert_eq!(layered.rounds_simulated, 34);
+}
+
+#[test]
 fn drift_harness_summary_stable_across_runs() {
     let path = fixtures_dir().join("drift_survey_soak.json");
     let spec = load_drift_fixture(&path).expect("load");

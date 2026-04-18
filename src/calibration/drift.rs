@@ -7,7 +7,8 @@ use std::path::Path;
 use serde::Deserialize;
 
 use crate::combat::{
-    simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode, WeaponStats,
+    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
 };
 
 #[derive(Debug, Clone, Deserialize)]
@@ -21,6 +22,19 @@ pub struct DriftFixtureFile {
     pub bands: MetricBands,
     #[serde(default)]
     pub expect_attacker_won: Option<bool>,
+    /// Optional minimal crew so drift scenarios can exercise profile weapon-damage pooling (needs
+    /// non-1 `pre_attack_multiplier`, e.g. from [`TimingWindow::RoundStart`] [`AbilityEffect::AttackMultiplier`]).
+    #[serde(default)]
+    pub synthetic_crew: Option<DriftSyntheticCrew>,
+}
+
+/// Minimal crew wiring for drift JSON without full LCARS/officer payloads.
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct DriftSyntheticCrew {
+    /// Delta passed to [`AbilityEffect::AttackMultiplier`] at [`TimingWindow::RoundStart`]
+    /// (feeds `pre_attack_modifier_sum`; uses per-round `round_index` ≥ 1 for traces).
+    #[serde(default)]
+    pub round_start_attack_multiplier: f64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -28,6 +42,15 @@ pub struct FixtureSimulation {
     pub rounds: u32,
     #[serde(default = "default_seed")]
     pub seed: u64,
+    /// When set, forwarded to [`SimulationConfig::weapon_damage_profile_additive_pool`] (research/profile `weapon_damage` pooled model).
+    #[serde(default)]
+    pub weapon_damage_profile_additive_pool: Option<f64>,
+    /// Forwarded to [`SimulationConfig::profile_weapon_damage_fraction`] (dilutes galaxy growth; layered model baseline).
+    #[serde(default)]
+    pub profile_weapon_damage_fraction: f64,
+    /// Forwarded to [`SimulationConfig::initial_attacker_hull_damage`].
+    #[serde(default)]
+    pub initial_attacker_hull_damage: f64,
 }
 
 fn default_seed() -> u64 {
@@ -110,6 +133,41 @@ pub struct MetricBands {
     pub attacker_hull_remaining: Option<[f64; 2]>,
 }
 
+fn crew_for_drift(synthetic: &Option<DriftSyntheticCrew>) -> CrewConfiguration {
+    let Some(c) = synthetic else {
+        return CrewConfiguration::default();
+    };
+    if !c.round_start_attack_multiplier.is_finite() || c.round_start_attack_multiplier == 0.0 {
+        return CrewConfiguration::default();
+    }
+    CrewConfiguration {
+        seats: vec![CrewSeatContext::legacy(
+            CrewSeat::Captain,
+            Ability {
+                name: "drift_synthetic_attack_mult".to_string(),
+                class: AbilityClass::CaptainManeuver,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(c.round_start_attack_multiplier),
+                condition: None,
+            },
+            false,
+        )],
+    }
+}
+
+fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> SimulationConfig {
+    SimulationConfig {
+        rounds: spec.simulation.rounds,
+        seed: spec.simulation.seed,
+        trace_mode: trace,
+        initial_attacker_hull_damage: spec.simulation.initial_attacker_hull_damage,
+        weapon_damage_profile_additive_pool: spec.simulation.weapon_damage_profile_additive_pool,
+        profile_weapon_damage_fraction: spec.simulation.profile_weapon_damage_fraction,
+        defender_hull_faction_id: 0,
+    }
+}
+
 impl FixtureCombatant {
     fn to_combatant(&self, default_id: &str) -> Combatant {
         let weapons: Vec<WeaponStats> = self
@@ -178,36 +236,22 @@ pub fn load_drift_fixture(path: &Path) -> Result<DriftFixtureFile, String> {
     serde_json::from_str(&raw).map_err(|e| format!("parse {}: {e}", path.display()))
 }
 
-/// Run the simulator for a loaded fixture (empty crew).
+/// Run the simulator for a loaded fixture (default empty crew unless `synthetic_crew` is set).
 pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::SimulationResult {
     let attacker = spec.attacker.to_combatant("drift_attacker");
     let defender = spec.defender.to_combatant("drift_defender");
-    let config = SimulationConfig {
-        rounds: spec.simulation.rounds,
-        seed: spec.simulation.seed,
-        trace_mode: TraceMode::Off,
-        initial_attacker_hull_damage: 0.0,
-        weapon_damage_profile_additive_pool: None,
-        profile_weapon_damage_fraction: 0.0,
-        defender_hull_faction_id: 0,
-    };
-    simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
+    let config = simulation_config_for_drift(spec, TraceMode::Off);
+    let crew = crew_for_drift(&spec.synthetic_crew);
+    simulate_combat(&attacker, &defender, config, &crew)
 }
 
 /// Same as [`simulate_drift_fixture`] but records full combat trace events ([`TraceMode::Events`]).
 pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::SimulationResult {
     let attacker = spec.attacker.to_combatant("drift_attacker");
     let defender = spec.defender.to_combatant("drift_defender");
-    let config = SimulationConfig {
-        rounds: spec.simulation.rounds,
-        seed: spec.simulation.seed,
-        trace_mode: TraceMode::Events,
-        initial_attacker_hull_damage: 0.0,
-        weapon_damage_profile_additive_pool: None,
-        profile_weapon_damage_fraction: 0.0,
-        defender_hull_faction_id: 0,
-    };
-    simulate_combat(&attacker, &defender, config, &CrewConfiguration::default())
+    let config = simulation_config_for_drift(spec, TraceMode::Events);
+    let crew = crew_for_drift(&spec.synthetic_crew);
+    simulate_combat(&attacker, &defender, config, &crew)
 }
 
 fn band_mid(low: f64, high: f64) -> f64 {

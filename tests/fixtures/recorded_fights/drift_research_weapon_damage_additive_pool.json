@@ -1,0 +1,39 @@
+{
+  "id": "drift_research_weapon_damage_additive_pool",
+  "description": "Synthetic calibration slice for merged research/profile weapon_damage: uses weapon_damage_profile_additive_pool with round-start AttackMultiplier (pre_attack path). Companion: drift_research_weapon_damage_layered_no_pool.json (same crew/stats, layered model, higher per-hit effective attack).",
+  "synthetic_crew": {
+    "round_start_attack_multiplier": 0.5
+  },
+  "attacker": {
+    "id": "research_pool_att",
+    "attack": 0,
+    "mitigation": 0,
+    "pierce": 0,
+    "crit_chance": 0,
+    "hull_health": 8000,
+    "shield_health": 0,
+    "shield_mitigation": 0.8,
+    "weapons": [{ "attack": 200, "shots": 1, "crit_chance": 0 }]
+  },
+  "defender": {
+    "id": "research_pool_def",
+    "attack": 0,
+    "mitigation": 0.2,
+    "hull_health": 8000,
+    "shield_health": 0,
+    "shield_mitigation": 0.8
+  },
+  "simulation": {
+    "rounds": 40,
+    "seed": 91331,
+    "weapon_damage_profile_additive_pool": 0.25,
+    "profile_weapon_damage_fraction": 0.25
+  },
+  "bands": {
+    "total_damage": [8040.0, 8090.0],
+    "rounds_simulated": [36.0, 36.0],
+    "defender_hull_remaining": [0.0, 0.0],
+    "attacker_hull_remaining": [7999.0, 8000.0]
+  },
+  "expect_attacker_won": true
+}
