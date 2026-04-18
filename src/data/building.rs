@@ -92,6 +92,9 @@ pub struct BuildingIndexEntry {
     /// Optional filename stem (without .json) when using bid_name scheme, e.g. "0_ops_center".
     #[serde(default)]
     pub file: Option<String>,
+    /// Upstream starbase module id (`bid`) when known — used with sync import and [`crate::data::building_bid_resolver`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bid: Option<i64>,
 }
 
 pub const DEFAULT_BUILDINGS_INDEX_PATH: &str = "data/buildings/index.json";

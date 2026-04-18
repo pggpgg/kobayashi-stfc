@@ -381,11 +381,17 @@ async function main() {
   const index = {
     data_version: DATA_VERSION,
     source_note: SOURCE_NOTE,
-    buildings: records.map((r, i) => ({
-      id: r.id,
-      building_name: r.building_name,
-      file: fileStems[i],
-    })),
+    buildings: records.map((r, i) => {
+      const stem = fileStems[i];
+      const bidPrefix = String(stem).split("_")[0];
+      const bid = /^\d+$/.test(bidPrefix) ? Number(bidPrefix) : undefined;
+      return {
+        id: r.id,
+        building_name: r.building_name,
+        file: stem,
+        ...(bid !== undefined ? { bid } : {}),
+      };
+    }),
   };
 
   const validFileStems = new Set(fileStems);

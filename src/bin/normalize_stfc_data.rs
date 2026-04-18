@@ -339,6 +339,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     id: rec.id.clone(),
                     building_name: rec.building_name.clone(),
                     file: None,
+                    bid: None,
                 });
                 let out_path = out_buildings.join(format!("{}.json", rec.id));
                 fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;

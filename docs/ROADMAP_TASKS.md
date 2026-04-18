@@ -4,7 +4,7 @@
 2. [ ] Add missing canonical condition token mappings that already have explicit, testable engine meaning.
 3. [x] Enumerate and document all known hostile `ship_type` ids; add missing `match` arms and profile fields where needed.
 4. [x] Add validation checks to flag normalized hostiles with unmapped `upstream_ship_type`.
-5. [ ] Add `bid` coverage (or fallback mapping) to the building index to improve import/sync resolution.
+5. [x] Add `bid` coverage (or fallback mapping) to the building index to improve import/sync resolution.
 6. [x] Implement a strict validation report for unmapped building buffs and unsupported building conditions.
 7. [x] Audit forbidden/chaos tech catalog `fid` coverage and fill missing ids to keep sync application complete.
 8. [x] Re-run and review chaos-tech row generation (`build_chaos_tech_csv_rows.mjs`) and fix high-impact heuristic gaps.

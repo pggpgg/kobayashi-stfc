@@ -1,5 +1,7 @@
-//! Resolve game building id (bid) to KOBAYASHI building id using
-//! translations-starbase_modules.json and the building index.
+//! Resolve game building id (`bid`) to KOBAYASHI building `id` using
+//! `translations-starbase_modules.json` plus [`BuildingIndex`](crate::data::building::BuildingIndex):
+//! optional explicit [`BuildingIndexEntry::bid`](crate::data::building::BuildingIndexEntry::bid),
+//! ids shaped `building_{n}`, and `{n}_*` [`BuildingIndexEntry::file`](crate::data::building::BuildingIndexEntry::file) stems.
 
 use std::collections::HashMap;
 use std::fs;
@@ -7,7 +9,7 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-use crate::data::building::BuildingIndex;
+use crate::data::building::{BuildingIndex, BuildingIndexEntry};
 
 const STARBASE_MODULE_NAME_KEY: &str = "starbase_module_name";
 
@@ -76,16 +78,47 @@ pub fn build_bid_to_building_id_from_json(
         }
     }
 
-    // Strategy for new buildings: include any index entry whose id is building_{bid}.
-    // Sync may send a bid not in translations (e.g. new game building); if we have that
-    // building file in the index (from import or manual add), resolve bid so merge can load it.
+    // Supplement from index: explicit `bid`, id `building_{n}`, and/or `{bid}_*` file stem
+    // (stfc.space exports use numeric-prefixed file stems even when `id` is a stable slug).
     for entry in &building_index.buildings {
-        if let Some(bid) = parse_building_id_as_bid(&entry.id) {
+        for bid in index_entry_candidate_bids(entry) {
             out.entry(bid).or_insert_with(|| entry.id.clone());
         }
     }
 
     Some(out)
+}
+
+/// All plausible upstream `bid` values for this index row (deduplicated).
+fn index_entry_candidate_bids(entry: &BuildingIndexEntry) -> Vec<i64> {
+    let mut v: Vec<i64> = Vec::new();
+    if let Some(b) = entry.bid {
+        v.push(b);
+    }
+    if let Some(b) = parse_building_id_as_bid(&entry.id) {
+        if !v.contains(&b) {
+            v.push(b);
+        }
+    }
+    if let Some(b) = parse_bid_from_file_stem(entry.file.as_deref()) {
+        if !v.contains(&b) {
+            v.push(b);
+        }
+    }
+    v
+}
+
+/// If `file` stem is `{digits}_…` (e.g. `50_parsteel_generator_d`), returns those digits as `bid`.
+fn parse_bid_from_file_stem(file: Option<&str>) -> Option<i64> {
+    let f = file?.trim();
+    let (head, tail) = f.split_once('_')?;
+    if head.is_empty() || !head.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    if tail.is_empty() {
+        return None;
+    }
+    head.parse().ok()
 }
 
 /// If id is "building_<number>", returns Some(bid); otherwise None.
@@ -147,16 +180,19 @@ mod tests {
                     id: "ops_center".to_string(),
                     building_name: "OPERATIONS CENTER".to_string(),
                     file: None,
+                    bid: None,
                 },
                 BuildingIndexEntry {
                     id: "parsteel_generator_a".to_string(),
                     building_name: "Parsteel Generator A".to_string(),
                     file: None,
+                    bid: None,
                 },
                 BuildingIndexEntry {
                     id: "building_50".to_string(),
                     building_name: "BUILDING 50".to_string(),
                     file: None,
+                    bid: None,
                 },
             ],
         }
@@ -208,5 +244,37 @@ mod tests {
         assert_eq!(map.get(&50), Some(&"building_50".to_string()));
         assert!(!map.contains_key(&0));
         assert!(!map.contains_key(&1));
+    }
+
+    #[test]
+    fn bid_from_file_stem_when_id_is_not_building_n() {
+        let index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "custom_parsteel".to_string(),
+                building_name: "Parsteel Generator A".to_string(),
+                file: Some("1_parsteel_generator_a".to_string()),
+                bid: None,
+            }],
+        };
+        let map = build_bid_to_building_id_from_json("[]", &index).unwrap();
+        assert_eq!(map.get(&1), Some(&"custom_parsteel".to_string()));
+    }
+
+    #[test]
+    fn explicit_index_bid_is_used() {
+        let index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "legacy_ops".to_string(),
+                building_name: "Operations".to_string(),
+                file: None,
+                bid: Some(0),
+            }],
+        };
+        let map = build_bid_to_building_id_from_json("[]", &index).unwrap();
+        assert_eq!(map.get(&0), Some(&"legacy_ops".to_string()));
     }
 }
