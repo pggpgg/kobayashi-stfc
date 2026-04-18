@@ -476,6 +476,7 @@ fn effect_condition_from_canonical(
         tag: None,
         ship_type: None,
         faction_id: Some(fid),
+        ship_id: None,
         conditions: None,
     };
     match base {
@@ -492,6 +493,7 @@ fn effect_condition_from_canonical(
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: Some(vec![b, hull]),
         }),
     }

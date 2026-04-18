@@ -1,7 +1,7 @@
 # Kobayashi Work Queue (Ordered)
 
 1. [x] Build an "unknown mapping" report for canonical officer condition tokens and hostile `upstream_ship_type` values.
-2. [ ] Add missing canonical condition token mappings that already have explicit, testable engine meaning.
+2. [x] Add missing canonical condition token mappings that already have explicit, testable engine meaning.
 3. [x] Enumerate and document all known hostile `ship_type` ids; add missing `match` arms and profile fields where needed.
 4. [x] Add validation checks to flag normalized hostiles with unmapped `upstream_ship_type`.
 5. [x] Add `bid` coverage (or fallback mapping) to the building index to improve import/sync resolution.

@@ -217,6 +217,10 @@ pub enum AbilityConditionSpec {
     AttackerShipTypeIs {
         ship_type: String,
     },
+    /// Player ship identity gate ([`crate::combat::abilities::AbilityCondition::AttackerShipIdIs`]).
+    AttackerShipIdIs {
+        ship_id: String,
+    },
     DefenderFactionIs {
         faction: String,
     },

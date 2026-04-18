@@ -18,6 +18,7 @@ fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
         tag: None,
         ship_type: None,
         faction_id: None,
+        ship_id: None,
         conditions: None,
     }
 }
@@ -42,7 +43,49 @@ fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
         tag: None,
         ship_type: None,
         faction_id: None,
+        ship_id: None,
         conditions: Some(vec![inner]),
+    }
+}
+
+fn lcars_attacker_ship_id_is(ship_id: &str) -> LcarsCondition {
+    let mut c = lcars_cond_base("attacker_ship_id_is");
+    c.ship_id = Some(ship_id.to_string());
+    c
+}
+
+fn lcars_or(children: Vec<LcarsCondition>) -> LcarsCondition {
+    LcarsCondition {
+        condition_type: "or".to_string(),
+        stat: None,
+        threshold_pct: None,
+        min: None,
+        max: None,
+        faction: None,
+        group: None,
+        min_members: None,
+        tag: None,
+        ship_type: None,
+        faction_id: None,
+        ship_id: None,
+        conditions: Some(children),
+    }
+}
+
+/// Canonical `SelfHull*` → Kobayashi `data/ships_extended` ids (see `data/ships_extended/index.json`).
+fn map_self_hull_suffix_to_lcars(rest: &str) -> Option<LcarsCondition> {
+    match rest {
+        "Voyager" => Some(lcars_attacker_ship_id_is("uss_voyager")),
+        "Discovery" => Some(lcars_attacker_ship_id_is("uss_discovery")),
+        "BorgCube" => Some(lcars_attacker_ship_id_is("borg_cube")),
+        "NseaProtector" => Some(lcars_attacker_ship_id_is("nsea_protector")),
+        "Amalgam" => Some(lcars_attacker_ship_id_is("amalgam")),
+        "Junker" => Some(lcars_attacker_ship_id_is("gs_31")),
+        "Franklins" => Some(lcars_or(vec![
+            lcars_attacker_ship_id_is("uss_franklin"),
+            lcars_attacker_ship_id_is("uss_franklin_a"),
+        ])),
+        _ => None,
     }
 }
 
@@ -78,6 +121,12 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             return Some(lcars_not(lcars_defender_ship_type_is("armada")));
         }
         _ => {}
+    }
+
+    if let Some(rest) = t.strip_prefix("SelfHull") {
+        if let Some(c) = map_self_hull_suffix_to_lcars(rest) {
+            return Some(c);
+        }
     }
 
     if let Some(rest) = t.strip_prefix("Enemy") {
@@ -177,6 +226,7 @@ pub fn canonical_conditions_to_lcars(
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: Some(mapped),
         }),
     }
@@ -321,6 +371,41 @@ mod tests {
     }
 
     #[test]
+    fn self_hull_voyager_maps_to_attacker_ship_id() {
+        let c = map_canonical_condition_token("SelfHullVoyager").expect("maps");
+        assert_eq!(c.condition_type, "attacker_ship_id_is");
+        assert_eq!(c.ship_id.as_deref(), Some("uss_voyager"));
+        let ac = resolve_lcars_condition(&c).expect("resolver accepts");
+        assert_eq!(ac, AbilityCondition::AttackerShipIdIs("uss_voyager".into()));
+    }
+
+    #[test]
+    fn self_hull_franklins_maps_to_or_of_two_ship_ids() {
+        let c = map_canonical_condition_token("SelfHullFranklins").expect("maps");
+        assert_eq!(c.condition_type, "or");
+        let kids = c.conditions.as_ref().expect("or children");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "attacker_ship_id_is");
+        assert_eq!(kids[0].ship_id.as_deref(), Some("uss_franklin"));
+        assert_eq!(kids[1].ship_id.as_deref(), Some("uss_franklin_a"));
+        let ac = resolve_lcars_condition(&c).expect("resolver accepts combined or");
+        match ac {
+            AbilityCondition::Or(parts) => {
+                assert_eq!(parts.len(), 2);
+                assert_eq!(
+                    parts[0],
+                    AbilityCondition::AttackerShipIdIs("uss_franklin".into())
+                );
+                assert_eq!(
+                    parts[1],
+                    AbilityCondition::AttackerShipIdIs("uss_franklin_a".into())
+                );
+            }
+            _ => panic!("expected Or, got {ac:?}"),
+        }
+    }
+
+    #[test]
     fn enemy_hull_faction_token_not_mapped_without_attributes() {
         assert!(
             map_canonical_condition_token("EnemyHullFaction").is_none(),
@@ -357,11 +442,6 @@ mod tests {
             "TargetIsArmadaOrInvadingEntity",
             "TargetNotPlayerStation",
             "SelfCloaked",
-            "SelfHullBorgCube",
-            "SelfHullDiscovery",
-            "SelfHullFranklins",
-            "SelfHullNseaProtector",
-            "SelfHullVoyager",
             "SelfStateNone",
             "TargetIsInvadingEntity",
             "CargoEmpty",
@@ -372,8 +452,6 @@ mod tests {
             "HitEnemyWithKinetic",
             "HullHealthAbove",
             "SelfAtAssault2",
-            "SelfHullAmalgam",
-            "SelfHullJunker",
             "SelfMining",
             "TargetNotInvadingEntity",
         ];

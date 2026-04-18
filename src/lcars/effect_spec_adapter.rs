@@ -158,6 +158,19 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
                 ship_type: slug.to_string(),
             })
         }
+        "attacker_ship_id_is" | "self_ship_id_is" => {
+            let id = c
+                .ship_id
+                .as_deref()
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .ok_or_else(|| {
+                    format!("{ty} condition requires non-empty `ship_id`")
+                })?;
+            Ok(AbilityConditionSpec::AttackerShipIdIs {
+                ship_id: id.to_string(),
+            })
+        }
         "and" => {
             let children = c.conditions.as_ref().ok_or_else(|| {
                 "`and` condition requires non-empty `conditions` array".to_string()
@@ -332,6 +345,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         };
         let spec = lcars_condition_to_spec(&c).expect("spec");

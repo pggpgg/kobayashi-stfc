@@ -206,6 +206,9 @@ pub struct LcarsCondition {
     /// Upstream hostile `faction.id` for `defender_hull_faction_id` / canonical `EnemyHullFaction`.
     #[serde(default)]
     pub faction_id: Option<i64>,
+    /// Kobayashi `ships_extended` id for `attacker_ship_id_is` / canonical `SelfHull*` tokens.
+    #[serde(default)]
+    pub ship_id: Option<String>,
     #[serde(default)]
     pub conditions: Option<Vec<LcarsCondition>>,
 }

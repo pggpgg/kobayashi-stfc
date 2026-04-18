@@ -936,17 +936,34 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
         };
+        let strat = super::candidate_strategy_from_scenario(&scenario);
+        let n = count_effective_optimize_candidates(
+            &registry,
+            scenario.ship,
+            scenario.hostile,
+            scenario.seed,
+            scenario.profile_id,
+            strat,
+            &scenario.warm_start,
+        );
         let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true);
         assert!(
-            out.ranked.len() <= 4,
-            "expected at most 4 ranked crews, got {}",
+            out.ranked.len() <= n.min(4),
+            "ranked crews {} exceed min(n, keep) with n={n}",
             out.ranked.len()
         );
-        let (g, k) = out
-            .analytical_prefilter
-            .expect("truncation should be recorded");
-        assert!(g > k, "generated {g} should exceed kept {k}");
-        assert_eq!(k, 4);
+        if n > 4 {
+            let (g, k) = out
+                .analytical_prefilter
+                .expect("truncation should be recorded when n > keep");
+            assert!(g > k, "generated {g} should exceed kept {k}");
+            assert_eq!(k, 4);
+        } else {
+            assert!(
+                out.analytical_prefilter.is_none(),
+                "no truncation when candidate count n={n} does not exceed keep=4"
+            );
+        }
     }
 
     /// Regression: tiered Monte Carlo must use the same resolved ship row as exhaustive when tier/level are set.

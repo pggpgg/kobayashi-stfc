@@ -28,6 +28,7 @@ fn empty_lcars_condition() -> LcarsCondition {
         tag: None,
         ship_type: None,
         faction_id: None,
+        ship_id: None,
         conditions: None,
     }
 }
@@ -161,6 +162,12 @@ fn lcars_condition_matrix() -> Vec<LcarsCondition> {
                     x
                 },
             ]);
+            c
+        },
+        {
+            let mut c = empty_lcars_condition();
+            c.condition_type = "attacker_ship_id_is".into();
+            c.ship_id = Some("uss_voyager".into());
             c
         },
     ]

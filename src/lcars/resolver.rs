@@ -170,6 +170,17 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
             })?;
             Ok(AbilityCondition::AttackerShipTypeIs(st))
         }
+        "attacker_ship_id_is" | "self_ship_id_is" => {
+            let id = c
+                .ship_id
+                .as_deref()
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .ok_or_else(|| {
+                    format!("{ty} condition requires non-empty `ship_id` (Kobayashi ships_extended id)")
+                })?;
+            Ok(AbilityCondition::AttackerShipIdIs(id.to_string()))
+        }
         "and" => {
             let children = c.conditions.as_ref().ok_or_else(|| {
                 "`and` condition requires non-empty `conditions` array".to_string()
@@ -934,6 +945,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         }
     }
@@ -988,6 +1000,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: Some(vec![lcars_condition("morale_active"), fc.clone()]),
         };
         let ability = LcarsAbility {
@@ -1096,6 +1109,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: Some(1750120904),
+            ship_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1140,6 +1154,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1156,6 +1171,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1176,6 +1192,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1192,6 +1209,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         })
         .unwrap();
@@ -1212,10 +1230,62 @@ mod tests {
             tag: None,
             ship_type: Some("explorer".to_string()),
             faction_id: None,
+            ship_id: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
         assert_eq!(ac, AbilityCondition::DefenderShipTypeIs(ShipType::Explorer));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_attacker_ship_id_is_and_evaluates() {
+        let c = LcarsCondition {
+            condition_type: "attacker_ship_id_is".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: Some("uss_discovery".to_string()),
+            conditions: None,
+        };
+        let ac = resolve_lcars_condition(&c).expect("maps");
+        assert_eq!(
+            ac,
+            AbilityCondition::AttackerShipIdIs("uss_discovery".into())
+        );
+        let ctx_match = CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: false,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
+            defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 0,
+            defender_ship_type: ShipType::Battleship,
+            attacker_ship_type: ShipType::Explorer,
+            attacker_ship_id: "uss_discovery".into(),
+            defender_is_npc_hostile: true,
+            defender_is_player_ship: false,
+            attacker_tal_assigned_captain_or_bridge: false,
+        };
+        assert!(ac.evaluate(&ctx_match));
+        let ctx_other = CombatContext {
+            attacker_ship_id: "uss_voyager".into(),
+            ..ctx_match
+        };
+        assert!(!ac.evaluate(&ctx_other));
     }
 
     #[test]
@@ -1232,6 +1302,7 @@ mod tests {
             tag: None,
             ship_type: Some("battleship".to_string()),
             faction_id: None,
+            ship_id: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1282,6 +1353,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         })
         .expect("npc");
@@ -1297,6 +1369,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         })
         .expect("player");
@@ -1346,6 +1419,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: Some(vec![LcarsCondition {
                 condition_type: "defender_ship_type_is".to_string(),
                 stat: None,
@@ -1358,6 +1432,7 @@ mod tests {
                 tag: None,
                 ship_type: Some("armada".to_string()),
                 faction_id: None,
+                ship_id: None,
                 conditions: None,
             }]),
         };
@@ -1405,6 +1480,7 @@ mod tests {
             tag: None,
             ship_type: None,
             faction_id: None,
+            ship_id: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");

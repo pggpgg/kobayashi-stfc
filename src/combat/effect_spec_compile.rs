@@ -118,6 +118,9 @@ pub fn compile_condition(
                 .ok_or_else(|| EffectSpecCompileError::UnknownShipTypeSlug(ship_type.clone()))?;
             Ok(AbilityCondition::AttackerShipTypeIs(st))
         }
+        AbilityConditionSpec::AttackerShipIdIs { ship_id } => {
+            Ok(AbilityCondition::AttackerShipIdIs(ship_id.clone()))
+        }
         AbilityConditionSpec::DefenderFactionIs { faction } => {
             let tag = OpponentFactionTag::from_data_slug(faction)
                 .ok_or_else(|| EffectSpecCompileError::UnknownFactionSlug(faction.clone()))?;
@@ -287,6 +290,15 @@ mod tests {
     fn compile_condition_tal_not_on_bridge() {
         let c = compile_condition(&AbilityConditionSpec::AttackerOfficerTalNotOnBridge).unwrap();
         assert!(matches!(c, AbilityCondition::AttackerOfficerTalNotOnBridge));
+    }
+
+    #[test]
+    fn compile_condition_attacker_ship_id_is() {
+        let c = compile_condition(&AbilityConditionSpec::AttackerShipIdIs {
+            ship_id: "borg_cube".into(),
+        })
+        .unwrap();
+        assert_eq!(c, AbilityCondition::AttackerShipIdIs("borg_cube".into()));
     }
 
     #[test]

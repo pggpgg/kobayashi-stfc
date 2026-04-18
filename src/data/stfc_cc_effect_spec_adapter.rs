@@ -33,13 +33,6 @@ const STFC_CC_DEFERRED_CONDITION_TOKENS: &[&str] = &[
     "SelfAttacking",
     "SelfCloaked",
     "SelfDefending",
-    "SelfHullAmalgam",
-    "SelfHullBorgCube",
-    "SelfHullDiscovery",
-    "SelfHullFranklins",
-    "SelfHullJunker",
-    "SelfHullNseaProtector",
-    "SelfHullVoyager",
     "SelfMining",
     "SelfStateNone",
     "TargetIsArmadaOrInvadingEntity",
@@ -335,6 +328,34 @@ fn map_condition_token(
         "DefenderNpcHostile" | "EnemyHostile" => Ok(AbilityConditionSpec::DefenderIsNpcHostile),
         "DefenderPlayerShip" | "EnemyPlayer" => Ok(AbilityConditionSpec::DefenderIsPlayerShip),
         "SelfOfficerTalNotOnBridge" => Ok(AbilityConditionSpec::AttackerOfficerTalNotOnBridge),
+        "SelfHullVoyager" => Ok(AbilityConditionSpec::AttackerShipIdIs {
+            ship_id: "uss_voyager".into(),
+        }),
+        "SelfHullDiscovery" => Ok(AbilityConditionSpec::AttackerShipIdIs {
+            ship_id: "uss_discovery".into(),
+        }),
+        "SelfHullBorgCube" => Ok(AbilityConditionSpec::AttackerShipIdIs {
+            ship_id: "borg_cube".into(),
+        }),
+        "SelfHullNseaProtector" => Ok(AbilityConditionSpec::AttackerShipIdIs {
+            ship_id: "nsea_protector".into(),
+        }),
+        "SelfHullAmalgam" => Ok(AbilityConditionSpec::AttackerShipIdIs {
+            ship_id: "amalgam".into(),
+        }),
+        "SelfHullJunker" => Ok(AbilityConditionSpec::AttackerShipIdIs {
+            ship_id: "gs_31".into(),
+        }),
+        "SelfHullFranklins" => Ok(AbilityConditionSpec::Or {
+            any: vec![
+                AbilityConditionSpec::AttackerShipIdIs {
+                    ship_id: "uss_franklin".into(),
+                },
+                AbilityConditionSpec::AttackerShipIdIs {
+                    ship_id: "uss_franklin_a".into(),
+                },
+            ],
+        }),
         "TargetNotArmada" => Ok(AbilityConditionSpec::Not {
             inner: Box::new(AbilityConditionSpec::DefenderShipTypeIs {
                 ship_type: "armada".into(),
@@ -765,6 +786,28 @@ mod tests {
         assert!(matches!(
             spec.conditions[0],
             AbilityConditionSpec::AttackerOfficerTalNotOnBridge
+        ));
+    }
+
+    #[test]
+    fn self_hull_voyager_condition_parses_to_attacker_ship_id() {
+        let h = headers_sample();
+        let rec = StringRecord::from(vec![
+            "X",
+            "OA",
+            "CargoCapacity",
+            "SelfHullVoyager",
+            "ShipLaunched",
+            "SelfShip",
+            "MultiplyAdd",
+            "1",
+            "0.1",
+        ]);
+        let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
+        assert_eq!(spec.conditions.len(), 1);
+        assert!(matches!(
+            spec.conditions[0],
+            AbilityConditionSpec::AttackerShipIdIs { ref ship_id } if ship_id == "uss_voyager"
         ));
     }
 
