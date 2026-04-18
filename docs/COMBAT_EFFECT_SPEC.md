@@ -250,7 +250,7 @@ Treat as ingestion aliases:
 
 Important: stfc.cc naming is input vocabulary, not runtime contract.
 
-**Implementation:** [`src/data/stfc_cc_effect_spec_adapter.rs`](../src/data/stfc_cc_effect_spec_adapter.rs) maps cheat-sheet columns to [`CombatEffectSpec`] where tokens are known; unknown modifiers/triggers/targets/operations/conditions emit stable `unmapped_*:` diagnostics. CLI: `cargo run --bin stfc_cc_cheat_sheet_report` (optional report on `data/upstream/cheat-sheet/raw-officers-m88-17rc.csv`).
+**Implementation:** `[src/data/stfc_cc_effect_spec_adapter.rs](../src/data/stfc_cc_effect_spec_adapter.rs)` maps cheat-sheet columns to [`CombatEffectSpec`] where tokens are known; unknown modifiers/triggers/targets/operations/conditions emit stable `unmapped_*:` diagnostics. CLI: `cargo run --bin stfc_cc_cheat_sheet_report` (optional report on `data/upstream/cheat-sheet/raw-officers-m88-17rc.csv`).
 
 ## Compile target
 
@@ -303,16 +303,14 @@ No immediate engine rewrite is required.
 
 1. Introduce `CombatEffectSpec` structs + serde schema in `src/data/combat_effect_spec.rs`.
 2. Add adapters:
-   - LCARS -> spec
-   - research row -> spec
-   - optional stfc.cc CSV -> spec
+  - LCARS -> spec
+  - research row -> spec
+  - optional stfc.cc CSV -> spec
 3. Add a compiler: spec -> current engine structs.
 4. Move existing `research_derived_attack_phase_seats` logic onto spec compiler output.
 5. Add parity tests:
-   - current behavior vs compiled behavior for officers and research fixtures.
+  - current behavior vs compiled behavior for officers and research fixtures.
 6. Keep old paths temporarily behind a feature flag; remove after parity confidence.
-
-Detailed implementation checklist: [COMBAT_EFFECT_SPEC_CHECKLIST.md](COMBAT_EFFECT_SPEC_CHECKLIST.md).
 
 ## Phase 1 scope (implementation)
 
@@ -323,3 +321,4 @@ Phase 1 delivers the **canonical IR + serde**, a **compiler to existing engine s
 - Replacing LCARS YAML as officer authoring input.
 - Committing to raw stfc.cc field names as the internal runtime API.
 - Expanding unsupported mechanics without engine evidence/tests.
+

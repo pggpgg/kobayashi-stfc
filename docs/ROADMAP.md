@@ -70,8 +70,7 @@ Current state: officer effects are LCARS-native, while research uses stat rows p
 
 ### Draft schema
 
-- Spec draft: [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md).
-- Implementation checklist: [COMBAT_EFFECT_SPEC_CHECKLIST.md](COMBAT_EFFECT_SPEC_CHECKLIST.md).
+- Spec draft and implementation notes: [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md).
 
 ### Phase 1 non-goals (while the spec flag is rolling out)
 
