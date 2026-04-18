@@ -20,6 +20,8 @@ pub const MAX_CANDIDATES: u32 = 2_000_000;
 pub const MAX_ANALYTICAL_PREFILTER_KEEP: u32 = 500_000;
 pub const MAX_TIERED_SCOUT_SIMS: u32 = 100_000;
 pub const MAX_TIERED_TOP_K: u32 = 500;
+pub const MAX_NOVELTY_DIVERSE_TOP: u32 = 500;
+pub const MAX_NOVELTY_POOL: u32 = 10_000;
 pub const MAX_WARM_START_CREWS: usize = 24;
 
 pub const MAX_OPTIMIZE_CONSTRAINT_LIST_LEN: usize = 32;
@@ -138,6 +140,12 @@ pub struct OptimizeRequest {
     pub chain: Option<ChainGrindRequest>,
     #[serde(default)]
     pub defender_opponent: DefenderOpponent,
+    /// Maximal marginal relevance blend (0, 1]; when set, reorders the recommendation head for materially diverse officer sets.
+    pub novelty_lambda: Option<f32>,
+    /// How many leading recommendations use MMR (optional; server defaults when `novelty_lambda` is set).
+    pub novelty_diverse_top: Option<u32>,
+    /// Strength-sorted pool size considered for MMR (optional; must be ≥ `novelty_diverse_top` when both are set).
+    pub novelty_pool: Option<u32>,
 }
 
 /// JSON body for `OptimizeRequest.constraints`.
@@ -302,6 +310,50 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
             errors.push(ValidationIssue {
                 field: "below_decks_slots",
                 messages: vec![format!("if set, must be between {lo} and {hi}")],
+            });
+        }
+    }
+
+    let has_novelty_extras = request.novelty_diverse_top.is_some() || request.novelty_pool.is_some();
+    if has_novelty_extras && request.novelty_lambda.is_none() {
+        errors.push(ValidationIssue {
+            field: "novelty_lambda",
+            messages: vec!["required when novelty_diverse_top or novelty_pool is set".to_string()],
+        });
+    }
+    if let Some(l) = request.novelty_lambda {
+        if l <= 0.0 || l > 1.0 {
+            errors.push(ValidationIssue {
+                field: "novelty_lambda",
+                messages: vec!["if set, must be greater than 0 and at most 1".to_string()],
+            });
+        }
+    }
+    if let Some(d) = request.novelty_diverse_top {
+        if d == 0 || d > MAX_NOVELTY_DIVERSE_TOP {
+            errors.push(ValidationIssue {
+                field: "novelty_diverse_top",
+                messages: vec![format!(
+                    "if set, must be between 1 and {MAX_NOVELTY_DIVERSE_TOP}"
+                )],
+            });
+        }
+    }
+    if let Some(p) = request.novelty_pool {
+        if p < 2 || p > MAX_NOVELTY_POOL {
+            errors.push(ValidationIssue {
+                field: "novelty_pool",
+                messages: vec![format!("if set, must be between 2 and {MAX_NOVELTY_POOL}")],
+            });
+        }
+    }
+    if let (Some(d), Some(p)) = (request.novelty_diverse_top, request.novelty_pool) {
+        if p < d {
+            errors.push(ValidationIssue {
+                field: "novelty_pool",
+                messages: vec![
+                    "if both novelty_pool and novelty_diverse_top are set, novelty_pool must be >= novelty_diverse_top".to_string(),
+                ],
             });
         }
     }

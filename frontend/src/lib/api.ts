@@ -481,6 +481,10 @@ export interface OptimizeResponse {
     effective_strategy: string;
     strategy_auto: boolean;
     requested_strategy?: string | null;
+    /** Maximal marginal relevance blend when client requested novelty-aware ordering. */
+    novelty_lambda?: number | null;
+    novelty_diverse_top?: number | null;
+    novelty_pool?: number | null;
   };
   recommendations: CrewRecommendation[];
   duration_ms?: number;

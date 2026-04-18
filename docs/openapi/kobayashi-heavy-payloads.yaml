@@ -434,6 +434,22 @@ components:
             type: string
         chain:
           $ref: "#/components/schemas/ChainGrindRequestDto"
+        defender_opponent:
+          type: string
+        novelty_lambda:
+          type: number
+          format: float
+          description: Optional MMR blend in (0,1] — reorders the recommendation head for officer-set diversity versus pure win rate
+        novelty_diverse_top:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 500
+        novelty_pool:
+          type: integer
+          format: int32
+          minimum: 2
+          maximum: 10000
 
     ReplaySeedCrew:
       type: object

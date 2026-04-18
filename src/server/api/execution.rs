@@ -20,7 +20,7 @@ use crate::optimizer::monte_carlo::{
     run_monte_carlo_parallel_with_registry, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
 };
-use crate::optimizer::ranking::{rank_results, RankedCrewResult};
+use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
 use crate::optimizer::{
     count_effective_optimize_candidates, optimize_scenario_with_progress_with_registry,
     OptimizationScenario, OptimizeProgressTick, OptimizerStrategy,
@@ -208,6 +208,12 @@ pub struct ScenarioSummary {
     /// Echo of the client `strategy` field when present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub requested_strategy: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub novelty_lambda: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub novelty_diverse_top: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub novelty_pool: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -565,7 +571,15 @@ fn build_optimize_response(
 ) -> OptimizeResponse {
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     let seed = request.seed.unwrap_or(0);
-    let ranked_results = rank_results(all_results);
+    let mut ranked_results = rank_results(all_results);
+    if request.novelty_lambda.is_some() {
+        ranked_results = apply_novelty_mmr_if_configured(
+            ranked_results,
+            request.novelty_lambda,
+            request.novelty_diverse_top.map(|n| n as usize),
+            request.novelty_pool.map(|n| n as usize),
+        );
+    }
 
     let engine = if meta.heuristics_only {
         "heuristics"
@@ -631,6 +645,12 @@ fn build_optimize_response(
                 .to_string(),
         );
     }
+    if request.novelty_lambda.is_some() {
+        approximate_notes.push(
+            "The leading recommendations use novelty-aware ordering (maximal marginal relevance on officer sets). Remaining rows stay in strength order."
+                .to_string(),
+        );
+    }
 
     let mut warnings = Vec::new();
     if meta.using_placeholder_combatants {
@@ -657,6 +677,9 @@ fn build_optimize_response(
             effective_strategy: optimizer_strategy_to_api_label(meta.strategy).to_string(),
             strategy_auto: meta.strategy_auto,
             requested_strategy: request.strategy.clone(),
+            novelty_lambda: request.novelty_lambda,
+            novelty_diverse_top: request.novelty_diverse_top,
+            novelty_pool: request.novelty_pool,
         },
         recommendations: ranked_results
             .iter()
