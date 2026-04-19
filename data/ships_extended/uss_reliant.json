@@ -1830,6 +1830,7 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
       "round_cap": null
     },
     {
@@ -1843,6 +1844,7 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
       "round_cap": null
     },
     {
@@ -1856,6 +1858,7 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
   ]

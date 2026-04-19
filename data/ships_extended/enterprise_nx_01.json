@@ -1092,6 +1092,7 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": "xindi",
       "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
   ]
