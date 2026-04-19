@@ -5,7 +5,8 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion, Throughput};
 use kobayashi::combat::{
-    simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
+    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration,
+    CrewSeat, CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
 };
 
 fn default_attacker() -> Combatant {
@@ -49,6 +50,24 @@ fn default_defender() -> Combatant {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+    }
+}
+
+/// Synthetic below-decks row exercising [`AbilityEffect::HullRegenPrevRoundFraction`] (bench-only).
+fn synthetic_prev_round_hull_crew() -> CrewConfiguration {
+    CrewConfiguration {
+        seats: vec![CrewSeatContext::legacy(
+            CrewSeat::BelowDeck,
+            Ability {
+                name: "BenchPrevRoundHull".into(),
+                class: AbilityClass::BelowDeck,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::HullRegenPrevRoundFraction(0.35),
+                condition: None,
+            },
+            false,
+        )],
     }
 }
 
@@ -122,6 +141,32 @@ fn bench_simulator(c: &mut Criterion) {
             BatchSize::SmallInput,
         );
     });
+    group.throughput(Throughput::Elements(1));
+
+    // Same combat shape as `combat_100_rounds`, with synthetic prev-round hull regen crew (A/B vs empty).
+    let prev_round_crew = synthetic_prev_round_hull_crew();
+    group.bench_with_input(
+        "combat_100_rounds_prev_round_hull_crew",
+        &rounds_full,
+        |b, &rounds| {
+            let attacker = default_attacker();
+            let defender = default_defender();
+            let config = SimulationConfig {
+                rounds,
+                seed: 7,
+                trace_mode: TraceMode::Off,
+                initial_attacker_hull_damage: 0.0,
+                weapon_damage_profile_additive_pool: None,
+                profile_weapon_damage_fraction: 0.0,
+                defender_hull_faction_id: 0,
+            };
+            b.iter_batched(
+                || (attacker.clone(), defender.clone()),
+                |(a, d)| black_box(simulate_combat(&a, &d, config, &prev_round_crew)),
+                BatchSize::SmallInput,
+            );
+        },
+    );
     group.throughput(Throughput::Elements(1));
 
     group.finish();

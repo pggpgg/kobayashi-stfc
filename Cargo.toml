@@ -104,3 +104,9 @@ windows-sys = { version = "0.59", features = ["Win32_System_Threading"] }
 criterion = "0.5"
 serial_test = "3"
 tower = { version = "0.4", features = ["util"] }
+
+# Release-grade optimizations with debuginfo for local profilers (samply, Instruments).
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = "none"
