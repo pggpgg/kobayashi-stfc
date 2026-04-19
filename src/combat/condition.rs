@@ -6,6 +6,7 @@
 //! so morale, burning, hull breach, faction, class, and round caps do not diverge across importers.
 
 use crate::combat::abilities::{AbilityCondition, CombatContext};
+use crate::combat::hostile_tags::required_mask_from_condition_slugs;
 use crate::combat::types::{OpponentFactionTag, ShipType, MAX_COMBAT_ROUNDS};
 use crate::data::research::ResearchBonusConditionKey;
 use crate::data::ship::ShipAbility;
@@ -76,6 +77,10 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::AttackerOfficerTalNotOnBridge => {
             !ctx.attacker_tal_assigned_captain_or_bridge
         }
+        AbilityCondition::DefenderHostileTagsAllPresent { required_mask } => {
+            *required_mask != 0
+                && (ctx.defender_hostile_tag_mask & *required_mask) == *required_mask
+        }
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),
@@ -102,6 +107,15 @@ pub fn ability_condition_from_ship_ability(ability: &ShipAbility) -> Option<Abil
     if let Some(ref slug) = ability.condition_opponent_ship_class {
         if let Some(st) = ShipType::from_data_slug(slug) {
             parts.push(AbilityCondition::DefenderShipTypeIs(st));
+        }
+    }
+    if let Some(ref tags) = ability.condition_opponent_hostile_tags {
+        if !tags.is_empty() {
+            if let Some(mask) = required_mask_from_condition_slugs(tags) {
+                parts.push(AbilityCondition::DefenderHostileTagsAllPresent {
+                    required_mask: mask,
+                });
+            }
         }
     }
     if let Some(n) = ability.round_cap.filter(|&n| n > 0) {
@@ -167,6 +181,7 @@ mod tests {
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
+            defender_hostile_tag_mask: 0,
         }
     }
 
@@ -314,6 +329,7 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: Some("klingon".into()),
             condition_opponent_ship_class: Some("battleship".into()),
+            condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
         };

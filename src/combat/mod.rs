@@ -8,6 +8,7 @@ pub mod effect_spec_compile;
 pub mod engine;
 pub mod events;
 pub mod export_csv;
+pub mod hostile_tags;
 pub mod log_ingest;
 pub mod mitigation;
 pub mod mitigation_sensitivity;
@@ -26,6 +27,7 @@ pub use damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
     compute_isolytic_taken,
 };
+pub use hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG;
 pub use engine::{
     apply_morale_primary_piercing, component_mitigation, effective_shots_for_weapon,
     isolytic_damage, mitigation, mitigation_for_hostile, mitigation_with_morale,

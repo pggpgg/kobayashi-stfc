@@ -34,10 +34,15 @@ struct AbilityCatalogEntry {
     #[serde(default)]
     condition_opponent_ship_class: Option<String>,
     #[serde(default)]
+    condition_opponent_hostile_tags: Option<Vec<String>>,
+    #[serde(default)]
     round_cap: Option<u32>,
     /// When true, emit [`ShipAbility::level_scaled_values`] from every upstream `values[]` row (still one [`ShipAbility`]).
     #[serde(default)]
     values_scale_with_ship_level: bool,
+    /// Multiply normalized numeric `value` / curve entries after the usual `value_is_percentage` scaling (e.g. Borg Omicron uses `0.001` on upstream “percent × 100” rows).
+    #[serde(default)]
+    post_scale: Option<f64>,
 }
 
 use kobayashi::data::ship::{
@@ -256,6 +261,7 @@ fn raw_to_extended(
             };
 
             let scale_curve = entry.values_scale_with_ship_level;
+            let post = entry.post_scale.unwrap_or(1.0);
             let level_scaled_values = if scale_curve {
                 let mut curve: Vec<f64> = Vec::with_capacity(values_arr.len());
                 for item in values_arr {
@@ -265,7 +271,7 @@ fn raw_to_extended(
                     } else {
                         raw_value
                     };
-                    curve.push(v);
+                    curve.push(v * post);
                 }
                 Some(curve)
             } else {
@@ -273,17 +279,18 @@ fn raw_to_extended(
             };
 
             let value = if let Some(v) = entry.value_override {
-                v
+                v * post
             } else {
                 let raw_value = first_val
                     .get("value")
                     .and_then(Value::as_f64)
                     .unwrap_or(0.0);
-                if value_is_percentage {
+                let base = if value_is_percentage {
                     raw_value * 0.01
                 } else {
                     raw_value
-                }
+                };
+                base * post
             };
 
             out.push(ShipAbility {
@@ -297,6 +304,7 @@ fn raw_to_extended(
                 condition_defender_hull_breach: entry.condition_defender_hull_breach,
                 condition_opponent_faction: entry.condition_opponent_faction.clone(),
                 condition_opponent_ship_class: entry.condition_opponent_ship_class.clone(),
+                condition_opponent_hostile_tags: entry.condition_opponent_hostile_tags.clone(),
                 round_cap: entry.round_cap,
                 level_scaled_values,
             });

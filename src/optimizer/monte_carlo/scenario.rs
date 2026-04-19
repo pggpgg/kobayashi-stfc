@@ -439,6 +439,14 @@ impl SharedScenarioData {
             .unwrap_or(ShipType::Battleship)
     }
 
+    /// Hostile tag bitmask for [`crate::combat::SimulationConfig::defender_hostile_tag_mask`] (0 when no hostile record or no tags).
+    pub(crate) fn defender_hostile_tag_mask_for_combat(&self) -> u32 {
+        self.hostile_rec
+            .as_ref()
+            .map(|h| h.hostile_tag_mask())
+            .unwrap_or(0)
+    }
+
     /// Player hull class for hostile-side ability conditions (defaults when no ship record).
     pub(crate) fn attacker_ship_type_for_combat(&self) -> ShipType {
         self.ship_rec
@@ -1854,6 +1862,7 @@ mod tests {
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
+                condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
             }]),
@@ -1887,6 +1896,7 @@ mod tests {
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: Some("interceptor".into()),
+                condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
             }]),
@@ -1921,6 +1931,7 @@ mod tests {
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
+                condition_opponent_hostile_tags: None,
                 round_cap: Some(3),
                 level_scaled_values: None,
             }]),
@@ -2018,6 +2029,7 @@ mod tests {
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
+                condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
             }]),

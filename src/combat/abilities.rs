@@ -151,6 +151,8 @@ pub enum AbilityEffect {
         per_round: f64,
         cap: f64,
     },
+    /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables instant-kill beams when that subsystem is modeled.
+    ConquerorBorgBeamSuppression,
 }
 
 /// Combat context for condition evaluation at runtime.
@@ -189,6 +191,8 @@ pub struct CombatContext {
     pub defender_is_player_ship: bool,
     /// True when officer Tal ([`TAL_OFFICER_LCARS_ID`]) occupies a Captain or Bridge seat on the attacker crew.
     pub attacker_tal_assigned_captain_or_bridge: bool,
+    /// Bitmask of tags on the defending NPC hostile (from [`crate::combat::SimulationConfig::defender_hostile_tag_mask`]).
+    pub defender_hostile_tag_mask: u32,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -234,6 +238,8 @@ pub enum AbilityCondition {
     DefenderIsPlayerShip,
     /// Canonical `SelfOfficerTalNotOnBridge`: true when Tal is not assigned Captain or Bridge on the attacker.
     AttackerOfficerTalNotOnBridge,
+    /// Every bit in `required_mask` is set on [`CombatContext::defender_hostile_tag_mask`] (built from AND of catalog tag slugs).
+    DefenderHostileTagsAllPresent { required_mask: u32 },
     /// Logical negation of a single sub-condition (LCARS `not`).
     Not(Box<AbilityCondition>),
     And(Vec<AbilityCondition>),

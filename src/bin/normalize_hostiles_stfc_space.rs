@@ -131,6 +131,51 @@ fn systems_from_values(vals: &[Value]) -> Vec<u64> {
     vals.iter().filter_map(value_to_u64).collect()
 }
 
+/// Upstream hostile JSON has no tag field; we merge [`HostileRecord::hostile_tags`] for known
+/// Conqueror Borg Suppressor / Obliterator rows so Borg Sphere passives can gate in combat.
+/// Names from `translations-navigation.json` (`marauder_name_only`): **Conqueror Borg Suppressor**
+/// (`loca_id` 89050–89052), **Conqueror Borg Obliterator** (`loca_id` 89053–89055; text includes
+/// `&#128128;` in JSON). Extend if Scopely adds more `loca_id`s with the same combat family.
+fn curated_hostile_tags_for_upstream_id(id: u64) -> Vec<String> {
+    const CONQUEROR_BORG_IDS: &[u64] = &[
+        316662618,
+        467189343,
+        500305250,
+        622949343,
+        778146301,
+        80039078,
+        864202735,
+        1117012705,
+        1137196075,
+        1361645982,
+        1361807236,
+        1379653470,
+        1458200336,
+        1472989983,
+        1851381248,
+        1976922167,
+        2529890757,
+        2689858241,
+        2813867447,
+        3021977695,
+        3192494251,
+        3293454542,
+        3385025265,
+        3644288642,
+        3767637067,
+        3820292784,
+        3907896092,
+        4008480588,
+        4082735163,
+        4113208627,
+        4280642366,
+    ];
+    if CONQUEROR_BORG_IDS.contains(&id) {
+        return vec!["conqueror_borg".to_string()];
+    }
+    Vec::new()
+}
+
 fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     let id = raw.id.to_string();
     let stats = raw.stats.unwrap_or_default();
@@ -191,6 +236,7 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
         shield_piercing: stats.shield_piercing,
         crit_chance: stats.critical_chance,
         crit_damage: stats.critical_damage,
+        hostile_tags: curated_hostile_tags_for_upstream_id(raw.id),
         components: raw.components,
         ability: raw.ability,
         resources: raw.resources,

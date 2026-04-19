@@ -6,7 +6,8 @@ use kobayashi::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant,
     CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EventSource, OpponentFactionTag,
     ShipType, SimulationConfig, StackContribution, StatStacking, TimingWindow, TraceCollector,
-    TraceMode, WeaponStats, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
+    TraceMode, WeaponStats, EPSILON, HOSTILE_TAG_MASK_CONQUEROR_BORG, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    PIERCE_CAP,
 };
 use serde_json::{Map, Value};
 
@@ -47,6 +48,7 @@ fn defender_counter_respects_weapon_base_shots() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let player = Combatant {
         id: "player".into(),
@@ -117,6 +119,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let player = Combatant {
         id: "player".into(),
@@ -429,6 +432,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -538,6 +542,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -639,6 +644,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let baseline = simulate_combat(
         &attacker,
@@ -816,6 +822,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration::default();
 
@@ -905,6 +912,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     // 200 damage: 80% = 160 to shield, 20% = 40 to hull.
@@ -962,6 +970,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     approx_eq(result.total_damage, 1000.0, 1e-12);
@@ -1017,6 +1026,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
@@ -1073,6 +1083,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_shred = CrewConfiguration {
@@ -1156,6 +1167,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_barrier = CrewConfiguration {
@@ -1240,6 +1252,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew_no_ship_ability = CrewConfiguration::default();
     let crew_with_ship_ability = CrewConfiguration {
@@ -1319,6 +1332,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1358,6 +1372,249 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         "faction-gated attack multiplier should apply only for matching defender faction"
     );
     approx_eq(romulan.total_damage, klingon.total_damage / 2.0, 1.0);
+}
+
+#[test]
+fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: None,
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "vs_conqueror_borg".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::AttackMultiplier(0.5),
+                condition: Some(AbilityCondition::DefenderHostileTagsAllPresent {
+                    required_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
+                }),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let cfg_no_tag = SimulationConfig {
+        rounds: 1,
+        seed: 11,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+    };
+    let cfg_tagged = SimulationConfig {
+        defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
+        ..cfg_no_tag
+    };
+    let no_tag = simulate_combat(&attacker, &defender, cfg_no_tag, &crew);
+    let tagged = simulate_combat(&attacker, &defender, cfg_tagged, &crew);
+    assert!(
+        tagged.total_damage > no_tag.total_damage,
+        "hostile-tag-gated attack multiplier should apply only when defender_hostile_tag_mask matches"
+    );
+    approx_eq(no_tag.total_damage, tagged.total_damage / 1.5, 1.0);
+}
+
+#[test]
+fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 200.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 5_000.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "apex_vs_conqueror_borg".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::ApexBarrierBonus(5_000.0),
+                condition: Some(AbilityCondition::DefenderHostileTagsAllPresent {
+                    required_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
+                }),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let cfg_no_tag = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+    };
+    let cfg_tagged = SimulationConfig {
+        defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
+        ..cfg_no_tag
+    };
+    let no_tag = simulate_combat(&attacker, &defender, cfg_no_tag, &crew);
+    let tagged = simulate_combat(&attacker, &defender, cfg_tagged, &crew);
+    assert!(
+        tagged.total_damage < no_tag.total_damage,
+        "hostile-tag-gated apex barrier bonus should reduce damage only when mask matches"
+    );
+}
+
+#[test]
+fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 50.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "beam_suppression".to_string(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::ConquerorBorgBeamSuppression,
+                condition: Some(AbilityCondition::DefenderHostileTagsAllPresent {
+                    required_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
+                }),
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let cfg_no_tag = SimulationConfig {
+        rounds: 1,
+        seed: 3,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+    };
+    let cfg_tagged = SimulationConfig {
+        defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
+        ..cfg_no_tag
+    };
+    assert!(!simulate_combat(&attacker, &defender, cfg_no_tag, &crew).conqueror_borg_beam_suppression);
+    assert!(
+        simulate_combat(&attacker, &defender, cfg_tagged, &crew).conqueror_borg_beam_suppression
+    );
 }
 
 #[test]
@@ -1412,6 +1669,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1512,6 +1770,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1613,6 +1872,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1715,6 +1975,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1844,6 +2105,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let uncapped = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1964,6 +2226,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew_plain = CrewConfiguration::default();
     let crew_crozier_style = CrewConfiguration {
@@ -2071,6 +2334,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -2156,6 +2420,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, config, &no_morale);
@@ -2257,6 +2522,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let never_morale = simulate_combat(&attacker, &defender, config, &crew_with_morale_chance(0.0));
@@ -2371,6 +2637,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, config, &baseline_crew);
@@ -2470,6 +2737,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -2560,6 +2828,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -2651,6 +2920,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -2740,6 +3010,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -2820,6 +3091,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -2884,6 +3156,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let crew = CrewConfiguration::default();
@@ -3112,6 +3385,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let valid_crew = CrewConfiguration {
@@ -3217,6 +3491,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let boosted = CrewConfiguration {
@@ -3304,6 +3579,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let attack_phase_crew = CrewConfiguration {
@@ -3438,6 +3714,7 @@ fn burning_deals_one_percent_hull_per_round() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_crew,
     );
@@ -3541,6 +3818,7 @@ fn burning_triggers_on_combat_begin() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_only_crew(TimingWindow::CombatBegin),
     );
@@ -3598,6 +3876,7 @@ fn burning_triggers_on_defense_phase_per_shot() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_only_crew(TimingWindow::DefensePhase),
     );
@@ -3655,6 +3934,7 @@ fn burning_triggers_on_round_end_before_tick() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_only_crew(TimingWindow::RoundEnd),
     );
@@ -3719,6 +3999,7 @@ fn burning_triggers_on_shield_break() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_only_crew(TimingWindow::ShieldBreak),
     );
@@ -3816,6 +4097,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -3873,6 +4155,7 @@ fn burning_triggers_on_receive_damage_hull() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_only_crew(TimingWindow::ReceiveDamage),
     );
@@ -3930,6 +4213,7 @@ fn burning_triggers_on_kill() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_only_crew(TimingWindow::Kill),
     );
@@ -3987,6 +4271,7 @@ fn burning_triggers_on_after_subround() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &burning_only_crew(TimingWindow::AfterSubround),
     );
@@ -4134,6 +4419,7 @@ fn emits_ability_activation_for_each_timing_window() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -4251,6 +4537,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
 
     let summed = simulate_combat(&attacker, &defender, config, &two_ten_percent);
@@ -4328,6 +4615,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &decay_crew);
     assert!(result.total_damage > 0.0);
@@ -4402,6 +4690,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &accumulate_crew);
     assert!(result.total_damage > 0.0);
@@ -4460,6 +4749,7 @@ fn combat_rounds_are_capped_at_100() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &CrewConfiguration::default(),
     );
@@ -4552,6 +4842,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew_no_regen,
     );
@@ -4566,6 +4857,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew_with_regen,
     );
@@ -4631,6 +4923,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &CrewConfiguration::default(),
     );
@@ -4697,6 +4990,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration::default();
     let result_no_iso = simulate_combat(&attacker_no_iso, &defender, config, &crew);
@@ -4762,6 +5056,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew_empty = CrewConfiguration::default();
     let crew_with_iso = CrewConfiguration {
@@ -4836,6 +5131,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew_base_iso = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -4952,6 +5248,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -5037,6 +5334,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -5113,6 +5411,7 @@ fn shots_bonus_increases_damage() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let no_bonus = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
 
@@ -5230,6 +5529,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -5314,6 +5614,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew_with_regen,
     );
@@ -5328,6 +5629,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &CrewConfiguration::default(),
     );
@@ -5433,6 +5735,7 @@ fn combat_end_window_respects_condition_filtering() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -5521,6 +5824,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         },
         &crew,
     );
@@ -5652,6 +5956,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let res = simulate_combat(&attacker, &defender, config, &crew);
     // Round 1–3 each heal 100 at round start: 400 − 300 = 100 net hull damage.
@@ -5727,6 +6032,7 @@ fn defender_round_start_hull_regen_heals_defender() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let without = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -5836,6 +6142,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,

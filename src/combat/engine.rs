@@ -320,9 +320,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_is_npc_hostile,
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,
+        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
+    let conqueror_borg_beam_suppression = combat_begin_filtered.iter().any(|e| {
+        matches!(
+            e.effect,
+            AbilityEffect::ConquerorBorgBeamSuppression
+        )
+    });
     let attacker_mitigation_additive = sum_mitigation_additive(&combat_begin_filtered);
     let shield_break_effects = active_effects_for_timing(&attacker_crew, TimingWindow::ShieldBreak);
     let self_shield_break_effects =
@@ -420,6 +427,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
         };
         let defender_rs_for_assim =
             filter_effects_by_condition(&defender_round_start_effects, &ctx_def_round_start);
@@ -475,6 +483,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -1317,6 +1326,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     defender_is_player_ship,
                     attacker_tal_assigned_captain_or_bridge: combat_ctx
                         .attacker_tal_assigned_captain_or_bridge,
+                    defender_hostile_tag_mask: config.defender_hostile_tag_mask,
                 };
                 let defender_combat_begin_filtered =
                     filter_effects_by_condition(&defender_combat_begin_effects, &defender_ctx);
@@ -1759,6 +1769,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 defender_is_player_ship,
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
                     .attacker_tal_assigned_captain_or_bridge,
+                defender_hostile_tag_mask: config.defender_hostile_tag_mask,
             };
             let after_subround_filtered =
                 filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
@@ -1839,6 +1850,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge: combat_ctx
                 .attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
         };
         let round_end_burn_filtered =
             filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
@@ -1983,6 +1995,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 defender_is_player_ship,
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
                     .attacker_tal_assigned_captain_or_bridge,
+                defender_hostile_tag_mask: config.defender_hostile_tag_mask,
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
@@ -2048,6 +2061,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_is_npc_hostile,
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,
+        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
     };
     let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(
@@ -2085,6 +2099,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_shield_remaining: round_f64(defender_shield_remaining),
         attacker_shield_remaining: round_f64(attacker_shield_remaining),
         events: trace.events(),
+        conqueror_borg_beam_suppression,
     }
 }
 

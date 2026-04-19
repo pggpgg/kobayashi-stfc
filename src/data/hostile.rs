@@ -132,6 +132,10 @@ pub struct HostileRecord {
     #[serde(default)]
     pub crit_damage: f64,
 
+    /// Simulator-only tags for ability gating (e.g. `conqueror_borg` for Update 89 Borg hostiles).
+    #[serde(default)]
+    pub hostile_tags: Vec<String>,
+
     /// Full upstream `components` array (warp, weapons, shield, etc.).
     #[serde(default)]
     pub components: Vec<Value>,
@@ -167,6 +171,11 @@ pub struct HostileIndexEntry {
 }
 
 impl HostileRecord {
+    /// Bitmask for [`crate::combat::SimulationConfig::defender_hostile_tag_mask`] / [`crate::combat::CombatContext::defender_hostile_tag_mask`].
+    pub fn hostile_tag_mask(&self) -> u32 {
+        crate::combat::hostile_tags::mask_from_slugs(&self.hostile_tags)
+    }
+
     pub fn to_defender_stats(&self) -> DefenderStats {
         DefenderStats {
             armor: self.armor,

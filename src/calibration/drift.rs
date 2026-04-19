@@ -165,6 +165,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         weapon_damage_profile_additive_pool: spec.simulation.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: spec.simulation.profile_weapon_damage_fraction,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     }
 }
 

@@ -201,6 +201,11 @@ fn handle_simulate(args: &[String]) -> i32 {
         };
     let defender_hull_faction_id =
         defender_hull_faction_id_for_cli_simulate(hostile_lookup.as_deref());
+    let defender_hostile_tag_mask = hostile_lookup
+        .as_deref()
+        .and_then(resolve_hostile)
+        .map(|h| h.hostile_tag_mask())
+        .unwrap_or(0);
 
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
     let profile_path_str = profile_path(&profile_id, PROFILE_JSON)
@@ -261,6 +266,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id,
+            defender_hostile_tag_mask,
         },
         &CrewConfiguration::default(),
         defender_faction,

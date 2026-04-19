@@ -64,6 +64,7 @@ fn main() {
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
     };
     let crew = CrewConfiguration::default();
 

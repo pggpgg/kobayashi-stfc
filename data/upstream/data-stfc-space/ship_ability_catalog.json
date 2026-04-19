@@ -110,10 +110,12 @@
     },
     "509252162": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": true,
+      "ignore_upstream_value_is_percentage": false,
+      "values_scale_with_ship_level": true,
+      "post_scale": 0.001,
+      "condition_opponent_hostile_tags": ["conqueror_borg"]
     },
     "546190599": {
       "timing": "combat_begin",
@@ -429,7 +431,8 @@
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_hostile_tags": ["conqueror_borg"]
     },
     "1784814733": {
       "timing": "combat_begin",
@@ -580,10 +583,11 @@
     },
     "2425475474": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "conqueror_borg_beam_suppression",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "value_override": 0.0,
+      "condition_opponent_hostile_tags": ["conqueror_borg"]
     },
     "2432056626": {
       "timing": "combat_begin",

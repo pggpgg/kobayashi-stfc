@@ -275,6 +275,7 @@ fn run_candidate_monte_carlo(
             .as_ref()
             .and_then(|h| h.faction.as_ref().map(|f| f.id))
             .unwrap_or(0),
+        defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
     };
 
     let mut n_done = 0usize;
@@ -698,6 +699,7 @@ pub fn replay_optimize_iteration_with_registry(
             .as_ref()
             .and_then(|h| h.faction.as_ref().map(|f| f.id))
             .unwrap_or(0),
+        defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(

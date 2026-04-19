@@ -21,7 +21,6 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::condition::ability_condition_from_research_bonus_key;
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewSeat,
     CrewSeatContext, ShipType, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
@@ -29,9 +28,7 @@ use crate::combat::{
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
-use crate::data::research::{
-    cumulative_conditional_research_bonuses, cumulative_research_bonuses, ResearchCatalog,
-};
+use crate::data::research::{cumulative_research_bonuses, ResearchCatalog};
 use crate::data::ship::ShipRecord;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

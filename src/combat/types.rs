@@ -276,6 +276,9 @@ pub struct SimulationConfig {
     /// Upstream defender hostile `faction.id` for canonical `EnemyHullFaction` / [`crate::combat::abilities::AbilityCondition::DefenderHullFactionIdIs`]. `0` when unknown or not loaded.
     #[serde(default)]
     pub defender_hull_faction_id: i64,
+    /// Bitmask from [`crate::data::hostile::HostileRecord::hostile_tag_mask`] / [`crate::combat::hostile_tags`]; `0` when unset or non-hostile defender.
+    #[serde(default)]
+    pub defender_hostile_tag_mask: u32,
 }
 
 impl Default for SimulationConfig {
@@ -288,6 +291,7 @@ impl Default for SimulationConfig {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
+            defender_hostile_tag_mask: 0,
         }
     }
 }
@@ -307,6 +311,9 @@ pub struct SimulationResult {
     #[serde(default)]
     pub attacker_shield_remaining: f64,
     pub events: Vec<CombatEvent>,
+    /// When true, attacker combat-begin effects included [`AbilityEffect::ConquerorBorgBeamSuppression`] vs a tagged Conqueror Borg defender. Instant-kill beam resolution reads this when implemented.
+    #[serde(default)]
+    pub conqueror_borg_beam_suppression: bool,
 }
 
 /// Per-weapon stats for sub-round resolution. Optional fields override [`Combatant`] ship-level

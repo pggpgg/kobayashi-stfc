@@ -69,6 +69,7 @@ fn simulate_trial(
             .as_ref()
             .and_then(|h| h.faction.as_ref().map(|f| f.id))
             .unwrap_or(0),
+        defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
     };
     let defender_faction = shared
         .hostile_rec

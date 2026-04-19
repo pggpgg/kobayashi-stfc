@@ -25,12 +25,19 @@
 //!
 //! **Round cap:** Optional [`crate::data::ship::ShipAbility::round_cap`] adds [`crate::combat::abilities::AbilityCondition::RoundRange`]
 //! `1..=N` so crew-seat effects apply only in the first **N** combat rounds.
+//!
+//! **Hostile tags:** [`crate::data::ship::ShipAbility::condition_opponent_hostile_tags`] maps to
+//! [`crate::combat::abilities::AbilityCondition::DefenderHostileTagsAllPresent`] (AND of known slugs).
+//! **Borg Sphere Omicron (ability 509252162):** upstream percentage rows use catalog `post_scale: 0.001`
+//! in the `normalize_data_stfc_space` binary so `raw × 0.01 × post_scale` matches the intended fractional
+//! attack bonus (calibrate vs client tooltips if they drift).
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::ability_condition_from_ship_ability;
+use crate::combat::hostile_tags::hostile_tag_mask_for_slug;
 use crate::combat::types::{OpponentFactionTag, ShipType, EPSILON, MAX_COMBAT_ROUNDS};
 use crate::data::ship::ShipAbility;
 
@@ -140,6 +147,13 @@ pub fn ship_ability_effect_from_catalog(
         "apex_shred" => Some(AbilityEffect::ApexShredBonus(value)),
         "apex_barrier" => Some(AbilityEffect::ApexBarrierBonus(value)),
 
+        "conqueror_borg_beam_suppression" | "borg_conqueror_beam_suppression" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::ConquerorBorgBeamSuppression)
+        },
+
         "shield_regen" | "shield_hp_repair" => Some(AbilityEffect::ShieldRegen(value)),
 
         "hull_regen" | "hull_hp_repair" | "hull_repair" => {
@@ -235,6 +249,11 @@ pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSe
     if let Some(ref slug) = ability.condition_opponent_ship_class {
         ShipType::from_data_slug(slug)?;
     }
+    if let Some(ref tags) = ability.condition_opponent_hostile_tags {
+        for t in tags {
+            hostile_tag_mask_for_slug(t)?;
+        }
+    }
     let timing = parse_ship_ability_timing(&ability.timing)?;
     let effect = ship_ability_effect_from_catalog(
         &ability.effect_type,
@@ -326,6 +345,7 @@ mod tests {
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
+                condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
             },
@@ -340,6 +360,7 @@ mod tests {
                 condition_defender_hull_breach: false,
                 condition_opponent_faction: None,
                 condition_opponent_ship_class: None,
+                condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
             },
@@ -363,6 +384,7 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: None,
             condition_opponent_ship_class: None,
+            condition_opponent_hostile_tags: None,
             round_cap: Some(5),
             level_scaled_values: None,
         }];
@@ -385,6 +407,7 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: None,
             condition_opponent_ship_class: None,
+            condition_opponent_hostile_tags: None,
             round_cap: Some(2),
             level_scaled_values: None,
         })
@@ -505,6 +528,7 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: None,
             condition_opponent_ship_class: Some("interceptor".to_string()),
+            condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
         })
@@ -531,6 +555,7 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: Some("klingon".to_string()),
             condition_opponent_ship_class: None,
+            condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
         })
@@ -557,6 +582,7 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: None,
             condition_opponent_ship_class: None,
+            condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
         })

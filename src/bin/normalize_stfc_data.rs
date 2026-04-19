@@ -276,6 +276,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     shield_piercing: 0.0,
                     crit_chance: 0.0,
                     crit_damage: 0.0,
+                    hostile_tags: Vec::new(),
                     components: Vec::new(),
                     ability: Vec::new(),
                     resources: Vec::new(),

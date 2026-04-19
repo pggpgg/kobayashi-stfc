@@ -712,7 +712,8 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
-                AbilityEffect::HostileCritDamageReduction { .. } => {}
+                AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::ConquerorBorgBeamSuppression => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -856,7 +857,8 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
-                AbilityEffect::HostileCritDamageReduction { .. } => {}
+                AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::ConquerorBorgBeamSuppression => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -971,7 +973,8 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
-                AbilityEffect::HostileCritDamageReduction { .. } => {}
+                AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::ConquerorBorgBeamSuppression => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1089,7 +1092,8 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
-                AbilityEffect::HostileCritDamageReduction { .. } => {}
+                AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::ConquerorBorgBeamSuppression => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
@@ -1195,7 +1199,8 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
-                AbilityEffect::HostileCritDamageReduction { .. } => {}
+                AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::ConquerorBorgBeamSuppression => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1329,7 +1334,8 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
-                AbilityEffect::HostileCritDamageReduction { .. } => {}
+                AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::ConquerorBorgBeamSuppression => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1538,5 +1544,6 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
+        AbilityEffect::ConquerorBorgBeamSuppression => effect,
     }
 }
