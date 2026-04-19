@@ -4,16 +4,16 @@
     "last_updated": "2026-04-17",
     "path": "syndicate_reputation.json"
   },
-  "hostiles": {
-    "source": "data-stfc-space",
-    "data_version": "stfcspace-hostiles-2026-04-19",
-    "last_updated": "2026-04-19",
-    "path": "hostiles/index.json"
-  },
   "ships": {
     "source": "data-stfc-space",
     "data_version": "data-stfc-space",
     "last_updated": "2026-02-22",
     "path": "ships_extended/index.json"
+  },
+  "hostiles": {
+    "source": "data-stfc-space",
+    "data_version": "stfcspace-hostiles-2026-04-19",
+    "last_updated": "2026-04-19",
+    "path": "hostiles/index.json"
   }
 }
