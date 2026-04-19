@@ -13,6 +13,11 @@
 //! morale, opponent kind, `EnemyHullFaction` via attributes `faction_id`). Unmapped tokens are skipped with a stderr line; emitted conditions may
 //! be weaker than in-game (subset `and`). Token mapping is implemented in
 //! `kobayashi::lcars::canonical_conditions` (`map_canonical_condition_token`, `canonical_conditions_to_lcars`).
+//!
+//! **`HullRepair` (cheat-sheet / canonical):** STFC uses trigger `RoundEnd` for “repair hull damage
+//! taken last round”; Kobayashi applies that heal at **round start** as `stat_modify` /
+//! `hull_hp_repair_prev_round` (resolver `HullRegenPrevRoundFraction`). Regenerated LCARS therefore
+//! uses `on_round_start` for this modifier regardless of canonical trigger string.
 
 use std::collections::HashMap;
 use std::fs;
@@ -432,7 +437,7 @@ fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64
         "ApexShred" | "ApexBarrier" => val,
         "IsolyticDamage" | "IsolyticDefense" => val,
         "IsolyticCascade" | "IsolyticCascadeDamage" => val,
-        "ShieldHPRepair" | "ShieldRegen" | "HullHPRepair" | "HullRegen" => val,
+        "ShieldHPRepair" | "ShieldRegen" | "HullHPRepair" | "HullRegen" | "HullRepair" => val,
         _ => val,
     }
 }
@@ -501,7 +506,11 @@ fn effect_condition_from_canonical(
 
 fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option<LcarsEffect> {
     let modifier = a.modifier.as_deref().unwrap_or("");
-    let trigger = map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"));
+    let trigger = if modifier == "HullRepair" {
+        "on_round_start"
+    } else {
+        map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"))
+    };
     let mapped = map_modifier(modifier, a)?;
     let target = map_target(a);
     let op = a.operation.as_deref().unwrap_or("Add");
@@ -693,6 +702,8 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "ShieldHPRepair" | "ShieldRegen" => {
             MappedEffect::StatModify("shield_regen".into(), "add".into(), val)
         }
+        // Fraction of hull damage taken last round; engine applies at round start.
+        "HullRepair" => MappedEffect::StatModify("hull_hp_repair_prev_round".into(), "add".into(), val),
         "HullHPRepair" | "HullRegen" => {
             MappedEffect::StatModify("hull_hp_repair".into(), "add".into(), val)
         }
@@ -724,6 +735,7 @@ fn map_trigger(canonical: &str) -> &'static str {
         "ShipLaunched" => "passive",
         "CombatStart" => "on_combat_start",
         "RoundStart" => "on_round_start",
+        "RoundEnd" => "on_round_end",
         "EnemyTakesHit" | "HitTaken" | "CriticalShotFired" => "on_hit",
         "ShieldsDepleted" => "on_shield_break",
         "Kill" | "EnemyKilled" => "on_kill",
@@ -854,5 +866,28 @@ mod canonical_condition_tests {
                 .len(),
             5
         );
+    }
+
+    #[test]
+    fn hull_repair_maps_to_prev_round_stat_and_round_start() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot": "officer",
+            "trigger": "RoundEnd",
+            "modifier": "HullRepair",
+            "operation": "MultiplyAdd",
+            "target": "SelfShip",
+            "chance_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0],
+            "value_by_rank": [0.05, 0.1, 0.15, 0.2, 0.35],
+            "conditions": []
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&a, "PIC Hugh").expect("effect");
+        assert_eq!(e.effect_type, "stat_modify");
+        assert_eq!(e.stat.as_deref(), Some("hull_hp_repair_prev_round"));
+        assert_eq!(e.trigger.as_deref(), Some("on_round_start"));
+        assert!(e.scaling.is_some());
+        let vals = e.scaling.as_ref().unwrap().values.as_ref().unwrap();
+        assert_eq!(vals.len(), 5);
+        assert!((vals[0] - 0.05).abs() < 1e-9);
     }
 }

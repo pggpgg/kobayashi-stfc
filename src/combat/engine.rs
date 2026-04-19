@@ -287,6 +287,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let max_att_hull = attacker.hull_health.max(0.0);
     let mut total_attacker_hull_damage =
         config.initial_attacker_hull_damage.clamp(0.0, max_att_hull);
+    // Gross attacker hull damage this round (counter, hostile round-end hull, burning) for
+    // [`AbilityEffect::HullRegenPrevRoundFraction`] (e.g. PIC Hugh below decks).
+    let mut attacker_hull_gross_damage_this_round: f64 = 0.0;
+    let mut attacker_hull_gross_damage_last_round: f64 = 0.0;
     let mut defender_hull_breach_rounds = 0_u32;
     let mut defender_burning_rounds = 0_u32;
     let mut attacker_hull_breach_rounds = 0_u32;
@@ -349,6 +353,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         active_effects_for_timing(&defender_crew, TimingWindow::DefensePhase);
     let defender_shield_break_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::ShieldBreak);
+    let defender_round_end_effects =
+        active_effects_for_timing(&defender_crew, TimingWindow::RoundEnd);
 
     let combat_begin_assimilated = assimilated_rounds_remaining > 0;
     record_ability_activations(
@@ -378,9 +384,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
 
-        let defender_hull_pct_round =
+        let defender_hull_pct_for_def_round_start =
             1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-        let defender_shield_pct_round = if defender.shield_health > 0.0 {
+        let defender_shield_pct_for_def_round_start = if defender.shield_health > 0.0 {
             defender_shield_remaining / defender.shield_health
         } else {
             1.0
@@ -396,8 +402,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         // Defender RoundStart assimilate procs before attacker `combat_ctx` so `TargetHasAssimilated` gates see them.
         let ctx_def_round_start = CombatContext {
             round_index,
-            defender_hull_pct: defender_hull_pct_round,
-            defender_shield_pct: defender_shield_pct_round,
+            defender_hull_pct: defender_hull_pct_for_def_round_start,
+            defender_shield_pct: defender_shield_pct_for_def_round_start,
             attacker_hull_pct: attacker_hull_pct_round,
             attacker_shield_pct: attacker_shield_pct_round,
             attacker_morale_active: false,
@@ -428,6 +434,26 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             &defender.id,
             &mut defender_assimilated_rounds_remaining,
         );
+
+        let def_rs_shield = EffectAccumulator::sum_shield_regen_from_effects(
+            &defender_rs_for_assim,
+            def_rs_assim_active,
+        );
+        let def_rs_hull =
+            EffectAccumulator::sum_hull_regen_from_effects(&defender_rs_for_assim, def_rs_assim_active);
+        if def_rs_shield != 0.0 || def_rs_hull != 0.0 {
+            defender_shield_remaining = (defender_shield_remaining + def_rs_shield)
+                .min(defender.shield_health.max(0.0));
+            total_hull_damage = (total_hull_damage - def_rs_hull).max(0.0);
+        }
+
+        let defender_hull_pct_round =
+            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+        let defender_shield_pct_round = if defender.shield_health > 0.0 {
+            defender_shield_remaining / defender.shield_health
+        } else {
+            1.0
+        };
 
         let mut combat_ctx = CombatContext {
             round_index,
@@ -694,6 +720,33 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 round_start_assimilated,
                 round_index,
             );
+        }
+
+        // Shield/hull regen from [`TimingWindow::CombatBegin`] + [`TimingWindow::RoundStart`]: apply
+        // at the **start** of this round (before weapon sub-rounds), then remove from the accumulator
+        // so it is not applied again at round end with ReceiveDamage/RoundEnd regen.
+        let att_rs_shield = phase_effects.composed_shield_regen();
+        let att_rs_hull = phase_effects.composed_hull_regen();
+        if att_rs_shield != 0.0 || att_rs_hull != 0.0 {
+            attacker_shield_remaining = (attacker_shield_remaining + att_rs_shield)
+                .min(attacker.shield_health.max(0.0));
+            total_attacker_hull_damage = (total_attacker_hull_damage - att_rs_hull).max(0.0);
+        }
+        phase_effects.clear_shield_hull_regen_stacks();
+
+        // PIC Hugh: heal a fraction of hull damage taken in the **previous** combat round (round 1: none).
+        let round_start_prev_heal = filter_effects_by_condition(&round_start_effects, &combat_ctx);
+        let prev_round_frac = EffectAccumulator::sum_hull_regen_prev_round_fraction(
+            &round_start_prev_heal,
+            round_start_assimilated,
+        )
+        .min(1.0);
+        if round_index >= 2
+            && prev_round_frac > 0.0
+            && attacker_hull_gross_damage_last_round > 0.0
+        {
+            let heal = prev_round_frac * attacker_hull_gross_damage_last_round;
+            total_attacker_hull_damage = (total_attacker_hull_damage - heal).max(0.0);
         }
 
         // Prune expired shots bonuses and compute B_shots(r) for this round.
@@ -1454,6 +1507,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     attacker_shield_remaining =
                         (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
                     total_attacker_hull_damage += att_hull_damage_this_round;
+                    attacker_hull_gross_damage_this_round += att_hull_damage_this_round;
 
                     if att_hull_damage_this_round > 0.0 {
                         for effect in defender_attack_filtered
@@ -1592,7 +1646,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                             .filter(|e| {
                                 !matches!(
                                     scale_effect(e.effect, attack_phase_assimilated),
-                                    AbilityEffect::ShieldRegen(_) | AbilityEffect::HullRegen(_)
+                                    AbilityEffect::ShieldRegen(_)
+                                        | AbilityEffect::HullRegen(_)
+                                        | AbilityEffect::HullRegenPrevRoundFraction(_)
                                 )
                             })
                             .cloned()
@@ -1820,7 +1876,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         // Round-end and burning apply to hull only (shields do not absorb these).
         total_hull_damage += (bonus_damage + burning_damage) * round_end_apex_factor;
         total_attacker_hull_damage += defender.end_of_round_damage;
+        attacker_hull_gross_damage_this_round += defender.end_of_round_damage;
         total_attacker_hull_damage += attacker_burning_damage * round_end_apex_factor;
+        attacker_hull_gross_damage_this_round += attacker_burning_damage * round_end_apex_factor;
 
         // Regen: shield and hull restoration at round end from attacker's crew (officer/data regen effects apply to the ship with the crew).
         let shield_regen = phase_effects_round.composed_shield_regen();
@@ -1828,6 +1886,31 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         attacker_shield_remaining =
             (attacker_shield_remaining + shield_regen).min(attacker.shield_health.max(0.0));
         total_attacker_hull_damage = (total_attacker_hull_damage - hull_regen).max(0.0);
+
+        let defender_round_end_filtered =
+            filter_effects_by_condition(&defender_round_end_effects, &ctx_after_weapons);
+        let defender_re_assimilated = defender_assimilated_rounds_remaining > 0;
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "round_end",
+            defender,
+            &defender_round_end_filtered,
+            defender_re_assimilated,
+        );
+        let mut defender_round_end_acc = EffectAccumulator::default();
+        defender_round_end_acc.add_effects(
+            TimingWindow::RoundEnd,
+            &defender_round_end_filtered,
+            defender.attack,
+            defender_re_assimilated,
+            round_index,
+        );
+        let def_re_shield = defender_round_end_acc.composed_shield_regen();
+        let def_re_hull = defender_round_end_acc.composed_hull_regen();
+        defender_shield_remaining = (defender_shield_remaining + def_re_shield)
+            .min(defender.shield_health.max(0.0));
+        total_hull_damage = (total_hull_damage - def_re_hull).max(0.0);
 
         defender_burning_rounds = defender_burning_rounds.saturating_sub(1);
         defender_hull_breach_rounds = defender_hull_breach_rounds.saturating_sub(1);
@@ -1928,6 +2011,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             .max(0.0);
             attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
         }
+        attacker_hull_gross_damage_last_round = attacker_hull_gross_damage_this_round;
+        attacker_hull_gross_damage_this_round = 0.0;
+
         if defender_hull_now <= 0.0 || attacker_hull_now <= 0.0 {
             break;
         }

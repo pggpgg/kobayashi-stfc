@@ -12847,18 +12847,29 @@ officers:
   below_decks_ability:
     name: Reclaiming Lives
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: hull_hp_repair_prev_round
       target: self
-      operator: null
-      value: 0.05
-      trigger: passive
+      operator: add
+      value: null
+      trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.05
+        - 0.1
+        - 0.15
+        - 0.2
+        - 0.35
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
-      tag: hullrepair:unmapped
+      tag: null
       accumulate: null
       decay: null
 - id: pic-riker-61815c
@@ -18081,14 +18092,25 @@ officers:
   bridge_ability:
     name: Silence Your Demons
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: hull_hp_repair_prev_round
       target: self
-      operator: null
-      value: 0.12
-      trigger: passive
+      operator: add
+      value: null
+      trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.12
+        - 0.15
+        - 0.18
+        - 0.21
+        - 0.24
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -18140,7 +18162,7 @@ officers:
             conditions: null
       chance: null
       multiplier: null
-      tag: hullrepair:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability:

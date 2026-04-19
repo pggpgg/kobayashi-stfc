@@ -5585,3 +5585,289 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
     );
     assert!(row.get("officer_id").is_none());
 }
+
+/// [`TimingWindow::RoundStart`] hull regen must reduce cumulative attacker hull damage each round
+/// before outbound fire (LCARS commonly uses `on_round_start` for this stat).
+#[test]
+fn attacker_round_start_hull_regen_stacks_across_rounds() {
+    let attacker = Combatant {
+        id: "player".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "hostile".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "test_hull_regen_rs".into(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::HullRegen(100.0),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: Some("test-officer".into()),
+            contribution_batch: 1,
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 3,
+        seed: 42,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 400.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+    };
+    let res = simulate_combat(&attacker, &defender, config, &crew);
+    // Round 1–3 each heal 100 at round start: 400 − 300 = 100 net hull damage.
+    approx_eq(res.attacker_hull_remaining, 900.0, 1e-6);
+}
+
+/// Defender crew [`TimingWindow::RoundStart`] hull regen reduces cumulative hull damage on the hostile.
+#[test]
+fn defender_round_start_hull_regen_heals_defender() {
+    let attacker = Combatant {
+        id: "player".into(),
+        attack: 500.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 500.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "hostile".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "def_hull_rs".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::HullRegen(300.0),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 2,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+    };
+    let without = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &CrewConfiguration::default(),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration::default(),
+    );
+    let with_regen = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &CrewConfiguration::default(),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    assert!(
+        with_regen.defender_hull_remaining > without.defender_hull_remaining,
+        "defender round-start hull regen should leave more defender hull: without={} with={}",
+        without.defender_hull_remaining,
+        with_regen.defender_hull_remaining
+    );
+    // Round 1: 500 damage. Round 2 start: −300 cumulative hull damage → 200 net before second hit.
+    // Round 2: +500 → 700 cumulative; defender hull remaining 10_000 − 700 = 9300.
+    approx_eq(with_regen.defender_hull_remaining, 9300.0, 1e-6);
+}
+
+/// PIC Hugh below decks: heal a **fraction** of hull damage taken in the previous combat round at round start.
+#[test]
+fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
+    let attacker = Combatant {
+        id: "player".into(),
+        attack: 500.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 500.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let defender = Combatant {
+        id: "hostile".into(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    };
+    let hugh_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::BelowDeck,
+            ability: Ability {
+                name: "Reclaiming Lives".into(),
+                class: AbilityClass::BelowDeck,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::HullRegenPrevRoundFraction(0.35),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: Some("pic-hugh-75d78e".into()),
+            contribution_batch: 2,
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 2,
+        seed: 99,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+    };
+    let baseline = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &CrewConfiguration::default(),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration::default(),
+    );
+    let with_hugh = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        config,
+        &hugh_crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration::default(),
+    );
+    assert!(
+        with_hugh.attacker_hull_remaining > baseline.attacker_hull_remaining,
+        "PIC Hugh heal should leave more attacker hull: baseline={} with={}",
+        baseline.attacker_hull_remaining,
+        with_hugh.attacker_hull_remaining
+    );
+    // Round 1: 100 hull taken. Round 2 start: heal 35 → net 165 hull damage vs 200 without Hugh.
+    approx_eq(with_hugh.attacker_hull_remaining, 9835.0, 1e-6);
+    approx_eq(baseline.attacker_hull_remaining, 9800.0, 1e-6);
+}

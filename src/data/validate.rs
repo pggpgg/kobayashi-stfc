@@ -535,6 +535,13 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
         return Some(MechanicSupport::Implemented);
     }
 
+    if matches!(
+        key,
+        "hull_hp_repair_prev_round" | "hull_repair_prev_round"
+    ) {
+        return Some(MechanicSupport::Implemented);
+    }
+
     if key.contains("burn")
         || key.contains("ignite")
         || matches!(

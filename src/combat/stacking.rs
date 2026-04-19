@@ -118,6 +118,11 @@ impl<K: Ord> StatStacking<K> {
         self.totals.clear();
     }
 
+    /// Drop accumulated totals for `key` (e.g. after applying round-start regen so it is not double-counted at round end).
+    pub(crate) fn remove_totals_for(&mut self, key: &K) {
+        self.totals.remove(key);
+    }
+
     /// Iterate accumulated category totals per key (for trace / diagnostics).
     pub(crate) fn iter_totals(&self) -> impl Iterator<Item = (&K, &CategoryTotals)> {
         self.totals.iter()

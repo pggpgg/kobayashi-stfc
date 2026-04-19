@@ -339,6 +339,65 @@ impl EffectAccumulator {
             .unwrap_or(0.0)
     }
 
+    /// Sum flat shield restoration from timed effects (used for defender round-start before the main phase accumulator runs).
+    pub(crate) fn sum_shield_regen_from_effects(
+        effects: &[ActiveAbilityEffect],
+        assimilated_active: bool,
+    ) -> f64 {
+        effects
+            .iter()
+            .filter_map(|e| {
+                if let AbilityEffect::ShieldRegen(v) = scale_effect(e.effect, assimilated_active) {
+                    Some(v)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
+
+    /// Sum flat hull restoration from timed effects (not [`AbilityEffect::OnKillHullRegen`]).
+    pub(crate) fn sum_hull_regen_from_effects(
+        effects: &[ActiveAbilityEffect],
+        assimilated_active: bool,
+    ) -> f64 {
+        effects
+            .iter()
+            .filter_map(|e| {
+                if let AbilityEffect::HullRegen(v) = scale_effect(e.effect, assimilated_active) {
+                    Some(v)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
+
+    /// Sum `fraction` values for [`AbilityEffect::HullRegenPrevRoundFraction`] (PIC Hugh–style heal).
+    pub(crate) fn sum_hull_regen_prev_round_fraction(
+        effects: &[ActiveAbilityEffect],
+        assimilated_active: bool,
+    ) -> f64 {
+        effects
+            .iter()
+            .filter_map(|e| {
+                if let AbilityEffect::HullRegenPrevRoundFraction(f) =
+                    scale_effect(e.effect, assimilated_active)
+                {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
+
+    /// Remove shield/hull regen stacks so values from CombatBegin/RoundStart are not applied again at round end.
+    pub(crate) fn clear_shield_hull_regen_stacks(&mut self) {
+        self.stacks.remove_totals_for(&EffectStatKey::ShieldRegen);
+        self.stacks.remove_totals_for(&EffectStatKey::HullRegen);
+    }
+
     pub(crate) fn composed_isolytic_damage_bonus(&self) -> f64 {
         self.stacks
             .composed_for(&EffectStatKey::IsolyticDamageBonus)
@@ -578,8 +637,25 @@ impl EffectAccumulator {
                 AbilityEffect::HullBreach { .. } => {}
                 AbilityEffect::Burning { .. } => {}
                 AbilityEffect::ShotsBonus { .. } => {}
-                AbilityEffect::ShieldRegen(_) => {}
-                AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::ShieldRegen(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ShieldRegen,
+                        v,
+                        timing,
+                        source,
+                        "ShieldRegen",
+                    );
+                }
+                AbilityEffect::HullRegen(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::HullRegen,
+                        v,
+                        timing,
+                        source,
+                        "HullRegen",
+                    );
+                }
+                AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -723,6 +799,7 @@ impl EffectAccumulator {
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -837,6 +914,7 @@ impl EffectAccumulator {
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -955,6 +1033,7 @@ impl EffectAccumulator {
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -1059,6 +1138,7 @@ impl EffectAccumulator {
                         "HullRegen",
                     );
                 }
+                AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -1192,6 +1272,7 @@ impl EffectAccumulator {
                         "HullRegen",
                     );
                 }
+                AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -1393,6 +1474,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::HullRegen(v) => {
             AbilityEffect::HullRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::HullRegenPrevRoundFraction(f) => {
+            AbilityEffect::HullRegenPrevRoundFraction(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::IsolyticDamageBonus(v) => {
             AbilityEffect::IsolyticDamageBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)

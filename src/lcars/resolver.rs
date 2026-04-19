@@ -413,6 +413,15 @@ fn resolve_effect(
                 "shield_regen" | "shield_hp_repair" => {
                     Some((timing, AbilityEffect::ShieldRegen(value)))
                 }
+                "hull_hp_repair_prev_round" | "hull_repair_prev_round" => {
+                    if timing != TimingWindow::RoundStart {
+                        return None;
+                    }
+                    Some((
+                        timing,
+                        AbilityEffect::HullRegenPrevRoundFraction(value),
+                    ))
+                }
                 "hull_repair" | "hull_hp_repair" => {
                     if timing == TimingWindow::Kill {
                         Some((timing, AbilityEffect::OnKillHullRegen(value)))

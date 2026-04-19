@@ -74,10 +74,18 @@ pub enum AbilityEffect {
         chance: f64,
         duration_rounds: u32,
     },
-    /// Shield HP restored per round (round end). Flat value.
+    /// Shield HP restored as a **flat** value. [`TimingWindow::CombatBegin`] / [`TimingWindow::RoundStart`]
+    /// entries are applied at the **start** of each combat round; other timings that feed the round
+    /// accumulator (e.g. [`TimingWindow::RoundEnd`], [`TimingWindow::ReceiveDamage`]) apply at **round end**.
     ShieldRegen(f64),
-    /// Hull HP restored per round (round end). Reduces effective hull damage taken.
+    /// Hull HP restored as a **flat** value (reduces cumulative hull damage taken on that ship).
+    /// Same timing split as [`AbilityEffect::ShieldRegen`].
     HullRegen(f64),
+    /// At [`TimingWindow::RoundStart`], heal `fraction ×` hull damage the attacker **took** in the
+    /// immediately preceding combat round (gross incoming hull from counter-fire, hostile round-end
+    /// hull effects, burning ticks, etc.; excludes prior heals). Round 1 has no prior round, so no
+    /// heal. `fraction` is typically 0..1; multiple effects **sum** before multiplying (capped at 1).
+    HullRegenPrevRoundFraction(f64),
     /// Officer-granted Apex Shred; value is decimal (0.15 = +15%).
     ApexShredBonus(f64),
     /// Officer-granted Apex Barrier; value is flat integer (e.g. 1000).
