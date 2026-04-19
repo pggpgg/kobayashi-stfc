@@ -392,6 +392,25 @@ impl EffectAccumulator {
             .sum()
     }
 
+    /// Sum `fraction` values for [`AbilityEffect::ShieldRegenPrevRoundFraction`] (Mara Dalen below decks vs armadas).
+    pub(crate) fn sum_shield_regen_prev_round_fraction(
+        effects: &[ActiveAbilityEffect],
+        assimilated_active: bool,
+    ) -> f64 {
+        effects
+            .iter()
+            .filter_map(|e| {
+                if let AbilityEffect::ShieldRegenPrevRoundFraction(f) =
+                    scale_effect(e.effect, assimilated_active)
+                {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
+
     /// Remove shield/hull regen stacks so values from CombatBegin/RoundStart are not applied again at round end.
     pub(crate) fn clear_shield_hull_regen_stacks(&mut self) {
         self.stacks.remove_totals_for(&EffectStatKey::ShieldRegen);
@@ -656,6 +675,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
+                AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -801,6 +821,7 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
+                AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -917,6 +938,7 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
+                AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -1037,6 +1059,7 @@ impl EffectAccumulator {
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
+                AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -1143,6 +1166,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
+                AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -1278,6 +1302,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
+                AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::ApexShredBonus,
@@ -1483,6 +1508,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::HullRegenPrevRoundFraction(f) => {
             AbilityEffect::HullRegenPrevRoundFraction(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::ShieldRegenPrevRoundFraction(f) => {
+            AbilityEffect::ShieldRegenPrevRoundFraction(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::IsolyticDamageBonus(v) => {
             AbilityEffect::IsolyticDamageBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)

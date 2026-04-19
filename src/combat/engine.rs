@@ -225,7 +225,7 @@ fn apply_attacker_hull_breach_timing_window(
 pub fn simulate_combat(
     attacker: &Combatant,
     defender: &Combatant,
-    config: SimulationConfig,
+    config: &SimulationConfig,
     attacker_crew: &CrewConfiguration,
 ) -> SimulationResult {
     simulate_combat_with_defender_faction(
@@ -240,7 +240,7 @@ pub fn simulate_combat(
 pub fn simulate_combat_with_defender_faction(
     attacker: &Combatant,
     defender: &Combatant,
-    config: SimulationConfig,
+    config: &SimulationConfig,
     attacker_crew: &CrewConfiguration,
     defender_faction: OpponentFactionTag,
 ) -> SimulationResult {
@@ -262,7 +262,7 @@ pub fn simulate_combat_with_defender_faction(
 pub fn simulate_combat_with_defender_faction_and_defender_crew(
     attacker: &Combatant,
     defender: &Combatant,
-    config: SimulationConfig,
+    config: &SimulationConfig,
     attacker_crew: &CrewConfiguration,
     defender_faction: OpponentFactionTag,
     defender_ship_type: ShipType,
@@ -271,6 +271,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     defender_is_player_ship: bool,
     defender_crew: &CrewConfiguration,
 ) -> SimulationResult {
+    let config = config.clone();
     let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
     let defender_crew = apply_duplicate_officer_policy(defender_crew);
     let attacker_tal_assigned_captain_or_bridge =
@@ -291,6 +292,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     // [`AbilityEffect::HullRegenPrevRoundFraction`] (e.g. PIC Hugh below decks).
     let mut attacker_hull_gross_damage_this_round: f64 = 0.0;
     let mut attacker_hull_gross_damage_last_round: f64 = 0.0;
+    let mut attacker_shield_gross_damage_this_round: f64 = 0.0;
+    let mut attacker_shield_gross_damage_last_round: f64 = 0.0;
     let mut defender_hull_breach_rounds = 0_u32;
     let mut defender_burning_rounds = 0_u32;
     let mut attacker_hull_breach_rounds = 0_u32;
@@ -321,6 +324,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,
         defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+        engagement_enemy_types: config.engagement_enemy_types.clone(),
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
@@ -428,6 +432,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+            engagement_enemy_types: config.engagement_enemy_types.clone(),
         };
         let defender_rs_for_assim =
             filter_effects_by_condition(&defender_round_start_effects, &ctx_def_round_start);
@@ -484,6 +489,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+            engagement_enemy_types: config.engagement_enemy_types.clone(),
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -756,6 +762,20 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         {
             let heal = prev_round_frac * attacker_hull_gross_damage_last_round;
             total_attacker_hull_damage = (total_attacker_hull_damage - heal).max(0.0);
+        }
+
+        let shield_prev_frac = EffectAccumulator::sum_shield_regen_prev_round_fraction(
+            &round_start_prev_heal,
+            round_start_assimilated,
+        )
+        .min(1.0);
+        if round_index >= 2
+            && shield_prev_frac > 0.0
+            && attacker_shield_gross_damage_last_round > 0.0
+        {
+            let heal_sh = shield_prev_frac * attacker_shield_gross_damage_last_round;
+            attacker_shield_remaining = (attacker_shield_remaining + heal_sh)
+                .min(attacker.shield_health.max(0.0));
         }
 
         // Prune expired shots bonuses and compute B_shots(r) for this round.
@@ -1327,6 +1347,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     attacker_tal_assigned_captain_or_bridge: combat_ctx
                         .attacker_tal_assigned_captain_or_bridge,
                     defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+                    engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
                 };
                 let defender_combat_begin_filtered =
                     filter_effects_by_condition(&defender_combat_begin_effects, &defender_ctx);
@@ -1484,12 +1505,17 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         defender_phase_effects.composed_pre_attack_damage();
                     let counter_after_attack_phase = defender_phase_effects
                         .compose_attack_phase_damage(counter_pre_attack_damage);
+                    // Attacker CombatBegin / RoundStart isolytic defense (e.g. Mara Dalen bridge)
+                    // must reduce isolytic taken on counter-fire, not only on outbound shots.
+                    let attacker_static_iso_def_bonus =
+                        weapon_round_base.composed_isolytic_defense_bonus();
                     let counter_iso_taken = compute_isolytic_taken(
                         counter_after_attack_phase,
                         (defender.isolytic_damage
                             + defender_phase_effects.composed_isolytic_damage_bonus())
                         .max(0.0),
                         (attacker.isolytic_defense
+                            + attacker_static_iso_def_bonus
                             + defender_phase_effects.composed_isolytic_defense_bonus())
                         .max(0.0),
                         defender_phase_effects
@@ -1518,6 +1544,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
                     total_attacker_hull_damage += att_hull_damage_this_round;
                     attacker_hull_gross_damage_this_round += att_hull_damage_this_round;
+                    attacker_shield_gross_damage_this_round += att_actual_shield_damage;
 
                     if att_hull_damage_this_round > 0.0 {
                         for effect in defender_attack_filtered
@@ -1659,6 +1686,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                     AbilityEffect::ShieldRegen(_)
                                         | AbilityEffect::HullRegen(_)
                                         | AbilityEffect::HullRegenPrevRoundFraction(_)
+                                        | AbilityEffect::ShieldRegenPrevRoundFraction(_)
                                 )
                             })
                             .cloned()
@@ -1770,6 +1798,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
                     .attacker_tal_assigned_captain_or_bridge,
                 defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+                engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
             };
             let after_subround_filtered =
                 filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
@@ -1851,6 +1880,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             attacker_tal_assigned_captain_or_bridge: combat_ctx
                 .attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+            engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
         };
         let round_end_burn_filtered =
             filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
@@ -1996,6 +2026,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
                     .attacker_tal_assigned_captain_or_bridge,
                 defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+                engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
@@ -2026,6 +2057,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         }
         attacker_hull_gross_damage_last_round = attacker_hull_gross_damage_this_round;
         attacker_hull_gross_damage_this_round = 0.0;
+        attacker_shield_gross_damage_last_round = attacker_shield_gross_damage_this_round;
+        attacker_shield_gross_damage_this_round = 0.0;
 
         if defender_hull_now <= 0.0 || attacker_hull_now <= 0.0 {
             break;
@@ -2062,6 +2095,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,
         defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+        engagement_enemy_types: config.engagement_enemy_types.clone(),
     };
     let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(

@@ -70,6 +70,7 @@ fn simulate_trial(
             .and_then(|h| h.faction.as_ref().map(|f| f.id))
             .unwrap_or(0),
         defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
+        engagement_enemy_types: input.engagement_enemy_types.clone(),
     };
     let defender_faction = shared
         .hostile_rec
@@ -82,7 +83,7 @@ fn simulate_trial(
     simulate_combat_with_defender_faction_and_defender_crew(
         &input.attacker,
         &input.defender,
-        combat_config,
+        &combat_config,
         &input.crew,
         defender_faction,
         defender_ship_type,

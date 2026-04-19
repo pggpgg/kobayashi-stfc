@@ -81,6 +81,7 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
             *required_mask != 0
                 && (ctx.defender_hostile_tag_mask & *required_mask) == *required_mask
         }
+        AbilityCondition::EngagementIncludes(tag) => ctx.engagement_enemy_types.contains(*tag),
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),
@@ -158,7 +159,7 @@ pub fn ability_condition_from_research_bonus_key(
 mod tests {
     use super::*;
     use crate::combat::abilities::{AbilityCondition, CombatContext};
-    use crate::combat::types::{OpponentFactionTag, ShipType};
+    use crate::combat::types::{EnemyTypes, OpponentFactionTag, ShipType};
 
     fn sample_ctx() -> CombatContext {
         CombatContext {
@@ -182,6 +183,7 @@ mod tests {
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
             defender_hostile_tag_mask: 0,
+            engagement_enemy_types: EnemyTypes::default(),
         }
     }
 

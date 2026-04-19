@@ -132,11 +132,24 @@ fn systems_from_values(vals: &[Value]) -> Vec<u64> {
 }
 
 /// Upstream hostile JSON has no tag field; we merge [`HostileRecord::hostile_tags`] for known
-/// Conqueror Borg Suppressor / Obliterator rows so Borg Sphere passives can gate in combat.
-/// Names from `translations-navigation.json` (`marauder_name_only`): **Conqueror Borg Suppressor**
-/// (`loca_id` 89050–89052), **Conqueror Borg Obliterator** (`loca_id` 89053–89055; text includes
-/// `&#128128;` in JSON). Extend if Scopely adds more `loca_id`s with the same combat family.
-fn curated_hostile_tags_for_upstream_id(id: u64) -> Vec<String> {
+/// Conqueror Borg Suppressor / Obliterator rows so Borg Sphere passives can gate in combat, and
+/// for **crew nullification** (Update 89 captains + V'Ger-line hostiles).
+///
+/// Conqueror Borg: names from `translations-navigation.json` (`marauder_name_only`):
+/// **Conqueror Borg Suppressor** (`loca_id` 89050–89052), **Conqueror Borg Obliterator**
+/// (`loca_id` 89053–89055). Extend if Scopely adds more `loca_id`s with the same combat family.
+///
+/// V'Ger / TMP Machine: `faction.loca_id` **86001** matches [`kobayashi::data::hostile::opponent_faction_from_faction_loca_id`]
+/// (“V'Ger Clone” → Borg combat tag). Same faction row is used for crew-nullification tagging.
+fn curated_hostile_tags_for_upstream(id: u64, faction: Option<&HostileFactionRef>) -> Vec<String> {
+    let mut tags: Vec<String> = Vec::new();
+    let mut push_unique = |s: &str| {
+        let t = s.to_string();
+        if !tags.contains(&t) {
+            tags.push(t);
+        }
+    };
+
     const CONQUEROR_BORG_IDS: &[u64] = &[
         316662618,
         467189343,
@@ -171,9 +184,13 @@ fn curated_hostile_tags_for_upstream_id(id: u64) -> Vec<String> {
         4280642366,
     ];
     if CONQUEROR_BORG_IDS.contains(&id) {
-        return vec!["conqueror_borg".to_string()];
+        push_unique("conqueror_borg");
+        push_unique("crew_nullification");
     }
-    Vec::new()
+    if faction.and_then(|f| f.loca_id) == Some(86001) {
+        push_unique("crew_nullification");
+    }
+    tags
 }
 
 fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
@@ -197,6 +214,7 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     };
 
     let shield_mitigation = shield_mitigation_from_components(&raw.components);
+    let hostile_tags = curated_hostile_tags_for_upstream(raw.id, raw.faction.as_ref());
 
     HostileRecord {
         id: id.clone(),
@@ -236,7 +254,8 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
         shield_piercing: stats.shield_piercing,
         crit_chance: stats.critical_chance,
         crit_damage: stats.critical_damage,
-        hostile_tags: curated_hostile_tags_for_upstream_id(raw.id),
+        hostile_tags,
+        engagement_enemy_types: None,
         components: raw.components,
         ability: raw.ability,
         resources: raw.resources,

@@ -3,10 +3,11 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, Ability, AbilityClass,
+    filter_crew_seats_for_crew_nullification, mitigation, mitigation_for_hostile,
+    nullified_officer_id_set_for_mask, pierce_damage_through_bonus, Ability, AbilityClass,
     AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, DefenderStats, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    CrewSeatContext, DefenderStats, EnemyTypes, ShipType, TimingWindow, MITIGATION_CEILING,
+    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingBonusContext, BuildingMode, DEFAULT_BUILDINGS_INDEX_PATH,
@@ -428,6 +429,8 @@ pub(crate) struct SharedScenarioData {
     pub class_gated_torpedo_family_hostile_shield_mitigation_sum: Option<f64>,
     /// Canonical `EnemyHostile` / `EnemyPlayer` condition context for the defending side.
     pub defender_opponent: DefenderOpponent,
+    /// STFC engagement tags for [`crate::combat::SimulationConfig::engagement_enemy_types`] (armada solo/group, …).
+    pub engagement_enemy_types: EnemyTypes,
 }
 
 impl SharedScenarioData {
@@ -472,6 +475,8 @@ pub(crate) struct CombatSimulationInput {
     pub weapon_damage_profile_additive_pool: Option<f64>,
     /// Profile `weapon_damage` fraction `p` for [`crate::combat::SimulationConfig::profile_weapon_damage_fraction`].
     pub profile_weapon_damage_fraction: f64,
+    /// Copied into [`crate::combat::SimulationConfig::engagement_enemy_types`].
+    pub engagement_enemy_types: EnemyTypes,
 }
 
 /// Build combat input from pre-resolved shared data and candidate. Resolves ship/hostile only once per run.
@@ -499,6 +504,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &shared.officer_index,
         shared.lcars_data.as_ref(),
         &resolve_opts,
+        shared.defender_hostile_tag_mask_for_combat(),
+        shared.defender_opponent,
     );
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
@@ -625,6 +632,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             base_seed,
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
+            engagement_enemy_types: shared.engagement_enemy_types.clone(),
         };
     }
 
@@ -726,6 +734,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         base_seed,
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
+        engagement_enemy_types: shared.engagement_enemy_types.clone(),
     }
 }
 
@@ -802,7 +811,13 @@ fn build_crew_and_buffs(
     officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
+    defender_hostile_tag_mask: u32,
+    defender_opponent: DefenderOpponent,
 ) -> (Vec<CrewSeatContext>, HashMap<String, f64>, f64, f64) {
+    let nullified = nullified_officer_id_set_for_mask(
+        defender_hostile_tag_mask,
+        defender_opponent.defender_is_npc_hostile(),
+    );
     if let Some(lcars) = lcars_data {
         let captain_id = lcars
             .name_to_id
@@ -838,6 +853,7 @@ fn build_crew_and_buffs(
                 &below_ids,
                 &lcars.by_id,
                 resolve_options,
+                nullified.as_ref(),
             );
             (
                 buff_set.to_crew_config().seats.clone(),
@@ -847,7 +863,11 @@ fn build_crew_and_buffs(
             )
         } else {
             (
-                build_crew_seats(candidate, officers_by_name),
+                filter_crew_seats_for_crew_nullification(
+                    build_crew_seats(candidate, officers_by_name),
+                    defender_hostile_tag_mask,
+                    defender_opponent.defender_is_npc_hostile(),
+                ),
                 HashMap::new(),
                 0.0,
                 1.0,
@@ -855,7 +875,11 @@ fn build_crew_and_buffs(
         }
     } else {
         (
-            build_crew_seats(candidate, officers_by_name),
+            filter_crew_seats_for_crew_nullification(
+                build_crew_seats(candidate, officers_by_name),
+                defender_hostile_tag_mask,
+                defender_opponent.defender_is_npc_hostile(),
+            ),
             HashMap::new(),
             0.0,
             1.0,
@@ -883,8 +907,17 @@ pub(crate) fn scenario_to_combat_input(
     );
 
     let resolve_opts = ResolveOptions::default();
-    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier) =
-        build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
+    let hostile_mask = resolve_hostile(hostile)
+        .map(|h| h.hostile_tag_mask())
+        .unwrap_or(0);
+    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
+        candidate,
+        officers_by_name,
+        lcars_data,
+        &resolve_opts,
+        hostile_mask,
+        DefenderOpponent::Hostile,
+    );
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
@@ -943,6 +976,7 @@ pub(crate) fn scenario_to_combat_input(
         let weapon_damage_profile_additive_pool =
             weapon_damage_profile_additive_pool_from_env(profile);
         let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
+        let engagement_enemy_types = hostile_rec.engagement_enemy_types_for_combat();
         return CombatSimulationInput {
             attacker,
             defender: defender_combatant_from_hostile_record(
@@ -958,6 +992,7 @@ pub(crate) fn scenario_to_combat_input(
             base_seed,
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
+            engagement_enemy_types,
         };
     }
 
@@ -1028,6 +1063,7 @@ pub(crate) fn scenario_to_combat_input(
         base_seed,
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
+        engagement_enemy_types: EnemyTypes::default(),
     }
 }
 
@@ -1311,6 +1347,11 @@ pub(crate) fn build_shared_scenario_data_standalone(
 
     let using_placeholder_combatants = cached_defender.is_none();
 
+    let engagement_enemy_types = hostile_rec
+        .as_ref()
+        .map(|h| h.engagement_enemy_types_for_combat())
+        .unwrap_or_default();
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -1335,6 +1376,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
         class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
+        engagement_enemy_types,
     }
 }
 
@@ -1580,6 +1622,11 @@ pub(crate) fn build_shared_scenario_data_from_registry(
 
     let using_placeholder_combatants = cached_defender.is_none();
 
+    let engagement_enemy_types = hostile_rec
+        .as_ref()
+        .map(|h| h.engagement_enemy_types_for_combat())
+        .unwrap_or_default();
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -1604,6 +1651,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
         class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
+        engagement_enemy_types,
     }
 }
 
@@ -2062,6 +2110,7 @@ mod tests {
             class_gated_torpedo_family_hull_hp_bonus: None,
             class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
+            engagement_enemy_types: EnemyTypes::default(),
         };
 
         let candidate = CrewCandidate {

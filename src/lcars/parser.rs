@@ -209,6 +209,9 @@ pub struct LcarsCondition {
     /// Kobayashi `ships_extended` id for `attacker_ship_id_is` / canonical `SelfHull*` tokens.
     #[serde(default)]
     pub ship_id: Option<String>,
+    /// Engagement tag slug for `engagement_includes` (e.g. `group_armadas`); same strings as [`crate::combat::EnemyType`] JSON.
+    #[serde(default)]
+    pub enemy_type: Option<String>,
     #[serde(default)]
     pub conditions: Option<Vec<LcarsCondition>>,
 }

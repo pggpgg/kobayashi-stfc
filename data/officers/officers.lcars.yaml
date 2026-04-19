@@ -22167,3 +22167,89 @@ officers:
       accumulate: null
       decay: null
   below_decks_ability: null
+- id: mara-dalen-6827
+  name: Mara Dalen
+  faction: null
+  rarity: epic
+  captain_ability: null
+  bridge_ability:
+    name: Right to Protest
+    effects:
+    - type: stat_modify
+      stat: isolytic_defense
+      target: self
+      operator: add
+      value: null
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.01
+        - 0.02
+        - 0.04
+        - 0.065
+        - 0.1
+        chance_values: null
+      condition:
+        type: engagement_includes
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        enemy_type: group_armadas
+        conditions: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability:
+    name: Defy Defeat
+    effects:
+    - type: stat_modify
+      stat: shield_hp_repair_prev_round
+      target: self
+      operator: add
+      value: null
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.05
+        - 0.07
+        - 0.1
+        - 0.12
+        - 0.2
+        chance_values: null
+      condition:
+        type: defender_ship_type_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: armada
+        faction_id: null
+        conditions: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null

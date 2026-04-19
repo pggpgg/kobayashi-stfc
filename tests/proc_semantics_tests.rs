@@ -52,7 +52,7 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
     let r = simulate_combat(
         &attacker,
         &defender,
-        SimulationConfig {
+        &SimulationConfig {
             rounds: 1,
             seed: 20260411,
             trace_mode: TraceMode::Events,
@@ -61,6 +61,7 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            engagement_enemy_types: Default::default(),
         },
         &crew,
     );

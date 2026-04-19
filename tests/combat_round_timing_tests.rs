@@ -65,9 +65,10 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
     };
 
-    let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 
     let round_end_shred = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -103,8 +104,8 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         }],
     };
 
-    let with_round_end = simulate_combat(&attacker, &defender, config, &round_end_shred);
-    let with_combat_begin = simulate_combat(&attacker, &defender, config, &combat_begin_shred);
+    let with_round_end = simulate_combat(&attacker, &defender, &config, &round_end_shred);
+    let with_combat_begin = simulate_combat(&attacker, &defender, &config, &combat_begin_shred);
 
     approx_eq(with_round_end.total_damage, baseline.total_damage, 1e-9);
     assert!(
@@ -175,8 +176,9 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
     };
-    let baseline = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let after_sub = CrewConfiguration {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
@@ -193,7 +195,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
             contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
         }],
     };
-    let boosted = simulate_combat(&attacker, &defender, config, &after_sub);
+    let boosted = simulate_combat(&attacker, &defender, &config, &after_sub);
     assert!(
         boosted.total_damage > baseline.total_damage + 50.0,
         "second weapon should roughly double from +100% carry: base={}, boosted={}",
@@ -266,8 +268,9 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
     };
-    let r = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let r = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     // Weapon0: high pierce + guaranteed crit x2 + proc x3 vs weapon1: no pierce, no crit, no proc.
     assert!(
         r.total_damage > 450.0,
@@ -334,8 +337,9 @@ fn defender_counter_attack_matches_helper_pipeline() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
     };
-    let result = simulate_combat(&attacker, &defender, config, &CrewConfiguration::default());
+    let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 
     let w = 200.0;
     let dtf = compute_damage_through_factor((1.0 - 0.1_f64).max(0.0), 0.05, 0.0);

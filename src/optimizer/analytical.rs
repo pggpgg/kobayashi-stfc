@@ -69,7 +69,7 @@ fn expected_hull_damage_total(input: &CombatSimulationInput) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::{Combatant, CrewConfiguration};
+    use crate::combat::{Combatant, CrewConfiguration, EnemyTypes};
 
     fn minimal_input(attacker_attack: f64) -> CombatSimulationInput {
         CombatSimulationInput {
@@ -118,6 +118,7 @@ mod tests {
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
             base_seed: 0,
+            engagement_enemy_types: EnemyTypes::default(),
         }
     }
 

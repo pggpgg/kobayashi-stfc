@@ -277,6 +277,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     crit_chance: 0.0,
                     crit_damage: 0.0,
                     hostile_tags: Vec::new(),
+                    engagement_enemy_types: None,
                     components: Vec::new(),
                     ability: Vec::new(),
                     resources: Vec::new(),

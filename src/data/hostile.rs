@@ -19,8 +19,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::combat::{
-    pierce_damage_through_bonus, AttackerStats, DefenderStats, OpponentFactionTag, ShipType,
-    WeaponStats,
+    pierce_damage_through_bonus, AttackerStats, DefenderStats, EnemyTypes, OpponentFactionTag,
+    ShipType, WeaponStats,
 };
 
 #[derive(Debug, Clone)]
@@ -135,6 +135,9 @@ pub struct HostileRecord {
     /// Simulator-only tags for ability gating (e.g. `conqueror_borg` for Update 89 Borg hostiles).
     #[serde(default)]
     pub hostile_tags: Vec<String>,
+    /// Optional engagement tags (e.g. `group_armadas`) copied into [`crate::combat::SimulationConfig::engagement_enemy_types`].
+    #[serde(default)]
+    pub engagement_enemy_types: Option<EnemyTypes>,
 
     /// Full upstream `components` array (warp, weapons, shield, etc.).
     #[serde(default)]
@@ -174,6 +177,11 @@ impl HostileRecord {
     /// Bitmask for [`crate::combat::SimulationConfig::defender_hostile_tag_mask`] / [`crate::combat::CombatContext::defender_hostile_tag_mask`].
     pub fn hostile_tag_mask(&self) -> u32 {
         crate::combat::hostile_tags::mask_from_slugs(&self.hostile_tags)
+    }
+
+    /// Tags for [`crate::combat::SimulationConfig::engagement_enemy_types`] when set; else [`EnemyTypes::default`].
+    pub fn engagement_enemy_types_for_combat(&self) -> EnemyTypes {
+        self.engagement_enemy_types.clone().unwrap_or_default()
     }
 
     pub fn to_defender_stats(&self) -> DefenderStats {

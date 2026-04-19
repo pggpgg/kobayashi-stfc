@@ -19,6 +19,7 @@ fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
         ship_type: None,
         faction_id: None,
         ship_id: None,
+        enemy_type: None,
         conditions: None,
     }
 }
@@ -44,6 +45,7 @@ fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
         ship_type: None,
         faction_id: None,
         ship_id: None,
+        enemy_type: None,
         conditions: Some(vec![inner]),
     }
 }
@@ -68,6 +70,7 @@ fn lcars_or(children: Vec<LcarsCondition>) -> LcarsCondition {
         ship_type: None,
         faction_id: None,
         ship_id: None,
+        enemy_type: None,
         conditions: Some(children),
     }
 }
@@ -227,6 +230,7 @@ pub fn canonical_conditions_to_lcars(
             ship_type: None,
             faction_id: None,
             ship_id: None,
+            enemy_type: None,
             conditions: Some(mapped),
         }),
     }

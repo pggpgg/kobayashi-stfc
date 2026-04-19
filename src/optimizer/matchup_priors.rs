@@ -260,7 +260,9 @@ pub(crate) fn analytical_prefilter_rank_score(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::{Ability, AbilityClass, CrewSeat, CrewSeatContext, ShipType, TimingWindow};
+    use crate::combat::{
+        Ability, AbilityClass, CrewSeat, CrewSeatContext, EnemyTypes, ShipType, TimingWindow,
+    };
     use crate::data::hostile::HostileRecord;
 
     fn minimal_shared_with_hostile(h: HostileRecord) -> SharedScenarioData {
@@ -288,6 +290,7 @@ mod tests {
             class_gated_torpedo_family_hull_hp_bonus: None,
             class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
+            engagement_enemy_types: EnemyTypes::default(),
         }
     }
 

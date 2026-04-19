@@ -252,7 +252,7 @@ pub enum TraceMode {
     Events,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimulationConfig {
     pub rounds: u32,
     pub seed: u64,
@@ -279,6 +279,10 @@ pub struct SimulationConfig {
     /// Bitmask from [`crate::data::hostile::HostileRecord::hostile_tag_mask`] / [`crate::combat::hostile_tags`]; `0` when unset or non-hostile defender.
     #[serde(default)]
     pub defender_hostile_tag_mask: u32,
+    /// STFC engagement category tags (solo vs group armada, wave defense, etc.) for officer [`crate::combat::abilities::AbilityCondition::EngagementIncludes`].
+    /// Default is only [`EnemyType::RedMovingSpace`]; set from [`crate::data::hostile::HostileRecord::engagement_enemy_types`] when curated.
+    #[serde(default)]
+    pub engagement_enemy_types: EnemyTypes,
 }
 
 impl Default for SimulationConfig {
@@ -292,8 +296,15 @@ impl Default for SimulationConfig {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            engagement_enemy_types: EnemyTypes::default(),
         }
     }
+}
+
+/// Parse `snake_case` slug from LCARS `engagement_includes` / JSON (same strings as [`EnemyType`] serde).
+pub fn enemy_type_from_engagement_slug(s: &str) -> Option<EnemyType> {
+    let slug = s.trim().replace('-', "_");
+    serde_json::from_value(serde_json::Value::String(slug)).ok()
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

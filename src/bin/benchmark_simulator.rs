@@ -11,7 +11,7 @@ use std::io::Write;
 use std::time::Instant;
 
 use kobayashi::combat::{
-    simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
+    simulate_combat, Combatant, CrewConfiguration, EnemyTypes, SimulationConfig, TraceMode,
 };
 
 fn main() {
@@ -65,6 +65,7 @@ fn main() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: EnemyTypes::default(),
     };
     let crew = CrewConfiguration::default();
 
@@ -75,7 +76,7 @@ fn main() {
     let start = Instant::now();
     let mut combats: u32 = 0;
     while start.elapsed().as_millis() < MIN_DURATION_MS as u128 || combats < MIN_COMBATS {
-        let _ = simulate_combat(&attacker, &defender, config, &crew);
+        let _ = simulate_combat(&attacker, &defender, &config, &crew);
         combats += 1;
     }
     let elapsed_secs = start.elapsed().as_secs_f64();

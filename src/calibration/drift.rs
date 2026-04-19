@@ -166,6 +166,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         profile_weapon_damage_fraction: spec.simulation.profile_weapon_damage_fraction,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: crate::combat::EnemyTypes::default(),
     }
 }
 
@@ -243,7 +244,7 @@ pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::Simulat
     let defender = spec.defender.to_combatant("drift_defender");
     let config = simulation_config_for_drift(spec, TraceMode::Off);
     let crew = crew_for_drift(&spec.synthetic_crew);
-    simulate_combat(&attacker, &defender, config, &crew)
+    simulate_combat(&attacker, &defender, &config, &crew)
 }
 
 /// Same as [`simulate_drift_fixture`] but records full combat trace events ([`TraceMode::Events`]).
@@ -252,7 +253,7 @@ pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::
     let defender = spec.defender.to_combatant("drift_defender");
     let config = simulation_config_for_drift(spec, TraceMode::Events);
     let crew = crew_for_drift(&spec.synthetic_crew);
-    simulate_combat(&attacker, &defender, config, &crew)
+    simulate_combat(&attacker, &defender, &config, &crew)
 }
 
 fn band_mid(low: f64, high: f64) -> f64 {

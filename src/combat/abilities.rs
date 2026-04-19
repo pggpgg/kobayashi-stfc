@@ -1,4 +1,4 @@
-use crate::combat::types::{OpponentFactionTag, ShipType};
+use crate::combat::types::{EnemyType, EnemyTypes, OpponentFactionTag, ShipType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AbilityClass {
@@ -86,6 +86,10 @@ pub enum AbilityEffect {
     /// hull effects, burning ticks, etc.; excludes prior heals). Round 1 has no prior round, so no
     /// heal. `fraction` is typically 0..1; multiple effects **sum** before multiplying (capped at 1).
     HullRegenPrevRoundFraction(f64),
+    /// At [`TimingWindow::RoundStart`], restore shield HP `fraction ×` shield damage the attacker **took**
+    /// in the immediately preceding combat round (gross shield loss on counter-fire, etc.). Round 1: none.
+    /// Multiple effects **sum** (capped at 1) before multiplying gross shield damage.
+    ShieldRegenPrevRoundFraction(f64),
     /// Officer-granted Apex Shred; value is decimal (0.15 = +15%).
     ApexShredBonus(f64),
     /// Officer-granted Apex Barrier; value is flat integer (e.g. 1000).
@@ -193,6 +197,8 @@ pub struct CombatContext {
     pub attacker_tal_assigned_captain_or_bridge: bool,
     /// Bitmask of tags on the defending NPC hostile (from [`crate::combat::SimulationConfig::defender_hostile_tag_mask`]).
     pub defender_hostile_tag_mask: u32,
+    /// Engagement category tags from [`crate::combat::SimulationConfig::engagement_enemy_types`] (armada solo/group, etc.).
+    pub engagement_enemy_types: EnemyTypes,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -240,6 +246,8 @@ pub enum AbilityCondition {
     AttackerOfficerTalNotOnBridge,
     /// Every bit in `required_mask` is set on [`CombatContext::defender_hostile_tag_mask`] (built from AND of catalog tag slugs).
     DefenderHostileTagsAllPresent { required_mask: u32 },
+    /// True when [`CombatContext::engagement_enemy_types`] lists this tag (e.g. group armadas only).
+    EngagementIncludes(EnemyType),
     /// Logical negation of a single sub-condition (LCARS `not`).
     Not(Box<AbilityCondition>),
     And(Vec<AbilityCondition>),

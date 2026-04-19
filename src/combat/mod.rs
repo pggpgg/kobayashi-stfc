@@ -8,6 +8,7 @@ pub mod effect_spec_compile;
 pub mod engine;
 pub mod events;
 pub mod export_csv;
+pub mod crew_nullification;
 pub mod hostile_tags;
 pub mod log_ingest;
 pub mod mitigation;
@@ -27,7 +28,13 @@ pub use damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
     compute_isolytic_taken,
 };
-pub use hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG;
+pub use crew_nullification::{
+    filter_crew_seats_for_crew_nullification, nullified_officer_id_set_for_mask,
+    NULLIFIED_OFFICER_IDS,
+};
+pub use hostile_tags::{
+    HOSTILE_TAG_MASK_CONQUEROR_BORG, HOSTILE_TAG_MASK_CREW_NULLIFICATION,
+};
 pub use engine::{
     apply_morale_primary_piercing, component_mitigation, effective_shots_for_weapon,
     isolytic_damage, mitigation, mitigation_for_hostile, mitigation_with_morale,

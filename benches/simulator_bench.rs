@@ -91,10 +91,11 @@ fn bench_simulator(c: &mut Criterion) {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
-            |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
+            |(a, d)| black_box(simulate_combat(&a, &d, &config, &crew)),
             BatchSize::SmallInput,
         );
     });
@@ -114,10 +115,11 @@ fn bench_simulator(c: &mut Criterion) {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
-            |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
+            |(a, d)| black_box(simulate_combat(&a, &d, &config, &crew)),
             BatchSize::SmallInput,
         );
     });
@@ -137,10 +139,11 @@ fn bench_simulator(c: &mut Criterion) {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
-            |(a, d)| black_box(simulate_combat(&a, &d, config, &crew)),
+            |(a, d)| black_box(simulate_combat(&a, &d, &config, &crew)),
             BatchSize::SmallInput,
         );
     });
@@ -163,10 +166,11 @@ fn bench_simulator(c: &mut Criterion) {
                 profile_weapon_damage_fraction: 0.0,
                 defender_hull_faction_id: 0,
                 defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
             };
             b.iter_batched(
                 || (attacker.clone(), defender.clone()),
-                |(a, d)| black_box(simulate_combat(&a, &d, config, &prev_round_crew)),
+                |(a, d)| black_box(simulate_combat(&a, &d, &config, &prev_round_crew)),
                 BatchSize::SmallInput,
             );
         },

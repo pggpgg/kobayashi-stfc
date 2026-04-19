@@ -84,7 +84,7 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
     let r = simulate_combat(
         &passive_attacker(),
         &defender,
-        SimulationConfig {
+        &SimulationConfig {
             rounds: duration + 3,
             seed: 41,
             trace_mode: TraceMode::Events,
@@ -93,6 +93,7 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         },
         &crew,
     );
@@ -156,7 +157,7 @@ fn burning_round_end_trigger_precedes_end_of_round_effects_in_event_order() {
     let r = simulate_combat(
         &passive_attacker(),
         &huge_defender(),
-        SimulationConfig {
+        &SimulationConfig {
             rounds: 2,
             seed: 43,
             trace_mode: TraceMode::Events,
@@ -165,6 +166,7 @@ fn burning_round_end_trigger_precedes_end_of_round_effects_in_event_order() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         },
         &crew,
     );
@@ -238,7 +240,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
     let r = simulate_combat(
         &attacker,
         &huge_defender(),
-        SimulationConfig {
+        &SimulationConfig {
             rounds: 3,
             seed: 47,
             trace_mode: TraceMode::Events,
@@ -247,6 +249,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         },
         &crew,
     );
@@ -330,7 +333,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
     let r = simulate_combat(
         &attacker,
         &huge_defender(),
-        SimulationConfig {
+        &SimulationConfig {
             rounds: 5,
             seed: 53,
             trace_mode: TraceMode::Events,
@@ -339,6 +342,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         },
         &crew,
     );
@@ -414,11 +418,12 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
     };
 
     let mut chosen = None;
     for seed in 0u64..2000 {
-        let r = simulate_combat(&attacker, &huge_defender(), cfg(seed), &crew);
+        let r = simulate_combat(&attacker, &huge_defender(), &cfg(seed), &crew);
         let t1 = round_start_hull_breach_triggered(&r.events, 1);
         let t2 = round_start_hull_breach_triggered(&r.events, 2);
         if t1 == Some(true) && t2 == Some(false) {
@@ -498,7 +503,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
     let r = simulate_combat(
         &attacker,
         &huge_defender(),
-        SimulationConfig {
+        &SimulationConfig {
             rounds: 1,
             seed: 59,
             trace_mode: TraceMode::Events,
@@ -507,6 +512,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
         },
         &crew,
     );

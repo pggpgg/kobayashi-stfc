@@ -3,8 +3,8 @@ use std::process;
 
 use kobayashi::combat::{
     default_percent_sensitivity_rows, format_sensitivity_tsv,
-    simulate_combat_with_defender_faction, Combatant, CrewConfiguration, HostileMitigationBaseline,
-    SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
+    simulate_combat_with_defender_faction, Combatant, CrewConfiguration, EnemyTypes,
+    HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
 };
 use kobayashi::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_battlelogs,
@@ -364,6 +364,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        engagement_enemy_types: EnemyTypes::default(),
     };
 
     let defender_faction = defender_faction_for_cli_simulate(
@@ -373,7 +374,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
     let result = simulate_combat_with_defender_faction(
         &attacker,
         &defender,
-        config,
+        &config,
         &CrewConfiguration::default(),
         defender_faction,
     );

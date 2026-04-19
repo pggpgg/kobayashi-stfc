@@ -482,6 +482,7 @@ fn effect_condition_from_canonical(
         ship_type: None,
         faction_id: Some(fid),
         ship_id: None,
+        enemy_type: None,
         conditions: None,
     };
     match base {
@@ -499,6 +500,7 @@ fn effect_condition_from_canonical(
             ship_type: None,
             faction_id: None,
             ship_id: None,
+            enemy_type: None,
             conditions: Some(vec![b, hull]),
         }),
     }
