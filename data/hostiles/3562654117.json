@@ -41,6 +41,7 @@
   "shield_piercing": 4970000000.0,
   "crit_chance": 0.1,
   "crit_damage": 1.6666666666666667,
+  "hostile_tags": [],
   "components": [
     {
       "art_id": 5001,
