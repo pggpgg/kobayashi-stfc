@@ -10,6 +10,8 @@ import {
   type CrewRecommendation,
   cancelOptimizeJob,
   fetchHeuristics,
+  API_ERROR_CPU_BUSY,
+  ApiError,
   formatApiError,
   getOptimizeEstimate,
   getOptimizeStatus,
@@ -181,9 +183,27 @@ export function useWorkspace() {
 
   // UI state
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorState] = useState<string | null>(null);
+  /** When `error` is set from an API failure, distinguishes capacity warnings from hard failures. */
+  const [errorSeverity, setErrorSeverity] = useState<
+    "error" | "warning" | null
+  >(null);
   /** Non-error feedback (e.g. after cancel). */
   const [workspaceInfo, setWorkspaceInfo] = useState<string | null>(null);
+
+  const setError = (message: string | null) => {
+    setErrorState(message);
+    setErrorSeverity(message === null ? null : "error");
+  };
+
+  const setErrorFromApiException = (e: unknown) => {
+    setErrorState(formatApiError(e));
+    setErrorSeverity(
+      e instanceof ApiError && e.code === API_ERROR_CPU_BUSY
+        ? "warning"
+        : "error",
+    );
+  };
   /** How progress updates are delivered while optimizing. */
   const [optimizeStreamMode, setOptimizeStreamMode] =
     useState<OptimizeStreamMode | null>(null);
@@ -330,7 +350,7 @@ export function useWorkspace() {
       setSimResult(res.stats);
       setRecommendations([]);
     } catch (e) {
-      setError(formatApiError(e));
+      setErrorFromApiException(e);
     } finally {
       setLoadingSim(false);
     }
@@ -434,8 +454,14 @@ export function useWorkspace() {
             clearTimeout(sseReconnectTimerRef.current);
             sseReconnectTimerRef.current = null;
           }
-          setError(
-            `Could not read optimization status (${formatApiError(e)}). The job may still be running on the server — refresh the page to reconnect, or start a new optimization.`,
+          const detail = formatApiError(e);
+          setErrorState(
+            `Could not read optimization status (${detail}). The job may still be running on the server — refresh the page to reconnect, or start a new optimization.`,
+          );
+          setErrorSeverity(
+            e instanceof ApiError && e.code === API_ERROR_CPU_BUSY
+              ? "warning"
+              : "error",
           );
           setLoadingOptimize(false);
           setOptimizeStreamMode(null);
@@ -616,11 +642,21 @@ export function useWorkspace() {
             fastDiscovery && selectedSeeds.length > 0 ? true : undefined,
         }),
         activeProfileId,
+        {
+          onCpuBusyWait: ({ waitMs, attempt }) => {
+            const sec = Math.max(1, Math.round(waitMs / 1000));
+            setWorkspaceInfo(
+              `Server CPU is busy (another simulation or optimization is running). Automatically retrying in ~${sec}s (attempt ${attempt})…`,
+            );
+          },
+        },
       );
+      setWorkspaceInfo(null);
       beginOptimizeTracking(job_id);
     } catch (e) {
       clearPersistedOptimizeJob();
-      setError(formatApiError(e));
+      setWorkspaceInfo(null);
+      setErrorFromApiException(e);
       setLoadingOptimize(false);
       setOptimizeStreamMode(null);
       setOptimizeProgress(null);
@@ -690,7 +726,7 @@ export function useWorkspace() {
       setShowSavePreset(false);
       setSavePresetName("");
     } catch (e) {
-      setError(formatApiError(e));
+      setErrorFromApiException(e);
     } finally {
       setSavingPreset(false);
     }
@@ -785,6 +821,7 @@ export function useWorkspace() {
     rightPanelCollapsed,
     setRightPanelCollapsed,
     error,
+    errorSeverity,
     setError,
     workspaceInfo,
     setWorkspaceInfo,

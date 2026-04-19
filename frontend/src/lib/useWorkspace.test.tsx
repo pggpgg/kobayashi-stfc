@@ -87,6 +87,7 @@ describe("useWorkspace", () => {
     });
 
     expect(result.current.error).toBe("Select a captain first");
+    expect(result.current.errorSeverity).toBe("error");
     expect(apiMocks.mockSimulate).not.toHaveBeenCalled();
   });
 
@@ -109,6 +110,7 @@ describe("useWorkspace", () => {
 
     expect(apiMocks.mockSimulate).toHaveBeenCalled();
     expect(result.current.error).toBeNull();
+    expect(result.current.errorSeverity).toBeNull();
     expect(result.current.simResult).not.toBeNull();
     expect(result.current.simResult?.n).toBe(100);
   });

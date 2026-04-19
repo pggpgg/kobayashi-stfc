@@ -86,7 +86,86 @@ export async function parseApiError(
   return new ApiError(message, res.status, code, retryAfterMs);
 }
 
-const MAX_CPU_BUSY_WAIT_MS = 120_000;
+/** Max single sleep when backing off after `cpu_busy` (per server hint, capped). */
+const MAX_CPU_BUSY_PER_WAIT_MS = 120_000;
+/** Max cumulative sleep across all `cpu_busy` rounds for one logical request. */
+const MAX_CPU_BUSY_TOTAL_WAIT_MS = 300_000;
+/** Number of `cpu_busy` responses tolerated before failing (each followed by a wait, then re-fetch). */
+const MAX_CPU_BUSY_ROUNDS = 7;
+/** When the server omits `retry_after_ms` / `Retry-After`, wait this long before retrying. */
+const CPU_BUSY_DEFAULT_BACKOFF_MS = 1_500;
+
+/** Passed to {@link fetchWithCpuBusyRetries} when the client waits for a CPU slot. */
+export type CpuBusyWaitInfo = { waitMs: number; attempt: number };
+
+type FetchCpuBusyOptions = {
+  onCpuBusyWait?: (info: CpuBusyWaitInfo) => void;
+};
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Repeated `fetch` with bounded waits when the server returns 503 `cpu_busy`
+ * (CPU admission). Caps per-wait, total wait, and number of rounds.
+ */
+async function fetchWithCpuBusyRetries(
+  url: string,
+  init: RequestInit,
+  options?: FetchCpuBusyOptions,
+): Promise<Response> {
+  let totalWaitedMs = 0;
+  let cpuBusyRound = 0;
+
+  while (true) {
+    const res = await fetch(url, init);
+    if (res.ok) return res;
+
+    const bodyText = await res.text();
+    const clone = new Response(bodyText, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: res.headers,
+    });
+
+    if (res.status !== 503) {
+      throw await parseApiError(clone, bodyText);
+    }
+
+    const err = await parseApiError(clone, bodyText);
+    if (err.code !== API_ERROR_CPU_BUSY) {
+      throw err;
+    }
+
+    if (cpuBusyRound >= MAX_CPU_BUSY_ROUNDS) {
+      throw err;
+    }
+
+    let waitMs =
+      err.retryAfterMs != null && err.retryAfterMs > 0
+        ? Math.min(err.retryAfterMs, MAX_CPU_BUSY_PER_WAIT_MS)
+        : CPU_BUSY_DEFAULT_BACKOFF_MS;
+
+    const remaining = MAX_CPU_BUSY_TOTAL_WAIT_MS - totalWaitedMs;
+    if (remaining <= 0) {
+      throw err;
+    }
+    waitMs = Math.min(waitMs, remaining);
+    if (waitMs <= 0) {
+      throw err;
+    }
+
+    options?.onCpuBusyWait?.({
+      waitMs,
+      attempt: cpuBusyRound + 1,
+    });
+
+    await sleepMs(waitMs);
+    totalWaitedMs += waitMs;
+    cpuBusyRound += 1;
+  }
+}
 
 /** Format any thrown value for user display; adds retry hint for server errors. */
 export function formatApiError(e: unknown): string {
@@ -118,46 +197,6 @@ async function checkOk(res: Response): Promise<void> {
   if (res.ok) return;
   const text = await res.text();
   throw await parseApiError(res, text);
-}
-
-/** One `fetch` retry after a bounded wait when the server returns 503 `cpu_busy`. */
-async function fetchWithOneCpuBusyRetry(
-  url: string,
-  init: RequestInit,
-): Promise<Response> {
-  let res = await fetch(url, init);
-  if (res.ok) return res;
-
-  async function toParsedError(r: Response): Promise<ApiError> {
-    const text = await r.text();
-    return parseApiError(
-      new Response(text, {
-        status: r.status,
-        statusText: r.statusText,
-        headers: r.headers,
-      }),
-      text,
-    );
-  }
-
-  if (res.status !== 503) {
-    await checkOk(res);
-    return res;
-  }
-
-  const err = await toParsedError(res);
-  if (err.code !== API_ERROR_CPU_BUSY) throw err;
-
-  const waitMs =
-    err.retryAfterMs != null && err.retryAfterMs > 0
-      ? Math.min(err.retryAfterMs, MAX_CPU_BUSY_WAIT_MS)
-      : 0;
-  if (waitMs === 0) throw err;
-
-  await new Promise((r) => setTimeout(r, waitMs));
-  res = await fetch(url, init);
-  await checkOk(res);
-  return res;
 }
 
 /** Build headers with X-Profile-Id when profileId is provided. */
@@ -397,7 +436,7 @@ export async function simulate(
   if (params.support_buffs && params.support_buffs.length > 0) {
     body.support_buffs = params.support_buffs;
   }
-  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/simulate`, {
+  const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/simulate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -486,7 +525,7 @@ export async function compareCrewsDistributions(
   if (params.support_buffs && params.support_buffs.length > 0) {
     body.support_buffs = params.support_buffs;
   }
-  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/compare/crews`, {
+  const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/compare/crews`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -671,7 +710,7 @@ export async function optimize(
   if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     body.below_decks_slots = params.below_decks_slots;
   }
-  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/optimize`, {
+  const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/optimize`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -724,6 +763,11 @@ export async function fetchHeuristics(): Promise<string[]> {
 
 export type OptimizerStrategyType = "exhaustive" | "genetic" | "tiered";
 
+/** Optional hooks for `optimizeStart` (CPU admission may queue the request). */
+export type OptimizeStartOptions = {
+  onCpuBusyWait?: (info: CpuBusyWaitInfo) => void;
+};
+
 /** Sub-object for POST /api/optimize/start `constraints` (matches server OptimizeConstraintsDto). */
 export interface OptimizeCrewConstraintsBody {
   must_include?: string[];
@@ -758,6 +802,7 @@ export async function optimizeStart(
     fast_discovery?: boolean;
   },
   profileId?: string | null,
+  options?: OptimizeStartOptions,
 ): Promise<OptimizeStartResponse> {
   const body: Record<string, unknown> = {
     ship: params.ship,
@@ -822,15 +867,28 @@ export async function optimizeStart(
   if (params.fast_discovery === true) {
     body.fast_discovery = true;
   }
-  const res = await fetchWithOneCpuBusyRetry(`${API_BASE}/api/optimize/start`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...profileHeaders(profileId),
+  const res = await fetchWithCpuBusyRetries(
+    `${API_BASE}/api/optimize/start`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...profileHeaders(profileId),
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+    { onCpuBusyWait: options?.onCpuBusyWait },
+  );
   return res.json();
+}
+
+const OPTIMIZE_STATUS_POLL_MAX_ATTEMPTS = 5;
+const OPTIMIZE_STATUS_POLL_BASE_MS = 300;
+const OPTIMIZE_STATUS_POLL_CAP_MS = 3_000;
+
+/** Transient HTTP errors while polling job status (long-running optimize). */
+function optimizeStatusFailureIsRetriable(err: ApiError): boolean {
+  return err.status === 502 || err.status === 503 || err.status === 504;
 }
 
 /** Poll async optimize job status. Jobs are keyed only by `job_id` (profile affects the start request body/headers, not this URL). */
@@ -838,9 +896,61 @@ export async function getOptimizeStatus(
   jobId: string,
 ): Promise<OptimizeStatusResponse> {
   const url = `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`;
-  const res = await fetch(url);
-  await checkOk(res);
-  return res.json();
+  let lastErr: unknown;
+
+  for (let attempt = 0; attempt < OPTIMIZE_STATUS_POLL_MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        return (await res.json()) as OptimizeStatusResponse;
+      }
+      const text = await res.text();
+      const err = await parseApiError(
+        new Response(text, {
+          status: res.status,
+          statusText: res.statusText,
+          headers: res.headers,
+        }),
+        text,
+      );
+      if (err.status === 404) {
+        throw err;
+      }
+      if (
+        optimizeStatusFailureIsRetriable(err) &&
+        attempt < OPTIMIZE_STATUS_POLL_MAX_ATTEMPTS - 1
+      ) {
+        lastErr = err;
+        await sleepMs(
+          Math.min(
+            OPTIMIZE_STATUS_POLL_CAP_MS,
+            OPTIMIZE_STATUS_POLL_BASE_MS * 2 ** attempt,
+          ),
+        );
+        continue;
+      }
+      throw err;
+    } catch (e) {
+      if (e instanceof ApiError) {
+        throw e;
+      }
+      if (attempt < OPTIMIZE_STATUS_POLL_MAX_ATTEMPTS - 1) {
+        lastErr = e;
+        await sleepMs(
+          Math.min(
+            OPTIMIZE_STATUS_POLL_CAP_MS,
+            OPTIMIZE_STATUS_POLL_BASE_MS * 2 ** attempt,
+          ),
+        );
+        continue;
+      }
+      throw e;
+    }
+  }
+
+  throw lastErr instanceof Error
+    ? lastErr
+    : new Error("getOptimizeStatus: exhausted retries");
 }
 
 /** URL for SSE stream of optimize job progress (GET). Use with EventSource for live updates. */

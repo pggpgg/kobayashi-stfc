@@ -3,6 +3,7 @@ import {
   API_ERROR_CPU_BUSY,
   ApiError,
   formatApiError,
+  getOptimizeStatus,
   parseApiError,
   simulate,
 } from "./api";
@@ -145,6 +146,43 @@ describe("formatApiError", () => {
   });
 });
 
+describe("getOptimizeStatus retries", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it("retries on 503 then returns JSON", async () => {
+    vi.useFakeTimers();
+    const okPayload = JSON.stringify({
+      status: "running",
+      progress: 5,
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("upstream busy", {
+          status: 503,
+          statusText: "Service Unavailable",
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(okPayload, {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const p = getOptimizeStatus("job-1");
+    await vi.advanceTimersByTimeAsync(300);
+    const status = await p;
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(status.status).toBe("running");
+    expect(status.progress).toBe(5);
+  });
+});
+
 describe("simulate cpu_busy retry", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -204,5 +242,157 @@ describe("simulate cpu_busy retry", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(result.stats.n).toBe(10);
     expect(result.seed).toBe(42);
+  });
+
+  it("retries through two cpu_busy responses then succeeds", async () => {
+    vi.useFakeTimers();
+    const stats = {
+      win_rate: 0.5,
+      stall_rate: 0,
+      loss_rate: 0.5,
+      avg_hull_remaining: 0.5,
+      avg_defender_hull_remaining: 0.5,
+      n: 10,
+    };
+    const okBody = JSON.stringify({
+      status: "ok",
+      stats,
+      seed: 99,
+    });
+    const busyBody = (ms: number) =>
+      JSON.stringify({
+        status: "error",
+        code: "cpu_busy",
+        message: "busy",
+        retry_after_ms: ms,
+      });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(busyBody(80), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(busyBody(90), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(okBody, {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const crew = {
+      captain: "Kirk",
+      bridge: ["Spock", null] as (string | null)[],
+      below_deck: [] as (string | null)[],
+    };
+    const p = simulate({
+      ship: "saladin",
+      hostile: "2918121098",
+      crew,
+      num_sims: 10,
+    });
+    await vi.advanceTimersByTimeAsync(80);
+    await vi.advanceTimersByTimeAsync(90);
+    const result = await p;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(result.seed).toBe(99);
+  });
+
+  it("throws after too many consecutive cpu_busy responses", async () => {
+    vi.useFakeTimers();
+    const busyBody = JSON.stringify({
+      status: "error",
+      code: "cpu_busy",
+      message: "busy",
+      retry_after_ms: 40,
+    });
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(busyBody, {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const crew = {
+      captain: "Kirk",
+      bridge: ["Spock", null] as (string | null)[],
+      below_deck: [] as (string | null)[],
+    };
+    const p = simulate({
+      ship: "saladin",
+      hostile: "2918121098",
+      crew,
+      num_sims: 10,
+    });
+    const assertRejected = expect(p).rejects.toMatchObject({
+      code: API_ERROR_CPU_BUSY,
+    });
+    await vi.runAllTimersAsync();
+    await assertRejected;
+    expect(fetchMock).toHaveBeenCalledTimes(8);
+  });
+
+  it("uses default backoff when cpu_busy omits retry_after_ms", async () => {
+    vi.useFakeTimers();
+    const stats = {
+      win_rate: 0.5,
+      stall_rate: 0,
+      loss_rate: 0.5,
+      avg_hull_remaining: 0.5,
+      avg_defender_hull_remaining: 0.5,
+      n: 10,
+    };
+    const okBody = JSON.stringify({
+      status: "ok",
+      stats,
+      seed: 1,
+    });
+    const busyNoRetry = JSON.stringify({
+      status: "error",
+      code: "cpu_busy",
+      message: "busy",
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(busyNoRetry, {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(okBody, {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const crew = {
+      captain: "Kirk",
+      bridge: ["Spock", null] as (string | null)[],
+      below_deck: [] as (string | null)[],
+    };
+    const p = simulate({
+      ship: "saladin",
+      hostile: "2918121098",
+      crew,
+      num_sims: 10,
+    });
+    await vi.advanceTimersByTimeAsync(1500);
+    const result = await p;
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.seed).toBe(1);
   });
 });

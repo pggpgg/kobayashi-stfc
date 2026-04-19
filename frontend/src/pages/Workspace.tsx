@@ -127,11 +127,23 @@ export default function Workspace() {
         <div
           style={{
             padding: "0.5rem 1rem",
-            background: "var(--error)",
-            color: "white",
+            background:
+              ws.errorSeverity === "warning"
+                ? "rgba(201, 162, 39, 0.22)"
+                : "var(--error)",
+            color: ws.errorSeverity === "warning" ? "var(--text)" : "white",
+            borderBottom:
+              ws.errorSeverity === "warning"
+                ? "1px solid var(--warning)"
+                : undefined,
           }}
           role="alert"
         >
+          {ws.errorSeverity === "warning" && (
+            <span style={{ fontWeight: 600, marginRight: "0.5rem" }}>
+              Server busy:
+            </span>
+          )}
           {ws.error}
         </div>
       )}
