@@ -21924,7 +21924,7 @@ officers:
     name: Zefram Cochrane (Below Decks)
     effects:
     - type: stat_modify
-      stat: hull_hp_repair
+      stat: hull_hp_repair_prev_round
       target: self
       operator: add
       value: null

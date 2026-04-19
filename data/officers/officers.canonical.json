@@ -19619,11 +19619,11 @@
             "TargetIsArmada"
           ],
           "description": "Visionary... or Something. On round start, repair X of hull damage taken in the previous round of combat against all Armadas.",
-          "modifier": "HullHPRepair",
+          "modifier": "HullRepair",
           "operation": "MultiplyAdd",
           "slot": "below_decks",
           "target": "SelfShip",
-          "trigger": "RoundStart",
+          "trigger": "RoundEnd",
           "value_by_rank": [
             0.05,
             0.07,
