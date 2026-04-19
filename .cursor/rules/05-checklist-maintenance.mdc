@@ -1,0 +1,11 @@
+---
+description: Keep checklist state in sync with completed work
+alwaysApply: true
+---
+# Checklist maintenance
+
+When working from a checklist or task list, keep it updated in real time.
+
+- As soon as an item is fully completed, immediately mark it as completed (for example, change `- [ ]` to `- [x]`).
+- Do not batch checklist updates until the end of the task.
+- Never report checklist work as done while the checklist still shows it as incomplete.
