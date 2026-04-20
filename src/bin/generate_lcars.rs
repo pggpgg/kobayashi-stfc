@@ -437,6 +437,8 @@ fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64
         "ApexShred" | "ApexBarrier" => val,
         "IsolyticDamage" | "IsolyticDefense" => val,
         "IsolyticCascade" | "IsolyticCascadeDamage" => val,
+        // Shots bonus is applied as additive fraction B_shots in the engine (`1.0 + B_shots` multiplier).
+        "ShotsPerAttack" => val,
         "ShieldHPRepair"
         | "ShieldRegen"
         | "ShieldRepairPrevRound"
@@ -585,6 +587,13 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
             } else {
                 Some(lcars_values.first().copied().unwrap_or(value_rank1))
             };
+            let duration = if stat == "shots_per_attack" {
+                LcarsDuration::Rounds {
+                    rounds: num_rounds_from_attributes(a.attributes.as_deref()).unwrap_or(2),
+                }
+            } else {
+                LcarsDuration::Permanent("permanent".to_string())
+            };
             Some(LcarsEffect {
                 effect_type: "stat_modify".to_string(),
                 stat: Some(stat),
@@ -592,7 +601,7 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 operator: Some(operator),
                 value: value_field,
                 trigger: Some(trigger.to_string()),
-                duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+                duration: Some(duration),
                 scaling,
                 condition: cond,
                 chance: None,
@@ -634,6 +643,25 @@ fn faction_id_from_canonical_attributes(raw: &str) -> Option<i64> {
             return None;
         }
         return val.parse::<i64>().ok();
+    }
+    None
+}
+
+/// Parse `num_rounds=N` from canonical ability `attributes` (comma-separated `key=value` pairs).
+fn num_rounds_from_attributes(raw: Option<&str>) -> Option<u32> {
+    let raw = raw?;
+    for part in raw.split(',') {
+        let mut it = part.trim().splitn(2, '=');
+        let key = it.next()?.trim();
+        if !key.eq_ignore_ascii_case("num_rounds") {
+            continue;
+        }
+        let val = it.next()?.trim();
+        if val.is_empty() {
+            return None;
+        }
+        let n: u32 = val.parse().ok()?;
+        return Some(n.max(1));
     }
     None
 }
@@ -706,6 +734,8 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "IsolyticCascade" | "IsolyticCascadeDamage" => {
             MappedEffect::StatModify("isolytic_cascade_damage".into(), "add".into(), val)
         }
+        "ShotsPerAttack" => MappedEffect::StatModify("shots_per_attack".into(), "add".into(), val),
+        "ArmadaLoot" => MappedEffect::Tag("armadaloot:non_combat".into()),
         "ShieldHPRepair" | "ShieldRegen" => {
             MappedEffect::StatModify("shield_regen".into(), "add".into(), val)
         }
@@ -902,5 +932,51 @@ mod canonical_condition_tests {
         let vals = e.scaling.as_ref().unwrap().values.as_ref().unwrap();
         assert_eq!(vals.len(), 5);
         assert!((vals[0] - 0.05).abs() < 1e-9);
+    }
+
+    #[test]
+    fn num_rounds_from_attributes_parses_typical_row() {
+        assert_eq!(
+            super::num_rounds_from_attributes(Some("num_rounds=2")),
+            Some(2)
+        );
+        assert_eq!(
+            super::num_rounds_from_attributes(Some("foo=1, num_rounds=5, bar=2")),
+            Some(5)
+        );
+        assert_eq!(super::num_rounds_from_attributes(Some("")), None);
+        assert_eq!(super::num_rounds_from_attributes(None), None);
+    }
+
+    #[test]
+    fn fcm_data_shots_maps_to_lcars_with_round_duration_and_and_condition() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot": "officer",
+            "trigger": "RoundStart",
+            "modifier": "ShotsPerAttack",
+            "operation": "MultiplyAdd",
+            "target": "SelfShip",
+            "attributes": "num_rounds=2",
+            "conditions": ["TargetNotSoloArmada", "TargetIsArmada"],
+            "chance_by_rank": [1.0, 1.0, 1.0],
+            "value_by_rank": [0.4, 0.3, 0.8]
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&a, "FCM Data").expect("effect");
+        assert_eq!(e.effect_type, "stat_modify");
+        assert_eq!(e.stat.as_deref(), Some("shots_per_attack"));
+        assert_eq!(e.trigger.as_deref(), Some("on_round_start"));
+        match e.duration.as_ref() {
+            Some(LcarsDuration::Rounds { rounds }) => assert_eq!(*rounds, 2),
+            other => panic!("expected rounds duration, got {other:?}"),
+        }
+        let cond = e.condition.as_ref().expect("cond");
+        assert_eq!(cond.condition_type, "and");
+        let kids = cond.conditions.as_ref().expect("kids");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "engagement_includes");
+        assert_eq!(kids[0].enemy_type.as_deref(), Some("group_armadas"));
+        assert_eq!(kids[1].condition_type, "defender_ship_type_is");
+        assert_eq!(kids[1].ship_type.as_deref(), Some("armada"));
     }
 }

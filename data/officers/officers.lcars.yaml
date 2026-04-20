@@ -5022,10 +5022,103 @@ officers:
 - id: fcm-data-3b9e4d
   name: FCM Data
   faction: Federation
-  rarity: unknown
+  rarity: epic
   group: UNKNOWN
   captain_ability: null
-  bridge_ability: null
+  bridge_ability:
+    name: FCM Data (Bridge)
+    effects:
+    - type: stat_modify
+      stat: shots_per_attack
+      target: self
+      operator: add
+      value: null
+      trigger: on_round_start
+      duration:
+        rounds: 2
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values:
+        - 0.4
+        - 0.3
+        - 0.8
+        chance_values: null
+      condition:
+        type: and
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: null
+        enemy_type: null
+        conditions:
+        - type: engagement_includes
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: null
+          enemy_type: group_armadas
+          conditions: null
+        - type: defender_ship_type_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: armada
+          faction_id: null
+          ship_id: null
+          enemy_type: null
+          conditions: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+    - type: tag
+      stat: null
+      target: self
+      operator: null
+      value: null
+      trigger: passive
+      duration: permanent
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.4
+        - 0.55
+        - 0.8
+        - 1.1
+        - 1.5
+        chance_values: null
+      condition: null
+      chance: null
+      multiplier: null
+      tag: armadaloot:non_combat
+      accumulate: null
+      decay: null
   below_decks_ability: null
 - id: fess-7afd43
   name: Fess

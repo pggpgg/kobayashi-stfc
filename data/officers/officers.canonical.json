@@ -19725,12 +19725,62 @@
       "source_officer_id": "766153048"
     },
     {
-      "abilities": [],
+      "abilities": [
+        {
+          "ability_id": "1610205778",
+          "attributes": "num_rounds=2",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "TargetNotSoloArmada",
+            "TargetIsArmada"
+          ],
+          "description": "Increases Shots by X for 2 rounds on round start against Group Armadas.",
+          "modifier": "ShotsPerAttack",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "RoundStart",
+          "value_by_rank": [
+            0.4,
+            0.3,
+            0.8
+          ]
+        },
+        {
+          "ability_id": "1470259639",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Increases base Loot gained from Armadas by X.",
+          "modifier": "ArmadaLoot",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            0.4,
+            0.55,
+            0.8,
+            1.1,
+            1.5
+          ]
+        }
+      ],
       "faction": "Federation",
       "group": "UNKNOWN",
       "id": "fcm-data-3b9e4d",
       "name": "FCM Data",
-      "rarity": "unknown",
+      "rarity": "epic",
       "scaling": {
         "rank_chance_model": "ability.chance_by_rank",
         "rank_value_model": "ability.value_by_rank",

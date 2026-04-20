@@ -119,6 +119,12 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         "EnemyArmada" | "TargetIsArmada" => {
             return Some(lcars_defender_ship_type_is("armada"));
         }
+        // “Not solo armada” — group armada engagements only (same tag as [`EnemyGroupArmadas`]).
+        "TargetNotSoloArmada" => {
+            let mut c = lcars_cond_base("engagement_includes");
+            c.enemy_type = Some("group_armadas".to_string());
+            return Some(c);
+        }
         // Defender is not the Armada ship class (canonical alias used alongside other `Target*` tokens).
         "TargetNotArmada" => {
             return Some(lcars_not(lcars_defender_ship_type_is("armada")));
@@ -303,6 +309,14 @@ mod tests {
         assert_eq!(a.condition_type, b.condition_type);
         assert_eq!(a.ship_type, b.ship_type);
         resolve_lcars_condition(&b).expect("resolver accepts");
+    }
+
+    #[test]
+    fn maps_target_not_solo_armada_to_group_armadas_engagement() {
+        let c = map_canonical_condition_token("TargetNotSoloArmada").expect("maps");
+        assert_eq!(c.condition_type, "engagement_includes");
+        assert_eq!(c.enemy_type.as_deref(), Some("group_armadas"));
+        resolve_lcars_condition(&c).expect("resolver accepts");
     }
 
     #[test]
