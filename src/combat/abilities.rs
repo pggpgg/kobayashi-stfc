@@ -245,7 +245,9 @@ pub enum AbilityCondition {
     /// Canonical `SelfOfficerTalNotOnBridge`: true when Tal is not assigned Captain or Bridge on the attacker.
     AttackerOfficerTalNotOnBridge,
     /// Every bit in `required_mask` is set on [`CombatContext::defender_hostile_tag_mask`] (built from AND of catalog tag slugs).
-    DefenderHostileTagsAllPresent { required_mask: u32 },
+    DefenderHostileTagsAllPresent {
+        required_mask: u32,
+    },
     /// True when [`CombatContext::engagement_enemy_types`] lists this tag (e.g. group armadas only).
     EngagementIncludes(EnemyType),
     /// Logical negation of a single sub-condition (LCARS `not`).

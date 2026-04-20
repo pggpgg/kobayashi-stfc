@@ -97,8 +97,8 @@ fn cpu_busy_response(retry_after_ms: u64) -> Response {
     let body_str = serde_json::to_string_pretty(&body)
         .unwrap_or_else(|_| "{\"status\":\"error\",\"code\":\"cpu_busy\"}".to_string());
     let secs = retry_after_ms.div_ceil(1000).max(1);
-    let retry = HeaderValue::from_str(&secs.to_string())
-        .unwrap_or_else(|_| HeaderValue::from_static("1"));
+    let retry =
+        HeaderValue::from_str(&secs.to_string()).unwrap_or_else(|_| HeaderValue::from_static("1"));
     let mut headers = HeaderMap::new();
     headers.insert(
         header::CONTENT_TYPE,

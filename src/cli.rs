@@ -268,6 +268,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             defender_hull_faction_id,
             defender_hostile_tag_mask,
             engagement_enemy_types: EnemyTypes::default(),
+            attacker_roster_officer_ids: Vec::new(),
         },
         &CrewConfiguration::default(),
         defender_faction,
@@ -497,7 +498,6 @@ fn handle_resolve(args: &[String]) -> i32 {
                 std::slice::from_ref(&o.id),
                 &by_id,
                 &opts,
-                None,
             );
             println!("Officer: {} ({})", o.name, o.id);
             println!("Resolved BuffSet:");

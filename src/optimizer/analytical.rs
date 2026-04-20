@@ -119,6 +119,7 @@ mod tests {
             profile_weapon_damage_fraction: 0.0,
             base_seed: 0,
             engagement_enemy_types: EnemyTypes::default(),
+            attacker_roster_officer_ids: Vec::new(),
         }
     }
 

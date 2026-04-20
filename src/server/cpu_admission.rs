@@ -32,7 +32,9 @@ pub(crate) fn cpu_job_queue_wait_config_from_env() -> (Option<Duration>, bool) {
 pub(crate) enum AcquireCpuPermitError {
     SemaphoreClosed,
     /// Permit not acquired within `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`.
-    QueueTimeout { retry_after_ms: u64 },
+    QueueTimeout {
+        retry_after_ms: u64,
+    },
 }
 
 /// Acquire an owned permit from the shared CPU semaphore, optionally with a bounded wait.
@@ -64,9 +66,7 @@ mod tests {
     #[tokio::test]
     async fn acquire_succeeds_when_permit_free() {
         let sem = Arc::new(Semaphore::new(1));
-        let p = acquire_cpu_permit(sem.clone(), None)
-            .await
-            .expect("permit");
+        let p = acquire_cpu_permit(sem.clone(), None).await.expect("permit");
         drop(p);
         let _ = acquire_cpu_permit(sem, None).await.expect("second acquire");
     }

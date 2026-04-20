@@ -277,6 +277,7 @@ fn run_candidate_monte_carlo(
             .unwrap_or(0),
         defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
         engagement_enemy_types: input.engagement_enemy_types.clone(),
+        attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
     };
 
     let mut n_done = 0usize;
@@ -702,6 +703,7 @@ pub fn replay_optimize_iteration_with_registry(
             .unwrap_or(0),
         defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
         engagement_enemy_types: input.engagement_enemy_types.clone(),
+        attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(

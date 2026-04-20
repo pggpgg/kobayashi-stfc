@@ -473,11 +473,9 @@ fn gather_optimize_simulation_results(
     }
 
     let dto_warm = warm_start_crews_from_request_dtos(request);
-    let fast_discovery_requested = request.fast_discovery == Some(true)
-        && heuristics_seeds_nonempty
-        && !heuristics_only;
-    let fast_discovery_no_resolved_crews =
-        fast_discovery_requested && h_candidates.is_empty();
+    let fast_discovery_requested =
+        request.fast_discovery == Some(true) && heuristics_seeds_nonempty && !heuristics_only;
+    let fast_discovery_no_resolved_crews = fast_discovery_requested && h_candidates.is_empty();
     let fast_discovery = fast_discovery_requested && !h_candidates.is_empty();
 
     let (scenario_warm_start, fast_discovery_heuristic_cap_hit) = if fast_discovery {
@@ -521,31 +519,29 @@ fn gather_optimize_simulation_results(
     )
     .using_placeholder_combatants;
 
-    let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty
-        && !is_seeded_genetic
-        && !fast_discovery
-    {
-        let h_total = h_candidates.len() as u32;
-        sink.on_heuristics_start(h_total);
-        let (results, _) = run_monte_carlo_parallel_with_registry(
-            registry,
-            &request.ship,
-            &request.hostile,
-            request.ship_tier,
-            request.ship_level,
-            &h_candidates,
-            sims as usize,
-            seed,
-            profile_id,
-            request.support_buffs.as_deref(),
-            chain_grind.clone(),
-            request.defender_opponent,
-        );
-        sink.on_heuristics_complete(heuristics_only, h_total, &results);
-        results
-    } else {
-        Vec::new()
-    };
+    let mut all_results: Vec<SimulationResult> =
+        if heuristics_seeds_nonempty && !is_seeded_genetic && !fast_discovery {
+            let h_total = h_candidates.len() as u32;
+            sink.on_heuristics_start(h_total);
+            let (results, _) = run_monte_carlo_parallel_with_registry(
+                registry,
+                &request.ship,
+                &request.hostile,
+                request.ship_tier,
+                request.ship_level,
+                &h_candidates,
+                sims as usize,
+                seed,
+                profile_id,
+                request.support_buffs.as_deref(),
+                chain_grind.clone(),
+                request.defender_opponent,
+            );
+            sink.on_heuristics_complete(heuristics_only, h_total, &results);
+            results
+        } else {
+            Vec::new()
+        };
 
     let analytical_prefilter = if !heuristics_only {
         let scenario = OptimizationScenario {

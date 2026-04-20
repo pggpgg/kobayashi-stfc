@@ -123,6 +123,12 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         "TargetNotArmada" => {
             return Some(lcars_not(lcars_defender_ship_type_is("armada")));
         }
+        // STFC “group armada” / engagement tag; see [`crate::combat::EnemyType::GroupArmadas`].
+        "EnemyGroupArmadas" => {
+            let mut c = lcars_cond_base("engagement_includes");
+            c.enemy_type = Some("group_armadas".to_string());
+            return Some(c);
+        }
         _ => {}
     }
 
@@ -297,6 +303,14 @@ mod tests {
         assert_eq!(a.condition_type, b.condition_type);
         assert_eq!(a.ship_type, b.ship_type);
         resolve_lcars_condition(&b).expect("resolver accepts");
+    }
+
+    #[test]
+    fn maps_enemy_group_armadas_to_engagement_includes() {
+        let c = map_canonical_condition_token("EnemyGroupArmadas").expect("maps");
+        assert_eq!(c.condition_type, "engagement_includes");
+        assert_eq!(c.enemy_type.as_deref(), Some("group_armadas"));
+        resolve_lcars_condition(&c).expect("resolver accepts");
     }
 
     #[test]

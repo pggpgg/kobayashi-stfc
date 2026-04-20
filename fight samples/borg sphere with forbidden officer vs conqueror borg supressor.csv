@@ -1,0 +1,14 @@
+Player Name	Player Level	Outcome	Ship Name	Ship Level	Ship Strength	Ship XP	Officer One	Officer Two	Officer Three	Hull Health	Hull Health Remaining	Shield Health	Shield Health Remaining	Location	Timestamp
+HiggsBozo	60	DEFEAT	BORG SPHERE	5	59183920	0	Kathryn Janeway	Enterprise-E Data	Chakotay	0	0	43477491	43477491	Assimilated Tellar	2026-04-20 12:03:24 AM
+Conqueror Borg Suppressor	55	VICTORY	Conqueror Borg Suppressor	55	8881302528	0	Conqueror Borg Drone	--	--	11670578800	11670578800	875279640	875279640	Assimilated Tellar	2026-04-20 12:03:24 AM
+
+Reward Name	Count
+
+Fleet Type	Attack	Defense	Health	Ship Ability	Captain Maneuver	Officer One Ability	Officer Two Ability	Officer Three Ability	Officer Attack Bonus	Damage Per Round	Armour Pierce	Shield Pierce	Accuracy	Critical Chance	Critical Damage	Officer Defense Bonus	Armour	Shield Deflection	Dodge	Officer Health Bonus	Shield Health	Hull Health	Impulse Speed	Warp Range	Warp Speed	Cargo Capacity	Protected Cargo	Mining Bonus	Debuff applied	Buff applied
+Player Fleet 1	2731384	3058105	53394432	Omicron Particle Charge---Apex Dispersion Field---Quantum Nullification Pulse	Red Alert! Raise Shields!	Bend the Rules	Saddle up. Lock and Load!	Maquis Strike	6	2475692	25945	257377	28232	0.22	2.95	6	405423	98463	107735	6	43477491	63311373	229	685	196.82	605000	0	1	NO	NO
+Enemy Fleet 1	273518880	2334853888	6272929280	Evolutionary Assimilation I---Quantum Resonance Beam	--	--	--	--	0	198370544	6721840	11605760	6721840	0.1	1.91	0	464230400	1826920	913460	0	875279616	11670579200	25	2	2	0	0	1	NO	NO
+
+Round	Battle Event	Type	Attacker Name	Attacker Alliance	Attacker Ship	Attacker - Is Armada?	Target Name	Target Alliance	Target Ship	Target - Is Armada?	Hyperthermic Decay %	Hyperthermic Stablizer %	Critical Hit?	Hull Damage	Shield Damage	Mitigated Damage	Mitigated Isolytic Damage	Mitigated Apex Barrier	Total Damage	Total Isolytic Damage	Ability Type	Ability Value	Ability Name	Ability Owner Name	Target Defeated	Target Destroyed	Charging Weapons %
+1	1	Officer Ability	HiggsBozo	INFINITE	BORG SPHERE	NO	--	--	BORG SPHERE	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.2	Bend the Rules	Kathryn Janeway	--	--	--
+1	2	Officer Ability	HiggsBozo	INFINITE	BORG SPHERE	NO	--	--	BORG SPHERE	NO	--	--	--	--	--	--	--	--	--	--	Officer	0.4	Saddle up. Lock and Load!	Enterprise-E Data	--	--	--
+

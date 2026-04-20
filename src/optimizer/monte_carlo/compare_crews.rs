@@ -71,6 +71,7 @@ fn simulate_trial(
             .unwrap_or(0),
         defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
         engagement_enemy_types: input.engagement_enemy_types.clone(),
+        attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
     };
     let defender_faction = shared
         .hostile_rec

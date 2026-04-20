@@ -32,6 +32,7 @@ use crate::combat::effect_accumulator::{
     record_ability_activations, scale_effect, sum_on_kill_hull_regen, EffectAccumulator,
 };
 use crate::combat::events::round_f64;
+use crate::combat::evolutionary_assimilation::evolutionary_assimilation_instant_loss;
 use crate::combat::proc::{accumulate_proc_attack_effects, roll_weapon_intrinsic_proc};
 use crate::combat::rng::Rng;
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
@@ -328,12 +329,30 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
-    let conqueror_borg_beam_suppression = combat_begin_filtered.iter().any(|e| {
-        matches!(
-            e.effect,
-            AbilityEffect::ConquerorBorgBeamSuppression
-        )
-    });
+    let conqueror_borg_beam_suppression = combat_begin_filtered
+        .iter()
+        .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));
+    if evolutionary_assimilation_instant_loss(
+        defender_is_npc_hostile,
+        config.defender_hostile_tag_mask,
+        conqueror_borg_beam_suppression,
+        &config.attacker_roster_officer_ids,
+    ) {
+        let total_attacker_hull_damage = max_att_hull;
+        let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        return SimulationResult {
+            total_damage: 0.0,
+            attacker_won: false,
+            winner_by_round_limit: false,
+            rounds_simulated: 0,
+            attacker_hull_remaining: round_f64(attacker_hull_remaining),
+            defender_hull_remaining: round_f64(defender.hull_health),
+            defender_shield_remaining: round_f64(defender_shield_remaining),
+            attacker_shield_remaining: round_f64(attacker_shield_remaining),
+            events: trace.events(),
+            conqueror_borg_beam_suppression,
+        };
+    }
     let attacker_mitigation_additive = sum_mitigation_additive(&combat_begin_filtered);
     let shield_break_effects = active_effects_for_timing(&attacker_crew, TimingWindow::ShieldBreak);
     let self_shield_break_effects =
@@ -452,11 +471,13 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             &defender_rs_for_assim,
             def_rs_assim_active,
         );
-        let def_rs_hull =
-            EffectAccumulator::sum_hull_regen_from_effects(&defender_rs_for_assim, def_rs_assim_active);
+        let def_rs_hull = EffectAccumulator::sum_hull_regen_from_effects(
+            &defender_rs_for_assim,
+            def_rs_assim_active,
+        );
         if def_rs_shield != 0.0 || def_rs_hull != 0.0 {
-            defender_shield_remaining = (defender_shield_remaining + def_rs_shield)
-                .min(defender.shield_health.max(0.0));
+            defender_shield_remaining =
+                (defender_shield_remaining + def_rs_shield).min(defender.shield_health.max(0.0));
             total_hull_damage = (total_hull_damage - def_rs_hull).max(0.0);
         }
 
@@ -743,8 +764,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         let att_rs_shield = phase_effects.composed_shield_regen();
         let att_rs_hull = phase_effects.composed_hull_regen();
         if att_rs_shield != 0.0 || att_rs_hull != 0.0 {
-            attacker_shield_remaining = (attacker_shield_remaining + att_rs_shield)
-                .min(attacker.shield_health.max(0.0));
+            attacker_shield_remaining =
+                (attacker_shield_remaining + att_rs_shield).min(attacker.shield_health.max(0.0));
             total_attacker_hull_damage = (total_attacker_hull_damage - att_rs_hull).max(0.0);
         }
         phase_effects.clear_shield_hull_regen_stacks();
@@ -756,9 +777,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             round_start_assimilated,
         )
         .min(1.0);
-        if round_index >= 2
-            && prev_round_frac > 0.0
-            && attacker_hull_gross_damage_last_round > 0.0
+        if round_index >= 2 && prev_round_frac > 0.0 && attacker_hull_gross_damage_last_round > 0.0
         {
             let heal = prev_round_frac * attacker_hull_gross_damage_last_round;
             total_attacker_hull_damage = (total_attacker_hull_damage - heal).max(0.0);
@@ -774,8 +793,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             && attacker_shield_gross_damage_last_round > 0.0
         {
             let heal_sh = shield_prev_frac * attacker_shield_gross_damage_last_round;
-            attacker_shield_remaining = (attacker_shield_remaining + heal_sh)
-                .min(attacker.shield_health.max(0.0));
+            attacker_shield_remaining =
+                (attacker_shield_remaining + heal_sh).min(attacker.shield_health.max(0.0));
         }
 
         // Prune expired shots bonuses and compute B_shots(r) for this round.
@@ -1950,8 +1969,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         );
         let def_re_shield = defender_round_end_acc.composed_shield_regen();
         let def_re_hull = defender_round_end_acc.composed_hull_regen();
-        defender_shield_remaining = (defender_shield_remaining + def_re_shield)
-            .min(defender.shield_health.max(0.0));
+        defender_shield_remaining =
+            (defender_shield_remaining + def_re_shield).min(defender.shield_health.max(0.0));
         total_hull_damage = (total_hull_damage - def_re_hull).max(0.0);
 
         defender_burning_rounds = defender_burning_rounds.saturating_sub(1);

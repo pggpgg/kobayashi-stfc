@@ -167,6 +167,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: crate::combat::EnemyTypes::default(),
+        attacker_roster_officer_ids: Vec::new(),
     }
 }
 

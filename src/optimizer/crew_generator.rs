@@ -361,7 +361,9 @@ pub fn narrow_officer_pools_for_constraints(
             .map(|s| pool_display_name_norm(s))
             .filter(|s| !s.is_empty())
             .collect();
-        pools.captains.retain(|n| wants.contains(&pool_display_name_norm(n)));
+        pools
+            .captains
+            .retain(|n| wants.contains(&pool_display_name_norm(n)));
     }
 
     for b in &constraints.bridge_must_include {

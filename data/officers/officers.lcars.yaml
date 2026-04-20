@@ -96,6 +96,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 1750120904
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -136,6 +138,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 1750120904
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -223,7 +227,7 @@ officers:
         - 0.7
         chance_values: null
       condition:
-        type: defender_is_player_ship
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -234,7 +238,37 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
-        conditions: null
+        ship_id: null
+        enemy_type: null
+        conditions:
+        - type: attacker_ship_id_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: gs_31
+          enemy_type: null
+          conditions: null
+        - type: defender_is_player_ship
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: null
+          enemy_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -274,6 +308,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -286,6 +322,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -298,6 +336,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -310,6 +350,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -322,6 +364,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -334,6 +378,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -420,6 +466,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -432,6 +480,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -444,6 +494,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -456,6 +508,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -496,6 +550,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -508,6 +564,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -520,6 +578,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_burning
           stat: null
@@ -532,6 +592,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -594,6 +656,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -606,6 +670,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -618,6 +684,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -630,6 +698,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -642,6 +712,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -909,6 +981,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -949,6 +1023,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -988,7 +1064,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: amalgam
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: combatscavenger:non_combat
@@ -1095,6 +1185,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -1107,6 +1199,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -1291,6 +1385,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -1331,6 +1427,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -1375,6 +1473,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -1415,6 +1515,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -1513,6 +1615,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 3292196998
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -1553,6 +1657,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -1565,6 +1671,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -1577,6 +1685,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -1589,6 +1699,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -1686,6 +1798,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 2943562711
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -1726,6 +1840,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -1738,6 +1854,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_assimilated
           stat: null
@@ -1750,6 +1868,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -1858,6 +1978,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2118,6 +2240,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -2130,6 +2254,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -2202,6 +2328,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2242,6 +2370,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2286,6 +2416,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2349,6 +2481,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2389,6 +2523,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2452,6 +2588,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -2464,6 +2602,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -2476,6 +2616,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -2488,6 +2630,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -2523,6 +2667,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2563,6 +2709,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2624,6 +2772,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: not
           stat: null
@@ -2636,6 +2786,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -2648,6 +2800,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_hull_breach
           stat: null
@@ -2660,6 +2814,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -2704,6 +2860,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -2716,6 +2874,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_faction_id
           stat: null
@@ -2728,6 +2888,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: 3536012672
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -2768,6 +2930,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2872,6 +3036,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -2912,6 +3078,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -2924,6 +3092,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -2936,6 +3106,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -2948,6 +3120,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -2997,7 +3171,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: uss_discovery
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: jumpandtowcosteff:unmapped
@@ -3060,6 +3248,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: not
           stat: null
@@ -3072,6 +3262,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -3084,6 +3276,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_burning
           stat: null
@@ -3096,6 +3290,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -3231,6 +3427,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -3243,6 +3441,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -3255,6 +3455,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -3267,6 +3469,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -3307,6 +3511,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -3319,6 +3525,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -3331,6 +3539,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -3343,6 +3553,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -3367,7 +3579,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: nsea_protector
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: trelliumrewards:unmapped
@@ -3427,6 +3653,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -3456,6 +3684,8 @@ officers:
         tag: null
         ship_type: interceptor
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -3500,6 +3730,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -3572,6 +3804,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -3612,6 +3846,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -3624,6 +3860,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_faction_id
           stat: null
@@ -3636,6 +3874,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: 669838839
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -3771,6 +4011,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -3806,6 +4048,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 2943562711
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -3909,6 +4153,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -3949,6 +4195,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -4072,6 +4320,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 2943562711
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -4236,6 +4486,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -4248,6 +4500,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -4260,6 +4514,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -4272,6 +4528,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -4351,6 +4609,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -4363,6 +4623,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -4375,6 +4637,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -4387,6 +4651,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -4485,6 +4751,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -4497,6 +4765,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -4509,6 +4779,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -4521,6 +4793,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -4561,6 +4835,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -4664,6 +4940,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -4676,6 +4954,8 @@ officers:
           tag: null
           ship_type: survey
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -4688,6 +4968,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -4728,6 +5010,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -4901,6 +5185,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -4913,6 +5199,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -4925,6 +5213,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -4934,14 +5224,25 @@ officers:
   below_decks_ability:
     name: Always Suffering
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: hull_hp_repair_prev_round
       target: self
-      operator: null
-      value: 0.05
-      trigger: passive
+      operator: add
+      value: null
+      trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.05
+        - 0.07
+        - 0.1
+        - 0.14
+        - 0.2
+        chance_values: null
       condition:
         type: defender_is_player_ship
         stat: null
@@ -4954,10 +5255,12 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
-      tag: hullrepair:unmapped
+      tag: null
       accumulate: null
       decay: null
 - id: gaila-3d387a
@@ -5016,6 +5319,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -5060,6 +5365,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -5072,6 +5379,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -5084,6 +5393,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -5096,6 +5407,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -5136,6 +5449,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -5148,6 +5463,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -5160,6 +5477,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -5172,6 +5491,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -5235,6 +5556,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -5247,6 +5570,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_faction_id
           stat: null
@@ -5259,6 +5584,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: 4153667145
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -5303,6 +5630,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -5455,6 +5784,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -5495,6 +5826,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -5539,6 +5872,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -5663,6 +5998,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 2943562711
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -5703,6 +6040,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -5715,6 +6054,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_assimilated
           stat: null
@@ -5727,6 +6068,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -5819,6 +6162,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -5831,6 +6176,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -5843,6 +6190,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -5872,6 +6221,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -5884,6 +6235,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -5896,6 +6249,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -5908,6 +6263,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -5960,6 +6317,8 @@ officers:
         tag: null
         ship_type: survey
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -6004,6 +6363,8 @@ officers:
         tag: null
         ship_type: explorer
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -6033,6 +6394,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -6045,6 +6408,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -6109,6 +6474,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -6249,6 +6616,8 @@ officers:
         tag: null
         ship_type: explorer
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -6293,6 +6662,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -6333,6 +6704,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -6437,6 +6810,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -6449,6 +6824,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -6461,6 +6838,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -6473,6 +6852,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -6519,6 +6900,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -6531,6 +6914,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -6543,6 +6928,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -6555,6 +6942,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -6595,6 +6984,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -6638,6 +7029,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -6650,6 +7043,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -6662,6 +7057,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -6702,6 +7099,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -6714,6 +7113,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: morale_active
           stat: null
@@ -6726,6 +7127,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -6738,6 +7141,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -6785,6 +7190,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -6797,6 +7204,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -6809,6 +7218,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -6849,6 +7260,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -6861,6 +7274,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -6873,6 +7288,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -6979,6 +7396,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -6991,6 +7410,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: morale_active
           stat: null
@@ -7003,6 +7424,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -7015,6 +7438,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -7055,6 +7480,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -7067,6 +7494,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -7079,6 +7508,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -7091,6 +7522,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -7213,6 +7646,8 @@ officers:
         tag: null
         ship_type: battleship
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -7236,7 +7671,49 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: or
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: null
+        enemy_type: null
+        conditions:
+        - type: attacker_ship_id_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: uss_franklin
+          enemy_type: null
+          conditions: null
+        - type: attacker_ship_id_is
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: uss_franklin_a
+          enemy_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: combatpverewards:unmapped
@@ -7254,7 +7731,7 @@ officers:
       duration: permanent
       scaling: null
       condition:
-        type: defender_hull_faction_id
+        type: and
         stat: null
         threshold_pct: null
         min: null
@@ -7264,8 +7741,66 @@ officers:
         min_members: null
         tag: null
         ship_type: null
-        faction_id: 2489857622
-        conditions: null
+        faction_id: null
+        ship_id: null
+        enemy_type: null
+        conditions:
+        - type: or
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: null
+          enemy_type: null
+          conditions:
+          - type: attacker_ship_id_is
+            stat: null
+            threshold_pct: null
+            min: null
+            max: null
+            faction: null
+            group: null
+            min_members: null
+            tag: null
+            ship_type: null
+            faction_id: null
+            ship_id: uss_franklin
+            enemy_type: null
+            conditions: null
+          - type: attacker_ship_id_is
+            stat: null
+            threshold_pct: null
+            min: null
+            max: null
+            faction: null
+            group: null
+            min_members: null
+            tag: null
+            ship_type: null
+            faction_id: null
+            ship_id: uss_franklin_a
+            enemy_type: null
+            conditions: null
+        - type: defender_hull_faction_id
+          stat: null
+          threshold_pct: null
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: 2489857622
+          ship_id: null
+          enemy_type: null
+          conditions: null
       chance: null
       multiplier: null
       tag: shotsperattack:unmapped
@@ -7479,6 +8014,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -7491,6 +8028,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -7686,6 +8225,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -7726,6 +8267,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8021,6 +8564,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8055,6 +8600,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8178,6 +8725,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -8190,6 +8739,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -8202,6 +8753,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -8242,6 +8795,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8277,6 +8832,8 @@ officers:
         tag: null
         ship_type: interceptor
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8317,6 +8874,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8352,6 +8911,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8381,6 +8942,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8453,6 +9016,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 2064723306
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8516,6 +9081,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8619,6 +9186,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 4153667145
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8643,7 +9212,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: nsea_protector
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: omega13cooldown:unmapped
@@ -8683,6 +9266,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8702,7 +9287,7 @@ officers:
       target: self
       operator: add
       value: null
-      trigger: passive
+      trigger: on_round_end
       duration: permanent
       scaling:
         base: null
@@ -8743,6 +9328,8 @@ officers:
         tag: null
         ship_type: battleship
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8787,6 +9374,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -8799,6 +9388,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -8811,6 +9402,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -8823,6 +9416,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -8835,6 +9430,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -8958,6 +9555,8 @@ officers:
         tag: null
         ship_type: battleship
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -8998,6 +9597,8 @@ officers:
         tag: null
         ship_type: battleship
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -9042,6 +9643,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -9054,6 +9657,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -9066,6 +9671,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -9157,6 +9764,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -9361,6 +9970,8 @@ officers:
         tag: null
         ship_type: interceptor
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -9375,7 +9986,7 @@ officers:
       target: enemy
       operator: null
       value: 0.2
-      trigger: passive
+      trigger: on_round_end
       duration: permanent
       scaling: null
       condition:
@@ -9390,6 +10001,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: not
           stat: null
@@ -9402,6 +10015,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -9414,6 +10029,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_hull_breach
           stat: null
@@ -9426,6 +10043,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -9433,6 +10052,96 @@ officers:
       accumulate: null
       decay: null
   below_decks_ability: null
+- id: mara-dalen-6827
+  name: Mara Dalen
+  faction: null
+  rarity: epic
+  group: null
+  captain_ability: null
+  bridge_ability:
+    name: The Right to Protest
+    effects:
+    - type: stat_modify
+      stat: isolytic_defense
+      target: self
+      operator: add
+      value: null
+      trigger: on_combat_start
+      duration: permanent
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.01
+        - 0.02
+        - 0.04
+        - 0.065
+        - 0.1
+        chance_values: null
+      condition:
+        type: engagement_includes
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: null
+        enemy_type: group_armadas
+        conditions: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
+  below_decks_ability:
+    name: Defy Defeat
+    effects:
+    - type: stat_modify
+      stat: shield_hp_repair_prev_round
+      target: self
+      operator: add
+      value: null
+      trigger: on_round_start
+      duration: permanent
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 0.05
+        - 0.07
+        - 0.1
+        - 0.12
+        - 0.2
+        chance_values: null
+      condition:
+        type: defender_ship_type_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: armada
+        faction_id: null
+        ship_id: null
+        enemy_type: null
+        conditions: null
+      chance: null
+      multiplier: null
+      tag: null
+      accumulate: null
+      decay: null
 - id: marcus-073931
   name: Marcus
   faction: Federation
@@ -9522,6 +10231,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -9534,6 +10245,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -9546,6 +10259,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -9586,6 +10301,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -9598,6 +10315,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_burning
           stat: null
@@ -9610,6 +10329,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -9622,6 +10343,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -9785,6 +10508,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -9887,6 +10612,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -9923,6 +10650,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -10011,6 +10740,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 2064723306
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -10055,6 +10786,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10067,6 +10800,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -10079,6 +10814,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10091,6 +10828,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10163,6 +10902,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10175,6 +10916,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -10187,6 +10930,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10199,6 +10944,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10239,6 +10986,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10251,6 +11000,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_assimilated
           stat: null
@@ -10263,6 +11014,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10307,6 +11060,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10319,6 +11074,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10331,6 +11088,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10360,6 +11119,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10372,6 +11133,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_assimilated
           stat: null
@@ -10384,6 +11147,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10428,6 +11193,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -10468,6 +11235,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10480,6 +11249,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_assimilated
           stat: null
@@ -10492,6 +11263,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10504,6 +11277,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10548,6 +11323,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10560,6 +11337,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -10572,6 +11351,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10584,6 +11365,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10624,6 +11407,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10636,6 +11421,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_assimilated
           stat: null
@@ -10648,6 +11435,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10695,6 +11484,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10707,6 +11498,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_assimilated
           stat: null
@@ -10719,6 +11512,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10731,6 +11526,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10771,6 +11568,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -10783,6 +11582,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -10795,6 +11596,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -10807,6 +11610,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10819,6 +11624,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10865,6 +11672,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -10877,6 +11686,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_burning
           stat: null
@@ -10889,6 +11700,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -10929,6 +11742,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -10941,6 +11756,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -10953,6 +11770,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -10965,6 +11784,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -11087,6 +11908,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -11099,6 +11922,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -11111,6 +11936,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -11123,6 +11950,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -11167,6 +11996,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -11218,7 +12049,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: borg_cube
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: jumpandtowcosteff:unmapped
@@ -11235,7 +12080,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: borg_cube
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: skillcuttingbeampvpbasedamagepercentage:unmapped
@@ -11295,6 +12154,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -11335,6 +12196,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -11359,7 +12222,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: uss_voyager
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: voyagerasace:unmapped
@@ -11399,6 +12276,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -11411,6 +12290,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -11423,6 +12304,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -11466,6 +12349,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -11557,6 +12442,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -11569,6 +12456,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -11581,6 +12470,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -11593,6 +12484,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -11605,6 +12498,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -11740,6 +12635,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -11752,6 +12649,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -11944,6 +12843,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 2943562711
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -12016,6 +12917,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -12056,6 +12959,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -12452,7 +13357,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: uss_discovery
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: jumpandtowcosteff:unmapped
@@ -12492,6 +13411,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -12579,6 +13500,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -12591,6 +13514,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -12651,6 +13576,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -12691,6 +13618,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -12703,6 +13632,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -12715,6 +13646,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -12762,6 +13695,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -12774,6 +13709,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -12786,6 +13723,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -12798,6 +13737,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -12909,6 +13850,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -12949,6 +13892,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -12961,6 +13906,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -12973,6 +13920,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -13017,6 +13966,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -13057,6 +14008,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -13069,6 +14022,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -13081,6 +14036,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -13156,6 +14113,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -13168,6 +14127,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -13180,6 +14141,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -13220,6 +14183,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -13232,6 +14197,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: morale_active
           stat: null
@@ -13244,6 +14211,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -13256,6 +14225,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -13300,6 +14271,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_hull_breach
           stat: null
@@ -13312,6 +14285,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -13324,6 +14299,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -13336,6 +14313,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -13365,6 +14344,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -13452,6 +14433,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -13492,6 +14475,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -13504,6 +14489,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -13516,6 +14503,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -13528,6 +14517,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -13591,6 +14582,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -13603,6 +14596,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -13615,6 +14610,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -13627,6 +14624,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -13639,6 +14638,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -13651,6 +14652,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -13745,6 +14748,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -13785,6 +14790,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -13923,6 +14930,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -13935,6 +14944,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_burning
           stat: null
@@ -13947,6 +14958,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -13987,6 +15000,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -13999,6 +15014,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -14011,6 +15028,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -14023,6 +15042,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -14066,6 +15087,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -14078,6 +15101,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -14090,6 +15115,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -14130,6 +15157,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14177,6 +15206,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -14189,6 +15220,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -14201,6 +15234,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -14213,6 +15248,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -14253,6 +15290,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14358,6 +15397,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14398,6 +15439,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14521,6 +15564,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14565,6 +15610,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 1750120904
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14605,6 +15652,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 1750120904
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14652,6 +15701,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -14664,6 +15715,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -14676,6 +15729,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -14688,6 +15743,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -14728,6 +15785,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -14740,6 +15799,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -14752,6 +15813,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -14764,6 +15827,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -14798,6 +15863,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: not
           stat: null
@@ -14810,6 +15877,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -14822,6 +15891,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_hull_faction_id
           stat: null
@@ -14834,6 +15905,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: 2943562711
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -14898,6 +15971,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14938,6 +16013,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -14981,6 +16058,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_burning
           stat: null
@@ -14993,6 +16072,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -15005,6 +16086,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -15017,6 +16100,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -15057,6 +16142,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -15104,6 +16191,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -15116,6 +16205,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -15128,6 +16219,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_burning
           stat: null
@@ -15140,6 +16233,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -15180,6 +16275,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -15192,6 +16289,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: morale_active
           stat: null
@@ -15204,6 +16303,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -15216,6 +16317,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -15278,6 +16381,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -15390,6 +16495,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -15488,6 +16595,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -15500,6 +16609,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -15512,6 +16623,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -15524,6 +16637,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -15536,6 +16651,8 @@ officers:
           tag: null
           ship_type: survey
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -15587,6 +16704,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -15599,6 +16718,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -15611,6 +16732,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -15623,6 +16746,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -15663,6 +16788,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -15675,6 +16802,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -15687,6 +16816,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -15699,6 +16830,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -15783,6 +16916,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -15795,6 +16930,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -15807,6 +16944,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -15819,6 +16958,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -15859,6 +17000,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -15871,6 +17014,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -15883,6 +17028,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -15895,6 +17042,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -15959,6 +17108,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -15971,6 +17122,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -15983,6 +17136,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -15995,6 +17150,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16038,6 +17195,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16050,6 +17209,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16062,6 +17223,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16074,6 +17237,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16114,6 +17279,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -16126,6 +17293,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_npc_hostile
           stat: null
@@ -16138,6 +17307,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -16150,6 +17321,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16162,6 +17335,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16174,6 +17349,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16221,6 +17398,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16233,6 +17412,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16245,6 +17426,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16257,6 +17440,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16319,6 +17504,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16331,6 +17518,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16343,6 +17532,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16355,6 +17546,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16384,6 +17577,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16396,6 +17591,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16408,6 +17605,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16420,6 +17619,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16464,6 +17665,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16476,6 +17679,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16488,6 +17693,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16500,6 +17707,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16540,6 +17749,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16552,6 +17763,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16564,6 +17777,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16576,6 +17791,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16623,6 +17840,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 3292196998
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -16694,6 +17913,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16706,6 +17927,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16718,6 +17941,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16730,6 +17955,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16770,6 +17997,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -16782,6 +18011,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_npc_hostile
           stat: null
@@ -16794,6 +18025,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16806,6 +18039,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16818,6 +18053,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -16830,6 +18067,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -16877,6 +18116,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16889,6 +18130,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16901,6 +18144,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -16913,6 +18158,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -16973,6 +18220,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -16985,6 +18234,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -16997,6 +18248,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -17009,6 +18262,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -17049,6 +18304,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -17061,6 +18318,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_npc_hostile
           stat: null
@@ -17073,6 +18332,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -17085,6 +18346,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -17097,6 +18360,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -17109,6 +18374,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17153,6 +18420,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -17165,6 +18434,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -17177,6 +18448,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -17189,6 +18462,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -17250,6 +18525,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -17262,6 +18539,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -17274,6 +18553,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17314,6 +18595,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -17326,6 +18609,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -17338,6 +18623,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_burning
           stat: null
@@ -17350,6 +18637,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -17362,6 +18651,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17397,6 +18688,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -17409,6 +18702,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_breach
           stat: null
@@ -17421,6 +18716,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -17433,6 +18730,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17473,6 +18772,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -17536,6 +18837,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -17580,6 +18883,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -17620,6 +18925,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -17632,6 +18939,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -17644,6 +18953,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -17656,6 +18967,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -17668,6 +18981,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17743,6 +19058,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -17755,6 +19072,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -17767,6 +19086,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_burning
           stat: null
@@ -17779,6 +19100,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17819,6 +19142,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -17831,6 +19156,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -17843,6 +19170,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17887,6 +19216,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_player_ship
           stat: null
@@ -17899,6 +19230,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -17911,6 +19244,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17940,6 +19275,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -17952,6 +19289,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -17964,6 +19303,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -17999,6 +19340,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -18011,6 +19354,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -18023,6 +19368,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -18052,6 +19399,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -18064,6 +19413,8 @@ officers:
           tag: null
           ship_type: battleship
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -18076,6 +19427,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -18123,6 +19476,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -18135,6 +19490,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -18147,6 +19504,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -18159,6 +19518,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -18199,6 +19560,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -18211,6 +19574,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -18223,6 +19588,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -18235,6 +19602,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -18306,6 +19675,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -18369,6 +19740,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -18381,6 +19754,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -18393,6 +19768,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -18405,6 +19782,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -18529,6 +19908,8 @@ officers:
         tag: null
         ship_type: battleship
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -18569,6 +19950,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: not
           stat: null
@@ -18581,6 +19964,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -18593,6 +19978,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_burning
           stat: null
@@ -18605,6 +19992,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -18752,6 +20141,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -18803,6 +20194,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -18832,6 +20225,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -18916,6 +20311,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -18979,6 +20376,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 1750120904
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19019,6 +20418,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 1750120904
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19063,6 +20464,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19251,6 +20654,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19291,6 +20696,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19362,6 +20769,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 4153667145
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19397,6 +20806,8 @@ officers:
         tag: null
         ship_type: explorer
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19437,6 +20848,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19481,6 +20894,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -19493,6 +20908,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -19505,6 +20922,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -19594,6 +21013,8 @@ officers:
         tag: null
         ship_type: explorer
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19629,6 +21050,8 @@ officers:
         tag: null
         ship_type: explorer
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -19718,6 +21141,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -19730,6 +21155,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -19742,6 +21169,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -19814,6 +21243,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -19826,6 +21257,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: morale_active
           stat: null
@@ -19838,6 +21271,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -19882,6 +21317,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -19894,6 +21331,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -19906,6 +21345,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -19935,6 +21376,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: morale_active
           stat: null
@@ -19947,6 +21390,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -19959,6 +21404,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -20006,6 +21453,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -20018,6 +21467,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -20075,7 +21526,21 @@ officers:
       trigger: passive
       duration: permanent
       scaling: null
-      condition: null
+      condition:
+        type: attacker_ship_id_is
+        stat: null
+        threshold_pct: null
+        min: null
+        max: null
+        faction: null
+        group: null
+        min_members: null
+        tag: null
+        ship_type: null
+        faction_id: null
+        ship_id: uss_voyager
+        enemy_type: null
+        conditions: null
       chance: null
       multiplier: null
       tag: cargocapacity:non_combat
@@ -20186,6 +21651,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20270,6 +21737,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -20282,6 +21751,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -20294,6 +21765,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -20334,6 +21807,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20397,6 +21872,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20441,6 +21918,8 @@ officers:
         tag: null
         ship_type: explorer
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20530,6 +22009,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20594,6 +22075,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20657,6 +22140,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20691,6 +22176,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -20703,6 +22190,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -20743,6 +22232,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20787,6 +22278,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -20848,6 +22341,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -20860,6 +22355,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -20872,6 +22369,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -20901,6 +22400,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -20913,6 +22414,8 @@ officers:
           tag: null
           ship_type: explorer
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: morale_active
           stat: null
@@ -20925,6 +22428,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -20937,6 +22442,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -20981,6 +22488,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21021,6 +22530,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -21033,6 +22544,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_hull_faction_id
           stat: null
@@ -21045,6 +22558,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: 2064723306
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -21098,6 +22613,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -21110,6 +22627,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -21122,6 +22641,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -21134,6 +22655,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -21180,6 +22703,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: attacker_ship_type_is
           stat: null
@@ -21192,6 +22717,8 @@ officers:
           tag: null
           ship_type: survey
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: defender_is_player_ship
           stat: null
@@ -21204,6 +22731,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -21216,6 +22745,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -21318,6 +22849,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21392,6 +22925,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -21404,6 +22939,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -21416,6 +22953,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -21428,6 +22967,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -21480,6 +23021,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -21492,6 +23035,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -21504,6 +23049,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -21516,6 +23063,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
       chance: null
       multiplier: null
@@ -21610,6 +23159,8 @@ officers:
         tag: null
         ship_type: battleship
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21639,6 +23190,8 @@ officers:
         tag: null
         ship_type: interceptor
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21711,6 +23264,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 669838839
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21755,6 +23310,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_ship_type_is
           stat: null
@@ -21767,6 +23324,8 @@ officers:
           tag: null
           ship_type: armada
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -21807,6 +23366,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: 669838839
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21914,6 +23475,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21954,6 +23517,8 @@ officers:
         tag: null
         ship_type: armada
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -21989,6 +23554,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -22029,6 +23596,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions:
         - type: defender_is_npc_hostile
           stat: null
@@ -22041,6 +23610,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: not
           stat: null
@@ -22053,6 +23624,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions:
           - type: defender_ship_type_is
             stat: null
@@ -22065,6 +23638,8 @@ officers:
             tag: null
             ship_type: armada
             faction_id: null
+            ship_id: null
+            enemy_type: null
             conditions: null
         - type: defender_ship_type_is
           stat: null
@@ -22077,6 +23652,8 @@ officers:
           tag: null
           ship_type: interceptor
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
           stat: null
@@ -22089,6 +23666,8 @@ officers:
           tag: null
           ship_type: null
           faction_id: null
+          ship_id: null
+          enemy_type: null
           conditions: null
       chance: null
       multiplier: null
@@ -22160,6 +23739,8 @@ officers:
         tag: null
         ship_type: null
         faction_id: null
+        ship_id: null
+        enemy_type: null
         conditions: null
       chance: null
       multiplier: null
@@ -22167,89 +23748,3 @@ officers:
       accumulate: null
       decay: null
   below_decks_ability: null
-- id: mara-dalen-6827
-  name: Mara Dalen
-  faction: null
-  rarity: epic
-  captain_ability: null
-  bridge_ability:
-    name: Right to Protest
-    effects:
-    - type: stat_modify
-      stat: isolytic_defense
-      target: self
-      operator: add
-      value: null
-      trigger: on_combat_start
-      duration: permanent
-      scaling:
-        base: null
-        per_rank: null
-        max_rank: 5
-        base_chance: null
-        values:
-        - 0.01
-        - 0.02
-        - 0.04
-        - 0.065
-        - 0.1
-        chance_values: null
-      condition:
-        type: engagement_includes
-        stat: null
-        threshold_pct: null
-        min: null
-        max: null
-        faction: null
-        group: null
-        min_members: null
-        tag: null
-        ship_type: null
-        faction_id: null
-        enemy_type: group_armadas
-        conditions: null
-      chance: null
-      multiplier: null
-      tag: null
-      accumulate: null
-      decay: null
-  below_decks_ability:
-    name: Defy Defeat
-    effects:
-    - type: stat_modify
-      stat: shield_hp_repair_prev_round
-      target: self
-      operator: add
-      value: null
-      trigger: on_round_start
-      duration: permanent
-      scaling:
-        base: null
-        per_rank: null
-        max_rank: 5
-        base_chance: null
-        values:
-        - 0.05
-        - 0.07
-        - 0.1
-        - 0.12
-        - 0.2
-        chance_values: null
-      condition:
-        type: defender_ship_type_is
-        stat: null
-        threshold_pct: null
-        min: null
-        max: null
-        faction: null
-        group: null
-        min_members: null
-        tag: null
-        ship_type: armada
-        faction_id: null
-        conditions: null
-      chance: null
-      multiplier: null
-      tag: null
-      accumulate: null
-      decay: null

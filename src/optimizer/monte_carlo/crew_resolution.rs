@@ -121,6 +121,37 @@ pub(crate) fn build_crew_seats(
     seats
 }
 
+/// Unique canonical officer ids for captain + bridge + below (tier suffixes stripped).
+///
+/// Used for Conqueror Borg **Evolutionary Assimilation** (instant loss checks the same ids, via
+/// [`crate::combat::SimulationConfig::attacker_roster_officer_ids`]).
+pub(crate) fn roster_officer_ids_from_candidate(
+    candidate: &CrewCandidate,
+    officers_by_name: &HashMap<String, Officer>,
+) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut push = |raw: &str| {
+        if is_empty_or_placeholder(raw) {
+            return;
+        }
+        let (lookup_name, _) = split_name_and_tier(raw);
+        let Some(o) = officers_by_name.get(&normalize_lookup_key(&lookup_name)) else {
+            return;
+        };
+        if !out.iter().any(|id| id == &o.id) {
+            out.push(o.id.clone());
+        }
+    };
+    push(&candidate.captain);
+    for n in &candidate.bridge {
+        push(n);
+    }
+    for n in &candidate.below_decks {
+        push(n);
+    }
+    out
+}
+
 fn seat_from_officer(
     id: &str,
     seat: CrewSeat,

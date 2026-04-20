@@ -7,8 +7,8 @@ pub mod effect_accumulator;
 pub mod effect_spec_compile;
 pub mod engine;
 pub mod events;
+pub mod evolutionary_assimilation;
 pub mod export_csv;
-pub mod crew_nullification;
 pub mod hostile_tags;
 pub mod log_ingest;
 pub mod mitigation;
@@ -28,13 +28,6 @@ pub use damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
     compute_isolytic_taken,
 };
-pub use crew_nullification::{
-    filter_crew_seats_for_crew_nullification, nullified_officer_id_set_for_mask,
-    NULLIFIED_OFFICER_IDS,
-};
-pub use hostile_tags::{
-    HOSTILE_TAG_MASK_CONQUEROR_BORG, HOSTILE_TAG_MASK_CREW_NULLIFICATION,
-};
 pub use engine::{
     apply_morale_primary_piercing, component_mitigation, effective_shots_for_weapon,
     isolytic_damage, mitigation, mitigation_for_hostile, mitigation_with_morale,
@@ -46,10 +39,12 @@ pub use engine::{
     EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS, MITIGATION_CEILING, MITIGATION_FLOOR,
     MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP, SURVEY_COEFFICIENTS,
 };
+pub use evolutionary_assimilation::EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS;
 pub use export_csv::{
     export_to_attacker, export_to_combat_input, export_to_combatants, export_to_crew,
     export_to_defender, parse_fight_export, ship_type_from_name, FightExport, FightExportEvent,
 };
+pub use hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG;
 pub use log_ingest::{
     ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
     parse_combat_log_json, IngestedCombatLog, IngestedEvent,

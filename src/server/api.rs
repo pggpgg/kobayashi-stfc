@@ -1108,7 +1108,6 @@ pub fn officer_resolved_payload(
         std::slice::from_ref(&officer.id),
         &by_id,
         &opts,
-        None,
     );
 
     // Create a response struct

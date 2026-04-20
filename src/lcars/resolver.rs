@@ -2,11 +2,11 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::combat::types::enemy_type_from_engagement_slug;
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
     CrewSeatContext, OpponentFactionTag, ShipType, TimingWindow,
 };
-use crate::combat::types::enemy_type_from_engagement_slug;
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
 use serde::Serialize;
@@ -191,9 +191,7 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
                 .or(c.stat.as_deref())
                 .or(c.tag.as_deref())
                 .ok_or_else(|| {
-                    format!(
-                        "{ty} requires `enemy_type` (snake_case tag, e.g. group_armadas)"
-                    )
+                    format!("{ty} requires `enemy_type` (snake_case tag, e.g. group_armadas)")
                 })?;
             let et = enemy_type_from_engagement_slug(slug).ok_or_else(|| {
                 format!("unknown engagement `enemy_type` slug '{slug}' for condition type '{ty}'")
@@ -434,19 +432,13 @@ fn resolve_effect(
                     if timing != TimingWindow::RoundStart {
                         return None;
                     }
-                    Some((
-                        timing,
-                        AbilityEffect::HullRegenPrevRoundFraction(value),
-                    ))
+                    Some((timing, AbilityEffect::HullRegenPrevRoundFraction(value)))
                 }
                 "shield_hp_repair_prev_round" | "shield_repair_prev_round" => {
                     if timing != TimingWindow::RoundStart {
                         return None;
                     }
-                    Some((
-                        timing,
-                        AbilityEffect::ShieldRegenPrevRoundFraction(value),
-                    ))
+                    Some((timing, AbilityEffect::ShieldRegenPrevRoundFraction(value)))
                 }
                 "hull_repair" | "hull_hp_repair" => {
                     if timing == TimingWindow::Kill {
@@ -734,15 +726,12 @@ pub fn resolve_officer_ability(
 /// Static buffs are accumulated from passive permanent stat_modify effects;
 /// all resolved effects that have a timing go into crew.
 ///
-/// When `nullified_officer_ids` is `Some`, officers whose id is in the set are omitted entirely
-/// (no static buffs, seats, or proc contribution) — used for **crew nullification** hostiles.
 pub fn resolve_crew_to_buff_set(
     captain_id: &str,
     bridge: &[String],
     below_decks: &[String],
     officers: &HashMap<String, LcarsOfficer>,
     options: &ResolveOptions,
-    nullified_officer_ids: Option<&HashSet<String>>,
 ) -> BuffSet {
     let mut static_buffs: HashMap<String, f64> = HashMap::new();
     let mut seats: Vec<CrewSeatContext> = Vec::new();
@@ -756,9 +745,6 @@ pub fn resolve_crew_to_buff_set(
                            seat: CrewSeat,
                            class: AbilityClass,
                            contribution_batch: u32| {
-        if nullified_officer_ids.is_some_and(|s| s.contains(&officer.id)) {
-            return;
-        }
         let officer_tier = options.tier_for(&officer.id);
         for effect in &ability.effects {
             if effect.effect_type != "stat_modify"
@@ -831,18 +817,15 @@ pub fn resolve_crew_to_buff_set(
 
     if let Some(o) = officers.get(captain_id) {
         seen_slots.insert(captain_id.to_string());
-        let cap_nullified = nullified_officer_ids.is_some_and(|s| s.contains(captain_id));
-        if !cap_nullified {
-            if let Some(ref a) = o.captain_ability {
-                let b = next_batch;
-                next_batch = next_batch.saturating_add(1);
-                add_ability(o, a, CrewSeat::Captain, AbilityClass::CaptainManeuver, b);
-            }
-            if let Some(ref a) = o.bridge_ability {
-                let b = next_batch;
-                next_batch = next_batch.saturating_add(1);
-                add_ability(o, a, CrewSeat::Captain, AbilityClass::BridgeAbility, b);
-            }
+        if let Some(ref a) = o.captain_ability {
+            let b = next_batch;
+            next_batch = next_batch.saturating_add(1);
+            add_ability(o, a, CrewSeat::Captain, AbilityClass::CaptainManeuver, b);
+        }
+        if let Some(ref a) = o.bridge_ability {
+            let b = next_batch;
+            next_batch = next_batch.saturating_add(1);
+            add_ability(o, a, CrewSeat::Captain, AbilityClass::BridgeAbility, b);
         }
     }
 
@@ -850,9 +833,6 @@ pub fn resolve_crew_to_buff_set(
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if nullified_officer_ids.is_some_and(|s| s.contains(id.as_str())) {
-            continue;
-        }
         if seen_slots.contains(id.as_str()) {
             continue;
         }
@@ -868,9 +848,6 @@ pub fn resolve_crew_to_buff_set(
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if nullified_officer_ids.is_some_and(|s| s.contains(id.as_str())) {
-            continue;
-        }
         if seen_slots.contains(id.as_str()) {
             continue;
         }
@@ -883,9 +860,6 @@ pub fn resolve_crew_to_buff_set(
     }
 
     let mut accumulate_proc = |officer: &LcarsOfficer, ability: &LcarsAbility| {
-        if nullified_officer_ids.is_some_and(|s| s.contains(&officer.id)) {
-            return;
-        }
         let officer_tier = options.tier_for(&officer.id);
         for effect in &ability.effects {
             if effect.effect_type == "extra_attack" {
@@ -911,23 +885,17 @@ pub fn resolve_crew_to_buff_set(
     let mut seen_proc: HashSet<String> = HashSet::new();
     if let Some(o) = officers.get(captain_id) {
         seen_proc.insert(captain_id.to_string());
-        let cap_nullified = nullified_officer_ids.is_some_and(|s| s.contains(captain_id));
-        if !cap_nullified {
-            if let Some(ref a) = o.captain_ability {
-                accumulate_proc(o, a);
-            }
-            if let Some(ref a) = o.bridge_ability {
-                accumulate_proc(o, a);
-            }
+        if let Some(ref a) = o.captain_ability {
+            accumulate_proc(o, a);
+        }
+        if let Some(ref a) = o.bridge_ability {
+            accumulate_proc(o, a);
         }
     }
     for id in bridge {
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if nullified_officer_ids.is_some_and(|s| s.contains(id.as_str())) {
-            continue;
-        }
         if seen_proc.contains(id.as_str()) {
             continue;
         }
@@ -940,9 +908,6 @@ pub fn resolve_crew_to_buff_set(
         let Some(o) = officers.get(id.as_str()) else {
             continue;
         };
-        if nullified_officer_ids.is_some_and(|s| s.contains(id.as_str())) {
-            continue;
-        }
         if seen_proc.contains(id.as_str()) {
             continue;
         }
@@ -976,7 +941,6 @@ mod tests {
         load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect, LcarsOfficer,
         LcarsScaling,
     };
-    use std::collections::HashSet;
     use std::path::Path;
 
     fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
@@ -1149,7 +1113,7 @@ mod tests {
             defender_faction: OpponentFactionTag::Klingon,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
-        engagement_enemy_types: Default::default(),
+            engagement_enemy_types: Default::default(),
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1200,7 +1164,7 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_hull_faction_id: 1750120904,
             defender_hostile_tag_mask: 0,
-        engagement_enemy_types: Default::default(),
+            engagement_enemy_types: Default::default(),
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1353,7 +1317,7 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
-        engagement_enemy_types: Default::default(),
+            engagement_enemy_types: Default::default(),
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: "uss_discovery".into(),
@@ -1407,7 +1371,7 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
-        engagement_enemy_types: Default::default(),
+            engagement_enemy_types: Default::default(),
             defender_ship_type: ShipType::Explorer,
             attacker_ship_type: ShipType::Battleship,
             attacker_ship_id: String::new(),
@@ -1474,7 +1438,7 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
-        engagement_enemy_types: Default::default(),
+            engagement_enemy_types: Default::default(),
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1542,7 +1506,7 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
-        engagement_enemy_types: Default::default(),
+            engagement_enemy_types: Default::default(),
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1599,7 +1563,7 @@ mod tests {
             defender_faction: OpponentFactionTag::Unknown,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
-        engagement_enemy_types: Default::default(),
+            engagement_enemy_types: Default::default(),
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1647,7 +1611,7 @@ mod tests {
             tier: Some(5),
             ..Default::default()
         };
-        let buff = resolve_crew_to_buff_set("cap_dual", &[], &[], &officers, &opts, None);
+        let buff = resolve_crew_to_buff_set("cap_dual", &[], &[], &officers, &opts);
         assert_eq!(buff.crew.seats.len(), 2);
         assert!(buff.crew.seats.iter().all(|s| s.seat == CrewSeat::Captain));
         let classes: Vec<_> = buff.crew.seats.iter().map(|s| s.ability.class).collect();
@@ -1678,7 +1642,7 @@ mod tests {
             ..Default::default()
         };
         let buff =
-            resolve_crew_to_buff_set("", &[], &["bd_only_bridge".to_string()], &officers, &opts, None);
+            resolve_crew_to_buff_set("", &[], &["bd_only_bridge".to_string()], &officers, &opts);
         assert!(buff.crew.seats.is_empty());
     }
 
@@ -1796,7 +1760,7 @@ mod tests {
             officer_tiers: None,
         };
         // Khan (Independent): bridge passive crit_chance uses `scaling.values` at officer tier.
-        let khan = resolve_crew_to_buff_set("khan-3f1d1e", &[], &[], &officers, &options, None);
+        let khan = resolve_crew_to_buff_set("khan-3f1d1e", &[], &[], &officers, &options);
         let cc = khan
             .static_buffs
             .get("crit_chance")
@@ -1805,41 +1769,13 @@ mod tests {
         assert!((cc - 0.05).abs() < 1e-12);
 
         // Scotty: passive bridge hull_hp multiplier rank 5 from discrete table.
-        let scotty = resolve_crew_to_buff_set("scotty-a83cb5", &[], &[], &officers, &options, None);
+        let scotty = resolve_crew_to_buff_set("scotty-a83cb5", &[], &[], &officers, &options);
         let hull = scotty
             .static_buffs
             .get("hull_hp")
             .copied()
             .expect("expected scotty-a83cb5 passive hull_hp from bundled LCARS");
         assert!((hull - 1.2).abs() < 1e-12);
-    }
-
-    #[test]
-    fn resolve_crew_nullified_captain_emits_no_seats_static_or_proc() {
-        let path = Path::new("data/officers/officers.lcars.yaml");
-        if !path.exists() {
-            return;
-        }
-        let file = load_lcars_file(path).unwrap();
-        let officers = index_lcars_officers_by_id(file.officers);
-        let options = ResolveOptions {
-            tier: Some(5),
-            officer_tiers: None,
-        };
-        let mut nullified = HashSet::new();
-        nullified.insert("kathryn-janeway-bd4a19".to_string());
-        let buff = resolve_crew_to_buff_set(
-            "kathryn-janeway-bd4a19",
-            &[],
-            &[],
-            &officers,
-            &options,
-            Some(&nullified),
-        );
-        assert!(buff.crew.seats.is_empty(), "{:?}", buff.crew.seats);
-        assert!(buff.static_buffs.is_empty(), "{:?}", buff.static_buffs);
-        assert_eq!(buff.proc_chance, 0.0);
-        assert_eq!(buff.proc_multiplier, 1.0);
     }
 
     #[test]
@@ -1912,9 +1848,9 @@ mod tests {
             officer_tiers: Some([("tiered_officer".to_string(), 5u8)].into_iter().collect()),
         };
         let buff_tier1 =
-            resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier1, None);
+            resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier1);
         let buff_tier5 =
-            resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier5, None);
+            resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier5);
         let v1 = buff_tier1
             .static_buffs
             .get("weapon_damage")
@@ -1983,7 +1919,7 @@ mod tests {
             tier: None,
             officer_tiers: Some([("table_officer".to_string(), 2u8)].into_iter().collect()),
         };
-        let buff = resolve_crew_to_buff_set("table_officer", &[], &[], &officers, &options_tier2, None);
+        let buff = resolve_crew_to_buff_set("table_officer", &[], &[], &officers, &options_tier2);
         let v2 = buff.static_buffs.get("apex_shred").copied().unwrap_or(0.0);
         assert!(
             (v2 - 0.25).abs() < 1e-9,

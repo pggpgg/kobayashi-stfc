@@ -328,7 +328,8 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         }
     }
 
-    let has_novelty_extras = request.novelty_diverse_top.is_some() || request.novelty_pool.is_some();
+    let has_novelty_extras =
+        request.novelty_diverse_top.is_some() || request.novelty_pool.is_some();
     if has_novelty_extras && request.novelty_lambda.is_none() {
         errors.push(ValidationIssue {
             field: "novelty_lambda",
@@ -388,7 +389,8 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
             errors.push(ValidationIssue {
                 field: "fast_discovery",
                 messages: vec![
-                    "cannot be used together with heuristics_only (no main optimize pass)".to_string(),
+                    "cannot be used together with heuristics_only (no main optimize pass)"
+                        .to_string(),
                 ],
             });
         }

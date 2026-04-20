@@ -494,7 +494,9 @@ async fn optimize_endpoint_rejects_zero_novelty_lambda() {
     assert_eq!(response.status_code, 400);
     let payload: serde_json::Value =
         serde_json::from_str(&response.body).expect("response should be valid json");
-    let errors = payload["errors"].as_array().expect("errors should be array");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
     assert!(
         errors.iter().any(|e| e["field"] == "novelty_lambda"),
         "expected novelty_lambda validation error"
@@ -513,7 +515,9 @@ async fn optimize_endpoint_requires_novelty_lambda_when_novelty_pool_set() {
     assert_eq!(response.status_code, 400);
     let payload: serde_json::Value =
         serde_json::from_str(&response.body).expect("response should be valid json");
-    let errors = payload["errors"].as_array().expect("errors should be array");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
     assert!(
         errors.iter().any(|e| e["field"] == "novelty_lambda"),
         "expected novelty_lambda required when novelty_pool set"
@@ -628,7 +632,9 @@ async fn optimize_fast_discovery_echoes_in_scenario_and_notes() {
         .as_array()
         .expect("approximate_notes array");
     assert!(
-        approx.iter().any(|n| n.as_str().is_some_and(|s| s.contains("fast_discovery"))),
+        approx
+            .iter()
+            .any(|n| n.as_str().is_some_and(|s| s.contains("fast_discovery"))),
         "expected fast_discovery approximate note: {:?}",
         approx
     );

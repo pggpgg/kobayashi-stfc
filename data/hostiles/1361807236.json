@@ -45,8 +45,7 @@
   "crit_chance": 0.10000000000000002,
   "crit_damage": 1.9166666666666667,
   "hostile_tags": [
-    "conqueror_borg",
-    "crew_nullification"
+    "conqueror_borg"
   ],
   "components": [
     {

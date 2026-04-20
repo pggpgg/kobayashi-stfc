@@ -437,7 +437,12 @@ fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64
         "ApexShred" | "ApexBarrier" => val,
         "IsolyticDamage" | "IsolyticDefense" => val,
         "IsolyticCascade" | "IsolyticCascadeDamage" => val,
-        "ShieldHPRepair" | "ShieldRegen" | "HullHPRepair" | "HullRegen" | "HullRepair" => val,
+        "ShieldHPRepair"
+        | "ShieldRegen"
+        | "ShieldRepairPrevRound"
+        | "HullHPRepair"
+        | "HullRegen"
+        | "HullRepair" => val,
         _ => val,
     }
 }
@@ -508,7 +513,7 @@ fn effect_condition_from_canonical(
 
 fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option<LcarsEffect> {
     let modifier = a.modifier.as_deref().unwrap_or("");
-    let trigger = if modifier == "HullRepair" {
+    let trigger = if modifier == "HullRepair" || modifier == "ShieldRepairPrevRound" {
         "on_round_start"
     } else {
         map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"))
@@ -705,7 +710,13 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("shield_regen".into(), "add".into(), val)
         }
         // Fraction of hull damage taken last round; engine applies at round start.
-        "HullRepair" => MappedEffect::StatModify("hull_hp_repair_prev_round".into(), "add".into(), val),
+        "HullRepair" => {
+            MappedEffect::StatModify("hull_hp_repair_prev_round".into(), "add".into(), val)
+        }
+        // Fraction of gross shield damage taken last round; engine applies at round start.
+        "ShieldRepairPrevRound" => {
+            MappedEffect::StatModify("shield_hp_repair_prev_round".into(), "add".into(), val)
+        }
         "HullHPRepair" | "HullRegen" => {
             MappedEffect::StatModify("hull_hp_repair".into(), "add".into(), val)
         }

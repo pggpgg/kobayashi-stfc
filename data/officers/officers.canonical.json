@@ -9129,6 +9129,80 @@
     {
       "abilities": [
         {
+          "ability_id": "4046135163",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyGroupArmadas"
+          ],
+          "description": "Right to Protest: increase Isolytic Defense in Group Armada engagements (STFC Update 89; values are display % as fraction).",
+          "modifier": "IsolyticDefense",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.01,
+            0.02,
+            0.04,
+            0.065,
+            0.1
+          ]
+        },
+        {
+          "ability_id": "1236877459",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyArmada"
+          ],
+          "description": "Defy Defeat: at round start, repair a fraction of shield HP lost to weapons last round vs Armadas (STFC Update 89).",
+          "modifier": "ShieldRepairPrevRound",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "RoundStart",
+          "value_by_rank": [
+            0.05,
+            0.07,
+            0.1,
+            0.12,
+            0.2
+          ]
+        }
+      ],
+      "faction": null,
+      "group": null,
+      "id": "mara-dalen-6827",
+      "name": "Mara Dalen",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "command",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "3979936827"
+    },
+    {
+      "abilities": [
+        {
           "ability_id": "2221311201",
           "attributes": "num_rounds=3, percentage=0.8, state=8",
           "chance_by_rank": [

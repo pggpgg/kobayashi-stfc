@@ -152,7 +152,7 @@ pub fn ship_ability_effect_from_catalog(
                 return None;
             }
             Some(AbilityEffect::ConquerorBorgBeamSuppression)
-        },
+        }
 
         "shield_regen" | "shield_hp_repair" => Some(AbilityEffect::ShieldRegen(value)),
 

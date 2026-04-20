@@ -66,6 +66,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        attacker_roster_officer_ids: Default::default(),
     };
 
     let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -177,6 +178,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        attacker_roster_officer_ids: Default::default(),
     };
     let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let after_sub = CrewConfiguration {
@@ -269,6 +271,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        attacker_roster_officer_ids: Default::default(),
     };
     let r = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     // Weapon0: high pierce + guaranteed crit x2 + proc x3 vs weapon1: no pierce, no crit, no proc.
@@ -338,6 +341,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 

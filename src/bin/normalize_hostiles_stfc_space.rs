@@ -133,15 +133,12 @@ fn systems_from_values(vals: &[Value]) -> Vec<u64> {
 
 /// Upstream hostile JSON has no tag field; we merge [`HostileRecord::hostile_tags`] for known
 /// Conqueror Borg Suppressor / Obliterator rows so Borg Sphere passives can gate in combat, and
-/// for **crew nullification** (Update 89 captains + V'Ger-line hostiles).
+/// for Update 89 Borg Sphere combat gating.
 ///
 /// Conqueror Borg: names from `translations-navigation.json` (`marauder_name_only`):
 /// **Conqueror Borg Suppressor** (`loca_id` 89050–89052), **Conqueror Borg Obliterator**
 /// (`loca_id` 89053–89055). Extend if Scopely adds more `loca_id`s with the same combat family.
-///
-/// V'Ger / TMP Machine: `faction.loca_id` **86001** matches [`kobayashi::data::hostile::opponent_faction_from_faction_loca_id`]
-/// (“V'Ger Clone” → Borg combat tag). Same faction row is used for crew-nullification tagging.
-fn curated_hostile_tags_for_upstream(id: u64, faction: Option<&HostileFactionRef>) -> Vec<String> {
+fn curated_hostile_tags_for_upstream(id: u64) -> Vec<String> {
     let mut tags: Vec<String> = Vec::new();
     let mut push_unique = |s: &str| {
         let t = s.to_string();
@@ -151,44 +148,14 @@ fn curated_hostile_tags_for_upstream(id: u64, faction: Option<&HostileFactionRef
     };
 
     const CONQUEROR_BORG_IDS: &[u64] = &[
-        316662618,
-        467189343,
-        500305250,
-        622949343,
-        778146301,
-        80039078,
-        864202735,
-        1117012705,
-        1137196075,
-        1361645982,
-        1361807236,
-        1379653470,
-        1458200336,
-        1472989983,
-        1851381248,
-        1976922167,
-        2529890757,
-        2689858241,
-        2813867447,
-        3021977695,
-        3192494251,
-        3293454542,
-        3385025265,
-        3644288642,
-        3767637067,
-        3820292784,
-        3907896092,
-        4008480588,
-        4082735163,
-        4113208627,
-        4280642366,
+        316662618, 467189343, 500305250, 622949343, 778146301, 80039078, 864202735, 1117012705,
+        1137196075, 1361645982, 1361807236, 1379653470, 1458200336, 1472989983, 1851381248,
+        1976922167, 2529890757, 2689858241, 2813867447, 3021977695, 3192494251, 3293454542,
+        3385025265, 3644288642, 3767637067, 3820292784, 3907896092, 4008480588, 4082735163,
+        4113208627, 4280642366,
     ];
     if CONQUEROR_BORG_IDS.contains(&id) {
         push_unique("conqueror_borg");
-        push_unique("crew_nullification");
-    }
-    if faction.and_then(|f| f.loca_id) == Some(86001) {
-        push_unique("crew_nullification");
     }
     tags
 }
@@ -214,7 +181,7 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     };
 
     let shield_mitigation = shield_mitigation_from_components(&raw.components);
-    let hostile_tags = curated_hostile_tags_for_upstream(raw.id, raw.faction.as_ref());
+    let hostile_tags = curated_hostile_tags_for_upstream(raw.id);
 
     HostileRecord {
         id: id.clone(),

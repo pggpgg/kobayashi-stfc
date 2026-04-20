@@ -3,8 +3,7 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    filter_crew_seats_for_crew_nullification, mitigation, mitigation_for_hostile,
-    nullified_officer_id_set_for_mask, pierce_damage_through_bonus, Ability, AbilityClass,
+    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, Ability, AbilityClass,
     AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewConfiguration, CrewSeat,
     CrewSeatContext, DefenderStats, EnemyTypes, ShipType, TimingWindow, MITIGATION_CEILING,
     MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
@@ -53,7 +52,7 @@ use std::path::Path;
 
 use super::crew_resolution::{
     build_crew_seats, hash_identifier, index_officers_by_name, normalize_lookup_key,
-    split_name_and_tier,
+    roster_officer_ids_from_candidate, split_name_and_tier,
 };
 
 const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
@@ -477,6 +476,8 @@ pub(crate) struct CombatSimulationInput {
     pub profile_weapon_damage_fraction: f64,
     /// Copied into [`crate::combat::SimulationConfig::engagement_enemy_types`].
     pub engagement_enemy_types: EnemyTypes,
+    /// Copied into [`crate::combat::SimulationConfig::attacker_roster_officer_ids`] (Evolutionary Assimilation).
+    pub attacker_roster_officer_ids: Vec<String>,
 }
 
 /// Build combat input from pre-resolved shared data and candidate. Resolves ship/hostile only once per run.
@@ -493,6 +494,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &candidate.below_decks,
         seed,
     );
+    let attacker_roster_officer_ids =
+        roster_officer_ids_from_candidate(candidate, &shared.officer_index);
 
     let resolve_opts = resolve_options_with_candidate_tiers(
         &shared.resolve_options,
@@ -504,8 +507,6 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &shared.officer_index,
         shared.lcars_data.as_ref(),
         &resolve_opts,
-        shared.defender_hostile_tag_mask_for_combat(),
-        shared.defender_opponent,
     );
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
@@ -633,6 +634,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
             engagement_enemy_types: shared.engagement_enemy_types.clone(),
+            attacker_roster_officer_ids,
         };
     }
 
@@ -735,6 +737,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
         engagement_enemy_types: shared.engagement_enemy_types.clone(),
+        attacker_roster_officer_ids,
     }
 }
 
@@ -811,13 +814,7 @@ fn build_crew_and_buffs(
     officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
-    defender_hostile_tag_mask: u32,
-    defender_opponent: DefenderOpponent,
 ) -> (Vec<CrewSeatContext>, HashMap<String, f64>, f64, f64) {
-    let nullified = nullified_officer_id_set_for_mask(
-        defender_hostile_tag_mask,
-        defender_opponent.defender_is_npc_hostile(),
-    );
     if let Some(lcars) = lcars_data {
         let captain_id = lcars
             .name_to_id
@@ -853,7 +850,6 @@ fn build_crew_and_buffs(
                 &below_ids,
                 &lcars.by_id,
                 resolve_options,
-                nullified.as_ref(),
             );
             (
                 buff_set.to_crew_config().seats.clone(),
@@ -863,11 +859,7 @@ fn build_crew_and_buffs(
             )
         } else {
             (
-                filter_crew_seats_for_crew_nullification(
-                    build_crew_seats(candidate, officers_by_name),
-                    defender_hostile_tag_mask,
-                    defender_opponent.defender_is_npc_hostile(),
-                ),
+                build_crew_seats(candidate, officers_by_name),
                 HashMap::new(),
                 0.0,
                 1.0,
@@ -875,11 +867,7 @@ fn build_crew_and_buffs(
         }
     } else {
         (
-            filter_crew_seats_for_crew_nullification(
-                build_crew_seats(candidate, officers_by_name),
-                defender_hostile_tag_mask,
-                defender_opponent.defender_is_npc_hostile(),
-            ),
+            build_crew_seats(candidate, officers_by_name),
             HashMap::new(),
             0.0,
             1.0,
@@ -905,19 +893,12 @@ pub(crate) fn scenario_to_combat_input(
         &candidate.below_decks,
         seed,
     );
+    let attacker_roster_officer_ids =
+        roster_officer_ids_from_candidate(candidate, officers_by_name);
 
     let resolve_opts = ResolveOptions::default();
-    let hostile_mask = resolve_hostile(hostile)
-        .map(|h| h.hostile_tag_mask())
-        .unwrap_or(0);
-    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
-        candidate,
-        officers_by_name,
-        lcars_data,
-        &resolve_opts,
-        hostile_mask,
-        DefenderOpponent::Hostile,
-    );
+    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier) =
+        build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
@@ -993,6 +974,7 @@ pub(crate) fn scenario_to_combat_input(
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
             engagement_enemy_types,
+            attacker_roster_officer_ids,
         };
     }
 
@@ -1064,6 +1046,7 @@ pub(crate) fn scenario_to_combat_input(
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
         engagement_enemy_types: EnemyTypes::default(),
+        attacker_roster_officer_ids,
     }
 }
 
