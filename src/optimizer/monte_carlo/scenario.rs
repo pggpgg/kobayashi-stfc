@@ -26,8 +26,9 @@ use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_O
 use crate::data::profile::{
     apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
-    forbidden_tech_derived_attack_phase_seats, forbidden_tech_level_tier_scaling_enabled_from_env,
-    load_profile, merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
+    borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
+    forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
+    merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
     merge_tech_fids_into_profile_with_level_tier,
     quantum_slipstream_forbidden_tech_round_start_seats, research_derived_attack_phase_seats,
     resolve_effective_tech_fids, ship_class_gated_torpedo_family_derived_seats,
@@ -1173,6 +1174,12 @@ pub(crate) fn build_shared_scenario_data_standalone(
                 catalog,
                 scale_by_level_tier,
             ));
+            forbidden_tech_derived_seats.extend(borg_operating_table_forbidden_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+                scale_by_level_tier,
+            ));
             borg_alcove_hull_hp_bonus = borg_alcove_hull_hp_bonus_fraction(
                 &ft_entries,
                 &effective_fids,
@@ -1424,6 +1431,12 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 ),
             );
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+                scale_by_level_tier,
+            ));
+            forbidden_tech_derived_seats.extend(borg_operating_table_forbidden_tech_seats(
                 &ft_entries,
                 &effective_fids,
                 catalog,

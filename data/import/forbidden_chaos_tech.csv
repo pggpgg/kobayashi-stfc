@@ -121,8 +121,9 @@ Quantum Slipstream Drive,forbidden,12,2439729135,shield_hp,0.195,add
 [PRO] Neural Neutralizer,forbidden,12,1490549096,crit_chance,0.45,add
 [PRO] Neural Neutralizer,forbidden,12,1490549096,weapon_damage,0.063,add
 [PRO] Neural Neutralizer,forbidden,12,1490549096,apex_barrier,5000,add
-[PRO] Borg Operating Table,forbidden,12,3042210440,crit_damage,1.2,add
-[PRO] Borg Operating Table,forbidden,12,3042210440,crit_damage,1.25,add
+[PRO] Borg Operating Table,forbidden,12,3042210440,crit_damage,2.5,add
+[PRO] Borg Operating Table,forbidden,12,3042210440,apex_shred,0.25,add
+[PRO] Borg Operating Table,forbidden,12,3042210440,hostile_crit_damage_reduction,0.25,add
 Interplexing Beacon,forbidden,12,2527878020,shield_mitigation,0.11,add
 Q Cannon,chaos,12,704754072,weapon_damage,0.07,add
 Temporal Conduit,chaos,12,258464522,apex_barrier,23000,add

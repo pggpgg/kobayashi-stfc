@@ -444,9 +444,13 @@ pub fn sum_mitigation_additive(effects: &[ActiveAbilityEffect]) -> f64 {
         .sum()
 }
 
-/// Hostile crit damage reduction from ship hull abilities (e.g. U.S.S. Crozier).
-/// When multiple seats match, uses the maximum `reduction` and maximum `duration_rounds`.
-pub fn hostile_crit_damage_reduction_from_crew(crew: &CrewConfiguration) -> (f64, u32) {
+/// Hostile crit damage reduction from ship hull abilities (e.g. U.S.S. Crozier) and gated forbidden-tech
+/// seats (e.g. Borg Operating Table vs Conqueror Borg). When multiple seats match **for the same
+/// [`CombatContext`]**, uses the maximum `reduction` and maximum `duration_rounds`.
+pub fn hostile_crit_damage_reduction_from_crew(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+) -> (f64, u32) {
     let mut reduction = 0.0_f64;
     let mut rounds = 0_u32;
     for s in &crew.seats {
@@ -455,6 +459,14 @@ pub fn hostile_crit_damage_reduction_from_crew(crew: &CrewConfiguration) -> (f64
             duration_rounds: d,
         } = s.ability.effect
         {
+            if s
+                .ability
+                .condition
+                .as_ref()
+                .is_some_and(|c| !c.evaluate(ctx))
+            {
+                continue;
+            }
             reduction = reduction.max(r);
             rounds = rounds.max(d);
         }

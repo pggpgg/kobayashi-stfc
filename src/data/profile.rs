@@ -4,6 +4,8 @@
 //! Bonuses from synced forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
 //! **Borg Alcove** ([`BORG_ALCOVE_FORBIDDEN_TECH_FID`]) is an exception: Voyager/NPC-gated combat stats use
 //! [`forbidden_tech_derived_attack_phase_seats`] and [`borg_alcove_hull_hp_bonus_fraction`] instead of flat `bonuses`.
+//! **Borg Operating Table** ([`BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID`]): Conqueror Borg–gated combat stats use
+//! [`borg_operating_table_forbidden_tech_seats`] (not flat `bonuses`). Warp-speed rows remain out of combat scope.
 //! **Quantum Slipstream Drive** ([`QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID`]): opponent cumulative shield-mitigation
 //! debuff is [`AbilityEffect::CumulativeOpponentShieldMitigationDebuff`] via
 //! [`quantum_slipstream_forbidden_tech_round_start_seats`]; catalog `shield_mitigation` is a **cap** source only
@@ -151,6 +153,7 @@ pub fn merge_tech_fids_into_profile(
         .collect();
     for &fid in fids {
         if is_borg_alcove_forbidden_tech_fid(fid)
+            || is_borg_operating_table_forbidden_tech_fid(fid)
             || is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid)
         {
             continue;
@@ -255,6 +258,7 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
 
     for &fid in fids {
         if is_borg_alcove_forbidden_tech_fid(fid)
+            || is_borg_operating_table_forbidden_tech_fid(fid)
             || is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid)
         {
             continue;
@@ -298,6 +302,10 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
 /// [`borg_alcove_hull_hp_bonus_fraction`].
 pub const BORG_ALCOVE_FORBIDDEN_TECH_FID: i64 = 733381942;
 
+/// **Borg Operating Table** (Update 89 prototype forbidden tech). Combat rows are **not** merged into
+/// unconditional [`PlayerProfile::bonuses`]; see [`borg_operating_table_forbidden_tech_seats`].
+pub const BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID: i64 = 3042210440;
+
 /// Quantum Slipstream Drive — opponent mitigation debuff is modeled in combat, not as additive player
 /// [`PlayerProfile::bonuses`] `shield_mitigation`.
 pub const QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID: i64 = 2439729135;
@@ -324,6 +332,11 @@ pub const USS_VOYAGER_SHIP_ID: &str = "uss_voyager";
 #[inline]
 fn is_borg_alcove_forbidden_tech_fid(fid: i64) -> bool {
     fid == BORG_ALCOVE_FORBIDDEN_TECH_FID
+}
+
+#[inline]
+fn is_borg_operating_table_forbidden_tech_fid(fid: i64) -> bool {
+    fid == BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID
 }
 
 #[inline]
@@ -500,6 +513,129 @@ pub fn forbidden_tech_derived_attack_phase_seats(
                 });
             }
             "hull_hp" => {}
+            _ => {}
+        }
+    }
+    out
+}
+
+/// Borg Operating Table: [`AbilityEffect`] seats gated on **Conqueror Borg** hostiles (tag
+/// `conqueror_borg` on the defender) plus [`AbilityCondition::DefenderIsNpcHostile`].
+///
+/// Catalog magnitudes are maintained in [`crate::data::forbidden_chaos::ForbiddenChaosList`] (see
+/// `data/import/forbidden_chaos_tech.csv`); they are **curated** from upstream
+/// `data/upstream/data-stfc-space/forbidden_tech/3042210440.json` and Update 89 copy (crit damage /
+/// apex shred vs Conqueror; reduction on incoming hostile crits). Refine when log-backed fights exist.
+///
+/// Supported catalog stats on this fid:
+/// - `crit_damage` → [`AbilityEffect::CritDamageMultiplier`] at [`TimingWindow::AttackPhase`]
+/// - `apex_shred` → [`AbilityEffect::ApexShredBonus`]
+/// - `hostile_crit_damage_reduction` → [`AbilityEffect::HostileCritDamageReduction`] at [`TimingWindow::CombatBegin`]
+pub fn borg_operating_table_forbidden_tech_seats(
+    imported_ft: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+    scale_by_level_tier: bool,
+) -> Vec<CrewSeatContext> {
+    if !effective_fids
+        .iter()
+        .any(|&f| is_borg_operating_table_forbidden_tech_fid(f))
+    {
+        return Vec::new();
+    }
+    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+        .items
+        .iter()
+        .filter_map(|r| r.fid.map(|id| (id, r)))
+        .collect();
+    let Some(record) = by_fid
+        .get(&BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID)
+        .copied()
+    else {
+        return Vec::new();
+    };
+    let imported_by_fid: HashMap<i64, &ForbiddenTechEntry> =
+        imported_ft.iter().map(|e| (e.fid, e)).collect();
+    let imported = imported_by_fid
+        .get(&BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID)
+        .copied();
+
+    let conqueror_gate = AbilityCondition::And(vec![
+        AbilityCondition::DefenderIsNpcHostile,
+        AbilityCondition::DefenderHostileTagsAllPresent {
+            required_mask: crate::combat::hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG,
+        },
+    ]);
+
+    let mut out: Vec<CrewSeatContext> = Vec::new();
+    let mut idx: u32 = 0;
+    for bonus in &record.bonuses {
+        let v = forbidden_tech_bonus_value_for_imported_entry(
+            bonus,
+            record,
+            imported,
+            scale_by_level_tier,
+        );
+        if !v.is_finite() || v <= 0.0 {
+            continue;
+        }
+        match bonus.stat.as_str() {
+            "crit_damage" => {
+                idx = idx.saturating_add(1);
+                out.push(CrewSeatContext {
+                    seat: CrewSeat::Ship,
+                    ability: Ability {
+                        name: format!("forbidden_tech_borg_operating_table_crit_damage_{idx}"),
+                        class: AbilityClass::ShipAbility,
+                        timing: TimingWindow::AttackPhase,
+                        boostable: false,
+                        effect: AbilityEffect::CritDamageMultiplier((1.0 + v).max(EPSILON)),
+                        condition: Some(conqueror_gate.clone()),
+                    },
+                    boosted: false,
+                    officer_id: None,
+                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                });
+            }
+            "apex_shred" => {
+                idx = idx.saturating_add(1);
+                out.push(CrewSeatContext {
+                    seat: CrewSeat::Ship,
+                    ability: Ability {
+                        name: format!("forbidden_tech_borg_operating_table_apex_shred_{idx}"),
+                        class: AbilityClass::ShipAbility,
+                        timing: TimingWindow::AttackPhase,
+                        boostable: false,
+                        effect: AbilityEffect::ApexShredBonus(v),
+                        condition: Some(conqueror_gate.clone()),
+                    },
+                    boosted: false,
+                    officer_id: None,
+                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                });
+            }
+            "hostile_crit_damage_reduction" => {
+                idx = idx.saturating_add(1);
+                out.push(CrewSeatContext {
+                    seat: CrewSeat::Ship,
+                    ability: Ability {
+                        name: format!(
+                            "forbidden_tech_borg_operating_table_hostile_crit_reduction_{idx}"
+                        ),
+                        class: AbilityClass::ShipAbility,
+                        timing: TimingWindow::CombatBegin,
+                        boostable: false,
+                        effect: AbilityEffect::HostileCritDamageReduction {
+                            reduction: v.clamp(0.0, 0.95),
+                            duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+                        },
+                        condition: Some(conqueror_gate.clone()),
+                    },
+                    boosted: false,
+                    officer_id: None,
+                    contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                });
+            }
             _ => {}
         }
     }
@@ -1819,6 +1955,61 @@ mod tests {
         let hull =
             super::borg_alcove_hull_hp_bonus_fraction(&imported, &effective, &catalog, false);
         assert!((hull.unwrap() - 0.12).abs() < 1e-12);
+    }
+
+    #[test]
+    fn borg_operating_table_skips_flat_profile_and_emits_conqueror_gated_seats() {
+        let catalog = ForbiddenChaosList {
+            source: None,
+            last_updated: None,
+            items: vec![ForbiddenChaosRecord {
+                fid: Some(super::BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID),
+                name: "Borg Operating Table".into(),
+                tech_type: "forbidden".into(),
+                tier: Some(12),
+                bonuses: vec![
+                    BonusEntry {
+                        stat: "crit_damage".into(),
+                        value: 1.0,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "apex_shred".into(),
+                        value: 0.1,
+                        operator: "add".into(),
+                    },
+                    BonusEntry {
+                        stat: "hostile_crit_damage_reduction".into(),
+                        value: 0.05,
+                        operator: "add".into(),
+                    },
+                ],
+            }],
+        };
+        let imported = vec![ForbiddenTechEntry {
+            fid: super::BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID,
+            tier: 12,
+            level: 60,
+            shard_count: 0,
+        }];
+        let effective = vec![super::BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID];
+
+        let mut profile = PlayerProfile::default();
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &effective,
+            &imported,
+            &catalog,
+            false,
+        );
+        assert!(profile.bonuses.get("crit_damage").is_none());
+        assert!(profile.bonuses.get("apex_shred").is_none());
+
+        let seats = super::borg_operating_table_forbidden_tech_seats(
+            &imported, &effective, &catalog, false,
+        );
+        assert_eq!(seats.len(), 3);
+        assert!(seats.iter().all(|s| s.ability.condition.is_some()));
     }
 
     #[test]

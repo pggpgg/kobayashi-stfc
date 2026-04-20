@@ -278,8 +278,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
-    let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
-        hostile_crit_damage_reduction_from_crew(&attacker_crew);
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let mut total_hull_damage = 0.0;
@@ -1376,6 +1374,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     filter_effects_by_condition(&defender_attack_phase_effects, &defender_ctx);
                 let defender_defense_filtered =
                     filter_effects_by_condition(&defender_defense_phase_effects, &defender_ctx);
+
+                let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
+                    hostile_crit_damage_reduction_from_crew(&attacker_crew, &defender_ctx);
 
                 defender_phase_template.add_effects(
                     TimingWindow::CombatBegin,
