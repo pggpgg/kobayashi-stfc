@@ -2,14 +2,16 @@
 
 ## CI workflow
 
-Pull requests run [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (workflow name **CI**). It includes:
+Pull requests run `[.github/workflows/ci.yml](.github/workflows/ci.yml)` (workflow name **CI**). It includes:
 
-| Job | What it runs |
-|-----|----------------|
-| **Rust** | `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `cargo build --release`, `cargo audit` |
-| **Frontend** | `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` (in `frontend/`) |
-| **Combat engine (Python)** | `pytest` under `tools/combat_engine/tests/` |
-| **E2E smoke (Playwright)** | Release build, frontend build, `npm run test:e2e` |
+
+| Job                        | What it runs                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Rust**                   | `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `cargo build --release`, `cargo audit`          |
+| **Frontend**               | `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` (in `frontend/`) |
+| **Combat engine (Python)** | `pytest` under `tools/combat_engine/tests/`                                                                                     |
+| **E2E smoke (Playwright)** | Release build, frontend build, `npm run test:e2e`                                                                               |
+
 
 ### Branch protection (repository settings)
 
@@ -24,7 +26,7 @@ Also require pull requests before merging if that matches project policy.
 
 ## Pre-commit hooks (recommended)
 
-We use [pre-commit](https://pre-commit.com/) with [`.pre-commit-config.yaml`](.pre-commit-config.yaml) so local commits run the same Rust `fmt`/`clippy` checks (and Biome when `frontend/` files change) before push.
+We use [pre-commit](https://pre-commit.com/) with `[.pre-commit-config.yaml](.pre-commit-config.yaml)` so local commits run the same Rust `fmt`/`clippy` checks (and Biome when `frontend/` files change) before push.
 
 ```bash
 pip install pre-commit   # or: brew install pre-commit
@@ -64,4 +66,4 @@ From the repo root:
 npm run ci:frontend
 ```
 
-Runs a clean-install frontend pipeline aligned with the CI frontend job (see root [`package.json`](package.json)).
+Runs a clean-install frontend pipeline aligned with the CI frontend job (see root `[package.json](package.json)`).
