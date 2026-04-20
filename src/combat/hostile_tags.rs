@@ -2,12 +2,18 @@
 
 /// Conqueror Borg Suppressor / Obliterator and related Update 89 hostiles.
 pub const HOSTILE_TAG_MASK_CONQUEROR_BORG: u32 = 1 << 0;
+/// [`crate::combat::conqueror_borg_beams`] — Conqueror Borg Suppressor family (`loca_id` 89050–89052).
+pub const HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR: u32 = 1 << 1;
+/// [`crate::combat::conqueror_borg_beams`] — Conqueror Borg Obliterator family (`loca_id` 89053–89055).
+pub const HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR: u32 = 1 << 2;
 
 /// Map a single data slug (from `ShipAbility` / hostile JSON) to one bit, if known.
 pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
     let s = slug.trim().to_lowercase().replace('-', "_");
     match s.as_str() {
         "conqueror_borg" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG),
+        "conqueror_borg_suppressor" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR),
+        "conqueror_borg_obliterator" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR),
         _ => None,
     }
 }

@@ -155,7 +155,9 @@ pub enum AbilityEffect {
         per_round: f64,
         cap: f64,
     },
-    /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables instant-kill beams when that subsystem is modeled.
+    /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables the
+    /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
+    /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
     ConquerorBorgBeamSuppression,
 }
 
@@ -459,8 +461,7 @@ pub fn hostile_crit_damage_reduction_from_crew(
             duration_rounds: d,
         } = s.ability.effect
         {
-            if s
-                .ability
+            if s.ability
                 .condition
                 .as_ref()
                 .is_some_and(|c| !c.evaluate(ctx))

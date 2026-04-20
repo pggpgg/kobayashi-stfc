@@ -1,6 +1,7 @@
 pub mod abilities;
 pub mod buffs;
 pub mod condition;
+pub mod conqueror_borg_beams;
 pub mod crit;
 pub mod damage;
 pub mod effect_accumulator;
@@ -44,7 +45,10 @@ pub use export_csv::{
     export_to_attacker, export_to_combat_input, export_to_combatants, export_to_crew,
     export_to_defender, parse_fight_export, ship_type_from_name, FightExport, FightExportEvent,
 };
-pub use hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG;
+pub use hostile_tags::{
+    HOSTILE_TAG_MASK_CONQUEROR_BORG, HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR,
+    HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
+};
 pub use log_ingest::{
     ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
     parse_combat_log_json, IngestedCombatLog, IngestedEvent,

@@ -60,6 +60,18 @@ cargo build --bin generate_lcars && ./target/release/kobayashi generate-lcars [p
 cargo bench
 ```
 
+### CI parity (local)
+
+GitHub Actions workflow **CI** (`.github/workflows/ci.yml`) runs fmt, clippy (`-D warnings`), tests, release build, and `cargo audit` for Rust; frontend runs Biome, `tsc`, Vitest, and production build under `frontend/`.
+
+```bash
+# Optional: pre-commit (install: pip install pre-commit; once: pre-commit install)
+pre-commit run --all-files
+
+# Full Rust + frontend checks like CI (see CONTRIBUTING.md)
+./scripts/local-ci.sh
+```
+
 ### Frontend
 
 ```bash

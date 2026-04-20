@@ -1,0 +1,20 @@
+# https://pre-commit.com — mirrors Rust checks from .github/workflows/ci.yml
+# Install: pip install pre-commit  (or: brew install pre-commit)
+# Once per clone: pre-commit install
+# Manual run (all hooks): pre-commit run --all-files
+repos:
+  - repo: local
+    hooks:
+      - id: rust-fmt-and-clippy
+        name: cargo fmt --check && cargo clippy
+        entry: bash -c 'cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings'
+        language: system
+        pass_filenames: false
+        files: (^Cargo\.(toml|lock)$|\.rs$|^src/|^benches/|^tests/|^build\.rs)
+
+      - id: frontend-biome
+        name: frontend biome check
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        pass_filenames: false
+        files: ^frontend/

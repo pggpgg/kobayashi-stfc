@@ -21,6 +21,10 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rust:
     name: Rust
@@ -33,9 +37,6 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: cargo fmt --check
-        run: cargo fmt --all -- --check
-
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -47,15 +48,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      - name: cargo fmt --check
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
       - name: cargo test
         # Includes CombatEffectSpec integration tests (research / LCARS / mixed).
         run: cargo test
 
       - name: cargo build --release
         run: cargo build --release
-
-      - name: cargo clippy
-        run: cargo clippy --all-targets -- -D warnings
 
       - name: Install cargo-audit
         uses: taiki-e/install-action@v2

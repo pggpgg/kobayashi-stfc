@@ -23,6 +23,10 @@ use crate::combat::abilities::{
     ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
+use crate::combat::conqueror_borg_beams::{
+    effective_conqueror_borg_beam_suppression, hyperthermic_resonance_beam_instant_loss,
+    quantum_resonance_beam_instant_loss,
+};
 use crate::combat::crit::resolve_vehicle_weapon_crit;
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
@@ -330,7 +334,20 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let conqueror_borg_beam_suppression = combat_begin_filtered
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));
-    if evolutionary_assimilation_instant_loss(
+    let effective_conqueror_borg_beam_suppression =
+        effective_conqueror_borg_beam_suppression(conqueror_borg_beam_suppression, &attacker.id);
+    if quantum_resonance_beam_instant_loss(
+        defender_is_npc_hostile,
+        config.defender_hostile_tag_mask,
+        effective_conqueror_borg_beam_suppression,
+        &attacker.id,
+    ) || hyperthermic_resonance_beam_instant_loss(
+        defender_is_npc_hostile,
+        config.defender_hostile_tag_mask,
+        effective_conqueror_borg_beam_suppression,
+        &attacker.id,
+        config.seed,
+    ) || evolutionary_assimilation_instant_loss(
         defender_is_npc_hostile,
         config.defender_hostile_tag_mask,
         conqueror_borg_beam_suppression,

@@ -138,7 +138,10 @@ fn systems_from_values(vals: &[Value]) -> Vec<u64> {
 /// Conqueror Borg: names from `translations-navigation.json` (`marauder_name_only`):
 /// **Conqueror Borg Suppressor** (`loca_id` 89050–89052), **Conqueror Borg Obliterator**
 /// (`loca_id` 89053–89055). Extend if Scopely adds more `loca_id`s with the same combat family.
-fn curated_hostile_tags_for_upstream(id: u64) -> Vec<String> {
+///
+/// Sub-tags `conqueror_borg_suppressor` / `conqueror_borg_obliterator` drive combat resonance beams
+/// (`crate::combat::conqueror_borg_beams`).
+fn curated_hostile_tags_for_upstream(id: u64, loca_id: Option<u64>) -> Vec<String> {
     let mut tags: Vec<String> = Vec::new();
     let mut push_unique = |s: &str| {
         let t = s.to_string();
@@ -156,6 +159,13 @@ fn curated_hostile_tags_for_upstream(id: u64) -> Vec<String> {
     ];
     if CONQUEROR_BORG_IDS.contains(&id) {
         push_unique("conqueror_borg");
+        if let Some(loca) = loca_id {
+            if (89050..=89052).contains(&loca) {
+                push_unique("conqueror_borg_suppressor");
+            } else if (89053..=89055).contains(&loca) {
+                push_unique("conqueror_borg_obliterator");
+            }
+        }
     }
     tags
 }
@@ -181,7 +191,7 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     };
 
     let shield_mitigation = shield_mitigation_from_components(&raw.components);
-    let hostile_tags = curated_hostile_tags_for_upstream(raw.id);
+    let hostile_tags = curated_hostile_tags_for_upstream(raw.id, loca_id);
 
     HostileRecord {
         id: id.clone(),

@@ -249,6 +249,8 @@ The UI is served from the same origin as the API by default. For custom deployme
 
 ## Contributing
 
+For CI, pre-commit hooks, branch protection, and a one-shot script that mirrors the main CI jobs, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ### Adding or updating officers
 
 Officer definitions live in `data/officers/officers.lcars.yaml`. LCARS is the source of truth for combat abilities; the canonical JSON can be regenerated from LCARS if needed.
