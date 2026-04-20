@@ -45,8 +45,10 @@
   "crit_chance": 0.1,
   "crit_damage": 1.8,
   "hostile_tags": [
-    "conqueror_borg"
+    "conqueror_borg",
+    "conqueror_borg_obliterator"
   ],
+  "engagement_enemy_types": null,
   "components": [
     {
       "art_id": 5001,

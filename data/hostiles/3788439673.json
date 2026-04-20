@@ -57,6 +57,7 @@
   "crit_chance": 0.10000000000000002,
   "crit_damage": 1.8,
   "hostile_tags": [],
+  "engagement_enemy_types": null,
   "components": [
     {
       "art_id": 5001,
