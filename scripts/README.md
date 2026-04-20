@@ -2,6 +2,19 @@
 
 Prefer **`cargo xtask --help`** from the repo root for a single discoverable entry point; each subcommand runs the same steps documented below. Under the hood this crate invokes the `node` / `python` / `cargo` commands in this file.
 
+## Automated refresh (CI)
+
+A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml)) runs the same high-level sequence as a local refresh: catalog fetch (`fetch_stfcspace_page_upstream.py`), ship/hostile/research detail fetches (missing-only by default), `npm run data:refresh -- --stfcspace`, then `cargo test`, and opens a PR when files change.
+
+**Manual run:** Actions → **Data refresh (stfc.space)** → *Run workflow*. Inputs:
+
+| Input | Effect |
+|-------|--------|
+| `full_fetch` | Pass `--full` to the three `fetch_stfcspace_*.mjs` scripts (long; re-downloads all cached ids). |
+| `dry_run` | Run fetch + normalize + tests but **skip** opening a PR. |
+
+Scheduled runs do **not** use `--stfccommunity` (PowerShell). `--stfcspace` only.
+
 ## Single data-refresh entrypoint (audit task 19)
 
 From the **repo root**, run importers and normalizers in a **fixed order**:

@@ -43,6 +43,10 @@ pre-commit run --all-files
 
 From the repo root, `cargo xtask --help` lists wrappers for ship/hostile/research refresh, `validate_data`, `generate_lcars`, `npm run data:refresh`, and `npm run verify`. See [CLAUDE.md](CLAUDE.md) § Maintenance (`cargo xtask`) and [scripts/README.md](scripts/README.md) for the underlying commands.
 
+## Scheduled data PRs
+
+The workflow [.github/workflows/data-refresh.yml](.github/workflows/data-refresh.yml) can open pull requests with large `data/` diffs. Treat them like any other PR: review scope, run local `cargo test` if needed, and merge when satisfied.
+
 ## Full local parity with CI
 
 From the repository root:

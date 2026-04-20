@@ -17,7 +17,7 @@ Check boxes off as tasks are completed. Each task lists a suggested scope, prima
   - Consolidate the many helper scripts (`scripts/*.mjs`, `scripts/*.py`, `cargo run --bin ...`) behind a single entry point with discoverable subcommands (`xtask refresh-ships`, `xtask refresh-hostiles`, `xtask validate`, `xtask regen-lcars`).
   - **Touchpoints:** new `xtask/` crate in `Cargo.toml` workspace; update `CLAUDE.md` and `README.md`.
   - **Done when:** `cargo xtask --help` lists every common maintenance workflow and the docs link to it.
-- **3. Upstream data-refresh CI job (scheduled)**
+- **3. Upstream data-refresh CI job (scheduled)** *(shipped: [`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml) — weekly + `workflow_dispatch`; see [scripts/README.md](../scripts/README.md) § Automated refresh.)*
   - Nightly (or weekly) GitHub Action that runs ship/hostile/research fetch scripts, regenerates normalized data, runs `cargo test`, and opens a PR with the diff.
   - **Touchpoints:** `.github/workflows/data-refresh.yml`, `scripts/fetch_stfcspace_*.mjs`, `normalize_`* binaries.
   - **Done when:** a scheduled run produces a draft PR with updated `data/` artifacts and green tests.

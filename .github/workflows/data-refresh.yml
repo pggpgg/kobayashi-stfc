@@ -1,0 +1,105 @@
+# Scheduled + manual: refresh data.stfc.space caches, run stfc.space normalizers, test, open PR.
+# Does not run --stfccommunity (PowerShell); see scripts/data-refresh.mjs.
+name: Data refresh (stfc.space)
+
+on:
+  schedule:
+    # Weekly Monday 06:00 UTC — missing-only fetches by default
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      full_fetch:
+        description: "Pass --full to ship, hostile, and research detail fetchers"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Run fetch + normalize + tests but do not open a PR"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Refresh upstream data and open PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: data-refresh-cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            data-refresh-cargo-${{ runner.os }}-
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install npm dependencies (repo root)
+        run: npm ci
+
+      - name: Fetch stfc.space catalog (summaries + translations)
+        run: python3 scripts/fetch_stfcspace_page_upstream.py
+
+      - name: Fetch ship / hostile / research detail JSON
+        run: |
+          set -euo pipefail
+          EXTRA=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.full_fetch }}" = "true" ]; then
+            EXTRA="--full"
+          fi
+          node scripts/fetch_stfcspace_ships.mjs ${EXTRA}
+          node scripts/fetch_stfcspace_hostiles.mjs ${EXTRA}
+          node scripts/fetch_stfcspace_research.mjs ${EXTRA}
+
+      - name: Run data refresh (core + stfc.space pipeline)
+        run: npm run data:refresh -- --stfcspace
+
+      - name: cargo test
+        run: cargo test
+
+      - name: Create Pull Request
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(data): automated stfc.space refresh"
+          title: "chore(data): automated stfc.space refresh"
+          body: |
+            Automated update from workflow **${{ github.workflow }}** ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})).
+
+            - Catalog: `python3 scripts/fetch_stfcspace_page_upstream.py`
+            - Detail fetch: `fetch_stfcspace_{ships,hostiles,research}.mjs` (scheduled runs use missing-only; manual dispatch can enable **full** fetch)
+            - Normalize: `npm run data:refresh -- --stfcspace`
+            - Verify: `cargo test`
+
+            Please review large `data/` diffs before merge.
+          branch: automated/data-refresh-${{ github.run_id }}
+          delete-branch: true
