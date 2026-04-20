@@ -110,3 +110,7 @@ tower = { version = "0.4", features = ["util"] }
 inherits = "release"
 debug = true
 strip = "none"
+
+[workspace]
+members = ["xtask"]
+resolver = "2"

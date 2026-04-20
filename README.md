@@ -94,7 +94,9 @@ KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladi
 
 ### Data maintenance policy
 
-**Refreshing combat/game data:** use the orchestrated importer chain — `npm run data:refresh` (optional flags `--stfcspace`, `--stfccommunity`, `--all`). See [scripts/README.md](scripts/README.md) for order and prerequisites.
+**Discoverable tasks:** run `cargo xtask --help` from the repo root for ship/hostile/research refresh, `validate_data`, `generate_lcars`, `data:refresh`, and `npm run verify` wrappers (implementation: [`xtask/`](xtask/)).
+
+**Refreshing combat/game data:** use the orchestrated importer chain — `cargo xtask data-refresh` or `npm run data:refresh` (optional flags `--stfcspace`, `--stfccommunity`, `--all`). See [scripts/README.md](scripts/README.md) for order and prerequisites.
 
 **Research catalog (`data/research_catalog.json`):** GitHub Actions sets `CI=true`, so `cargo test` **must** find a non-empty catalog (the `scenario_research_integration` test fails with a short remediation message if it is missing). The committed file in the repo satisfies this. To regenerate after updating upstream research JSON under `data/upstream/data-stfc-space/research/`, run `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` (see [data/README.md](data/README.md) § Research). To match CI behavior locally, run with `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1`.
 

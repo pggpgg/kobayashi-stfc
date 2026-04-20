@@ -72,6 +72,22 @@ pre-commit run --all-files
 ./scripts/local-ci.sh
 ```
 
+### Maintenance (`cargo xtask`)
+
+The workspace includes an **`xtask`** crate. From the repo root, `cargo xtask --help` lists maintenance commands that wrap `scripts/*.mjs`, Python helpers, and `cargo run --bin …` (same flows as [scripts/README.md](scripts/README.md)).
+
+```bash
+cargo xtask --help
+cargo xtask refresh-ships -- --full
+cargo xtask refresh-hostiles
+cargo xtask data-refresh -- --stfcspace
+cargo xtask regen-lcars
+cargo xtask validate
+cargo xtask verify
+```
+
+Requires **Node** and **Python** on `PATH` where the underlying scripts do (set `PYTHON` to pick a Python executable). Alias is defined in [`.cargo/config.toml`](.cargo/config.toml).
+
 ### Frontend
 
 ```bash

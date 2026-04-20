@@ -39,6 +39,10 @@ Run all hooks manually:
 pre-commit run --all-files
 ```
 
+## Maintenance tasks (`cargo xtask`)
+
+From the repo root, `cargo xtask --help` lists wrappers for ship/hostile/research refresh, `validate_data`, `generate_lcars`, `npm run data:refresh`, and `npm run verify`. See [CLAUDE.md](CLAUDE.md) § Maintenance (`cargo xtask`) and [scripts/README.md](scripts/README.md) for the underlying commands.
+
 ## Full local parity with CI
 
 From the repository root:

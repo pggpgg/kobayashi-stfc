@@ -1,5 +1,7 @@
 # Scripts
 
+Prefer **`cargo xtask --help`** from the repo root for a single discoverable entry point; each subcommand runs the same steps documented below. Under the hood this crate invokes the `node` / `python` / `cargo` commands in this file.
+
 ## Single data-refresh entrypoint (audit task 19)
 
 From the **repo root**, run importers and normalizers in a **fixed order**:
