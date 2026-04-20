@@ -79,6 +79,7 @@ harness = false
 path = "benches/monte_carlo_parallel_bench.rs"
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
 axum = { version = "0.7", features = ["macros"] }
 calamine = "0.24"
 chrono = { version = "0.4", default-features = false, features = ["std", "now"] }

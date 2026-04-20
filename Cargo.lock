@@ -784,6 +784,7 @@ dependencies = [
  "axum",
  "calamine",
  "chrono",
+ "clap",
  "criterion",
  "csv",
  "futures-util",

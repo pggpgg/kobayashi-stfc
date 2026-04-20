@@ -3,18 +3,73 @@ use std::fmt;
 use std::fs;
 use std::path::Path;
 
+use serde::Serialize;
 use serde_json::{Map, Value};
 
 use crate::data::building::DEFAULT_BUILDINGS_INDEX_PATH;
+use crate::data::forbidden_chaos::{forbidden_chaos_sync_readiness_issues, load_forbidden_chaos};
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
+use crate::data::mapping_gap_report::{
+    scan_canonical_officer_conditions, unmapped_canonical_condition_rows,
+};
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
+use crate::data::registry::Registry;
 use crate::data::ship::{
     ExtendedShipIndex, ExtendedShipRecord, ShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
 use crate::data::upstream_hostile_ship_type::upstream_ship_type_is_known_category;
 use crate::lcars;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// One named slice of diagnostics (registry, officers, hostiles, …).
+#[derive(Debug, Clone, Serialize)]
+pub struct NamedValidationReport {
+    pub name: String,
+    pub diagnostics: Vec<ValidationDiagnostic>,
+}
+
+/// Full strict validation output for CI / `validate_data` (JSON + Markdown).
+#[derive(Debug, Clone, Serialize)]
+pub struct FullDataValidationReport {
+    pub generated_at: String,
+    pub manifest_dir: String,
+    pub summary: ValidationSummaryCounts,
+    pub categories: Vec<NamedValidationReport>,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize)]
+pub struct ValidationSummaryCounts {
+    pub errors: usize,
+    pub warnings: usize,
+    pub infos: usize,
+}
+
+impl FullDataValidationReport {
+    pub fn from_categories(manifest_dir: &Path, categories: Vec<NamedValidationReport>) -> Self {
+        let mut summary = ValidationSummaryCounts::default();
+        for cat in &categories {
+            for d in &cat.diagnostics {
+                match d.severity {
+                    ValidationSeverity::Error => summary.errors += 1,
+                    ValidationSeverity::Warning => summary.warnings += 1,
+                    ValidationSeverity::Info => summary.infos += 1,
+                }
+            }
+        }
+        Self {
+            generated_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+            manifest_dir: manifest_dir.display().to_string(),
+            summary,
+            categories,
+        }
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.summary.errors > 0
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ValidationSeverity {
     Error,
     Warning,
@@ -37,19 +92,23 @@ impl fmt::Display for ValidationSeverity {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ValidationDiagnostic {
     pub severity: ValidationSeverity,
     pub context: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct ValidationReport {
     pub diagnostics: Vec<ValidationDiagnostic>,
 }
 
 impl ValidationReport {
+    pub fn append(&mut self, other: ValidationReport) {
+        self.diagnostics.extend(other.diagnostics);
+    }
+
     pub fn push(
         &mut self,
         severity: ValidationSeverity,
@@ -107,6 +166,14 @@ const TRIGGER_ENUM: &[&str] = &[
     "on_own_shield_break",
     "on_enemy_shield_break",
 ];
+
+/// `ship_class` strings that map cleanly in [`crate::data::hostile::ship_class_to_type`].
+pub fn hostile_ship_class_is_recognized(ship_class: &str) -> bool {
+    matches!(
+        ship_class.trim().to_lowercase().as_str(),
+        "battleship" | "explorer" | "interceptor" | "survey" | "armada"
+    )
+}
 
 const OPERATOR_ENUM: &[&str] = &[
     "Add",
@@ -725,30 +792,55 @@ pub fn validate_ships_extended_dataset(path: &str) -> Result<ValidationReport, S
                 serde_json::from_str::<ExtendedShipRecord>(&raw).map_err(|e| e.to_string())
             }) {
             Ok(extended) => {
-                if let Some(rec) = extended.to_ship_record(Some(1), Some(1)) {
-                    if rec.hull_health <= 0.0 {
+                if extended.tiers.is_empty() {
+                    report.push(
+                        ValidationSeverity::Error,
+                        ctx.clone(),
+                        "extended ship has empty `tiers`",
+                    );
+                } else {
+                    if !extended.tiers.iter().any(|t| t.tier == 1) {
                         report.push(
                             ValidationSeverity::Error,
                             ctx.clone(),
-                            format!(
-                                "tier 1 level 1 hull_health is {} (must be > 0)",
-                                rec.hull_health
-                            ),
+                            "extended ship has no tier 1 entry in `tiers`",
                         );
                     }
-                    if rec.attack <= 0.0 {
+                    if extended.levels.is_empty() {
                         report.push(
                             ValidationSeverity::Warning,
-                            ctx,
-                            format!("tier 1 level 1 attack is {} (zero or negative)", rec.attack),
+                            ctx.clone(),
+                            "extended ship has empty `levels` (no per-level shield/hull bonuses)",
                         );
                     }
-                } else {
-                    report.push(
-                        ValidationSeverity::Error,
-                        ctx,
-                        "failed to resolve tier 1 level 1 ShipRecord".to_string(),
-                    );
+                    if let Some(rec) = extended.to_ship_record(Some(1), Some(1)) {
+                        if rec.hull_health <= 0.0 {
+                            report.push(
+                                ValidationSeverity::Error,
+                                ctx.clone(),
+                                format!(
+                                    "tier 1 level 1 hull_health is {} (must be > 0)",
+                                    rec.hull_health
+                                ),
+                            );
+                        }
+                        if rec.attack <= 0.0 {
+                            report.push(
+                                ValidationSeverity::Warning,
+                                ctx,
+                                format!(
+                                    "tier 1 level 1 attack is {} (zero or negative)",
+                                    rec.attack
+                                ),
+                            );
+                        }
+                    } else {
+                        report.push(
+                            ValidationSeverity::Error,
+                            ctx,
+                            "failed to resolve tier 1 level 1 ShipRecord".to_string(),
+                        );
+                    }
                 }
             }
             Err(e) => {
@@ -786,6 +878,9 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
     let mut parse_errors: usize = 0;
     let mut bad_stats: usize = 0;
     let mut unknown_upstream_ship_type: BTreeMap<u32, (usize, Vec<String>)> = BTreeMap::new();
+    let mut empty_ship_class: usize = 0;
+    let mut empty_ship_class_samples: Vec<String> = Vec::new();
+    let mut unknown_ship_class: BTreeMap<String, (usize, Vec<String>)> = BTreeMap::new();
 
     for (idx, entry) in index.hostiles.iter().enumerate() {
         let ctx = format!("hostiles[{idx}] id='{}'", entry.id);
@@ -813,6 +908,21 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
             .and_then(|raw| serde_json::from_str::<HostileRecord>(&raw).map_err(|e| e.to_string()))
         {
             Ok(record) => {
+                if record.ship_class.trim().is_empty() {
+                    empty_ship_class += 1;
+                    if empty_ship_class_samples.len() < 4 {
+                        empty_ship_class_samples.push(entry.id.clone());
+                    }
+                } else if !hostile_ship_class_is_recognized(&record.ship_class) {
+                    let key = record.ship_class.clone();
+                    let slot = unknown_ship_class
+                        .entry(key)
+                        .or_insert_with(|| (0, Vec::new()));
+                    slot.0 += 1;
+                    if slot.1.len() < 4 && !slot.1.contains(&entry.id) {
+                        slot.1.push(entry.id.clone());
+                    }
+                }
                 if !upstream_ship_type_is_known_category(record.upstream_ship_type) {
                     let slot = unknown_upstream_ship_type
                         .entry(record.upstream_ship_type)
@@ -856,6 +966,34 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
             format!("{bad_stats} hostile record(s) have hull_health ≤ 0"),
         );
     }
+    if empty_ship_class > 0 {
+        let samples = empty_ship_class_samples.join(", ");
+        report.push(
+            ValidationSeverity::Error,
+            "hostiles.ship_class",
+            format!(
+                "{empty_ship_class} hostile record(s) have empty `ship_class` (sample id(s): {samples})"
+            ),
+        );
+    }
+    if !unknown_ship_class.is_empty() {
+        let distinct = unknown_ship_class.len();
+        let total: usize = unknown_ship_class.values().map(|(n, _)| *n).sum();
+        let mut parts: Vec<String> = Vec::new();
+        for (cls, (count, ids)) in unknown_ship_class.iter().take(12) {
+            let s = ids.join(", ");
+            parts.push(format!("`{cls}`×{count} (e.g. {s})"));
+        }
+        let tail = if distinct > 12 { " …" } else { "" };
+        let detail = parts.join("; ");
+        report.push(
+            ValidationSeverity::Warning,
+            "hostiles.ship_class",
+            format!(
+                "{distinct} distinct non-standard `ship_class` value(s) ({total} hostile row(s)); combat defaults these to battleship — {detail}{tail}"
+            ),
+        );
+    }
     for (ty, (count, sample_ids)) in unknown_upstream_ship_type {
         let samples = sample_ids.join(", ");
         report.push(
@@ -868,6 +1006,256 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
     }
 
     Ok(report)
+}
+
+fn named_validation_report(
+    name: &str,
+    result: Result<ValidationReport, String>,
+) -> NamedValidationReport {
+    match result {
+        Ok(r) => NamedValidationReport {
+            name: name.to_string(),
+            diagnostics: r.diagnostics,
+        },
+        Err(e) => NamedValidationReport {
+            name: name.to_string(),
+            diagnostics: vec![ValidationDiagnostic {
+                severity: ValidationSeverity::Error,
+                context: name.to_string(),
+                message: e,
+            }],
+        },
+    }
+}
+
+/// Validate `data/registry.json`: each entry path exists under `data_root` and parses as JSON.
+pub fn validate_registry_dataset(data_root: &Path) -> Result<ValidationReport, String> {
+    let registry_path = data_root.join("registry.json");
+    let mut report = ValidationReport::default();
+    if !registry_path.is_file() {
+        report.push(
+            ValidationSeverity::Error,
+            "registry",
+            format!(
+                "registry.json not found at {} (run normalizers / importers first)",
+                registry_path.display()
+            ),
+        );
+        return Ok(report);
+    }
+
+    let content = fs::read_to_string(&registry_path)
+        .map_err(|e| format!("{}: {e}", registry_path.display()))?;
+    let registry: Registry =
+        serde_json::from_str(&content).map_err(|e| format!("{}: {e}", registry_path.display()))?;
+
+    for (name, entry) in &registry {
+        let path = data_root.join(&entry.path);
+        let ctx = format!("registry.{name}");
+        if !path.exists() {
+            report.push(
+                ValidationSeverity::Error,
+                ctx,
+                format!("path missing: {}", path.display()),
+            );
+            continue;
+        }
+        let file_content = match fs::read_to_string(&path) {
+            Ok(c) => c,
+            Err(e) => {
+                report.push(ValidationSeverity::Error, ctx, format!("read failed: {e}"));
+                continue;
+            }
+        };
+        if let Err(e) = serde_json::from_str::<Value>(&file_content) {
+            report.push(ValidationSeverity::Error, ctx, format!("invalid JSON: {e}"));
+        }
+    }
+
+    Ok(report)
+}
+
+/// Validate forbidden/chaos tech catalog sync readiness (unique `fid`, etc.).
+pub fn validate_forbidden_chaos_catalog_data(data_root: &Path) -> Result<ValidationReport, String> {
+    let path = data_root.join("forbidden_chaos_tech.json");
+    let mut report = ValidationReport::default();
+    let Some(path_str) = path.to_str() else {
+        return Ok(report);
+    };
+    let Some(list) = load_forbidden_chaos(path_str) else {
+        return Ok(report);
+    };
+    for msg in forbidden_chaos_sync_readiness_issues(&list) {
+        report.push(ValidationSeverity::Error, "forbidden_chaos.catalog", msg);
+    }
+    Ok(report)
+}
+
+/// Warnings for canonical `conditions` tokens not yet mapped for the officer LCARS pipeline.
+pub fn validate_unmapped_canonical_officer_conditions(
+    data_root: &Path,
+) -> Result<ValidationReport, String> {
+    let path = data_root.join("officers/officers.canonical.json");
+    let mut report = ValidationReport::default();
+    if !path.is_file() {
+        report.push(
+            ValidationSeverity::Error,
+            "canonical.officers",
+            format!("missing {}", path.display()),
+        );
+        return Ok(report);
+    }
+
+    let map = scan_canonical_officer_conditions(&path)?;
+    for (tok, count, examples) in unmapped_canonical_condition_rows(&map) {
+        let ex = examples.join("; ");
+        report.push(
+            ValidationSeverity::Warning,
+            "canonical.unmapped_condition",
+            format!("token `{tok}`: {count} occurrence(s); examples: {ex}"),
+        );
+    }
+    Ok(report)
+}
+
+/// All validation categories for strict reports / CI (paths relative to `manifest_dir`).
+pub fn all_dataset_validation_reports(manifest_dir: &Path) -> Vec<NamedValidationReport> {
+    let data_root = manifest_dir.join("data");
+    let mut out: Vec<NamedValidationReport> = Vec::new();
+
+    out.push(named_validation_report(
+        "registry",
+        validate_registry_dataset(&data_root),
+    ));
+
+    let canonical_path = data_root.join("officers/officers.canonical.json");
+    out.push(named_validation_report(
+        "officers_canonical",
+        validate_officer_dataset_canonical(
+            canonical_path
+                .to_str()
+                .unwrap_or("data/officers/officers.canonical.json"),
+        ),
+    ));
+
+    if let Some(officers_dir) = data_root.join("officers").to_str() {
+        out.push(named_validation_report(
+            "officers_lcars",
+            validate_lcars_dir(officers_dir),
+        ));
+    }
+
+    let ext_dir = data_root.join("ships_extended");
+    if ext_dir.join("index.json").is_file() {
+        if let Some(p) = ext_dir.to_str() {
+            out.push(named_validation_report(
+                "ships_extended",
+                validate_ships_extended_dataset(p),
+            ));
+        }
+    }
+
+    let hostiles_dir = data_root.join("hostiles");
+    if hostiles_dir.join("index.json").is_file() {
+        if let Some(p) = hostiles_dir.to_str() {
+            out.push(named_validation_report(
+                "hostiles",
+                validate_hostiles_dataset(p),
+            ));
+        }
+    }
+
+    let buildings_dir = data_root.join("buildings");
+    if buildings_dir.join("index.json").is_file() {
+        if let Some(p) = buildings_dir.to_str() {
+            out.push(named_validation_report(
+                "buildings",
+                validate_buildings_dataset(p),
+            ));
+        }
+    }
+
+    out.push(named_validation_report(
+        "forbidden_chaos",
+        validate_forbidden_chaos_catalog_data(&data_root),
+    ));
+
+    out.push(named_validation_report(
+        "canonical_conditions",
+        validate_unmapped_canonical_officer_conditions(&data_root),
+    ));
+
+    out
+}
+
+/// Build the full structured validation report (used by `validate_data` and tests).
+pub fn validate_all_data_for_report(manifest_dir: &Path) -> FullDataValidationReport {
+    let categories = all_dataset_validation_reports(manifest_dir);
+    FullDataValidationReport::from_categories(manifest_dir, categories)
+}
+
+/// Serialize [`FullDataValidationReport`] as pretty JSON.
+pub fn full_validation_report_to_json(
+    report: &FullDataValidationReport,
+) -> Result<String, serde_json::Error> {
+    serde_json::to_string_pretty(report)
+}
+
+/// Render [`FullDataValidationReport`] as Markdown tables (CI artifact / human triage).
+pub fn full_validation_report_to_markdown(report: &FullDataValidationReport) -> String {
+    use crate::data::mapping_gap_report::md_escape_cell;
+
+    let mut s = String::new();
+    s.push_str("# Kobayashi data validation report\n\n");
+    s.push_str(&format!("- Generated: `{}`\n", report.generated_at));
+    s.push_str(&format!("- Manifest dir: `{}`\n", report.manifest_dir));
+    s.push_str(&format!(
+        "- Summary: **{}** error(s), **{}** warning(s), **{}** info message(s)\n\n",
+        report.summary.errors, report.summary.warnings, report.summary.infos
+    ));
+    s.push_str("Canonical condition triage: repo path `docs/CANONICAL_CONDITIONS.md`.\n\n");
+
+    for cat in &report.categories {
+        s.push_str(&format!("## `{}`\n\n", md_escape_cell(&cat.name)));
+        if cat.diagnostics.is_empty() {
+            s.push_str("_No diagnostics._\n\n");
+            continue;
+        }
+        s.push_str("| severity | context | message |\n| --- | --- | --- |\n");
+        for d in &cat.diagnostics {
+            let sev = d.severity.as_str();
+            let ctx = md_escape_cell(&d.context);
+            let msg = md_escape_cell(&d.message);
+            s.push_str(&format!("| {sev} | {ctx} | {msg} |\n"));
+        }
+        s.push('\n');
+    }
+    s
+}
+
+fn startup_validation_pairs() -> Vec<(&'static str, Result<ValidationReport, String>)> {
+    let mut v = vec![(
+        "officers",
+        validate_officer_dataset_canonical(DEFAULT_CANONICAL_OFFICERS_PATH),
+    )];
+
+    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    if ext_dir.join("index.json").is_file() {
+        v.push((
+            "ships_extended",
+            validate_ships_extended_dataset(DEFAULT_SHIPS_EXTENDED_DIR),
+        ));
+    }
+
+    if Path::new(DEFAULT_HOSTILES_INDEX_PATH).is_file() {
+        v.push(("hostiles", validate_hostiles_dataset("data/hostiles")));
+    }
+
+    if Path::new(DEFAULT_BUILDINGS_INDEX_PATH).is_file() {
+        v.push(("buildings", validate_buildings_dataset("data/buildings")));
+    }
+
+    v
 }
 
 /// Run all startup data validations and print per-category results to stdout.
@@ -922,25 +1310,8 @@ pub fn validate_all_startup_data() -> Result<(), String> {
         }
     }
 
-    // Officers are always required.
-    let r = validate_officer_dataset_canonical(DEFAULT_CANONICAL_OFFICERS_PATH);
-    process_report("officers", r, &mut error_count, &mut warning_count);
-
-    // Ships: validate data/ships_extended only (legacy data/ships removed).
-    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
-    if ext_dir.join("index.json").is_file() {
-        let r = validate_ships_extended_dataset(DEFAULT_SHIPS_EXTENDED_DIR);
-        process_report("ships_extended", r, &mut error_count, &mut warning_count);
-    }
-
-    if Path::new(DEFAULT_HOSTILES_INDEX_PATH).is_file() {
-        let r = validate_hostiles_dataset("data/hostiles");
-        process_report("hostiles", r, &mut error_count, &mut warning_count);
-    }
-
-    if Path::new(DEFAULT_BUILDINGS_INDEX_PATH).is_file() {
-        let r = validate_buildings_dataset("data/buildings");
-        process_report("buildings", r, &mut error_count, &mut warning_count);
+    for (label, result) in startup_validation_pairs() {
+        process_report(label, result, &mut error_count, &mut warning_count);
     }
 
     if error_count == 0 {

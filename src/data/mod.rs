@@ -12,6 +12,7 @@ pub mod hostile_ability_resolve;
 pub mod hostile_loca;
 pub mod import;
 pub mod loader;
+pub mod mapping_gap_report;
 pub mod officer;
 pub mod profile;
 pub mod profile_index;

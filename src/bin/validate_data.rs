@@ -1,58 +1,111 @@
-//! Validate data registry: check that each referenced path exists and is loadable.
-//! Run: cargo run --bin validate_data
+//! Validate committed `data/` artifacts: registry paths, officers (canonical + LCARS), ships,
+//! hostiles, buildings, forbidden/chaos catalog, and unmapped canonical condition tokens.
+//!
+//! Run from repo root: `cargo run --bin validate_data`
+//!
+//! Exit code **1** if any diagnostic has severity `error`. Warnings do not fail the process.
 
-use std::path::Path;
+use std::fs;
+use std::path::PathBuf;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
-    let data_root = Path::new(&manifest_dir).join("data");
-    let registry_path = data_root.join("registry.json");
+use clap::Parser;
+use kobayashi::data::validate::{
+    full_validation_report_to_json, full_validation_report_to_markdown,
+    validate_all_data_for_report, ValidationSeverity,
+};
 
-    if !registry_path.exists() {
-        eprintln!("Registry not found: {}", registry_path.display());
-        eprintln!("Run the normalizer first: cargo run --bin normalize_stfc_data");
-        std::process::exit(1);
+#[derive(Parser, Debug)]
+#[command(name = "validate_data")]
+struct Args {
+    /// Emit JSON (pretty) for CI / tooling.
+    #[arg(long, value_name = "PATH")]
+    json_out: Option<PathBuf>,
+
+    /// Emit Markdown tables for human triage.
+    #[arg(long, value_name = "PATH")]
+    markdown_out: Option<PathBuf>,
+
+    /// Which machine-readable formats to write when output paths are set (default: both if both paths given).
+    #[arg(long, value_enum, default_value = "both")]
+    format: ReportFormat,
+
+    /// Crate / repo root containing `data/` (default: `CARGO_MANIFEST_DIR`).
+    #[arg(long)]
+    manifest_dir: Option<PathBuf>,
+}
+
+#[derive(Clone, Copy, Debug, Default, clap::ValueEnum)]
+enum ReportFormat {
+    #[default]
+    Both,
+    Json,
+    Markdown,
+}
+
+fn main() {
+    let args = Args::parse();
+    let manifest_dir = args
+        .manifest_dir
+        .or_else(|| std::env::var("CARGO_MANIFEST_DIR").ok().map(PathBuf::from))
+        .unwrap_or_else(|| PathBuf::from("."));
+
+    let report = validate_all_data_for_report(&manifest_dir);
+
+    let write_json = matches!(args.format, ReportFormat::Both | ReportFormat::Json);
+    let write_md = matches!(args.format, ReportFormat::Both | ReportFormat::Markdown);
+
+    if let Some(path) = &args.json_out {
+        if write_json {
+            let json = full_validation_report_to_json(&report).unwrap_or_else(|e| {
+                eprintln!("validate_data: JSON serialize failed: {e}");
+                std::process::exit(2);
+            });
+            if let Err(e) = fs::write(path, json.as_bytes()) {
+                eprintln!("validate_data: write {}: {e}", path.display());
+                std::process::exit(2);
+            }
+            eprintln!("Wrote {}", path.display());
+        }
     }
 
-    let content = std::fs::read_to_string(&registry_path)?;
-    let registry: kobayashi::data::registry::Registry = serde_json::from_str(&content)?;
-
-    let mut ok = 0;
-    let mut err = 0;
-    for (name, entry) in &registry {
-        let path = data_root.join(&entry.path);
-        if !path.exists() {
-            eprintln!("[{}] path missing: {}", name, path.display());
-            err += 1;
-            continue;
+    if let Some(path) = &args.markdown_out {
+        if write_md {
+            let md = full_validation_report_to_markdown(&report);
+            if let Err(e) = fs::write(path, md.as_bytes()) {
+                eprintln!("validate_data: write {}: {e}", path.display());
+                std::process::exit(2);
+            }
+            eprintln!("Wrote {}", path.display());
         }
-        let content = match std::fs::read_to_string(&path) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("[{}] read failed: {} - {}", name, path.display(), e);
-                err += 1;
-                continue;
-            }
-        };
-        let _: serde_json::Value = match serde_json::from_str(&content) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!("[{}] invalid JSON: {} - {}", name, path.display(), e);
-                err += 1;
-                continue;
-            }
-        };
-        ok += 1;
     }
 
     println!(
-        "Validated {} datasets, {} ok, {} errors",
-        registry.len(),
-        ok,
-        err
+        "Data validation: {} error(s), {} warning(s), {} info (manifest {})",
+        report.summary.errors, report.summary.warnings, report.summary.infos, report.manifest_dir
     );
-    if err > 0 {
+
+    for cat in &report.categories {
+        let errs = cat
+            .diagnostics
+            .iter()
+            .filter(|d| d.severity == ValidationSeverity::Error)
+            .count();
+        let warns = cat
+            .diagnostics
+            .iter()
+            .filter(|d| d.severity == ValidationSeverity::Warning)
+            .count();
+        if errs == 0 && warns == 0 {
+            println!("  {}: ok", cat.name);
+        } else {
+            println!("  {}: {} error(s), {} warning(s)", cat.name, errs, warns);
+        }
+    }
+
+    if report.has_errors() {
+        eprintln!(
+            "validate_data: failing due to one or more errors (see JSON/Markdown or stdout above)."
+        );
         std::process::exit(1);
     }
-    Ok(())
 }
