@@ -4,7 +4,7 @@ alwaysApply: true
 ---
 # Checklist maintenance
 
-When you **start from** a checklist or numbered task doc (for example [`docs/DEV_TASKS.md`](docs/DEV_TASKS.md)), treat updating that doc as part of the same deliverable as the code.
+When you **start from** a checklist or numbered task doc the user or repo points you at (Markdown checkboxes, `docs/` task lists, GitHub issues, etc.), treat updating that artifact as part of the same deliverable as the code.
 
 - As soon as an item is fully completed, immediately mark it completed (for example, change `- [ ]` to `- [x]`) and refresh any progress counts or summaries in the same file.
 - Do not defer checklist updates to “after push” or the end of the session unless the user explicitly asked only for a draft.
