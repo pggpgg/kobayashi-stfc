@@ -16,7 +16,8 @@ use crate::data::ship_ability_resolve;
 /// Decaying `weapon_damage`: `{"amount": f64, "floor": f64}` on [`CombatEffectSpec::attributes`].
 pub const OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY: &str = "kobayashi_officer_weapon_damage_decay";
 /// Accumulating `weapon_damage`: `{"amount": f64, "ceiling": f64}` on [`CombatEffectSpec::attributes`].
-pub const OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE: &str = "kobayashi_officer_weapon_damage_accumulate";
+pub const OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE: &str =
+    "kobayashi_officer_weapon_damage_accumulate";
 /// Raw LCARS operator string after dash/underscore normalization (matches resolver `normalize_operator`).
 pub const OFFICER_SPEC_ATTR_LCARS_OP: &str = "kobayashi_lcars_normalize_op";
 
@@ -177,9 +178,8 @@ pub fn compile_condition(
             Ok(AbilityCondition::Or(parts))
         }
         AbilityConditionSpec::EngagementIncludes { enemy_type } => {
-            let et = enemy_type_from_engagement_slug(enemy_type).ok_or_else(|| {
-                EffectSpecCompileError::UnknownEngagementSlug(enemy_type.clone())
-            })?;
+            let et = enemy_type_from_engagement_slug(enemy_type)
+                .ok_or_else(|| EffectSpecCompileError::UnknownEngagementSlug(enemy_type.clone()))?;
             Ok(AbilityCondition::EngagementIncludes(et))
         }
         AbilityConditionSpec::CombatBattleTypeAny { battle_types } => {
@@ -295,7 +295,8 @@ pub fn compile_officer_combat_spec(
                 ));
             }
             let mult = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => v,
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => v,
                 "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => {
                     1.0 - v
                 }
@@ -325,7 +326,8 @@ pub fn compile_officer_combat_spec(
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
             let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => {
                     return Err(EffectSpecCompileError::UnsupportedModifierOperation {
                         modifier: spec.modifier,
                         operation: spec.operation,
@@ -349,7 +351,8 @@ pub fn compile_officer_combat_spec(
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
             let mult = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => v,
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => v,
                 "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => {
                     (1.0 - v).max(0.0)
                 }
@@ -485,9 +488,8 @@ pub fn compile_officer_combat_spec(
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
             let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => {
-                    v - 1.0
-                }
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => v - 1.0,
                 "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
                 "set" => {
                     return Err(EffectSpecCompileError::UnsupportedModifierOperation {

@@ -60,8 +60,15 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 - [ ] **11. Adaptive simulation budgets in tiered optimizer**
   - Replace fixed `tiered_scout_sims` with a variance/confidence-driven allocator: give more sims only to crews whose win-rate CI overlaps the current top-K cut.
-  - **Touchpoints:** `src/optimizer/tiered.rs`, `src/optimizer/ranking.rs`.
+  - **Touchpoints:** `src/optimizer/tiered.rs`, `src/optimizer/ranking.rs`, `src/bin/tiered_scout_budget_compare.rs` (uniform vs adaptive scout totals).
   - **Done when:** total sim budget drops ≥ 30% on representative workloads at equal final top-K accuracy (benchmarked).
+  - **Baseline (recorded 2026-04-22, `8312387a`):** from repo root, `cargo run --release --bin tiered_scout_budget_compare`. Uses `profile_id=demo`, `tiered_scout_uniform` on/off; table columns are `OptimizeRunOutcome::tiered_scout_budget.scout_trials_final` (sum of per-crew `trials_run`, so Wilson **scout** early-stop can make totals below `n × tiered_scout_sims`). Wall time is uniform+adaptive for that row (same machine, release build).
+    | scenario | `n` | uniform `scout_trials_final` | adaptive `scout_trials_final` | reduction |
+    | --- | ---: | ---: | ---: | ---: |
+    | `saladin` vs `2918121098` (seed 11, max_c 120, scout 500, top_k 20, full_sims 2000) | 120 | 60_000 | 60_000 | 0% |
+    | `uss_enterprise_d` vs `2918121098` (seed 42, max_c 128, scout 500, top_k 20, full_sims 2000) | 128 | 12_800 | 12_800 | 0% |
+    | `amalgam` vs `2918121098` (seed 7, max_c 100, scout 400, top_k 16, full_sims 1800) | 100 | 10_000 | 10_000 | 0% |
+  - On these three demo-roster scenarios, adaptive scout cost matched the uniform baseline (0% reduction); use this table as the comparison anchor while tuning overlap/refine rules toward the ≥30% “done when” bar.
 - [x] **12. Cross-session learning cache (per ship × hostile)** *(shipped: [`src/data/optimize_history.rs`](../src/data/optimize_history.rs) + `OPTIMIZE_HISTORY_JSON` in [`profile_index.rs`](../src/data/profile_index.rs); optimize API `optimize_cache_key` + scenario `optimize_history_confirm_hits` / `optimize_history_wrote`; tiered scout/confirm reuse via [`tiered.rs`](../src/optimizer/tiered.rs) + [`mod.rs`](../src/optimizer/mod.rs); SPA [`workspaceRequests.ts`](../frontend/src/lib/workspaceRequests.ts) / [`useWorkspace.ts`](../frontend/src/lib/useWorkspace.ts) sends same fingerprint as [`optimizeWarmStart.ts`](../frontend/src/lib/optimizeWarmStart.ts); “Cached warm start” in [`OptimizePanel.tsx`](../frontend/src/components/OptimizePanel.tsx).)*
   - Persist winners + warm-start seeds to `profiles/{id}/optimize_history.json`; auto-seed future optimize runs for the same (ship, hostile, constraints) key.
   - **Touchpoints:** `src/data/optimize_history.rs`, `src/optimizer/mod.rs`, `src/optimizer/tiered.rs`, `src/server/api/execution.rs`, `src/server/api/requests.rs`, `frontend/src/lib/optimizeWarmStart.ts`, `frontend/src/lib/workspaceRequests.ts`, `frontend/src/lib/useWorkspace.ts`, `frontend/src/components/OptimizePanel.tsx`.
@@ -74,7 +81,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 ## Phase 5 — API, frontend & UX
 
-- [ ] **14. OpenAPI spec + typed client for the frontend**
+- [x] **14. OpenAPI spec + typed client for the frontend** *(shipped: [`docs/openapi/kobayashi-openapi.yaml`](../docs/openapi/kobayashi-openapi.yaml) OAS 3.1 + [`src/server/openapi.rs`](../src/server/openapi.rs); `npm run gen:api` → [`frontend/src/lib/api/generated.d.ts`](../frontend/src/lib/api/generated.d.ts) + [`frontend/src/lib/api/schema.ts`](../frontend/src/lib/api/schema.ts); [`tests/openapi_response_contract_test.rs`](../tests/openapi_response_contract_test.rs) validates read-only JSON vs spec.)*
   - Complete `docs/openapi/` into a full OpenAPI 3.1 document covering every `/api/`* route; generate TS types consumed by the SPA to replace ad-hoc fetch wrappers.
   - **Touchpoints:** `docs/openapi/`, `src/server/routes.rs`, `frontend/src/lib/api/` (new).
   - **Done when:** SPA builds using generated types and a contract test asserts server responses match the spec.
@@ -115,7 +122,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 12 / 20 (tasks 1–4, 6, 9–10, 12–13, 15, 17, 19)
+- **Completed:** 13 / 20 (tasks 1–4, 6, 9–10, 12–15, 17, 19)
 - **In progress:** 0
 - **Blocked:** 0
 

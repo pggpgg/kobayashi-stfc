@@ -10,10 +10,10 @@ use tokio::sync::OwnedSemaphorePermit;
 use tracing::{info, info_span, warn};
 
 use crate::data::data_registry::DataRegistry;
-use crate::data::optimize_history;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
+use crate::data::optimize_history;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
@@ -590,9 +590,7 @@ fn gather_optimize_simulation_results(
     let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
     info!(
         effective_strategy = optimizer_strategy_to_api_label(strategy),
-        strategy_auto,
-        is_seeded_genetic,
-        "optimize_execution_mode_selected"
+        strategy_auto, is_seeded_genetic, "optimize_execution_mode_selected"
     );
 
     if let OptimizeProgressSink::Job {
@@ -933,12 +931,7 @@ pub fn run_optimize(
         gather_optimize_simulation_results(registry, request, profile_id, &mut sink)
             .expect("sync optimize does not cancel");
     let duration_ms = start.elapsed().as_millis() as u64;
-    let response = build_optimize_response(
-        request,
-        all_results,
-        duration_ms,
-        &meta,
-    );
+    let response = build_optimize_response(request, all_results, duration_ms, &meta);
     info!(
         duration_ms,
         recommendations = response.recommendations.len() as u64,
@@ -1224,7 +1217,11 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
     let crew_like_phase = state.phase.as_deref().is_none_or(|p| {
         matches!(
             p,
-            "heuristics" | "monte_carlo" | "tiered_scout" | "tiered_scout_refine" | "tiered_confirm"
+            "heuristics"
+                | "monte_carlo"
+                | "tiered_scout"
+                | "tiered_scout_refine"
+                | "tiered_confirm"
         )
     });
     let (throughput_crews_per_sec, eta_seconds) =

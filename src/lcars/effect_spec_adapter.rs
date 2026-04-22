@@ -222,14 +222,18 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
             values.sort_unstable();
             values.dedup();
             if values.is_empty() {
-                return Err("combat_battle_type_any requires non-empty `battle_types` list".to_string());
+                return Err(
+                    "combat_battle_type_any requires non-empty `battle_types` list".to_string(),
+                );
             }
-            Ok(AbilityConditionSpec::CombatBattleTypeAny { battle_types: values })
+            Ok(AbilityConditionSpec::CombatBattleTypeAny {
+                battle_types: values,
+            })
         }
         "defender_level_at_most" | "target_max_level" => {
-            let max_level = c.max.ok_or_else(|| {
-                "defender_level_at_most requires integer `max` level".to_string()
-            })?;
+            let max_level = c
+                .max
+                .ok_or_else(|| "defender_level_at_most requires integer `max` level".to_string())?;
             Ok(AbilityConditionSpec::DefenderLevelAtMost { max_level })
         }
         _ => Err(format!(
@@ -382,10 +386,7 @@ pub fn lcars_effect_to_combat_effect_spec(
     let trigger = timing_window_to_trigger_spec(timing);
     let target = officer_target_from_effect(effect);
     let conditions = officer_conditions_from_effect(effect);
-    let duration = effect
-        .duration
-        .as_ref()
-        .and_then(lcars_duration_to_spec);
+    let duration = effect.duration.as_ref().and_then(lcars_duration_to_spec);
 
     let op_norm = normalize_operator(effect.operator.as_deref());
     let mut attributes = serde_json::Map::new();
@@ -727,9 +728,14 @@ mod tests {
             name: "strike".into(),
             effects: vec![effect.clone()],
         };
-        let spec =
-            lcars_effect_to_combat_effect_spec(&effect, "parity:id", "parity_officer", "strike", None)
-                .expect("spec");
+        let spec = lcars_effect_to_combat_effect_spec(
+            &effect,
+            "parity:id",
+            "parity_officer",
+            "strike",
+            None,
+        )
+        .expect("spec");
         let raw = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
         let contexts = resolve_officer_ability(
             &officer,

@@ -93,6 +93,7 @@ Requires **Node** and **Python** on `PATH` where the underlying scripts do (set 
 ```bash
 cd frontend
 npm install
+npm run gen:api  # regenerate src/lib/api/generated.d.ts from docs/openapi/kobayashi-openapi.yaml
 npm run build    # outputs to frontend/dist, served by the Rust server
 npm run dev      # Vite dev server (hot reload; API calls still go to the Rust server)
 npm run test     # Vitest tests

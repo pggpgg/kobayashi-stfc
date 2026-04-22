@@ -181,7 +181,9 @@ export default function WorkspaceHeader({
           setLevels(l);
           if (!t.includes(shipTier)) onShipTierChange(t[0] ?? 1);
           if (!l.includes(shipLevel)) onShipLevelChange(l[0] ?? 1);
-          const rows = data.crew_slots;
+          const rows = data.crew_slots as
+            | { unlock_level: number }[]
+            | undefined;
           if (rows?.length) {
             const unlockLevels = rows
               .map((r) => r.unlock_level)
@@ -189,7 +191,9 @@ export default function WorkspaceHeader({
               .sort((a, b) => a - b);
             onBelowDeckUnlockLevelsChange(unlockLevels);
           } else {
-            onBelowDeckUnlockLevelsChange([...DEFAULT_BELOW_DECK_UNLOCK_LEVELS]);
+            onBelowDeckUnlockLevelsChange([
+              ...DEFAULT_BELOW_DECK_UNLOCK_LEVELS,
+            ]);
           }
         }
       })
@@ -203,7 +207,12 @@ export default function WorkspaceHeader({
     return () => {
       c = true;
     };
-  }, [shipId, onBelowDeckUnlockLevelsChange, onShipLevelChange, onShipTierChange]);
+  }, [
+    shipId,
+    onBelowDeckUnlockLevelsChange,
+    onShipLevelChange,
+    onShipTierChange,
+  ]);
 
   useEffect(() => {
     let c = false;

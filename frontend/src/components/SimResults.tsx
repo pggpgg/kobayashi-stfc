@@ -168,8 +168,7 @@ export default function SimResults({
     ? `P(${chainMeta.kills_target}-kill)`
     : "Win %";
   const chainHullHeader =
-    chainMode &&
-    chainMeta.secondary_objective === "max_loot_per_hull_proxy"
+    chainMode && chainMeta.secondary_objective === "max_loot_per_hull_proxy"
       ? "Loot proxy*|hit"
       : chainMode
         ? "Hull %*|hit"
@@ -184,14 +183,7 @@ export default function SimResults({
         chainHullHeader,
         "Enemy hull %",
       ]
-    : [
-        "Win %",
-        "Stall %",
-        "Loss %",
-        "R1 %",
-        "Your hull %",
-        "Enemy hull %",
-      ];
+    : ["Win %", "Stall %", "Loss %", "R1 %", "Your hull %", "Enemy hull %"];
   const totalSelected = selected.size;
 
   const total = recommendations.length;
@@ -450,13 +442,13 @@ export default function SimResults({
           >
             {chainMode ? (
               <>
-                Select 2–5 rows to compare.{" "}
-                <strong>Chain grind:</strong> {chainMeta.kills_target} consecutive
-                wins vs the same hostile; attacker hull carries between fights;
-                shields start full each fight. First column is chain completion
-                rate (Wilson CI). &quot;Hull %*|hit&quot; / &quot;Loot
-                proxy*|hit&quot; is the secondary mean given a successful chain
-                (normal approx CI). Stall/loss/R1 follow the first link.
+                Select 2–5 rows to compare. <strong>Chain grind:</strong>{" "}
+                {chainMeta.kills_target} consecutive wins vs the same hostile;
+                attacker hull carries between fights; shields start full each
+                fight. First column is chain completion rate (Wilson CI).
+                &quot;Hull %*|hit&quot; / &quot;Loot proxy*|hit&quot; is the
+                secondary mean given a successful chain (normal approx CI).
+                Stall/loss/R1 follow the first link.
               </>
             ) : (
               <>

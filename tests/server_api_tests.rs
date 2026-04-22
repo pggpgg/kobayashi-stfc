@@ -103,7 +103,7 @@ async fn openapi_yaml_and_json_served() {
         "unexpected content-type: {}",
         yaml.content_type
     );
-    assert!(yaml.body.contains("openapi: 3.0.3"));
+    assert!(yaml.body.contains("openapi: 3.1.0"));
     assert!(yaml.body.contains("/api/simulate:"));
     assert!(yaml
         .body
@@ -117,7 +117,7 @@ async fn openapi_yaml_and_json_served() {
         json.content_type
     );
     let p: serde_json::Value = serde_json::from_str(&json.body).expect("openapi json");
-    assert_eq!(p["openapi"], "3.0.3");
+    assert_eq!(p["openapi"], "3.1.0");
     assert!(p["paths"].is_object());
 }
 

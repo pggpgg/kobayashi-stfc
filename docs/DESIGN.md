@@ -843,7 +843,7 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 
 ### 10.4 API
 
-**Canonical contract:** OpenAPI is served at `**GET /api/openapi.yaml`** and `**GET /api/openapi.json**`. The bundled document is maintained as `[docs/openapi/kobayashi-heavy-payloads.yaml](../docs/openapi/kobayashi-heavy-payloads.yaml)` and wired through `[src/server/openapi.rs](../src/server/openapi.rs)`. Prefer those definitions over this summary; routes evolve in `src/server/routes.rs`.
+**Canonical contract:** OpenAPI is served at `**GET /api/openapi.yaml`** and `**GET /api/openapi.json**`. The bundled document is maintained as `[docs/openapi/kobayashi-openapi.yaml](../docs/openapi/kobayashi-openapi.yaml)` and wired through `[src/server/openapi.rs](../src/server/openapi.rs)`. Prefer those definitions over this summary; routes evolve in `src/server/routes.rs`.
 
 **Primary endpoints (illustrative):**
 

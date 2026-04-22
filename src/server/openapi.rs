@@ -1,9 +1,9 @@
-//! Bundled OpenAPI 3.0 document for heavy JSON payloads (`docs/openapi/kobayashi-heavy-payloads.yaml`).
+//! Bundled OpenAPI 3.1 document (`docs/openapi/kobayashi-openapi.yaml`).
 
-/// Raw OpenAPI YAML (audit task 7).
+/// Raw OpenAPI YAML (task 14 — full API contract).
 pub const OPENAPI_YAML: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/docs/openapi/kobayashi-heavy-payloads.yaml"
+    "/docs/openapi/kobayashi-openapi.yaml"
 ));
 
 /// Same document as JSON (for clients that prefer `application/json`).
@@ -25,7 +25,7 @@ mod tests {
             v.get("openapi")
                 .and_then(|x| x.as_str())
                 .unwrap_or_default(),
-            "3.0.3"
+            "3.1.0"
         );
     }
 

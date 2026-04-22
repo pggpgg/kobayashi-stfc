@@ -1,4 +1,4 @@
-//! Contract checks for `docs/openapi/kobayashi-heavy-payloads.yaml` (audit task 7).
+//! Contract checks for `docs/openapi/kobayashi-openapi.yaml` (task 14).
 
 use kobayashi::server::api::{
     CompareCrewsRequest, OptimizeRequest, ReplaySeedRequest, SimulateRequest,
@@ -8,7 +8,7 @@ use kobayashi::server::openapi::OPENAPI_YAML;
 #[test]
 fn bundled_openapi_is_valid_yaml_with_expected_version() {
     let v: serde_yaml::Value = serde_yaml::from_str(OPENAPI_YAML).expect("OpenAPI YAML must parse");
-    assert_eq!(v.get("openapi").and_then(|x| x.as_str()), Some("3.0.3"));
+    assert_eq!(v.get("openapi").and_then(|x| x.as_str()), Some("3.1.0"));
     assert!(v.get("paths").is_some());
     assert!(v.get("components").is_some());
 }

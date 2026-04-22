@@ -1,12 +1,17 @@
 //! Print tiered scout trial totals: legacy uniform scout vs adaptive coarse→refine.
 //!
-//! Run from the repo root (so `data/` resolves): `cargo run --release --bin tiered_scout_budget_compare`
+//! Run from the repo root (so `data/` and `profiles/` resolve):
+//! `cargo run --release --bin tiered_scout_budget_compare`
+//!
+//! Uses [`kobayashi::data::profile_index::DEMO_PROFILE_ID`] so `roster.imported.json` exists and
+//! officer pools are non-empty (the default API profile may have no roster file on disk).
 //!
 //! Compare `scout_trials_final` from [`kobayashi::optimizer::OptimizeRunOutcome::tiered_scout_budget`].
-//! If `ranked.len()` is zero (no generated candidates for the ship/hostile pair), scout totals stay at zero.
-//! With a non-empty candidate pool, adaptive scout typically lowers total scout trials versus uniform scout.
+
+use std::time::Instant;
 
 use kobayashi::data::data_registry::DataRegistry;
+use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::optimizer::crew_generator::DEFAULT_BELOW_DECKS_SLOTS;
 use kobayashi::optimizer::monte_carlo::DefenderOpponent;
 use kobayashi::optimizer::{
@@ -14,21 +19,65 @@ use kobayashi::optimizer::{
 };
 use kobayashi::parallel::init_from_env;
 
-fn scenario(uniform: bool) -> OptimizationScenario<'static> {
+struct BenchRow {
+    label: &'static str,
+    ship: &'static str,
+    hostile: &'static str,
+    seed: u64,
+    max_candidates: usize,
+    tiered_scout_sims: usize,
+    tiered_top_k: usize,
+    simulation_count: usize,
+}
+
+const ROWS: &[BenchRow] = &[
+    BenchRow {
+        label: "saladin_vs_numeric_hostile",
+        ship: "saladin",
+        hostile: "2918121098",
+        seed: 11,
+        max_candidates: 120,
+        tiered_scout_sims: 500,
+        tiered_top_k: 20,
+        simulation_count: 2_000,
+    },
+    BenchRow {
+        label: "uss_enterprise_d_vs_numeric_hostile",
+        ship: "uss_enterprise_d",
+        hostile: "2918121098",
+        seed: 42,
+        max_candidates: 128,
+        tiered_scout_sims: 500,
+        tiered_top_k: 20,
+        simulation_count: 2_000,
+    },
+    BenchRow {
+        label: "amalgam_vs_numeric_hostile_tiered_ship",
+        ship: "amalgam",
+        hostile: "2918121098",
+        seed: 7,
+        max_candidates: 100,
+        tiered_scout_sims: 400,
+        tiered_top_k: 16,
+        simulation_count: 1_800,
+    },
+];
+
+fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
     OptimizationScenario {
-        ship: "enterprise",
-        hostile: "swarm",
+        ship: row.ship,
+        hostile: row.hostile,
         ship_tier: None,
         ship_level: None,
-        simulation_count: 1_200,
-        seed: 42,
-        max_candidates: Some(256),
+        simulation_count: row.simulation_count,
+        seed: row.seed,
+        max_candidates: Some(row.max_candidates),
         strategy: OptimizerStrategy::Tiered,
         only_below_decks_with_ability: false,
         seed_population: Vec::new(),
-        profile_id: None,
-        tiered_scout_sims: Some(400),
-        tiered_top_k: Some(12),
+        profile_id: Some(DEMO_PROFILE_ID),
+        tiered_scout_sims: Some(row.tiered_scout_sims),
+        tiered_top_k: Some(row.tiered_top_k),
         tiered_scout_uniform: uniform,
         analytical_prefilter_keep: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
@@ -47,29 +96,46 @@ fn main() {
     }
     init_from_env();
     let registry = DataRegistry::load().expect("data registry");
-    let uniform_out =
-        optimize_scenario_with_progress_with_registry(&registry, &scenario(true), |_| true);
-    let adaptive_out =
-        optimize_scenario_with_progress_with_registry(&registry, &scenario(false), |_| true);
-    let u = uniform_out
-        .tiered_scout_budget
-        .expect("uniform tiered scout budget");
-    let a = adaptive_out
-        .tiered_scout_budget
-        .expect("adaptive tiered scout budget");
+
     println!(
-        "uniform  scout_trials_final={} coarse_pass={} refine_pass={}",
-        u.scout_trials_final, u.coarse_pass_trials, u.refine_pass_trials
+        "kobayashi tiered_scout_budget_compare (profile_id={DEMO_PROFILE_ID}) — {}",
+        env!("CARGO_PKG_VERSION")
     );
     println!(
-        "adaptive scout_trials_final={} coarse_pass={} refine_pass={}",
-        a.scout_trials_final, a.coarse_pass_trials, a.refine_pass_trials
+        "{:<36} {:>5} {:>14} {:>14} {:>10} {:>8}",
+        "scenario", "n", "uniform_trials", "adaptive_trials", "reduction%", "secs"
     );
-    if u.scout_trials_final > 0 {
-        let ratio = a.scout_trials_final as f64 / u.scout_trials_final as f64;
+
+    for row in ROWS {
+        let t0 = Instant::now();
+        let uniform_out =
+            optimize_scenario_with_progress_with_registry(&registry, &scenario(row, true), |_| {
+                true
+            });
+        let t1 = Instant::now();
+        let adaptive_out =
+            optimize_scenario_with_progress_with_registry(&registry, &scenario(row, false), |_| {
+                true
+            });
+        let elapsed = t0.elapsed().as_secs_f64() + t1.elapsed().as_secs_f64();
+
+        let n = adaptive_out.tiered_resolved.map(|(n, _, _)| n).unwrap_or(0);
+        let u = uniform_out
+            .tiered_scout_budget
+            .map(|b| b.scout_trials_final)
+            .unwrap_or(0);
+        let a = adaptive_out
+            .tiered_scout_budget
+            .map(|b| b.scout_trials_final)
+            .unwrap_or(0);
+        let pct = if u > 0 {
+            100.0 * (1.0 - (a as f64 / u as f64))
+        } else {
+            0.0
+        };
         println!(
-            "scout trial reduction vs uniform: {:.1}% (adaptive/uniform={ratio:.3})",
-            100.0 * (1.0 - ratio)
+            "{:<36} {:>5} {:>14} {:>14} {:>9.1}% {:>8.2}",
+            row.label, n, u, a, pct, elapsed
         );
     }
 }

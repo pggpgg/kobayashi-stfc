@@ -175,12 +175,11 @@ pub fn load_history_file(profile_id: &str) -> OptimizeHistoryFile {
         };
     }
     let raw = fs::read_to_string(&path).unwrap_or_default();
-    let mut file: OptimizeHistoryFile = serde_json::from_str(&raw).unwrap_or_else(|_| {
-        OptimizeHistoryFile {
+    let mut file: OptimizeHistoryFile =
+        serde_json::from_str(&raw).unwrap_or_else(|_| OptimizeHistoryFile {
             schema: OPTIMIZE_HISTORY_SCHEMA,
             entries: HashMap::new(),
-        }
-    });
+        });
     if file.schema != OPTIMIZE_HISTORY_SCHEMA {
         file.entries.clear();
         file.schema = OPTIMIZE_HISTORY_SCHEMA;
@@ -370,12 +369,8 @@ mod tests {
             chain_fingerprint: "0".into(),
             crews: vec![],
         };
-        assert!(!entry_matches_run(
-            &entry, 100, 2, 500, 20, 49, 1, "0"
-        ));
-        assert!(entry_matches_run(
-            &entry, 100, 2, 500, 20, 50, 1, "0"
-        ));
+        assert!(!entry_matches_run(&entry, 100, 2, 500, 20, 49, 1, "0"));
+        assert!(entry_matches_run(&entry, 100, 2, 500, 20, 50, 1, "0"));
     }
 
     #[test]
@@ -391,12 +386,8 @@ mod tests {
             chain_fingerprint: "0".into(),
             crews: vec![],
         };
-        assert!(!entry_matches_run(
-            &entry, 100, 2, 500, 20, 50, 1, "0"
-        ));
-        assert!(entry_matches_run(
-            &entry, 100, 2, 500, 20, 50, 0, "0"
-        ));
+        assert!(!entry_matches_run(&entry, 100, 2, 500, 20, 50, 1, "0"));
+        assert!(entry_matches_run(&entry, 100, 2, 500, 20, 50, 0, "0"));
     }
 
     #[test]

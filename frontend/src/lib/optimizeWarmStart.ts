@@ -78,7 +78,9 @@ export function storageKeyForWarmStart(cacheKey: string): string {
   return `${PREFIX}${cacheKey}`;
 }
 
-export function loadWarmStartCrews(cacheKey: string): WarmStartCrewPayload[] | null {
+export function loadWarmStartCrews(
+  cacheKey: string,
+): WarmStartCrewPayload[] | null {
   try {
     const raw = localStorage.getItem(storageKeyForWarmStart(cacheKey));
     if (!raw) return null;
@@ -97,7 +99,9 @@ export function loadWarmStartCrews(cacheKey: string): WarmStartCrewPayload[] | n
       out.push({
         captain: o.captain,
         bridge: o.bridge.filter((x): x is string => typeof x === "string"),
-        below_decks: o.below_decks.filter((x): x is string => typeof x === "string"),
+        below_decks: o.below_decks.filter(
+          (x): x is string => typeof x === "string",
+        ),
       });
     }
     return out.length ? out : null;

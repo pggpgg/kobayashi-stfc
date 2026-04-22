@@ -378,7 +378,9 @@ export default function OptimizePanel({
               aria-label="Fast discovery: merge seed crews into main optimize pipeline"
               style={{ margin: 0 }}
             />
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <span
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+            >
               Fast discovery (merge seeds into main pipeline)
               <HelpHint
                 text={

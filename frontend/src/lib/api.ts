@@ -1,3 +1,32 @@
+import type {
+  DataVersionResponse,
+  HostileListItem,
+  OfficerListItem,
+  OptimizeEstimate,
+  OptimizeStartResponse,
+  ProfileEntry,
+  ProfilesResponse,
+  ShipListItem,
+  ShipTiersLevels,
+  SimulateCrew,
+  SimulateResponse,
+} from "./api/schema";
+
+export type {
+  DataVersionResponse,
+  HostileListItem,
+  OfficerListItem,
+  OptimizeEstimate,
+  OptimizeStartResponse,
+  ProfileEntry,
+  ProfilesResponse,
+  ShipListItem,
+  ShipTiersLevels,
+  SimulateCrew,
+  SimulateResponse,
+  SimulateStats,
+} from "./api/schema";
+
 /**
  * Base URL for API requests. Empty string = same origin.
  * Set at build time via VITE_API_BASE (e.g. for deployment behind a proxy).
@@ -205,17 +234,6 @@ function profileHeaders(profileId?: string | null): Record<string, string> {
   return { "X-Profile-Id": profileId };
 }
 
-export interface ProfileEntry {
-  id: string;
-  name: string;
-  sync_token: string;
-}
-
-export interface ProfilesResponse {
-  profiles: ProfileEntry[];
-  default_id?: string;
-}
-
 export async function fetchProfiles(): Promise<ProfilesResponse> {
   const res = await fetch(`${API_BASE}/api/profiles`);
   await checkOk(res);
@@ -262,34 +280,6 @@ export async function importProfilesBackup(zip: Blob): Promise<void> {
   await checkOk(res);
 }
 
-export interface OfficerListItem {
-  id: string;
-  name: string;
-  slot?: string;
-}
-
-export interface ShipListItem {
-  id: string;
-  ship_name: string;
-  ship_class: string;
-  /** From roster when owned_only: tier of first roster entry for this ship. */
-  tier?: number;
-  /** From roster when owned_only: level of first roster entry for this ship. */
-  level?: number;
-}
-
-/** Below-decks slot row from `data/ships_extended` / upstream `crew_slots`. */
-export interface CrewSlotUnlockRow {
-  slots?: string | null;
-  unlock_level: number;
-}
-
-export interface ShipTiersLevels {
-  tiers: number[];
-  levels: number[];
-  crew_slots?: CrewSlotUnlockRow[];
-}
-
 export async function getShipTiersLevels(
   shipId: string,
 ): Promise<ShipTiersLevels> {
@@ -298,15 +288,6 @@ export async function getShipTiersLevels(
   );
   await checkOk(res);
   return res.json();
-}
-
-export interface HostileListItem {
-  id: string;
-  hostile_name: string;
-  /** Resolved from loca translations when available (use for labels). */
-  display_name?: string;
-  level: number;
-  ship_class: string;
 }
 
 /** Primary sort key for hostiles (display name when present). */
@@ -323,18 +304,6 @@ function compareHostiles(a: HostileListItem, b: HostileListItem): number {
   if (byName !== 0) return byName;
   if (a.level !== b.level) return a.level - b.level;
   return a.id.localeCompare(b.id);
-}
-
-export interface MechanicStatus {
-  name: string;
-  status: string;
-}
-
-export interface DataVersionResponse {
-  officer_version?: string;
-  hostile_version?: string;
-  ship_version?: string;
-  mechanics: MechanicStatus[];
 }
 
 export async function fetchOfficers(
@@ -384,29 +353,6 @@ export async function fetchDataVersion(): Promise<DataVersionResponse> {
   const res = await fetch(`${API_BASE}/api/data/version`);
   await checkOk(res);
   return res.json();
-}
-
-export interface SimulateCrew {
-  captain: string | null;
-  bridge: (string | null)[];
-  below_deck: (string | null)[];
-}
-
-export interface SimulateStats {
-  win_rate: number;
-  stall_rate: number;
-  loss_rate: number;
-  avg_hull_remaining: number;
-  /** Mean hostile hull left as fraction of max hull (0–1), all trials. */
-  avg_defender_hull_remaining: number;
-  n: number;
-  win_rate_95_ci?: [number, number];
-}
-
-export interface SimulateResponse {
-  status: string;
-  stats: SimulateStats;
-  seed: number;
 }
 
 export async function simulate(
@@ -636,12 +582,6 @@ export interface OptimizeResponse {
   warnings?: string[];
 }
 
-export interface OptimizeEstimate {
-  estimated_candidates: number;
-  sims_per_crew: number;
-  estimated_seconds: number;
-}
-
 export async function getOptimizeEstimate(
   params: {
     ship: string;
@@ -723,10 +663,6 @@ export async function optimize(
     body: JSON.stringify(body),
   });
   return res.json();
-}
-
-export interface OptimizeStartResponse {
-  job_id: string;
 }
 
 export interface OptimizeStatusResponse {
@@ -881,10 +817,7 @@ export async function optimizeStart(
   ) {
     body.novelty_lambda = params.novelty_lambda;
   }
-  if (
-    params.novelty_diverse_top != null &&
-    params.novelty_diverse_top >= 1
-  ) {
+  if (params.novelty_diverse_top != null && params.novelty_diverse_top >= 1) {
     body.novelty_diverse_top = params.novelty_diverse_top;
   }
   if (params.novelty_pool != null && params.novelty_pool >= 2) {
@@ -921,7 +854,11 @@ export async function getOptimizeStatus(
   const url = `${API_BASE}/api/optimize/status/${encodeURIComponent(jobId)}`;
   let lastErr: unknown;
 
-  for (let attempt = 0; attempt < OPTIMIZE_STATUS_POLL_MAX_ATTEMPTS; attempt++) {
+  for (
+    let attempt = 0;
+    attempt < OPTIMIZE_STATUS_POLL_MAX_ATTEMPTS;
+    attempt++
+  ) {
     try {
       const res = await fetch(url);
       if (res.ok) {
@@ -1091,8 +1028,7 @@ export async function fetchModSyncStatus(
   await checkOk(res);
   const data = (await res.json()) as Record<string, unknown>;
   return {
-    profile_id:
-      typeof data.profile_id === "string" ? data.profile_id : "",
+    profile_id: typeof data.profile_id === "string" ? data.profile_id : "",
     last_mod_sync_utc:
       typeof data.last_mod_sync_utc === "string"
         ? data.last_mod_sync_utc

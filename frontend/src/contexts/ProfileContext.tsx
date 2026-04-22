@@ -35,7 +35,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const refreshProfiles = useCallback(async () => {
     const data = await fetchProfiles();
-    const list = data.profiles ?? [];
+    const list: ProfileEntry[] = data.profiles ?? [];
     setProfiles(list);
     const defaultId = data.default_id ?? list[0]?.id;
     setActiveProfileIdState((prev) => {

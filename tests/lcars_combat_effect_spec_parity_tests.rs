@@ -238,8 +238,8 @@ fn lcars_on_shield_break_target_disambiguates_timing() {
     ];
     for (trigger, target, expected_tw) in cases {
         let e = stat_modify_effect("weapon_damage", 0.01, trigger, Some("add"), target, None);
-        let spec =
-            lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab", None).expect("spec");
+        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab", None)
+            .expect("spec");
         assert_eq!(compile_trigger(spec.trigger).unwrap(), expected_tw);
         let ability = LcarsAbility {
             name: "ab".into(),

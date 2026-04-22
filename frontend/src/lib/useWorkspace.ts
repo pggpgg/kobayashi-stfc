@@ -1,17 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  buildOptimizeWarmStartKey,
-  loadWarmStartCrews,
-  saveWarmStartFromRecommendations,
-} from "./optimizeWarmStart";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
 import {
+  API_ERROR_CPU_BUSY,
+  ApiError,
   type CrewRecommendation,
   cancelOptimizeJob,
   fetchHeuristics,
-  API_ERROR_CPU_BUSY,
-  ApiError,
   formatApiError,
   getOptimizeEstimate,
   getOptimizeStatus,
@@ -30,13 +25,18 @@ import {
   profileMatchesPersisted,
   readPersistedOptimizeJob,
 } from "./optimizeJobStorage";
+import {
+  buildOptimizeWarmStartKey,
+  loadWarmStartCrews,
+  saveWarmStartFromRecommendations,
+} from "./optimizeWarmStart";
 import type { SupportBuffId } from "./supportBuffs";
 import {
   belowDeckSlotCount,
-  DEFAULT_BELOW_DECK_UNLOCK_LEVELS,
   type CrewState,
   createEmptyCrew,
   createEmptyPins,
+  DEFAULT_BELOW_DECK_UNLOCK_LEVELS,
   type PinsState,
 } from "./types";
 import {
@@ -310,7 +310,8 @@ export function useWorkspace() {
   }, []);
 
   useEffect(() => {
-    if (optimizerStrategy === "genetic" && fastDiscovery) setFastDiscovery(false);
+    if (optimizerStrategy === "genetic" && fastDiscovery)
+      setFastDiscovery(false);
   }, [optimizerStrategy, fastDiscovery]);
 
   useEffect(() => {
@@ -387,11 +388,8 @@ export function useWorkspace() {
         optimizeWarmStartCacheKey(),
         status.result.recommendations ?? [],
       );
-      const hits =
-        status.result.scenario?.optimize_history_confirm_hits ?? 0;
-      setCachedWarmStartBadge(
-        typeof hits === "number" && hits > 0,
-      );
+      const hits = status.result.scenario?.optimize_history_confirm_hits ?? 0;
+      setCachedWarmStartBadge(typeof hits === "number" && hits > 0);
       setSimResult(null);
       if (status.result.duration_ms != null)
         setLastOptimizeDurationMs(status.result.duration_ms);

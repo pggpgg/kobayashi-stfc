@@ -1,0 +1,1550 @@
+# OpenAPI 3.1 — full Kobayashi HTTP API (task 14).
+# Served at GET /api/openapi.yaml and GET /api/openapi.json.
+# Profile scoping: query ?profile=<id> and/or header X-Profile-Id (see docs/DEPLOYMENT_SECURITY.md).
+# When KOBAYASHI_API_KEY is set, mutating routes (except /api/sync/ingress) require Authorization: Bearer <key> or X-Api-Key from non-loopback peers.
+
+openapi: 3.1.0
+info:
+  title: Kobayashi STFC API
+  description: |
+    Monte Carlo combat simulation, crew optimization, profiles, presets, and sync ingress.
+    Mutating routes may require `Authorization: Bearer` or `X-Api-Key` when `KOBAYASHI_API_KEY` is set;
+    `/api/sync/ingress` uses `stfc-sync-token` instead (see `docs/SYNC.md`).
+    CPU-heavy routes can return HTTP 503 with `code: cpu_busy` and `Retry-After`.
+  version: 1.0.0
+
+servers:
+  - url: /
+    description: Same origin as the running kobayashi server
+
+tags:
+  - name: meta
+  - name: catalog
+  - name: profile
+  - name: presets
+  - name: simulate
+  - name: optimize
+  - name: compare
+  - name: sync
+  - name: debug
+
+security: []
+
+paths:
+  /api/openapi.yaml:
+    get:
+      tags: [meta]
+      summary: Bundled OpenAPI document (YAML)
+      responses:
+        "200":
+          description: OpenAPI YAML document
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /api/openapi.json:
+    get:
+      tags: [meta]
+      summary: Bundled OpenAPI document (JSON)
+      responses:
+        "200":
+          description: OpenAPI as JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "500":
+          description: Failed to serialize YAML to JSON
+
+  /api/health:
+    get:
+      tags: [meta]
+      summary: Liveness and build/data signals
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/mechanics/coverage:
+    get:
+      tags: [meta]
+      summary: LCARS / mechanics coverage snapshot
+      responses:
+        "200":
+          description: Coverage JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MechanicsCoverageResponse"
+
+  /api/debug/combat-effect-spec/officers/{id}:
+    get:
+      tags: [debug]
+      summary: Optional LCARS → CombatEffectSpec JSON (local investigation)
+      description: |
+        Returns **404** unless `KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1`. LCARS officers must be loaded.
+      parameters:
+        - $ref: "#/components/parameters/PathOfficerId"
+      responses:
+        "200":
+          description: Debug payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Debug disabled or officer not found
+
+  /api/officers:
+    get:
+      tags: [catalog]
+      summary: List officers (optionally roster-filtered)
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+        - name: owned_only
+          in: query
+          schema:
+            type: string
+          description: When `1` or `true`, only officers present in the profile roster import.
+      responses:
+        "200":
+          description: Officer list envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfficersListResponse"
+
+  /api/officers/{id}/resolved:
+    get:
+      tags: [catalog]
+      summary: Resolved officer JSON (LCARS path)
+      parameters:
+        - $ref: "#/components/parameters/PathOfficerId"
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      responses:
+        "200":
+          description: Resolved officer
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Unknown officer
+
+  /api/ships:
+    get:
+      tags: [catalog]
+      summary: List ships
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+        - name: owned_only
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipsListResponse"
+
+  /api/ships/{ship_id}/tiers-levels:
+    get:
+      tags: [catalog]
+      summary: Tier/level grid and crew slot unlocks for a ship id
+      parameters:
+        - name: ship_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipTiersLevelsResponse"
+        "404":
+          description: Unknown ship id
+
+  /api/hostiles:
+    get:
+      tags: [catalog]
+      summary: List hostiles
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostilesListResponse"
+
+  /api/data/version:
+    get:
+      tags: [catalog]
+      summary: Data / mechanics version summary
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataVersionResponse"
+
+  /api/forbidden-tech:
+    get:
+      tags: [catalog]
+      summary: Forbidden/chaos tech catalog for UI
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenTechCatalogResponse"
+
+  /api/profile:
+    get:
+      tags: [profile]
+      summary: Load merged player profile JSON
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Profile not found
+    put:
+      tags: [profile]
+      summary: Replace player profile JSON
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessageResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /api/profile/buildings-summary:
+    get:
+      tags: [profile]
+      summary: Synced building levels and combat bonuses
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/profile/research-summary:
+    get:
+      tags: [profile]
+      summary: Synced research and combat bonuses
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/profiles:
+    get:
+      tags: [profile]
+      summary: List profiles (index)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfilesListResponse"
+    post:
+      tags: [profile]
+      summary: Create a profile
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProfileRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileEntry"
+
+  /api/profiles/export:
+    get:
+      tags: [profile]
+      summary: Download profiles tree as zip
+      responses:
+        "200":
+          description: application/zip bytes
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+
+  /api/profiles/import:
+    post:
+      tags: [profile]
+      summary: Restore profiles tree from Kobayashi export zip (destructive)
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/zip:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessageResponse"
+
+  /api/profiles/{id}:
+    delete:
+      tags: [profile]
+      summary: Delete a profile
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessageResponse"
+
+  /api/presets:
+    get:
+      tags: [presets]
+      summary: List presets for profile
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresetsListResponse"
+    post:
+      tags: [presets]
+      summary: Save a preset
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Preset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessageResponse"
+
+  /api/presets/{id}:
+    get:
+      tags: [presets]
+      summary: Load one preset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preset"
+        "404":
+          description: Preset not found
+
+  /api/heuristics:
+    get:
+      tags: [optimize]
+      summary: List heuristic seed names
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeuristicsListResponse"
+
+  /api/optimize/estimate:
+    get:
+      tags: [optimize]
+      summary: Estimate candidate count and wall time
+      parameters:
+        - name: ship
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hostile
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sims
+          in: query
+          schema:
+            type: integer
+        - name: max_candidates
+          in: query
+          schema:
+            type: integer
+        - name: prioritize_below_decks_ability
+          in: query
+          schema:
+            type: string
+        - name: ship_tier
+          in: query
+          schema:
+            type: integer
+        - name: ship_level
+          in: query
+          schema:
+            type: integer
+        - name: below_decks_slots
+          in: query
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizeEstimateResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /api/optimize/status/{job_id}:
+    get:
+      tags: [optimize]
+      summary: Poll async optimize job
+      parameters:
+        - $ref: "#/components/parameters/PathJobId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizeStatusResponse"
+        "404":
+          description: Unknown job
+
+  /api/optimize/jobs/{job_id}/stream:
+    get:
+      tags: [optimize]
+      summary: SSE progress stream until job completes
+      parameters:
+        - $ref: "#/components/parameters/PathJobId"
+      responses:
+        "200":
+          description: text/event-stream of JSON event payloads
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Each event `data:` line is JSON with fields such as status, progress, phase, result (when done).
+
+  /api/optimize/jobs/{job_id}/cancel:
+    post:
+      tags: [optimize]
+      summary: Request cancellation of async optimize job
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathJobId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessageResponse"
+
+  /api/sync/status:
+    get:
+      tags: [sync]
+      summary: Roster sync file status for profile
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/sync/ingress:
+    post:
+      tags: [sync]
+      summary: STFC Community Mod sync batch (JSON array)
+      security:
+        - SyncToken: []
+      parameters:
+        - name: stfc-sync-token
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncIngressBatch"
+      responses:
+        "200":
+          description: Per-type batch results
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400":
+          description: Body is not a JSON array
+        "401":
+          description: Invalid or missing sync token for persistence
+
+  /api/officers/import:
+    post:
+      tags: [catalog]
+      summary: Import officers (CSV or Spock JSON)
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkMessageResponse"
+        "400":
+          description: Parse/validation error
+
+  /api/simulate:
+    post:
+      tags: [simulate]
+      summary: Monte Carlo simulation for one crew
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulateResponse"
+        "400":
+          description: Invalid JSON or validation
+        "503":
+          description: CPU saturated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/compare/crews:
+    post:
+      tags: [compare]
+      summary: Monte Carlo distributions for 2–5 crews
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompareCrewsRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompareCrewsResponse"
+        "400":
+          description: Validation error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/optimize:
+    post:
+      tags: [optimize]
+      summary: Synchronous crew optimization
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OptimizeRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizeResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/optimize/replay-seed:
+    post:
+      tags: [optimize]
+      summary: Deterministic replay of one MC draw (combat trace)
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaySeedRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400":
+          description: Invalid request
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/optimize/start:
+    post:
+      tags: [optimize]
+      summary: Start async optimization (same JSON as /api/optimize)
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OptimizeRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizeStartResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+    SyncToken:
+      type: apiKey
+      in: header
+      name: stfc-sync-token
+
+  parameters:
+    QueryProfile:
+      name: profile
+      in: query
+      schema:
+        type: string
+      description: Profile id (alternative to X-Profile-Id)
+    HeaderProfileId:
+      name: X-Profile-Id
+      in: header
+      required: false
+      schema:
+        type: string
+    PathOfficerId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    PathJobId:
+      name: job_id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    CpuBusyError:
+      type: object
+      required: [status, code, message]
+      properties:
+        status:
+          type: string
+          const: error
+        code:
+          type: string
+          const: cpu_busy
+        message:
+          type: string
+        retry_after_ms:
+          type: number
+
+    OkMessageResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      required: [status, service, build, server, data]
+      properties:
+        status:
+          type: string
+          const: ok
+        service:
+          type: string
+        build:
+          type: object
+          required: [cargo_pkg_version]
+          properties:
+            cargo_pkg_version:
+              type: string
+            git_sha_short:
+              type: ["string", "null"]
+        server:
+          type: object
+          required:
+            - started_at_utc
+            - max_concurrent_cpu_jobs
+            - max_concurrent_cpu_jobs_from_env
+            - cpu_job_permits_available
+            - cpu_job_permits_total
+            - cpu_job_queue_wait_ms
+            - cpu_job_queue_wait_ms_from_env
+          properties:
+            started_at_utc:
+              type: string
+            max_concurrent_cpu_jobs:
+              type: integer
+            max_concurrent_cpu_jobs_from_env:
+              type: boolean
+            cpu_job_permits_available:
+              type: integer
+            cpu_job_permits_total:
+              type: integer
+            cpu_job_queue_wait_ms:
+              type: ["integer", "null"]
+            cpu_job_queue_wait_ms_from_env:
+              type: boolean
+        data:
+          type: object
+          required:
+            - officer_count
+            - hostile_index_loaded
+            - ship_index_loaded
+          properties:
+            officer_count:
+              type: integer
+              minimum: 0
+            hostile_data_version:
+              type: ["string", "null"]
+            ship_data_version:
+              type: ["string", "null"]
+            hostile_index_loaded:
+              type: boolean
+            ship_index_loaded:
+              type: boolean
+
+    MechanicsCoverageResponse:
+      type: object
+      required: [status, lcars_effects, ship_hull_abilities, hostile_catalog_entries, fidelity_backlog]
+      properties:
+        status:
+          type: string
+          const: ok
+        lcars_effects:
+          type: object
+          required: [implemented]
+          properties:
+            implemented:
+              type: integer
+          additionalProperties: true
+        ship_hull_abilities:
+          type: object
+          additionalProperties: true
+        hostile_catalog_entries:
+          type: object
+          additionalProperties: true
+        fidelity_backlog:
+          type: array
+          items:
+            type: object
+            required: [rank, area, summary]
+            properties:
+              rank:
+                type: integer
+              area:
+                type: string
+              summary:
+                type: string
+            additionalProperties: true
+
+    DataVersionResponse:
+      type: object
+      required: [mechanics]
+      properties:
+        officer_version:
+          type: ["string", "null"]
+        hostile_version:
+          type: ["string", "null"]
+        ship_version:
+          type: ["string", "null"]
+        mechanics:
+          type: array
+          items:
+            type: object
+            required: [name, status]
+            properties:
+              name:
+                type: string
+              status:
+                type: string
+
+    OfficersListResponse:
+      type: object
+      required: [officers]
+      properties:
+        officers:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              slot:
+                type: ["string", "null"]
+            additionalProperties: true
+
+    ShipsListResponse:
+      type: object
+      required: [ships]
+      properties:
+        ships:
+          type: array
+          items:
+            type: object
+            required: [id, ship_name, ship_class]
+            properties:
+              id:
+                type: string
+              ship_name:
+                type: string
+              ship_class:
+                type: string
+              tier:
+                type: integer
+              level:
+                type: integer
+            additionalProperties: true
+
+    HostilesListResponse:
+      type: object
+      required: [hostiles]
+      properties:
+        hostiles:
+          type: array
+          items:
+            type: object
+            required: [id, hostile_name, level, ship_class]
+            properties:
+              id:
+                type: string
+              hostile_name:
+                type: string
+              display_name:
+                type: string
+              level:
+                type: integer
+              ship_class:
+                type: string
+            additionalProperties: true
+
+    ShipTiersLevelsResponse:
+      type: object
+      required: [tiers, levels]
+      properties:
+        tiers:
+          type: array
+          items:
+            type: integer
+        levels:
+          type: array
+          items:
+            type: integer
+        crew_slots:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ForbiddenTechCatalogResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ProfilesListResponse:
+      type: object
+      required: [profiles]
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileEntry"
+        default_id:
+          type: ["string", "null"]
+
+    ProfileEntry:
+      type: object
+      required: [id, name, sync_token]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sync_token:
+          type: string
+
+    CreateProfileRequest:
+      type: object
+      required: [name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    PresetsListResponse:
+      type: object
+      required: [presets]
+      properties:
+        presets:
+          type: array
+          items:
+            type: object
+            required: [id, name, ship, scenario]
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              ship:
+                type: string
+              scenario:
+                type: string
+              schema_version:
+                type: integer
+            additionalProperties: true
+
+    Preset:
+      type: object
+      required: [id, name, ship, scenario, crew]
+      properties:
+        schema_version:
+          type: integer
+        id:
+          type: string
+        name:
+          type: string
+        ship:
+          type: string
+        scenario:
+          type: string
+        crew:
+          type: object
+          additionalProperties: true
+        provenance:
+          type: object
+          additionalProperties: true
+
+    HeuristicsListResponse:
+      type: object
+      required: [seeds]
+      properties:
+        seeds:
+          type: array
+          items:
+            type: string
+
+    OptimizeEstimateResponse:
+      type: object
+      required: [estimated_candidates, sims_per_crew, estimated_seconds]
+      properties:
+        estimated_candidates:
+          type: integer
+          minimum: 0
+        sims_per_crew:
+          type: integer
+        estimated_seconds:
+          type: number
+
+    OptimizeStartResponse:
+      type: object
+      required: [job_id]
+      properties:
+        job_id:
+          type: string
+
+    OptimizeStatusResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+        progress:
+          type: integer
+        crews_done:
+          type: integer
+        total_crews:
+          type: integer
+        phase:
+          type: string
+        throughput_crews_per_sec:
+          type: number
+        eta_seconds:
+          type: integer
+        progress_preview:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        result:
+          description: Present when status is done; same shape as synchronous /api/optimize response
+          type: object
+          additionalProperties: true
+        error:
+          type: string
+
+    OptimizeResponse:
+      type: object
+      required: [status, engine, scenario, recommendations, notes]
+      properties:
+        status:
+          type: string
+        engine:
+          type: string
+        scenario:
+          type: object
+          additionalProperties: true
+        recommendations:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        duration_ms:
+          type: integer
+        notes:
+          type: array
+          items:
+            type: string
+        approximate_notes:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+    NullableString:
+      type: ["string", "null"]
+      description: JSON null means empty slot
+
+    SimulateCrew:
+      type: object
+      properties:
+        captain:
+          $ref: "#/components/schemas/NullableString"
+        bridge:
+          type: array
+          items:
+            $ref: "#/components/schemas/NullableString"
+        below_deck:
+          type: array
+          items:
+            $ref: "#/components/schemas/NullableString"
+
+    SimulateRequest:
+      type: object
+      required: [ship, hostile, crew]
+      properties:
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+          minimum: 1
+        ship_level:
+          type: integer
+          minimum: 1
+        crew:
+          $ref: "#/components/schemas/SimulateCrew"
+        num_sims:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        seed:
+          type: integer
+          format: int64
+        below_decks_slots:
+          type: integer
+          minimum: 2
+          maximum: 5
+        support_buffs:
+          type: array
+          items:
+            type: string
+        chain:
+          $ref: "#/components/schemas/ChainGrindRequestDto"
+        defender_opponent:
+          type: string
+
+    SimulateStats:
+      type: object
+      required:
+        - win_rate
+        - stall_rate
+        - loss_rate
+        - avg_hull_remaining
+        - avg_defender_hull_remaining
+        - n
+      properties:
+        win_rate:
+          type: number
+        stall_rate:
+          type: number
+        loss_rate:
+          type: number
+        avg_hull_remaining:
+          type: number
+        avg_defender_hull_remaining:
+          type: number
+        n:
+          type: integer
+        win_rate_95_ci:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
+
+    SimulateResponse:
+      type: object
+      required: [status, stats, seed]
+      properties:
+        status:
+          type: string
+        stats:
+          $ref: "#/components/schemas/SimulateStats"
+        seed:
+          type: integer
+          format: int64
+        warnings:
+          type: array
+          items:
+            type: string
+
+    CompareCrewsRequest:
+      type: object
+      required: [ship, hostile, crews]
+      properties:
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        crews:
+          type: array
+          minItems: 2
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/SimulateCrew"
+        num_sims:
+          type: integer
+        seed:
+          type: integer
+          format: int64
+        below_decks_slots:
+          type: integer
+        proc_sample_trials:
+          type: integer
+        support_buffs:
+          type: array
+          items:
+            type: string
+        defender_opponent:
+          type: string
+
+    CompareCrewsResponse:
+      type: object
+      required: [status, seed, crews, using_placeholder_combatants]
+      properties:
+        status:
+          type: string
+        seed:
+          type: integer
+          format: int64
+        crews:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        using_placeholder_combatants:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+
+    OfficerGroupConstraintDto:
+      type: object
+      required: [officers, min_count]
+      properties:
+        officers:
+          type: array
+          items:
+            type: string
+        min_count:
+          type: integer
+
+    OptimizeConstraintsDto:
+      type: object
+      properties:
+        must_include:
+          type: array
+          items:
+            type: string
+        exclude:
+          type: array
+          items:
+            type: string
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/OfficerGroupConstraintDto"
+        captain_must_be:
+          type: string
+        bridge_must_include:
+          type: array
+          items:
+            type: string
+        below_decks_must_include:
+          type: array
+          items:
+            type: string
+
+    WarmStartCrewDto:
+      type: object
+      required: [captain, bridge, below_decks]
+      properties:
+        captain:
+          type: string
+        bridge:
+          type: array
+          items:
+            type: string
+        below_decks:
+          type: array
+          items:
+            type: string
+
+    ChainGrindRequestDto:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        kills_target:
+          type: integer
+          minimum: 1
+          maximum: 50
+        secondary:
+          type: string
+
+    OptimizeRequest:
+      type: object
+      required: [ship, hostile]
+      properties:
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        sims:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        seed:
+          type: integer
+          format: int64
+        max_candidates:
+          type: integer
+        strategy:
+          type: string
+        prioritize_below_decks_ability:
+          type: boolean
+        heuristics_seeds:
+          type: array
+          items:
+            type: string
+        heuristics_only:
+          type: boolean
+        fast_discovery:
+          type: boolean
+        below_decks_strategy:
+          type: string
+        analytical_prefilter_keep:
+          type: integer
+        tiered_scout_sims:
+          type: integer
+        tiered_top_k:
+          type: integer
+        tiered_scout_uniform:
+          type: boolean
+        warm_start_crews:
+          type: array
+          items:
+            $ref: "#/components/schemas/WarmStartCrewDto"
+        below_decks_slots:
+          type: integer
+        constraints:
+          $ref: "#/components/schemas/OptimizeConstraintsDto"
+        support_buffs:
+          type: array
+          items:
+            type: string
+        chain:
+          $ref: "#/components/schemas/ChainGrindRequestDto"
+        defender_opponent:
+          type: string
+        novelty_lambda:
+          type: number
+        novelty_diverse_top:
+          type: integer
+        novelty_pool:
+          type: integer
+        optimize_cache_key:
+          type: string
+
+    ReplaySeedCrew:
+      type: object
+      properties:
+        captain:
+          $ref: "#/components/schemas/NullableString"
+        bridge:
+          type: array
+          items:
+            $ref: "#/components/schemas/NullableString"
+        below_deck:
+          type: array
+          items:
+            $ref: "#/components/schemas/NullableString"
+
+    ReplaySeedRequest:
+      type: object
+      required: [ship, hostile, sim_index, crew]
+      properties:
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        seed:
+          type: integer
+          format: int64
+        sim_index:
+          type: integer
+          format: int64
+        max_trace_events:
+          type: integer
+        crew:
+          $ref: "#/components/schemas/ReplaySeedCrew"
+        support_buffs:
+          type: array
+          items:
+            type: string
+        defender_opponent:
+          type: string
+
+    SyncIngressBatch:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+
+    ValidationIssue:
+      type: object
+      properties:
+        field:
+          type: string
+        messages:
+          type: array
+          items:
+            type: string
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationIssue"

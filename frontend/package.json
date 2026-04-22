@@ -10,7 +10,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:api": "openapi-typescript ../docs/openapi/kobayashi-openapi.yaml -o src/lib/api/generated.d.ts"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -25,6 +26,7 @@
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
     "jsdom": "^25.0.0",
+    "openapi-typescript": "^7.10.1",
     "typescript": "~5.2.2",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"

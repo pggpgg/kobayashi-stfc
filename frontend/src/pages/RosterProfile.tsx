@@ -263,10 +263,11 @@ export default function RosterProfile() {
       ) : modSyncUtc === null ? (
         <span style={{ color: "var(--text-muted)" }}>
           No community mod sync recorded yet for this profile. Use the STFC
-          Community Mod in-game to push roster, buildings, research, and
-          other data to Kobayashi.
+          Community Mod in-game to push roster, buildings, research, and other
+          data to Kobayashi.
         </span>
-      ) : (() => {
+      ) : (
+        (() => {
           const t = Date.parse(modSyncUtc);
           const ok =
             !Number.isNaN(t) &&
@@ -288,7 +289,8 @@ export default function RosterProfile() {
               {!Number.isNaN(t) && !ok ? " (stale)" : ""}
             </span>
           );
-        })()}
+        })()
+      )}
     </div>
   );
 

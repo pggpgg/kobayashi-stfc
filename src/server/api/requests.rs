@@ -5,8 +5,8 @@ use std::collections::HashSet;
 use std::fmt;
 
 use crate::data::heuristics::BelowDecksStrategy;
-use crate::optimizer::chain::{ChainGrindParams, ChainSecondaryObjective};
 use crate::data::optimize_history::{validate_optimize_cache_key, MAX_OPTIMIZE_CACHE_KEY_BYTES};
+use crate::optimizer::chain::{ChainGrindParams, ChainSecondaryObjective};
 use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };

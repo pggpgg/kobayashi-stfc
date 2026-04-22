@@ -263,12 +263,14 @@ where
             total_candidates = n_candidates as u64,
             "optimize_sim_batch_completed"
         );
-        let ordered: Vec<SimulationResult> = candidates
+        // Progress ticks run after each batch; only `candidates[..end]` is guaranteed filled
+        // (later indices are processed in subsequent batches).
+        let ordered: Vec<SimulationResult> = candidates[..end]
             .iter()
             .map(|c| {
                 scout_by_hash
                     .get(&crew_candidate_stable_hash(c))
-                    .expect("scout row for every candidate")
+                    .expect("scout row for every candidate in processed prefix")
                     .clone()
             })
             .collect();
@@ -553,13 +555,13 @@ where
 #[cfg(test)]
 mod workload_tests {
     use super::{
-        confirm_sims_from_scout_wilson_widths, max_scout_refine_contenders, scout_coarse_sims_from_cap,
-        scout_refine_candidate_hashes, tiered_scout_sims_for_workload, tiered_top_k_for_workload,
-        DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
+        confirm_sims_from_scout_wilson_widths, max_scout_refine_contenders,
+        scout_coarse_sims_from_cap, scout_refine_candidate_hashes, tiered_scout_sims_for_workload,
+        tiered_top_k_for_workload, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
     };
     use crate::optimizer::crew_generator::CrewCandidate;
     use crate::optimizer::monte_carlo::crew_candidate_stable_hash;
-    use crate::optimizer::ranking::{RankingScore, RankedCrewResult};
+    use crate::optimizer::ranking::{RankedCrewResult, RankingScore};
 
     fn ranked_row(captain: &str, win_lo: f64, win_hi: f64) -> RankedCrewResult {
         let win_rate = (win_lo + win_hi) / 2.0;
@@ -658,7 +660,10 @@ mod workload_tests {
         });
         assert!(hs.contains(&h2), "expected c2 in refine set");
         assert!(hs.contains(&h3), "expected c3 in refine set");
-        assert!(!hs.contains(&h0), "strong head should not overlap the tail-only cut band");
+        assert!(
+            !hs.contains(&h0),
+            "strong head should not overlap the tail-only cut band"
+        );
     }
 
     #[test]

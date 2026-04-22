@@ -237,7 +237,9 @@ pub fn format_unknown_mappings_markdown(
     if undocumented.is_empty() {
         out.push_str("None — every index value is documented.\n\n");
     } else {
-        out.push_str("| Value | Hostile rows | `validate_data` | Sample ids |\n| --- | ---: | --- | --- |\n");
+        out.push_str(
+            "| Value | Hostile rows | `validate_data` | Sample ids |\n| --- | ---: | --- | --- |\n",
+        );
         for (value, agg) in &undocumented {
             let ids = agg
                 .sample_ids
@@ -251,10 +253,7 @@ pub fn format_unknown_mappings_markdown(
             };
             out.push_str(&format!(
                 "| {} | {} | {} | {} |\n",
-                value,
-                agg.count,
-                validation,
-                ids
+                value, agg.count, validation, ids
             ));
         }
         out.push('\n');

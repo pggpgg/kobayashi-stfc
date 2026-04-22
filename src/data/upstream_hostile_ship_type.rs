@@ -46,10 +46,7 @@ pub const KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES: &[u32] =
 ///   these rows until they are promoted to `KNOWN` (and documented) or removed from this list.
 pub const DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES: &[(u32, &str)] = &[];
 
-fn deferral_reason_lookup<'a>(
-    ship_type: u32,
-    deferrals: &[(u32, &'a str)],
-) -> Option<&'a str> {
+fn deferral_reason_lookup<'a>(ship_type: u32, deferrals: &[(u32, &'a str)]) -> Option<&'a str> {
     deferrals
         .binary_search_by_key(&ship_type, |(v, _)| *v)
         .ok()

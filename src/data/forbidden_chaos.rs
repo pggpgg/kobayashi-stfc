@@ -167,10 +167,7 @@ mod sync_readiness_tests {
         let Some(imported) =
             import::load_imported_forbidden_tech(ft_path.to_str().expect("utf8 path"))
         else {
-            panic!(
-                "missing or invalid {}",
-                ft_path.display()
-            );
+            panic!("missing or invalid {}", ft_path.display());
         };
         let Some(catalog) = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH) else {
             panic!("missing catalog {}", DEFAULT_FORBIDDEN_CHAOS_PATH);
@@ -205,7 +202,11 @@ mod sync_readiness_tests {
                 continue;
             }
             if record.len() < 7 {
-                missing_rows.push(format!("row {}: expected >=7 columns, got {}", i + 1, record.len()));
+                missing_rows.push(format!(
+                    "row {}: expected >=7 columns, got {}",
+                    i + 1,
+                    record.len()
+                ));
                 continue;
             }
             let fid_col = record.get(3).unwrap_or("").trim();

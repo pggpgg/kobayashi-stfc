@@ -1314,5 +1314,4 @@ mod tests {
             "tier 1 vs 5 amalgam attacker attack should differ materially: {atk_low} vs {atk_high}"
         );
     }
-
 }

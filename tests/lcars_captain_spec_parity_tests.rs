@@ -59,7 +59,10 @@ fn contexts_from_officer_combat_effect_spec(
 
 #[test]
 fn captain_maneuver_effect_type_histogram_is_allowlisted() {
-    let path = format!("{}/data/officers/officers.lcars.yaml", env!("CARGO_MANIFEST_DIR"));
+    let path = format!(
+        "{}/data/officers/officers.lcars.yaml",
+        env!("CARGO_MANIFEST_DIR")
+    );
     let file = load_lcars_file(&path).expect("load officers.lcars.yaml");
     let mut types: BTreeSet<String> = BTreeSet::new();
     for o in &file.officers {
@@ -89,8 +92,13 @@ fn captain_maneuver_effect_type_histogram_is_allowlisted() {
 
 #[test]
 fn captain_maneuver_spec_path_matches_resolver_all_tiers() {
-    let path = format!("{}/data/officers/officers.lcars.yaml", env!("CARGO_MANIFEST_DIR"));
-    let officers = load_lcars_file(&path).expect("load officers.lcars.yaml").officers;
+    let path = format!(
+        "{}/data/officers/officers.lcars.yaml",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let officers = load_lcars_file(&path)
+        .expect("load officers.lcars.yaml")
+        .officers;
     for tier in 1u8..=5u8 {
         for o in &officers {
             let Some(cap) = &o.captain_ability else {
@@ -130,8 +138,13 @@ fn captain_maneuver_spec_path_matches_resolver_all_tiers() {
 
 #[test]
 fn bridge_and_below_decks_spec_path_matches_resolver_sample_tiers() {
-    let path = format!("{}/data/officers/officers.lcars.yaml", env!("CARGO_MANIFEST_DIR"));
-    let officers = load_lcars_file(&path).expect("load officers.lcars.yaml").officers;
+    let path = format!(
+        "{}/data/officers/officers.lcars.yaml",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let officers = load_lcars_file(&path)
+        .expect("load officers.lcars.yaml")
+        .officers;
     for tier in [1u8, 3u8, 5u8] {
         for o in &officers {
             let mut tiers = HashMap::new();
