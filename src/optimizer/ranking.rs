@@ -172,13 +172,13 @@ pub fn apply_novelty_mmr_reordering(
     for &i in &selected {
         out.push(ranked[i].clone());
     }
-    for i in 0..pool {
+    for (i, crew) in ranked.iter().enumerate().take(pool) {
         if !selected_set.contains(&i) {
-            out.push(ranked[i].clone());
+            out.push(crew.clone());
         }
     }
-    for i in pool..n {
-        out.push(ranked[i].clone());
+    for crew in ranked.iter().skip(pool) {
+        out.push(crew.clone());
     }
     out
 }
