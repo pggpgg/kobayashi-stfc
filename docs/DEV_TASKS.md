@@ -47,9 +47,9 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Build a tool that converts `profiles/{id}/battlelogs.imported.json` entries into recorded-fight fixtures automatically; include CLI command and docs.
   - **Touchpoints:** `src/sync.rs`, new `src/bin/import_battlelogs.rs`, `docs/SYNC.md`.
   - **Done when:** `cargo xtask battlelogs-to-fixtures --profile higgsbozo` produces valid fixtures the calibration tests can consume.
-- [ ] **9. Progressive LCARS → `CombatEffectSpec` resolver migration**
+- [x] **9. Progressive LCARS → `CombatEffectSpec` resolver migration** *(shipped: `resolve_effect` → adapter + `compile_officer_combat_spec`; parity in `tests/lcars_captain_spec_parity_tests.rs` + `tests/lcars_combat_effect_spec_parity_tests.rs`; see `docs/COMBAT_EFFECT_SPEC.md` § Task 9.)*
   - Per `docs/COMBAT_EFFECT_SPEC.md`, migrate officer families one at a time (captains first, then bridge, then BD) with parity tests; keep LCARS as the authoring surface.
-  - **Touchpoints:** `src/lcars/effect_spec_adapter.rs`, `src/combat/effect_spec_compile.rs`, `tests/lcars_combat_effect_spec_parity_tests.rs`.
+  - **Touchpoints:** `src/lcars/effect_spec_adapter.rs`, `src/combat/effect_spec_compile.rs`, `src/lcars/resolver.rs`, `tests/lcars_combat_effect_spec_parity_tests.rs`, `tests/lcars_captain_spec_parity_tests.rs`.
   - **Done when:** at least one officer family runs exclusively through the spec path in production with parity fixtures.
 - [ ] **10. Hostile `upstream_ship_type` enumeration + validation report**
   - Finish the map in `docs/UPSTREAM_HOSTILE_SHIP_TYPES.md`; add a validator that lists any normalized hostile whose `upstream_ship_type` is unmapped.
@@ -114,7 +114,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 5 / 20 (tasks 1–4, 6)
+- **Completed:** 6 / 20 (tasks 1–4, 6, 9)
 - **In progress:** 0
 - **Blocked:** 0
 

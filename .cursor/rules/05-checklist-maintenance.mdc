@@ -4,8 +4,11 @@ alwaysApply: true
 ---
 # Checklist maintenance
 
-When working from a checklist or task list, keep it updated in real time.
+When you **start from** a checklist or numbered task doc (for example [`docs/DEV_TASKS.md`](docs/DEV_TASKS.md)), treat updating that doc as part of the same deliverable as the code.
 
-- As soon as an item is fully completed, immediately mark it as completed (for example, change `- [ ]` to `- [x]`).
-- Do not batch checklist updates until the end of the task.
-- Never report checklist work as done while the checklist still shows it as incomplete.
+- As soon as an item is fully completed, immediately mark it completed (for example, change `- [ ]` to `- [x]`) and refresh any progress counts or summaries in the same file.
+- Do not defer checklist updates to “after push” or the end of the session unless the user explicitly asked only for a draft.
+- Do not batch many checklist updates until the very end if items finish at different times—mark each when it is done.
+- Never tell the user a checklist item is done while the repo checklist still shows it incomplete.
+
+If there is no checklist file for the work, this rule does not require inventing one.

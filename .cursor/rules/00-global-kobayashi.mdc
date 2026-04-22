@@ -10,6 +10,7 @@ Primary goals:
 - Treat combat behavior as a mechanistic simulation problem, not a black-box fitting problem.
 
 General expectations:
+- If work began from a repo checklist (e.g. `docs/DEV_TASKS.md`), update checkboxes and progress there before closing out the task; see checklist maintenance rule.
 - Surface uncertainty clearly when game behavior is unknown.
 - Prefer the smallest safe change that preserves extensibility.
 - Do not silently invent game constants, formulas, or hidden mechanics.
