@@ -78,7 +78,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Complete `docs/openapi/` into a full OpenAPI 3.1 document covering every `/api/`* route; generate TS types consumed by the SPA to replace ad-hoc fetch wrappers.
   - **Touchpoints:** `docs/openapi/`, `src/server/routes.rs`, `frontend/src/lib/api/` (new).
   - **Done when:** SPA builds using generated types and a contract test asserts server responses match the spec.
-- [ ] **15. Frontend E2E smoke tests via Playwright**
+- [x] **15. Frontend E2E smoke tests via Playwright** *(shipped: [e2e/workspace-flow.spec.ts](../e2e/workspace-flow.spec.ts) full UI flow + [e2e/smoke.spec.ts](../e2e/smoke.spec.ts); [playwright.config.ts](../playwright.config.ts) `workers: 1`; CI job `e2e_smoke` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) with failure artifacts; preset POST JSON omits null crew slots in [`savePreset`](../frontend/src/lib/api.ts).)*
   - Use existing `e2e/` + `playwright.config.ts` to cover: load workspace, run sim, run optimize (small), save preset, open results library. Wire into CI.
   - **Touchpoints:** `e2e/`, `.github/workflows/`.
   - **Done when:** CI runs Playwright headless against a locally-served release build and blocks merges on failures.
@@ -100,7 +100,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 ## Phase 7 — Release, docs & community
 
-- [ ] **19. Prebuilt release artifacts (macOS, Linux, Windows)**
+- [x] **19. Prebuilt release artifacts (macOS, Linux, Windows)** *(shipped: [`.github/workflows/release.yml`](../.github/workflows/release.yml) on `push` tags `v*` — matrix Linux / macOS aarch64 / Windows; `SHA256SUMS`; `softprops/action-gh-release` + `generate_release_notes`; bundle readme [`packaging/RELEASE-BUNDLE-README.txt`](../packaging/RELEASE-BUNDLE-README.txt); Quick Start + [`DEPLOYMENT_SECURITY.md`](DEPLOYMENT_SECURITY.md) § Release binaries.)*
   - GitHub Release workflow that builds `kobayashi` + `frontend/dist` and attaches zipped artifacts per OS; include a checksum file and signed tag.
   - **Touchpoints:** `.github/workflows/release.yml`, `README.md` Quick Start, `docs/DEPLOYMENT_SECURITY.md`.
   - **Done when:** tagging `vX.Y.Z` publishes three downloadable archives + release notes.
@@ -115,7 +115,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 9 / 20 (tasks 1–4, 6, 9–10, 12–13)
+- **Completed:** 11 / 20 (tasks 1–4, 6, 9–10, 12–13, 15, 19)
 - **In progress:** 0
 - **Blocked:** 0
 

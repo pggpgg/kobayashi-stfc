@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "id": "e2e_1776833437524",
+  "name": "e2e-1776833437524",
+  "ship": "admonition",
+  "scenario": "2626153673",
+  "crew": {
+    "captain": "annorax-830d35",
+    "bridge": null,
+    "below_deck": null
+  },
+  "provenance": {
+    "saved_at": "2026-04-22T04:50:37Z",
+    "kobayashi_version": "0.1.0",
+    "hostile_data_version": "stfcspace-hostiles-2026-04-20",
+    "ship_data_version": "data-stfc-space",
+    "source": "kobayashi_api",
+    "inferred": false
+  }
+}

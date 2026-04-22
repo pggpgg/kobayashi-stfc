@@ -3,6 +3,8 @@ import path from "node:path";
 
 export default defineConfig({
   testDir: "./e2e",
+  /** One worker: server allows limited concurrent CPU jobs; parallel tests would queue/flake. */
+  workers: 1,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 0,

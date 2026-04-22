@@ -55,6 +55,14 @@ cargo build --release
 
 On Windows, use `target\release\kobayashi.exe` instead of `./target/release/kobayashi`.
 
+### Prebuilt releases (GitHub)
+
+Tagged versions ([`.github/workflows/release.yml`](.github/workflows/release.yml)) publish **GitHub Release** assets: Linux x86_64 (`.tar.gz`), macOS Apple Silicon arm64 (`.tar.gz`), Windows x86_64 (`.zip`), plus a **`SHA256SUMS`** file for verification. Each archive contains the `kobayashi` binary, `frontend/dist/`, and a short `README.txt` (from [`packaging/RELEASE-BUNDLE-README.txt`](packaging/RELEASE-BUNDLE-README.txt)).
+
+Unpack the archive **into a repository checkout at the same tag** so `./data/` and `./profiles/` already exist next to the binary and UI. Verify digests as described in [`docs/DEPLOYMENT_SECURITY.md`](docs/DEPLOYMENT_SECURITY.md).
+
+Maintainers: push an annotated or GPG-signed version tag to trigger the workflow, for example `git tag -s v0.1.0 -m "Release v0.1.0"` then `git push origin v0.1.0`.
+
 ### Run
 
 ```bash

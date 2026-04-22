@@ -10,7 +10,7 @@ Pull requests run `[.github/workflows/ci.yml](.github/workflows/ci.yml)` (workfl
 | **Rust**                   | `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `cargo build --release`, `cargo audit`          |
 | **Frontend**               | `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` (in `frontend/`) |
 | **Combat engine (Python)** | `pytest` under `tools/combat_engine/tests/`                                                                                     |
-| **E2E smoke (Playwright)** | Release build, frontend build, `npm run test:e2e`                                                                               |
+| **E2E smoke (Playwright)** | Release build, frontend build, `npm run test:e2e` (health + workspace sim/optimize/preset/results); failed runs upload `playwright-report` + `test-results` artifacts |
 
 
 ### Branch protection (repository settings)

@@ -16,6 +16,17 @@ The [STFC Community Mod](https://github.com/netniV/stfc-mod) sends data using th
 
 Sync ingress is **not** covered by `KOBAYASHI_API_KEY` (see below): it keeps its own token-based routing.
 
+## Release binaries and integrity
+
+Prebuilt **GitHub Release** archives (Linux, macOS arm64, Windows) ship the `kobayashi` binary and `frontend/dist/` only; they are meant to be extracted **on top of** a checkout of the same **git tag** so `data/`, `profiles/`, and other repo paths remain available. See [`packaging/RELEASE-BUNDLE-README.txt`](../packaging/RELEASE-BUNDLE-README.txt).
+
+Each release includes **`SHA256SUMS`** (SHA-256 of every attached archive). After downloading, verify before unpacking, for example:
+
+- Linux: `sha256sum -c SHA256SUMS` (remove lines for archives you did not download if the checker complains).
+- macOS: `shasum -a 256 -c SHA256SUMS`
+
+Treat third-party binaries like any other downloaded executable: fetch only from the project’s **Releases** page, verify hashes, and prefer **signed or annotated tags** when correlating source (`git tag -v vX.Y.Z` for signed tags).
+
 ## Threat surfaces by deployment
 
 

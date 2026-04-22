@@ -1,0 +1,135 @@
+# Publishes prebuilt binaries + built SPA when a version tag is pushed (e.g. v0.1.0).
+# Maintainers: create an annotated or GPG-signed tag locally, then push it:
+#   git tag -s v0.1.0 -m "Release v0.1.0"
+#   git push origin v0.1.0
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.slug }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            slug: linux-x86_64
+            ext: tar.gz
+          - os: macos-latest
+            slug: macos-aarch64
+            ext: tar.gz
+          - os: windows-latest
+            slug: windows-x86_64
+            ext: zip
+
+    env:
+      REF: ${{ github.ref_name }}
+      STAGE_DIR: kobayashi-${{ github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-release-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-cargo-
+
+      - name: cargo build --release
+        run: cargo build --release --locked
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemble bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "stage/${STAGE_DIR}/frontend"
+          if [ -f target/release/kobayashi.exe ]; then
+            cp target/release/kobayashi.exe "stage/${STAGE_DIR}/"
+          else
+            cp target/release/kobayashi "stage/${STAGE_DIR}/"
+          fi
+          cp -R frontend/dist "stage/${STAGE_DIR}/frontend/dist"
+          cp packaging/RELEASE-BUNDLE-README.txt "stage/${STAGE_DIR}/README.txt"
+
+      - name: Package (tar.gz)
+        if: matrix.ext == 'tar.gz'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf "kobayashi-${REF}-${{ matrix.slug }}.tar.gz" -C stage "${STAGE_DIR}"
+
+      - name: Package (zip)
+        if: matrix.ext == 'zip'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Compress-Archive -Path "stage/${env:STAGE_DIR}" -DestinationPath "kobayashi-${env:REF}-${{ matrix.slug }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-asset-${{ matrix.slug }}
+          path: kobayashi-${{ github.ref_name }}-${{ matrix.slug }}.${{ matrix.ext }}
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: release-asset-*
+          merge-multiple: true
+
+      - name: Write SHA256SUMS
+        working-directory: release-assets
+        run: |
+          set -euo pipefail
+          sha256sum ./* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

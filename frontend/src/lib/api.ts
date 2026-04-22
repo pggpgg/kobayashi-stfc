@@ -1254,6 +1254,14 @@ export async function savePreset(
   },
   profileId?: string | null,
 ): Promise<Preset> {
+  const c = preset.crew;
+  const bridge = (c.bridge ?? []).filter((x): x is string => x != null);
+  const below_deck = (c.below_deck ?? []).filter((x): x is string => x != null);
+  const crewBody: Record<string, unknown> = {};
+  if (c.captain != null && c.captain !== "") crewBody.captain = c.captain;
+  if (bridge.length > 0) crewBody.bridge = bridge;
+  if (below_deck.length > 0) crewBody.below_deck = below_deck;
+
   const res = await fetch(`${API_BASE}/api/presets`, {
     method: "POST",
     headers: {
@@ -1264,7 +1272,7 @@ export async function savePreset(
       name: preset.name ?? "Unnamed",
       ship: preset.ship,
       scenario: preset.scenario,
-      crew: preset.crew,
+      crew: crewBody,
     }),
   });
   await checkOk(res);
