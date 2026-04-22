@@ -62,9 +62,9 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Replace fixed `tiered_scout_sims` with a variance/confidence-driven allocator: give more sims only to crews whose win-rate CI overlaps the current top-K cut.
   - **Touchpoints:** `src/optimizer/tiered.rs`, `src/optimizer/ranking.rs`.
   - **Done when:** total sim budget drops ≥ 30% on representative workloads at equal final top-K accuracy (benchmarked).
-- [ ] **12. Cross-session learning cache (per ship × hostile)**
+- [x] **12. Cross-session learning cache (per ship × hostile)** *(shipped: [`src/data/optimize_history.rs`](../src/data/optimize_history.rs) + `OPTIMIZE_HISTORY_JSON` in [`profile_index.rs`](../src/data/profile_index.rs); optimize API `optimize_cache_key` + scenario `optimize_history_confirm_hits` / `optimize_history_wrote`; tiered scout/confirm reuse via [`tiered.rs`](../src/optimizer/tiered.rs) + [`mod.rs`](../src/optimizer/mod.rs); SPA [`workspaceRequests.ts`](../frontend/src/lib/workspaceRequests.ts) / [`useWorkspace.ts`](../frontend/src/lib/useWorkspace.ts) sends same fingerprint as [`optimizeWarmStart.ts`](../frontend/src/lib/optimizeWarmStart.ts); “Cached warm start” in [`OptimizePanel.tsx`](../frontend/src/components/OptimizePanel.tsx).)*
   - Persist winners + warm-start seeds to `profiles/{id}/optimize_history.json`; auto-seed future optimize runs for the same (ship, hostile, constraints) key.
-  - **Touchpoints:** `src/optimizer/mod.rs`, `src/server/api/execution.rs`, `frontend/src/lib/optimizeWarmStart.ts`.
+  - **Touchpoints:** `src/data/optimize_history.rs`, `src/optimizer/mod.rs`, `src/optimizer/tiered.rs`, `src/server/api/execution.rs`, `src/server/api/requests.rs`, `frontend/src/lib/optimizeWarmStart.ts`, `frontend/src/lib/workspaceRequests.ts`, `frontend/src/lib/useWorkspace.ts`, `frontend/src/components/OptimizePanel.tsx`.
   - **Done when:** re-running an identical optimize call short-circuits scout on already-confirmed winners and shows a "cached warm start" badge.
 - [x] **13. Novelty-aware crew ranking** *(shipped: MMR + Jaccard on officer sets in [`src/optimizer/ranking.rs`](../src/optimizer/ranking.rs); optimize API `novelty_lambda` / `novelty_diverse_top` / `novelty_pool`, default off = pure strength order; workspace Optimize panel sends optional fields.)*
   - Add a diversity penalty (e.g. Jaccard distance over officer ids) so the ranked top-K is not dominated by near-duplicates of one lineage.
@@ -115,7 +115,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 8 / 20 (tasks 1–4, 6, 9–10, 13)
+- **Completed:** 9 / 20 (tasks 1–4, 6, 9–10, 12–13)
 - **In progress:** 0
 - **Blocked:** 0
 
