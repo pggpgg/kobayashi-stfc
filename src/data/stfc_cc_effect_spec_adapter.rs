@@ -370,7 +370,7 @@ fn map_condition_token(
             Ok(AbilityConditionSpec::DefenderHullFactionIdIs { faction_id: id })
         }
         _ => {
-            if STFC_CC_DEFERRED_CONDITION_TOKENS.iter().any(|&x| x == t) {
+            if STFC_CC_DEFERRED_CONDITION_TOKENS.contains(&t) {
                 Ok(AbilityConditionSpec::StfcCcToken {
                     token: t.to_string(),
                 })

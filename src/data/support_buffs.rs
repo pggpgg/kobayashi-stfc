@@ -202,7 +202,7 @@ const STATIC_MULT_KEYS: &[&str] = &[
 ];
 
 fn is_static_mult_key(k: &str) -> bool {
-    STATIC_MULT_KEYS.iter().any(|m| *m == k)
+    STATIC_MULT_KEYS.contains(&k)
 }
 
 /// Merge crew LCARS static buffs with support static bonuses for mitigation + combatant application.

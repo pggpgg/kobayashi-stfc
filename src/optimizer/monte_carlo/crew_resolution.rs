@@ -240,7 +240,7 @@ fn seat_from_officer(
         (timing, effect)
     } else if let Some(chance) = morale_chance {
         (TimingWindow::RoundStart, AbilityEffect::Morale(chance))
-    } else if hash % 2 == 0 {
+    } else if hash.is_multiple_of(2) {
         (
             TimingWindow::AttackPhase,
             AbilityEffect::AttackMultiplier(0.05 + ((hash >> 8) % 12) as f64 / 100.0),
@@ -266,7 +266,7 @@ fn seat_from_officer(
             effect,
             condition: None,
         },
-        boosted: hash % 5 == 0,
+        boosted: hash.is_multiple_of(5),
         officer_id,
         contribution_batch,
     }

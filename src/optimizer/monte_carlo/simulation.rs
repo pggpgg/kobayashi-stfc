@@ -162,7 +162,7 @@ fn run_candidate_chain_monte_carlo(
             if n_done >= cfg.min_trials
                 && n_done < max_iterations
                 && cfg.check_every > 0
-                && n_done % cfg.check_every == 0
+                && n_done.is_multiple_of(cfg.check_every)
                 && win_rate_upper_wilson_95(primary_ok, n_done) < cfg.eliminate_upper_below
             {
                 break;
@@ -349,7 +349,7 @@ fn run_candidate_monte_carlo(
             if n_done >= cfg.min_trials
                 && n_done < max_iterations
                 && cfg.check_every > 0
-                && n_done % cfg.check_every == 0
+                && n_done.is_multiple_of(cfg.check_every)
                 && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
             {
                 break;
