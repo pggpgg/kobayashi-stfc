@@ -800,6 +800,9 @@ export async function optimizeStart(
     tiered_scout_sims?: number;
     tiered_top_k?: number;
     fast_discovery?: boolean;
+    novelty_lambda?: number;
+    novelty_diverse_top?: number;
+    novelty_pool?: number;
   },
   profileId?: string | null,
   options?: OptimizeStartOptions,
@@ -866,6 +869,22 @@ export async function optimizeStart(
   }
   if (params.fast_discovery === true) {
     body.fast_discovery = true;
+  }
+  if (
+    params.novelty_lambda != null &&
+    params.novelty_lambda > 0 &&
+    params.novelty_lambda <= 1
+  ) {
+    body.novelty_lambda = params.novelty_lambda;
+  }
+  if (
+    params.novelty_diverse_top != null &&
+    params.novelty_diverse_top >= 1
+  ) {
+    body.novelty_diverse_top = params.novelty_diverse_top;
+  }
+  if (params.novelty_pool != null && params.novelty_pool >= 2) {
+    body.novelty_pool = params.novelty_pool;
   }
   const res = await fetchWithCpuBusyRetries(
     `${API_BASE}/api/optimize/start`,

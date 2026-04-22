@@ -227,6 +227,12 @@ export default function Workspace() {
           onTieredScoutSimsChange={ws.setTieredScoutSims}
           tieredTopK={ws.tieredTopK}
           onTieredTopKChange={ws.setTieredTopK}
+          noveltyLambdaText={ws.noveltyLambdaText}
+          onNoveltyLambdaTextChange={ws.setNoveltyLambdaText}
+          noveltyDiverseTopText={ws.noveltyDiverseTopText}
+          onNoveltyDiverseTopTextChange={ws.setNoveltyDiverseTopText}
+          noveltyPoolText={ws.noveltyPoolText}
+          onNoveltyPoolTextChange={ws.setNoveltyPoolText}
           optimizeMustInclude={ws.optimizeMustInclude}
           onOptimizeMustIncludeChange={ws.setOptimizeMustInclude}
           optimizeExclude={ws.optimizeExclude}

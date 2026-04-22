@@ -66,10 +66,11 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Persist winners + warm-start seeds to `profiles/{id}/optimize_history.json`; auto-seed future optimize runs for the same (ship, hostile, constraints) key.
   - **Touchpoints:** `src/optimizer/mod.rs`, `src/server/api/execution.rs`, `frontend/src/lib/optimizeWarmStart.ts`.
   - **Done when:** re-running an identical optimize call short-circuits scout on already-confirmed winners and shows a "cached warm start" badge.
-- [ ] **13. Novelty-aware crew ranking**
+- [x] **13. Novelty-aware crew ranking** *(shipped: MMR + Jaccard on officer sets in [`src/optimizer/ranking.rs`](../src/optimizer/ranking.rs); optimize API `novelty_lambda` / `novelty_diverse_top` / `novelty_pool`, default off = pure strength order; workspace Optimize panel sends optional fields.)*
   - Add a diversity penalty (e.g. Jaccard distance over officer ids) so the ranked top-K is not dominated by near-duplicates of one lineage.
   - **Touchpoints:** `src/optimizer/ranking.rs`, new unit tests with synthetic crews.
   - **Done when:** a configurable `novelty_weight` parameter exposes the behavior and defaults preserve current output.
+  - **Note:** the JSON field is **`novelty_lambda`** (MMR tradeoff, \((0,1]\)); higher values stay closer to win-rate ordering. The original “novelty weight” wording maps to this control.
 
 ## Phase 5 — API, frontend & UX
 
@@ -114,7 +115,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 7 / 20 (tasks 1–4, 6, 9–10)
+- **Completed:** 8 / 20 (tasks 1–4, 6, 9–10, 13)
 - **In progress:** 0
 - **Blocked:** 0
 

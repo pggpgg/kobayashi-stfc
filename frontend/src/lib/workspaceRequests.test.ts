@@ -4,6 +4,7 @@ import {
   buildOptimizeConstraintsFromForm,
   buildWorkspaceOptimizeStartBody,
   buildWorkspaceSimulateParams,
+  noveltyFieldsForOptimizeBody,
 } from "./workspaceRequests";
 
 describe("buildWorkspaceSimulateParams", () => {
@@ -266,6 +267,89 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     });
     expect(body).not.toHaveProperty("tiered_scout_sims");
     expect(body).not.toHaveProperty("tiered_top_k");
+  });
+
+  it("omits novelty fields when lambda text blank even if head/pool set", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "exhaustive",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      noveltyLambdaText: "  ",
+      noveltyDiverseTopText: "20",
+      noveltyPoolText: "64",
+    });
+    expect(body).not.toHaveProperty("novelty_lambda");
+    expect(body).not.toHaveProperty("novelty_diverse_top");
+    expect(body).not.toHaveProperty("novelty_pool");
+  });
+
+  it("includes novelty_lambda and optional head/pool when lambda text valid", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      noveltyLambdaText: "0.7",
+      noveltyDiverseTopText: "15",
+      noveltyPoolText: "100",
+    });
+    expect(body.novelty_lambda).toBe(0.7);
+    expect(body.novelty_diverse_top).toBe(15);
+    expect(body.novelty_pool).toBe(100);
+  });
+});
+
+describe("noveltyFieldsForOptimizeBody", () => {
+  it("returns empty when lambda blank", () => {
+    expect(
+      noveltyFieldsForOptimizeBody({
+        noveltyLambdaText: "",
+        noveltyDiverseTopText: "20",
+        noveltyPoolText: "64",
+      }),
+    ).toEqual({});
+  });
+
+  it("returns empty when lambda out of (0, 1]", () => {
+    expect(
+      noveltyFieldsForOptimizeBody({
+        noveltyLambdaText: "0",
+        noveltyDiverseTopText: "",
+        noveltyPoolText: "",
+      }),
+    ).toEqual({});
+    expect(
+      noveltyFieldsForOptimizeBody({
+        noveltyLambdaText: "1.01",
+        noveltyDiverseTopText: "",
+        noveltyPoolText: "",
+      }),
+    ).toEqual({});
+  });
+
+  it("includes only lambda when head/pool invalid or blank", () => {
+    expect(
+      noveltyFieldsForOptimizeBody({
+        noveltyLambdaText: "0.65",
+        noveltyDiverseTopText: "0",
+        noveltyPoolText: "xy",
+      }),
+    ).toEqual({ novelty_lambda: 0.65 });
   });
 });
 

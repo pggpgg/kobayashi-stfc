@@ -269,4 +269,87 @@ mod novelty_tests {
         assert!((out[1].win_rate - 0.89).abs() < 1e-9);
         assert!((out[2].win_rate - 0.88).abs() < 1e-9);
     }
+
+    #[test]
+    fn mmr_if_configured_none_lambda_returns_input_unchanged_even_with_extras() {
+        let ranked = vec![
+            dummy("A", ["b1", "b2"], &["d1", "d2", "d3"], 0.9),
+            dummy("B", ["b1", "b2"], &["d1", "d2", "d4"], 0.8),
+        ];
+        let expected: Vec<String> = ranked.iter().map(|r| r.captain.clone()).collect();
+        let out = apply_novelty_mmr_if_configured(ranked, None, Some(2), Some(64));
+        assert_eq!(
+            out.iter().map(|r| r.captain.as_str()).collect::<Vec<_>>(),
+            expected.iter().map(|s| s.as_str()).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn mmr_reordering_invalid_lambda_returns_unchanged() {
+        let ranked = vec![
+            dummy("A", ["b1", "b2"], &["d1", "d2", "d3"], 0.9),
+            dummy("B", ["x1", "x2"], &["y1", "y2", "y3"], 0.8),
+        ];
+        let expected: Vec<String> = ranked.iter().map(|r| r.captain.clone()).collect();
+        for bad_lambda in [0.0_f32, -0.5_f32, 1.000_000_1_f32] {
+            let dup = ranked.clone();
+            let out = apply_novelty_mmr_reordering(dup, bad_lambda, 2, 2);
+            assert_eq!(
+                out.iter().map(|r| r.captain.as_str()).collect::<Vec<_>>(),
+                expected.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+                "bad_lambda={bad_lambda}"
+            );
+        }
+    }
+
+    #[test]
+    fn mmr_diverse_top_zero_is_noop() {
+        let ranked = vec![
+            dummy("A", ["b1", "b2"], &["d1", "d2", "d3"], 0.9),
+            dummy("B", ["x1", "x2"], &["y1", "y2", "y3"], 0.8),
+        ];
+        let expected: Vec<String> = ranked.iter().map(|r| r.captain.clone()).collect();
+        let out = apply_novelty_mmr_reordering(ranked, 0.65, 0, 4);
+        assert_eq!(
+            out.iter().map(|r| r.captain.as_str()).collect::<Vec<_>>(),
+            expected.iter().map(|s| s.as_str()).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn mmr_pool_composition_selected_then_remaining_pool_indices_then_tail() {
+        // Strength order: P0 > P1 > P2 > P3 > P4 > P5 (same officer template for 0–1 = near dup).
+        let p0 = dummy("P0", ["b1", "b2"], &["d1", "d2", "d3"], 0.95);
+        let p1 = dummy("P1", ["b1", "b2"], &["d1", "d2", "d4"], 0.94);
+        let p2 = dummy("P2", ["x1", "x2"], &["y1", "y2", "y3"], 0.93);
+        let p3 = dummy("P3", ["x1", "x2"], &["y1", "y2", "y4"], 0.92);
+        let p4 = dummy("P4", ["m1", "m2"], &["n1", "n2", "n3"], 0.50);
+        let p5 = dummy("P5", ["m1", "m2"], &["n1", "n2", "n4"], 0.40);
+        let ranked = vec![p0, p1, p2, p3, p4, p5];
+        let out = apply_novelty_mmr_reordering(ranked, 0.65, 2, 4);
+        assert_eq!(out.len(), 6);
+        // Anchor P0; second pick favors material diversity → P2 over near-duplicate P1.
+        assert_eq!(out[0].captain, "P0");
+        assert_eq!(out[1].captain, "P2");
+        // Remaining pool indices 1..4 not selected: P1 (idx 1), P3 (idx 3) in original order.
+        assert_eq!(out[2].captain, "P1");
+        assert_eq!(out[3].captain, "P3");
+        // Beyond pool: unchanged tail in original list order.
+        assert_eq!(out[4].captain, "P4");
+        assert_eq!(out[5].captain, "P5");
+    }
+
+    #[test]
+    fn mmr_very_low_lambda_prioritizes_diversity_over_small_win_rate_gap() {
+        // Same captain/bridge; below_decks differ by one id — high Jaccard between adjacent rows.
+        let near_a = dummy("Cap", ["B1", "B2"], &["D1", "D2", "D3"], 0.62);
+        let near_b = dummy("Cap", ["B1", "B2"], &["D1", "D2", "D4"], 0.61);
+        let near_c = dummy("Cap", ["B1", "B2"], &["D1", "D2", "D5"], 0.60);
+        let far = dummy("CapZ", ["X1", "X2"], &["Y1", "Y2", "Y3"], 0.595);
+        let ranked = vec![near_a, near_b, near_c, far];
+        let out = apply_novelty_mmr_reordering(ranked, 0.05, 2, 4);
+        assert_eq!(out[0].captain, "Cap");
+        // With tiny λ, redundancy penalty dominates: pick materially different second row.
+        assert_eq!(out[1].captain, "CapZ");
+    }
 }

@@ -120,6 +120,11 @@ export function useWorkspace() {
   /** Tiered: top K for confirmation; null = omit (server default 20). */
   const [tieredTopK, setTieredTopK] = useState<number | null>(null);
 
+  /** Novelty (MMR): optional text fields; blank lambda = omit (pure strength order). */
+  const [noveltyLambdaText, setNoveltyLambdaText] = useState("");
+  const [noveltyDiverseTopText, setNoveltyDiverseTopText] = useState("");
+  const [noveltyPoolText, setNoveltyPoolText] = useState("");
+
   // Alliance / ship support buffs (UI + request payload; combat application TBD)
   const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
     SupportBuffId[]
@@ -640,6 +645,9 @@ export function useWorkspace() {
           tieredTopK,
           fastDiscovery:
             fastDiscovery && selectedSeeds.length > 0 ? true : undefined,
+          noveltyLambdaText,
+          noveltyDiverseTopText,
+          noveltyPoolText,
         }),
         activeProfileId,
         {
@@ -798,6 +806,12 @@ export function useWorkspace() {
     setTieredScoutSims,
     tieredTopK,
     setTieredTopK,
+    noveltyLambdaText,
+    setNoveltyLambdaText,
+    noveltyDiverseTopText,
+    setNoveltyDiverseTopText,
+    noveltyPoolText,
+    setNoveltyPoolText,
     optimizeMustInclude,
     setOptimizeMustInclude,
     optimizeExclude,

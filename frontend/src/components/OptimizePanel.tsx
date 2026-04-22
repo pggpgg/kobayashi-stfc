@@ -5,6 +5,9 @@ import OfficerNameMultiSelect from "./OfficerNameMultiSelect";
 /** Match server `MAX_TIERED_SCOUT_SIMS` / `MAX_TIERED_TOP_K` (see `src/server/api/requests.rs`). */
 const MAX_TIERED_SCOUT_SIMS_UI = 100_000;
 const MAX_TIERED_TOP_K_UI = 500;
+/** Match server novelty caps (`MAX_NOVELTY_*` in `src/server/api/requests.rs`). */
+const MAX_NOVELTY_DIVERSE_TOP_UI = 500;
+const MAX_NOVELTY_POOL_UI = 10_000;
 
 interface OptimizePanelProps {
   collapsed: boolean;
@@ -41,6 +44,13 @@ interface OptimizePanelProps {
   /** Tiered only: top K for confirmation; null = server default (20). */
   tieredTopK: number | null;
   onTieredTopKChange: (value: number | null) => void;
+  /** Blank = off. When set to a number in (0, 1], server reorders the recommendation head for diverse officer material (MMR + Jaccard). */
+  noveltyLambdaText: string;
+  onNoveltyLambdaTextChange: (value: string) => void;
+  noveltyDiverseTopText: string;
+  onNoveltyDiverseTopTextChange: (value: string) => void;
+  noveltyPoolText: string;
+  onNoveltyPoolTextChange: (value: string) => void;
   optimizeMustInclude: string;
   onOptimizeMustIncludeChange: (value: string) => void;
   optimizeExclude: string;
@@ -160,6 +170,12 @@ export default function OptimizePanel({
   onTieredScoutSimsChange,
   tieredTopK,
   onTieredTopKChange,
+  noveltyLambdaText,
+  onNoveltyLambdaTextChange,
+  noveltyDiverseTopText,
+  onNoveltyDiverseTopTextChange,
+  noveltyPoolText,
+  onNoveltyPoolTextChange,
   optimizeMustInclude,
   onOptimizeMustIncludeChange,
   optimizeExclude,
@@ -572,6 +588,105 @@ export default function OptimizePanel({
           ? "Ranking: chain success rate first, then secondary among successful trials."
           : "Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see optimizer ranking)."}
       </p>
+
+      <div style={{ fontSize: "0.85rem", marginTop: 10 }}>
+        <FieldLabelWithHint
+          hint={
+            "Maximal marginal relevance (MMR) on officer sets: λ in (0, 1] blends win rate vs redundancy. Higher λ stays closer to pure strength order. Leave blank to disable. Optional head size and pool limit refine how many leading rows are reordered and how wide the candidate pool is (server defaults apply when omitted)."
+          }
+        >
+          <span>Novelty λ (optional, 0–1)</span>
+        </FieldLabelWithHint>
+        <input
+          type="text"
+          inputMode="decimal"
+          placeholder="Off — pure strength order"
+          value={noveltyLambdaText}
+          onChange={(e) => onNoveltyLambdaTextChange(e.target.value)}
+          aria-label="Novelty lambda for MMR ranking"
+          style={{
+            display: "block",
+            marginTop: 4,
+            width: "100%",
+            padding: "0.4rem",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            borderRadius: 4,
+            color: "var(--text)",
+          }}
+        />
+        <label
+          style={{
+            fontSize: "0.85rem",
+            display: "block",
+            marginTop: 8,
+            opacity: noveltyLambdaText.trim() ? 1 : 0.45,
+          }}
+        >
+          Diverse head size (optional)
+          <input
+            type="number"
+            min={1}
+            max={MAX_NOVELTY_DIVERSE_TOP_UI}
+            step={1}
+            placeholder={`Default ${20} when λ set`}
+            disabled={!noveltyLambdaText.trim()}
+            value={noveltyDiverseTopText}
+            onChange={(e) => onNoveltyDiverseTopTextChange(e.target.value)}
+            style={{
+              display: "block",
+              marginTop: 4,
+              width: "100%",
+              padding: "0.4rem",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+              borderRadius: 4,
+              color: "var(--text)",
+            }}
+          />
+        </label>
+        <label
+          style={{
+            fontSize: "0.85rem",
+            display: "block",
+            marginTop: 8,
+            opacity: noveltyLambdaText.trim() ? 1 : 0.45,
+          }}
+        >
+          Novelty pool size (optional)
+          <input
+            type="number"
+            min={2}
+            max={MAX_NOVELTY_POOL_UI}
+            step={1}
+            placeholder="Server default when λ set"
+            disabled={!noveltyLambdaText.trim()}
+            value={noveltyPoolText}
+            onChange={(e) => onNoveltyPoolTextChange(e.target.value)}
+            style={{
+              display: "block",
+              marginTop: 4,
+              width: "100%",
+              padding: "0.4rem",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+              borderRadius: 4,
+              color: "var(--text)",
+            }}
+          />
+        </label>
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontSize: "0.72rem",
+            color: "var(--text-muted)",
+          }}
+        >
+          Diverse head / pool require a valid λ. Pool must be ≥ head when both
+          are set (server validates). Max head {MAX_NOVELTY_DIVERSE_TOP_UI},
+          pool {MAX_NOVELTY_POOL_UI.toLocaleString()}.
+        </p>
+      </div>
 
       <div style={{ fontSize: "0.85rem", fontWeight: 600, marginTop: 4 }}>
         Search constraints

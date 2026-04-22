@@ -133,6 +133,53 @@ export function buildOptimizeConstraintsFromForm(args: {
   return body;
 }
 
+/** Match server `MAX_NOVELTY_DIVERSE_TOP` / `MAX_NOVELTY_POOL` (`src/server/api/requests.rs`). */
+const MAX_NOVELTY_DIVERSE_TOP_UI = 500;
+const MAX_NOVELTY_POOL_UI = 10_000;
+
+/** Optional MMR / novelty fields for `POST /api/optimize/start` (omit when lambda blank). */
+export function noveltyFieldsForOptimizeBody(args: {
+  noveltyLambdaText: string;
+  noveltyDiverseTopText: string;
+  noveltyPoolText: string;
+}): {
+  novelty_lambda?: number;
+  novelty_diverse_top?: number;
+  novelty_pool?: number;
+} {
+  const lamStr = args.noveltyLambdaText.trim();
+  if (!lamStr) return {};
+  const novelty_lambda = Number(lamStr);
+  if (
+    !Number.isFinite(novelty_lambda) ||
+    novelty_lambda <= 0 ||
+    novelty_lambda > 1
+  ) {
+    return {};
+  }
+  const out: {
+    novelty_lambda: number;
+    novelty_diverse_top?: number;
+    novelty_pool?: number;
+  } = { novelty_lambda };
+
+  const dStr = args.noveltyDiverseTopText.trim();
+  if (dStr) {
+    const d = parseInt(dStr, 10);
+    if (Number.isFinite(d) && d >= 1 && d <= MAX_NOVELTY_DIVERSE_TOP_UI) {
+      out.novelty_diverse_top = d;
+    }
+  }
+  const pStr = args.noveltyPoolText.trim();
+  if (pStr) {
+    const p = parseInt(pStr, 10);
+    if (Number.isFinite(p) && p >= 2 && p <= MAX_NOVELTY_POOL_UI) {
+      out.novelty_pool = p;
+    }
+  }
+  return out;
+}
+
 /** Body for POST /api/optimize/start from workspace UI (mirrors handleRunOptimize). */
 export function buildWorkspaceOptimizeStartBody(args: {
   shipId: string;
@@ -165,6 +212,10 @@ export function buildWorkspaceOptimizeStartBody(args: {
   tieredTopK?: number | null;
   /** Merge heuristic seeds into main optimize warm-start (requires non-empty selected seeds). */
   fastDiscovery?: boolean;
+  /** MMR blend in (0, 1]; blank = omit (pure strength ordering). */
+  noveltyLambdaText?: string;
+  noveltyDiverseTopText?: string;
+  noveltyPoolText?: string;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -220,5 +271,10 @@ export function buildWorkspaceOptimizeStartBody(args: {
       ? { tiered_top_k: args.tieredTopK }
       : {}),
     ...(args.fastDiscovery === true ? { fast_discovery: true } : {}),
+    ...noveltyFieldsForOptimizeBody({
+      noveltyLambdaText: args.noveltyLambdaText ?? "",
+      noveltyDiverseTopText: args.noveltyDiverseTopText ?? "",
+      noveltyPoolText: args.noveltyPoolText ?? "",
+    }),
   };
 }
