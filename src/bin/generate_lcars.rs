@@ -459,42 +459,149 @@ fn effect_condition_from_canonical(
         .conditions
         .iter()
         .any(|c| c.trim().eq_ignore_ascii_case("EnemyHullFaction"));
+    let wants_combat_battle_type = a
+        .conditions
+        .iter()
+        .any(|c| c.trim().eq_ignore_ascii_case("CombatBattleType"));
+    let wants_target_max_level = a
+        .conditions
+        .iter()
+        .any(|c| c.trim().eq_ignore_ascii_case("TargetMaxLevel"));
+    let wants_hull_health_below_start = a.conditions.iter().any(|c| {
+        c.trim()
+            .eq_ignore_ascii_case("HullHealthBelowStartOfCombat")
+    });
+    let wants_hull_health_below = a
+        .conditions
+        .iter()
+        .any(|c| c.trim().eq_ignore_ascii_case("HullHealthBelow"));
+    let wants_hull_health_above = a
+        .conditions
+        .iter()
+        .any(|c| c.trim().eq_ignore_ascii_case("HullHealthAbove"));
     let filtered: Vec<String> = a
         .conditions
         .iter()
-        .filter(|c| !c.trim().eq_ignore_ascii_case("EnemyHullFaction"))
+        .filter(|c| {
+            let t = c.trim();
+            !t.eq_ignore_ascii_case("EnemyHullFaction")
+                && !t.eq_ignore_ascii_case("CombatBattleType")
+                && !t.eq_ignore_ascii_case("TargetMaxLevel")
+                && !t.eq_ignore_ascii_case("HullHealthBelowStartOfCombat")
+                && !t.eq_ignore_ascii_case("HullHealthBelow")
+                && !t.eq_ignore_ascii_case("HullHealthAbove")
+        })
         .cloned()
         .collect();
-    let base = canonical_conditions_to_lcars(&filtered, officer_name, ability_label);
-    if !wants_hull_faction {
-        return base;
+    let mut conditions: Vec<LcarsCondition> =
+        canonical_conditions_to_lcars(&filtered, officer_name, ability_label)
+            .into_iter()
+            .collect();
+
+    if wants_hull_faction {
+        match faction_id_from_canonical_attributes(attrs) {
+            Some(fid) => conditions.push(LcarsCondition {
+                condition_type: "defender_hull_faction_id".to_string(),
+                stat: None,
+                threshold_pct: None,
+                min: None,
+                max: None,
+                faction: None,
+                group: None,
+                min_members: None,
+                tag: None,
+                ship_type: None,
+                faction_id: Some(fid),
+                ship_id: None,
+                enemy_type: None,
+                battle_types: None,
+                conditions: None,
+            }),
+            None => {
+                eprintln!(
+                    "generate_lcars: EnemyHullFaction without parseable faction_id in attributes \
+                     (officer {officer_name:?}, ability {ability_label:?})"
+                );
+            }
+        }
     }
-    let Some(fid) = faction_id_from_canonical_attributes(attrs) else {
-        eprintln!(
-            "generate_lcars: EnemyHullFaction without parseable faction_id in attributes \
-             (officer {officer_name:?}, ability {ability_label:?})"
-        );
-        return base;
-    };
-    let hull = LcarsCondition {
-        condition_type: "defender_hull_faction_id".to_string(),
-        stat: None,
-        threshold_pct: None,
-        min: None,
-        max: None,
-        faction: None,
-        group: None,
-        min_members: None,
-        tag: None,
-        ship_type: None,
-        faction_id: Some(fid),
-        ship_id: None,
-        enemy_type: None,
-        conditions: None,
-    };
-    match base {
-        None => Some(hull),
-        Some(b) => Some(LcarsCondition {
+
+    if wants_combat_battle_type {
+        match battle_types_from_canonical_attributes(attrs) {
+            Some(ids) if !ids.is_empty() => conditions.push(LcarsCondition {
+                condition_type: "combat_battle_type_any".to_string(),
+                stat: None,
+                threshold_pct: None,
+                min: None,
+                max: None,
+                faction: None,
+                group: None,
+                min_members: None,
+                tag: None,
+                ship_type: None,
+                faction_id: None,
+                ship_id: None,
+                enemy_type: None,
+                battle_types: Some(ids),
+                conditions: None,
+            }),
+            _ => eprintln!(
+                "generate_lcars: CombatBattleType without parseable battle_types in attributes \
+                 (officer {officer_name:?}, ability {ability_label:?})"
+            ),
+        }
+    }
+
+    if wants_target_max_level {
+        match max_level_from_canonical_attributes(attrs) {
+            Some(max_level) => conditions.push(LcarsCondition {
+                condition_type: "defender_level_at_most".to_string(),
+                stat: None,
+                threshold_pct: None,
+                min: None,
+                max: Some(max_level),
+                faction: None,
+                group: None,
+                min_members: None,
+                tag: None,
+                ship_type: None,
+                faction_id: None,
+                ship_id: None,
+                enemy_type: None,
+                battle_types: None,
+                conditions: None,
+            }),
+            None => eprintln!(
+                "generate_lcars: TargetMaxLevel without parseable max_level in attributes \
+                 (officer {officer_name:?}, ability {ability_label:?})"
+            ),
+        }
+    }
+
+    for token in [
+        (wants_hull_health_above, "HullHealthAbove"),
+        (
+            wants_hull_health_below_start,
+            "HullHealthBelowStartOfCombat",
+        ),
+        (wants_hull_health_below, "HullHealthBelow"),
+    ]
+    .into_iter()
+    .filter_map(|(enabled, tok)| enabled.then_some(tok))
+    {
+        match hull_health_condition_from_canonical_attributes(token, attrs, a.target.as_deref()) {
+            Some(c) => conditions.push(c),
+            None => eprintln!(
+                "generate_lcars: {token} without parseable percentage in attributes \
+                 (officer {officer_name:?}, ability {ability_label:?})"
+            ),
+        }
+    }
+
+    match conditions.len() {
+        0 => None,
+        1 => conditions.pop(),
+        _ => Some(LcarsCondition {
             condition_type: "and".to_string(),
             stat: None,
             threshold_pct: None,
@@ -508,7 +615,8 @@ fn effect_condition_from_canonical(
             faction_id: None,
             ship_id: None,
             enemy_type: None,
-            conditions: Some(vec![b, hull]),
+            battle_types: None,
+            conditions: Some(conditions),
         }),
     }
 }
@@ -645,6 +753,103 @@ fn faction_id_from_canonical_attributes(raw: &str) -> Option<i64> {
         return val.parse::<i64>().ok();
     }
     None
+}
+
+fn percentage_from_canonical_attributes(raw: &str) -> Option<f64> {
+    for part in raw.split(',') {
+        let mut it = part.trim().splitn(2, '=');
+        let key = it.next()?.trim();
+        if !key.eq_ignore_ascii_case("percentage") {
+            continue;
+        }
+        let val = it.next()?.trim();
+        if val.is_empty() {
+            return None;
+        }
+        let parsed = val.parse::<f64>().ok()?;
+        if !parsed.is_finite() {
+            return None;
+        }
+        return Some(parsed.clamp(0.0, 1.0));
+    }
+    None
+}
+
+fn battle_types_from_canonical_attributes(raw: &str) -> Option<Vec<u32>> {
+    let lower = raw.to_ascii_lowercase();
+    let key = "battle_types=";
+    let idx = lower.find(key)?;
+    let after = &raw[idx + key.len()..];
+    let start = after.find('[')?;
+    let rest = &after[start + 1..];
+    let end = rest.find(']')?;
+    let inner = &rest[..end];
+    let mut out = Vec::new();
+    for token in inner.split(',') {
+        let t = token.trim();
+        if t.is_empty() {
+            continue;
+        }
+        let id = t.parse::<u32>().ok()?;
+        out.push(id);
+    }
+    out.sort_unstable();
+    out.dedup();
+    Some(out)
+}
+
+fn max_level_from_canonical_attributes(raw: &str) -> Option<u32> {
+    for part in raw.split(',') {
+        let mut it = part.trim().splitn(2, '=');
+        let key = it.next()?.trim();
+        if !key.eq_ignore_ascii_case("max_level") {
+            continue;
+        }
+        let val = it.next()?.trim();
+        if val.is_empty() {
+            return None;
+        }
+        return val.parse::<u32>().ok();
+    }
+    None
+}
+
+fn hull_health_condition_from_canonical_attributes(
+    token: &str,
+    attrs: &str,
+    target: Option<&str>,
+) -> Option<LcarsCondition> {
+    let threshold_pct = percentage_from_canonical_attributes(attrs)?;
+    let stat = if target
+        .map(|t| t.to_ascii_lowercase().contains("enemy"))
+        .unwrap_or(false)
+    {
+        "hull_hp"
+    } else {
+        "attacker_hull_hp"
+    };
+    let ty = if token.eq_ignore_ascii_case("HullHealthAbove") {
+        "stat_above"
+    } else {
+        "stat_below"
+    };
+    Some(LcarsCondition {
+        condition_type: ty.to_string(),
+        stat: Some(stat.to_string()),
+        threshold_pct: Some(threshold_pct),
+        min: None,
+        max: None,
+        faction: None,
+        group: None,
+        min_members: None,
+        tag: None,
+        ship_type: None,
+        faction_id: None,
+        ship_id: None,
+        enemy_type: None,
+        battle_types: None,
+        conditions: None,
+    })
 }
 
 /// Parse `num_rounds=N` from canonical ability `attributes` (comma-separated `key=value` pairs).
@@ -863,6 +1068,49 @@ mod canonical_condition_tests {
     }
 
     #[test]
+    fn percentage_from_attributes_parses_and_clamps() {
+        assert_eq!(
+            super::percentage_from_canonical_attributes("percentage=0.7, foo=1"),
+            Some(0.7)
+        );
+        assert_eq!(
+            super::percentage_from_canonical_attributes("percentage=2.5"),
+            Some(1.0)
+        );
+        assert_eq!(
+            super::percentage_from_canonical_attributes("percentage=-0.2"),
+            Some(0.0)
+        );
+        assert_eq!(super::percentage_from_canonical_attributes("foo=1"), None);
+    }
+
+    #[test]
+    fn battle_types_from_attributes_parses_and_dedups() {
+        assert_eq!(
+            super::battle_types_from_canonical_attributes("battle_types=[9, 4, 4, 2]"),
+            Some(vec![2, 4, 9])
+        );
+        assert_eq!(
+            super::battle_types_from_canonical_attributes("foo=1,battle_types=[4]"),
+            Some(vec![4])
+        );
+        assert_eq!(super::battle_types_from_canonical_attributes("foo=1"), None);
+    }
+
+    #[test]
+    fn max_level_from_attributes_parses() {
+        assert_eq!(
+            super::max_level_from_canonical_attributes("max_level=70"),
+            Some(70)
+        );
+        assert_eq!(
+            super::max_level_from_canonical_attributes("foo=1,max_level=51"),
+            Some(51)
+        );
+        assert_eq!(super::max_level_from_canonical_attributes("foo=1"), None);
+    }
+
+    #[test]
     fn enemy_hull_faction_merges_with_mapped_conditions() {
         let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
             "modifier": "AllDamage",
@@ -978,5 +1226,98 @@ mod canonical_condition_tests {
         assert_eq!(kids[0].enemy_type.as_deref(), Some("group_armadas"));
         assert_eq!(kids[1].condition_type, "defender_ship_type_is");
         assert_eq!(kids[1].ship_type.as_deref(), Some("armada"));
+    }
+
+    #[test]
+    fn hull_health_below_token_merges_to_stat_below_attacker_hull_threshold() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot": "officer",
+            "trigger": "RoundStart",
+            "modifier": "AllDamage",
+            "operation": "MultiplyAdd",
+            "target": "SelfShip",
+            "attributes": "percentage=0.6",
+            "conditions": ["HullHealthBelow"],
+            "chance_by_rank": [1.0],
+            "value_by_rank": [0.1]
+        }))
+        .unwrap();
+        let c = super::effect_condition_from_canonical(&a, "Chang", "AllDamage").expect("cond");
+        assert_eq!(c.condition_type, "stat_below");
+        assert_eq!(c.stat.as_deref(), Some("attacker_hull_hp"));
+        assert_eq!(c.threshold_pct, Some(0.6));
+    }
+
+    #[test]
+    fn hull_health_below_start_and_hull_health_above_merge_with_other_conds() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot": "captain",
+            "trigger": "RoundStart",
+            "modifier": "AddState",
+            "operation": "Set",
+            "target": "EnemyShip",
+            "attributes": "num_rounds=1, percentage=0.3, state=8",
+            "conditions": ["EnemyPlayer", "HullHealthBelowStartOfCombat", "HullHealthAbove"],
+            "chance_by_rank": [0.8],
+            "value_by_rank": [1.0]
+        }))
+        .unwrap();
+        let c = super::effect_condition_from_canonical(&a, "TOS Kirk", "AddState").expect("cond");
+        assert_eq!(c.condition_type, "and");
+        let kids = c.conditions.as_ref().expect("children");
+        assert_eq!(kids.len(), 3);
+        assert_eq!(kids[0].condition_type, "defender_is_player_ship");
+        assert_eq!(kids[1].condition_type, "stat_above");
+        assert_eq!(kids[1].stat.as_deref(), Some("hull_hp"));
+        assert_eq!(kids[1].threshold_pct, Some(0.3));
+        assert_eq!(kids[2].condition_type, "stat_below");
+        assert_eq!(kids[2].stat.as_deref(), Some("hull_hp"));
+        assert_eq!(kids[2].threshold_pct, Some(0.3));
+    }
+
+    #[test]
+    fn combat_battle_type_merges_to_condition_from_attributes() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot": "officer",
+            "trigger": "CombatStart",
+            "modifier": "AllPiercing",
+            "operation": "MultiplyAdd",
+            "target": "SelfShip",
+            "attributes": "battle_types=[4, 9, 4]",
+            "conditions": ["CombatBattleType", "TargetHasHullBreach"],
+            "chance_by_rank": [1.0],
+            "value_by_rank": [0.1]
+        }))
+        .unwrap();
+        let c = super::effect_condition_from_canonical(&a, "Data", "AllPiercing").expect("cond");
+        assert_eq!(c.condition_type, "and");
+        let kids = c.conditions.as_ref().expect("children");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "defender_hull_breach");
+        assert_eq!(kids[1].condition_type, "combat_battle_type_any");
+        assert_eq!(kids[1].battle_types, Some(vec![4, 9]));
+    }
+
+    #[test]
+    fn target_max_level_merges_to_defender_level_condition() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot": "captain",
+            "trigger": "CombatStart",
+            "modifier": "AllDamage",
+            "operation": "MultiplyAdd",
+            "target": "SelfShip",
+            "attributes": "max_level=70",
+            "conditions": ["TargetMaxLevel", "EnemyHostile"],
+            "chance_by_rank": [1.0],
+            "value_by_rank": [0.2]
+        }))
+        .unwrap();
+        let c = super::effect_condition_from_canonical(&a, "Bones", "AllDamage").expect("cond");
+        assert_eq!(c.condition_type, "and");
+        let kids = c.conditions.as_ref().expect("children");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "defender_is_npc_hostile");
+        assert_eq!(kids[1].condition_type, "defender_level_at_most");
+        assert_eq!(kids[1].max, Some(70));
     }
 }

@@ -51,6 +51,7 @@ fn defender_counter_respects_weapon_base_shots() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let player = Combatant {
@@ -124,6 +125,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let player = Combatant {
@@ -439,6 +441,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -551,6 +554,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -655,6 +659,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let baseline = simulate_combat(
@@ -835,6 +840,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew = CrewConfiguration::default();
@@ -927,6 +933,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -987,6 +994,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -1045,6 +1053,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -1104,6 +1113,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew_no_apex = CrewConfiguration::default();
@@ -1190,6 +1200,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew_no_apex = CrewConfiguration::default();
@@ -1277,6 +1288,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew_no_ship_ability = CrewConfiguration::default();
@@ -1359,6 +1371,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew = CrewConfiguration {
@@ -1473,6 +1486,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let cfg_tagged = SimulationConfig {
@@ -1557,6 +1571,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let cfg_tagged = SimulationConfig {
@@ -1640,6 +1655,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let cfg_tagged = SimulationConfig {
@@ -1710,6 +1726,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: vec![
             EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS[0].to_string()
         ],
@@ -1819,6 +1836,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew = CrewConfiguration {
@@ -1922,6 +1940,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew = CrewConfiguration {
@@ -2026,6 +2045,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew = CrewConfiguration {
@@ -2131,6 +2151,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew = CrewConfiguration {
@@ -2263,6 +2284,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let uncapped = CrewConfiguration {
@@ -2386,6 +2408,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew_plain = CrewConfiguration::default();
@@ -2496,6 +2519,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -2584,6 +2608,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -2688,6 +2713,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -2806,6 +2832,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -2908,6 +2935,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -3001,6 +3029,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -3095,6 +3124,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -3187,6 +3217,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -3270,6 +3301,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -3337,6 +3369,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -3568,6 +3601,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -3676,6 +3710,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -3766,6 +3801,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -3903,6 +3939,7 @@ fn burning_deals_one_percent_hull_per_round() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_crew,
@@ -4009,6 +4046,7 @@ fn burning_triggers_on_combat_begin() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_only_crew(TimingWindow::CombatBegin),
@@ -4069,6 +4107,7 @@ fn burning_triggers_on_defense_phase_per_shot() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_only_crew(TimingWindow::DefensePhase),
@@ -4129,6 +4168,7 @@ fn burning_triggers_on_round_end_before_tick() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_only_crew(TimingWindow::RoundEnd),
@@ -4196,6 +4236,7 @@ fn burning_triggers_on_shield_break() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_only_crew(TimingWindow::ShieldBreak),
@@ -4296,6 +4337,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -4356,6 +4398,7 @@ fn burning_triggers_on_receive_damage_hull() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_only_crew(TimingWindow::ReceiveDamage),
@@ -4416,6 +4459,7 @@ fn burning_triggers_on_kill() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_only_crew(TimingWindow::Kill),
@@ -4476,6 +4520,7 @@ fn burning_triggers_on_after_subround() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &burning_only_crew(TimingWindow::AfterSubround),
@@ -4626,6 +4671,7 @@ fn emits_ability_activation_for_each_timing_window() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -4746,6 +4792,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
 
@@ -4826,6 +4873,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &decay_crew);
@@ -4903,6 +4951,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &accumulate_crew);
@@ -4964,6 +5013,7 @@ fn combat_rounds_are_capped_at_100() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &CrewConfiguration::default(),
@@ -5059,6 +5109,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew_no_regen,
@@ -5076,6 +5127,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew_with_regen,
@@ -5144,6 +5196,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &CrewConfiguration::default(),
@@ -5213,6 +5266,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew = CrewConfiguration::default();
@@ -5281,6 +5335,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew_empty = CrewConfiguration::default();
@@ -5358,6 +5413,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let crew_base_iso = CrewConfiguration {
@@ -5477,6 +5533,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -5565,6 +5622,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -5644,6 +5702,7 @@ fn shots_bonus_increases_damage() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let no_bonus = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -5764,6 +5823,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -5851,6 +5911,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew_with_regen,
@@ -5868,6 +5929,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &CrewConfiguration::default(),
@@ -5976,6 +6038,7 @@ fn combat_end_window_respects_condition_filtering() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -6067,6 +6130,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,
@@ -6201,6 +6265,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let res = simulate_combat(&attacker, &defender, &config, &crew);
@@ -6279,6 +6344,7 @@ fn defender_round_start_hull_regen_heals_defender() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let without = simulate_combat_with_defender_faction_and_defender_crew(
@@ -6391,6 +6457,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -6504,6 +6571,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: EnemyTypes::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let cfg_group = SimulationConfig {
@@ -6603,6 +6671,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let baseline_armada = simulate_combat_with_defender_faction_and_defender_crew(

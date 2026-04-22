@@ -283,6 +283,9 @@ pub struct SimulationConfig {
     /// Default is only [`EnemyType::RedMovingSpace`]; set from [`crate::data::hostile::HostileRecord::engagement_enemy_types`] when curated.
     #[serde(default)]
     pub engagement_enemy_types: EnemyTypes,
+    /// Optional hostile level for canonical `TargetMaxLevel` (`AbilityCondition::DefenderLevelAtMost`).
+    #[serde(default)]
+    pub defender_level: Option<u32>,
     /// Canonical officer ids assigned to the attacker (captain, bridge, below) for
     /// **Evolutionary Assimilation** vs Conqueror Borg: when any id matches the curated forbidden
     /// roster and beam suppression is inactive, combat ends in instant hull loss. Empty: do not
@@ -303,6 +306,7 @@ impl Default for SimulationConfig {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: EnemyTypes::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Vec::new(),
         }
     }

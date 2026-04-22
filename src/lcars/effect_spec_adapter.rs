@@ -345,6 +345,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         };
         let spec = lcars_condition_to_spec(&c).expect("spec");

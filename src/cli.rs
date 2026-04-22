@@ -268,6 +268,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             defender_hull_faction_id,
             defender_hostile_tag_mask,
             engagement_enemy_types: EnemyTypes::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Vec::new(),
         },
         &CrewConfiguration::default(),

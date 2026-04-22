@@ -291,6 +291,7 @@ mod tests {
             class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
             engagement_enemy_types: EnemyTypes::default(),
+            defender_level: None,
         }
     }
 

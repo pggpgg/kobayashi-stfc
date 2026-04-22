@@ -212,6 +212,10 @@ pub struct LcarsCondition {
     /// Engagement tag slug for `engagement_includes` (e.g. `group_armadas`); same strings as [`crate::combat::EnemyType`] JSON.
     #[serde(default)]
     pub enemy_type: Option<String>,
+    /// Raw STFC `battle_types` ids (from canonical attributes `battle_types=[...]`).
+    /// Used by `combat_battle_type_any`.
+    #[serde(default)]
+    pub battle_types: Option<Vec<u32>>,
     #[serde(default)]
     pub conditions: Option<Vec<LcarsCondition>>,
 }

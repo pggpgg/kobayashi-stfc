@@ -72,6 +72,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -149,6 +150,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -209,6 +211,7 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let result = simulate_combat(&attacker, &defender, &config, &crew);
@@ -308,6 +311,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: Default::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Default::default(),
     };
     let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());

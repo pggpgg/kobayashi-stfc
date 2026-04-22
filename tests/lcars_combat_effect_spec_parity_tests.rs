@@ -30,6 +30,7 @@ fn empty_lcars_condition() -> LcarsCondition {
         faction_id: None,
         ship_id: None,
         enemy_type: None,
+        battle_types: None,
         conditions: None,
     }
 }

@@ -328,6 +328,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         attacker_tal_assigned_captain_or_bridge,
         defender_hostile_tag_mask: config.defender_hostile_tag_mask,
         engagement_enemy_types: config.engagement_enemy_types.clone(),
+        combat_battle_type_id: None,
+        defender_level: config.defender_level,
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
@@ -467,6 +469,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
             engagement_enemy_types: config.engagement_enemy_types.clone(),
+            combat_battle_type_id: None,
+            defender_level: config.defender_level,
         };
         let defender_rs_for_assim =
             filter_effects_by_condition(&defender_round_start_effects, &ctx_def_round_start);
@@ -526,6 +530,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
             engagement_enemy_types: config.engagement_enemy_types.clone(),
+            combat_battle_type_id: None,
+            defender_level: config.defender_level,
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -1382,6 +1388,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         .attacker_tal_assigned_captain_or_bridge,
                     defender_hostile_tag_mask: config.defender_hostile_tag_mask,
                     engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+                    combat_battle_type_id: combat_ctx.combat_battle_type_id,
+                    defender_level: combat_ctx.defender_level,
                 };
                 let defender_combat_begin_filtered =
                     filter_effects_by_condition(&defender_combat_begin_effects, &defender_ctx);
@@ -1836,6 +1844,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     .attacker_tal_assigned_captain_or_bridge,
                 defender_hostile_tag_mask: config.defender_hostile_tag_mask,
                 engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+                combat_battle_type_id: combat_ctx.combat_battle_type_id,
+                defender_level: combat_ctx.defender_level,
             };
             let after_subround_filtered =
                 filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
@@ -1918,6 +1928,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 .attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
             engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+            combat_battle_type_id: combat_ctx.combat_battle_type_id,
+            defender_level: combat_ctx.defender_level,
         };
         let round_end_burn_filtered =
             filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
@@ -2064,6 +2076,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     .attacker_tal_assigned_captain_or_bridge,
                 defender_hostile_tag_mask: config.defender_hostile_tag_mask,
                 engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+                combat_battle_type_id: combat_ctx.combat_battle_type_id,
+                defender_level: combat_ctx.defender_level,
             };
             let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
@@ -2133,6 +2147,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         attacker_tal_assigned_captain_or_bridge,
         defender_hostile_tag_mask: config.defender_hostile_tag_mask,
         engagement_enemy_types: config.engagement_enemy_types.clone(),
+        combat_battle_type_id: None,
+        defender_level: config.defender_level,
     };
     let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
     record_ability_activations(

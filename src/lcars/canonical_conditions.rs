@@ -20,6 +20,7 @@ fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
         faction_id: None,
         ship_id: None,
         enemy_type: None,
+        battle_types: None,
         conditions: None,
     }
 }
@@ -46,6 +47,7 @@ fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
         faction_id: None,
         ship_id: None,
         enemy_type: None,
+        battle_types: None,
         conditions: Some(vec![inner]),
     }
 }
@@ -71,6 +73,7 @@ fn lcars_or(children: Vec<LcarsCondition>) -> LcarsCondition {
         faction_id: None,
         ship_id: None,
         enemy_type: None,
+        battle_types: None,
         conditions: Some(children),
     }
 }
@@ -184,7 +187,14 @@ pub fn is_canonical_condition_mapped(token: &str) -> bool {
 
 /// Condition tokens that are not handled by [`map_canonical_condition_token`] but are still merged
 /// into officer LCARS by `generate_lcars` (typically from the ability `attributes` string).
-const OFFICER_LCARS_ATTRIBUTE_MERGED_CONDITION_TOKENS: &[&str] = &["EnemyHullFaction"];
+const OFFICER_LCARS_ATTRIBUTE_MERGED_CONDITION_TOKENS: &[&str] = &[
+    "EnemyHullFaction",
+    "CombatBattleType",
+    "TargetMaxLevel",
+    "HullHealthBelowStartOfCombat",
+    "HullHealthBelow",
+    "HullHealthAbove",
+];
 
 /// True when canonical `conditions` need no triage for the officer LCARS pipeline: either
 /// [`map_canonical_condition_token`] returns LCARS, or `generate_lcars` merges the token from
@@ -243,6 +253,7 @@ pub fn canonical_conditions_to_lcars(
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: Some(mapped),
         }),
     }
@@ -452,6 +463,26 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn hull_health_tokens_are_marked_as_attribute_merged() {
+        for tok in [
+            "CombatBattleType",
+            "TargetMaxLevel",
+            "HullHealthBelowStartOfCombat",
+            "HullHealthBelow",
+            "HullHealthAbove",
+        ] {
+            assert!(
+                map_canonical_condition_token(tok).is_none(),
+                "{tok} should be merged from canonical attributes, not token-only map"
+            );
+            assert!(
+                is_canonical_officer_condition_resolved(tok),
+                "{tok} should be considered resolved for officer LCARS reports"
+            );
+        }
+    }
+
     // Task 2 audit: tokens below still lack a 1:1 AbilityCondition / CombatContext story (see
     // docs/CANONICAL_CONDITIONS.md). When engine support exists, map in map_canonical_condition_token
     // and remove the token from DEFERRED.
@@ -459,9 +490,7 @@ mod tests {
     fn task2_deferred_tokens_remain_unmapped() {
         const DEFERRED: &[&str] = &[
             "TargetNotASB",
-            "TargetMaxLevel",
             "SelfDefending",
-            "CombatBattleType",
             "EnemySentinel",
             "ModuleKinetic",
             "CombatGameContext",

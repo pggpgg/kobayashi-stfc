@@ -62,6 +62,7 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         },
         &crew,

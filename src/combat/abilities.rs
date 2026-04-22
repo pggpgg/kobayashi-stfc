@@ -201,6 +201,11 @@ pub struct CombatContext {
     pub defender_hostile_tag_mask: u32,
     /// Engagement category tags from [`crate::combat::SimulationConfig::engagement_enemy_types`] (armada solo/group, etc.).
     pub engagement_enemy_types: EnemyTypes,
+    /// Optional upstream STFC combat battle-type id for canonical `CombatBattleType` gating.
+    /// `None` means unknown/unset for this scenario.
+    pub combat_battle_type_id: Option<u32>,
+    /// Optional defender level from hostile catalog for canonical `TargetMaxLevel`.
+    pub defender_level: Option<u32>,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -252,6 +257,12 @@ pub enum AbilityCondition {
     },
     /// True when [`CombatContext::engagement_enemy_types`] lists this tag (e.g. group armadas only).
     EngagementIncludes(EnemyType),
+    /// True when the engagement battle-type id is in this allow-list.
+    /// If battle type is unavailable in context, this condition currently evaluates leniently true.
+    CombatBattleTypeAny(Vec<u32>),
+    /// True when defender level is <= max_level.
+    /// If defender level is unavailable in context, this condition currently evaluates leniently true.
+    DefenderLevelAtMost(u32),
     /// Logical negation of a single sub-condition (LCARS `not`).
     Not(Box<AbilityCondition>),
     And(Vec<AbilityCondition>),

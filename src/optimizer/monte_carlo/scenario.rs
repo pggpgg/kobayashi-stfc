@@ -431,6 +431,8 @@ pub(crate) struct SharedScenarioData {
     pub defender_opponent: DefenderOpponent,
     /// STFC engagement tags for [`crate::combat::SimulationConfig::engagement_enemy_types`] (armada solo/group, …).
     pub engagement_enemy_types: EnemyTypes,
+    /// Optional hostile level for canonical `TargetMaxLevel`.
+    pub defender_level: Option<u32>,
 }
 
 impl SharedScenarioData {
@@ -477,6 +479,8 @@ pub(crate) struct CombatSimulationInput {
     pub profile_weapon_damage_fraction: f64,
     /// Copied into [`crate::combat::SimulationConfig::engagement_enemy_types`].
     pub engagement_enemy_types: EnemyTypes,
+    /// Copied into [`crate::combat::SimulationConfig::defender_level`].
+    pub defender_level: Option<u32>,
     /// Copied into [`crate::combat::SimulationConfig::attacker_roster_officer_ids`] (Evolutionary Assimilation).
     pub attacker_roster_officer_ids: Vec<String>,
 }
@@ -635,6 +639,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
             engagement_enemy_types: shared.engagement_enemy_types.clone(),
+            defender_level: shared.defender_level,
             attacker_roster_officer_ids,
         };
     }
@@ -738,6 +743,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
         engagement_enemy_types: shared.engagement_enemy_types.clone(),
+        defender_level: shared.defender_level,
         attacker_roster_officer_ids,
     }
 }
@@ -975,6 +981,7 @@ pub(crate) fn scenario_to_combat_input(
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
             engagement_enemy_types,
+            defender_level: Some(hostile_rec.level),
             attacker_roster_officer_ids,
         };
     }
@@ -1047,6 +1054,7 @@ pub(crate) fn scenario_to_combat_input(
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
         engagement_enemy_types: EnemyTypes::default(),
+        defender_level: None,
         attacker_roster_officer_ids,
     }
 }
@@ -1341,6 +1349,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .as_ref()
         .map(|h| h.engagement_enemy_types_for_combat())
         .unwrap_or_default();
+    let defender_level = hostile_rec.as_ref().map(|h| h.level);
 
     SharedScenarioData {
         ship: ship.to_string(),
@@ -1367,6 +1376,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
         engagement_enemy_types,
+        defender_level,
     }
 }
 
@@ -1622,6 +1632,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .as_ref()
         .map(|h| h.engagement_enemy_types_for_combat())
         .unwrap_or_default();
+    let defender_level = hostile_rec.as_ref().map(|h| h.level);
 
     SharedScenarioData {
         ship: ship.to_string(),
@@ -1648,6 +1659,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
         engagement_enemy_types,
+        defender_level,
     }
 }
 
@@ -2107,6 +2119,7 @@ mod tests {
             class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
             engagement_enemy_types: EnemyTypes::default(),
+            defender_level: None,
         };
 
         let candidate = CrewCandidate {

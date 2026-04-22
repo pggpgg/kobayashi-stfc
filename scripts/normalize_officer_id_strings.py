@@ -48,6 +48,10 @@ def normalize_id_string(s: str) -> str:
     return str(int(v))
 
 
+def normalize_condition_token(s: str) -> str:
+    return s.strip()
+
+
 def sync_below_decks_slots_from_upstream(data: dict) -> int:
     """Align ability slot with stfc.space below_decks_ability.id. Returns rows updated."""
     if not UPSTREAM_OFFICERS_DIR.is_dir():
@@ -95,6 +99,18 @@ def fix_canonical(path: Path) -> tuple[int, int]:
             if n != sid:
                 touched += 1
             o["source_officer_id"] = n
+        conds = o.get("conditions")
+        if isinstance(conds, list):
+            normalized_conds: list[str] = []
+            for cond in conds:
+                if not isinstance(cond, str):
+                    continue
+                token = normalize_condition_token(cond)
+                if token:
+                    normalized_conds.append(token)
+            if normalized_conds != conds:
+                touched += 1
+                o["conditions"] = normalized_conds
         for a in o.get("abilities", []):
             aid = a.get("ability_id")
             if isinstance(aid, str) and aid:
@@ -102,6 +118,18 @@ def fix_canonical(path: Path) -> tuple[int, int]:
                 if n != aid:
                     touched += 1
                 a["ability_id"] = n
+            conds = a.get("conditions")
+            if isinstance(conds, list):
+                normalized_conds: list[str] = []
+                for cond in conds:
+                    if not isinstance(cond, str):
+                        continue
+                    token = normalize_condition_token(cond)
+                    if token:
+                        normalized_conds.append(token)
+                if normalized_conds != conds:
+                    touched += 1
+                    a["conditions"] = normalized_conds
     bd = sync_below_decks_slots_from_upstream(data)
     with path.open("w") as f:
         json.dump(data, f, indent=2)

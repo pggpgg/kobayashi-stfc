@@ -365,6 +365,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: EnemyTypes::default(),
+        defender_level: None,
         attacker_roster_officer_ids: Vec::new(),
     };
 

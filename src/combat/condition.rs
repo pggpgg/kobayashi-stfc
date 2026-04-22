@@ -82,6 +82,18 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
                 && (ctx.defender_hostile_tag_mask & *required_mask) == *required_mask
         }
         AbilityCondition::EngagementIncludes(tag) => ctx.engagement_enemy_types.contains(*tag),
+        AbilityCondition::CombatBattleTypeAny(allowed) => {
+            if allowed.is_empty() {
+                return true;
+            }
+            ctx.combat_battle_type_id
+                .map(|id| allowed.contains(&id))
+                .unwrap_or(true)
+        }
+        AbilityCondition::DefenderLevelAtMost(max_level) => ctx
+            .defender_level
+            .map(|level| level <= *max_level)
+            .unwrap_or(true),
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),
@@ -184,6 +196,8 @@ mod tests {
             attacker_tal_assigned_captain_or_bridge: false,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: EnemyTypes::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
         }
     }
 
@@ -345,5 +359,35 @@ mod tests {
         };
         let from_research = ability_condition_from_research_bonus_key(&key).unwrap();
         assert_eq!(from_ship, from_research);
+    }
+
+    #[test]
+    fn combat_battle_type_any_evaluates_known_and_unknown_context() {
+        let mut ctx = sample_ctx();
+        let cond = AbilityCondition::CombatBattleTypeAny(vec![4, 9]);
+        ctx.combat_battle_type_id = Some(4);
+        assert!(evaluate_ability_condition(&cond, &ctx));
+        ctx.combat_battle_type_id = Some(2);
+        assert!(!evaluate_ability_condition(&cond, &ctx));
+        ctx.combat_battle_type_id = None;
+        assert!(
+            evaluate_ability_condition(&cond, &ctx),
+            "unknown battle type should remain lenient to avoid regressions"
+        );
+    }
+
+    #[test]
+    fn defender_level_at_most_evaluates_known_and_unknown_context() {
+        let mut ctx = sample_ctx();
+        let cond = AbilityCondition::DefenderLevelAtMost(51);
+        ctx.defender_level = Some(50);
+        assert!(evaluate_ability_condition(&cond, &ctx));
+        ctx.defender_level = Some(52);
+        assert!(!evaluate_ability_condition(&cond, &ctx));
+        ctx.defender_level = None;
+        assert!(
+            evaluate_ability_condition(&cond, &ctx),
+            "unknown defender level should remain lenient to avoid regressions"
+        );
     }
 }

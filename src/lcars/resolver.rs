@@ -198,6 +198,24 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
             })?;
             Ok(AbilityCondition::EngagementIncludes(et))
         }
+        "combat_battle_type_any" | "combat_battle_type" => {
+            let mut values = c
+                .battle_types
+                .clone()
+                .ok_or_else(|| format!("{ty} requires non-empty `battle_types` list"))?;
+            values.sort_unstable();
+            values.dedup();
+            if values.is_empty() {
+                return Err(format!("{ty} requires non-empty `battle_types` list"));
+            }
+            Ok(AbilityCondition::CombatBattleTypeAny(values))
+        }
+        "defender_level_at_most" | "target_max_level" => {
+            let max_level = c
+                .max
+                .ok_or_else(|| format!("{ty} requires integer `max` level"))?;
+            Ok(AbilityCondition::DefenderLevelAtMost(max_level))
+        }
         "and" => {
             let children = c.conditions.as_ref().ok_or_else(|| {
                 "`and` condition requires non-empty `conditions` array".to_string()
@@ -977,6 +995,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         }
     }
@@ -1033,6 +1052,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: Some(vec![lcars_condition("morale_active"), fc.clone()]),
         };
         let ability = LcarsAbility {
@@ -1114,6 +1134,8 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1145,6 +1167,7 @@ mod tests {
             faction_id: Some(1750120904),
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         })
         .unwrap();
@@ -1165,6 +1188,8 @@ mod tests {
             defender_hull_faction_id: 1750120904,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1193,6 +1218,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         })
         .unwrap();
@@ -1211,6 +1237,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         })
         .unwrap();
@@ -1233,6 +1260,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         })
         .unwrap();
@@ -1251,6 +1279,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         })
         .unwrap();
@@ -1273,6 +1302,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1295,6 +1325,7 @@ mod tests {
             faction_id: None,
             ship_id: Some("uss_discovery".to_string()),
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1318,6 +1349,8 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: "uss_discovery".into(),
@@ -1349,6 +1382,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1372,6 +1406,8 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
             defender_ship_type: ShipType::Explorer,
             attacker_ship_type: ShipType::Battleship,
             attacker_ship_id: String::new(),
@@ -1403,6 +1439,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         })
         .expect("npc");
@@ -1420,6 +1457,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         })
         .expect("player");
@@ -1439,6 +1477,8 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1473,6 +1513,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: Some(vec![LcarsCondition {
                 condition_type: "defender_ship_type_is".to_string(),
                 stat: None,
@@ -1487,6 +1528,7 @@ mod tests {
                 faction_id: None,
                 ship_id: None,
                 enemy_type: None,
+                battle_types: None,
                 conditions: None,
             }]),
         };
@@ -1507,6 +1549,8 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -1538,6 +1582,7 @@ mod tests {
             faction_id: None,
             ship_id: None,
             enemy_type: None,
+            battle_types: None,
             conditions: None,
         };
         let ac = resolve_lcars_condition(&c).expect("maps");
@@ -1564,6 +1609,8 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            combat_battle_type_id: None,
+            defender_level: None,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
             attacker_ship_id: String::new(),
@@ -2103,5 +2150,51 @@ mod tests {
         );
         e.trigger = Some("on_enemy_shield_break".to_string());
         assert_eq!(effect_trigger_timing(&e), Some(TimingWindow::ShieldBreak));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_combat_battle_type_any() {
+        let c = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "combat_battle_type_any".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: None,
+            enemy_type: None,
+            battle_types: Some(vec![9, 4, 4]),
+            conditions: None,
+        })
+        .expect("battle types map");
+        assert_eq!(c, AbilityCondition::CombatBattleTypeAny(vec![4, 9]));
+    }
+
+    #[test]
+    fn resolve_lcars_condition_maps_defender_level_at_most() {
+        let c = resolve_lcars_condition(&LcarsCondition {
+            condition_type: "defender_level_at_most".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: Some(51),
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: None,
+            enemy_type: None,
+            battle_types: None,
+            conditions: None,
+        })
+        .expect("level maps");
+        assert_eq!(c, AbilityCondition::DefenderLevelAtMost(51));
     }
 }
