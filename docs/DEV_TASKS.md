@@ -32,7 +32,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Work through `docs/CANONICAL_CONDITIONS.md` triage; map high-frequency "skipping unmapped" tokens (e.g. `CombatBattleType`, hull-line tokens) to engine-understood conditions with fixtures.
   - **Touchpoints:** `src/lcars/resolver.rs`, `scripts/normalize_officer_id_strings.py`, `data/officers/officers.canonical.json`.
   - **Done when:** `generate_lcars` logs zero warnings on the top 20 most-frequent tokens and tests cover each.
-- [ ] **6. Backfill `fid` coverage for forbidden/chaos tech catalog**
+- [x] **6. Backfill `fid` coverage for forbidden/chaos tech catalog** *(catalog + CSV already full `fid`; `forbidden_chaos_unresolved_import_fids` + `sync_readiness_tests` assert demo sync resolves 100% and every CSV row has `fid`.)*
   - Use `scripts/build_chaos_tech_csv_rows.mjs` + manual curation to ensure every committed catalog row has a unique `fid`; enforce in `forbidden_chaos::sync_readiness_tests`.
   - **Touchpoints:** `data/forbidden_chaos_tech.json`, `data/import/forbidden_chaos_tech.csv`, related tests.
   - **Done when:** every catalog row has a `fid` and synced profiles resolve 100% of bonuses.
@@ -114,7 +114,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 4 / 20 (tasks 1–4 shipped in-repo)
+- **Completed:** 5 / 20 (tasks 1–4, 6)
 - **In progress:** 0
 - **Blocked:** 0
 

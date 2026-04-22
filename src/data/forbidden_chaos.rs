@@ -1,10 +1,12 @@
 //! Forbidden tech and Chaos tech: name + stat bonuses (from community spreadsheet or manual).
 //! For advanced player profile when implemented.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 
 use serde::{Deserialize, Serialize};
+
+use crate::data::import;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForbiddenChaosRecord {
@@ -66,8 +68,27 @@ pub fn forbidden_chaos_sync_readiness_issues(list: &ForbiddenChaosList) -> Vec<S
     issues
 }
 
+/// `fid` values present in a synced `forbidden_tech.imported.json` payload that have **no** matching
+/// catalog row. Merge applies no combat bonuses for those entries.
+pub fn forbidden_chaos_unresolved_import_fids(
+    catalog: &ForbiddenChaosList,
+    imported: &[import::ForbiddenTechEntry],
+) -> Vec<i64> {
+    let catalog_fids: HashSet<i64> = catalog.items.iter().filter_map(|r| r.fid).collect();
+    let mut missing: Vec<i64> = imported
+        .iter()
+        .map(|e| e.fid)
+        .filter(|fid| !catalog_fids.contains(fid))
+        .collect();
+    missing.sort_unstable();
+    missing.dedup();
+    missing
+}
+
 #[cfg(test)]
 mod sync_readiness_tests {
+    use std::path::Path;
+
     use super::*;
 
     #[test]
@@ -136,6 +157,67 @@ mod sync_readiness_tests {
              Fix: set `fid` in data/import/forbidden_chaos_tech.csv or run `cargo run --bin import_forbidden_chaos` \
              with data/upstream/data-stfc-space/summary-forbidden_tech.json + translations-forbidden_tech.json present.",
             DEFAULT_FORBIDDEN_CHAOS_PATH
+        );
+    }
+
+    #[test]
+    fn repo_demo_synced_forbidden_tech_fids_resolve_in_catalog() {
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
+        let ft_path = Path::new(&manifest_dir).join("profiles/demo/forbidden_tech.imported.json");
+        let Some(imported) =
+            import::load_imported_forbidden_tech(ft_path.to_str().expect("utf8 path"))
+        else {
+            panic!(
+                "missing or invalid {}",
+                ft_path.display()
+            );
+        };
+        let Some(catalog) = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH) else {
+            panic!("missing catalog {}", DEFAULT_FORBIDDEN_CHAOS_PATH);
+        };
+        let missing = forbidden_chaos_unresolved_import_fids(&catalog, &imported);
+        assert!(
+            missing.is_empty(),
+            "demo profile forbidden_tech fids missing from {} (sync bonuses would not apply): {missing:?}",
+            DEFAULT_FORBIDDEN_CHAOS_PATH
+        );
+    }
+
+    /// Source CSV must carry `fid` on every row so the catalog stays sync-ready without relying on
+    /// optional upstream join during `import_forbidden_chaos`.
+    #[test]
+    fn repo_forbidden_chaos_csv_has_fid_on_every_data_row() {
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
+        let csv_path = Path::new(&manifest_dir).join("data/import/forbidden_chaos_tech.csv");
+        let data = fs::read_to_string(&csv_path).unwrap_or_else(|e| {
+            panic!("read {}: {e}", csv_path.display());
+        });
+        let mut reader = csv::Reader::from_reader(data.as_bytes());
+        let mut missing_rows: Vec<String> = Vec::new();
+        for (i, result) in reader.records().enumerate() {
+            let record = result.unwrap_or_else(|e| panic!("csv record {i}: {e}"));
+            if i == 0
+                && record
+                    .get(0)
+                    .map(|s| s.eq_ignore_ascii_case("name"))
+                    .unwrap_or(false)
+            {
+                continue;
+            }
+            if record.len() < 7 {
+                missing_rows.push(format!("row {}: expected >=7 columns, got {}", i + 1, record.len()));
+                continue;
+            }
+            let fid_col = record.get(3).unwrap_or("").trim();
+            if fid_col.is_empty() || fid_col.parse::<i64>().is_err() {
+                let name = record.get(0).unwrap_or("").to_string();
+                missing_rows.push(format!("row {}: name={name:?} bad fid={fid_col:?}", i + 1));
+            }
+        }
+        assert!(
+            missing_rows.is_empty(),
+            "data/import/forbidden_chaos_tech.csv rows with missing/invalid fid:\n{}",
+            missing_rows.join("\n")
         );
     }
 }
