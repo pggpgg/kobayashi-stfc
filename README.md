@@ -55,6 +55,26 @@ cargo build --release
 
 On Windows, use `target\release\kobayashi.exe` instead of `./target/release/kobayashi`.
 
+### First-time contributor path (minimal)
+
+Use this sequence to go from a fresh clone to a first passing test and running server:
+
+```bash
+# 1) First green test signal from your clone
+cargo test
+
+# 2) Build the frontend bundle for a full local UI (recommended)
+(cd frontend && npm ci && npm run build)
+
+# 3) Build and run the server from repo root
+cargo build --release
+./target/release/kobayashi serve
+```
+
+Notes:
+- Run `serve` from the repository root so the server can find `frontend/dist` and `data/`.
+- For the complete pre-push workflow (CI parity, pre-commit, Playwright, Python tests), use [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ### Prebuilt releases (GitHub)
 
 Tagged versions ([`.github/workflows/release.yml`](.github/workflows/release.yml)) publish **GitHub Release** assets: Linux x86_64 (`.tar.gz`), macOS Apple Silicon arm64 (`.tar.gz`), Windows x86_64 (`.zip`), plus a **`SHA256SUMS`** file for verification. Each archive contains the `kobayashi` binary, `frontend/dist/`, and a short `README.txt` (from [`packaging/RELEASE-BUNDLE-README.txt`](packaging/RELEASE-BUNDLE-README.txt)).

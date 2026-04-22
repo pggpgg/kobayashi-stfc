@@ -111,9 +111,9 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - GitHub Release workflow that builds `kobayashi` + `frontend/dist` and attaches zipped artifacts per OS; include a checksum file and signed tag.
   - **Touchpoints:** `.github/workflows/release.yml`, `README.md` Quick Start, `docs/DEPLOYMENT_SECURITY.md`.
   - **Done when:** tagging `vX.Y.Z` publishes three downloadable archives + release notes.
-- [ ] **20. Contributor onboarding pass (README + CONTRIBUTING + architecture diagram)**
-  - Write `CONTRIBUTING.md`, refresh `README.md`'s Quick Start, add a high-level architecture diagram (Mermaid) showing data flow: sync → profile merge → scenario build → optimizer → SPA.
-  - **Touchpoints:** `README.md`, new `CONTRIBUTING.md`, `docs/DESIGN.md`.
+- [x] **20. Contributor onboarding pass (README + CONTRIBUTING + architecture diagram)**
+  - Refresh `CONTRIBUTING.md`, refresh `README.md`'s Quick Start with a first-time contributor path, add a high-level architecture diagram (Mermaid) showing data flow: sync → profile merge → scenario build → optimizer → SPA.
+  - **Touchpoints:** `README.md`, `CONTRIBUTING.md`, `docs/DESIGN.md`.
   - **Done when:** a new contributor can go from clone → running server → first passing test using only the docs.
 
 ---
@@ -122,7 +122,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 13 / 20 (tasks 1–4, 6, 9–10, 12–15, 17, 19)
+- **Completed:** 14 / 20 (tasks 1–4, 6, 9–10, 12–15, 17, 19–20)
 - **In progress:** 0
 - **Blocked:** 0
 

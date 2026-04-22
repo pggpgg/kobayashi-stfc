@@ -84,6 +84,25 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 └─────────────────────────────────────────────────────┘
 ```
 
+### 2.1 Contributor data flow
+
+This is the onboarding-level flow from synced game data to rendered UI output:
+
+```mermaid
+flowchart LR
+  syncIngress["SyncIngress"] --> profileMerge["ProfileMerge"]
+  profileMerge --> scenarioBuild["ScenarioBuild"]
+  scenarioBuild --> optimizerRun["OptimizerAndSimulation"]
+  optimizerRun --> apiResponse["ApiResponse"]
+  apiResponse --> spaRender["SPARender"]
+```
+
+- **Sync ingress:** data enters through the sync endpoints in `src/server/sync.rs`.
+- **Profile merge:** synced roster and profile bonuses are merged from profile files under `profiles/{id}/`.
+- **Scenario build:** optimizer requests construct attacker/defender scenarios before simulation (`src/optimizer/monte_carlo/scenario.rs`).
+- **Optimizer and simulation:** candidate crews are evaluated through optimizer strategies and the combat engine (`src/optimizer/` + `src/combat/`).
+- **SPA render:** Axum API responses are consumed by the frontend workspace components under `frontend/src/`.
+
 ---
 
 ## 3. LCARS Language Specification
