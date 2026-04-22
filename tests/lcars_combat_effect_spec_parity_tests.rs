@@ -203,7 +203,7 @@ fn lcars_spec_trigger_compile_matches_officer_ability_timing() {
     ];
     for (trigger, expected_tw) in triggers {
         let e = stat_modify_effect("weapon_damage", 0.05, trigger, Some("add"), None, None);
-        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab")
+        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab", None)
             .unwrap_or_else(|| panic!("spec None for trigger {trigger}"));
         let tw = compile_trigger(spec.trigger).expect("compile_trigger");
         assert_eq!(tw, expected_tw, "trigger {trigger}");
@@ -239,7 +239,7 @@ fn lcars_on_shield_break_target_disambiguates_timing() {
     for (trigger, target, expected_tw) in cases {
         let e = stat_modify_effect("weapon_damage", 0.01, trigger, Some("add"), target, None);
         let spec =
-            lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab").expect("spec");
+            lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab", None).expect("spec");
         assert_eq!(compile_trigger(spec.trigger).unwrap(), expected_tw);
         let ability = LcarsAbility {
             name: "ab".into(),
@@ -271,7 +271,7 @@ fn lcars_effect_with_condition_spec_matches_resolve() {
         Some(c.clone()),
     );
     let spec =
-        lcars_effect_to_combat_effect_spec(&e, "id", "parity_lcars", "strike").expect("spec");
+        lcars_effect_to_combat_effect_spec(&e, "id", "parity_lcars", "strike", None).expect("spec");
     assert_eq!(spec.conditions.len(), 1);
     let cc = compile_condition(&spec.conditions[0]).expect("cc");
     let rc = resolve_lcars_condition(&c).expect("rc");
@@ -304,7 +304,7 @@ fn lcars_spec_scalar_matches_resolver_effect_for_weapon_crit_pierce() {
     ];
     for (stat, value, label) in cases {
         let e = stat_modify_effect(stat, value, "on_attack", Some("add"), None, None);
-        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab")
+        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "parity_lcars", "ab", None)
             .unwrap_or_else(|| panic!("{label} spec"));
         let scalar = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
         assert!((scalar - value).abs() < 1e-12, "{label} scalar mismatch");

@@ -264,19 +264,6 @@ fn normalize_operator(op: Option<&str>) -> String {
         .replace('-', "_")
 }
 
-fn duration_rounds_or_default(effect: &LcarsEffect, fallback: u32) -> u32 {
-    effect
-        .duration
-        .as_ref()
-        .and_then(|d| match d {
-            crate::lcars::parser::LcarsDuration::Rounds { rounds } => Some(*rounds),
-            crate::lcars::parser::LcarsDuration::Stacks { stacks } => Some(*stacks),
-            crate::lcars::parser::LcarsDuration::Permanent(_) => None,
-        })
-        .unwrap_or(fallback)
-        .max(1)
-}
-
 /// Map LCARS `trigger` (+ `target` for legacy `on_shield_break`) to engine timing. Unknown → None.
 ///
 /// Shield semantics: **enemy** shields down → [`TimingWindow::ShieldBreak`]; **your** shields down
@@ -322,16 +309,6 @@ pub(crate) fn effect_trigger_timing(effect: &LcarsEffect) -> Option<TimingWindow
     }
 }
 
-/// LCARS `armor` values often follow sheet “percent of health” magnitudes (e.g. `8`, `25`).
-/// Engine mitigation is a `0..1` fraction; treat `|v| > 1` as percent points (`v / 100`).
-fn mitigation_fraction_from_lcars_armor_value(raw: f64) -> f64 {
-    if raw.abs() > 1.0 {
-        raw / 100.0
-    } else {
-        raw
-    }
-}
-
 /// True if this effect is passive and permanent (should go only into static_buffs, not crew).
 fn is_static_effect(effect: &LcarsEffect) -> bool {
     let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
@@ -344,263 +321,29 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
 }
 
 /// Resolve a single LCARS effect into (TimingWindow, AbilityEffect) if supported.
-/// Unknown effect types or stats are skipped (graceful degradation); returns None.
-/// Static effects (passive + permanent stat_modify) return None so they are only in static_buffs.
+///
+/// Implementation: [`crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec`] →
+/// [`crate::combat::effect_spec_compile::compile_officer_combat_spec`].
 fn resolve_effect(
     effect: &LcarsEffect,
-    _ability_name: &str,
+    ability_name: &str,
     options: &ResolveOptions,
     officer_id: &str,
+    effect_index: usize,
 ) -> Option<(TimingWindow, AbilityEffect)> {
     if is_static_effect(effect) {
         return None;
     }
     let tier = options.tier_for(officer_id);
-    let timing = effect_trigger_timing(effect)?;
-
-    match effect.effect_type.as_str() {
-        "stat_modify" => {
-            let value = effect
-                .value
-                .or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(tier)))?;
-            let stat = effect.stat.as_deref().unwrap_or("");
-            let op = normalize_operator(effect.operator.as_deref());
-
-            // Map stat + operator to engine effect. Multiplicative damage -> AttackMultiplier; pierce -> PierceBonus.
-            match stat {
-                "weapon_damage" | "attack" => {
-                    if let Some(ref decay) = effect.decay {
-                        let initial = value;
-                        let decay_per_round = decay.amount.unwrap_or(0.0);
-                        let floor = decay.floor.unwrap_or(1.0);
-                        Some((
-                            timing,
-                            AbilityEffect::DecayingAttackMultiplier {
-                                initial,
-                                decay_per_round,
-                                floor,
-                            },
-                        ))
-                    } else if let Some(ref acc) = effect.accumulate {
-                        let initial = value;
-                        let growth_per_round = acc.amount.unwrap_or(0.0);
-                        let ceiling = acc.ceiling.unwrap_or(2.0);
-                        Some((
-                            timing,
-                            AbilityEffect::AccumulatingAttackMultiplier {
-                                initial,
-                                growth_per_round,
-                                ceiling,
-                            },
-                        ))
-                    } else {
-                        let mult = match op.as_str() {
-                            // Best effort: map common canonical forms to additive/multiplicative behavior.
-                            "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                            | "multiplybaseadd" => value,
-                            "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
-                            | "multiplybasesub" => 1.0 - value,
-                            "set" => value,
-                            _ => 1.0 + value,
-                        };
-                        Some((timing, AbilityEffect::AttackMultiplier(mult)))
-                    }
-                }
-                "shield_pierce" | "armor_pierce" => {
-                    let add = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
-                        "sub" | "mul_sub" | "multiplysub" => -value,
-                        "set" => value,
-                        _ => value,
-                    };
-                    Some((timing, AbilityEffect::PierceBonus(add)))
-                }
-                "crit_chance" => {
-                    let add = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                        | "multiplybaseadd" => return None,
-                        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
-                        | "multiplybasesub" => -value,
-                        "set" => return None,
-                        _ => value,
-                    };
-                    Some((timing, AbilityEffect::CritChanceBonus(add)))
-                }
-                "crit_damage" => {
-                    let mult = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                        | "multiplybaseadd" => value,
-                        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
-                        | "multiplybasesub" => (1.0 - value).max(0.0),
-                        "set" => value.max(0.0),
-                        _ => 1.0 + value,
-                    };
-                    if mult.is_finite() && mult > 0.0 {
-                        Some((timing, AbilityEffect::CritDamageMultiplier(mult)))
-                    } else {
-                        None
-                    }
-                }
-                "apex_shred" => Some((timing, AbilityEffect::ApexShredBonus(value))),
-                "apex_barrier" => Some((timing, AbilityEffect::ApexBarrierBonus(value))),
-                "shield_regen" | "shield_hp_repair" => {
-                    Some((timing, AbilityEffect::ShieldRegen(value)))
-                }
-                "hull_hp_repair_prev_round" | "hull_repair_prev_round" => {
-                    if timing != TimingWindow::RoundStart {
-                        return None;
-                    }
-                    Some((timing, AbilityEffect::HullRegenPrevRoundFraction(value)))
-                }
-                "shield_hp_repair_prev_round" | "shield_repair_prev_round" => {
-                    if timing != TimingWindow::RoundStart {
-                        return None;
-                    }
-                    Some((timing, AbilityEffect::ShieldRegenPrevRoundFraction(value)))
-                }
-                "hull_repair" | "hull_hp_repair" => {
-                    if timing == TimingWindow::Kill {
-                        Some((timing, AbilityEffect::OnKillHullRegen(value)))
-                    } else {
-                        Some((timing, AbilityEffect::HullRegen(value)))
-                    }
-                }
-                "isolytic_damage" => {
-                    let add = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
-                        "sub" | "mul_sub" | "multiplysub" => -value,
-                        _ => value,
-                    };
-                    Some((timing, AbilityEffect::IsolyticDamageBonus(add)))
-                }
-                "isolytic_defense" => {
-                    let add = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
-                        "sub" | "mul_sub" | "multiplysub" => -value,
-                        _ => value,
-                    };
-                    Some((timing, AbilityEffect::IsolyticDefenseBonus(add)))
-                }
-                "isolytic_cascade" | "isolytic_cascade_damage" => {
-                    let add = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
-                        "sub" | "mul_sub" | "multiplysub" => -value,
-                        _ => value,
-                    };
-                    Some((timing, AbilityEffect::IsolyticCascadeDamageBonus(add)))
-                }
-                "shield_mitigation" => {
-                    let add = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
-                        "sub" | "mul_sub" | "multiplysub" => -value,
-                        _ => value,
-                    };
-                    Some((timing, AbilityEffect::ShieldMitigationBonus(add)))
-                }
-                "armor" => {
-                    if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
-                        return None;
-                    }
-                    let add = match op.as_str() {
-                        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                        | "multiplybaseadd" => value - 1.0,
-                        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub"
-                        | "multiplybasesub" => -value,
-                        "set" => return None,
-                        _ => value,
-                    };
-                    Some((
-                        timing,
-                        AbilityEffect::MitigationAdditive(
-                            mitigation_fraction_from_lcars_armor_value(add),
-                        ),
-                    ))
-                }
-                // Combat-begin accuracy is merged in [resolve_crew_to_buff_set]; other timings are not modeled.
-                "accuracy" => None,
-                "shots" | "weapon_shots" | "shots_per_weapon" | "shots_per_attack" => {
-                    // +X% shots for Y rounds (round half-even applied in engine). Only at round start or combat begin.
-                    if matches!(timing, TimingWindow::RoundStart | TimingWindow::CombatBegin) {
-                        let bonus_pct = match op.as_str() {
-                            "multiply" | "mul_add" | "multiplyadd" => value - 1.0,
-                            "sub" | "mul_sub" | "multiplysub" => -value,
-                            "set" => value,
-                            _ => value,
-                        };
-                        let duration_rounds = duration_rounds_or_default(effect, 1);
-                        Some((
-                            timing,
-                            AbilityEffect::ShotsBonus {
-                                chance: 1.0,
-                                bonus_pct,
-                                duration_rounds,
-                            },
-                        ))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            }
-        }
-        "extra_attack" => {
-            // extra_attack is handled via BuffSet.proc_chance/proc_multiplier, not crew seats.
-            // Return None so it's not added to crew; resolve_crew_to_buff_set accumulates proc separately.
-            None
-        }
-        "morale" => {
-            let chance = effect
-                .chance
-                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
-                .unwrap_or(0.0);
-            Some((timing, AbilityEffect::Morale(chance)))
-        }
-        "assimilated" => {
-            let chance = effect
-                .chance
-                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
-                .unwrap_or(0.0);
-            let duration_rounds = duration_rounds_or_default(effect, 1);
-            Some((
-                timing,
-                AbilityEffect::Assimilated {
-                    chance,
-                    duration_rounds,
-                },
-            ))
-        }
-        "hull_breach" => {
-            let chance = effect
-                .chance
-                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
-                .unwrap_or(0.0);
-            let duration_rounds = duration_rounds_or_default(effect, 1);
-            Some((
-                timing,
-                AbilityEffect::HullBreach {
-                    chance,
-                    duration_rounds,
-                    requires_critical: false,
-                },
-            ))
-        }
-        "burning" => {
-            let chance = effect
-                .chance
-                .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
-                .unwrap_or(0.0);
-            let duration_rounds = duration_rounds_or_default(effect, 1);
-            Some((
-                timing,
-                AbilityEffect::Burning {
-                    chance,
-                    duration_rounds,
-                },
-            ))
-        }
-        "tag" => None, // Non-combat; skip.
-        _ => None,
-    }
+    let stable_id = format!("lcars:{officer_id}:{ability_name}:{effect_index}");
+    let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
+        effect,
+        &stable_id,
+        officer_id,
+        ability_name,
+        tier,
+    )?;
+    crate::combat::effect_spec_compile::compile_officer_combat_spec(&spec).ok()
 }
 
 /// Coarse coverage tier for `/api/mechanics/coverage` (LCARS effects).
@@ -676,7 +419,7 @@ pub fn lcars_effect_coverage(
         };
     }
 
-    if resolve_effect(effect, "", options, officer_id).is_some() {
+    if resolve_effect(effect, "", options, officer_id, 0).is_some() {
         return LcarsEffectCoverage {
             tier: MechanicCoverageTier::Implemented,
             pathway: "dynamic_crew_ability".to_string(),
@@ -706,9 +449,9 @@ pub fn resolve_officer_ability(
     contribution_batch: u32,
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
-    for effect in &ability.effects {
+    for (idx, effect) in ability.effects.iter().enumerate() {
         if let Some((timing, effect_effect)) =
-            resolve_effect(effect, &ability.name, options, &officer.id)
+            resolve_effect(effect, &ability.name, options, &officer.id, idx)
         {
             let condition = effect
                 .condition

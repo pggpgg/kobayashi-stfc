@@ -314,7 +314,14 @@ No immediate engine rewrite is required.
 
 ## Phase 1 scope (implementation)
 
-Phase 1 delivers the **canonical IR + serde**, a **compiler to existing engine structs**, and the **research-derived attack-phase seat** path (always via the spec adapter + compiler in-tree). Officers remain resolved through LCARS as today; a **lossy LCARS → spec** adapter exists for tooling and parity tests. **No intended combat timing or formula changes** for migration: golden tests lock adapter output against the public API.
+Phase 1 delivers the **canonical IR + serde**, a **compiler to existing engine structs**, and the **research-derived attack-phase seat** path (always via the spec adapter + compiler in-tree). **No intended combat timing or formula changes** for migration: golden tests lock adapter output against the public API.
+
+### Task 9 — LCARS officers (shipped)
+
+Dynamic officer LCARS effects (`stat_modify`, `morale`, `burning`, `hull_breach`, `assimilated`, and the other `resolve_effect` modes) are authored in YAML as before, adapted by [`src/lcars/effect_spec_adapter.rs`](../src/lcars/effect_spec_adapter.rs), and compiled by [`compile_officer_combat_spec`](../src/combat/effect_spec_compile.rs) in [`src/lcars/resolver.rs`](../src/lcars/resolver.rs) (`resolve_effect`). Static passive-permanent `stat_modify` rows and `extra_attack` proc aggregation stay in `resolve_crew_to_buff_set` unchanged.
+
+- **Parity:** [`tests/lcars_captain_spec_parity_tests.rs`](../tests/lcars_captain_spec_parity_tests.rs) compares the spec pipeline to `resolve_officer_ability` for captain maneuvers (tiers 1–5) and samples bridge / below-decks tiers; [`tests/lcars_combat_effect_spec_parity_tests.rs`](../tests/lcars_combat_effect_spec_parity_tests.rs) covers synthetic LCARS rows.
+- **Next (optional follow-up):** extend IR/compiler for any new LCARS `effect_type` values before they appear in `captain_ability` (the parity test allow-list will fail CI if an unlisted type ships).
 
 ## Non-goals
 

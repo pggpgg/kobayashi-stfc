@@ -147,6 +147,14 @@ pub enum AbilityModifierSpec {
     ProcPierceBonus,
     HostileCritDamageReduction,
     CumulativeOpponentShieldMitigationDebuff,
+    /// LCARS `shield_regen` / `shield_hp_repair` → [`crate::combat::abilities::AbilityEffect::ShieldRegen`].
+    OfficerShieldRegenFlat,
+    /// LCARS `hull_repair` / `hull_hp_repair` (non-kill timings) → [`crate::combat::abilities::AbilityEffect::HullRegen`].
+    OfficerHullRegenFlat,
+    /// LCARS `hull_hp_repair_prev_round` (engine timing: round start).
+    OfficerHullRegenPrevRoundFraction,
+    /// LCARS `shield_hp_repair_prev_round` (engine timing: round start).
+    OfficerShieldRegenPrevRoundFraction,
     TagOnly,
 }
 
@@ -247,6 +255,19 @@ pub enum AbilityConditionSpec {
     },
     Or {
         any: Vec<AbilityConditionSpec>,
+    },
+    /// Engagement category gate (LCARS `engagement_includes` / `engagement_has`); `enemy_type` is a
+    /// snake_case slug resolved like [`crate::combat::types::enemy_type_from_engagement_slug`].
+    EngagementIncludes {
+        enemy_type: String,
+    },
+    /// STFC combat battle-type id allow-list (LCARS `combat_battle_type_any`).
+    CombatBattleTypeAny {
+        battle_types: Vec<u32>,
+    },
+    /// Defender level ceiling (LCARS `defender_level_at_most` / `target_max_level`).
+    DefenderLevelAtMost {
+        max_level: u32,
     },
     /// stfc.cc / upstream token with no [`crate::combat::abilities::AbilityCondition`] mapping yet.
     /// [`crate::combat::effect_spec_compile::compile_condition`] returns an error for this variant.

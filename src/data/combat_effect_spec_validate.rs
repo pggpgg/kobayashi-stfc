@@ -10,6 +10,7 @@ pub enum CombatEffectSpecValidationError {
     ChanceOutOfRange { field: &'static str, value: f64 },
     RoundRangeInverted { min: u32, max: u32 },
     EmptyAndOr { which: &'static str },
+    EmptyCombatBattleTypeList,
     ValueSpecEmpty,
 }
 
@@ -24,6 +25,9 @@ impl std::fmt::Display for CombatEffectSpecValidationError {
                 write!(f, "round_range min ({min}) must be <= max ({max})")
             }
             Self::EmptyAndOr { which } => write!(f, "{which} must contain at least one condition"),
+            Self::EmptyCombatBattleTypeList => {
+                write!(f, "combat_battle_type_any requires non-empty battle_types")
+            }
             Self::ValueSpecEmpty => write!(f, "value must set scalar or by_rank when present"),
         }
     }
@@ -86,6 +90,11 @@ fn validate_condition_tree(
             }
         }
         AbilityConditionSpec::Not { inner } => validate_condition_tree(inner)?,
+        AbilityConditionSpec::CombatBattleTypeAny { battle_types } => {
+            if battle_types.is_empty() {
+                return Err(CombatEffectSpecValidationError::EmptyCombatBattleTypeList);
+            }
+        }
         _ => {}
     }
     Ok(())

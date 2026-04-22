@@ -5,13 +5,20 @@ use crate::combat::abilities::{
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::combine_optional_and;
-use crate::combat::types::{OpponentFactionTag, ShipType};
+use crate::combat::types::{enemy_type_from_engagement_slug, OpponentFactionTag, ShipType};
 use crate::combat::TimingWindow;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, CombatEffectSpec, ValueSpec,
+    AbilityTriggerSpec, CombatEffectSpec, DurationSpec, ValueSpec,
 };
 use crate::data::ship_ability_resolve;
+
+/// Decaying `weapon_damage`: `{"amount": f64, "floor": f64}` on [`CombatEffectSpec::attributes`].
+pub const OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY: &str = "kobayashi_officer_weapon_damage_decay";
+/// Accumulating `weapon_damage`: `{"amount": f64, "ceiling": f64}` on [`CombatEffectSpec::attributes`].
+pub const OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE: &str = "kobayashi_officer_weapon_damage_accumulate";
+/// Raw LCARS operator string after dash/underscore normalization (matches resolver `normalize_operator`).
+pub const OFFICER_SPEC_ATTR_LCARS_OP: &str = "kobayashi_lcars_normalize_op";
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EffectSpecCompileError {
@@ -24,6 +31,7 @@ pub enum EffectSpecCompileError {
     UnsupportedValueShape,
     UnknownFactionSlug(String),
     UnknownShipTypeSlug(String),
+    UnknownEngagementSlug(String),
     EmptyConditionParts,
     StfcCcTokenNotCompilable {
         token: String,
@@ -51,6 +59,7 @@ impl std::fmt::Display for EffectSpecCompileError {
             }
             Self::UnknownFactionSlug(s) => write!(f, "unknown defender faction slug '{s}'"),
             Self::UnknownShipTypeSlug(s) => write!(f, "unknown ship class slug '{s}'"),
+            Self::UnknownEngagementSlug(s) => write!(f, "unknown engagement enemy_type slug '{s}'"),
             Self::EmptyConditionParts => write!(f, "condition list produced no runtime gates"),
             Self::StfcCcTokenNotCompilable { token } => write!(
                 f,
@@ -167,6 +176,24 @@ pub fn compile_condition(
             }
             Ok(AbilityCondition::Or(parts))
         }
+        AbilityConditionSpec::EngagementIncludes { enemy_type } => {
+            let et = enemy_type_from_engagement_slug(enemy_type).ok_or_else(|| {
+                EffectSpecCompileError::UnknownEngagementSlug(enemy_type.clone())
+            })?;
+            Ok(AbilityCondition::EngagementIncludes(et))
+        }
+        AbilityConditionSpec::CombatBattleTypeAny { battle_types } => {
+            if battle_types.is_empty() {
+                return Err(EffectSpecCompileError::EmptyConditionParts);
+            }
+            let mut v = battle_types.clone();
+            v.sort_unstable();
+            v.dedup();
+            Ok(AbilityCondition::CombatBattleTypeAny(v))
+        }
+        AbilityConditionSpec::DefenderLevelAtMost { max_level } => {
+            Ok(AbilityCondition::DefenderLevelAtMost(*max_level))
+        }
         AbilityConditionSpec::StfcCcToken { token } => {
             Err(EffectSpecCompileError::StfcCcTokenNotCompilable {
                 token: token.clone(),
@@ -187,6 +214,382 @@ pub fn compile_conditions_and(
         parts.push(compile_condition(s)?);
     }
     Ok(combine_optional_and(parts))
+}
+
+fn mitigation_fraction_from_lcars_armor_value(raw: f64) -> f64 {
+    if raw.abs() > 1.0 {
+        raw / 100.0
+    } else {
+        raw
+    }
+}
+
+fn officer_spec_duration_rounds(spec: &CombatEffectSpec, fallback: u32) -> u32 {
+    match spec.duration.as_ref() {
+        Some(DurationSpec::Rounds { rounds }) => (*rounds).max(1),
+        Some(DurationSpec::Stacks { stacks }) => (*stacks).max(1),
+        Some(DurationSpec::Permanent) => fallback,
+        None => fallback,
+    }
+}
+
+fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
+    spec.attributes
+        .get(OFFICER_SPEC_ATTR_LCARS_OP)
+        .and_then(|v| v.as_str())
+        .map(std::string::ToString::to_string)
+        .unwrap_or_else(|| match spec.operation {
+            AbilityOperationSpec::Multiply => "multiply".to_string(),
+            AbilityOperationSpec::Set => "set".to_string(),
+            AbilityOperationSpec::Min => "min".to_string(),
+            AbilityOperationSpec::Max => "max".to_string(),
+            _ => "add".to_string(),
+        })
+}
+
+/// Compile LCARS-authored [`CombatEffectSpec`] into runtime [`AbilityEffect`] + [`TimingWindow`].
+pub fn compile_officer_combat_spec(
+    spec: &CombatEffectSpec,
+) -> Result<(TimingWindow, AbilityEffect), EffectSpecCompileError> {
+    let timing = compile_trigger(spec.trigger)?;
+    let op = lcars_op_from_officer_spec(spec);
+    let op = op.as_str();
+
+    match spec.modifier {
+        AbilityModifierSpec::WeaponDamage => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            if let Some(obj) = spec
+                .attributes
+                .get(OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY)
+                .and_then(|x| x.as_object())
+            {
+                let decay_per_round = obj.get("amount").and_then(|x| x.as_f64()).unwrap_or(0.0);
+                let floor = obj.get("floor").and_then(|x| x.as_f64()).unwrap_or(1.0);
+                return Ok((
+                    timing,
+                    AbilityEffect::DecayingAttackMultiplier {
+                        initial: v,
+                        decay_per_round,
+                        floor,
+                    },
+                ));
+            }
+            if let Some(obj) = spec
+                .attributes
+                .get(OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE)
+                .and_then(|x| x.as_object())
+            {
+                let growth_per_round = obj.get("amount").and_then(|x| x.as_f64()).unwrap_or(0.0);
+                let ceiling = obj.get("ceiling").and_then(|x| x.as_f64()).unwrap_or(2.0);
+                return Ok((
+                    timing,
+                    AbilityEffect::AccumulatingAttackMultiplier {
+                        initial: v,
+                        growth_per_round,
+                        ceiling,
+                    },
+                ));
+            }
+            let mult = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => v,
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => {
+                    1.0 - v
+                }
+                "set" => v,
+                _ => 1.0 + v,
+            };
+            Ok((timing, AbilityEffect::AttackMultiplier(mult)))
+        }
+        AbilityModifierSpec::Pierce => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" => -v,
+                "set" => v,
+                _ => v,
+            };
+            Ok((timing, AbilityEffect::PierceBonus(add)))
+        }
+        AbilityModifierSpec::CritChance => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => {
+                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                        modifier: spec.modifier,
+                        operation: spec.operation,
+                    });
+                }
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
+                "set" => {
+                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                        modifier: spec.modifier,
+                        operation: spec.operation,
+                    });
+                }
+                _ => v,
+            };
+            Ok((timing, AbilityEffect::CritChanceBonus(add)))
+        }
+        AbilityModifierSpec::CritDamage => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let mult = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => v,
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => {
+                    (1.0 - v).max(0.0)
+                }
+                "set" => v.max(0.0),
+                _ => 1.0 + v,
+            };
+            if mult.is_finite() && mult > 0.0 {
+                Ok((timing, AbilityEffect::CritDamageMultiplier(mult)))
+            } else {
+                Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                })
+            }
+        }
+        AbilityModifierSpec::ApexShred => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((timing, AbilityEffect::ApexShredBonus(v)))
+        }
+        AbilityModifierSpec::ApexBarrier => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((timing, AbilityEffect::ApexBarrierBonus(v)))
+        }
+        AbilityModifierSpec::OfficerShieldRegenFlat => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((timing, AbilityEffect::ShieldRegen(v)))
+        }
+        AbilityModifierSpec::OfficerHullRegenFlat => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            if timing == TimingWindow::Kill {
+                Ok((timing, AbilityEffect::OnKillHullRegen(v)))
+            } else {
+                Ok((timing, AbilityEffect::HullRegen(v)))
+            }
+        }
+        AbilityModifierSpec::OfficerHullRegenPrevRoundFraction => {
+            if timing != TimingWindow::RoundStart {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((timing, AbilityEffect::HullRegenPrevRoundFraction(v)))
+        }
+        AbilityModifierSpec::OfficerShieldRegenPrevRoundFraction => {
+            if timing != TimingWindow::RoundStart {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((timing, AbilityEffect::ShieldRegenPrevRoundFraction(v)))
+        }
+        AbilityModifierSpec::IsolyticDamage => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" => -v,
+                _ => v,
+            };
+            Ok((timing, AbilityEffect::IsolyticDamageBonus(add)))
+        }
+        AbilityModifierSpec::IsolyticDefense => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" => -v,
+                _ => v,
+            };
+            Ok((timing, AbilityEffect::IsolyticDefenseBonus(add)))
+        }
+        AbilityModifierSpec::IsolyticCascadeDamage => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" => -v,
+                _ => v,
+            };
+            Ok((timing, AbilityEffect::IsolyticCascadeDamageBonus(add)))
+        }
+        AbilityModifierSpec::ShieldMitigation => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" => -v,
+                _ => v,
+            };
+            Ok((timing, AbilityEffect::ShieldMitigationBonus(add)))
+        }
+        AbilityModifierSpec::Armor => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => {
+                    v - 1.0
+                }
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
+                "set" => {
+                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                        modifier: spec.modifier,
+                        operation: spec.operation,
+                    });
+                }
+                _ => v,
+            };
+            Ok((
+                timing,
+                AbilityEffect::MitigationAdditive(mitigation_fraction_from_lcars_armor_value(add)),
+            ))
+        }
+        AbilityModifierSpec::ShotsBonus => {
+            if !matches!(timing, TimingWindow::RoundStart | TimingWindow::CombatBegin) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let bonus_pct = match op {
+                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" => -v,
+                "set" => v,
+                _ => v,
+            };
+            let duration_rounds = officer_spec_duration_rounds(spec, 1);
+            Ok((
+                timing,
+                AbilityEffect::ShotsBonus {
+                    chance: 1.0,
+                    bonus_pct,
+                    duration_rounds,
+                },
+            ))
+        }
+        AbilityModifierSpec::StateMorale => {
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(0.0);
+            Ok((timing, AbilityEffect::Morale(chance)))
+        }
+        AbilityModifierSpec::StateAssimilated => {
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(0.0);
+            let duration_rounds = officer_spec_duration_rounds(spec, 1);
+            Ok((
+                timing,
+                AbilityEffect::Assimilated {
+                    chance,
+                    duration_rounds,
+                },
+            ))
+        }
+        AbilityModifierSpec::StateHullBreach => {
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(0.0);
+            let duration_rounds = officer_spec_duration_rounds(spec, 1);
+            Ok((
+                timing,
+                AbilityEffect::HullBreach {
+                    chance,
+                    duration_rounds,
+                    requires_critical: false,
+                },
+            ))
+        }
+        AbilityModifierSpec::StateBurning => {
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(0.0);
+            let duration_rounds = officer_spec_duration_rounds(spec, 1);
+            Ok((
+                timing,
+                AbilityEffect::Burning {
+                    chance,
+                    duration_rounds,
+                },
+            ))
+        }
+        _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
+            modifier: spec.modifier,
+            operation: spec.operation,
+        }),
+    }
 }
 
 /// Research conditional attack-phase row: `weapon_damage` / `crit_*`, `add`, scalar fraction.

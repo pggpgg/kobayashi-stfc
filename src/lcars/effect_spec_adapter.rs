@@ -1,14 +1,20 @@
 //! LCARS YAML → [`crate::data::combat_effect_spec::CombatEffectSpec`] (canonical IR).
 //!
-//! This is a **lossy** view used for tooling, JSON export, and parity experiments; the combat
-//! runtime still resolves through [`crate::lcars::resolver::resolve_officer_ability`] today.
+//! Officer dynamic effects resolve through this adapter plus
+//! [`crate::combat::effect_spec_compile::compile_officer_combat_spec`] (see
+//! [`crate::lcars::resolver::resolve_effect`]). HTTP debug and parity tests use the same path.
 
+use crate::combat::effect_spec_compile::{
+    OFFICER_SPEC_ATTR_LCARS_OP, OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE,
+    OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY,
+};
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, CombatEffectSpec, EffectSource, ValueSpec,
+    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource, ValueSpec,
 };
-use crate::lcars::parser::{LcarsCondition, LcarsEffect};
+use crate::lcars::parser::{LcarsCondition, LcarsDuration, LcarsEffect};
 use crate::lcars::resolver::effect_trigger_timing;
+use serde_json::json;
 
 fn normalize_trigger(s: &str) -> String {
     s.trim().to_ascii_lowercase().replace('-', "_")
@@ -195,6 +201,37 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
             }
             Ok(AbilityConditionSpec::Or { any })
         }
+        "engagement_includes" | "engagement_has" => {
+            let slug = c
+                .enemy_type
+                .as_deref()
+                .or(c.stat.as_deref())
+                .or(c.tag.as_deref())
+                .ok_or_else(|| {
+                    "engagement_includes requires `enemy_type` (snake_case tag, e.g. group_armadas)"
+                        .to_string()
+                })?;
+            Ok(AbilityConditionSpec::EngagementIncludes {
+                enemy_type: slug.to_string(),
+            })
+        }
+        "combat_battle_type_any" | "combat_battle_type" => {
+            let mut values = c.battle_types.clone().ok_or_else(|| {
+                "combat_battle_type_any requires non-empty `battle_types` list".to_string()
+            })?;
+            values.sort_unstable();
+            values.dedup();
+            if values.is_empty() {
+                return Err("combat_battle_type_any requires non-empty `battle_types` list".to_string());
+            }
+            Ok(AbilityConditionSpec::CombatBattleTypeAny { battle_types: values })
+        }
+        "defender_level_at_most" | "target_max_level" => {
+            let max_level = c.max.ok_or_else(|| {
+                "defender_level_at_most requires integer `max` level".to_string()
+            })?;
+            Ok(AbilityConditionSpec::DefenderLevelAtMost { max_level })
+        }
         _ => Err(format!(
             "unknown LCARS condition type '{}'",
             c.condition_type.trim()
@@ -202,8 +239,8 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
     }
 }
 
-fn stat_to_modifier(stat: &str) -> Option<AbilityModifierSpec> {
-    match stat {
+fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
+    match stat.trim() {
         "weapon_damage" | "attack" => Some(AbilityModifierSpec::WeaponDamage),
         "hull_hp" | "hull" => Some(AbilityModifierSpec::HullHp),
         "shield_hp" | "shield" => Some(AbilityModifierSpec::ShieldHp),
@@ -217,10 +254,84 @@ fn stat_to_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "accuracy" => Some(AbilityModifierSpec::Accuracy),
         "isolytic_damage" => Some(AbilityModifierSpec::IsolyticDamage),
         "isolytic_defense" => Some(AbilityModifierSpec::IsolyticDefense),
-        "isolytic_cascade_damage" => Some(AbilityModifierSpec::IsolyticCascadeDamage),
+        "isolytic_cascade" | "isolytic_cascade_damage" => {
+            Some(AbilityModifierSpec::IsolyticCascadeDamage)
+        }
         "apex_shred" => Some(AbilityModifierSpec::ApexShred),
         "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
+        "shield_regen" | "shield_hp_repair" => Some(AbilityModifierSpec::OfficerShieldRegenFlat),
+        "hull_repair" | "hull_hp_repair" => Some(AbilityModifierSpec::OfficerHullRegenFlat),
+        "hull_hp_repair_prev_round" | "hull_repair_prev_round" => {
+            Some(AbilityModifierSpec::OfficerHullRegenPrevRoundFraction)
+        }
+        "shield_hp_repair_prev_round" | "shield_repair_prev_round" => {
+            Some(AbilityModifierSpec::OfficerShieldRegenPrevRoundFraction)
+        }
+        "shots" | "weapon_shots" | "shots_per_weapon" | "shots_per_attack" => {
+            Some(AbilityModifierSpec::ShotsBonus)
+        }
         _ => None,
+    }
+}
+
+fn timing_window_to_trigger_spec(tw: crate::combat::TimingWindow) -> AbilityTriggerSpec {
+    match tw {
+        crate::combat::TimingWindow::CombatBegin => AbilityTriggerSpec::CombatBegin,
+        crate::combat::TimingWindow::RoundStart => AbilityTriggerSpec::RoundStart,
+        crate::combat::TimingWindow::AttackPhase => AbilityTriggerSpec::AttackPhase,
+        crate::combat::TimingWindow::AfterSubround => AbilityTriggerSpec::AfterSubround,
+        crate::combat::TimingWindow::DefensePhase => AbilityTriggerSpec::DefensePhase,
+        crate::combat::TimingWindow::RoundEnd => AbilityTriggerSpec::RoundEnd,
+        crate::combat::TimingWindow::ShieldBreak => AbilityTriggerSpec::ShieldBreak,
+        crate::combat::TimingWindow::SelfShieldBreak => AbilityTriggerSpec::SelfShieldBreak,
+        crate::combat::TimingWindow::Kill => AbilityTriggerSpec::Kill,
+        crate::combat::TimingWindow::HullBreach => AbilityTriggerSpec::HullBreach,
+        crate::combat::TimingWindow::ReceiveDamage => AbilityTriggerSpec::ReceiveDamage,
+        crate::combat::TimingWindow::CombatEnd => AbilityTriggerSpec::CombatEnd,
+    }
+}
+
+fn effect_value_at_officer_tier(effect: &LcarsEffect, tier: Option<u8>) -> Option<f64> {
+    effect
+        .value
+        .or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(tier)))
+}
+
+fn effect_chance_at_officer_tier(effect: &LcarsEffect, tier: Option<u8>) -> f64 {
+    effect
+        .chance
+        .or_else(|| effect.scaling.as_ref().map(|s| s.chance_at_rank(tier)))
+        .unwrap_or(0.0)
+}
+
+fn lcars_duration_to_spec(d: &LcarsDuration) -> Option<DurationSpec> {
+    match d {
+        LcarsDuration::Rounds { rounds } => Some(DurationSpec::Rounds { rounds: *rounds }),
+        LcarsDuration::Stacks { stacks } => Some(DurationSpec::Rounds { rounds: *stacks }),
+        LcarsDuration::Permanent(_) => None,
+    }
+}
+
+fn officer_conditions_from_effect(effect: &LcarsEffect) -> Vec<AbilityConditionSpec> {
+    match effect.condition.as_ref() {
+        Some(c) => match lcars_condition_to_spec(c) {
+            Ok(s) => vec![s],
+            Err(_) => Vec::new(),
+        },
+        None => Vec::new(),
+    }
+}
+
+fn officer_target_from_effect(effect: &LcarsEffect) -> AbilityTargetSpec {
+    match effect
+        .target
+        .as_deref()
+        .map(|s| s.trim().to_ascii_lowercase())
+    {
+        Some(ref t) if t == "enemy" => AbilityTargetSpec::DefenderOpponent,
+        Some(ref t) if t == "self" || t.is_empty() => AbilityTargetSpec::AttackerSelf,
+        None => AbilityTargetSpec::AttackerSelf,
+        _ => AbilityTargetSpec::AttackerSelf,
     }
 }
 
@@ -234,92 +345,276 @@ fn op_to_spec(op: &str) -> AbilityOperationSpec {
     }
 }
 
-/// Convert one LCARS effect to a [`CombatEffectSpec`] when the row maps cleanly. Returns [`None`] for
-/// static-only rows, unsupported types, or unknown triggers (same coarse cuts as the resolver).
+/// Convert one LCARS officer effect to a [`CombatEffectSpec`] when the row maps cleanly.
+/// Returns [`None`] for static-only `stat_modify`, `tag`, `extra_attack`, `accuracy` non-CB timings,
+/// and unknown triggers (aligned with [`crate::lcars::resolver::resolve_effect`]).
 pub fn lcars_effect_to_combat_effect_spec(
     effect: &LcarsEffect,
     stable_id: &str,
     officer_id: &str,
     ability_name: &str,
+    officer_tier: Option<u8>,
 ) -> Option<CombatEffectSpec> {
-    if effect.effect_type != "stat_modify" {
+    if effect.effect_type == "tag" || effect.effect_type == "extra_attack" {
         return None;
     }
-    let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
-    let permanent = effect
+
+    if effect.effect_type == "stat_modify" {
+        let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
+        let permanent = effect
+            .duration
+            .as_ref()
+            .map(|d| d.is_permanent())
+            .unwrap_or(false);
+        if passive && permanent {
+            return None;
+        }
+    }
+
+    let timing = effect_trigger_timing(effect)?;
+    if effect.effect_type == "stat_modify" {
+        let stat = effect.stat.as_deref().unwrap_or("").trim();
+        if stat.eq_ignore_ascii_case("accuracy") {
+            return None;
+        }
+    }
+
+    let trigger = timing_window_to_trigger_spec(timing);
+    let target = officer_target_from_effect(effect);
+    let conditions = officer_conditions_from_effect(effect);
+    let duration = effect
         .duration
         .as_ref()
-        .map(|d| d.is_permanent())
-        .unwrap_or(false);
-    if passive && permanent {
-        return None;
+        .and_then(lcars_duration_to_spec);
+
+    let op_norm = normalize_operator(effect.operator.as_deref());
+    let mut attributes = serde_json::Map::new();
+    attributes.insert(
+        OFFICER_SPEC_ATTR_LCARS_OP.into(),
+        serde_json::Value::String(op_norm.clone()),
+    );
+    let operation = op_to_spec(op_norm.as_str());
+
+    match effect.effect_type.as_str() {
+        "stat_modify" => {
+            let value = effect_value_at_officer_tier(effect, officer_tier)?;
+            let stat = effect.stat.as_deref().unwrap_or("").trim();
+
+            if stat == "weapon_damage" || stat == "attack" {
+                if let Some(ref decay) = effect.decay {
+                    attributes.insert(
+                        OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY.into(),
+                        json!({
+                            "amount": decay.amount.unwrap_or(0.0),
+                            "floor": decay.floor.unwrap_or(1.0),
+                        }),
+                    );
+                    return Some(CombatEffectSpec {
+                        id: stable_id.to_string(),
+                        source: EffectSource::LcarsOfficer,
+                        source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                            officer_id: Some(officer_id.to_string()),
+                            ability_id: Some(ability_name.to_string()),
+                            ..Default::default()
+                        }),
+                        text: None,
+                        trigger,
+                        target,
+                        modifier: AbilityModifierSpec::WeaponDamage,
+                        operation,
+                        value: Some(ValueSpec {
+                            scalar: Some(value),
+                            by_rank: None,
+                            unit: None,
+                        }),
+                        chance: None,
+                        duration,
+                        conditions,
+                        attributes,
+                        stacking: None,
+                        category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+                        confidence: None,
+                    });
+                }
+                if let Some(ref acc) = effect.accumulate {
+                    attributes.insert(
+                        OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE.into(),
+                        json!({
+                            "amount": acc.amount.unwrap_or(0.0),
+                            "ceiling": acc.ceiling.unwrap_or(2.0),
+                        }),
+                    );
+                    return Some(CombatEffectSpec {
+                        id: stable_id.to_string(),
+                        source: EffectSource::LcarsOfficer,
+                        source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                            officer_id: Some(officer_id.to_string()),
+                            ability_id: Some(ability_name.to_string()),
+                            ..Default::default()
+                        }),
+                        text: None,
+                        trigger,
+                        target,
+                        modifier: AbilityModifierSpec::WeaponDamage,
+                        operation,
+                        value: Some(ValueSpec {
+                            scalar: Some(value),
+                            by_rank: None,
+                            unit: None,
+                        }),
+                        chance: None,
+                        duration,
+                        conditions,
+                        attributes,
+                        stacking: None,
+                        category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+                        confidence: None,
+                    });
+                }
+            }
+
+            let modifier = stat_to_officer_modifier(stat)?;
+            Some(CombatEffectSpec {
+                id: stable_id.to_string(),
+                source: EffectSource::LcarsOfficer,
+                source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                    officer_id: Some(officer_id.to_string()),
+                    ability_id: Some(ability_name.to_string()),
+                    ..Default::default()
+                }),
+                text: None,
+                trigger,
+                target,
+                modifier,
+                operation,
+                value: Some(ValueSpec {
+                    scalar: Some(value),
+                    by_rank: None,
+                    unit: None,
+                }),
+                chance: None,
+                duration,
+                conditions,
+                attributes,
+                stacking: None,
+                category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+                confidence: None,
+            })
+        }
+        "morale" => {
+            let chance = effect_chance_at_officer_tier(effect, officer_tier);
+            Some(CombatEffectSpec {
+                id: stable_id.to_string(),
+                source: EffectSource::LcarsOfficer,
+                source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                    officer_id: Some(officer_id.to_string()),
+                    ability_id: Some(ability_name.to_string()),
+                    ..Default::default()
+                }),
+                text: None,
+                trigger,
+                target,
+                modifier: AbilityModifierSpec::StateMorale,
+                operation: AbilityOperationSpec::Add,
+                value: None,
+                chance: Some(ChanceSpec {
+                    scalar: Some(chance),
+                    by_rank: None,
+                }),
+                duration,
+                conditions,
+                attributes,
+                stacking: None,
+                category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+                confidence: None,
+            })
+        }
+        "assimilated" => {
+            let chance = effect_chance_at_officer_tier(effect, officer_tier);
+            Some(CombatEffectSpec {
+                id: stable_id.to_string(),
+                source: EffectSource::LcarsOfficer,
+                source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                    officer_id: Some(officer_id.to_string()),
+                    ability_id: Some(ability_name.to_string()),
+                    ..Default::default()
+                }),
+                text: None,
+                trigger,
+                target,
+                modifier: AbilityModifierSpec::StateAssimilated,
+                operation: AbilityOperationSpec::Add,
+                value: None,
+                chance: Some(ChanceSpec {
+                    scalar: Some(chance),
+                    by_rank: None,
+                }),
+                duration,
+                conditions,
+                attributes,
+                stacking: None,
+                category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+                confidence: None,
+            })
+        }
+        "hull_breach" => {
+            let chance = effect_chance_at_officer_tier(effect, officer_tier);
+            Some(CombatEffectSpec {
+                id: stable_id.to_string(),
+                source: EffectSource::LcarsOfficer,
+                source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                    officer_id: Some(officer_id.to_string()),
+                    ability_id: Some(ability_name.to_string()),
+                    ..Default::default()
+                }),
+                text: None,
+                trigger,
+                target,
+                modifier: AbilityModifierSpec::StateHullBreach,
+                operation: AbilityOperationSpec::Add,
+                value: None,
+                chance: Some(ChanceSpec {
+                    scalar: Some(chance),
+                    by_rank: None,
+                }),
+                duration,
+                conditions,
+                attributes,
+                stacking: None,
+                category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+                confidence: None,
+            })
+        }
+        "burning" => {
+            let chance = effect_chance_at_officer_tier(effect, officer_tier);
+            Some(CombatEffectSpec {
+                id: stable_id.to_string(),
+                source: EffectSource::LcarsOfficer,
+                source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                    officer_id: Some(officer_id.to_string()),
+                    ability_id: Some(ability_name.to_string()),
+                    ..Default::default()
+                }),
+                text: None,
+                trigger,
+                target,
+                modifier: AbilityModifierSpec::StateBurning,
+                operation: AbilityOperationSpec::Add,
+                value: None,
+                chance: Some(ChanceSpec {
+                    scalar: Some(chance),
+                    by_rank: None,
+                }),
+                duration,
+                conditions,
+                attributes,
+                stacking: None,
+                category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+                confidence: None,
+            })
+        }
+        _ => None,
     }
-    let timing = effect_trigger_timing(effect)?;
-    let trigger = match timing {
-        crate::combat::TimingWindow::CombatBegin => AbilityTriggerSpec::CombatBegin,
-        crate::combat::TimingWindow::RoundStart => AbilityTriggerSpec::RoundStart,
-        crate::combat::TimingWindow::AttackPhase => AbilityTriggerSpec::AttackPhase,
-        crate::combat::TimingWindow::AfterSubround => AbilityTriggerSpec::AfterSubround,
-        crate::combat::TimingWindow::DefensePhase => AbilityTriggerSpec::DefensePhase,
-        crate::combat::TimingWindow::RoundEnd => AbilityTriggerSpec::RoundEnd,
-        crate::combat::TimingWindow::ShieldBreak => AbilityTriggerSpec::ShieldBreak,
-        crate::combat::TimingWindow::SelfShieldBreak => AbilityTriggerSpec::SelfShieldBreak,
-        crate::combat::TimingWindow::Kill => AbilityTriggerSpec::Kill,
-        crate::combat::TimingWindow::HullBreach => AbilityTriggerSpec::HullBreach,
-        crate::combat::TimingWindow::ReceiveDamage => AbilityTriggerSpec::ReceiveDamage,
-        crate::combat::TimingWindow::CombatEnd => AbilityTriggerSpec::CombatEnd,
-    };
-    let stat = effect.stat.as_deref().unwrap_or("");
-    let modifier = stat_to_modifier(stat)?;
-    let op = normalize_operator(effect.operator.as_deref());
-    let operation = op_to_spec(op.as_str());
-    let value = if let Some(v) = effect.value {
-        v
-    } else if let Some(ref sc) = effect.scaling {
-        sc.value_at_rank(None)
-    } else {
-        return None;
-    };
-    let conditions: Vec<AbilityConditionSpec> = match effect.condition.as_ref() {
-        Some(c) => vec![lcars_condition_to_spec(c).ok()?],
-        None => Vec::new(),
-    };
-    let target = match effect
-        .target
-        .as_deref()
-        .map(|s| s.trim().to_ascii_lowercase())
-    {
-        Some(ref t) if t == "enemy" => AbilityTargetSpec::DefenderOpponent,
-        Some(ref t) if t == "self" || t.is_empty() => AbilityTargetSpec::AttackerSelf,
-        None => AbilityTargetSpec::AttackerSelf,
-        _ => AbilityTargetSpec::AttackerSelf,
-    };
-    Some(CombatEffectSpec {
-        id: stable_id.to_string(),
-        source: EffectSource::LcarsOfficer,
-        source_ref: Some(crate::data::combat_effect_spec::SourceRef {
-            officer_id: Some(officer_id.to_string()),
-            ability_id: Some(ability_name.to_string()),
-            ..Default::default()
-        }),
-        text: None,
-        trigger,
-        target,
-        modifier,
-        operation,
-        value: Some(ValueSpec {
-            scalar: Some(value),
-            by_rank: None,
-            unit: None,
-        }),
-        chance: None,
-        duration: None,
-        conditions,
-        attributes: serde_json::Map::new(),
-        stacking: None,
-        category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
-        confidence: None,
-    })
 }
 
 #[cfg(test)]
@@ -370,7 +665,7 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        let spec = lcars_effect_to_combat_effect_spec(&e, "test:id", "gorkon", "cm").unwrap();
+        let spec = lcars_effect_to_combat_effect_spec(&e, "test:id", "gorkon", "cm", None).unwrap();
         assert_eq!(spec.modifier, AbilityModifierSpec::WeaponDamage);
         assert_eq!(spec.trigger, AbilityTriggerSpec::AttackPhase);
     }
@@ -395,7 +690,7 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a").is_none());
+        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None).is_none());
     }
 
     /// [`lcars_effect_to_combat_effect_spec`] scalar + modifier must stay aligned with
@@ -433,7 +728,7 @@ mod tests {
             effects: vec![effect.clone()],
         };
         let spec =
-            lcars_effect_to_combat_effect_spec(&effect, "parity:id", "parity_officer", "strike")
+            lcars_effect_to_combat_effect_spec(&effect, "parity:id", "parity_officer", "strike", None)
                 .expect("spec");
         let raw = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
         let contexts = resolve_officer_ability(
