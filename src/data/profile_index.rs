@@ -56,6 +56,8 @@ pub const BUFFS_IMPORTED: &str = "buffs.imported.json";
 pub const BATTLELOGS_IMPORTED: &str = "battlelogs.imported.json";
 /// Written when the STFC Community Mod persists data via `POST /api/sync/ingress` (not manual UI import).
 pub const LAST_MOD_SYNC_JSON: &str = "last_mod_sync.json";
+/// Cross-session optimize winners / warm-start stats (per `optimize_cache_key` from the SPA).
+pub const OPTIMIZE_HISTORY_JSON: &str = "optimize_history.json";
 
 /// Resolve profile id for optimizer/simulate; uses default when None.
 pub fn resolve_profile_id_for_api(profile_id: Option<&str>) -> String {

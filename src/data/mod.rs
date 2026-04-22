@@ -14,6 +14,7 @@ pub mod import;
 pub mod loader;
 pub mod mapping_gap_report;
 pub mod officer;
+pub mod optimize_history;
 pub mod profile;
 pub mod profile_index;
 pub mod registry;

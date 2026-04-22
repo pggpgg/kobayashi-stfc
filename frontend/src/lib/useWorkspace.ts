@@ -105,6 +105,8 @@ export function useWorkspace() {
   const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<
     number | null
   >(null);
+  /** True after last completed optimize reused profile disk cache for tiered scout/confirm. */
+  const [cachedWarmStartBadge, setCachedWarmStartBadge] = useState(false);
 
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
@@ -385,12 +387,18 @@ export function useWorkspace() {
         optimizeWarmStartCacheKey(),
         status.result.recommendations ?? [],
       );
+      const hits =
+        status.result.scenario?.optimize_history_confirm_hits ?? 0;
+      setCachedWarmStartBadge(
+        typeof hits === "number" && hits > 0,
+      );
       setSimResult(null);
       if (status.result.duration_ms != null)
         setLastOptimizeDurationMs(status.result.duration_ms);
     } else if (status.status === "error") {
       const detail = status.error?.trim() || "Unknown error";
       setError(`Optimization failed: ${detail}`);
+      setCachedWarmStartBadge(false);
     }
     setLoadingOptimize(false);
     setOptimizeProgress(null);
@@ -596,6 +604,7 @@ export function useWorkspace() {
   const handleRunOptimize = async () => {
     setError(null);
     setWorkspaceInfo(null);
+    setCachedWarmStartBadge(false);
     setLoadingOptimize(true);
     setLastOptimizeDurationMs(null);
     setOptimizeProgress(0);
@@ -648,6 +657,10 @@ export function useWorkspace() {
           noveltyLambdaText,
           noveltyDiverseTopText,
           noveltyPoolText,
+          optimizeCacheKey:
+            activeProfileId != null && activeProfileId !== ""
+              ? optimizeWarmStartCacheKey()
+              : undefined,
         }),
         activeProfileId,
         {
@@ -678,6 +691,7 @@ export function useWorkspace() {
   };
 
   const handleCancelOptimize = () => {
+    setCachedWarmStartBadge(false);
     const jobId = currentOptimizeJobIdRef.current;
     clearPersistedOptimizeJob();
     currentOptimizeJobIdRef.current = null;
@@ -775,6 +789,7 @@ export function useWorkspace() {
     optimizePreview,
     estimate,
     lastOptimizeDurationMs,
+    cachedWarmStartBadge,
     // Optimization parameters
     simsPerCrew,
     setSimsPerCrew,

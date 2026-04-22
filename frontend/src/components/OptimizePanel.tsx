@@ -71,6 +71,8 @@ interface OptimizePanelProps {
   onChainSecondaryChange: (
     value: "min_hull_damage" | "max_loot_per_hull_proxy",
   ) => void;
+  /** Last optimize reused server profile disk cache for tiered warm-start. */
+  cachedWarmStartBadge?: boolean;
 }
 
 const selectStyle: CSSProperties = {
@@ -194,6 +196,7 @@ export default function OptimizePanel({
   onChainKillsTargetChange,
   chainSecondary,
   onChainSecondaryChange,
+  cachedWarmStartBadge = false,
 }: OptimizePanelProps) {
   if (collapsed) {
     return (
@@ -826,6 +829,32 @@ export default function OptimizePanel({
             }${optimizeEtaSeconds != null ? ` · ETA ~${optimizeEtaSeconds}s` : ""}`
           : "Live status: — (run optimize to see phase, ETA, preview)"}
       </p>
+      {cachedWarmStartBadge && !loadingOptimize ? (
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontSize: "0.78rem",
+            color: "var(--text-muted)",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              padding: "2px 8px",
+              borderRadius: 999,
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated, var(--bg))",
+              fontWeight: 600,
+            }}
+          >
+            Cached warm start
+          </span>
+          <span style={{ marginLeft: 8 }}>
+            Tiered scout/confirm skipped for crews restored from your profile
+            optimize history.
+          </span>
+        </p>
+      ) : null}
     </aside>
   );
 }

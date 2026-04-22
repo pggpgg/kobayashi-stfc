@@ -188,6 +188,24 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     expect(body.constraints?.captain_must_be).toBe("Alice, Bob, Carol");
   });
 
+  it("includes optimize_cache_key when non-empty", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: 10,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      optimizeCacheKey: " 3|k|v1 ",
+    });
+    expect(body.optimize_cache_key).toBe("3|k|v1");
+  });
+
   it("includes warm_start_crews when non-empty", () => {
     const warmStartCrews = [
       { captain: "A", bridge: ["B", "C"], below_decks: ["D", "E", "F"] },

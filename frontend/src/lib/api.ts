@@ -624,6 +624,10 @@ export interface OptimizeResponse {
     novelty_pool?: number | null;
     /** True when the server merged heuristic seeds into warm-start (fast discovery pipeline). */
     fast_discovery?: boolean | null;
+    /** Tiered: crews that reused persisted confirmation stats from profile `optimize_history.json`. */
+    optimize_history_confirm_hits?: number | null;
+    /** True when the server wrote an entry to `optimize_history.json` for this run. */
+    optimize_history_wrote?: boolean | null;
   };
   recommendations: CrewRecommendation[];
   duration_ms?: number;

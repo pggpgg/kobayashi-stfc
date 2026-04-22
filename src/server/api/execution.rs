@@ -9,6 +9,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::OwnedSemaphorePermit;
 
 use crate::data::data_registry::DataRegistry;
+use crate::data::optimize_history;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
@@ -238,6 +239,12 @@ pub struct ScenarioSummary {
     /// When true, heuristic seed crews were merged into warm-start for the main optimize path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fast_discovery: Option<bool>,
+    /// Tiered runs: crews that reused persisted confirmation stats from `optimize_history.json`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimize_history_confirm_hits: Option<u32>,
+    /// True when this run updated `optimize_history.json` for `optimize_cache_key`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimize_history_wrote: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -298,6 +305,8 @@ struct OptimizeGatherMeta {
     analytical_prefilter: Option<(usize, usize)>,
     below_decks_slots: usize,
     optimize_constraints: Option<OptimizeConstraintsSummary>,
+    optimize_history_confirm_hits: u32,
+    optimize_history_wrote: bool,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -462,6 +471,16 @@ fn gather_optimize_simulation_results(
         request.below_decks_slots,
     );
     let crew_constraints = build_crew_search_constraints(request);
+    let cache_key_normalized = request.optimize_cache_key.as_ref().and_then(|s| {
+        let t = s.trim();
+        if t.is_empty() {
+            None
+        } else {
+            Some(t.to_string())
+        }
+    });
+    let mut optimize_history_confirm_hits = 0u32;
+    let mut optimize_history_wrote = false;
 
     let mut h_candidates = if heuristics_seeds_nonempty {
         load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
@@ -569,12 +588,33 @@ fn gather_optimize_simulation_results(
             chain_grind: chain_grind.clone(),
             defender_opponent: request.defender_opponent,
             warm_start: scenario_warm_start,
+            optimize_cache_key: cache_key_normalized.clone(),
         };
         let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
             sink.on_optimize_tick(tick)
         });
         if sink.job_cancelled() {
             return Err(());
+        }
+        optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
+        if strategy == OptimizerStrategy::Tiered {
+            if let (Some(pid), Some(ref key), Some((n, scout, tk))) = (
+                profile_id,
+                cache_key_normalized.as_ref(),
+                outcome.tiered_resolved,
+            ) {
+                let entry = optimize_history::build_entry_from_ranked(
+                    sims,
+                    seed,
+                    scout,
+                    tk,
+                    n,
+                    &chain_grind,
+                    &outcome.ranked,
+                );
+                optimize_history_wrote =
+                    optimize_history::upsert_entry(pid, key.as_str(), entry).is_ok();
+            }
         }
         let pf = outcome.analytical_prefilter;
         all_results.extend(
@@ -601,6 +641,8 @@ fn gather_optimize_simulation_results(
         analytical_prefilter,
         below_decks_slots,
         optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
+        optimize_history_confirm_hits,
+        optimize_history_wrote,
     };
 
     Ok((all_results, meta))
@@ -746,6 +788,9 @@ fn build_optimize_response(
             novelty_diverse_top: request.novelty_diverse_top,
             novelty_pool: request.novelty_pool,
             fast_discovery: meta.fast_discovery.then_some(true),
+            optimize_history_confirm_hits: (meta.optimize_history_confirm_hits > 0)
+                .then_some(meta.optimize_history_confirm_hits),
+            optimize_history_wrote: meta.optimize_history_wrote.then_some(true),
         },
         recommendations: ranked_results
             .iter()

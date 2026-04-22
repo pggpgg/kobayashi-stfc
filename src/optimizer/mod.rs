@@ -10,7 +10,7 @@ pub mod tiered;
 
 pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
@@ -158,6 +158,10 @@ pub struct OptimizeRunOutcome {
     pub ranked: Vec<RankedCrewResult>,
     /// `Some((generated, kept))` when crews were truncated after analytical ranking before Monte Carlo.
     pub analytical_prefilter: Option<(usize, usize)>,
+    /// When tiered ran: `(n_candidates, resolved_scout_sims, resolved_top_k)` for cross-session cache metadata.
+    pub tiered_resolved: Option<(usize, usize, usize)>,
+    /// Crews in the tiered candidate list that reused [`crate::data::optimize_history`] confirmation rows.
+    pub optimize_history_confirm_hits: u32,
 }
 
 /// Progress update for async optimize jobs (SSE / polling): phase label, counts, optional partial top crews.
@@ -221,6 +225,8 @@ pub struct OptimizationScenario<'a> {
     pub defender_opponent: DefenderOpponent,
     /// Optional crews prepended before generated candidates (deduped by stable hash); e.g. warm-start from UI.
     pub warm_start: Vec<CrewCandidate>,
+    /// Opaque client fingerprint for [`crate::data::optimize_history`] when `profile_id` is set.
+    pub optimize_cache_key: Option<String>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -246,7 +252,38 @@ impl Default for OptimizationScenario<'_> {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            optimize_cache_key: None,
         }
+    }
+}
+
+fn tiered_preconfirmed_map(
+    scenario: &OptimizationScenario<'_>,
+    n_tiered: usize,
+    scout_sims: usize,
+    top_k: usize,
+    candidates: &[CrewCandidate],
+) -> (HashMap<u64, SimulationResult>, u32) {
+    match (scenario.profile_id, scenario.optimize_cache_key.as_ref()) {
+        (Some(pid), Some(key)) => {
+            let t = key.trim();
+            if t.is_empty() {
+                return (HashMap::new(), 0);
+            }
+            let sims_u32 = scenario.simulation_count.min(u32::MAX as usize) as u32;
+            crate::data::optimize_history::preconfirmed_for_candidates(
+                pid,
+                t,
+                sims_u32,
+                scenario.seed,
+                scout_sims,
+                top_k,
+                n_tiered,
+                &scenario.chain_grind,
+                candidates,
+            )
+        }
+        _ => (HashMap::new(), 0),
     }
 }
 
@@ -429,6 +466,12 @@ fn optimize_scenario_tiered_with_registry(
         .tiered_top_k
         .unwrap_or_else(|| tiered_top_k_for_workload(n_tiered))
         .max(1);
+    let (pre_map, _) = tiered_preconfirmed_map(scenario, n_tiered, scout_sims, top_k, &candidates);
+    let pre_ref = if pre_map.is_empty() {
+        None
+    } else {
+        Some(&pre_map)
+    };
     run_tiered_with_registry_with_progress(
         registry,
         scenario.ship,
@@ -444,6 +487,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario_support_slice(scenario),
         scenario.chain_grind.clone(),
         scenario.defender_opponent,
+        pre_ref,
         |_| true,
     )
 }
@@ -626,6 +670,7 @@ where
                 chain_grind: scenario.chain_grind.clone(),
                 defender_opponent: scenario.defender_opponent,
                 warm_start: scenario.warm_start.clone(),
+                optimize_cache_key: scenario.optimize_cache_key.clone(),
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -760,6 +805,13 @@ where
                 .tiered_top_k
                 .unwrap_or_else(|| tiered_top_k_for_workload(n_tiered))
                 .max(1);
+            let (pre_map, hits) =
+                tiered_preconfirmed_map(scenario, n_tiered, scout_sims, top_k, &candidates);
+            let pre_ref = if pre_map.is_empty() {
+                None
+            } else {
+                Some(&pre_map)
+            };
             let ranked = run_tiered_with_registry_with_progress(
                 registry,
                 scenario.ship,
@@ -775,11 +827,14 @@ where
                 scenario_support_slice(scenario),
                 scenario.chain_grind.clone(),
                 scenario.defender_opponent,
+                pre_ref,
                 &mut on_progress,
             );
             OptimizeRunOutcome {
                 ranked,
                 analytical_prefilter,
+                tiered_resolved: Some((n_tiered, scout_sims, top_k)),
+                optimize_history_confirm_hits: hits,
             }
         }
         OptimizerStrategy::Exhaustive => {
@@ -818,6 +873,8 @@ where
                 return OptimizeRunOutcome {
                     ranked: Vec::new(),
                     analytical_prefilter,
+                    tiered_resolved: None,
+                    optimize_history_confirm_hits: 0,
                 };
             }
             if !on_progress(OptimizeProgressTick {
@@ -829,6 +886,8 @@ where
                 return OptimizeRunOutcome {
                     ranked: Vec::new(),
                     analytical_prefilter,
+                    tiered_resolved: None,
+                    optimize_history_confirm_hits: 0,
                 };
             }
 
@@ -871,6 +930,8 @@ where
             OptimizeRunOutcome {
                 ranked: rank_results(all_results),
                 analytical_prefilter,
+                tiered_resolved: None,
+                optimize_history_confirm_hits: 0,
             }
         }
         OptimizerStrategy::Genetic => OptimizeRunOutcome {
@@ -883,6 +944,8 @@ where
                 })
             }),
             analytical_prefilter: None,
+            tiered_resolved: None,
+            optimize_history_confirm_hits: 0,
         },
     }
 }
@@ -914,6 +977,7 @@ pub fn optimize_crew(
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
         warm_start: Vec::new(),
+        optimize_cache_key: None,
     })
 }
 
@@ -955,6 +1019,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            optimize_cache_key: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -1092,6 +1157,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            optimize_cache_key: None,
         };
         let strat = super::candidate_strategy_from_scenario(&scenario);
         let n = count_effective_optimize_candidates(

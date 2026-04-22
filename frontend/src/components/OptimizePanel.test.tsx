@@ -60,6 +60,7 @@ const baseProps = {
   onChainKillsTargetChange: vi.fn(),
   chainSecondary: "min_hull_damage" as const,
   onChainSecondaryChange: vi.fn(),
+  cachedWarmStartBadge: false,
 };
 
 describe("OptimizePanel", () => {
@@ -227,5 +228,10 @@ describe("OptimizePanel", () => {
       target: { value: "" },
     });
     expect(fn).toHaveBeenCalledWith(null);
+  });
+
+  it("shows cached warm start badge when last run reused profile history", () => {
+    render(<OptimizePanel {...baseProps} cachedWarmStartBadge={true} />);
+    expect(screen.getByText("Cached warm start")).toBeTruthy();
   });
 });

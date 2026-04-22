@@ -1,6 +1,8 @@
 //! Tiered simulation: two-pass strategy (cheap scouting pass → expensive confirmation).
 //! Phase 1: low sims per crew to prune; Phase 2: full Monte Carlo on top N only.
 
+use std::collections::HashMap;
+
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::crew_generator::CrewCandidate;
@@ -8,8 +10,8 @@ use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, DefenderOpponent,
 };
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared_variable_iterations,
-    SimulationResult,
+    crew_candidate_stable_hash, run_monte_carlo_scout_phase_with_shared,
+    run_monte_carlo_with_shared_variable_iterations, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::OptimizeProgressTick;
@@ -114,6 +116,8 @@ pub fn run_tiered_with_registry_with_progress<F>(
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
+    // When set, matching crews skip scout and/or confirm Monte Carlo using stored aggregates.
+    preconfirmed: Option<&HashMap<u64, SimulationResult>>,
     mut on_progress: F,
 ) -> Vec<RankedCrewResult>
 where
@@ -154,16 +158,28 @@ where
     let mut scout_results: Vec<SimulationResult> = Vec::with_capacity(total_candidates);
 
     for (start, end) in ranges {
-        let batch = &candidates[start..end];
-        let batch_results = run_monte_carlo_scout_phase_with_shared(
-            shared.clone(),
-            batch,
-            scout_sims,
-            seed,
-            true,
-            chain_grind.clone(),
-        );
-        scout_results.extend(batch_results);
+        let mut batch_scout: Vec<CrewCandidate> = Vec::new();
+        let mut batch_cached: Vec<SimulationResult> = Vec::new();
+        for c in &candidates[start..end] {
+            let h = crew_candidate_stable_hash(c);
+            if let Some(pre) = preconfirmed.and_then(|m| m.get(&h)) {
+                batch_cached.push(pre.clone());
+            } else {
+                batch_scout.push(c.clone());
+            }
+        }
+        if !batch_scout.is_empty() {
+            let fresh = run_monte_carlo_scout_phase_with_shared(
+                shared.clone(),
+                &batch_scout,
+                scout_sims,
+                seed,
+                true,
+                chain_grind.clone(),
+            );
+            scout_results.extend(fresh);
+        }
+        scout_results.extend(batch_cached);
         let partial_top = rank_results(scout_results.clone())
             .into_iter()
             .take(5)
@@ -196,14 +212,50 @@ where
         .collect();
 
     // Phase 2: full MC on top K (per-crew iterations scale with scout confidence / Wilson width).
-    let confirmation_results = run_monte_carlo_with_shared_variable_iterations(
-        shared,
-        &top_crews,
-        &confirm_sims,
-        seed.wrapping_add(1), // distinct seed for confirmation phase
-        true,
-        chain_grind,
-    );
+    let mut confirmation_slots: Vec<Option<SimulationResult>> = vec![None; top_crews.len()];
+    let mut pending_crews: Vec<CrewCandidate> = Vec::new();
+    let mut pending_sims: Vec<usize> = Vec::new();
+    for (i, crew) in top_crews.iter().enumerate() {
+        let h = crew_candidate_stable_hash(crew);
+        if let Some(pre) = preconfirmed.and_then(|m| m.get(&h)) {
+            confirmation_slots[i] = Some(pre.clone());
+        } else {
+            pending_crews.push(crew.clone());
+            pending_sims.push(confirm_sims[i]);
+        }
+    }
+    let confirmation_results: Vec<SimulationResult> = if pending_crews.is_empty() {
+        drop(shared);
+        confirmation_slots
+            .into_iter()
+            .map(|o| o.expect("preconfirmed fills all top-K slots"))
+            .collect()
+    } else {
+        let fresh = run_monte_carlo_with_shared_variable_iterations(
+            shared,
+            &pending_crews,
+            &pending_sims,
+            seed.wrapping_add(1), // distinct seed for confirmation phase
+            true,
+            chain_grind.clone(),
+        );
+        let mut fi = 0usize;
+        for slot in &mut confirmation_slots {
+            if slot.is_none() {
+                *slot = Some(fresh[fi].clone());
+                fi += 1;
+            }
+        }
+        assert_eq!(
+            fi,
+            fresh.len(),
+            "pending confirm slots must match fresh MC rows"
+        );
+        confirmation_slots
+            .into_iter()
+            .map(|o| o.expect("tiered confirm slot filled"))
+            .collect()
+    };
 
     let partial_top = rank_results(confirmation_results.clone())
         .into_iter()

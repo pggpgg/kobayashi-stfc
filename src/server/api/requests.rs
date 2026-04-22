@@ -6,6 +6,7 @@ use std::fmt;
 
 use crate::data::heuristics::BelowDecksStrategy;
 use crate::optimizer::chain::{ChainGrindParams, ChainSecondaryObjective};
+use crate::data::optimize_history::{validate_optimize_cache_key, MAX_OPTIMIZE_CACHE_KEY_BYTES};
 use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };
@@ -160,6 +161,9 @@ pub struct OptimizeRequest {
     pub novelty_diverse_top: Option<u32>,
     /// Strength-sorted pool size considered for MMR (optional; must be ≥ `novelty_diverse_top` when both are set).
     pub novelty_pool: Option<u32>,
+    /// Opaque fingerprint (same string as SPA `buildOptimizeWarmStartKey`) for `profiles/{id}/optimize_history.json`.
+    #[serde(default)]
+    pub optimize_cache_key: Option<String>,
 }
 
 /// JSON body for `OptimizeRequest.constraints`.
@@ -314,6 +318,18 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
                     break;
                 }
             }
+        }
+    }
+
+    if let Some(ref k) = request.optimize_cache_key {
+        let t = k.trim();
+        if !t.is_empty() && !validate_optimize_cache_key(t) {
+            errors.push(ValidationIssue {
+                field: "optimize_cache_key",
+                messages: vec![format!(
+                    "if set, must be non-empty after trim, at most {MAX_OPTIMIZE_CACHE_KEY_BYTES} bytes, and contain no control characters"
+                )],
+            });
         }
     }
 

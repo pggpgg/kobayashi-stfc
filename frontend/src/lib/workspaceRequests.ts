@@ -216,6 +216,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   noveltyLambdaText?: string;
   noveltyDiverseTopText?: string;
   noveltyPoolText?: string;
+  /** Opaque key for server-side optimize history (`profiles/{id}/optimize_history.json`). */
+  optimizeCacheKey?: string | null;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -276,5 +278,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
       noveltyDiverseTopText: args.noveltyDiverseTopText ?? "",
       noveltyPoolText: args.noveltyPoolText ?? "",
     }),
+    ...(args.optimizeCacheKey != null && args.optimizeCacheKey.trim() !== ""
+      ? { optimize_cache_key: args.optimizeCacheKey.trim() }
+      : {}),
   };
 }

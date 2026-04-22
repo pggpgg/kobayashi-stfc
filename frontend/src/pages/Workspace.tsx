@@ -251,6 +251,7 @@ export default function Workspace() {
           onChainKillsTargetChange={ws.setChainKillsTarget}
           chainSecondary={ws.chainSecondary}
           onChainSecondaryChange={ws.setChainSecondary}
+          cachedWarmStartBadge={ws.cachedWarmStartBadge}
         />
       </div>
     </div>
