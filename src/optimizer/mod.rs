@@ -31,7 +31,7 @@ use crate::optimizer::monte_carlo::{
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
     run_tiered_with_registry_with_progress, tiered_scout_sims_for_workload,
-    tiered_top_k_for_workload, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
+    tiered_top_k_for_workload, TieredScoutBudgetStats, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
 };
 
 /// Reference full Monte Carlo count for auto prefilter scaling (matches [`OptimizationScenario`] default).
@@ -161,6 +161,8 @@ pub struct OptimizeRunOutcome {
     pub analytical_prefilter: Option<(usize, usize)>,
     /// When tiered ran: `(n_candidates, resolved_scout_sims, resolved_top_k)` for cross-session cache metadata.
     pub tiered_resolved: Option<(usize, usize, usize)>,
+    /// Scout-phase trial totals when tiered adaptive scout ran (see [`TieredScoutBudgetStats`]).
+    pub tiered_scout_budget: Option<TieredScoutBudgetStats>,
     /// Crews in the tiered candidate list that reused [`crate::data::optimize_history`] confirmation rows.
     pub optimize_history_confirm_hits: u32,
 }
@@ -170,7 +172,7 @@ pub struct OptimizeRunOutcome {
 pub struct OptimizeProgressTick {
     pub crews_done: u32,
     pub total_crews: u32,
-    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_confirm`.
+    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`.
     pub phase: &'static str,
     pub partial_top: Option<Vec<RankedCrewResult>>,
 }
@@ -212,6 +214,8 @@ pub struct OptimizationScenario<'a> {
     pub tiered_scout_sims: Option<usize>,
     /// Tiered only: number of top crews to run full confirmation. None = workload-aware default (see [`crate::optimizer::tiered::tiered_top_k_for_workload`]).
     pub tiered_top_k: Option<usize>,
+    /// Tiered only: when true, use a single uniform scout pass at the resolved scout cap (legacy). When false (default), use adaptive coarse→refine scout.
+    pub tiered_scout_uniform: bool,
     /// When set, keep only this many crews after analytical expected-hull-damage ranking before Monte Carlo. Genetic ignores this.
     pub analytical_prefilter_keep: Option<usize>,
     /// Below-decks slot count for candidate generation (resolved from API / tier defaults upstream).
@@ -246,6 +250,7 @@ impl Default for OptimizationScenario<'_> {
             profile_id: None,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            tiered_scout_uniform: false,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -255,6 +260,14 @@ impl Default for OptimizationScenario<'_> {
             warm_start: Vec::new(),
             optimize_cache_key: None,
         }
+    }
+}
+
+fn tiered_scout_allocator_id(scenario: &OptimizationScenario<'_>) -> u8 {
+    if scenario.tiered_scout_uniform {
+        0
+    } else {
+        1
     }
 }
 
@@ -280,6 +293,7 @@ fn tiered_preconfirmed_map(
                 scout_sims,
                 top_k,
                 n_tiered,
+                tiered_scout_allocator_id(scenario),
                 &scenario.chain_grind,
                 candidates,
             )
@@ -489,8 +503,10 @@ fn optimize_scenario_tiered_with_registry(
         scenario.chain_grind.clone(),
         scenario.defender_opponent,
         pre_ref,
+        !scenario.tiered_scout_uniform,
         |_| true,
     )
+    .0
 }
 
 /// Like [optimize_scenario] but uses [DataRegistry] for officers and ship/hostile (no reload).
@@ -664,6 +680,7 @@ where
                 profile_id: scenario.profile_id,
                 tiered_scout_sims: scenario.tiered_scout_sims,
                 tiered_top_k: scenario.tiered_top_k,
+                tiered_scout_uniform: scenario.tiered_scout_uniform,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
                 below_decks_slots: scenario.below_decks_slots,
                 constraints: scenario.constraints.clone(),
@@ -837,7 +854,8 @@ where
             } else {
                 Some(&pre_map)
             };
-            let ranked = run_tiered_with_registry_with_progress(
+            let scout_adaptive = !scenario.tiered_scout_uniform;
+            let (ranked, scout_budget) = run_tiered_with_registry_with_progress(
                 registry,
                 scenario.ship,
                 scenario.hostile,
@@ -853,12 +871,14 @@ where
                 scenario.chain_grind.clone(),
                 scenario.defender_opponent,
                 pre_ref,
+                scout_adaptive,
                 &mut on_progress,
             );
             OptimizeRunOutcome {
                 ranked,
                 analytical_prefilter,
                 tiered_resolved: Some((n_tiered, scout_sims, top_k)),
+                tiered_scout_budget: Some(scout_budget),
                 optimize_history_confirm_hits: hits,
             }
         }
@@ -899,6 +919,7 @@ where
                     ranked: Vec::new(),
                     analytical_prefilter,
                     tiered_resolved: None,
+                    tiered_scout_budget: None,
                     optimize_history_confirm_hits: 0,
                 };
             }
@@ -912,6 +933,7 @@ where
                     ranked: Vec::new(),
                     analytical_prefilter,
                     tiered_resolved: None,
+                    tiered_scout_budget: None,
                     optimize_history_confirm_hits: 0,
                 };
             }
@@ -980,6 +1002,7 @@ where
                 ranked: rank_results(all_results),
                 analytical_prefilter,
                 tiered_resolved: None,
+                tiered_scout_budget: None,
                 optimize_history_confirm_hits: 0,
             }
         }
@@ -994,6 +1017,7 @@ where
             }),
             analytical_prefilter: None,
             tiered_resolved: None,
+            tiered_scout_budget: None,
             optimize_history_confirm_hits: 0,
         },
     }
@@ -1019,6 +1043,7 @@ pub fn optimize_crew(
         profile_id,
         tiered_scout_sims: None,
         tiered_top_k: None,
+        tiered_scout_uniform: false,
         analytical_prefilter_keep: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
@@ -1061,6 +1086,7 @@ mod tests {
             profile_id: None,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            tiered_scout_uniform: false,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -1199,6 +1225,7 @@ mod tests {
             profile_id: None,
             tiered_scout_sims: None,
             tiered_top_k: None,
+            tiered_scout_uniform: false,
             analytical_prefilter_keep: Some(4),
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -1287,4 +1314,5 @@ mod tests {
             "tier 1 vs 5 amalgam attacker attack should differ materially: {atk_low} vs {atk_high}"
         );
     }
+
 }

@@ -37,6 +37,9 @@ pub struct OptimizeHistoryEntry {
     pub tiered_scout_sims: usize,
     pub tiered_top_k: usize,
     pub n_candidates: usize,
+    /// `0` = uniform single-pass scout; `1` = adaptive coarse→refine scout (must match current run).
+    #[serde(default)]
+    pub tiered_scout_allocator: u8,
     /// Same encoding as the SPA warm-start key chain segment (`0` vs `1:kt:secondary`).
     pub chain_fingerprint: String,
     pub crews: Vec<OptimizeHistoryCrewRecord>,
@@ -67,6 +70,8 @@ pub struct OptimizeHistoryCrewRecord {
     pub avg_defender_hull_remaining_ci_high: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chain: Option<crate::optimizer::chain::ChainSimulationSummary>,
+    #[serde(default)]
+    pub trials_run: usize,
 }
 
 /// Matches [`frontend/src/lib/optimizeWarmStart.ts`] `chain` segment when chain grind is enabled.
@@ -113,6 +118,7 @@ impl OptimizeHistoryCrewRecord {
             avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
             avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
             chain: r.chain.clone(),
+            trials_run: r.trials_run,
         }
     }
 
@@ -123,6 +129,7 @@ impl OptimizeHistoryCrewRecord {
                 bridge: self.bridge.clone(),
                 below_decks: self.below_decks.clone(),
             },
+            trials_run: self.trials_run,
             win_rate: self.win_rate,
             win_rate_ci_low: self.win_rate_ci_low,
             win_rate_ci_high: self.win_rate_ci_high,
@@ -226,6 +233,7 @@ pub fn entry_matches_run(
     tiered_scout_sims: usize,
     tiered_top_k: usize,
     n_candidates: usize,
+    tiered_scout_allocator: u8,
     chain_fp: &str,
 ) -> bool {
     entry.sims == sims
@@ -233,6 +241,7 @@ pub fn entry_matches_run(
         && entry.tiered_scout_sims == tiered_scout_sims
         && entry.tiered_top_k == tiered_top_k
         && entry.n_candidates == n_candidates
+        && entry.tiered_scout_allocator == tiered_scout_allocator
         && entry.chain_fingerprint == chain_fp
 }
 
@@ -245,6 +254,7 @@ pub fn preconfirmed_for_candidates(
     tiered_scout_sims: usize,
     tiered_top_k: usize,
     n_candidates: usize,
+    tiered_scout_allocator: u8,
     chain: &Option<ChainGrindParams>,
     candidates: &[CrewCandidate],
 ) -> (HashMap<u64, SimulationResult>, u32) {
@@ -260,6 +270,7 @@ pub fn preconfirmed_for_candidates(
         tiered_scout_sims,
         tiered_top_k,
         n_candidates,
+        tiered_scout_allocator,
         &chain_fp,
     ) {
         return (HashMap::new(), 0);
@@ -304,6 +315,7 @@ fn ranked_to_simulation(r: &RankedCrewResult) -> SimulationResult {
         avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
         chain: r.chain.clone(),
+        trials_run: r.trials_run,
     }
 }
 
@@ -313,6 +325,7 @@ pub fn build_entry_from_ranked(
     tiered_scout_sims: usize,
     tiered_top_k: usize,
     n_candidates: usize,
+    tiered_scout_allocator: u8,
     chain: &Option<ChainGrindParams>,
     ranked: &[RankedCrewResult],
 ) -> OptimizeHistoryEntry {
@@ -328,6 +341,7 @@ pub fn build_entry_from_ranked(
         tiered_scout_sims,
         tiered_top_k,
         n_candidates,
+        tiered_scout_allocator,
         chain_fingerprint: chain_fingerprint(chain),
         crews,
     }
@@ -352,14 +366,36 @@ mod tests {
             tiered_scout_sims: 500,
             tiered_top_k: 20,
             n_candidates: 50,
+            tiered_scout_allocator: 1,
             chain_fingerprint: "0".into(),
             crews: vec![],
         };
         assert!(!entry_matches_run(
-            &entry, 100, 2, 500, 20, 49, "0"
+            &entry, 100, 2, 500, 20, 49, 1, "0"
         ));
         assert!(entry_matches_run(
-            &entry, 100, 2, 500, 20, 50, "0"
+            &entry, 100, 2, 500, 20, 50, 1, "0"
+        ));
+    }
+
+    #[test]
+    fn entry_allocator_mismatch_invalidates() {
+        let entry = OptimizeHistoryEntry {
+            updated_at_ms: 1,
+            sims: 100,
+            seed: 2,
+            tiered_scout_sims: 500,
+            tiered_top_k: 20,
+            n_candidates: 50,
+            tiered_scout_allocator: 0,
+            chain_fingerprint: "0".into(),
+            crews: vec![],
+        };
+        assert!(!entry_matches_run(
+            &entry, 100, 2, 500, 20, 50, 1, "0"
+        ));
+        assert!(entry_matches_run(
+            &entry, 100, 2, 500, 20, 50, 0, "0"
         ));
     }
 
@@ -376,6 +412,7 @@ mod tests {
                     tiered_scout_sims: 500,
                     tiered_top_k: 20,
                     n_candidates: 100,
+                    tiered_scout_allocator: 0,
                     chain_fingerprint: "0".to_string(),
                     crews: vec![],
                 },

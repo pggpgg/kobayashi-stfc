@@ -593,6 +593,7 @@ pub fn simulate_payload(
             bridge,
             below_decks,
         },
+        trials_run: 0,
         win_rate: 0.0,
         win_rate_ci_low: 0.0,
         win_rate_ci_high: 0.0,

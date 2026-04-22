@@ -16,6 +16,9 @@ pub struct RankedCrewResult {
     pub captain: String,
     pub bridge: Vec<String>,
     pub below_decks: Vec<String>,
+    /// Scout or exhaustive Monte Carlo trials backing this row (0 if unknown / synthetic).
+    #[serde(default)]
+    pub trials_run: usize,
     pub win_rate: f64,
     pub win_rate_ci_low: f64,
     pub win_rate_ci_high: f64,
@@ -54,6 +57,7 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
                 captain: result.candidate.captain,
                 bridge: result.candidate.bridge.clone(),
                 below_decks: result.candidate.below_decks.clone(),
+                trials_run: result.trials_run,
                 win_rate: result.win_rate,
                 win_rate_ci_low: result.win_rate_ci_low,
                 win_rate_ci_high: result.win_rate_ci_high,
@@ -218,6 +222,7 @@ mod novelty_tests {
             captain: captain.to_string(),
             bridge: bridge.iter().map(|s| (*s).to_string()).collect(),
             below_decks: below.iter().map(|s| (*s).to_string()).collect(),
+            trials_run: 0,
             win_rate,
             win_rate_ci_low: 0.0,
             win_rate_ci_high: 1.0,

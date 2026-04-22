@@ -23,6 +23,8 @@ use super::scenario::{
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
     pub candidate: CrewCandidate,
+    /// Monte Carlo trials actually executed (may be less than requested when scout early-stop fires).
+    pub trials_run: usize,
     pub win_rate: f64,
     /// Wilson 95% interval lower bound (inclusive), clamped to [0, 1].
     pub win_rate_ci_low: f64,
@@ -223,6 +225,7 @@ fn run_candidate_chain_monte_carlo(
 
     SimulationResult {
         candidate: candidate.clone(),
+        trials_run: n,
         win_rate,
         win_rate_ci_low,
         win_rate_ci_high,
@@ -408,6 +411,7 @@ fn run_candidate_monte_carlo(
 
     SimulationResult {
         candidate: candidate.clone(),
+        trials_run: n_done,
         win_rate,
         win_rate_ci_low,
         win_rate_ci_high,
@@ -527,6 +531,7 @@ pub fn run_monte_carlo_parallel_deduped(
             k,
             SimulationResult {
                 candidate: c.clone(),
+                trials_run: r.trials_run,
                 win_rate: r.win_rate,
                 win_rate_ci_low: r.win_rate_ci_low,
                 win_rate_ci_high: r.win_rate_ci_high,

@@ -136,6 +136,9 @@ pub struct OptimizeRequest {
     pub tiered_scout_sims: Option<u32>,
     /// Tiered strategy: how many top scout crews receive full confirmation sims (1..=MAX_TIERED_TOP_K). Omitted = scaled from candidate count.
     pub tiered_top_k: Option<u32>,
+    /// When true, tiered scouting uses one uniform pass at the scout cap (legacy). Omitted or false = adaptive coarse→refine scout.
+    #[serde(default)]
+    pub tiered_scout_uniform: Option<bool>,
     /// Optional crews prepended before generated candidates (deduped); e.g. UI warm-start persistence.
     #[serde(default)]
     pub warm_start_crews: Option<Vec<WarmStartCrewDto>>,

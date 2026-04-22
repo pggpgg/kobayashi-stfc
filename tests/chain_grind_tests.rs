@@ -86,6 +86,7 @@ fn simulation_result_chain(
             bridge: vec![],
             below_decks: vec![],
         },
+        trials_run: 0,
         win_rate,
         win_rate_ci_low: 0.0,
         win_rate_ci_high: 1.0,

@@ -475,6 +475,7 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
             bridge: r.bridge,
             below_decks: r.below_decks,
         },
+        trials_run: r.trials_run,
         win_rate: r.win_rate,
         win_rate_ci_low: r.win_rate_ci_low,
         win_rate_ci_high: r.win_rate_ci_high,
@@ -663,6 +664,7 @@ fn gather_optimize_simulation_results(
             profile_id,
             tiered_scout_sims: request.tiered_scout_sims.map(|n| n as usize),
             tiered_top_k: request.tiered_top_k.map(|n| n as usize),
+            tiered_scout_uniform: matches!(request.tiered_scout_uniform, Some(true)),
             analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
             below_decks_slots,
             constraints: crew_constraints.clone(),
@@ -681,17 +683,23 @@ fn gather_optimize_simulation_results(
         }
         optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
         if strategy == OptimizerStrategy::Tiered {
-            if let (Some(pid), Some(ref key), Some((n, scout, tk))) = (
+            if let (Some(pid), Some(key), Some((n, scout, tk))) = (
                 profile_id,
                 cache_key_normalized.as_ref(),
                 outcome.tiered_resolved,
             ) {
+                let tiered_scout_allocator = if matches!(request.tiered_scout_uniform, Some(true)) {
+                    0u8
+                } else {
+                    1u8
+                };
                 let entry = optimize_history::build_entry_from_ranked(
                     sims,
                     seed,
                     scout,
                     tk,
                     n,
+                    tiered_scout_allocator,
                     &chain_grind,
                     &outcome.ranked,
                 );
@@ -1216,7 +1224,7 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
     let crew_like_phase = state.phase.as_deref().is_none_or(|p| {
         matches!(
             p,
-            "heuristics" | "monte_carlo" | "tiered_scout" | "tiered_confirm"
+            "heuristics" | "monte_carlo" | "tiered_scout" | "tiered_scout_refine" | "tiered_confirm"
         )
     });
     let (throughput_crews_per_sec, eta_seconds) =
