@@ -2,6 +2,7 @@
 //! Phase 1: low sims per crew to prune; Phase 2: full Monte Carlo on top N only.
 
 use std::collections::HashMap;
+use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::chain::ChainGrindParams;
@@ -155,9 +156,23 @@ where
     let scout_sims = scout_sims.max(1);
     let num_batches = monte_carlo_batch_count_for_candidates(total_candidates);
     let ranges = batch_ranges(total_candidates, num_batches);
+    let total_batches = ranges.len();
     let mut scout_results: Vec<SimulationResult> = Vec::with_capacity(total_candidates);
 
-    for (start, end) in ranges {
+    for (batch_index, (start, end)) in ranges.into_iter().enumerate() {
+        info!(
+            phase = "tiered_scout",
+            strategy = "tiered",
+            seed,
+            batch_index = (batch_index + 1) as u64,
+            batch_total = total_batches as u64,
+            batch_start = start as u64,
+            batch_end = end as u64,
+            batch_candidates = (end - start) as u64,
+            total_candidates = total_candidates as u64,
+            scout_sims = scout_sims as u64,
+            "optimize_sim_batch_started"
+        );
         let mut batch_scout: Vec<CrewCandidate> = Vec::new();
         let mut batch_cached: Vec<SimulationResult> = Vec::new();
         for c in &candidates[start..end] {
@@ -180,6 +195,16 @@ where
             scout_results.extend(fresh);
         }
         scout_results.extend(batch_cached);
+        info!(
+            phase = "tiered_scout",
+            strategy = "tiered",
+            seed,
+            batch_index = (batch_index + 1) as u64,
+            batch_total = total_batches as u64,
+            crews_done = end as u64,
+            total_candidates = total_candidates as u64,
+            "optimize_sim_batch_completed"
+        );
         let partial_top = rank_results(scout_results.clone())
             .into_iter()
             .take(5)
@@ -224,6 +249,16 @@ where
             pending_sims.push(confirm_sims[i]);
         }
     }
+    info!(
+        phase = "tiered_confirm",
+        strategy = "tiered",
+        seed,
+        confirm_seed = seed.wrapping_add(1),
+        top_k = k as u64,
+        cached_confirm_crews = (top_crews.len() - pending_crews.len()) as u64,
+        pending_confirm_crews = pending_crews.len() as u64,
+        "optimize_tiered_confirm_started"
+    );
     let confirmation_results: Vec<SimulationResult> = if pending_crews.is_empty() {
         drop(shared);
         confirmation_slots
@@ -256,6 +291,13 @@ where
             .map(|o| o.expect("tiered confirm slot filled"))
             .collect()
     };
+    info!(
+        phase = "tiered_confirm",
+        strategy = "tiered",
+        seed = seed.wrapping_add(1),
+        confirmed_crews = confirmation_results.len() as u64,
+        "optimize_tiered_confirm_completed"
+    );
 
     let partial_top = rank_results(confirmation_results.clone())
         .into_iter()

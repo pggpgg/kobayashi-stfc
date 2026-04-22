@@ -66,6 +66,49 @@ The React app does **not** read the API key from build-time environment variable
 | `KOBAYASHI_BIND`                   | Address to listen on (default `127.0.0.1:3000`)                        |
 | `KOBAYASHI_API_KEY`                | Optional shared secret for mutating `/api/`* routes (not sync ingress) |
 | `KOBAYASHI_API_KEY_TRUST_LOOPBACK` | When `1` (default), loopback peers skip the key check                  |
+| `KOBAYASHI_LOG`                    | Kobayashi log level/filter alias (`info`, `debug`, or full filter)     |
+| `RUST_LOG`                         | Full tracing filter (highest precedence over `KOBAYASHI_LOG`)          |
 
 
 See also [SYNC.md](SYNC.md) for mod sync tokens and [README.md](../README.md) for general run instructions.
+
+## Structured logging and tracing
+
+Server logs are emitted as newline-delimited JSON via `tracing` / `tracing-subscriber`.
+
+- Per-request logs include fields like `method`, `matched_path`, `status`, and `latency_ms`.
+- Optimize lifecycle logs include `job_id`, `seed`, `requested_strategy`, `effective_strategy`, and progress phase (`heuristics`, `monte_carlo`, `tiered_scout`, `tiered_confirm`, `genetic`).
+- Simulation batch logs include `batch_index`, `batch_total`, `batch_start`, `batch_end`, and candidate counts.
+
+### Enable log levels
+
+```bash
+# Common operator default
+KOBAYASHI_LOG=info ./target/release/kobayashi serve
+
+# Full filter syntax (overrides KOBAYASHI_LOG when set)
+RUST_LOG='warn,kobayashi=info,tower_http=info' ./target/release/kobayashi serve
+```
+
+### `jq` recipes
+
+```bash
+# Request latency summary by route (p50/p95 in ms)
+jq -r 'select(.fields.message=="request_completed") | [.fields.matched_path, .fields.latency_ms] | @tsv' server.log \
+  | awk -F '\t' '{a[$1]=a[$1]" "$2} END {for (k in a) {n=split(substr(a[k],2),v," "); asort(v); p50=v[int((n+1)*0.50)]; p95=v[int((n+1)*0.95)]; printf "%s\tp50=%sms\tp95=%sms\tn=%d\n",k,p50,p95,n}}'
+```
+
+```bash
+# Non-2xx request completions with route + status
+jq 'select(.fields.message=="request_completed" and (.fields.status|tonumber >= 400)) | {ts: .timestamp, route: .fields.matched_path, status: .fields.status, latency_ms: .fields.latency_ms}'
+```
+
+```bash
+# Optimize phase transitions and progress ticks
+jq 'select((.fields.message=="optimize_phase_started") or (.fields.message=="optimize_phase_completed") or (.fields.message=="optimize_progress_tick")) | {ts: .timestamp, job_id: .fields.job_id, phase: .fields.phase, progress: .fields.progress, crews_done: .fields.crews_done, total_crews: .fields.total_crews}'
+```
+
+```bash
+# Batch-level throughput view for optimize Monte Carlo/tiered scout batches
+jq 'select((.fields.message=="optimize_sim_batch_started") or (.fields.message=="optimize_sim_batch_completed")) | {ts: .timestamp, phase: .fields.phase, strategy: .fields.strategy, batch_index: .fields.batch_index, batch_total: .fields.batch_total, batch_start: .fields.batch_start, batch_end: .fields.batch_end, crews_done: .fields.crews_done}'
+```

@@ -11,6 +11,7 @@ pub mod tiered;
 pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
 
 use std::collections::{HashMap, HashSet};
+use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
@@ -711,10 +712,24 @@ where
 
             let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
             let ranges = batch_ranges(total, num_batches);
+            let total_batches = ranges.len();
             let mut all_results: Vec<SimulationResult> = Vec::with_capacity(total);
             let sim_count = scenario.simulation_count.max(1);
 
-            for (start, end) in ranges {
+            for (batch_index, (start, end)) in ranges.into_iter().enumerate() {
+                info!(
+                    phase = "monte_carlo",
+                    strategy = "exhaustive",
+                    seed = scenario.seed,
+                    batch_index = (batch_index + 1) as u64,
+                    batch_total = total_batches as u64,
+                    batch_start = start as u64,
+                    batch_end = end as u64,
+                    batch_candidates = (end - start) as u64,
+                    total_candidates = total as u64,
+                    sims_per_candidate = sim_count as u64,
+                    "optimize_sim_batch_started"
+                );
                 let batch = &candidates[start..end];
                 let batch_results = run_monte_carlo_parallel(
                     scenario.ship,
@@ -727,6 +742,16 @@ where
                     scenario.defender_opponent,
                 );
                 all_results.extend(batch_results);
+                info!(
+                    phase = "monte_carlo",
+                    strategy = "exhaustive",
+                    seed = scenario.seed,
+                    batch_index = (batch_index + 1) as u64,
+                    batch_total = total_batches as u64,
+                    crews_done = end as u64,
+                    total_candidates = total as u64,
+                    "optimize_sim_batch_completed"
+                );
                 let partial_top = rank_results(all_results.clone())
                     .into_iter()
                     .take(5)
@@ -893,10 +918,24 @@ where
 
             let num_batches = OPTIMIZE_PROGRESS_BATCH_COUNT.min(total);
             let ranges = batch_ranges(total, num_batches);
+            let total_batches = ranges.len();
             let mut all_results: Vec<SimulationResult> = Vec::with_capacity(total);
             let sim_count = scenario.simulation_count.max(1);
 
-            for (start, end) in ranges {
+            for (batch_index, (start, end)) in ranges.into_iter().enumerate() {
+                info!(
+                    phase = "monte_carlo",
+                    strategy = "exhaustive",
+                    seed = scenario.seed,
+                    batch_index = (batch_index + 1) as u64,
+                    batch_total = total_batches as u64,
+                    batch_start = start as u64,
+                    batch_end = end as u64,
+                    batch_candidates = (end - start) as u64,
+                    total_candidates = total as u64,
+                    sims_per_candidate = sim_count as u64,
+                    "optimize_sim_batch_started"
+                );
                 let batch = &candidates[start..end];
                 let (batch_results, _) = run_monte_carlo_parallel_with_registry(
                     registry,
@@ -913,6 +952,16 @@ where
                     scenario.defender_opponent,
                 );
                 all_results.extend(batch_results);
+                info!(
+                    phase = "monte_carlo",
+                    strategy = "exhaustive",
+                    seed = scenario.seed,
+                    batch_index = (batch_index + 1) as u64,
+                    batch_total = total_batches as u64,
+                    crews_done = end as u64,
+                    total_candidates = total as u64,
+                    "optimize_sim_batch_completed"
+                );
                 let partial_top = rank_results(all_results.clone())
                     .into_iter()
                     .take(5)

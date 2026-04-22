@@ -11,9 +11,10 @@
 use axum::{
     body::Bytes,
     extract::DefaultBodyLimit,
+    extract::MatchedPath,
     extract::OriginalUri,
     extract::{Path, Query, State},
-    http::{header, HeaderMap, HeaderValue, StatusCode},
+    http::{header, HeaderMap, HeaderValue, Request, StatusCode},
     middleware,
     response::sse::{Event, Sse},
     response::{IntoResponse, Response},
@@ -28,6 +29,8 @@ use std::time::Duration;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use tokio_stream::wrappers::ReceiverStream;
 use tower_http::compression::CompressionLayer;
+use tower_http::trace::TraceLayer;
+use tracing::Span;
 
 use crate::data::data_registry::DataRegistry;
 use crate::mechanics::coverage::mechanics_coverage_json;
@@ -284,9 +287,51 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         }
     };
 
+    let trace_layer = TraceLayer::new_for_http()
+        .make_span_with(|request: &Request<_>| {
+            let matched_path = request
+                .extensions()
+                .get::<MatchedPath>()
+                .map(MatchedPath::as_str)
+                .unwrap_or_else(|| request.uri().path())
+                .to_string();
+            let has_profile_hint = request.headers().contains_key("x-profile-id")
+                || request
+                    .uri()
+                    .query()
+                    .is_some_and(|q| q.contains("profile="));
+            tracing::info_span!(
+                "http_request",
+                method = %request.method(),
+                uri = %request.uri(),
+                matched_path = %matched_path,
+                has_profile_hint
+            )
+        })
+        .on_response(|response: &Response<_>, latency: Duration, span: &Span| {
+            tracing::info!(
+                parent: span,
+                status = response.status().as_u16(),
+                latency_ms = latency.as_millis() as u64,
+                "request_completed"
+            );
+        })
+        .on_failure(
+            |failure_class: tower_http::classify::ServerErrorsFailureClass,
+             latency: Duration,
+             span: &Span| {
+                tracing::warn!(
+                    parent: span,
+                    failure_class = %failure_class,
+                    latency_ms = latency.as_millis() as u64,
+                    "request_failed"
+                );
+            },
+        );
+
     // Gzip/Brotli for compressible responses (audit task 13). Default predicate skips
     // SSE (`text/event-stream`), images, and tiny bodies.
-    app.layer(CompressionLayer::new())
+    app.layer(CompressionLayer::new()).layer(trace_layer)
 }
 
 fn locate_dist_dir() -> Option<std::path::PathBuf> {

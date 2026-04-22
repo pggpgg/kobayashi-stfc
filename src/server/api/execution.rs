@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use tokio::sync::OwnedSemaphorePermit;
+use tracing::{info, info_span, warn};
 
 use crate::data::data_registry::DataRegistry;
 use crate::data::optimize_history;
@@ -90,9 +91,24 @@ fn resolve_effective_optimize_strategy(
     warm_start_for_count: &[CrewCandidate],
 ) -> (OptimizerStrategy, bool) {
     if let Some(ref raw) = request.strategy {
-        return (parse_strategy(Some(raw)), false);
+        let strategy = parse_strategy(Some(raw));
+        info!(
+            requested_strategy = %raw,
+            effective_strategy = optimizer_strategy_to_api_label(strategy),
+            strategy_auto = false,
+            heuristics_only,
+            "optimize_strategy_resolved"
+        );
+        return (strategy, false);
     }
     if heuristics_only {
+        info!(
+            requested_strategy = "auto",
+            effective_strategy = optimizer_strategy_to_api_label(OptimizerStrategy::Exhaustive),
+            strategy_auto = false,
+            heuristics_only = true,
+            "optimize_strategy_resolved"
+        );
         return (OptimizerStrategy::Exhaustive, false);
     }
     let strat = CandidateStrategy {
@@ -117,6 +133,15 @@ fn resolve_effective_optimize_strategy(
     } else {
         OptimizerStrategy::Exhaustive
     };
+    info!(
+        requested_strategy = "auto",
+        effective_strategy = optimizer_strategy_to_api_label(strategy),
+        strategy_auto = true,
+        heuristics_only = false,
+        effective_candidates = n as u64,
+        tiered_auto_threshold = TIERED_AUTO_THRESHOLD as u64,
+        "optimize_strategy_resolved"
+    );
     (strategy, true)
 }
 
@@ -328,6 +353,13 @@ impl OptimizeProgressSink {
         let Self::Job { job_id, .. } = self else {
             return;
         };
+        info!(
+            job_id = %job_id,
+            phase = "heuristics",
+            crews_done = 0u32,
+            total_crews = h_total,
+            "optimize_phase_started"
+        );
         let mut map = lock_jobs();
         if let Some(state) = map.get_mut(job_id) {
             state.total_crews = h_total;
@@ -344,6 +376,15 @@ impl OptimizeProgressSink {
         let Self::Job { job_id, .. } = self else {
             return;
         };
+        info!(
+            job_id = %job_id,
+            phase = "heuristics",
+            crews_done = h_total,
+            total_crews = h_total,
+            heuristics_only,
+            top_preview_size = results.len().min(5) as u64,
+            "optimize_phase_completed"
+        );
         let mut map = lock_jobs();
         if let Some(state) = map.get_mut(job_id) {
             state.crews_done = h_total;
@@ -405,6 +446,15 @@ impl OptimizeProgressSink {
                         );
                     }
                 }
+                info!(
+                    job_id = %job_id,
+                    phase = tick.phase,
+                    crews_done,
+                    total_crews,
+                    progress,
+                    partial_top_size = tick.partial_top.as_ref().map_or(0, |top| top.len()) as u64,
+                    "optimize_progress_tick"
+                );
                 true
             }
         }
@@ -464,6 +514,18 @@ fn gather_optimize_simulation_results(
     let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
     let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
     let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
+    let gather_span = info_span!(
+        "optimize_gather",
+        ship = %request.ship,
+        hostile = %request.hostile,
+        seed,
+        sims,
+        requested_strategy = request.strategy.as_deref().unwrap_or("auto"),
+        heuristics_only,
+        heuristics_seed_count = heuristics_seeds.len() as u64,
+        profile_id_present = profile_id.is_some()
+    );
+    let _gather_span = gather_span.enter();
     let below_decks_slots = resolve_below_decks_slots_for_ship(
         &request.ship,
         request.ship_tier,
@@ -490,12 +552,22 @@ fn gather_optimize_simulation_results(
     if let Some(ref c) = crew_constraints {
         h_candidates = filter_candidates(h_candidates, c);
     }
+    info!(
+        heuristics_candidates = h_candidates.len() as u64,
+        "optimize_heuristics_candidates_ready"
+    );
 
     let dto_warm = warm_start_crews_from_request_dtos(request);
     let fast_discovery_requested =
         request.fast_discovery == Some(true) && heuristics_seeds_nonempty && !heuristics_only;
     let fast_discovery_no_resolved_crews = fast_discovery_requested && h_candidates.is_empty();
     let fast_discovery = fast_discovery_requested && !h_candidates.is_empty();
+    info!(
+        fast_discovery_requested,
+        fast_discovery_enabled = fast_discovery,
+        fast_discovery_no_resolved_crews,
+        "optimize_fast_discovery_resolution"
+    );
 
     let (scenario_warm_start, fast_discovery_heuristic_cap_hit) = if fast_discovery {
         merge_fast_discovery_warm_start(h_candidates.clone(), dto_warm)
@@ -515,6 +587,12 @@ fn gather_optimize_simulation_results(
     );
 
     let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
+    info!(
+        effective_strategy = optimizer_strategy_to_api_label(strategy),
+        strategy_auto,
+        is_seeded_genetic,
+        "optimize_execution_mode_selected"
+    );
 
     if let OptimizeProgressSink::Job {
         is_seeded_genetic: sink_sg,
@@ -557,6 +635,10 @@ fn gather_optimize_simulation_results(
                 request.defender_opponent,
             );
             sink.on_heuristics_complete(heuristics_only, h_total, &results);
+            info!(
+                heuristic_results = results.len() as u64,
+                "optimize_heuristics_monte_carlo_complete"
+            );
             results
         } else {
             Vec::new()
@@ -594,6 +676,7 @@ fn gather_optimize_simulation_results(
             sink.on_optimize_tick(tick)
         });
         if sink.job_cancelled() {
+            warn!("optimize_cancelled");
             return Err(());
         }
         optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
@@ -623,6 +706,13 @@ fn gather_optimize_simulation_results(
                 .into_iter()
                 .map(ranked_crew_to_simulation_result),
         );
+        info!(
+            strategy = optimizer_strategy_to_api_label(strategy),
+            optimize_history_confirm_hits,
+            optimize_history_wrote,
+            ranked_results = all_results.len() as u64,
+            "optimize_main_phase_complete"
+        );
         pf
     } else {
         None
@@ -644,6 +734,16 @@ fn gather_optimize_simulation_results(
         optimize_history_confirm_hits,
         optimize_history_wrote,
     };
+    info!(
+        effective_strategy = optimizer_strategy_to_api_label(meta.strategy),
+        strategy_auto = meta.strategy_auto,
+        heuristics_only = meta.heuristics_only,
+        analytical_prefilter_applied = meta.analytical_prefilter.is_some(),
+        optimize_history_confirm_hits = meta.optimize_history_confirm_hits,
+        optimize_history_wrote = meta.optimize_history_wrote,
+        final_result_count = all_results.len() as u64,
+        "optimize_gather_complete"
+    );
 
     Ok((all_results, meta))
 }
@@ -809,18 +909,36 @@ pub fn run_optimize(
     request: &OptimizeRequest,
     profile_id: Option<&str>,
 ) -> Result<OptimizeResponse, OptimizePayloadError> {
+    let seed = request.seed.unwrap_or(0);
+    let span = info_span!(
+        "optimize_sync_run",
+        ship = %request.ship,
+        hostile = %request.hostile,
+        seed,
+        requested_strategy = request.strategy.as_deref().unwrap_or("auto"),
+        profile_id_present = profile_id.is_some()
+    );
+    let _span_guard = span.enter();
     let start = Instant::now();
     let mut sink = OptimizeProgressSink::None;
     let (all_results, meta) =
         gather_optimize_simulation_results(registry, request, profile_id, &mut sink)
             .expect("sync optimize does not cancel");
     let duration_ms = start.elapsed().as_millis() as u64;
-    Ok(build_optimize_response(
+    let response = build_optimize_response(
         request,
         all_results,
         duration_ms,
         &meta,
-    ))
+    );
+    info!(
+        duration_ms,
+        recommendations = response.recommendations.len() as u64,
+        effective_strategy = %response.scenario.effective_strategy,
+        strategy_auto = response.scenario.strategy_auto,
+        "optimize_sync_completed"
+    );
+    Ok(response)
 }
 
 // --- Optimize job store (for progress polling) ---
@@ -979,6 +1097,16 @@ pub fn start_optimize_job(
         .heuristics_seeds
         .as_ref()
         .is_some_and(|s| !s.is_empty());
+    info!(
+        job_id = %job_id,
+        ship = %request.ship,
+        hostile = %request.hostile,
+        seed = request.seed.unwrap_or(0),
+        requested_strategy = request.strategy.as_deref().unwrap_or("auto"),
+        heuristics_seeds_nonempty,
+        profile_id_present = profile_id.is_some(),
+        "optimize_job_started"
+    );
 
     {
         let mut map = lock_jobs();
@@ -1008,6 +1136,16 @@ pub fn start_optimize_job(
     let profile_owned = profile_id.map(String::from);
 
     std::thread::spawn(move || {
+        let job_span = info_span!(
+            "optimize_job_run",
+            job_id = %job_id_thread,
+            ship = %request.ship,
+            hostile = %request.hostile,
+            seed = request.seed.unwrap_or(0),
+            requested_strategy = request.strategy.as_deref().unwrap_or("auto"),
+            profile_id_present = profile_owned.is_some()
+        );
+        let _job_span = job_span.enter();
         let _cpu_permit = cpu_permit;
         let start = Instant::now();
         let mut sink = OptimizeProgressSink::Job {
@@ -1028,6 +1166,14 @@ pub fn start_optimize_job(
             Ok((all_results, meta)) => {
                 let duration_ms = start.elapsed().as_millis() as u64;
                 let response = build_optimize_response(&request, all_results, duration_ms, &meta);
+                info!(
+                    job_id = %job_id_thread,
+                    duration_ms,
+                    recommendations = response.recommendations.len() as u64,
+                    effective_strategy = %response.scenario.effective_strategy,
+                    strategy_auto = response.scenario.strategy_auto,
+                    "optimize_job_completed"
+                );
                 let mut map = lock_jobs();
                 if let Some(state) = map.get_mut(&job_id_thread) {
                     state.status = OptimizeJobStatus::Done;
@@ -1038,6 +1184,7 @@ pub fn start_optimize_job(
                 }
             }
             Err(()) => {
+                warn!(job_id = %job_id_thread, "optimize_job_cancelled");
                 let mut map = lock_jobs();
                 if let Some(state) = map.get_mut(&job_id_thread) {
                     state.status = OptimizeJobStatus::Error;
@@ -1046,6 +1193,7 @@ pub fn start_optimize_job(
             }
         }
         lock_cancel_flags().remove(&job_id_thread);
+        info!(job_id = %job_id_thread, "optimize_job_cleanup");
     });
 
     Ok(OptimizeStartResponse { job_id })

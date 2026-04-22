@@ -89,7 +89,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 ## Phase 6 — Observability & performance
 
-- [ ] **17. Structured logging + request tracing in the server**
+- [x] **17. Structured logging + request tracing in the server** *(shipped: JSON `tracing` bootstrap in [`src/logging.rs`](../src/logging.rs) with `KOBAYASHI_LOG`/`RUST_LOG`; per-request spans via `TraceLayer` in [`src/server/routes.rs`](../src/server/routes.rs); optimize/job/sim-batch events in [`src/server/api/execution.rs`](../src/server/api/execution.rs), [`src/optimizer/mod.rs`](../src/optimizer/mod.rs), and [`src/optimizer/tiered.rs`](../src/optimizer/tiered.rs); `jq` recipes in [`docs/DEPLOYMENT_SECURITY.md`](DEPLOYMENT_SECURITY.md).)*
   - Adopt `tracing` + `tracing-subscriber` with JSON output; add span per request, per optimize job, per sim batch; include seed, strategy, candidate count.
   - **Touchpoints:** `src/server/`, `Cargo.toml`, `docs/DEPLOYMENT_SECURITY.md`.
   - **Done when:** `KOBAYASHI_LOG=info` emits structured events and an example dashboard (or `jq` recipe) is documented.
@@ -115,7 +115,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 11 / 20 (tasks 1–4, 6, 9–10, 12–13, 15, 19)
+- **Completed:** 12 / 20 (tasks 1–4, 6, 9–10, 12–13, 15, 17, 19)
 - **In progress:** 0
 - **Blocked:** 0
 
