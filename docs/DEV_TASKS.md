@@ -24,7 +24,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 ## Phase 2 — Data quality & validation
 
-- [ ] **4. Strict data validator with actionable error report**
+- [x] **4. Strict data validator with actionable error report** *(shipped: `validate_data` JSON/Markdown + `mapping_gap_report`; CI uploads `data-validation-report` from [`.github/workflows/ci.yml`](../.github/workflows/ci.yml); see `cargo run --bin validate_data -- --help`.)*
   - Extend `cargo run --bin validate_data` to emit a structured JSON/Markdown report listing: missing `fid`s, unmapped canonical conditions, ships with no tiers/levels, hostiles missing `ship_type`, officers failing LCARS schema.
   - **Touchpoints:** `src/bin/validate_data.rs`, `src/data/`*, `docs/CANONICAL_CONDITIONS.md`.
   - **Done when:** the report is generated in CI as an artifact and warnings trend to zero.
@@ -114,7 +114,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 3 / 20 (tasks 1–3 shipped in-repo)
+- **Completed:** 4 / 20 (tasks 1–4 shipped in-repo)
 - **In progress:** 0
 - **Blocked:** 0
 
