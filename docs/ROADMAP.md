@@ -94,7 +94,7 @@ data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normali
 ### Roadmap / backlog
 
 - **Enumerate ids** — Maintainer reference: [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md). Cross-check `summary-hostile.json`, stfc.space UI, and in-game copy when adding `match` arms (and new `UpstreamHostileShipTypeProfile` fields if mechanics need more than `is_armada_target`).
-- **Unknown values** — Optional validation or a small report: list normalized hostiles whose `upstream_ship_type` is not in the mapping (for triage).
+- **Unknown values** — Shipped: `cargo run --bin validate_data` errors on any per-hostile `upstream_ship_type` not in `KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES` (see [`src/data/upstream_hostile_ship_type.rs`](../src/data/upstream_hostile_ship_type.rs)); optional short-term deferral with a reason warns via `DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES`. Maintainer Markdown: `cargo run --bin report_unknown_mappings` (includes an undocumented-values subsection).
 - **Overlap with `EnemyTypes`** — If future categories do not fit `[EnemyType](../src/combat/types.rs)` / `ShipType` (e.g. multi-tag engagements), decide whether to thread `[EnemyTypes](../src/combat/types.rs)` through scenario vs growing the upstream profile struct.
 
 ---

@@ -38,6 +38,30 @@ impl Default for UpstreamHostileShipTypeProfile {
 pub const KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES: &[u32] =
     &[0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14];
 
+/// Upstream category ids that appear in committed data **before** maintainer triage lands in
+/// [`KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES`] and the reference doc.
+///
+/// - Must be sorted by `u32` and unique (enforced by a unit test).
+/// - [`crate::data::validate::validate_hostiles_dataset`] emits a **warning** (not an error) for
+///   these rows until they are promoted to `KNOWN` (and documented) or removed from this list.
+pub const DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES: &[(u32, &str)] = &[];
+
+fn deferral_reason_lookup<'a>(
+    ship_type: u32,
+    deferrals: &[(u32, &'a str)],
+) -> Option<&'a str> {
+    deferrals
+        .binary_search_by_key(&ship_type, |(v, _)| *v)
+        .ok()
+        .map(|i| deferrals[i].1)
+}
+
+/// Maintainer allow-list: when present, `validate_data` warns instead of erroring for this id.
+#[inline]
+pub fn upstream_ship_type_deferral_reason(ship_type: u32) -> Option<&'static str> {
+    deferral_reason_lookup(ship_type, DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES)
+}
+
 /// True when `ship_type` is a maintainer-documented hostile category (not necessarily a dedicated combat `match` arm).
 #[inline]
 pub fn upstream_ship_type_is_known_category(ship_type: u32) -> bool {
@@ -103,5 +127,29 @@ mod tests {
         assert!(upstream_ship_type_is_known_category(14));
         assert!(!upstream_ship_type_is_known_category(9));
         assert!(!upstream_ship_type_is_known_category(99));
+    }
+
+    #[test]
+    fn deferral_reason_lookup_sorted_pairs() {
+        let d: &[(u32, &str)] = &[(2, "a"), (40, "b")];
+        assert_eq!(super::deferral_reason_lookup(2, d), Some("a"));
+        assert_eq!(super::deferral_reason_lookup(40, d), Some("b"));
+        assert_eq!(super::deferral_reason_lookup(3, d), None);
+    }
+
+    #[test]
+    fn deferred_upstream_ship_types_sorted_unique() {
+        for w in DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES.windows(2) {
+            assert!(
+                w[0].0 < w[1].0,
+                "DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES must be sorted unique by u32"
+            );
+        }
+    }
+
+    #[test]
+    fn empty_deferral_table_yields_no_reason() {
+        assert_eq!(upstream_ship_type_deferral_reason(9), None);
+        assert_eq!(upstream_ship_type_deferral_reason(0), None);
     }
 }

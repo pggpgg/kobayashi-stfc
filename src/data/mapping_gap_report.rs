@@ -1,6 +1,6 @@
 //! Maintainer-facing scans: canonical officer `conditions` token frequencies and hostile index
-//! `upstream_ship_type` distribution. Used by `report_unknown_mappings` and the strict
-//! `validate_data` report (see [`crate::data::validate`]).
+//! `upstream_ship_type` distribution (including undocumented-value triage). Used by
+//! `report_unknown_mappings` and the strict `validate_data` report (see [`crate::data::validate`]).
 //!
 //! For triage context see `docs/CANONICAL_CONDITIONS.md` in the repo.
 
@@ -11,7 +11,8 @@ use std::path::Path;
 use serde::Deserialize;
 
 use crate::data::upstream_hostile_ship_type::{
-    upstream_hostile_ship_type_profile, upstream_ship_type_is_explicitly_mapped,
+    upstream_hostile_ship_type_profile, upstream_ship_type_deferral_reason,
+    upstream_ship_type_is_explicitly_mapped, upstream_ship_type_is_known_category,
 };
 use crate::lcars::is_canonical_officer_condition_resolved;
 
@@ -219,5 +220,45 @@ pub fn format_unknown_mappings_markdown(
     }
 
     out.push('\n');
+
+    out.push_str("### Undocumented `upstream_ship_type` values\n\n");
+    out.push_str(
+        "Values present in the hostile index that are **not** in `KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES` (`upstream_hostile_ship_type.rs`). \
+`validate_data` treats these as errors unless listed in `DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES` (warnings).\n\n",
+    );
+
+    let mut undocumented: Vec<(u32, &HostileUpstreamTypeAgg)> = ship_map
+        .iter()
+        .filter(|(v, _)| !upstream_ship_type_is_known_category(**v))
+        .map(|(v, agg)| (*v, agg))
+        .collect();
+    undocumented.sort_by_key(|(v, _)| *v);
+
+    if undocumented.is_empty() {
+        out.push_str("None — every index value is documented.\n\n");
+    } else {
+        out.push_str("| Value | Hostile rows | `validate_data` | Sample ids |\n| --- | ---: | --- | --- |\n");
+        for (value, agg) in &undocumented {
+            let ids = agg
+                .sample_ids
+                .iter()
+                .map(|id| format!("`{id}`"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            let validation = match upstream_ship_type_deferral_reason(*value) {
+                Some(r) => format!("deferred (warn): {}", md_escape_cell(r)),
+                None => "undocumented (error)".to_string(),
+            };
+            out.push_str(&format!(
+                "| {} | {} | {} | {} |\n",
+                value,
+                agg.count,
+                validation,
+                ids
+            ));
+        }
+        out.push('\n');
+    }
+
     out
 }

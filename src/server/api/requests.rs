@@ -31,7 +31,7 @@ pub const MAX_CHAIN_KILLS_TARGET: u32 = 50;
 
 /// Split `captain_must_be` request field on commas/semicolons (captain may be any listed officer).
 fn parse_captain_must_be_tokens(s: &str) -> Vec<String> {
-    s.split(|c: char| c == ',' || c == ';')
+    s.split([',', ';'])
         .map(str::trim)
         .filter(|t| !t.is_empty())
         .map(str::to_string)
@@ -355,7 +355,7 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         }
     }
     if let Some(p) = request.novelty_pool {
-        if p < 2 || p > MAX_NOVELTY_POOL {
+        if !(2..=MAX_NOVELTY_POOL).contains(&p) {
             errors.push(ValidationIssue {
                 field: "novelty_pool",
                 messages: vec![format!("if set, must be between 2 and {MAX_NOVELTY_POOL}")],

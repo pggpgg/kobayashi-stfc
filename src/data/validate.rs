@@ -17,7 +17,9 @@ use crate::data::registry::Registry;
 use crate::data::ship::{
     ExtendedShipIndex, ExtendedShipRecord, ShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
-use crate::data::upstream_hostile_ship_type::upstream_ship_type_is_known_category;
+use crate::data::upstream_hostile_ship_type::{
+    upstream_ship_type_deferral_reason, upstream_ship_type_is_known_category,
+};
 use crate::lcars;
 
 /// One named slice of diagnostics (registry, officers, hostiles, …).
@@ -878,6 +880,7 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
     let mut parse_errors: usize = 0;
     let mut bad_stats: usize = 0;
     let mut unknown_upstream_ship_type: BTreeMap<u32, (usize, Vec<String>)> = BTreeMap::new();
+    let mut deferred_upstream_ship_type: BTreeMap<u32, (usize, Vec<String>)> = BTreeMap::new();
     let mut empty_ship_class: usize = 0;
     let mut empty_ship_class_samples: Vec<String> = Vec::new();
     let mut unknown_ship_class: BTreeMap<String, (usize, Vec<String>)> = BTreeMap::new();
@@ -924,12 +927,22 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
                     }
                 }
                 if !upstream_ship_type_is_known_category(record.upstream_ship_type) {
-                    let slot = unknown_upstream_ship_type
-                        .entry(record.upstream_ship_type)
-                        .or_insert_with(|| (0, Vec::new()));
-                    slot.0 += 1;
-                    if slot.1.len() < 4 {
-                        slot.1.push(entry.id.clone());
+                    if upstream_ship_type_deferral_reason(record.upstream_ship_type).is_some() {
+                        let slot = deferred_upstream_ship_type
+                            .entry(record.upstream_ship_type)
+                            .or_insert_with(|| (0, Vec::new()));
+                        slot.0 += 1;
+                        if slot.1.len() < 4 {
+                            slot.1.push(entry.id.clone());
+                        }
+                    } else {
+                        let slot = unknown_upstream_ship_type
+                            .entry(record.upstream_ship_type)
+                            .or_insert_with(|| (0, Vec::new()));
+                        slot.0 += 1;
+                        if slot.1.len() < 4 {
+                            slot.1.push(entry.id.clone());
+                        }
                     }
                 }
                 if record.hull_health <= 0.0 {
@@ -994,13 +1007,24 @@ pub fn validate_hostiles_dataset(path: &str) -> Result<ValidationReport, String>
             ),
         );
     }
+    for (ty, (count, sample_ids)) in deferred_upstream_ship_type {
+        let samples = sample_ids.join(", ");
+        let reason = upstream_ship_type_deferral_reason(ty).unwrap_or("");
+        report.push(
+            ValidationSeverity::Warning,
+            "hostiles.upstream_ship_type",
+            format!(
+                "upstream_ship_type {ty} is deferred ({count} hostile row(s); sample id(s): {samples}) — {reason}; remove from DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES after documenting in KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES and docs/UPSTREAM_HOSTILE_SHIP_TYPES.md"
+            ),
+        );
+    }
     for (ty, (count, sample_ids)) in unknown_upstream_ship_type {
         let samples = sample_ids.join(", ");
         report.push(
             ValidationSeverity::Error,
             "hostiles.upstream_ship_type",
             format!(
-                "upstream_ship_type {ty} is not a documented category ({count} hostile row(s); sample id(s): {samples}) — extend KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES and docs/UPSTREAM_HOSTILE_SHIP_TYPES.md"
+                "upstream_ship_type {ty} is not a documented category ({count} hostile row(s); sample id(s): {samples}) — extend KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES and docs/UPSTREAM_HOSTILE_SHIP_TYPES.md, or add a temporary entry to DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES with a reason"
             ),
         );
     }

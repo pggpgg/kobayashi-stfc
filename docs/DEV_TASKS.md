@@ -51,9 +51,9 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Per `docs/COMBAT_EFFECT_SPEC.md`, migrate officer families one at a time (captains first, then bridge, then BD) with parity tests; keep LCARS as the authoring surface.
   - **Touchpoints:** `src/lcars/effect_spec_adapter.rs`, `src/combat/effect_spec_compile.rs`, `src/lcars/resolver.rs`, `tests/lcars_combat_effect_spec_parity_tests.rs`, `tests/lcars_captain_spec_parity_tests.rs`.
   - **Done when:** at least one officer family runs exclusively through the spec path in production with parity fixtures.
-- [ ] **10. Hostile `upstream_ship_type` enumeration + validation report**
-  - Finish the map in `docs/UPSTREAM_HOSTILE_SHIP_TYPES.md`; add a validator that lists any normalized hostile whose `upstream_ship_type` is unmapped.
-  - **Touchpoints:** `src/data/hostile.rs`, `UpstreamHostileShipTypeProfile`, new validator binary.
+- [x] **10. Hostile `upstream_ship_type` enumeration + validation report** *(shipped: `KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES` + `DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES` in [`src/data/upstream_hostile_ship_type.rs`](../src/data/upstream_hostile_ship_type.rs); `validate_hostiles_dataset` in [`src/data/validate.rs`](../src/data/validate.rs); doc [`UPSTREAM_HOSTILE_SHIP_TYPES.md`](UPSTREAM_HOSTILE_SHIP_TYPES.md); triage subsection in [`mapping_gap_report.rs`](../src/data/mapping_gap_report.rs) / `report_unknown_mappings`.)*
+  - Finish the map in `docs/UPSTREAM_HOSTILE_SHIP_TYPES.md`; strict check via `cargo run --bin validate_data` (lists unmapped ids with counts and samples); defer-list warns with a maintainer reason until documented.
+  - **Touchpoints:** `src/data/hostile.rs`, `UpstreamHostileShipTypeProfile`, `validate_data`, `report_unknown_mappings`.
   - **Done when:** unmapped count is zero or explicitly allow-listed with a reason.
 
 ## Phase 4 — Optimizer intelligence
@@ -114,7 +114,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 6 / 20 (tasks 1–4, 6, 9)
+- **Completed:** 7 / 20 (tasks 1–4, 6, 9–10)
 - **In progress:** 0
 - **Blocked:** 0
 
