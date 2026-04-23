@@ -28,7 +28,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Extend `cargo run --bin validate_data` to emit a structured JSON/Markdown report listing: missing `fid`s, unmapped canonical conditions, ships with no tiers/levels, hostiles missing `ship_type`, officers failing LCARS schema.
   - **Touchpoints:** `src/bin/validate_data.rs`, `src/data/`*, `docs/CANONICAL_CONDITIONS.md`.
   - **Done when:** the report is generated in CI as an artifact and warnings trend to zero.
-- [ ] **5. Expand canonical condition token coverage**
+- [ ] **5. Expand canonical condition token coverage** *(in progress: ship-vs-hostile **scenario literals** — `TargetNotASB`, `SelfAttacking`, `TargetNotPlayerStation` → LCARS `literal_true` / `AbilityCondition::LiteralBool(true)`; `SelfDefending` → `literal_false`; stfc.cc adapter + parity tests; triage in [`CANONICAL_CONDITIONS.md`](CANONICAL_CONDITIONS.md); `report_unknown_mappings` **21** still-unmapped.)*
   - Work through `docs/CANONICAL_CONDITIONS.md` triage; map high-frequency "skipping unmapped" tokens (e.g. `CombatBattleType`, hull-line tokens) to engine-understood conditions with fixtures.
   - **Touchpoints:** `src/lcars/resolver.rs`, `scripts/normalize_officer_id_strings.py`, `data/officers/officers.canonical.json`.
   - **Done when:** `generate_lcars` logs zero warnings on the top 20 most-frequent tokens and tests cover each.
@@ -123,7 +123,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 Count checked tasks above, or use:
 
 - **Completed:** 14 / 20 (tasks 1–4, 6, 9–10, 12–15, 17, 19–20)
-- **In progress:** 0
+- **In progress:** 5 (canonical condition coverage — scenario literals landed; top-frequency tokens e.g. `EnemySentinel` still open)
 - **Blocked:** 0
 
 *Keep this file updated as tasks land; link PRs inline in the task bullets when useful.*

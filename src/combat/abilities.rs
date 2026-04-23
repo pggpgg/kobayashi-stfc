@@ -263,6 +263,9 @@ pub enum AbilityCondition {
     /// True when defender level is <= max_level.
     /// If defender level is unavailable in context, this condition currently evaluates leniently true.
     DefenderLevelAtMost(u32),
+    /// Constant used when a canonical token has no dynamic [`CombatContext`] signal yet, but the
+    /// Kobayashi **ship-vs-hostile** scenario fixes its truth value (see `docs/CANONICAL_CONDITIONS.md`).
+    LiteralBool(bool),
     /// Logical negation of a single sub-condition (LCARS `not`).
     Not(Box<AbilityCondition>),
     And(Vec<AbilityCondition>),

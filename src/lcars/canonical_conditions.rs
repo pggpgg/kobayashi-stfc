@@ -114,6 +114,11 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         "SelfOfficerTalNotOnBridge" => {
             return Some(lcars_cond_base("attacker_officer_tal_not_on_bridge"));
         }
+        // Kobayashi ship-vs-hostile scenario literals (see `docs/CANONICAL_CONDITIONS.md`).
+        "TargetNotASB" | "SelfAttacking" | "TargetNotPlayerStation" => {
+            return Some(lcars_cond_base("literal_true"));
+        }
+        "SelfDefending" => return Some(lcars_cond_base("literal_false")),
         // Canonical opponent category: NPC hostile (ship-vs-hostile optimizer default).
         "EnemyHostile" => return Some(lcars_cond_base("defender_is_npc_hostile")),
         // Canonical opponent category: player ship (PvP-shaped API toggle).
@@ -464,6 +469,26 @@ mod tests {
     }
 
     #[test]
+    fn scenario_literal_tokens_map_and_resolve() {
+        for (tok, expected) in [
+            ("TargetNotASB", AbilityCondition::LiteralBool(true)),
+            ("SelfAttacking", AbilityCondition::LiteralBool(true)),
+            ("TargetNotPlayerStation", AbilityCondition::LiteralBool(true)),
+            ("SelfDefending", AbilityCondition::LiteralBool(false)),
+        ] {
+            let lc = map_canonical_condition_token(tok).expect(tok);
+            let ac = resolve_lcars_condition(&lc).expect(tok);
+            assert_eq!(ac, expected, "{tok}");
+        }
+        let raw = vec![
+            "TargetNotASB".to_string(),
+            "EnemyHostile".to_string(),
+        ];
+        let out = canonical_conditions_to_lcars(&raw, "x", "y").expect("and");
+        assert_eq!(out.condition_type, "and");
+    }
+
+    #[test]
     fn hull_health_tokens_are_marked_as_attribute_merged() {
         for tok in [
             "CombatBattleType",
@@ -489,8 +514,6 @@ mod tests {
     #[test]
     fn task2_deferred_tokens_remain_unmapped() {
         const DEFERRED: &[&str] = &[
-            "TargetNotASB",
-            "SelfDefending",
             "EnemySentinel",
             "ModuleKinetic",
             "CombatGameContext",
@@ -498,12 +521,10 @@ mod tests {
             "SelfAtSoloArmada",
             "SelfAtStation",
             "TargetStateAny",
-            "SelfAttacking",
             "HullHealthBelowStartOfCombat",
             "HullHealthBelow",
             "SelfAtWaveDefenseChallenge",
             "TargetIsArmadaOrInvadingEntity",
-            "TargetNotPlayerStation",
             "SelfCloaked",
             "SelfStateNone",
             "TargetIsInvadingEntity",

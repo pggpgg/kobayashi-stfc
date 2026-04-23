@@ -216,6 +216,8 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
                 .ok_or_else(|| format!("{ty} requires integer `max` level"))?;
             Ok(AbilityCondition::DefenderLevelAtMost(max_level))
         }
+        "literal_true" => Ok(AbilityCondition::LiteralBool(true)),
+        "literal_false" => Ok(AbilityCondition::LiteralBool(false)),
         "and" => {
             let children = c.conditions.as_ref().ok_or_else(|| {
                 "`and` condition requires non-empty `conditions` array".to_string()

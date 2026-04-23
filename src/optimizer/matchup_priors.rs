@@ -95,6 +95,13 @@ fn eval_static_gate(
                 StaticGate::Pass
             }
         }
+        AbilityCondition::LiteralBool(v) => {
+            if *v {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
         AbilityCondition::Not(inner) => match eval_static_gate(inner, shared, crew) {
             StaticGate::Pass => StaticGate::Fail,
             StaticGate::Fail => StaticGate::Pass,

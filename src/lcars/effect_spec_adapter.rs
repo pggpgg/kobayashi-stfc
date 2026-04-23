@@ -99,6 +99,8 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
         "attacker_officer_tal_not_on_bridge" | "self_officer_tal_not_on_bridge" => {
             Ok(AbilityConditionSpec::AttackerOfficerTalNotOnBridge)
         }
+        "literal_true" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "literal_false" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
         "defender_faction_is"
         | "defender_faction"
         | "opponent_faction_is"

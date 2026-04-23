@@ -219,6 +219,10 @@ pub enum AbilityConditionSpec {
     DefenderIsPlayerShip,
     /// Matches [`crate::combat::abilities::AbilityCondition::AttackerOfficerTalNotOnBridge`].
     AttackerOfficerTalNotOnBridge,
+    /// Matches [`crate::combat::abilities::AbilityCondition::LiteralBool`].
+    LiteralBool {
+        value: bool,
+    },
     DefenderShipTypeIs {
         ship_type: String,
     },
@@ -401,6 +405,14 @@ mod tests {
         let c = AbilityConditionSpec::StfcCcToken {
             token: "TargetNotASB".into(),
         };
+        let j = serde_json::to_string(&c).unwrap();
+        let back: AbilityConditionSpec = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, c);
+    }
+
+    #[test]
+    fn serde_literal_bool_roundtrip() {
+        let c = AbilityConditionSpec::LiteralBool { value: false };
         let j = serde_json::to_string(&c).unwrap();
         let back: AbilityConditionSpec = serde_json::from_str(&j).unwrap();
         assert_eq!(back, c);

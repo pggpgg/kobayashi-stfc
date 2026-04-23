@@ -172,6 +172,16 @@ fn lcars_condition_matrix() -> Vec<LcarsCondition> {
             c.ship_id = Some("uss_voyager".into());
             c
         },
+        {
+            let mut c = empty_lcars_condition();
+            c.condition_type = "literal_true".into();
+            c
+        },
+        {
+            let mut c = empty_lcars_condition();
+            c.condition_type = "literal_false".into();
+            c
+        },
     ]
 }
 

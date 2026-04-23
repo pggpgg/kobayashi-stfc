@@ -118,6 +118,7 @@ pub fn compile_condition(
         AbilityConditionSpec::AttackerOfficerTalNotOnBridge => {
             Ok(AbilityCondition::AttackerOfficerTalNotOnBridge)
         }
+        AbilityConditionSpec::LiteralBool { value } => Ok(AbilityCondition::LiteralBool(*value)),
         AbilityConditionSpec::DefenderShipTypeIs { ship_type } => {
             let st = ShipType::from_data_slug(ship_type)
                 .ok_or_else(|| EffectSpecCompileError::UnknownShipTypeSlug(ship_type.clone()))?;

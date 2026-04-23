@@ -94,6 +94,7 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
             .defender_level
             .map(|level| level <= *max_level)
             .unwrap_or(true),
+        AbilityCondition::LiteralBool(v) => *v,
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),
@@ -314,6 +315,19 @@ mod tests {
         ctx.defender_assimilated_active = true;
         assert!(evaluate_ability_condition(
             &AbilityCondition::DefenderAssimilated,
+            &ctx
+        ));
+    }
+
+    #[test]
+    fn literal_bool_is_constant_across_context() {
+        let ctx = sample_ctx();
+        assert!(evaluate_ability_condition(
+            &AbilityCondition::LiteralBool(true),
+            &ctx
+        ));
+        assert!(!evaluate_ability_condition(
+            &AbilityCondition::LiteralBool(false),
             &ctx
         ));
     }

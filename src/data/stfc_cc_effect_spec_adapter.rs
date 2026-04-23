@@ -30,17 +30,13 @@ const STFC_CC_DEFERRED_CONDITION_TOKENS: &[&str] = &[
     "SelfAtSoloArmada",
     "SelfAtStation",
     "SelfAtWaveDefenseChallenge",
-    "SelfAttacking",
     "SelfCloaked",
-    "SelfDefending",
     "SelfMining",
     "SelfStateNone",
     "TargetIsArmadaOrInvadingEntity",
     "TargetIsInvadingEntity",
     "TargetMaxLevel",
-    "TargetNotASB",
     "TargetNotInvadingEntity",
-    "TargetNotPlayerStation",
     "TargetNotSoloArmada",
     "TargetStateAny",
 ];
@@ -361,6 +357,10 @@ fn map_condition_token(
                 ship_type: "armada".into(),
             }),
         }),
+        "TargetNotASB" | "SelfAttacking" | "TargetNotPlayerStation" => {
+            Ok(AbilityConditionSpec::LiteralBool { value: true })
+        }
+        "SelfDefending" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
         "EnemyHullFaction" => {
             let Some(attrs) = ability_attributes.map(str::trim).filter(|s| !s.is_empty()) else {
                 return Err("unmapped_condition:EnemyHullFaction".into());
@@ -722,7 +722,7 @@ mod tests {
     }
 
     #[test]
-    fn target_not_asb_is_stfc_cc_token_with_merged_attributes() {
+    fn target_not_asb_maps_to_literal_true_with_merged_attributes() {
         let h = headers_with_attributes();
         let rec = StringRecord::from(vec![
             "X",
@@ -737,10 +737,13 @@ mod tests {
             "num_rounds=1",
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
-        assert!(spec.conditions.iter().any(|c| matches!(
-            c,
-            AbilityConditionSpec::StfcCcToken { token } if token == "TargetNotASB"
-        )));
+        assert!(
+            spec.conditions.iter().any(|c| {
+                matches!(c, AbilityConditionSpec::LiteralBool { value: true })
+            }),
+            "expected TargetNotASB → literal_bool true, got {:?}",
+            spec.conditions
+        );
         let n = spec
             .attributes
             .get("stfc_cc_ability_attributes")
