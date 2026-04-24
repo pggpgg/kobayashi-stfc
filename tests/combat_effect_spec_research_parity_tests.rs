@@ -3,7 +3,11 @@
 //! (order-independent seat signatures). The public API delegates to the adapter; these tests lock behavior.
 
 use kobayashi::data::import::ResearchEntry;
-use kobayashi::data::profile::{research_derived_attack_phase_seats, SupportBuffResearchGateState};
+use kobayashi::data::profile::{
+    research_derived_attack_phase_seats, SupportBuffResearchGateState, CERRITOS_SUPPORT_BUFF_ID,
+    TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS, TITAN_A_FORTIFY_SUPPORT_BUFF_IDS,
+    TITAN_CERRITOS_FORTIFIED_DUAL_RESEARCH_RID,
+};
 use kobayashi::data::research::{
     ResearchBonusConditionKey, ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
 };
@@ -18,8 +22,17 @@ fn seat_signature(c: &kobayashi::combat::CrewSeatContext) -> String {
 
 fn assert_public_matches_adapter(imported: &[ResearchEntry], catalog: &ResearchCatalog) {
     let gates = SupportBuffResearchGateState::default();
+    assert_public_matches_adapter_with_gates(imported, catalog, &gates, imported);
+}
+
+fn assert_public_matches_adapter_with_gates(
+    imported: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    gates: &SupportBuffResearchGateState,
+    expected_adapter_import: &[ResearchEntry],
+) {
     let public = research_derived_attack_phase_seats(imported, catalog, &gates);
-    let via_spec = research_derived_attack_phase_seats_from_spec(imported, catalog);
+    let via_spec = research_derived_attack_phase_seats_from_spec(expected_adapter_import, catalog);
     assert_eq!(public.len(), via_spec.len(), "seat count mismatch");
     let mut a: Vec<String> = public.iter().map(seat_signature).collect();
     let mut b: Vec<String> = via_spec.iter().map(seat_signature).collect();
@@ -222,4 +235,127 @@ fn parity_cumulative_level_stacks_same_rid() {
         level: 2,
     }];
     assert_public_matches_adapter(&imported, &catalog);
+}
+
+#[test]
+fn parity_support_buff_gate_filters_fortify_research_before_spec_compile() {
+    let gated_rid = TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS[0];
+    let always_rid = 88001006;
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![
+            ResearchRecord {
+                rid: gated_rid,
+                name: Some("Fortified burning weapon damage".into()),
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "weapon_damage".into(),
+                        value: 0.07,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            requires_defender_burning: true,
+                            ..Default::default()
+                        },
+                    }],
+                }],
+            },
+            ResearchRecord {
+                rid: always_rid,
+                name: Some("Regular hull-breach crit chance".into()),
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "crit_chance".into(),
+                        value: 0.03,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            requires_defender_hull_breach: true,
+                            ..Default::default()
+                        },
+                    }],
+                }],
+            },
+        ],
+    };
+    let imported = vec![
+        ResearchEntry {
+            rid: gated_rid,
+            level: 1,
+        },
+        ResearchEntry {
+            rid: always_rid,
+            level: 1,
+        },
+    ];
+    let expected_without_support = vec![ResearchEntry {
+        rid: always_rid,
+        level: 1,
+    }];
+    let gates = SupportBuffResearchGateState::default();
+    assert_public_matches_adapter_with_gates(
+        &imported,
+        &catalog,
+        &gates,
+        &expected_without_support,
+    );
+
+    let gates = SupportBuffResearchGateState::from_resolved_support_buff_ids(&[String::from(
+        TITAN_A_FORTIFY_SUPPORT_BUFF_IDS[0],
+    )]);
+    assert_public_matches_adapter_with_gates(&imported, &catalog, &gates, &imported);
+}
+
+#[test]
+fn parity_dual_support_buff_gate_requires_cerritos_and_fortify_before_spec_compile() {
+    let dual_rid = TITAN_CERRITOS_FORTIFIED_DUAL_RESEARCH_RID;
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: dual_rid,
+            name: Some("Titan Wrecker dual support gate".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "crit_damage".into(),
+                    value: 0.11,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        requires_morale: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry {
+        rid: dual_rid,
+        level: 1,
+    }];
+
+    let only_cerritos =
+        SupportBuffResearchGateState::from_resolved_support_buff_ids(&[String::from(
+            CERRITOS_SUPPORT_BUFF_ID,
+        )]);
+    assert_public_matches_adapter_with_gates(&imported, &catalog, &only_cerritos, &[]);
+
+    let only_fortify =
+        SupportBuffResearchGateState::from_resolved_support_buff_ids(&[String::from(
+            TITAN_A_FORTIFY_SUPPORT_BUFF_IDS[0],
+        )]);
+    assert_public_matches_adapter_with_gates(&imported, &catalog, &only_fortify, &[]);
+
+    let both = SupportBuffResearchGateState::from_resolved_support_buff_ids(&[
+        String::from(CERRITOS_SUPPORT_BUFF_ID),
+        String::from(TITAN_A_FORTIFY_SUPPORT_BUFF_IDS[0]),
+    ]);
+    assert_public_matches_adapter_with_gates(&imported, &catalog, &both, &imported);
 }

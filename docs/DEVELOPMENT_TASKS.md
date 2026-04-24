@@ -9,7 +9,7 @@ Ordered checklist for tracking near-term Kobayashi simulator and optimizer work.
 5. [x] Add validation for support buff catalog data and profile payloads.
 6. [x] Extend profile loading and saving tests to cover support buff round trips.
 7. [ ] Verify research summary merge behavior against representative HiggsBozo profile data.
-8. [ ] Add focused parity tests for combat effect specs that combine research and support buffs.
+8. [x] Add focused parity tests for combat effect specs that combine research and support buffs.
 9. [ ] Review Monte Carlo scenario construction to ensure support buffs, research buffs, and crew effects are resolved once per simulation request.
 10. [ ] Improve combat trace output for externally supplied buffs so users can see which bonuses were applied.
 11. [ ] Add API contract coverage for optimize and simulate requests that include support buffs.
