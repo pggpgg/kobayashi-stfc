@@ -12,23 +12,11 @@ use crate::data::combat_effect_spec::{
 /// Upstream cheat-sheet tokens with no resolved [`AbilityConditionSpec`] / engine mapping yet;
 /// ingested as [`AbilityConditionSpec::StfcCcToken`]. See `docs/CANONICAL_CONDITIONS.md` deferred list.
 const STFC_CC_DEFERRED_CONDITION_TOKENS: &[&str] = &[
-    "CargoEmpty",
-    "CargoFull",
     "CombatBattleType",
-    "EnemyNotToaTrialHostile",
-    "EnemyStronger",
-    "HitEnemyWithEnergy",
-    "HitEnemyWithKinetic",
     "HullHealthAbove",
     "HullHealthBelow",
     "HullHealthBelowStartOfCombat",
-    "ModuleEnergy",
-    "ModuleKinetic",
-    "SelfCloaked",
-    "SelfMining",
-    "SelfStateNone",
     "TargetMaxLevel",
-    "TargetStateAny",
 ];
 
 /// Stable diagnostic strings (prefix `unmapped_*:`) for rows that cannot be fully converted.
@@ -367,6 +355,29 @@ fn map_condition_token(
             ship_type: "armada".into(),
         }),
         "TargetNotInvadingEntity" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "ModuleKinetic" | "ModuleEnergy" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "TargetStateAny" => Ok(AbilityConditionSpec::Or {
+            any: vec![
+                AbilityConditionSpec::DefenderBurning,
+                AbilityConditionSpec::DefenderHullBreach,
+                AbilityConditionSpec::DefenderAssimilated,
+            ],
+        }),
+        "SelfStateNone" => Ok(AbilityConditionSpec::Not {
+            inner: Box::new(AbilityConditionSpec::Or {
+                any: vec![
+                    AbilityConditionSpec::AttackerBurning,
+                    AbilityConditionSpec::AttackerHullBreach,
+                ],
+            }),
+        }),
+        "SelfCloaked" | "SelfMining" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
+        "CargoEmpty" | "EnemyNotToaTrialHostile" => Ok(AbilityConditionSpec::LiteralBool {
+            value: true,
+        }),
+        "CargoFull" | "EnemyStronger" | "HitEnemyWithEnergy" | "HitEnemyWithKinetic" => {
+            Ok(AbilityConditionSpec::LiteralBool { value: false })
+        },
         "EnemyHullFaction" => {
             let Some(attrs) = ability_attributes.map(str::trim).filter(|s| !s.is_empty()) else {
                 return Err("unmapped_condition:EnemyHullFaction".into());

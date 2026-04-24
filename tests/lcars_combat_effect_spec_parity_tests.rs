@@ -168,6 +168,48 @@ fn lcars_condition_matrix() -> Vec<LcarsCondition> {
         },
         {
             let mut c = empty_lcars_condition();
+            c.condition_type = "or".into();
+            c.conditions = Some(vec![
+                {
+                    let mut x = empty_lcars_condition();
+                    x.condition_type = "defender_burning".into();
+                    x
+                },
+                {
+                    let mut x = empty_lcars_condition();
+                    x.condition_type = "defender_hull_breach".into();
+                    x
+                },
+                {
+                    let mut x = empty_lcars_condition();
+                    x.condition_type = "defender_assimilated".into();
+                    x
+                },
+            ]);
+            c
+        },
+        {
+            let mut inner = empty_lcars_condition();
+            inner.condition_type = "or".into();
+            inner.conditions = Some(vec![
+                {
+                    let mut x = empty_lcars_condition();
+                    x.condition_type = "attacker_burning".into();
+                    x
+                },
+                {
+                    let mut x = empty_lcars_condition();
+                    x.condition_type = "attacker_hull_breach".into();
+                    x
+                },
+            ]);
+            let mut c = empty_lcars_condition();
+            c.condition_type = "not".into();
+            c.conditions = Some(vec![inner]);
+            c
+        },
+        {
+            let mut c = empty_lcars_condition();
             c.condition_type = "attacker_ship_id_is".into();
             c.ship_id = Some("uss_voyager".into());
             c

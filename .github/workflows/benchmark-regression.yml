@@ -1,0 +1,54 @@
+# Task 18: Criterion median regression gate vs committed benchmark_results.log (10% slower fails).
+# PRs get a sticky comment with the comparison table.
+
+name: Benchmark regression
+
+on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: bench-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  criterion_gate:
+    name: Criterion vs baseline
+    runs-on: ubuntu-24.04
+    env:
+      CI: "true"
+      KOBAYASHI_RAYON_THREADS: "2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-bench-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bench-cargo-
+
+      - name: cargo bench + regression check
+        run: |
+          set -euo pipefail
+          cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
+          cargo xtask bench-check --markdown-out bench-comment.md
+
+      - uses: marocchino/sticky-pull-request-comment@v2
+        if: always() && github.event_name == 'pull_request' && hashFiles('bench-comment.md') != ''
+        with:
+          header: criterion-benchmark-gate
+          path: bench-comment.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

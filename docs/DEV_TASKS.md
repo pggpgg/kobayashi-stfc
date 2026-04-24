@@ -28,7 +28,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Extend `cargo run --bin validate_data` to emit a structured JSON/Markdown report listing: missing `fid`s, unmapped canonical conditions, ships with no tiers/levels, hostiles missing `ship_type`, officers failing LCARS schema.
   - **Touchpoints:** `src/bin/validate_data.rs`, `src/data/`*, `docs/CANONICAL_CONDITIONS.md`.
   - **Done when:** the report is generated in CI as an artifact and warnings trend to zero.
-- [ ] **5. Expand canonical condition token coverage** *(in progress: scenario literals + `SelfAtSoloArmada` → `engagement_includes` / `TargetIsArmadaOrInvadingEntity` → defender armada class + more `literal_false` encounter tokens; stfc.cc `TargetNotSoloArmada` → group armadas; triage in [`CANONICAL_CONDITIONS.md`](CANONICAL_CONDITIONS.md); `report_unknown_mappings` **12** still-unmapped — next: `ModuleKinetic` / `ModuleEnergy`, `TargetStateAny`.)*
+- [ ] **5. Expand canonical condition token coverage** *(in progress: above + `TargetStateAny` / module line / `SelfStateNone` / cargo & hit-type literals per [`CANONICAL_CONDITIONS.md`](CANONICAL_CONDITIONS.md); `report_unknown_mappings` **0** still-unmapped canonical condition tokens — remaining work: fidelity review, `generate_lcars` warning budget, and tests per high-frequency token.)*
   - Work through `docs/CANONICAL_CONDITIONS.md` triage; map high-frequency "skipping unmapped" tokens (e.g. `CombatBattleType`, hull-line tokens) to engine-understood conditions with fixtures.
   - **Touchpoints:** `src/lcars/resolver.rs`, `scripts/normalize_officer_id_strings.py`, `data/officers/officers.canonical.json`.
   - **Done when:** `generate_lcars` logs zero warnings on the top 20 most-frequent tokens and tests cover each.
@@ -100,7 +100,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
   - Adopt `tracing` + `tracing-subscriber` with JSON output; add span per request, per optimize job, per sim batch; include seed, strategy, candidate count.
   - **Touchpoints:** `src/server/`, `Cargo.toml`, `docs/DEPLOYMENT_SECURITY.md`.
   - **Done when:** `KOBAYASHI_LOG=info` emits structured events and an example dashboard (or `jq` recipe) is documented.
-- [ ] **18. Criterion benchmark regression gate**
+- [x] **18. Criterion benchmark regression gate** *(shipped: [`benchmark_results.log`](../benchmark_results.log) + `cargo xtask bench-check` in [`xtask/src/bench_check.rs`](../xtask/src/bench_check.rs); PR workflow [`.github/workflows/benchmark-regression.yml`](../.github/workflows/benchmark-regression.yml) on `ubuntu-24.04` with sticky PR comment; release Linux job emits `benchmark_results.fresh.log` → release asset `benchmark_results.log`; [`docs/PERFORMANCE.md`](../docs/PERFORMANCE.md) § Regression gate; CI-tuned sampling in `benches/` when `CI` is set.)*
   - Extend `benches/` with fixed-seed scenarios; store baseline in `benchmark_results.log`; CI fails if p50 regresses > 10% on the reference machine profile.
   - **Touchpoints:** `benches/`, `.github/workflows/`, `docs/PERFORMANCE.md`.
   - **Done when:** CI surfaces a regression summary comment on PRs and the baseline is refreshed on release tags.
@@ -122,7 +122,7 @@ Use the **checkbox on each numbered task** to track progress (`[x]` = done). Nes
 
 Count checked tasks above, or use:
 
-- **Completed:** 14 / 20 (tasks 1–4, 6, 9–10, 12–15, 17, 19–20)
+- **Completed:** 15 / 20 (tasks 1–4, 6, 9–10, 12–15, 17, 18, 19–20)
 - **In progress:** 5 (canonical condition coverage — scenario literals landed; top-frequency tokens e.g. `EnemySentinel` still open)
 - **Blocked:** 0
 

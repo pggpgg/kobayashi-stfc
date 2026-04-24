@@ -211,10 +211,7 @@ fn status_label(s: RowStatus) -> &'static str {
 }
 
 pub fn print_text_table(outcome: &CompareOutcome) {
-    eprintln!(
-        "{:<45} {:>12} {:>12} {:>10} {}",
-        "benchmark", "baseline_ns", "current_ns", "delta_%", "status"
-    );
+    eprintln!("{:<45} {:>12} {:>12} {:>10} status", "benchmark", "baseline_ns", "current_ns", "delta_%");
     for r in &outcome.rows {
         let delta = r
             .delta_pct
@@ -298,9 +295,9 @@ pub fn run(
     let outcome = compare(&baseline, &current, regression_fraction);
     print_text_table(&outcome);
 
-    if let Some(md_path) = markdown_out {
+    if let Some(md_path) = markdown_out.as_ref() {
         let md = markdown_summary(&outcome, regression_fraction);
-        fs::write(&md_path, md).with_context(|| format!("write {}", md_path.display()))?;
+        fs::write(md_path, md).with_context(|| format!("write {}", md_path.display()))?;
         eprintln!("Wrote {}", md_path.display());
     }
 

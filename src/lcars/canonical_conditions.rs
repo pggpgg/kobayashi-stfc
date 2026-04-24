@@ -78,6 +78,24 @@ fn lcars_or(children: Vec<LcarsCondition>) -> LcarsCondition {
     }
 }
 
+/// STFC “opponent has any state” bundle: burning / hull breach / assimilated on the defender.
+/// Does **not** include defender morale (engine exposes morale only on the attacker as `morale_active`).
+fn lcars_target_state_any() -> LcarsCondition {
+    lcars_or(vec![
+        lcars_cond_base("defender_burning"),
+        lcars_cond_base("defender_hull_breach"),
+        lcars_cond_base("defender_assimilated"),
+    ])
+}
+
+/// Approximation for “no debuff state on self”: neither attacker burning nor attacker hull breach.
+fn lcars_self_state_none_attacker_debuffs() -> LcarsCondition {
+    lcars_not(lcars_or(vec![
+        lcars_cond_base("attacker_burning"),
+        lcars_cond_base("attacker_hull_breach"),
+    ]))
+}
+
 /// Canonical `SelfHull*` → Kobayashi `data/ships_extended` ids (see `data/ships_extended/index.json`).
 fn map_self_hull_suffix_to_lcars(rest: &str) -> Option<LcarsCondition> {
     match rest {
@@ -162,6 +180,16 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             let mut c = lcars_cond_base("engagement_includes");
             c.enemy_type = Some("group_armadas".to_string());
             return Some(c);
+        }
+        // Weapon module line is not tracked in ship-vs-hostile condition eval; lenient `true` so
+        // kinetic/energy-gated rows are not dropped from the AND (see docs/CANONICAL_CONDITIONS.md).
+        "ModuleKinetic" | "ModuleEnergy" => return Some(lcars_cond_base("literal_true")),
+        "TargetStateAny" => return Some(lcars_target_state_any()),
+        "SelfStateNone" => return Some(lcars_self_state_none_attacker_debuffs()),
+        "SelfCloaked" | "SelfMining" => return Some(lcars_cond_base("literal_false")),
+        "CargoEmpty" | "EnemyNotToaTrialHostile" => return Some(lcars_cond_base("literal_true")),
+        "CargoFull" | "EnemyStronger" | "HitEnemyWithEnergy" | "HitEnemyWithKinetic" => {
+            return Some(lcars_cond_base("literal_false"));
         }
         _ => {}
     }
@@ -552,34 +580,54 @@ mod tests {
         }
     }
 
-    // Task 2 audit: tokens below still lack a 1:1 AbilityCondition / CombatContext story (see
-    // docs/CANONICAL_CONDITIONS.md). When engine support exists, map in map_canonical_condition_token
-    // and remove the token from DEFERRED.
+    // Task 2 audit: tokens merged from canonical `attributes` only — must stay absent from
+    // `map_canonical_condition_token` (see docs/CANONICAL_CONDITIONS.md).
     #[test]
-    fn task2_deferred_tokens_remain_unmapped() {
-        const DEFERRED: &[&str] = &[
-            "ModuleKinetic",
-            "ModuleEnergy",
-            "TargetStateAny",
+    fn task2_attribute_merged_hull_health_tokens_remain_token_only_unmapped() {
+        const ATTR_ONLY: &[&str] = &[
             "HullHealthBelowStartOfCombat",
             "HullHealthBelow",
-            "SelfCloaked",
-            "SelfStateNone",
-            "CargoEmpty",
-            "CargoFull",
-            "EnemyNotToaTrialHostile",
-            "EnemyStronger",
-            "HitEnemyWithEnergy",
-            "HitEnemyWithKinetic",
             "HullHealthAbove",
-            "SelfMining",
         ];
 
-        for tok in DEFERRED {
+        for tok in ATTR_ONLY {
             assert!(
                 map_canonical_condition_token(tok).is_none(),
-                "deferred token {tok:?} unexpectedly maps; remove from DEFERRED or document new engine semantics"
+                "attribute-merged token {tok:?} must not gain a duplicate token-only LCARS map"
             );
         }
+    }
+
+    #[test]
+    fn target_state_any_maps_to_or_of_defender_states() {
+        let lc = map_canonical_condition_token("TargetStateAny").expect("maps");
+        assert_eq!(lc.condition_type, "or");
+        let ch = lc.conditions.as_ref().expect("children");
+        assert_eq!(ch.len(), 3);
+        let ac = resolve_lcars_condition(&lc).expect("resolve");
+        assert_eq!(
+            ac,
+            AbilityCondition::Or(vec![
+                AbilityCondition::DefenderBurning,
+                AbilityCondition::DefenderHullBreach,
+                AbilityCondition::DefenderAssimilated,
+            ])
+        );
+    }
+
+    #[test]
+    fn self_state_none_maps_to_not_or_attacker_debuffs() {
+        let lc = map_canonical_condition_token("SelfStateNone").expect("maps");
+        assert_eq!(lc.condition_type, "not");
+        let inner = lc.conditions.as_ref().expect("not child")[0].clone();
+        assert_eq!(inner.condition_type, "or");
+        let ac = resolve_lcars_condition(&lc).expect("resolve");
+        assert_eq!(
+            ac,
+            AbilityCondition::Not(Box::new(AbilityCondition::Or(vec![
+                AbilityCondition::AttackerBurning,
+                AbilityCondition::AttackerHullBreach,
+            ])))
+        );
     }
 }

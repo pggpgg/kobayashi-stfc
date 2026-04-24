@@ -25,7 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             slug: linux-x86_64
             ext: tar.gz
           - os: macos-latest
@@ -60,6 +60,23 @@ jobs:
 
       - name: cargo build --release
         run: cargo build --release --locked
+
+      - name: Criterion benchmark baseline log (linux only)
+        if: matrix.slug == 'linux-x86_64'
+        env:
+          CI: "true"
+          KOBAYASHI_RAYON_THREADS: "2"
+        run: |
+          set -euo pipefail
+          cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
+          cargo xtask bench-check --write-baseline benchmark_results.fresh.log
+
+      - name: Upload benchmark baseline log artifact
+        if: matrix.slug == 'linux-x86_64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-log
+          path: benchmark_results.fresh.log
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -116,6 +133,16 @@ jobs:
           path: release-assets
           pattern: release-asset-*
           merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: benchmark-results-log
+          path: bench-download
+
+      - name: Attach benchmark_results.log to release assets
+        run: |
+          set -euo pipefail
+          cp bench-download/benchmark_results.fresh.log release-assets/benchmark_results.log
 
       - name: Write SHA256SUMS
         working-directory: release-assets

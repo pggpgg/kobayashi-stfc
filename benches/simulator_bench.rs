@@ -2,6 +2,7 @@
 //!
 //! Run with: `cargo bench`
 //! Results show mean time per combat and throughput (combats/s, rounds/s).
+//! All `SimulationConfig` uses here set `seed: 7` (regression baseline; see `docs/PERFORMANCE.md`).
 
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion, Throughput};
 use kobayashi::combat::{

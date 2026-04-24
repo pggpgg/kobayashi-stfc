@@ -2,6 +2,24 @@
 
 Benchmarks were run after implementing the sim efficiency plan (lazy trace, pre-compute effects, EffectAccumulator reuse, Monte Carlo shared cache, SplitMix64 RNG).
 
+## Regression gate (Criterion)
+
+CI ([`.github/workflows/benchmark-regression.yml`](../.github/workflows/benchmark-regression.yml)) runs Criterion on **`ubuntu-24.04`** with **`CI=true`** and **`KOBAYASHI_RAYON_THREADS=2**`, then [`cargo xtask bench-check`](../xtask/src/main.rs) compares medians to the committed [`benchmark_results.log`](../benchmark_results.log).
+
+- **Rule:** for every benchmark id listed in the log, the current run fails if `median_ns > baseline_median × 1.10` (strictly more than 10% slower). The set of ids in the log must match the set under `target/criterion/**/new/estimates.json`.
+- **Fixed seeds:** simulator benches use `SimulationConfig::seed = 7` ([`benches/simulator_bench.rs`](../benches/simulator_bench.rs)). Monte Carlo benches use `seed = 42` with ship `saladin` / hostile `2918121098` ([`benches/monte_carlo_parallel_bench.rs`](../benches/monte_carlo_parallel_bench.rs)).
+- **Refreshing the baseline:** after a **`v*`** tag push, the Release workflow’s Linux job uploads `benchmark_results.fresh.log` as artifact **`benchmark-results-log`** and publishes it on the GitHub Release as **`benchmark_results.log`**. Copy that file to the repo root (replace [`benchmark_results.log`](../benchmark_results.log)), adjust the `#` header comments if needed, and open a PR to `main`.
+- **Local refresh (same env as CI):** from repo root:
+
+```bash
+export CI=true
+export KOBAYASHI_RAYON_THREADS=2
+cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
+cargo xtask bench-check --write-baseline
+```
+
+- **Noise:** shared GitHub runners vary; if the gate flakes, re-run the workflow or refresh the log from a fresh Linux release artifact. Prefer **`ubuntu-24.04`** for the committed numbers so they match the gate runner.
+
 ## benchmark_parallel_speedup (64 candidates × 1000 iterations)
 
 

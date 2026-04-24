@@ -2,6 +2,7 @@
 //!
 //! Run with: `cargo bench --bench monte_carlo_parallel`
 //! Or quick comparison: `cargo run --bin benchmark_parallel_speedup` (see src/bin)
+//! Uses `seed: 42`, ship `saladin`, hostile `2918121098` (see `docs/PERFORMANCE.md` regression gate).
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use kobayashi::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
