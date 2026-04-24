@@ -169,7 +169,7 @@ fn raw_to_extended(
         .and_then(Value::as_array)
         .ok_or("missing levels")?;
 
-    let mut tiers: Vec<TierStats> = Vec::new();
+    let mut parsed_tiers: Vec<TierStats> = Vec::new();
     for t in tiers_arr {
         let tier_num = t.get("tier").and_then(Value::as_u64).unwrap_or(0) as u32;
         let components: &[Value] = t
@@ -189,7 +189,7 @@ fn raw_to_extended(
             shield_mitigation,
             weapons,
         ) = extract_tier_combat(components)?;
-        tiers.push(TierStats {
+        parsed_tiers.push(TierStats {
             tier: tier_num,
             armor_piercing,
             shield_piercing,
@@ -202,6 +202,21 @@ fn raw_to_extended(
             shield_mitigation: Some(shield_mitigation),
             weapons,
         });
+    }
+    parsed_tiers.sort_by_key(|t| t.tier);
+    let mut tiers: Vec<TierStats> = Vec::with_capacity(parsed_tiers.len());
+    let mut cumulative_armor_piercing = 0.0;
+    let mut cumulative_shield_piercing = 0.0;
+    let mut cumulative_accuracy = 0.0;
+    for mut t in parsed_tiers {
+        // STFC displays these offensive stats as cumulative tier upgrade contributions.
+        cumulative_armor_piercing += t.armor_piercing;
+        cumulative_shield_piercing += t.shield_piercing;
+        cumulative_accuracy += t.accuracy;
+        t.armor_piercing = cumulative_armor_piercing;
+        t.shield_piercing = cumulative_shield_piercing;
+        t.accuracy = cumulative_accuracy;
+        tiers.push(t);
     }
 
     let mut levels: Vec<LevelBonus> = Vec::new();
@@ -460,10 +475,9 @@ fn extract_tier_combat(
         });
     }
 
-    let weapon_count = weapons_out.len().max(1);
-    let armor_piercing = armor_piercing_sum / weapon_count as f64;
-    let shield_piercing = shield_piercing_sum / weapon_count as f64;
-    let accuracy = accuracy_sum / weapon_count as f64;
+    let armor_piercing = armor_piercing_sum;
+    let shield_piercing = shield_piercing_sum;
+    let accuracy = accuracy_sum;
     let attack = if attack_total <= 0.0 {
         100.0
     } else {

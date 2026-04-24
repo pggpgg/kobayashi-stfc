@@ -116,8 +116,9 @@ pub fn research_combat_summary_for_profile(
     unmapped_rids.sort_unstable();
     unmapped_rids.dedup();
 
+    // No support-buff context: Fortify-gated Titan research is omitted (matches simulate without Fortify).
     let combat_bonuses_from_research = catalog_nonempty
-        .map(|cat| combat_research_bonuses_from_import(&imported, cat))
+        .map(|cat| combat_research_bonuses_from_import(&imported, cat, false))
         .unwrap_or_default();
 
     let error = catalog_nonempty.is_none().then(|| {
@@ -190,7 +191,7 @@ mod tests {
             },
         ];
         let mut scratch = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut scratch, &imported, &cat);
+        merge_research_bonuses_into_profile(&mut scratch, &imported, &cat, false);
         assert_eq!(scratch.bonuses.get("weapon_damage").copied(), Some(0.03));
 
         let catalog_by_rid = by_rid(&cat);

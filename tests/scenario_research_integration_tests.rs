@@ -130,6 +130,7 @@ fn shared_scenario_applies_research_bonuses_from_profile() {
             &mut profile,
             &imported_research,
             catalog,
+            false,
         );
     }
 
@@ -191,7 +192,12 @@ fn catalog_apex_research_round_trips_through_profile_combatant() {
     };
 
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &[ResearchEntry { rid, level: 1 }], catalog);
+    merge_research_bonuses_into_profile(
+        &mut profile,
+        &[ResearchEntry { rid, level: 1 }],
+        catalog,
+        false,
+    );
 
     let merged = profile.bonuses.get("apex_shred").copied().unwrap_or(0.0);
     assert!(

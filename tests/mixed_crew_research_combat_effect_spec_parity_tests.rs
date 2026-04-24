@@ -113,7 +113,7 @@ fn mixed_bridge_officer_plus_burning_gated_research_combines() {
         level: 1,
     }];
 
-    let research = research_derived_attack_phase_seats(&imported, &catalog);
+    let research = research_derived_attack_phase_seats(&imported, &catalog, false);
     let from_spec = research_derived_attack_phase_seats_from_spec(&imported, &catalog);
     assert!(!research.is_empty());
     assert_eq!(
@@ -184,7 +184,7 @@ fn mixed_bridge_officer_plus_two_research_rids_combines() {
         },
     ];
 
-    let research = research_derived_attack_phase_seats(&imported, &catalog);
+    let research = research_derived_attack_phase_seats(&imported, &catalog, false);
     let from_spec = research_derived_attack_phase_seats_from_spec(&imported, &catalog);
     assert_eq!(research.len(), from_spec.len());
 

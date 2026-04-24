@@ -16,7 +16,11 @@
 //! and scenario-side hostile shield / accuracy patches.
 //! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
 //! Bonuses from synced research (by rid) are merged in when [merge_research_bonuses_into_profile] is used.
+//! **Titan-A Fortify:** several Titan research `rid`s apply combat catalog stats only while the alliance
+//! Fortify support buff is selected (`titan_a_fortification` / `titan_a_max_fortification`); see
+//! [`TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS`] and [`merge_research_bonuses_into_profile`].
 
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
@@ -1099,6 +1103,63 @@ pub fn merge_building_bonuses_into_profile(
     }
 }
 
+/// Support buff ids for Titan-A **Fortify** / Fortified (exclusive group in `data/support_buffs.json`).
+pub const TITAN_A_FORTIFY_SUPPORT_BUFF_IDS: &[&str] =
+    &["titan_a_fortification", "titan_a_max_fortification"];
+
+/// Game research ids whose **catalog combat bonuses** apply only while a Titan-A Fortify support buff
+/// is active for the scenario (in-game Fortified from alliance Titan-A).
+///
+/// Names: Titan's Fist, Clash of Titan, Titan Shield (Fortified line), Titan Force, Titan's Bulwark,
+/// Titan Power, Titan's Fortune.
+pub const TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS: &[i64] = &[
+    1_110_389_612,
+    3_414_721_139,
+    2_004_950_139,
+    2_448_831_923,
+    4_127_725_796,
+    3_591_450_656,
+    1_724_539_590,
+];
+
+#[inline]
+pub fn titan_a_fortify_active_in_resolved_support_buffs(resolved: &[String]) -> bool {
+    resolved.iter().any(|id| {
+        TITAN_A_FORTIFY_SUPPORT_BUFF_IDS
+            .iter()
+            .any(|&known| known == id.as_str())
+    })
+}
+
+/// Strips [`TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS`] from `entries` when Fortify is not active.
+pub(crate) fn research_entries_for_combat_merge<'a>(
+    entries: &'a [ResearchEntry],
+    titan_a_fortify_active: bool,
+) -> Cow<'a, [ResearchEntry]> {
+    if titan_a_fortify_active {
+        return Cow::Borrowed(entries);
+    }
+    let needs_filter = entries.iter().any(|e| {
+        TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS
+            .iter()
+            .any(|&rid| rid == e.rid)
+    });
+    if !needs_filter {
+        return Cow::Borrowed(entries);
+    }
+    Cow::Owned(
+        entries
+            .iter()
+            .filter(|e| {
+                !TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS
+                    .iter()
+                    .any(|&rid| rid == e.rid)
+            })
+            .cloned()
+            .collect(),
+    )
+}
+
 /// Per-`rid` research level from sync import: duplicate rows use **max** level for that `rid`.
 pub(crate) fn research_levels_by_rid_from_import(
     imported_research: &[ResearchEntry],
@@ -1129,9 +1190,11 @@ pub(crate) fn research_levels_by_rid_from_import(
 pub fn research_derived_attack_phase_seats(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
+    titan_a_fortify_active: bool,
 ) -> Vec<CrewSeatContext> {
+    let filtered = research_entries_for_combat_merge(imported_research, titan_a_fortify_active);
     crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
-        imported_research,
+        filtered.as_ref(),
         catalog,
     )
 }
@@ -1142,12 +1205,14 @@ pub fn research_derived_attack_phase_seats(
 pub fn combat_research_bonuses_from_import(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
+    titan_a_fortify_active: bool,
 ) -> HashMap<String, f64> {
     if imported_research.is_empty() || catalog.items.is_empty() {
         return HashMap::new();
     }
 
-    let levels_by_rid = research_levels_by_rid_from_import(imported_research);
+    let filtered = research_entries_for_combat_merge(imported_research, titan_a_fortify_active);
+    let levels_by_rid = research_levels_by_rid_from_import(filtered.as_ref());
     if levels_by_rid.is_empty() {
         return HashMap::new();
     }
@@ -1177,12 +1242,18 @@ pub fn combat_research_bonuses_from_import(
 /// For each imported research entry (rid, level), looks up the catalog by rid and sums
 /// cumulative bonuses for levels 1..=level. Only combat stats are applied (same keys as buildings).
 /// Duplicate `rid` rows use the **maximum** synced level for that `rid`.
+///
+/// When `titan_a_fortify_active` is false, omits [`TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS`] (Titan-A
+/// Fortify–gated tree); set true when `titan_a_fortification` or `titan_a_max_fortification` is in the
+/// resolved support buff list for the run.
 pub fn merge_research_bonuses_into_profile(
     profile: &mut PlayerProfile,
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
+    titan_a_fortify_active: bool,
 ) {
-    let bonuses = combat_research_bonuses_from_import(imported_research, catalog);
+    let bonuses =
+        combat_research_bonuses_from_import(imported_research, catalog, titan_a_fortify_active);
     for (key, value) in bonuses {
         let current = profile.bonuses.get(&key).copied().unwrap_or(0.0);
         profile.bonuses.insert(key, current + value);
@@ -1486,7 +1557,7 @@ mod tests {
                 }],
             }],
         };
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, false);
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
         assert!(!profile.bonuses.contains_key("buff_unknown"));
     }
@@ -1526,7 +1597,7 @@ mod tests {
                 }],
             }],
         };
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, false);
         assert_eq!(profile.bonuses.get("apex_shred"), Some(&0.25));
         assert_eq!(profile.bonuses.get("apex_barrier"), Some(&500.0));
     }
@@ -1561,7 +1632,7 @@ mod tests {
             }],
         };
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, false);
         assert_eq!(profile.bonuses.get("isolytic_damage_morale"), Some(&0.05));
         assert!(!profile.bonuses.contains_key("isolytic_damage"));
     }
@@ -1593,7 +1664,7 @@ mod tests {
             }],
         };
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, false);
 
         let attacker = Combatant {
             id: "test".to_string(),
@@ -1671,8 +1742,45 @@ mod tests {
                 levels: vec![],
             }],
         };
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, false);
         assert!(profile.bonuses.is_empty());
+    }
+
+    #[test]
+    fn merge_research_skips_titan_fortify_gated_rid_without_fortify_buff() {
+        use crate::data::research::{
+            ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+        };
+        let rid = TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS[0];
+        let catalog = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid,
+                name: Some("Titan's Fist".into()),
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "weapon_damage".into(),
+                        value: 0.07,
+                        operator: "add".into(),
+                        condition: Default::default(),
+                    }],
+                }],
+            }],
+        };
+        let imported = vec![ResearchEntry { rid, level: 1 }];
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, false);
+        assert!(
+            profile.bonuses.get("weapon_damage").is_none(),
+            "gated rid must not merge without Fortify support buff"
+        );
+        let mut with_fortify = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut with_fortify, &imported, &catalog, true);
+        assert_eq!(with_fortify.bonuses.get("weapon_damage"), Some(&0.07));
     }
 
     fn combatant_with(
@@ -2518,7 +2626,7 @@ mod tests {
             rid: 5001,
             level: 1,
         }];
-        let via_public = research_derived_attack_phase_seats(&imported, &catalog);
+        let via_public = research_derived_attack_phase_seats(&imported, &catalog, false);
         let via_spec =
             crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
                 &imported,

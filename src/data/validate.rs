@@ -291,7 +291,7 @@ fn validate_lcars_ability(
                 if let Some(support) = mechanic_support_for_lcars_stat(stat) {
                     if matches!(support, MechanicSupport::Partial) {
                         report.push(
-                            ValidationSeverity::Warning,
+                            ValidationSeverity::Info,
                             eff_ctx.clone(),
                             format!("stat '{stat}' maps to partially implemented mechanic"),
                         );
@@ -326,6 +326,85 @@ fn validate_lcars_ability(
 fn mechanic_support_for_lcars_stat(stat: &str) -> Option<MechanicSupport> {
     let key = stat.to_lowercase().replace('-', "_");
     mechanic_support_for_key(&key)
+}
+
+/// Canonical `officers.canonical.json` uses PascalCase `modifier` strings; [`normalize_key`] turns them
+/// into snake segments (e.g. `HullHPMax` → `hull_h_p_max`). This layer extends [`mechanic_support_for_key`]
+/// with every modifier token present in the committed catalog so `validate_data` triages **unknown**
+/// upstream strings rather than re-listing the whole roster.
+fn mechanic_support_for_canonical_modifier_or_stat(key: &str) -> Option<MechanicSupport> {
+    if let Some(support) = mechanic_support_for_key(key) {
+        return Some(support);
+    }
+
+    match key {
+        // `generate_lcars` `map_modifier` combat stats (beyond the generic [`mechanic_support_for_key`] set).
+        "all_damage"
+        | "officer_stat_attack"
+        | "officer_stat_defense"
+        | "ship_armor"
+        | "armor_piercing"
+        | "shield_piercing"
+        | "accuracy"
+        | "ship_dodge"
+        | "hull_h_p_max"
+        | "shield_h_p_max" => Some(MechanicSupport::Implemented),
+
+        // Regeneration / proc scaffolding / bridge tags — modeled incompletely vs live STFC.
+        "shield_h_p_repair"
+        | "hull_h_p_repair"
+        | "hull_repair"
+        | "shield_repair_prev_round"
+        | "officer_stat_all"
+        | "officer_stat_health"
+        | "add_state"
+        | "add_random_state"
+        | "off_ability_effect"
+        | "cpt_maneuver_effect"
+        | "all_reload_speed"
+        | "all_load_speed"
+        | "shields" => Some(MechanicSupport::Partial),
+
+        // Explicit `map_modifier` non-combat tags + economy/exploration modifiers in the catalog.
+        "mining_rate"
+        | "cargo_capacity"
+        | "warp_speed"
+        | "faction_points_gain"
+        | "pve_chest_loot_multiplier_limited_resources"
+        | "hostile_loot"
+        | "combat_scavenger"
+        | "skill_cloaking_duration"
+        | "armada_loot"
+        | "cargo_protection"
+        | "impulse_speed"
+        | "warp_distance"
+        | "combat_x_p_reward"
+        | "combat_pve_rewards"
+        | "repair_time"
+        | "repair_costs_post"
+        | "jump_and_tow_cost_eff"
+        | "mining_reward"
+        | "skill_cloaking_cooldown"
+        | "skill_cutting_beam_pv_p_base_damage_percentage"
+        | "voyager_asa_c_e"
+        | "skill_cutting_beam_ability_cost"
+        | "omega13_cooldown"
+        | "combat_parsteel_reward"
+        | "combat_tritanium_reward"
+        | "combat_dilithium_reward"
+        | "trellium_rewards"
+        | "actian_venom_and_nanoprobe_loot"
+        | "broken_ship_parts_loot"
+        | "gorn_hostile_volatile_loot"
+        | "hirogen_relic_and_biotoxin_loot"
+        | "artifact_token_loot"
+        | "wok_augment_all_loot_rewards"
+        | "xindi_hostile_loot" => Some(MechanicSupport::Planned),
+
+        _ if key.contains("loot") || key.contains("reward") => Some(MechanicSupport::Planned),
+
+        _ => None,
+    }
 }
 
 /// Validate canonical JSON officer dataset.
@@ -532,26 +611,37 @@ fn validate_effect_key(
     };
 
     let normalized = normalize_key(raw_key);
-    match mechanic_support_for_key(&normalized) {
+    let support = if label == "condition" {
+        if lcars::is_canonical_officer_condition_resolved(raw_key) {
+            Some(MechanicSupport::Implemented)
+        } else {
+            None
+        }
+    } else {
+        mechanic_support_for_canonical_modifier_or_stat(&normalized)
+    };
+
+    match support {
         None => report.push(
             ValidationSeverity::Warning,
             context.clone(),
             format!("unrecognized {label} key '{raw_key}' (not mapped in mechanic matrix)"),
         ),
         Some(MechanicSupport::Implemented) => {}
+        // Expected catalog limitations — keep visible for triage without counting as warnings.
         Some(MechanicSupport::Partial) => report.push(
-            ValidationSeverity::Warning,
+            ValidationSeverity::Info,
             context.clone(),
             format!("recognized {label} key '{raw_key}' maps to partially implemented mechanic"),
         ),
         Some(MechanicSupport::Planned) => report.push(
-            ValidationSeverity::Warning,
+            ValidationSeverity::Info,
             context.clone(),
             format!("recognized {label} key '{raw_key}' maps to planned mechanic"),
         ),
     }
 
-    if is_non_combat_key(&normalized) {
+    if label != "condition" && is_non_combat_key(&normalized) {
         report.push(
             ValidationSeverity::Info,
             context,
