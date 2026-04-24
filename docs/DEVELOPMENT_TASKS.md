@@ -7,7 +7,7 @@ Ordered checklist for tracking near-term Kobayashi simulator and optimizer work.
 3. [x] Define the canonical support buff schema, including ids, display names, stat targets, stacking behavior, and provenance notes.
 4. [x] Normalize support buff catalog entries so frontend and backend use the same identifiers and metadata.
 5. [x] Add validation for support buff catalog data and profile payloads.
-6. [ ] Extend profile loading and saving tests to cover support buff round trips.
+6. [x] Extend profile loading and saving tests to cover support buff round trips.
 7. [ ] Verify research summary merge behavior against representative HiggsBozo profile data.
 8. [ ] Add focused parity tests for combat effect specs that combine research and support buffs.
 9. [ ] Review Monte Carlo scenario construction to ensure support buffs, research buffs, and crew effects are resolved once per simulation request.
