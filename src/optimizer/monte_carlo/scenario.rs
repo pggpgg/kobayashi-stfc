@@ -32,11 +32,10 @@ use crate::data::profile::{
     merge_tech_fids_into_profile_with_level_tier,
     quantum_slipstream_forbidden_tech_round_start_seats, research_derived_attack_phase_seats,
     resolve_effective_tech_fids, ship_class_gated_torpedo_family_derived_seats,
-    SupportBuffResearchGateState,
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship, PlayerProfile,
-    USS_VOYAGER_SHIP_ID,
+    SupportBuffResearchGateState, USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,

@@ -6,7 +6,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use kobayashi::data::validate::{
     full_validation_report_to_json, hostile_ship_class_is_recognized, validate_all_data_for_report,
-    validate_registry_dataset, validate_unmapped_canonical_officer_conditions, ValidationSeverity,
+    validate_registry_dataset, validate_support_buffs_catalog_data,
+    validate_unmapped_canonical_officer_conditions, ValidationSeverity,
 };
 
 static CANONICAL_CONDITION_VALIDATE_TEST_LOCK: Mutex<()> = Mutex::new(());
@@ -29,6 +30,7 @@ fn full_report_includes_core_categories() {
         "officers_canonical",
         "officers_lcars",
         "forbidden_chaos",
+        "support_buffs",
         "canonical_conditions",
     ] {
         assert!(
@@ -39,6 +41,57 @@ fn full_report_includes_core_categories() {
     let json = full_validation_report_to_json(&report).expect("serialize");
     assert!(json.contains("\"summary\""));
     assert!(json.contains("\"errors\""));
+}
+
+#[test]
+fn support_buff_validation_reports_catalog_errors() {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let tmp = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("target")
+        .join(format!("support_buff_validate_{nanos}"));
+    let _ = std::fs::remove_dir_all(&tmp);
+    std::fs::create_dir_all(&tmp).unwrap();
+    std::fs::write(
+        tmp.join("support_buffs.json"),
+        r#"{
+          "buffs": {
+            "bad_buff": {
+              "id": "wrong_id",
+              "display_name": "Bad Buff",
+              "source": "test",
+              "provenance_notes": ["test fixture"],
+              "stat_targets": [
+                {
+                  "stat": "unknown_static_key",
+                  "value": 2.0,
+                  "stacking": "additive",
+                  "layer": "static_bonuses"
+                }
+              ],
+              "static_bonuses": {
+                "unknown_static_key": 3.0
+              }
+            }
+          }
+        }"#,
+    )
+    .unwrap();
+
+    let report = validate_support_buffs_catalog_data(&tmp).expect("validate support buffs");
+    let _ = std::fs::remove_dir_all(&tmp);
+
+    assert!(report.has_errors());
+    assert!(report.diagnostics.iter().any(|d| {
+        d.severity == ValidationSeverity::Error && d.message.contains("must match map key")
+    }));
+    assert!(report.diagnostics.iter().any(|d| {
+        d.severity == ValidationSeverity::Error
+            && d.message
+                .contains("not consumed by the static combat layer")
+    }));
 }
 
 #[test]

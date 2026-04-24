@@ -95,6 +95,189 @@ impl SupportBuffCatalog {
     pub fn get(&self, id: &str) -> Option<&SupportBuffDef> {
         self.buffs.get(id)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &SupportBuffDef)> {
+        self.buffs.iter()
+    }
+}
+
+fn support_static_key_is_supported(key: &str) -> bool {
+    matches!(
+        key,
+        "weapon_damage"
+            | "hull_hp"
+            | "shield_hp"
+            | "crit_chance"
+            | "crit_damage"
+            | "shield_pierce"
+            | "armor_pierce"
+            | "shield_mitigation"
+            | "armor"
+            | "dodge"
+            | "damage_reduction"
+            | "isolytic_damage"
+            | "isolytic_defense"
+            | "isolytic_cascade"
+            | "isolytic_cascade_damage"
+            | "apex_shred"
+            | "apex_barrier"
+            | "accuracy"
+            | "accuracy_cb_mult"
+    )
+}
+
+/// Semantic validation for `data/support_buffs.json`.
+///
+/// The catalog is request-scoped combat data, so invalid static keys are errors: otherwise a typo
+/// can silently become an unapplied combat modifier.
+pub fn support_buff_catalog_validation_issues(catalog: &SupportBuffCatalog) -> Vec<String> {
+    let mut issues = Vec::new();
+
+    for (id, def) in catalog.iter() {
+        let context = format!("support_buffs.{id}");
+        if id.trim().is_empty() {
+            issues.push("support_buffs: buff id key must not be empty".to_string());
+        }
+        match def.id.as_deref().map(str::trim) {
+            Some(value) if value == id => {}
+            Some(value) if value.is_empty() => {
+                issues.push(format!("{context}: field `id` must not be empty"));
+            }
+            Some(value) => {
+                issues.push(format!(
+                    "{context}: field `id` must match map key `{id}` (got `{value}`)"
+                ));
+            }
+            None => {
+                issues.push(format!("{context}: missing field `id`"));
+            }
+        }
+
+        for (field, value) in [
+            ("display_name", def.display_name.as_deref()),
+            ("source", def.source.as_deref()),
+        ] {
+            if value.is_none_or(|s| s.trim().is_empty()) {
+                issues.push(format!("{context}: `{field}` must not be empty"));
+            }
+        }
+        if def
+            .provenance_notes
+            .iter()
+            .all(|note| note.trim().is_empty())
+        {
+            issues.push(format!(
+                "{context}: `provenance_notes` must include at least one non-empty note"
+            ));
+        }
+        if def
+            .exclusive_group
+            .as_deref()
+            .is_some_and(|group| group.trim().is_empty())
+        {
+            issues.push(format!(
+                "{context}: `exclusive_group` must not be empty when set"
+            ));
+        }
+
+        for row in &def.research_levels {
+            if row.rid <= 0 {
+                issues.push(format!(
+                    "{context}: research_levels contains non-positive rid {}",
+                    row.rid
+                ));
+            }
+            if row.level == 0 {
+                issues.push(format!(
+                    "{context}: research_levels rid {} must use a non-zero level",
+                    row.rid
+                ));
+            }
+        }
+
+        let mut target_by_stat: HashMap<&str, &SupportBuffStatTarget> = HashMap::new();
+        for target in &def.stat_targets {
+            let stat = target.stat.trim();
+            if stat.is_empty() {
+                issues.push(format!("{context}: stat_targets contains an empty stat"));
+                continue;
+            }
+            if !target.value.is_finite() {
+                issues.push(format!(
+                    "{context}: stat target `{stat}` value must be finite"
+                ));
+            }
+            if target
+                .layer
+                .as_deref()
+                .is_some_and(|layer| layer != "static_bonuses")
+            {
+                issues.push(format!(
+                    "{context}: stat target `{stat}` has unsupported layer {:?}",
+                    target.layer
+                ));
+            }
+            if target_by_stat.insert(stat, target).is_some() {
+                issues.push(format!("{context}: duplicate stat target `{stat}`"));
+            }
+            if target.layer.as_deref() == Some("static_bonuses")
+                && !def.static_bonuses.contains_key(stat)
+            {
+                issues.push(format!(
+                    "{context}: stat target `{stat}` is missing matching static_bonuses value"
+                ));
+            }
+        }
+
+        for (stat, value) in &def.static_bonuses {
+            let stat = stat.trim();
+            if stat.is_empty() {
+                issues.push(format!(
+                    "{context}: static_bonuses contains an empty stat key"
+                ));
+                continue;
+            }
+            if !support_static_key_is_supported(stat) {
+                issues.push(format!(
+                    "{context}: static bonus `{stat}` is not consumed by the static combat layer"
+                ));
+            }
+            if !value.is_finite() {
+                issues.push(format!(
+                    "{context}: static bonus `{stat}` value must be finite"
+                ));
+            }
+            let Some(target) = target_by_stat.get(stat).copied() else {
+                issues.push(format!(
+                    "{context}: static bonus `{stat}` is missing stat_targets metadata"
+                ));
+                continue;
+            };
+            if target.layer.as_deref() != Some("static_bonuses") {
+                issues.push(format!(
+                    "{context}: stat target `{stat}` must declare layer `static_bonuses`"
+                ));
+            }
+            if target.value != *value {
+                issues.push(format!(
+                    "{context}: stat target `{stat}` value {} does not match static bonus {}",
+                    target.value, value
+                ));
+            }
+            let expected_stacking = if is_static_mult_key(stat) {
+                "multiplicative"
+            } else {
+                "additive"
+            };
+            if target.stacking != expected_stacking {
+                issues.push(format!(
+                    "{context}: stat target `{stat}` stacking must be `{expected_stacking}`"
+                ));
+            }
+        }
+    }
+
+    issues
 }
 
 /// Normalize selection: cap length, known ids only, apply exclusive_group (highest priority wins).
@@ -409,6 +592,16 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn bundled_catalog_passes_semantic_validation() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        let issues = support_buff_catalog_validation_issues(&c);
+        assert!(
+            issues.is_empty(),
+            "support buff validation issues: {issues:?}"
+        );
     }
 
     #[test]

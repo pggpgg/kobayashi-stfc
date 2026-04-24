@@ -2,6 +2,7 @@ use axum::body::Body;
 use axum::extract::connect_info::ConnectInfo;
 use axum::http::{Method, Request, StatusCode};
 use kobayashi::data::data_registry::DataRegistry;
+use kobayashi::data::profile_index::profile_data_dir;
 use kobayashi::server::routes::build_router;
 use std::net::SocketAddr;
 use tower::ServiceExt;
@@ -170,6 +171,79 @@ async fn profile_research_summary_returns_json() {
     assert!(payload["synced_research_count"].is_number());
     assert!(payload["unmapped_rids"].is_array());
     assert!(payload["research"].is_array());
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn profile_put_rejects_unknown_bonus_key() {
+    let profile_id = "profile_validation_unknown_bonus";
+    let _ = std::fs::remove_dir_all(profile_data_dir(profile_id));
+    let response = route_request(
+        "PUT",
+        &format!("/api/profile?profile={profile_id}"),
+        r#"{"bonuses":{"warp_speed":1.0}}"#,
+    )
+    .await;
+    let _ = std::fs::remove_dir_all(profile_data_dir(profile_id));
+
+    assert_eq!(response.status_code, 400);
+    assert!(response.body.contains("not a supported combat stat"));
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn profile_put_rejects_invalid_optional_fields() {
+    let profile_id = "profile_validation_invalid_options";
+    let _ = std::fs::remove_dir_all(profile_data_dir(profile_id));
+    let response = route_request(
+        "PUT",
+        &format!("/api/profile?profile={profile_id}"),
+        r#"{"bonuses":{"weapon_damage":0.1},"ops_level":0,"forbidden_tech_override":[123,123]}"#,
+    )
+    .await;
+    let _ = std::fs::remove_dir_all(profile_data_dir(profile_id));
+
+    assert_eq!(response.status_code, 400);
+    assert!(response.body.contains("ops_level"));
+    assert!(response.body.contains("duplicate id"));
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn profile_put_rejects_malformed_json() {
+    let response = route_request(
+        "PUT",
+        "/api/profile?profile=profile_validation_malformed",
+        "{",
+    )
+    .await;
+    assert_eq!(response.status_code, 400);
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn profile_put_accepts_and_canonicalizes_valid_payload() {
+    let profile_id = "profile_validation_valid_payload";
+    let _ = std::fs::remove_dir_all(profile_data_dir(profile_id));
+    let response = route_request(
+        "PUT",
+        &format!("/api/profile?profile={profile_id}"),
+        r#"{"bonuses":{"weapon_damage":0.1,"armor_pierce":5.0},"ops_level":40,"forbidden_tech_override":[123],"chaos_tech_override":[456]}"#,
+    )
+    .await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+
+    let get_response =
+        route_request("GET", &format!("/api/profile?profile={profile_id}"), "").await;
+    let _ = std::fs::remove_dir_all(profile_data_dir(profile_id));
+
+    assert_eq!(get_response.status_code, 200, "{}", get_response.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&get_response.body).expect("profile json");
+    assert_eq!(payload["bonuses"]["weapon_damage"], 0.1);
+    assert_eq!(payload["bonuses"]["pierce"], 5.0);
+    assert!(payload["bonuses"]["armor_pierce"].is_null());
+    assert_eq!(payload["ops_level"], 40);
 }
 
 #[serial_test::serial]

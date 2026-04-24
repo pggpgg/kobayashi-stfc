@@ -57,6 +57,79 @@ pub struct PlayerProfile {
 
 pub const DEFAULT_PROFILE_PATH: &str = "data/profile.json";
 
+fn validate_positive_unique_ids(issues: &mut Vec<String>, field: &str, ids: Option<&[i64]>) {
+    let Some(ids) = ids else { return };
+    let mut seen = HashSet::new();
+    for &id in ids {
+        if id <= 0 {
+            issues.push(format!("{field} contains non-positive id {id}"));
+        }
+        if !seen.insert(id) {
+            issues.push(format!("{field} contains duplicate id {id}"));
+        }
+    }
+}
+
+/// Validate and canonicalize a profile payload before persisting it.
+///
+/// Profile bonus keys are the combat stat names consumed by [`apply_profile_to_attacker`] and related
+/// scenario helpers. Aliases such as `armor_pierce` and `shield_pierce` are folded into `pierce` so
+/// accepted payloads cannot be silently ignored later.
+pub fn validate_player_profile_payload(
+    profile: PlayerProfile,
+) -> Result<PlayerProfile, Vec<String>> {
+    let mut issues = Vec::new();
+    let mut canonical_bonuses: HashMap<String, f64> = HashMap::new();
+
+    for (raw_key, value) in &profile.bonuses {
+        let key = raw_key.trim();
+        if key.is_empty() {
+            issues.push("bonuses contains an empty stat key".to_string());
+            continue;
+        }
+        if key != raw_key {
+            issues.push(format!(
+                "bonus key `{raw_key}` must not contain surrounding whitespace"
+            ));
+        }
+        if !value.is_finite() {
+            issues.push(format!("bonus `{key}` value must be finite"));
+            continue;
+        }
+        let Some(canonical_key) = normalize_profile_combat_stat(key) else {
+            issues.push(format!("bonus `{key}` is not a supported combat stat"));
+            continue;
+        };
+        canonical_bonuses
+            .entry(canonical_key.to_string())
+            .and_modify(|existing| *existing += *value)
+            .or_insert(*value);
+    }
+
+    if profile.ops_level == Some(0) {
+        issues.push("ops_level must be greater than 0 when set".to_string());
+    }
+    validate_positive_unique_ids(
+        &mut issues,
+        "forbidden_tech_override",
+        profile.forbidden_tech_override.as_deref(),
+    );
+    validate_positive_unique_ids(
+        &mut issues,
+        "chaos_tech_override",
+        profile.chaos_tech_override.as_deref(),
+    );
+
+    if !issues.is_empty() {
+        return Err(issues);
+    }
+
+    Ok(PlayerProfile {
+        bonuses: canonical_bonuses,
+        ..profile
+    })
+}
+
 /// Applies one bonus to profile (add or mult). Mult: (1+current)*(1+value)-1; else additive.
 fn accumulate_forbidden_tech_bonus(
     out: &mut HashMap<String, f64>,
@@ -1216,8 +1289,12 @@ impl SupportBuffResearchGateState {
             titan_max_fortification: resolved
                 .iter()
                 .any(|id| id.as_str() == "titan_a_max_fortification"),
-            cerritos_support: resolved.iter().any(|id| id.as_str() == CERRITOS_SUPPORT_BUFF_ID),
-            defiant_reinforce: resolved.iter().any(|id| id.as_str() == DEFIANT_REINFORCE_BUFF_ID),
+            cerritos_support: resolved
+                .iter()
+                .any(|id| id.as_str() == CERRITOS_SUPPORT_BUFF_ID),
+            defiant_reinforce: resolved
+                .iter()
+                .any(|id| id.as_str() == DEFIANT_REINFORCE_BUFF_ID),
         }
     }
 }

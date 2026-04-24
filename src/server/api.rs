@@ -21,6 +21,7 @@ use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
 };
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
+use crate::data::profile::{validate_player_profile_payload, PlayerProfile};
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
     PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
@@ -894,12 +895,6 @@ pub fn replay_optimize_seed_payload(
     serde_json::to_string_pretty(&response_json).map_err(ReplaySeedError::Parse)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PlayerProfile {
-    #[serde(default)]
-    pub bonuses: std::collections::HashMap<String, f64>,
-}
-
 /// Resolve profile id from optional param; falls back to index default.
 fn resolve_profile_id(profile_id: Option<&str>) -> String {
     let index = load_profile_index();
@@ -914,13 +909,9 @@ pub fn profile_get_payload(profile_id: Option<&str>) -> Result<String, serde_jso
     let path = profile_path(&id, PROFILE_JSON);
     let profile: PlayerProfile = if path.exists() {
         let raw = fs::read_to_string(&path).unwrap_or_else(|_| "{}".to_string());
-        serde_json::from_str(&raw).unwrap_or(PlayerProfile {
-            bonuses: std::collections::HashMap::new(),
-        })
+        serde_json::from_str(&raw).unwrap_or_default()
     } else {
-        PlayerProfile {
-            bonuses: std::collections::HashMap::new(),
-        }
+        PlayerProfile::default()
     };
     serde_json::to_string_pretty(&profile)
 }
@@ -929,12 +920,19 @@ pub fn profile_put_payload(
     body: &str,
     profile_id: Option<&str>,
 ) -> Result<String, serde_json::Error> {
-    let _: PlayerProfile = serde_json::from_str(body)?;
+    let profile: PlayerProfile = serde_json::from_str(body)?;
+    let profile = validate_player_profile_payload(profile).map_err(|issues| {
+        serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            issues.join("; "),
+        ))
+    })?;
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, PROFILE_JSON);
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
+    let body = serde_json::to_string_pretty(&profile)?;
     fs::write(&path, body).map_err(serde_json::Error::io)?;
     serde_json::to_string_pretty(&serde_json::json!({ "status": "ok" }))
 }

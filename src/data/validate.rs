@@ -17,6 +17,9 @@ use crate::data::registry::Registry;
 use crate::data::ship::{
     ExtendedShipIndex, ExtendedShipRecord, ShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
+use crate::data::support_buffs::{
+    support_buff_catalog_validation_issues, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
+};
 use crate::data::upstream_hostile_ship_type::{
     upstream_ship_type_deferral_reason, upstream_ship_type_is_known_category,
 };
@@ -1205,6 +1208,31 @@ pub fn validate_forbidden_chaos_catalog_data(data_root: &Path) -> Result<Validat
     Ok(report)
 }
 
+/// Validate support-buff catalog metadata and modeled static combat keys.
+pub fn validate_support_buffs_catalog_data(data_root: &Path) -> Result<ValidationReport, String> {
+    let path = data_root.join(
+        Path::new(DEFAULT_SUPPORT_BUFFS_PATH)
+            .file_name()
+            .unwrap_or_default(),
+    );
+    let mut report = ValidationReport::default();
+    if !path.is_file() {
+        report.push(
+            ValidationSeverity::Error,
+            "support_buffs.catalog",
+            format!("missing {}", path.display()),
+        );
+        return Ok(report);
+    }
+
+    let catalog = SupportBuffCatalog::load(&path)
+        .map_err(|e| format!("failed to load {}: {e}", path.display()))?;
+    for msg in support_buff_catalog_validation_issues(&catalog) {
+        report.push(ValidationSeverity::Error, "support_buffs.catalog", msg);
+    }
+    Ok(report)
+}
+
 /// When `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS` is `1` / `true` / `yes`, unmapped canonical
 /// officer `conditions` tokens are validation **errors** instead of warnings (see
 /// `docs/CANONICAL_CONDITIONS.md` § After editing canonical officers).
@@ -1310,6 +1338,11 @@ pub fn all_dataset_validation_reports(manifest_dir: &Path) -> Vec<NamedValidatio
     out.push(named_validation_report(
         "forbidden_chaos",
         validate_forbidden_chaos_catalog_data(&data_root),
+    ));
+
+    out.push(named_validation_report(
+        "support_buffs",
+        validate_support_buffs_catalog_data(&data_root),
     ));
 
     out.push(named_validation_report(
