@@ -142,6 +142,12 @@ pub struct OptimizeRequest {
     /// When set (tiered): cap total confirmation iterations across the top-K crews to `floor(mult * tiered_top_k * sims)` after per-crew adaptive allocation.
     #[serde(default)]
     pub tiered_confirm_budget_cap_mult: Option<f64>,
+    /// Exhaustive strategy only: scout-phase sims per crew before ranking (pair with `exhaustive_scout_top_keep`).
+    #[serde(default)]
+    pub exhaustive_scout_sims: Option<u32>,
+    /// Exhaustive strategy only: how many top scout crews receive full `sims` confirmation (pair with `exhaustive_scout_sims`).
+    #[serde(default)]
+    pub exhaustive_scout_top_keep: Option<u32>,
     /// Optional crews prepended before generated candidates (deduped); e.g. UI warm-start persistence.
     #[serde(default)]
     pub warm_start_crews: Option<Vec<WarmStartCrewDto>>,
@@ -297,6 +303,38 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
                 messages: vec![
                     "if set, must be a finite number in (0, 20] (typical: 1.5–3)".to_string(),
                 ],
+            });
+        }
+    }
+
+    let ex_scout = request.exhaustive_scout_sims;
+    let ex_keep = request.exhaustive_scout_top_keep;
+    if ex_scout.is_some() != ex_keep.is_some() {
+        errors.push(ValidationIssue {
+            field: "exhaustive_scout_sims",
+            messages: vec![
+                "exhaustive_scout_sims and exhaustive_scout_top_keep must both be set or both omitted"
+                    .to_string(),
+            ],
+        });
+    }
+    if let Some(s) = ex_scout {
+        if !(1..=MAX_TIERED_SCOUT_SIMS).contains(&s) {
+            errors.push(ValidationIssue {
+                field: "exhaustive_scout_sims",
+                messages: vec![format!(
+                    "if set, must be between 1 and {MAX_TIERED_SCOUT_SIMS}"
+                )],
+            });
+        }
+    }
+    if let Some(k) = ex_keep {
+        if !(1..=MAX_TIERED_TOP_K).contains(&k) {
+            errors.push(ValidationIssue {
+                field: "exhaustive_scout_top_keep",
+                messages: vec![format!(
+                    "if set, must be between 1 and {MAX_TIERED_TOP_K}"
+                )],
             });
         }
     }

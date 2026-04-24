@@ -16,10 +16,9 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 ### Next optimizer upgrades
 
-- **Adaptive simulation budgets** — Allocate sims dynamically based on scout-pass confidence and variance instead of giving every surviving crew the same budget.
 - **Matchup-aware pruning rules** — Add captain/bridge synergy priors, encounter-specific tags, and learned “family” priors from prior winning crews before expensive simulation.
 - **Novelty-aware ranking** — Reward crews that are both strong and materially different from already-known winners so discovery does not collapse into the same few lineages.
-- **Automatic local learning loop** — *(Partial: per-profile `optimize_history.json` stores tiered results for `optimize_cache_key` and re-injects them on the next matching optimize — see `src/data/optimize_history.rs` and `src/server/api/execution.rs`.)* Still open: use history to tune exploration limits automatically, extend reuse beyond tiered (e.g. exhaustive), and broader “learn” feedback loops.
+- **Automatic local learning loop** — *(Partial: per-profile `optimize_history.json` stores tiered and exhaustive two-phase results for `optimize_cache_key` and re-injects matching crews on the next run — see `src/data/optimize_history.rs` and `src/server/api/execution.rs`.)* Still open: use history to tune exploration limits automatically and broader “learn” feedback loops.
 - **First-class fast-discovery mode** — *(Shipped: `fast_discovery` on optimize merges expanded `heuristics_seeds` crews into the main warm-start path so they share analytical prefilter + tiered or exhaustive Monte Carlo; workspace Strategy panel checkbox; OpenAPI field.)* Optional genetic refinement pass after tiered confirm remains future work.
 
 ### Operating principle

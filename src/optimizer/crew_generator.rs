@@ -11,6 +11,11 @@ use crate::optimizer::constraints::{
 };
 use crate::perf_log;
 
+/// Profile id with no `profiles/<id>/roster.imported.json` in the repo: roster import filter is
+/// skipped so tests and tools see the full canonical officer catalog (see unit tests using this id).
+pub const NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS: &str =
+    "__kobayashi_test_profile_without_roster_dir__";
+
 /// Path to `roster.imported.json` for the given API profile id (or default profile when `None`).
 fn roster_import_json_path_for_profile(profile_id: Option<&str>) -> String {
     let pid = profile_id
@@ -1173,16 +1178,13 @@ mod tests {
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
 
-    /// Profile id with no `profiles/<id>/roster.imported.json` in the repo → roster filter skipped.
-    const NO_ROSTER_PROFILE_FOR_TESTS: &str = "__kobayashi_test_profile_without_roster_dir__";
-
     #[test]
     fn narrow_pools_returns_none_for_unknown_captain_must_be() {
         let registry = DataRegistry::load().expect("registry");
         let pools = build_officer_pools_from_registry(
             &registry,
             false,
-            Some(NO_ROSTER_PROFILE_FOR_TESTS),
+            Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
         )
@@ -1202,7 +1204,7 @@ mod tests {
         let pools = build_officer_pools_from_registry(
             &registry,
             false,
-            Some(NO_ROSTER_PROFILE_FOR_TESTS),
+            Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
         )
@@ -1272,7 +1274,7 @@ mod tests {
     fn generation_is_deterministic_for_same_seed() {
         let generator = CrewGenerator::with_strategy(CandidateStrategy {
             max_candidates: Some(32),
-            roster_profile_id: Some(NO_ROSTER_PROFILE_FOR_TESTS.into()),
+            roster_profile_id: Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS.into()),
             ..CandidateStrategy::default()
         });
 
@@ -1289,7 +1291,7 @@ mod tests {
             max_candidates: Some(24),
             large_pool_captain_limit: 5,
             large_pool_bridge_limit: 6,
-            roster_profile_id: Some(NO_ROSTER_PROFILE_FOR_TESTS.into()),
+            roster_profile_id: Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS.into()),
             ..CandidateStrategy::default()
         });
 
@@ -1306,7 +1308,7 @@ mod tests {
         let generator = CrewGenerator::with_strategy(CandidateStrategy {
             below_decks_slots: 2,
             max_candidates: Some(24),
-            roster_profile_id: Some(NO_ROSTER_PROFILE_FOR_TESTS.into()),
+            roster_profile_id: Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS.into()),
             ..CandidateStrategy::default()
         });
         let candidates = generator.generate_candidates("defiant", "romulan", 11);

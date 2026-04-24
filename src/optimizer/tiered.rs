@@ -103,6 +103,16 @@ pub fn scout_coarse_sims_from_cap(cap_s: usize, n_candidates: usize, top_k: usiz
         q = q.clamp(200, s.saturating_sub(1)).max(1);
     }
 
+    // Optional operator / lab scale on the adaptive coarse fraction (default unchanged when unset).
+    if let Ok(raw) = std::env::var("KOBAYASHI_SCOUT_COARSE_MULT") {
+        if let Ok(mult) = raw.parse::<f64>() {
+            if mult.is_finite() && mult > 0.0 {
+                q = ((q as f64) * mult).round() as usize;
+                q = q.min(s.saturating_sub(1)).max(1);
+            }
+        }
+    }
+
     q
 }
 
@@ -261,6 +271,7 @@ pub struct TieredScoutBudgetStats {
     /// Sum of final per-crew `trials_run` after coarse + refine (used for total scout cost).
     pub scout_trials_final: u64,
     /// Sum of `trials_run` across the top-K confirmation phase (includes optimize-history cache hits).
+    /// For exhaustive two-phase (`exhaustive_adaptive`), only the top-`keep` full-MC rows are summed (not scout-only crews).
     pub confirm_trials_total: u64,
     /// Min / max confirmation iterations allocated per top-K crew (after optional global cap shrink).
     pub confirm_sims_alloc_min: usize,
@@ -378,6 +389,8 @@ where
 /// Progress: `total_crews` = num_candidates + top_k; during scouting, `crews_done` is 0..num_candidates;
 /// after confirmation, `crews_done` reaches `total_crews`. Phases: `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`.
 /// Returns false from `on_progress` to abort.
+///
+/// `budget_hints`: optional per-profile coarse-scout multiplier from `optimizer_budget_hints.json`.
 #[allow(clippy::too_many_arguments)]
 pub fn run_tiered_with_registry_with_progress<F>(
     registry: &DataRegistry,
@@ -399,6 +412,8 @@ pub fn run_tiered_with_registry_with_progress<F>(
     scout_adaptive: bool,
     // When `Some(f)`, shrink confirmation totals so `sum ≤ floor(f * K * full_sims)`.
     confirm_budget_cap_mult: Option<f64>,
+    // Optional per-profile coarse-scout multiplier (`profiles/<id>/optimizer_budget_hints.json`).
+    budget_hints: Option<&super::budget_hints::OptimizerBudgetHints>,
     mut on_progress: F,
 ) -> (Vec<RankedCrewResult>, TieredScoutBudgetStats)
 where
@@ -435,7 +450,8 @@ where
 
     let scout_cap = scout_sims.max(1);
     let coarse_sims = if scout_adaptive {
-        scout_coarse_sims_from_cap(scout_cap, total_candidates, k)
+        let q = scout_coarse_sims_from_cap(scout_cap, total_candidates, k);
+        super::budget_hints::apply_tiered_coarse_hint(q, scout_cap, budget_hints)
     } else {
         scout_cap
     };

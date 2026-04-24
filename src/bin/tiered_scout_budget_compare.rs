@@ -80,6 +80,8 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         tiered_top_k: Some(row.tiered_top_k),
         tiered_scout_uniform: uniform,
         tiered_confirm_budget_cap_mult: None,
+        exhaustive_scout_sims: None,
+        exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,

@@ -9,6 +9,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::OwnedSemaphorePermit;
 use tracing::{info, info_span, warn};
 
+use crate::data::budget_telemetry::{maybe_append_row, BudgetTelemetryRow};
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
@@ -275,6 +276,9 @@ pub struct ScenarioSummary {
     /// Tiered runs: scout/confirm trial accounting (see `TieredScoutBudgetStats`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tiered_scout_budget: Option<TieredScoutBudgetStats>,
+    /// Exhaustive two-phase runs: scout-then-full-MC trial accounting (same struct shape as tiered budget stats).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -338,6 +342,7 @@ struct OptimizeGatherMeta {
     optimize_history_confirm_hits: u32,
     optimize_history_wrote: bool,
     tiered_scout_budget: Option<TieredScoutBudgetStats>,
+    exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -551,6 +556,7 @@ fn gather_optimize_simulation_results(
     let mut optimize_history_confirm_hits = 0u32;
     let mut optimize_history_wrote = false;
     let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
+    let mut exhaustive_adaptive_budget_for_response: Option<TieredScoutBudgetStats> = None;
 
     let mut h_candidates = if heuristics_seeds_nonempty {
         load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
@@ -683,6 +689,14 @@ fn gather_optimize_simulation_results(
             tiered_top_k: request.tiered_top_k.map(|n| n as usize),
             tiered_scout_uniform: matches!(request.tiered_scout_uniform, Some(true)),
             tiered_confirm_budget_cap_mult: request.tiered_confirm_budget_cap_mult,
+            exhaustive_scout_sims: request
+                .exhaustive_scout_sims
+                .map(|n| n as usize)
+                .filter(|_| strategy == OptimizerStrategy::Exhaustive),
+            exhaustive_scout_top_keep: request
+                .exhaustive_scout_top_keep
+                .map(|n| n as usize)
+                .filter(|_| strategy == OptimizerStrategy::Exhaustive),
             analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
             below_decks_slots,
             constraints: crew_constraints.clone(),
@@ -711,6 +725,7 @@ fn gather_optimize_simulation_results(
         }
         optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
         tiered_scout_budget_for_response = outcome.tiered_scout_budget;
+        exhaustive_adaptive_budget_for_response = outcome.exhaustive_adaptive_budget;
         if strategy == OptimizerStrategy::Tiered {
             if let (Some(pid), Some(key), Some((n, scout, tk))) = (
                 profile_id,
@@ -736,6 +751,35 @@ fn gather_optimize_simulation_results(
                 );
                 optimize_history_wrote =
                     optimize_history::upsert_entry(pid, key.as_str(), entry).is_ok();
+            }
+        }
+        if strategy == OptimizerStrategy::Exhaustive {
+            if let (Some(pid), Some(key)) = (profile_id, cache_key_normalized.as_ref()) {
+                if outcome.exhaustive_adaptive_budget.is_some() && !outcome.ranked.is_empty() {
+                    if let (Some(scout_u32), Some(keep_u32)) =
+                        (request.exhaustive_scout_sims, request.exhaustive_scout_top_keep)
+                    {
+                        let n = outcome.ranked.len();
+                        let entry =
+                            optimize_history::build_entry_from_ranked_exhaustive_two_phase(
+                                sims,
+                                seed,
+                                n,
+                                scout_u32 as usize,
+                                keep_u32 as usize,
+                                optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
+                                &chain_grind,
+                                request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
+                                &outcome.ranked,
+                            );
+                        optimize_history_wrote |= optimize_history::upsert_entry(
+                            pid,
+                            key.as_str(),
+                            entry,
+                        )
+                        .is_ok();
+                    }
+                }
             }
         }
         let pf = outcome.analytical_prefilter;
@@ -773,6 +817,7 @@ fn gather_optimize_simulation_results(
         optimize_history_confirm_hits,
         optimize_history_wrote,
         tiered_scout_budget: tiered_scout_budget_for_response,
+        exhaustive_adaptive_budget: exhaustive_adaptive_budget_for_response,
     };
     info!(
         effective_strategy = optimizer_strategy_to_api_label(meta.strategy),
@@ -783,6 +828,39 @@ fn gather_optimize_simulation_results(
         optimize_history_wrote = meta.optimize_history_wrote,
         final_result_count = all_results.len() as u64,
         "optimize_gather_complete"
+    );
+
+    let ts_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u128)
+        .unwrap_or(0);
+    maybe_append_row(
+        profile_id,
+        &BudgetTelemetryRow {
+            ts_ms,
+            ship: request.ship.as_str(),
+            hostile: request.hostile.as_str(),
+            strategy: optimizer_strategy_to_api_label(meta.strategy),
+            result_crews: all_results.len(),
+            tiered_scout_trials_final: meta
+                .tiered_scout_budget
+                .as_ref()
+                .map(|b| b.scout_trials_final),
+            tiered_confirm_trials_total: meta
+                .tiered_scout_budget
+                .as_ref()
+                .map(|b| b.confirm_trials_total),
+            exhaustive_scout_trials_final: meta
+                .exhaustive_adaptive_budget
+                .as_ref()
+                .map(|b| b.scout_trials_final),
+            exhaustive_confirm_trials_total: meta
+                .exhaustive_adaptive_budget
+                .as_ref()
+                .map(|b| b.confirm_trials_total),
+            optimize_history_confirm_hits: meta.optimize_history_confirm_hits,
+            optimize_history_wrote: meta.optimize_history_wrote,
+        },
     );
 
     Ok((all_results, meta))
@@ -932,6 +1010,7 @@ fn build_optimize_response(
                 .then_some(meta.optimize_history_confirm_hits),
             optimize_history_wrote: meta.optimize_history_wrote.then_some(true),
             tiered_scout_budget: meta.tiered_scout_budget,
+            exhaustive_adaptive_budget: meta.exhaustive_adaptive_budget,
         },
         recommendations: ranked_results
             .iter()
@@ -1257,6 +1336,8 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
                 | "tiered_scout"
                 | "tiered_scout_refine"
                 | "tiered_confirm"
+                | "exhaustive_scout"
+                | "exhaustive_confirm"
         )
     });
     let (throughput_crews_per_sec, eta_seconds) =

@@ -58,6 +58,10 @@ pub const BATTLELOGS_IMPORTED: &str = "battlelogs.imported.json";
 pub const LAST_MOD_SYNC_JSON: &str = "last_mod_sync.json";
 /// Cross-session optimize winners / warm-start stats (per `optimize_cache_key` from the SPA).
 pub const OPTIMIZE_HISTORY_JSON: &str = "optimize_history.json";
+/// Optional JSON overrides for scout/coarse budget heuristics (operator-tuned; see `optimizer::budget_hints`).
+pub const OPTIMIZER_BUDGET_HINTS_JSON: &str = "optimizer_budget_hints.json";
+/// Append-only optimize budget telemetry when `KOBAYASHI_BUDGET_TELEMETRY=1` (see `budget_telemetry` module).
+pub const BUDGET_TELEMETRY_JSONL: &str = "budget_telemetry.jsonl";
 
 /// Resolve profile id for optimizer/simulate; uses default when None.
 pub fn resolve_profile_id_for_api(profile_id: Option<&str>) -> String {

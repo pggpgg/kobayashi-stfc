@@ -1,8 +1,8 @@
 //! Per-profile optimize result cache (`profiles/{id}/optimize_history.json`).
 //!
-//! Keys are opaque client fingerprints (`optimize_cache_key`). Entries store resolved tiered
-//! parameters plus full Monte Carlo aggregates so a later tiered run can skip scout/confirm
-//! for matching crews when metadata still aligns.
+//! Keys are opaque client fingerprints (`optimize_cache_key`). Entries store resolved run
+//! parameters plus Monte Carlo aggregates so a later **tiered** or **exhaustive two-phase**
+//! run can skip scout and/or confirm for matching crews when metadata still aligns.
 
 use std::collections::HashMap;
 use std::fs;
@@ -27,6 +27,14 @@ pub const TIERED_BUDGET_POLICY_LEGACY: u8 = 0;
 /// Current tiered Monte Carlo budget allocator (adaptive coarse fraction, ranking-aligned confirm widths, optional confirm cap).
 pub const TIERED_BUDGET_POLICY_V2: u8 = 2;
 
+/// [`OptimizeHistoryEntry::optimize_history_kind`] — tiered cache row (default for legacy JSON).
+pub const OPTIMIZE_HISTORY_KIND_TIERED: u8 = 0;
+/// Exhaustive two-phase scout→confirm cache row.
+pub const OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE: u8 = 1;
+
+/// Exhaustive two-phase: confirmation iterations allocated from scout ranking widths (must match run).
+pub const EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1: u8 = 1;
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OptimizeHistoryFile {
     pub schema: u32,
@@ -42,6 +50,9 @@ pub struct OptimizeHistoryEntry {
     pub tiered_scout_sims: usize,
     pub tiered_top_k: usize,
     pub n_candidates: usize,
+    /// [`OPTIMIZE_HISTORY_KIND_TIERED`] vs [`OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE`].
+    #[serde(default)]
+    pub optimize_history_kind: u8,
     /// `0` = uniform single-pass scout; `1` = adaptive coarse→refine scout (must match current run).
     #[serde(default)]
     pub tiered_scout_allocator: u8,
@@ -51,6 +62,14 @@ pub struct OptimizeHistoryEntry {
     /// When set, must match the optimize request `tiered_confirm_budget_cap_mult` (global confirm shrink).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tiered_confirm_cap_mult: Option<f32>,
+    /// Exhaustive two-phase: scout sims per crew (meaningful when [`Self::optimize_history_kind`] is exhaustive).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exhaustive_scout_sims: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exhaustive_scout_top_keep: Option<usize>,
+    /// [`EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1`] for current exhaustive confirm allocator.
+    #[serde(default)]
+    pub exhaustive_confirm_policy: u8,
     /// Same encoding as the SPA warm-start key chain segment (`0` vs `1:kt:secondary`).
     pub chain_fingerprint: String,
     pub crews: Vec<OptimizeHistoryCrewRecord>,
@@ -249,6 +268,9 @@ pub fn entry_matches_run(
     tiered_budget_policy: u8,
     tiered_confirm_cap_mult: Option<f32>,
 ) -> bool {
+    if entry.optimize_history_kind != OPTIMIZE_HISTORY_KIND_TIERED {
+        return false;
+    }
     entry.sims == sims
         && entry.seed == seed
         && entry.tiered_scout_sims == tiered_scout_sims
@@ -258,6 +280,78 @@ pub fn entry_matches_run(
         && entry.chain_fingerprint == chain_fp
         && entry.tiered_budget_policy == tiered_budget_policy
         && entry.tiered_confirm_cap_mult == tiered_confirm_cap_mult
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn entry_matches_exhaustive_two_phase(
+    entry: &OptimizeHistoryEntry,
+    sims: u32,
+    seed: u64,
+    n_candidates: usize,
+    exhaustive_scout_sims: usize,
+    exhaustive_top_keep: usize,
+    chain_fp: &str,
+    exhaustive_confirm_policy: u8,
+    tiered_confirm_cap_mult: Option<f32>,
+) -> bool {
+    if entry.optimize_history_kind != OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE {
+        return false;
+    }
+    entry.sims == sims
+        && entry.seed == seed
+        && entry.n_candidates == n_candidates
+        && entry.exhaustive_scout_sims == Some(exhaustive_scout_sims)
+        && entry.exhaustive_scout_top_keep == Some(exhaustive_top_keep)
+        && entry.exhaustive_confirm_policy == exhaustive_confirm_policy
+        && entry.chain_fingerprint == chain_fp
+        && entry.tiered_confirm_cap_mult == tiered_confirm_cap_mult
+}
+
+/// Like [`preconfirmed_for_candidates`] for exhaustive two-phase runs (`optimize_history_kind` exhaustive).
+#[allow(clippy::too_many_arguments)]
+pub fn preconfirmed_for_exhaustive_two_phase(
+    profile_id: &str,
+    cache_key: &str,
+    sims: u32,
+    seed: u64,
+    n_candidates: usize,
+    exhaustive_scout_sims: usize,
+    exhaustive_top_keep: usize,
+    chain: &Option<ChainGrindParams>,
+    exhaustive_confirm_policy: u8,
+    tiered_confirm_cap_mult: Option<f32>,
+    candidates: &[CrewCandidate],
+) -> (HashMap<u64, SimulationResult>, u32) {
+    let chain_fp = chain_fingerprint(chain);
+    let file = load_history_file(profile_id);
+    let Some(entry) = file.entries.get(cache_key) else {
+        return (HashMap::new(), 0);
+    };
+    if !entry_matches_exhaustive_two_phase(
+        entry,
+        sims,
+        seed,
+        n_candidates,
+        exhaustive_scout_sims,
+        exhaustive_top_keep,
+        &chain_fp,
+        exhaustive_confirm_policy,
+        tiered_confirm_cap_mult,
+    ) {
+        return (HashMap::new(), 0);
+    }
+    let mut map: HashMap<u64, SimulationResult> = HashMap::new();
+    for row in &entry.crews {
+        let sim = row.to_simulation_result();
+        map.insert(crew_candidate_stable_hash(&sim.candidate), sim);
+    }
+    let mut hits: u32 = 0;
+    for c in candidates {
+        if map.contains_key(&crew_candidate_stable_hash(c)) {
+            hits += 1;
+        }
+    }
+    (map, hits)
 }
 
 /// Build preconfirmed map when file entry matches this run's tiered metadata.
@@ -364,9 +458,49 @@ pub fn build_entry_from_ranked(
         tiered_scout_sims,
         tiered_top_k,
         n_candidates,
+        optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
         tiered_scout_allocator,
         tiered_budget_policy,
         tiered_confirm_cap_mult,
+        exhaustive_scout_sims: None,
+        exhaustive_scout_top_keep: None,
+        exhaustive_confirm_policy: 0,
+        chain_fingerprint: chain_fingerprint(chain),
+        crews,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn build_entry_from_ranked_exhaustive_two_phase(
+    sims: u32,
+    seed: u64,
+    n_candidates: usize,
+    exhaustive_scout_sims: usize,
+    exhaustive_top_keep: usize,
+    exhaustive_confirm_policy: u8,
+    chain: &Option<ChainGrindParams>,
+    tiered_confirm_cap_mult: Option<f32>,
+    ranked: &[RankedCrewResult],
+) -> OptimizeHistoryEntry {
+    let crews: Vec<OptimizeHistoryCrewRecord> = ranked
+        .iter()
+        .take(MAX_OPTIMIZE_HISTORY_CREWS)
+        .map(|r| OptimizeHistoryCrewRecord::from_simulation(&ranked_to_simulation(r)))
+        .collect();
+    OptimizeHistoryEntry {
+        updated_at_ms: now_ms(),
+        sims,
+        seed,
+        tiered_scout_sims: 0,
+        tiered_top_k: 0,
+        n_candidates,
+        optimize_history_kind: OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE,
+        tiered_scout_allocator: 0,
+        tiered_budget_policy: TIERED_BUDGET_POLICY_LEGACY,
+        tiered_confirm_cap_mult,
+        exhaustive_scout_sims: Some(exhaustive_scout_sims),
+        exhaustive_scout_top_keep: Some(exhaustive_top_keep),
+        exhaustive_confirm_policy,
         chain_fingerprint: chain_fingerprint(chain),
         crews,
     }
@@ -375,6 +509,61 @@ pub fn build_entry_from_ranked(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn exhaustive_entry_matches_metadata() {
+        let entry = OptimizeHistoryEntry {
+            updated_at_ms: 1,
+            sims: 40,
+            seed: 9,
+            tiered_scout_sims: 0,
+            tiered_top_k: 0,
+            n_candidates: 60,
+            optimize_history_kind: OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE,
+            tiered_scout_allocator: 0,
+            tiered_budget_policy: TIERED_BUDGET_POLICY_LEGACY,
+            tiered_confirm_cap_mult: None,
+            exhaustive_scout_sims: Some(12),
+            exhaustive_scout_top_keep: Some(4),
+            exhaustive_confirm_policy: EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
+            chain_fingerprint: "0".into(),
+            crews: vec![],
+        };
+        assert!(entry_matches_exhaustive_two_phase(
+            &entry,
+            40,
+            9,
+            60,
+            12,
+            4,
+            "0",
+            EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
+            None
+        ));
+        assert!(!entry_matches_exhaustive_two_phase(
+            &entry,
+            40,
+            9,
+            61,
+            12,
+            4,
+            "0",
+            EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
+            None
+        ));
+        assert!(!entry_matches_run(
+            &entry,
+            40,
+            9,
+            0,
+            0,
+            60,
+            0,
+            "0",
+            TIERED_BUDGET_POLICY_V2,
+            None
+        ));
+    }
 
     #[test]
     fn validate_cache_key_rejects_control_chars() {
@@ -391,9 +580,13 @@ mod tests {
             tiered_scout_sims: 500,
             tiered_top_k: 20,
             n_candidates: 50,
+            optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
             tiered_scout_allocator: 1,
             tiered_budget_policy: TIERED_BUDGET_POLICY_V2,
             tiered_confirm_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
+            exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
             crews: vec![],
         };
@@ -432,9 +625,13 @@ mod tests {
             tiered_scout_sims: 500,
             tiered_top_k: 20,
             n_candidates: 50,
+            optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
             tiered_scout_allocator: 0,
             tiered_budget_policy: TIERED_BUDGET_POLICY_V2,
             tiered_confirm_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
+            exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
             crews: vec![],
         };
@@ -473,9 +670,13 @@ mod tests {
             tiered_scout_sims: 500,
             tiered_top_k: 20,
             n_candidates: 50,
+            optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
             tiered_scout_allocator: 1,
             tiered_budget_policy: TIERED_BUDGET_POLICY_V2,
             tiered_confirm_cap_mult: Some(2.5),
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
+            exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
             crews: vec![],
         };
@@ -518,9 +719,13 @@ mod tests {
                     tiered_scout_sims: 500,
                     tiered_top_k: 20,
                     n_candidates: 100,
+                    optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
                     tiered_scout_allocator: 0,
                     tiered_budget_policy: TIERED_BUDGET_POLICY_V2,
                     tiered_confirm_cap_mult: None,
+                    exhaustive_scout_sims: None,
+                    exhaustive_scout_top_keep: None,
+                    exhaustive_confirm_policy: 0,
                     chain_fingerprint: "0".to_string(),
                     crews: vec![],
                 },

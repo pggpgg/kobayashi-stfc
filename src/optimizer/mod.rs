@@ -1,7 +1,9 @@
 pub mod analytical;
+pub mod budget_hints;
 pub mod chain;
 pub mod constraints;
 pub mod crew_generator;
+pub(crate) mod exhaustive_adaptive;
 pub mod genetic;
 pub mod matchup_priors;
 pub mod monte_carlo;
@@ -24,6 +26,7 @@ use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
     scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
 };
+use crate::optimizer::exhaustive_adaptive::run_exhaustive_scout_then_full_mc;
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry,
     SimulationResult,
@@ -163,6 +166,8 @@ pub struct OptimizeRunOutcome {
     pub tiered_resolved: Option<(usize, usize, usize)>,
     /// Scout-phase trial totals when tiered adaptive scout ran (see [`TieredScoutBudgetStats`]).
     pub tiered_scout_budget: Option<TieredScoutBudgetStats>,
+    /// When exhaustive two-phase Monte Carlo ran (`exhaustive_scout_sims` + `exhaustive_scout_top_keep`): trial accounting (reuses [`TieredScoutBudgetStats`] shape).
+    pub exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
     /// Crews in the tiered candidate list that reused [`crate::data::optimize_history`] confirmation rows.
     pub optimize_history_confirm_hits: u32,
 }
@@ -172,7 +177,7 @@ pub struct OptimizeRunOutcome {
 pub struct OptimizeProgressTick {
     pub crews_done: u32,
     pub total_crews: u32,
-    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`.
+    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`, `exhaustive_scout`, `exhaustive_confirm`.
     pub phase: &'static str,
     pub partial_top: Option<Vec<RankedCrewResult>>,
 }
@@ -216,8 +221,13 @@ pub struct OptimizationScenario<'a> {
     pub tiered_top_k: Option<usize>,
     /// Tiered only: when true, use a single uniform scout pass at the resolved scout cap (legacy). When false (default), use adaptive coarse→refine scout.
     pub tiered_scout_uniform: bool,
-    /// Tiered only: when set, shrink per-top-K confirmation totals so the sum does not exceed `floor(mult * K * simulation_count)`.
+    /// Tiered: when set, shrink per-top-K confirmation totals so the sum does not exceed `floor(mult * K * simulation_count)`.
+    /// Exhaustive two-phase: same cap applies to the width-based confirmation pass on the top-`keep` crews.
     pub tiered_confirm_budget_cap_mult: Option<f64>,
+    /// Exhaustive only: when **both** this and [`Self::exhaustive_scout_top_keep`] are `Some`, run scout Monte Carlo at this many trials per crew on the full candidate list, then run full [`Self::simulation_count`] only on the top `exhaustive_scout_top_keep` crews by scout rank (others keep scout statistics).
+    pub exhaustive_scout_sims: Option<usize>,
+    /// Exhaustive only: paired with [`Self::exhaustive_scout_sims`] (see there).
+    pub exhaustive_scout_top_keep: Option<usize>,
     /// When set, keep only this many crews after analytical expected-hull-damage ranking before Monte Carlo. Genetic ignores this.
     pub analytical_prefilter_keep: Option<usize>,
     /// Below-decks slot count for candidate generation (resolved from API / tier defaults upstream).
@@ -254,6 +264,8 @@ impl Default for OptimizationScenario<'_> {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -299,6 +311,38 @@ fn tiered_preconfirmed_map(
                 tiered_scout_allocator_id(scenario),
                 &scenario.chain_grind,
                 crate::data::optimize_history::TIERED_BUDGET_POLICY_V2,
+                scenario.tiered_confirm_budget_cap_mult.map(|x| x as f32),
+                candidates,
+            )
+        }
+        _ => (HashMap::new(), 0),
+    }
+}
+
+fn exhaustive_two_phase_preconfirmed_map(
+    scenario: &OptimizationScenario<'_>,
+    n_candidates: usize,
+    exhaustive_scout_sims: usize,
+    exhaustive_top_keep: usize,
+    candidates: &[CrewCandidate],
+) -> (HashMap<u64, SimulationResult>, u32) {
+    match (scenario.profile_id, scenario.optimize_cache_key.as_ref()) {
+        (Some(pid), Some(key)) => {
+            let t = key.trim();
+            if t.is_empty() {
+                return (HashMap::new(), 0);
+            }
+            let sims_u32 = scenario.simulation_count.min(u32::MAX as usize) as u32;
+            crate::data::optimize_history::preconfirmed_for_exhaustive_two_phase(
+                pid,
+                t,
+                sims_u32,
+                scenario.seed,
+                n_candidates,
+                exhaustive_scout_sims,
+                exhaustive_top_keep,
+                &scenario.chain_grind,
+                crate::data::optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
                 scenario.tiered_confirm_budget_cap_mult.map(|x| x as f32),
                 candidates,
             )
@@ -492,6 +536,9 @@ fn optimize_scenario_tiered_with_registry(
     } else {
         Some(&pre_map)
     };
+    let budget_hints_storage = scenario
+        .profile_id
+        .and_then(|pid| crate::optimizer::budget_hints::load_for_profile(pid));
     run_tiered_with_registry_with_progress(
         registry,
         scenario.ship,
@@ -510,6 +557,7 @@ fn optimize_scenario_tiered_with_registry(
         pre_ref,
         !scenario.tiered_scout_uniform,
         scenario.tiered_confirm_budget_cap_mult,
+        budget_hints_storage.as_ref(),
         |_| true,
     )
     .0
@@ -563,6 +611,38 @@ fn optimize_scenario_exhaustive_with_registry(
         &scenario.chain_grind,
         &scenario.warm_start,
     );
+    if let Some((scout_s, top_keep)) =
+        scenario.exhaustive_scout_sims.zip(scenario.exhaustive_scout_top_keep)
+    {
+        let (pre_map, _) = exhaustive_two_phase_preconfirmed_map(
+            scenario,
+            candidates.len(),
+            scout_s,
+            top_keep,
+            &candidates,
+        );
+        let pre_ref = if pre_map.is_empty() {
+            None
+        } else {
+            Some(&pre_map)
+        };
+        if let Some((merged, _)) = run_exhaustive_scout_then_full_mc(
+            shared_ex,
+            &candidates,
+            scout_s,
+            scenario.simulation_count.max(1),
+            top_keep,
+            scenario.seed,
+            scenario.chain_grind.clone(),
+            pre_ref,
+            scenario.tiered_confirm_budget_cap_mult,
+            |_| true,
+            || true,
+        ) {
+            return rank_results(merged);
+        }
+        return Vec::new();
+    }
     let (simulation_results, _) = run_monte_carlo_parallel_with_registry(
         registry,
         scenario.ship,
@@ -693,6 +773,8 @@ where
                 tiered_top_k: scenario.tiered_top_k,
                 tiered_scout_uniform: scenario.tiered_scout_uniform,
                 tiered_confirm_budget_cap_mult: scenario.tiered_confirm_budget_cap_mult,
+                exhaustive_scout_sims: scenario.exhaustive_scout_sims,
+                exhaustive_scout_top_keep: scenario.exhaustive_scout_top_keep,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
                 below_decks_slots: scenario.below_decks_slots,
                 constraints: scenario.constraints.clone(),
@@ -875,6 +957,9 @@ where
                 Some(&pre_map)
             };
             let scout_adaptive = !scenario.tiered_scout_uniform;
+            let budget_hints_storage = scenario
+                .profile_id
+                .and_then(|pid| crate::optimizer::budget_hints::load_for_profile(pid));
             let (ranked, scout_budget) = run_tiered_with_registry_with_progress(
                 registry,
                 scenario.ship,
@@ -893,6 +978,7 @@ where
                 pre_ref,
                 scout_adaptive,
                 scenario.tiered_confirm_budget_cap_mult,
+                budget_hints_storage.as_ref(),
                 &mut on_progress,
             );
             OptimizeRunOutcome {
@@ -900,6 +986,7 @@ where
                 analytical_prefilter,
                 tiered_resolved: Some((n_tiered, scout_sims, top_k)),
                 tiered_scout_budget: Some(scout_budget),
+                exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: hits,
             }
         }
@@ -941,9 +1028,58 @@ where
                     analytical_prefilter,
                     tiered_resolved: None,
                     tiered_scout_budget: None,
+                    exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
                 };
             }
+
+            if let Some((scout_s, top_keep)) =
+                scenario.exhaustive_scout_sims.zip(scenario.exhaustive_scout_top_keep)
+            {
+                let (pre_map, hits) = exhaustive_two_phase_preconfirmed_map(
+                    scenario,
+                    total,
+                    scout_s,
+                    top_keep,
+                    &candidates,
+                );
+                let pre_ref = if pre_map.is_empty() {
+                    None
+                } else {
+                    Some(&pre_map)
+                };
+                if let Some((merged, budget)) = run_exhaustive_scout_then_full_mc(
+                    shared_ex,
+                    &candidates,
+                    scout_s,
+                    scenario.simulation_count.max(1),
+                    top_keep,
+                    scenario.seed,
+                    scenario.chain_grind.clone(),
+                    pre_ref,
+                    scenario.tiered_confirm_budget_cap_mult,
+                    &mut on_progress,
+                    &mut eval_should_continue,
+                ) {
+                    return OptimizeRunOutcome {
+                        ranked: rank_results(merged),
+                        analytical_prefilter,
+                        tiered_resolved: None,
+                        tiered_scout_budget: None,
+                        exhaustive_adaptive_budget: Some(budget),
+                        optimize_history_confirm_hits: hits,
+                    };
+                }
+                return OptimizeRunOutcome {
+                    ranked: Vec::new(),
+                    analytical_prefilter,
+                    tiered_resolved: None,
+                    tiered_scout_budget: None,
+                    exhaustive_adaptive_budget: None,
+                    optimize_history_confirm_hits: 0,
+                };
+            }
+
             if !on_progress(OptimizeProgressTick {
                 crews_done: 0,
                 total_crews: total as u32,
@@ -955,6 +1091,7 @@ where
                     analytical_prefilter,
                     tiered_resolved: None,
                     tiered_scout_budget: None,
+                    exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
                 };
             }
@@ -1027,6 +1164,7 @@ where
                 analytical_prefilter,
                 tiered_resolved: None,
                 tiered_scout_budget: None,
+                exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
             }
         }
@@ -1046,6 +1184,7 @@ where
             analytical_prefilter: None,
             tiered_resolved: None,
             tiered_scout_budget: None,
+            exhaustive_adaptive_budget: None,
             optimize_history_confirm_hits: 0,
         },
     }
@@ -1073,6 +1212,8 @@ pub fn optimize_crew(
         tiered_top_k: None,
         tiered_scout_uniform: false,
         tiered_confirm_budget_cap_mult: None,
+        exhaustive_scout_sims: None,
+        exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
@@ -1093,7 +1234,9 @@ mod tests {
     };
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
-    use crate::optimizer::crew_generator::{CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS};
+    use crate::optimizer::crew_generator::{
+        CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS, NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS,
+    };
     use crate::optimizer::monte_carlo::scenario::{
         build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
         DefenderOpponent,
@@ -1117,6 +1260,8 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -1257,6 +1402,8 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: Some(4),
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -1295,6 +1442,119 @@ mod tests {
                 "no truncation when candidate count n={n} does not exceed keep=4"
             );
         }
+    }
+
+    #[test]
+    fn exhaustive_two_phase_scout_then_confirm_budgets() {
+        let registry = DataRegistry::load().expect("data registry");
+        let scenario = OptimizationScenario {
+            ship: "saladin",
+            hostile: "2918121098",
+            ship_tier: None,
+            ship_level: None,
+            simulation_count: 40,
+            seed: 11,
+            max_candidates: Some(80),
+            strategy: OptimizerStrategy::Exhaustive,
+            only_below_decks_with_ability: false,
+            seed_population: Vec::new(),
+            profile_id: Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            tiered_scout_sims: None,
+            tiered_top_k: None,
+            tiered_scout_uniform: false,
+            tiered_confirm_budget_cap_mult: None,
+            exhaustive_scout_sims: Some(12),
+            exhaustive_scout_top_keep: Some(4),
+            analytical_prefilter_keep: None,
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+            constraints: None,
+            support_buffs: Vec::new(),
+            chain_grind: None,
+            defender_opponent: DefenderOpponent::Hostile,
+            warm_start: Vec::new(),
+            optimize_cache_key: None,
+        };
+        let out =
+            optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true, || true);
+        let ranked_n = out.ranked.len();
+        assert!(
+            ranked_n > 0 && ranked_n <= 80,
+            "unexpected ranked crew count ranked_n={ranked_n}"
+        );
+        let bud = out
+            .exhaustive_adaptive_budget
+            .expect("exhaustive two-phase should populate budget stats");
+        assert!(
+            bud.scout_trials_final <= (ranked_n as u64) * 12,
+            "scout trials should not exceed n×scout cap: {} vs n={ranked_n}",
+            bud.scout_trials_final
+        );
+        assert!(
+            bud.confirm_trials_total >= 4 && bud.confirm_trials_total <= 4 * 40,
+            "adaptive confirm totals should stay within [4, 4×sims], got {}",
+            bud.confirm_trials_total
+        );
+        assert!(bud.confirm_sims_alloc_min >= 1);
+        assert!(bud.confirm_sims_alloc_max <= 40);
+        assert!(bud.confirm_sims_alloc_min <= bud.confirm_sims_alloc_max);
+    }
+
+    #[test]
+    fn tiered_adaptive_scout_trials_not_above_uniform_small_pool() {
+        let registry = DataRegistry::load().expect("data registry");
+        let uniform = OptimizationScenario {
+            ship: "defiant",
+            hostile: "romulan",
+            ship_tier: None,
+            ship_level: None,
+            simulation_count: 800,
+            seed: 19,
+            max_candidates: Some(48),
+            strategy: OptimizerStrategy::Tiered,
+            only_below_decks_with_ability: false,
+            seed_population: Vec::new(),
+            profile_id: Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            tiered_scout_sims: Some(320),
+            tiered_top_k: Some(10),
+            tiered_scout_uniform: true,
+            tiered_confirm_budget_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
+            analytical_prefilter_keep: None,
+            below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
+            constraints: None,
+            support_buffs: Vec::new(),
+            chain_grind: None,
+            defender_opponent: DefenderOpponent::Hostile,
+            warm_start: Vec::new(),
+            optimize_cache_key: None,
+        };
+        let mut adaptive = uniform.clone();
+        adaptive.tiered_scout_uniform = false;
+        let out_u = optimize_scenario_with_progress_with_registry(
+            &registry,
+            &uniform,
+            |_| true,
+            || true,
+        );
+        let out_a = optimize_scenario_with_progress_with_registry(
+            &registry,
+            &adaptive,
+            |_| true,
+            || true,
+        );
+        let trials_u = out_u
+            .tiered_scout_budget
+            .expect("tiered budget")
+            .scout_trials_final;
+        let trials_a = out_a
+            .tiered_scout_budget
+            .expect("tiered budget")
+            .scout_trials_final;
+        assert!(
+            trials_a <= trials_u,
+            "adaptive scout trials {trials_a} should not exceed uniform {trials_u}"
+        );
     }
 
     /// Regression: tiered Monte Carlo must use the same resolved ship row as exhaustive when tier/level are set.

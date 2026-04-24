@@ -1456,9 +1456,25 @@ components:
         tiered_confirm_budget_cap_mult:
           type: number
           description: >
-            Tiered strategy only. When set, scales down per-top-K confirmation iterations so their
-            sum does not exceed floor(mult * tiered_top_k * sims). Omit for no global cap (default).
-            Typical values 1.5–3; must be in (0, 20].
+            Tiered: when set, scales down per-top-K confirmation iterations so their sum does not
+            exceed floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the
+            width-based confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no
+            global cap (default). Typical values 1.5–3; must be in (0, 20].
+        exhaustive_scout_sims:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          description: >
+            Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep.
+            Scout-phase Monte Carlo trials per remaining candidate after analytical prefilter; then
+            full `sims` run only on the top exhaustive_scout_top_keep crews by scout ranking.
+        exhaustive_scout_top_keep:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: >
+            Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked
+            crews receive the full per-crew simulation_count (others keep scout statistics).
         warm_start_crews:
           type: array
           items:
