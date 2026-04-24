@@ -119,6 +119,26 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             return Some(lcars_cond_base("literal_true"));
         }
         "SelfDefending" => return Some(lcars_cond_base("literal_false")),
+        // Solo armada — matches [`crate::combat::EnemyType::SoloArmadas`] when hostile sets `engagement_enemy_types`.
+        "SelfAtSoloArmada" => {
+            let mut c = lcars_cond_base("engagement_includes");
+            c.enemy_type = Some("solo_armadas".to_string());
+            return Some(c);
+        }
+        // Station / sentinel / overworld encounter tokens: not modeled on default ship-vs-hostile path.
+        "EnemySentinel"
+        | "CombatGameContext"
+        | "SelfAtStation"
+        | "SelfAtWaveDefenseChallenge"
+        | "SelfAtAssault2"
+        | "TargetIsInvadingEntity" => {
+            return Some(lcars_cond_base("literal_false"));
+        }
+        // Invading half is not a distinct signal yet; armada fights gate on defender hull class Armada.
+        "TargetIsArmadaOrInvadingEntity" => {
+            return Some(lcars_defender_ship_type_is("armada"));
+        }
+        "TargetNotInvadingEntity" => return Some(lcars_cond_base("literal_true")),
         // Canonical opponent category: NPC hostile (ship-vs-hostile optimizer default).
         "EnemyHostile" => return Some(lcars_cond_base("defender_is_npc_hostile")),
         // Canonical opponent category: player ship (PvP-shaped API toggle).
@@ -267,7 +287,7 @@ pub fn canonical_conditions_to_lcars(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::{AbilityCondition, ShipType};
+    use crate::combat::{AbilityCondition, EnemyType, ShipType};
     use crate::lcars::resolve_lcars_condition;
 
     #[test]
@@ -475,6 +495,9 @@ mod tests {
             ("SelfAttacking", AbilityCondition::LiteralBool(true)),
             ("TargetNotPlayerStation", AbilityCondition::LiteralBool(true)),
             ("SelfDefending", AbilityCondition::LiteralBool(false)),
+            ("EnemySentinel", AbilityCondition::LiteralBool(false)),
+            ("CombatGameContext", AbilityCondition::LiteralBool(false)),
+            ("TargetNotInvadingEntity", AbilityCondition::LiteralBool(true)),
         ] {
             let lc = map_canonical_condition_token(tok).expect(tok);
             let ac = resolve_lcars_condition(&lc).expect(tok);
@@ -486,6 +509,27 @@ mod tests {
         ];
         let out = canonical_conditions_to_lcars(&raw, "x", "y").expect("and");
         assert_eq!(out.condition_type, "and");
+    }
+
+    #[test]
+    fn self_at_solo_armada_maps_to_engagement_includes() {
+        let lc = map_canonical_condition_token("SelfAtSoloArmada").expect("maps");
+        assert_eq!(lc.condition_type, "engagement_includes");
+        assert_eq!(lc.enemy_type.as_deref(), Some("solo_armadas"));
+        let ac = resolve_lcars_condition(&lc).unwrap();
+        assert_eq!(
+            ac,
+            AbilityCondition::EngagementIncludes(EnemyType::SoloArmadas)
+        );
+    }
+
+    #[test]
+    fn target_is_armada_or_invading_entity_maps_to_defender_armada_class() {
+        let lc = map_canonical_condition_token("TargetIsArmadaOrInvadingEntity").expect("maps");
+        assert_eq!(lc.condition_type, "defender_ship_type_is");
+        assert_eq!(lc.ship_type.as_deref(), Some("armada"));
+        let ac = resolve_lcars_condition(&lc).unwrap();
+        assert_eq!(ac, AbilityCondition::DefenderShipTypeIs(ShipType::Armada));
     }
 
     #[test]
@@ -514,20 +558,13 @@ mod tests {
     #[test]
     fn task2_deferred_tokens_remain_unmapped() {
         const DEFERRED: &[&str] = &[
-            "EnemySentinel",
             "ModuleKinetic",
-            "CombatGameContext",
             "ModuleEnergy",
-            "SelfAtSoloArmada",
-            "SelfAtStation",
             "TargetStateAny",
             "HullHealthBelowStartOfCombat",
             "HullHealthBelow",
-            "SelfAtWaveDefenseChallenge",
-            "TargetIsArmadaOrInvadingEntity",
             "SelfCloaked",
             "SelfStateNone",
-            "TargetIsInvadingEntity",
             "CargoEmpty",
             "CargoFull",
             "EnemyNotToaTrialHostile",
@@ -535,9 +572,7 @@ mod tests {
             "HitEnemyWithEnergy",
             "HitEnemyWithKinetic",
             "HullHealthAbove",
-            "SelfAtAssault2",
             "SelfMining",
-            "TargetNotInvadingEntity",
         ];
 
         for tok in DEFERRED {

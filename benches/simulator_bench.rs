@@ -75,7 +75,11 @@ fn bench_simulator(c: &mut Criterion) {
     let crew = CrewConfiguration::default();
 
     let mut group = c.benchmark_group("simulator");
-    group.sample_size(100);
+    if std::env::var_os("CI").is_some() {
+        group.sample_size(40);
+    } else {
+        group.sample_size(100);
+    }
 
     // Short combat (3 rounds) – typical for quick sims
     let rounds_short = 3u32;
@@ -92,6 +96,7 @@ fn bench_simulator(c: &mut Criterion) {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         };
         b.iter_batched(
@@ -117,6 +122,7 @@ fn bench_simulator(c: &mut Criterion) {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         };
         b.iter_batched(
@@ -142,6 +148,7 @@ fn bench_simulator(c: &mut Criterion) {
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: Default::default(),
+            defender_level: None,
             attacker_roster_officer_ids: Default::default(),
         };
         b.iter_batched(
@@ -170,6 +177,7 @@ fn bench_simulator(c: &mut Criterion) {
                 defender_hull_faction_id: 0,
                 defender_hostile_tag_mask: 0,
                 engagement_enemy_types: Default::default(),
+                defender_level: None,
                 attacker_roster_officer_ids: Default::default(),
             };
             b.iter_batched(

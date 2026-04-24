@@ -41,8 +41,13 @@ fn bench_monte_carlo_sequential_vs_parallel(c: &mut Criterion) {
     let candidate_list = candidates(ship, hostile, seed, 32);
 
     let mut group = c.benchmark_group("monte_carlo");
-    group.sample_size(20);
-    group.measurement_time(std::time::Duration::from_secs(10));
+    if std::env::var_os("CI").is_some() {
+        group.sample_size(10);
+        group.measurement_time(std::time::Duration::from_secs(2));
+    } else {
+        group.sample_size(20);
+        group.measurement_time(std::time::Duration::from_secs(10));
+    }
 
     group.bench_function("sequential", |b| {
         b.iter(|| {

@@ -102,6 +102,13 @@ fn eval_static_gate(
                 StaticGate::Fail
             }
         }
+        AbilityCondition::EngagementIncludes(et) => {
+            if shared.engagement_enemy_types.contains(*et) {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
         AbilityCondition::Not(inner) => match eval_static_gate(inner, shared, crew) {
             StaticGate::Pass => StaticGate::Fail,
             StaticGate::Fail => StaticGate::Pass,
@@ -268,11 +275,13 @@ pub(crate) fn analytical_prefilter_rank_score(
 mod tests {
     use super::*;
     use crate::combat::{
-        Ability, AbilityClass, CrewSeat, CrewSeatContext, EnemyTypes, ShipType, TimingWindow,
+        Ability, AbilityClass, CrewSeat, CrewSeatContext, EnemyType, EnemyTypes, ShipType,
+        TimingWindow,
     };
     use crate::data::hostile::HostileRecord;
 
     fn minimal_shared_with_hostile(h: HostileRecord) -> SharedScenarioData {
+        let engagement_enemy_types = h.engagement_enemy_types_for_combat();
         SharedScenarioData {
             ship: "test_ship".to_string(),
             hostile: "test_hostile".to_string(),
@@ -297,7 +306,7 @@ mod tests {
             class_gated_torpedo_family_hull_hp_bonus: None,
             class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
-            engagement_enemy_types: EnemyTypes::default(),
+            engagement_enemy_types,
             defender_level: None,
         }
     }
@@ -341,6 +350,40 @@ mod tests {
             ))],
         };
         assert!(static_matchup_gate_score(&shared, &crew) > 0.0);
+    }
+
+    #[test]
+    fn static_gate_engagement_includes_matches_hostile_engagement_tags() {
+        let mut h: HostileRecord = serde_json::from_value(serde_json::json!({
+            "id": "h1",
+            "hostile_name": "H",
+            "level": 1,
+            "ship_class": "Battleship",
+            "armor": 0.0,
+            "shield_deflection": 0.0,
+            "dodge": 0.0,
+            "hull_health": 100.0,
+            "shield_health": 0.0,
+            "faction": { "id": 42 },
+            "engagement_enemy_types": ["solo_armadas"]
+        }))
+        .unwrap();
+        let shared = minimal_shared_with_hostile(h.clone());
+        let crew_pass = CrewConfiguration {
+            seats: vec![seat_with_condition(AbilityCondition::EngagementIncludes(
+                EnemyType::SoloArmadas,
+            ))],
+        };
+        assert!(static_matchup_gate_score(&shared, &crew_pass) > 0.0);
+
+        h.engagement_enemy_types = Some(EnemyTypes::default());
+        let shared_default = minimal_shared_with_hostile(h);
+        let crew_fail = CrewConfiguration {
+            seats: vec![seat_with_condition(AbilityCondition::EngagementIncludes(
+                EnemyType::SoloArmadas,
+            ))],
+        };
+        assert!(static_matchup_gate_score(&shared_default, &crew_fail) < 0.0);
     }
 
     #[test]

@@ -1,6 +1,8 @@
 //! Discoverable maintenance tasks for the Kobayashi repo.
 //! Run from repo root: `cargo xtask --help`
 
+mod bench_check;
+
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -68,6 +70,21 @@ enum Commands {
     NormalizeStfcData,
     /// Full local verification (`npm run verify`)
     Verify,
+    /// Compare Criterion medians under `target/criterion` to `benchmark_results.log` (10% regression)
+    BenchCheck {
+        /// Baseline log path (relative to repo root unless absolute)
+        #[arg(long, default_value = "benchmark_results.log")]
+        baseline: PathBuf,
+        /// Criterion output directory (default: `<repo>/target/criterion`)
+        #[arg(long)]
+        criterion_dir: Option<PathBuf>,
+        /// Write baseline file from current Criterion output (no compare)
+        #[arg(long)]
+        write_baseline: bool,
+        /// Write Markdown summary (for CI PR comments)
+        #[arg(long)]
+        markdown_out: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -143,6 +160,26 @@ fn main() -> Result<()> {
         }
         Commands::Verify => {
             npm(&repo, "verify", &[])?;
+        }
+        Commands::BenchCheck {
+            baseline,
+            criterion_dir,
+            write_baseline,
+            markdown_out,
+        } => {
+            let baseline_path = if baseline.is_absolute() {
+                baseline
+            } else {
+                repo.join(baseline)
+            };
+            let md = markdown_out.map(|p| if p.is_absolute() { p } else { repo.join(p) });
+            bench_check::run(
+                &repo,
+                baseline_path,
+                criterion_dir.map(|p| if p.is_absolute() { p } else { repo.join(p) }),
+                write_baseline,
+                md,
+            )?;
         }
     }
     Ok(())

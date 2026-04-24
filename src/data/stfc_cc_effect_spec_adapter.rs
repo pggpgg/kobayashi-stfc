@@ -9,15 +9,13 @@ use crate::data::combat_effect_spec::{
     AbilityTriggerSpec, CombatEffectSpec, EffectCategory, EffectSource, ValueSpec,
 };
 
-/// Upstream cheat-sheet tokens with no [`crate::combat::abilities::AbilityCondition`] equivalent yet;
+/// Upstream cheat-sheet tokens with no resolved [`AbilityConditionSpec`] / engine mapping yet;
 /// ingested as [`AbilityConditionSpec::StfcCcToken`]. See `docs/CANONICAL_CONDITIONS.md` deferred list.
 const STFC_CC_DEFERRED_CONDITION_TOKENS: &[&str] = &[
     "CargoEmpty",
     "CargoFull",
     "CombatBattleType",
-    "CombatGameContext",
     "EnemyNotToaTrialHostile",
-    "EnemySentinel",
     "EnemyStronger",
     "HitEnemyWithEnergy",
     "HitEnemyWithKinetic",
@@ -26,18 +24,10 @@ const STFC_CC_DEFERRED_CONDITION_TOKENS: &[&str] = &[
     "HullHealthBelowStartOfCombat",
     "ModuleEnergy",
     "ModuleKinetic",
-    "SelfAtAssault2",
-    "SelfAtSoloArmada",
-    "SelfAtStation",
-    "SelfAtWaveDefenseChallenge",
     "SelfCloaked",
     "SelfMining",
     "SelfStateNone",
-    "TargetIsArmadaOrInvadingEntity",
-    "TargetIsInvadingEntity",
     "TargetMaxLevel",
-    "TargetNotInvadingEntity",
-    "TargetNotSoloArmada",
     "TargetStateAny",
 ];
 
@@ -361,6 +351,22 @@ fn map_condition_token(
             Ok(AbilityConditionSpec::LiteralBool { value: true })
         }
         "SelfDefending" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
+        "SelfAtSoloArmada" => Ok(AbilityConditionSpec::EngagementIncludes {
+            enemy_type: "solo_armadas".into(),
+        }),
+        "TargetNotSoloArmada" => Ok(AbilityConditionSpec::EngagementIncludes {
+            enemy_type: "group_armadas".into(),
+        }),
+        "EnemySentinel"
+        | "CombatGameContext"
+        | "SelfAtStation"
+        | "SelfAtWaveDefenseChallenge"
+        | "SelfAtAssault2"
+        | "TargetIsInvadingEntity" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
+        "TargetIsArmadaOrInvadingEntity" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
+            ship_type: "armada".into(),
+        }),
+        "TargetNotInvadingEntity" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
         "EnemyHullFaction" => {
             let Some(attrs) = ability_attributes.map(str::trim).filter(|s| !s.is_empty()) else {
                 return Err("unmapped_condition:EnemyHullFaction".into());

@@ -174,6 +174,12 @@ fn lcars_condition_matrix() -> Vec<LcarsCondition> {
         },
         {
             let mut c = empty_lcars_condition();
+            c.condition_type = "engagement_includes".into();
+            c.enemy_type = Some("solo_armadas".into());
+            c
+        },
+        {
+            let mut c = empty_lcars_condition();
             c.condition_type = "literal_true".into();
             c
         },
