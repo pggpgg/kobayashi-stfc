@@ -589,10 +589,7 @@ fn gather_optimize_simulation_results(
         (dto_warm, false)
     };
 
-    let prior_reference_crews = match (
-        profile_id,
-        cache_key_normalized.as_deref(),
-    ) {
+    let prior_reference_crews = match (profile_id, cache_key_normalized.as_deref()) {
         (Some(pid), Some(key)) => {
             optimize_history::prior_reference_crews_for_matchup_priors(pid, key, &chain_grind)
         }
@@ -767,28 +764,24 @@ fn gather_optimize_simulation_results(
         if strategy == OptimizerStrategy::Exhaustive {
             if let (Some(pid), Some(key)) = (profile_id, cache_key_normalized.as_ref()) {
                 if outcome.exhaustive_adaptive_budget.is_some() && !outcome.ranked.is_empty() {
-                    if let (Some(scout_u32), Some(keep_u32)) =
-                        (request.exhaustive_scout_sims, request.exhaustive_scout_top_keep)
-                    {
+                    if let (Some(scout_u32), Some(keep_u32)) = (
+                        request.exhaustive_scout_sims,
+                        request.exhaustive_scout_top_keep,
+                    ) {
                         let n = outcome.ranked.len();
-                        let entry =
-                            optimize_history::build_entry_from_ranked_exhaustive_two_phase(
-                                sims,
-                                seed,
-                                n,
-                                scout_u32 as usize,
-                                keep_u32 as usize,
-                                optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
-                                &chain_grind,
-                                request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
-                                &outcome.ranked,
-                            );
-                        optimize_history_wrote |= optimize_history::upsert_entry(
-                            pid,
-                            key.as_str(),
-                            entry,
-                        )
-                        .is_ok();
+                        let entry = optimize_history::build_entry_from_ranked_exhaustive_two_phase(
+                            sims,
+                            seed,
+                            n,
+                            scout_u32 as usize,
+                            keep_u32 as usize,
+                            optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
+                            &chain_grind,
+                            request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
+                            &outcome.ranked,
+                        );
+                        optimize_history_wrote |=
+                            optimize_history::upsert_entry(pid, key.as_str(), entry).is_ok();
                     }
                 }
             }

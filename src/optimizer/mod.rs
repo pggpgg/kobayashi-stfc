@@ -21,13 +21,13 @@ use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     CandidateStrategy, CrewCandidate, CrewGenerator, DEFAULT_BELOW_DECKS_SLOTS,
 };
+use crate::optimizer::exhaustive_adaptive::run_exhaustive_scout_then_full_mc;
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::matchup_priors::analytical_prefilter_rank_score;
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
     scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
 };
-use crate::optimizer::exhaustive_adaptive::run_exhaustive_scout_then_full_mc;
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry,
     SimulationResult,
@@ -642,8 +642,9 @@ fn optimize_scenario_exhaustive_with_registry(
         &scenario.warm_start,
         &scenario.prior_reference_crews,
     );
-    if let Some((scout_s, top_keep)) =
-        scenario.exhaustive_scout_sims.zip(scenario.exhaustive_scout_top_keep)
+    if let Some((scout_s, top_keep)) = scenario
+        .exhaustive_scout_sims
+        .zip(scenario.exhaustive_scout_top_keep)
     {
         let (pre_map, _) = exhaustive_two_phase_preconfirmed_map(
             scenario,
@@ -1069,8 +1070,9 @@ where
                 };
             }
 
-            if let Some((scout_s, top_keep)) =
-                scenario.exhaustive_scout_sims.zip(scenario.exhaustive_scout_top_keep)
+            if let Some((scout_s, top_keep)) = scenario
+                .exhaustive_scout_sims
+                .zip(scenario.exhaustive_scout_top_keep)
             {
                 let (pre_map, hits) = exhaustive_two_phase_preconfirmed_map(
                     scenario,
@@ -1274,10 +1276,99 @@ mod tests {
     use crate::optimizer::crew_generator::{
         CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS, NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS,
     };
+    use crate::optimizer::matchup_priors::analytical_prefilter_rank_score;
     use crate::optimizer::monte_carlo::scenario::{
         build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
         DefenderOpponent,
     };
+
+    #[test]
+    fn analytical_rank_score_prior_reference_boosts_identical_crew() {
+        let registry = DataRegistry::load().expect("data registry");
+        let shared = build_shared_scenario_data_from_registry(
+            &registry,
+            "saladin",
+            "2918121098",
+            None,
+            None,
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
+        let seed = 11u64;
+        let cand = CrewCandidate {
+            captain: "James T. Kirk".into(),
+            bridge: vec!["Spock".into(), "Leonard McCoy".into()],
+            below_decks: vec![
+                "Montgomery Scott".into(),
+                "Hikaru Sulu".into(),
+                "Nyota Uhura".into(),
+            ],
+        };
+        let input = scenario_to_combat_input_from_shared(&shared, &cand, seed);
+        let s0 = analytical_prefilter_rank_score(&shared, &input, &cand, &[]);
+        let prior = vec![cand.clone()];
+        let s1 = analytical_prefilter_rank_score(&shared, &input, &cand, prior.as_slice());
+        assert!(
+            s1 > s0,
+            "history-shaped prior refs should raise composite rank score: s0={s0} s1={s1}"
+        );
+    }
+
+    #[test]
+    fn sort_and_analytical_prefilter_prior_reference_changes_keep_one_winner() {
+        let registry = DataRegistry::load().expect("data registry");
+        let shared = build_shared_scenario_data_from_registry(
+            &registry,
+            "saladin",
+            "2918121098",
+            None,
+            None,
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
+        let seed = 11u64;
+        let history_shape = CrewCandidate {
+            captain: "James T. Kirk".into(),
+            bridge: vec!["Spock".into(), "Leonard McCoy".into()],
+            below_decks: vec![
+                "Montgomery Scott".into(),
+                "Hikaru Sulu".into(),
+                "Nyota Uhura".into(),
+            ],
+        };
+        let mut near_dup = history_shape.clone();
+        near_dup.below_decks[2] = "Pavel Chekov".into();
+
+        let candidates = vec![near_dup.clone(), history_shape.clone()];
+        let (keep_empty, _) = super::sort_and_analytical_prefilter(
+            &shared,
+            candidates.clone(),
+            seed,
+            Some(1),
+            &[],
+            &[],
+        );
+        let (keep_prior, _) = super::sort_and_analytical_prefilter(
+            &shared,
+            candidates,
+            seed,
+            Some(1),
+            &[],
+            std::slice::from_ref(&history_shape),
+        );
+        assert_eq!(keep_empty.len(), 1);
+        assert_eq!(keep_prior.len(), 1);
+        assert_eq!(
+            keep_empty[0].below_decks.last().map(String::as_str),
+            Some("Pavel Chekov")
+        );
+        assert_eq!(
+            keep_prior[0].below_decks.last().map(String::as_str),
+            Some("Nyota Uhura")
+        );
+    }
 
     #[test]
     fn genetic_strategy_returns_ranked_results_shape() {
@@ -1572,18 +1663,10 @@ mod tests {
         };
         let mut adaptive = uniform.clone();
         adaptive.tiered_scout_uniform = false;
-        let out_u = optimize_scenario_with_progress_with_registry(
-            &registry,
-            &uniform,
-            |_| true,
-            || true,
-        );
-        let out_a = optimize_scenario_with_progress_with_registry(
-            &registry,
-            &adaptive,
-            |_| true,
-            || true,
-        );
+        let out_u =
+            optimize_scenario_with_progress_with_registry(&registry, &uniform, |_| true, || true);
+        let out_a =
+            optimize_scenario_with_progress_with_registry(&registry, &adaptive, |_| true, || true);
         let trials_u = out_u
             .tiered_scout_budget
             .expect("tiered budget")

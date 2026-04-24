@@ -16,7 +16,7 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 ### Next optimizer upgrades
 
-- **Matchup-aware pruning rules** — *(Partial: analytical prefilter uses [`src/optimizer/matchup_priors.rs`](../src/optimizer/matchup_priors.rs) — static gates, encounter heuristics armada/Borg/scout/outpost, client warm-start overlap, and **optimize_history** reference crews for the same `optimize_cache_key` + chain fingerprint.)* **Open:** catalog-backed captain/bridge synergy priors when [`src/data/synergy.rs`](../src/data/synergy.rs) grows loadable pair rows.
+- **Matchup-aware pruning rules (soft)** — *(Shipped: analytical prefilter composite score in [`src/optimizer/matchup_priors.rs`](../src/optimizer/matchup_priors.rs) — static LCARS gate hints, encounter heuristics (armada / Conqueror Borg / scout / outpost), client `warm_start_crews` overlap, and **optimize_history** reference crews for matching `optimize_cache_key` + chain fingerprint; then truncation via `analytical_prefilter_keep` / auto.)* **Open:** catalog-backed captain/bridge **synergy** priors when [`src/data/synergy.rs`](../src/data/synergy.rs) gains loadable officer-pair rows.
 - **Novelty-aware ranking** — Reward crews that are both strong and materially different from already-known winners so discovery does not collapse into the same few lineages.
 - **Automatic local learning loop** — *(Partial: per-profile `optimize_history.json` stores tiered and exhaustive two-phase results for `optimize_cache_key` and re-injects matching crews on the next run — see `src/data/optimize_history.rs` and `src/server/api/execution.rs`.)* Still open: use history to tune exploration limits automatically and broader “learn” feedback loops.
 - **First-class fast-discovery mode** — *(Shipped: `fast_discovery` on optimize merges expanded `heuristics_seeds` crews into the main warm-start path so they share analytical prefilter + tiered or exhaustive Monte Carlo; workspace Strategy panel checkbox; OpenAPI field.)* Optional genetic refinement pass after tiered confirm remains future work.
@@ -49,11 +49,6 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 | Invading Entities, Assaults                     | Unsupported without encounter ids in data.                                                                                                                          |
 | Outpost Armadas, Outpost Retaliation Attackers  | `[HostileRecord::is_outpost](../src/data/hostile.rs)` exists; no LCARS condition wired yet—confirm in-game vs logs before adding `defender_is_outpost`-style gates. |
 
-
-### Roadmap / backlog (officers)
-
-- **More canonical condition tokens:** Many other strings in `**officers.canonical.json`** still log “skipping unmapped” during `generate_lcars` (for example `CombatBattleType`, hull-line tokens). Map each only when the engine has an explicit, testable meaning. Triage of unmapped tokens: [CANONICAL_CONDITIONS.md](CANONICAL_CONDITIONS.md).
-
 ---
 
 ## Unified CombatEffectSpec (cross-source normalization)
@@ -82,7 +77,7 @@ Current state: officer effects are LCARS-native, while research uses stat rows p
 - **Adapters:** *(Shipped: `research_effect_spec_adapter.rs`, `lcars/effect_spec_adapter.rs`, `stfc_cc_effect_spec_adapter.rs`.)*
 - **Compiler:** *(Shipped: `src/combat/effect_spec_compile.rs`.)*
 - **Parity harness:** *(Shipped: `tests/combat_effect_spec_research_parity_tests.rs`, `tests/lcars_combat_effect_spec_parity_tests.rs`, `tests/mixed_crew_research_combat_effect_spec_parity_tests.rs`.)*
-- **Cutover:** Research conditional seats use **only** the CombatEffectSpec adapter path (`research_derived_attack_phase_seats` delegates to `research_derived_attack_phase_seats_from_spec`). **Next:** progressive LCARS resolver migration only where parity and performance allow.
+- **Cutover:** Research conditional seats use **only** the CombatEffectSpec adapter path (`research_derived_attack_phase_seats` delegates to `research_derived_attack_phase_seats_from_spec`). **Shipped (slice):** officer dynamic effects from `resolve_effect` / `resolve_officer_ability` use `compile_officer_combat_spec` for both `AbilityEffect` and `Ability.condition` (YAML conditions must round-trip through `lcars_condition_to_spec` or the effect is skipped). **Next:** further LCARS surface (e.g. deduplicating [`resolve_lcars_condition`](../src/lcars/resolver.rs) vs adapter-only call sites, or more `effect_type` coverage) only where parity and performance allow.
 
 ---
 

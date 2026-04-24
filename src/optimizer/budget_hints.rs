@@ -19,7 +19,11 @@ pub fn load_for_profile(profile_id: &str) -> Option<OptimizerBudgetHints> {
 }
 
 /// Apply `hints.tiered_scout_coarse_mult` to coarse scout cap (clamped to `[1, scout_cap - 1]` when `scout_cap > 1`).
-pub fn apply_tiered_coarse_hint(coarse_sims: usize, scout_cap: usize, hints: Option<&OptimizerBudgetHints>) -> usize {
+pub fn apply_tiered_coarse_hint(
+    coarse_sims: usize,
+    scout_cap: usize,
+    hints: Option<&OptimizerBudgetHints>,
+) -> usize {
     let Some(h) = hints else {
         return coarse_sims;
     };

@@ -248,11 +248,13 @@ fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
         })
 }
 
-/// Compile LCARS-authored [`CombatEffectSpec`] into runtime [`AbilityEffect`] + [`TimingWindow`].
+/// Compile LCARS-authored [`CombatEffectSpec`] into runtime [`AbilityEffect`] + [`TimingWindow`] +
+/// optional AND-combined [`AbilityCondition`] from `spec.conditions`.
 pub fn compile_officer_combat_spec(
     spec: &CombatEffectSpec,
-) -> Result<(TimingWindow, AbilityEffect), EffectSpecCompileError> {
+) -> Result<(TimingWindow, AbilityEffect, Option<AbilityCondition>), EffectSpecCompileError> {
     let timing = compile_trigger(spec.trigger)?;
+    let compiled_condition = compile_conditions_and(&spec.conditions)?;
     let op = lcars_op_from_officer_spec(spec);
     let op = op.as_str();
 
@@ -277,6 +279,7 @@ pub fn compile_officer_combat_spec(
                         decay_per_round,
                         floor,
                     },
+                    compiled_condition.clone(),
                 ));
             }
             if let Some(obj) = spec
@@ -293,6 +296,7 @@ pub fn compile_officer_combat_spec(
                         growth_per_round,
                         ceiling,
                     },
+                    compiled_condition.clone(),
                 ));
             }
             let mult = match op {
@@ -304,7 +308,11 @@ pub fn compile_officer_combat_spec(
                 "set" => v,
                 _ => 1.0 + v,
             };
-            Ok((timing, AbilityEffect::AttackMultiplier(mult)))
+            Ok((
+                timing,
+                AbilityEffect::AttackMultiplier(mult),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::Pierce => {
             let v = scalar_fraction(
@@ -318,7 +326,11 @@ pub fn compile_officer_combat_spec(
                 "set" => v,
                 _ => v,
             };
-            Ok((timing, AbilityEffect::PierceBonus(add)))
+            Ok((
+                timing,
+                AbilityEffect::PierceBonus(add),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::CritChance => {
             let v = scalar_fraction(
@@ -343,7 +355,11 @@ pub fn compile_officer_combat_spec(
                 }
                 _ => v,
             };
-            Ok((timing, AbilityEffect::CritChanceBonus(add)))
+            Ok((
+                timing,
+                AbilityEffect::CritChanceBonus(add),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::CritDamage => {
             let v = scalar_fraction(
@@ -361,7 +377,11 @@ pub fn compile_officer_combat_spec(
                 _ => 1.0 + v,
             };
             if mult.is_finite() && mult > 0.0 {
-                Ok((timing, AbilityEffect::CritDamageMultiplier(mult)))
+                Ok((
+                    timing,
+                    AbilityEffect::CritDamageMultiplier(mult),
+                    compiled_condition.clone(),
+                ))
             } else {
                 Err(EffectSpecCompileError::UnsupportedModifierOperation {
                     modifier: spec.modifier,
@@ -375,7 +395,11 @@ pub fn compile_officer_combat_spec(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            Ok((timing, AbilityEffect::ApexShredBonus(v)))
+            Ok((
+                timing,
+                AbilityEffect::ApexShredBonus(v),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::ApexBarrier => {
             let v = scalar_fraction(
@@ -383,7 +407,11 @@ pub fn compile_officer_combat_spec(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            Ok((timing, AbilityEffect::ApexBarrierBonus(v)))
+            Ok((
+                timing,
+                AbilityEffect::ApexBarrierBonus(v),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::OfficerShieldRegenFlat => {
             let v = scalar_fraction(
@@ -391,7 +419,11 @@ pub fn compile_officer_combat_spec(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            Ok((timing, AbilityEffect::ShieldRegen(v)))
+            Ok((
+                timing,
+                AbilityEffect::ShieldRegen(v),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::OfficerHullRegenFlat => {
             let v = scalar_fraction(
@@ -400,9 +432,17 @@ pub fn compile_officer_combat_spec(
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
             if timing == TimingWindow::Kill {
-                Ok((timing, AbilityEffect::OnKillHullRegen(v)))
+                Ok((
+                    timing,
+                    AbilityEffect::OnKillHullRegen(v),
+                    compiled_condition.clone(),
+                ))
             } else {
-                Ok((timing, AbilityEffect::HullRegen(v)))
+                Ok((
+                    timing,
+                    AbilityEffect::HullRegen(v),
+                    compiled_condition.clone(),
+                ))
             }
         }
         AbilityModifierSpec::OfficerHullRegenPrevRoundFraction => {
@@ -414,7 +454,11 @@ pub fn compile_officer_combat_spec(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            Ok((timing, AbilityEffect::HullRegenPrevRoundFraction(v)))
+            Ok((
+                timing,
+                AbilityEffect::HullRegenPrevRoundFraction(v),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::OfficerShieldRegenPrevRoundFraction => {
             if timing != TimingWindow::RoundStart {
@@ -425,7 +469,11 @@ pub fn compile_officer_combat_spec(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            Ok((timing, AbilityEffect::ShieldRegenPrevRoundFraction(v)))
+            Ok((
+                timing,
+                AbilityEffect::ShieldRegenPrevRoundFraction(v),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::IsolyticDamage => {
             let v = scalar_fraction(
@@ -438,7 +486,11 @@ pub fn compile_officer_combat_spec(
                 "sub" | "mul_sub" | "multiplysub" => -v,
                 _ => v,
             };
-            Ok((timing, AbilityEffect::IsolyticDamageBonus(add)))
+            Ok((
+                timing,
+                AbilityEffect::IsolyticDamageBonus(add),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::IsolyticDefense => {
             let v = scalar_fraction(
@@ -451,7 +503,11 @@ pub fn compile_officer_combat_spec(
                 "sub" | "mul_sub" | "multiplysub" => -v,
                 _ => v,
             };
-            Ok((timing, AbilityEffect::IsolyticDefenseBonus(add)))
+            Ok((
+                timing,
+                AbilityEffect::IsolyticDefenseBonus(add),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::IsolyticCascadeDamage => {
             let v = scalar_fraction(
@@ -464,7 +520,11 @@ pub fn compile_officer_combat_spec(
                 "sub" | "mul_sub" | "multiplysub" => -v,
                 _ => v,
             };
-            Ok((timing, AbilityEffect::IsolyticCascadeDamageBonus(add)))
+            Ok((
+                timing,
+                AbilityEffect::IsolyticCascadeDamageBonus(add),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::ShieldMitigation => {
             let v = scalar_fraction(
@@ -477,7 +537,11 @@ pub fn compile_officer_combat_spec(
                 "sub" | "mul_sub" | "multiplysub" => -v,
                 _ => v,
             };
-            Ok((timing, AbilityEffect::ShieldMitigationBonus(add)))
+            Ok((
+                timing,
+                AbilityEffect::ShieldMitigationBonus(add),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::Armor => {
             if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
@@ -503,6 +567,7 @@ pub fn compile_officer_combat_spec(
             Ok((
                 timing,
                 AbilityEffect::MitigationAdditive(mitigation_fraction_from_lcars_armor_value(add)),
+                compiled_condition.clone(),
             ))
         }
         AbilityModifierSpec::ShotsBonus => {
@@ -528,6 +593,7 @@ pub fn compile_officer_combat_spec(
                     bonus_pct,
                     duration_rounds,
                 },
+                compiled_condition.clone(),
             ))
         }
         AbilityModifierSpec::StateMorale => {
@@ -537,7 +603,11 @@ pub fn compile_officer_combat_spec(
                 .and_then(|c| c.scalar)
                 .filter(|c| c.is_finite())
                 .unwrap_or(0.0);
-            Ok((timing, AbilityEffect::Morale(chance)))
+            Ok((
+                timing,
+                AbilityEffect::Morale(chance),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::StateAssimilated => {
             let chance = spec
@@ -553,6 +623,7 @@ pub fn compile_officer_combat_spec(
                     chance,
                     duration_rounds,
                 },
+                compiled_condition.clone(),
             ))
         }
         AbilityModifierSpec::StateHullBreach => {
@@ -570,6 +641,7 @@ pub fn compile_officer_combat_spec(
                     duration_rounds,
                     requires_critical: false,
                 },
+                compiled_condition.clone(),
             ))
         }
         AbilityModifierSpec::StateBurning => {
@@ -586,6 +658,7 @@ pub fn compile_officer_combat_spec(
                     chance,
                     duration_rounds,
                 },
+                compiled_condition.clone(),
             ))
         }
         _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {

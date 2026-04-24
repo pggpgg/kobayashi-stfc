@@ -7,8 +7,7 @@ use kobayashi::combat::abilities::{Ability, AbilityClass, CrewSeat, CrewSeatCont
 use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec;
 use kobayashi::lcars::{
-    load_lcars_file, resolve_lcars_condition, resolve_officer_ability, LcarsAbility, LcarsOfficer,
-    ResolveOptions,
+    load_lcars_file, resolve_officer_ability, LcarsAbility, LcarsOfficer, ResolveOptions,
 };
 
 fn contexts_from_officer_combat_effect_spec(
@@ -32,13 +31,9 @@ fn contexts_from_officer_combat_effect_spec(
         ) else {
             continue;
         };
-        let Ok((timing, effect_effect)) = compile_officer_combat_spec(&spec) else {
+        let Ok((timing, effect_effect, condition)) = compile_officer_combat_spec(&spec) else {
             continue;
         };
-        let condition = effect
-            .condition
-            .as_ref()
-            .and_then(|c| resolve_lcars_condition(c).ok());
         contexts.push(CrewSeatContext {
             seat,
             ability: Ability {

@@ -64,7 +64,9 @@ impl BuffSet {
 
 /// Resolve an LCARS condition tree into an engine [`AbilityCondition`].
 ///
-/// Used by [`resolve_officer_ability`] (via [`lcars_condition_to_ability_condition`]) and LCARS validation.
+/// Used for LCARS validation and parity tests; officer ability runtime conditions on dynamic
+/// effects come from [`crate::combat::effect_spec_compile::compile_officer_combat_spec`]
+/// (spec IR) after [`lcars_effect_to_combat_effect_spec`].
 /// Returns [`Err`] with a short message when the YAML is unsupported or incomplete (unknown `type`,
 /// missing `ship_type` / `faction`, unknown slugs, empty `and`/`or`, or invalid child conditions).
 pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, String> {
@@ -251,10 +253,6 @@ pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, S
     }
 }
 
-fn lcars_condition_to_ability_condition(c: &LcarsCondition) -> Option<AbilityCondition> {
-    resolve_lcars_condition(c).ok()
-}
-
 fn normalize_trigger(trigger: &str) -> String {
     trigger.trim().to_ascii_lowercase().replace('-', "_")
 }
@@ -322,7 +320,8 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
     passive && permanent && effect.effect_type == "stat_modify"
 }
 
-/// Resolve a single LCARS effect into (TimingWindow, AbilityEffect) if supported.
+/// Resolve a single LCARS effect into timing, effect body, and optional AND-combined condition
+/// from the CombatEffectSpec compile path when supported.
 ///
 /// Implementation: [`crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec`] →
 /// [`crate::combat::effect_spec_compile::compile_officer_combat_spec`].
@@ -332,7 +331,7 @@ fn resolve_effect(
     options: &ResolveOptions,
     officer_id: &str,
     effect_index: usize,
-) -> Option<(TimingWindow, AbilityEffect)> {
+) -> Option<(TimingWindow, AbilityEffect, Option<AbilityCondition>)> {
     if is_static_effect(effect) {
         return None;
     }
@@ -452,13 +451,9 @@ pub fn resolve_officer_ability(
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
     for (idx, effect) in ability.effects.iter().enumerate() {
-        if let Some((timing, effect_effect)) =
+        if let Some((timing, effect_effect, condition)) =
             resolve_effect(effect, &ability.name, options, &officer.id, idx)
         {
-            let condition = effect
-                .condition
-                .as_ref()
-                .and_then(lcars_condition_to_ability_condition);
             contexts.push(CrewSeatContext {
                 seat,
                 ability: Ability {

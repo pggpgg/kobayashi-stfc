@@ -5,7 +5,9 @@
 //! keeps `And(vec![one])`. We only assert `and` parity when there are **two or more** children.
 
 use kobayashi::combat::abilities::{AbilityClass, AbilityEffect, CrewSeat};
-use kobayashi::combat::effect_spec_compile::{compile_condition, compile_trigger};
+use kobayashi::combat::effect_spec_compile::{
+    compile_condition, compile_officer_combat_spec, compile_trigger,
+};
 use kobayashi::combat::TimingWindow;
 use kobayashi::lcars::effect_spec_adapter::{
     lcars_condition_to_spec, lcars_effect_to_combat_effect_spec,
@@ -348,7 +350,10 @@ fn lcars_effect_with_condition_spec_matches_resolve() {
         0,
     );
     assert_eq!(ctx.len(), 1);
-    assert_eq!(ctx[0].ability.condition, Some(rc));
+    let (_, _, cond_from_officer_compile) =
+        compile_officer_combat_spec(&spec).expect("officer spec compile");
+    assert_eq!(ctx[0].ability.condition, cond_from_officer_compile);
+    assert_eq!(cond_from_officer_compile, Some(rc));
 }
 
 #[test]

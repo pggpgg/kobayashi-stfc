@@ -655,6 +655,8 @@ Reduce combat to closed-form math: expected damage per round given stats. Skip s
 
 **Matchup priors (non-genetic paths):** Before optional truncation (`analytical_prefilter_keep` / auto), the optimizer sorts candidates by a composite score: closed-form [`expected_damage`](src/optimizer/analytical.rs) plus small priors from [`src/optimizer/matchup_priors.rs`](src/optimizer/matchup_priors.rs) (static LCARS gate hints vs the defender, encounter heuristics, overlap with client warm-start, and persisted `optimize_history` reference crews when `optimize_cache_key` matches — reference crews are **not** prepended to the candidate list). The **genetic** strategy does not use this analytical sort.
 
+**Hard pruning** (dropping candidates solely because static gates look “failed”) is intentionally not the default: it can remove true optima when conditions are unknown or abilities are mis-ranked analytically; a future explicit API flag could revisit this.
+
 ### 6.3 Tiered Simulation (implemented)
 
 ```

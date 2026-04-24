@@ -1115,7 +1115,20 @@ pub fn validate_forbidden_chaos_catalog_data(data_root: &Path) -> Result<Validat
     Ok(report)
 }
 
-/// Warnings for canonical `conditions` tokens not yet mapped for the officer LCARS pipeline.
+/// When `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS` is `1` / `true` / `yes`, unmapped canonical
+/// officer `conditions` tokens are validation **errors** instead of warnings (see
+/// `docs/CANONICAL_CONDITIONS.md` § After editing canonical officers).
+fn strict_canonical_officer_condition_maps_required() -> bool {
+    matches!(
+        std::env::var("KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS")
+            .ok()
+            .as_deref(),
+        Some("1") | Some("true") | Some("yes")
+    )
+}
+
+/// Warnings (or errors when `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS` is set) for canonical
+/// `conditions` tokens not yet mapped for the officer LCARS pipeline.
 pub fn validate_unmapped_canonical_officer_conditions(
     data_root: &Path,
 ) -> Result<ValidationReport, String> {
@@ -1131,10 +1144,15 @@ pub fn validate_unmapped_canonical_officer_conditions(
     }
 
     let map = scan_canonical_officer_conditions(&path)?;
+    let severity = if strict_canonical_officer_condition_maps_required() {
+        ValidationSeverity::Error
+    } else {
+        ValidationSeverity::Warning
+    };
     for (tok, count, examples) in unmapped_canonical_condition_rows(&map) {
         let ex = examples.join("; ");
         report.push(
-            ValidationSeverity::Warning,
+            severity,
             "canonical.unmapped_condition",
             format!("token `{tok}`: {count} occurrence(s); examples: {ex}"),
         );

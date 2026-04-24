@@ -318,13 +318,15 @@ fn lcars_duration_to_spec(d: &LcarsDuration) -> Option<DurationSpec> {
     }
 }
 
-fn officer_conditions_from_effect(effect: &LcarsEffect) -> Vec<AbilityConditionSpec> {
+/// `None` when YAML has a `condition` block that cannot be represented in [`AbilityConditionSpec`]
+/// (caller must not emit a spec row without that gate — see [`lcars_effect_to_combat_effect_spec`]).
+fn try_officer_conditions_from_effect(effect: &LcarsEffect) -> Option<Vec<AbilityConditionSpec>> {
     match effect.condition.as_ref() {
+        None => Some(Vec::new()),
         Some(c) => match lcars_condition_to_spec(c) {
-            Ok(s) => vec![s],
-            Err(_) => Vec::new(),
+            Ok(s) => Some(vec![s]),
+            Err(_) => None,
         },
-        None => Vec::new(),
     }
 }
 
@@ -353,7 +355,8 @@ fn op_to_spec(op: &str) -> AbilityOperationSpec {
 
 /// Convert one LCARS officer effect to a [`CombatEffectSpec`] when the row maps cleanly.
 /// Returns [`None`] for static-only `stat_modify`, `tag`, `extra_attack`, `accuracy` non-CB timings,
-/// and unknown triggers (aligned with [`crate::lcars::resolver::resolve_effect`]).
+/// unknown triggers, or a present `condition` that [`lcars_condition_to_spec`] cannot encode
+/// (aligned with [`crate::lcars::resolver::resolve_effect`]).
 pub fn lcars_effect_to_combat_effect_spec(
     effect: &LcarsEffect,
     stable_id: &str,
@@ -387,7 +390,7 @@ pub fn lcars_effect_to_combat_effect_spec(
 
     let trigger = timing_window_to_trigger_spec(timing);
     let target = officer_target_from_effect(effect);
-    let conditions = officer_conditions_from_effect(effect);
+    let conditions = try_officer_conditions_from_effect(effect)?;
     let duration = effect.duration.as_ref().and_then(lcars_duration_to_spec);
 
     let op_norm = normalize_operator(effect.operator.as_deref());
@@ -757,5 +760,80 @@ mod tests {
             "resolver mult {m} vs 1+spec_scalar {}",
             1.0 + raw
         );
+    }
+
+    #[test]
+    fn lcars_effect_with_unmapped_condition_yields_no_spec_row() {
+        let bad_c = LcarsCondition {
+            condition_type: "totally_unknown_condition_xyz".into(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: None,
+            enemy_type: None,
+            battle_types: None,
+            conditions: None,
+        };
+        let e_bad = LcarsEffect {
+            effect_type: "stat_modify".into(),
+            stat: Some("weapon_damage".into()),
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.1),
+            trigger: Some("on_attack".into()),
+            duration: None,
+            scaling: None,
+            condition: Some(bad_c),
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        assert!(
+            lcars_effect_to_combat_effect_spec(&e_bad, "x", "o", "a", None).is_none(),
+            "must not emit spec without encoding the YAML condition"
+        );
+        let good_c = LcarsCondition {
+            condition_type: "defender_burning".into(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: None,
+            enemy_type: None,
+            battle_types: None,
+            conditions: None,
+        };
+        let e_ok = LcarsEffect {
+            effect_type: "stat_modify".into(),
+            stat: Some("weapon_damage".into()),
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.1),
+            trigger: Some("on_attack".into()),
+            duration: None,
+            scaling: None,
+            condition: Some(good_c),
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        assert!(lcars_effect_to_combat_effect_spec(&e_ok, "x", "o", "a", None).is_some());
     }
 }

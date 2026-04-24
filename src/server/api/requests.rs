@@ -332,9 +332,7 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         if !(1..=MAX_TIERED_TOP_K).contains(&k) {
             errors.push(ValidationIssue {
                 field: "exhaustive_scout_top_keep",
-                messages: vec![format!(
-                    "if set, must be between 1 and {MAX_TIERED_TOP_K}"
-                )],
+                messages: vec![format!("if set, must be between 1 and {MAX_TIERED_TOP_K}")],
             });
         }
     }

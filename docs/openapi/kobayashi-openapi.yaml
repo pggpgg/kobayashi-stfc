@@ -1499,6 +1499,11 @@ components:
           type: integer
         optimize_cache_key:
           type: string
+          description: >
+            Opaque client fingerprint (e.g. workspace warm-start key). When set and the request
+            runs with an active profile, the server may load matching `optimize_history.json` rows
+            for Monte Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors
+            (reference crews from history only; same chain fingerprint as this request’s `chain`).
 
     ReplaySeedCrew:
       type: object

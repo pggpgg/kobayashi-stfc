@@ -154,10 +154,7 @@ where
             below_decks: r.below_decks.clone(),
         })
         .collect();
-    let top_hashes: HashSet<u64> = top_crews
-        .iter()
-        .map(crew_candidate_stable_hash)
-        .collect();
+    let top_hashes: HashSet<u64> = top_crews.iter().map(crew_candidate_stable_hash).collect();
 
     let full = full_sims.max(1);
     let uncertainty_widths: Vec<f64> = top_ranked
@@ -282,12 +279,7 @@ where
         crews_done: total_work as u32,
         total_crews: total_work as u32,
         phase: "exhaustive_confirm",
-        partial_top: Some(
-            rank_results(merged.clone())
-                .into_iter()
-                .take(5)
-                .collect(),
-        ),
+        partial_top: Some(rank_results(merged.clone()).into_iter().take(5).collect()),
     }) {
         return None;
     }
