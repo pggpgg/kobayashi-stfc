@@ -1,6 +1,6 @@
 # Additional development tasks (supplementary)
 
-Twenty improvement ideas for Kobayashi that are **not** listed in [`DEV_TASKS.md`](DEV_TASKS.md) and **not** framed as the active backlog items described in [`ROADMAP.md`](ROADMAP.md). Use checkboxes locally to track progress.
+Twenty improvement ideas for Kobayashi that sit **outside** the phased backlog described in [`ROADMAP.md`](ROADMAP.md). Use checkboxes locally to track progress.
 
 - [ ] Add explicit **HTTP health and readiness** routes (e.g. separate liveness vs “data registry loaded”) and document expected status codes for reverse proxies and container orchestrators.
 - [ ] Ship a **`cargo xtask doctor`** (or equivalent) that prints a single report: Rust/toolchain versions, required env vars, presence of `data/` artifacts, profile path validity, and optional mod-sync reachability hints.
