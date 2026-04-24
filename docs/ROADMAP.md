@@ -73,10 +73,6 @@ Current state: officer effects are LCARS-native, while research uses stat rows p
 
 ### Roadmap / backlog
 
-- **IR model:** *(Shipped: `src/data/combat_effect_spec.rs`, validation in `combat_effect_spec_validate.rs`.)*
-- **Adapters:** *(Shipped: `research_effect_spec_adapter.rs`, `lcars/effect_spec_adapter.rs`, `stfc_cc_effect_spec_adapter.rs`.)*
-- **Compiler:** *(Shipped: `src/combat/effect_spec_compile.rs`.)*
-- **Parity harness:** *(Shipped: `tests/combat_effect_spec_research_parity_tests.rs`, `tests/lcars_combat_effect_spec_parity_tests.rs`, `tests/mixed_crew_research_combat_effect_spec_parity_tests.rs`.)*
 - **Cutover:** Research conditional seats use **only** the CombatEffectSpec adapter path (`research_derived_attack_phase_seats` delegates to `research_derived_attack_phase_seats_from_spec`). **Shipped (slice):** officer dynamic effects from `resolve_effect` / `resolve_officer_ability` use `compile_officer_combat_spec` for both `AbilityEffect` and `Ability.condition` (YAML conditions must round-trip through `lcars_condition_to_spec` or the effect is skipped). **Next:** further LCARS surface (e.g. deduplicating [`resolve_lcars_condition`](../src/lcars/resolver.rs) vs adapter-only call sites, or more `effect_type` coverage) only where parity and performance allow.
 
 ---
@@ -88,7 +84,6 @@ data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normali
 ### Roadmap / backlog
 
 - **Enumerate ids** — Maintainer reference: [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md). Cross-check `summary-hostile.json`, stfc.space UI, and in-game copy when adding `match` arms (and new `UpstreamHostileShipTypeProfile` fields if mechanics need more than `is_armada_target`).
-- **Unknown values** — Shipped: `cargo run --bin validate_data` errors on any per-hostile `upstream_ship_type` not in `KNOWN_UPSTREAM_HOSTILE_SHIP_TYPES` (see `[src/data/upstream_hostile_ship_type.rs](../src/data/upstream_hostile_ship_type.rs)`); optional short-term deferral with a reason warns via `DEFERRED_UPSTREAM_HOSTILE_SHIP_TYPES`. Maintainer Markdown: `cargo run --bin report_unknown_mappings` (includes an undocumented-values subsection).
 - **Overlap with `EnemyTypes`** — If future categories do not fit `[EnemyType](../src/combat/types.rs)` / `ShipType` (e.g. multi-tag engagements), decide whether to thread `[EnemyTypes](../src/combat/types.rs)` through scenario vs growing the upstream profile struct.
 
 ---
