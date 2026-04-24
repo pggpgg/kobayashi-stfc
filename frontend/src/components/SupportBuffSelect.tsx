@@ -67,6 +67,17 @@ export default function SupportBuffSelect({
         <legend style={{ position: "absolute", left: -10_000, top: "auto" }}>
           Support buffs
         </legend>
+        <div
+          style={{
+            fontSize: "0.72rem",
+            color: "var(--text-muted)",
+            margin: "0.15rem 0 0.35rem",
+            lineHeight: 1.35,
+          }}
+        >
+          Titan-A Fortify (Fortified / Max), Cerritos Support, and Defiant Reinforce each unlock their
+          own catalog combat research when checked (server merges into the matching static buff layer).
+        </div>
         {SUPPORT_BUFF_OPTIONS.map((opt) => (
           <label
             key={opt.id}

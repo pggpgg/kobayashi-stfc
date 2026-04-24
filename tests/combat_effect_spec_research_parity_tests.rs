@@ -3,7 +3,7 @@
 //! (order-independent seat signatures). The public API delegates to the adapter; these tests lock behavior.
 
 use kobayashi::data::import::ResearchEntry;
-use kobayashi::data::profile::research_derived_attack_phase_seats;
+use kobayashi::data::profile::{research_derived_attack_phase_seats, SupportBuffResearchGateState};
 use kobayashi::data::research::{
     ResearchBonusConditionKey, ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
 };
@@ -17,7 +17,8 @@ fn seat_signature(c: &kobayashi::combat::CrewSeatContext) -> String {
 }
 
 fn assert_public_matches_adapter(imported: &[ResearchEntry], catalog: &ResearchCatalog) {
-    let public = research_derived_attack_phase_seats(imported, catalog, false);
+    let gates = SupportBuffResearchGateState::default();
+    let public = research_derived_attack_phase_seats(imported, catalog, &gates);
     let via_spec = research_derived_attack_phase_seats_from_spec(imported, catalog);
     assert_eq!(public.len(), via_spec.len(), "seat count mismatch");
     let mut a: Vec<String> = public.iter().map(seat_signature).collect();

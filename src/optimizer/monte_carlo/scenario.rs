@@ -32,7 +32,7 @@ use crate::data::profile::{
     merge_tech_fids_into_profile_with_level_tier,
     quantum_slipstream_forbidden_tech_round_start_seats, research_derived_attack_phase_seats,
     resolve_effective_tech_fids, ship_class_gated_torpedo_family_derived_seats,
-    titan_a_fortify_active_in_resolved_support_buffs,
+    SupportBuffResearchGateState,
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship, PlayerProfile,
@@ -1208,30 +1208,18 @@ pub(crate) fn build_shared_scenario_data_standalone(
             }
             _ => (Vec::new(), Vec::new()),
         };
-    let titan_fortify_active =
-        titan_a_fortify_active_in_resolved_support_buffs(&resolved_support_buffs);
+    let support_research_gates =
+        SupportBuffResearchGateState::from_resolved_support_buff_ids(&resolved_support_buffs);
 
     let shared_research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
-    let research_derived_seats = if let Some(imported_research) = import::load_imported_research(
-        profile_path(&pid, RESEARCH_IMPORTED)
-            .to_string_lossy()
-            .as_ref(),
-    ) {
-        if let Some(ref cat) = shared_research_catalog {
-            merge_research_bonuses_into_profile(
-                &mut profile,
-                &imported_research,
-                cat,
-                titan_fortify_active,
-            );
-            research_derived_attack_phase_seats(
-                &imported_research,
-                cat,
-                titan_fortify_active,
-            )
-        } else {
-            Vec::new()
-        }
+    let research_path = profile_path(&pid, RESEARCH_IMPORTED)
+        .to_string_lossy()
+        .into_owned();
+    let imported_research = import::load_imported_research(&research_path).unwrap_or_default();
+
+    let research_derived_seats = if let Some(ref cat) = shared_research_catalog {
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, cat);
+        research_derived_attack_phase_seats(&imported_research, cat, &support_research_gates)
     } else {
         Vec::new()
     };
@@ -1241,10 +1229,18 @@ pub(crate) fn build_shared_scenario_data_standalone(
     } else {
         None
     };
-    let support_static_buffs = support_cat
+    let mut support_static_buffs = support_cat
         .as_ref()
         .map(|c| support_buffs::aggregate_support_static_bonuses(c, &resolved_support_buffs))
         .unwrap_or_default();
+    if let Some(ref cat) = shared_research_catalog {
+        support_buffs::augment_static_buffs_with_support_gated_research(
+            &mut support_static_buffs,
+            &imported_research,
+            cat,
+            &support_research_gates,
+        );
+    }
     if let Some(ref cat) = support_cat {
         if !resolved_support_buffs.is_empty() {
             support_buffs::apply_support_buff_research_to_profile(
@@ -1530,29 +1526,17 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             }
             _ => (Vec::new(), Vec::new()),
         };
-    let titan_fortify_active =
-        titan_a_fortify_active_in_resolved_support_buffs(&resolved_support_buffs);
+    let support_research_gates =
+        SupportBuffResearchGateState::from_resolved_support_buff_ids(&resolved_support_buffs);
 
-    let research_derived_seats = if let Some(imported_research) = import::load_imported_research(
-        profile_path(&pid, RESEARCH_IMPORTED)
-            .to_string_lossy()
-            .as_ref(),
-    ) {
-        if let Some(catalog) = registry.research_catalog() {
-            merge_research_bonuses_into_profile(
-                &mut profile,
-                &imported_research,
-                catalog,
-                titan_fortify_active,
-            );
-            research_derived_attack_phase_seats(
-                &imported_research,
-                catalog,
-                titan_fortify_active,
-            )
-        } else {
-            Vec::new()
-        }
+    let research_path = profile_path(&pid, RESEARCH_IMPORTED)
+        .to_string_lossy()
+        .into_owned();
+    let imported_research = import::load_imported_research(&research_path).unwrap_or_default();
+
+    let research_derived_seats = if let Some(catalog) = registry.research_catalog() {
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
+        research_derived_attack_phase_seats(&imported_research, catalog, &support_research_gates)
     } else {
         Vec::new()
     };
@@ -1562,10 +1546,18 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     } else {
         None
     };
-    let support_static_buffs = registry
+    let mut support_static_buffs = registry
         .support_buffs_catalog()
         .map(|c| support_buffs::aggregate_support_static_bonuses(c, &resolved_support_buffs))
         .unwrap_or_default();
+    if let Some(cat) = registry.research_catalog() {
+        support_buffs::augment_static_buffs_with_support_gated_research(
+            &mut support_static_buffs,
+            &imported_research,
+            cat,
+            &support_research_gates,
+        );
+    }
     if let Some(cat) = registry.support_buffs_catalog() {
         if !resolved_support_buffs.is_empty() {
             support_buffs::apply_support_buff_research_to_profile(
@@ -1864,7 +1856,7 @@ mod tests {
             level: 1,
         }];
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, false);
+        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
 
         let ship_rec = ShipRecord {
             id: "t".into(),

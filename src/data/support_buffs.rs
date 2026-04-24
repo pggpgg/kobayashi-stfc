@@ -8,7 +8,13 @@ use std::sync::Arc;
 use serde::Deserialize;
 
 use crate::data::import::ResearchEntry;
-use crate::data::profile::{merge_research_bonuses_into_profile, PlayerProfile};
+use crate::data::profile::{
+    combat_research_bonuses_for_rid_subset, merge_research_bonuses_into_profile,
+    profile_combat_bonuses_to_static_style, PlayerProfile, SupportBuffResearchGateState,
+    CERRITOS_SUPPORT_GATED_RESEARCH_RIDS, DEFIANT_REINFORCE_GATED_RESEARCH_RIDS,
+    TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS, TITAN_CERRITOS_FORTIFIED_DUAL_RESEARCH_RID,
+    TITAN_MAX_FORTIFICATION_GATED_RESEARCH_RIDS,
+};
 use crate::data::research::ResearchCatalog;
 
 pub const DEFAULT_SUPPORT_BUFFS_PATH: &str = "data/support_buffs.json";
@@ -164,7 +170,7 @@ pub fn apply_support_buff_research_to_profile(
     }
     if !synthetic.is_empty() {
         // Support-buff virtual `rid`s are not Titan-A Fortify–gated; Fortify only affects synced tree rids.
-        merge_research_bonuses_into_profile(profile, &synthetic, rc, false);
+        merge_research_bonuses_into_profile(profile, &synthetic, rc);
     }
 }
 
@@ -235,6 +241,39 @@ pub fn merge_static_buff_maps(
         out.insert(k, v);
     }
     out
+}
+
+/// Merges catalog combat stats from support-buff–gated research into `support_static` (same layer as
+/// `static_bonuses` from `data/support_buffs.json`), using [`merge_static_buff_maps`] per stat key.
+pub fn augment_static_buffs_with_support_gated_research(
+    support_static: &mut HashMap<String, f64>,
+    imported: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    gates: &SupportBuffResearchGateState,
+) {
+    let mut merge_layer = |rids: &[i64]| {
+        let m = combat_research_bonuses_for_rid_subset(imported, catalog, rids);
+        if m.is_empty() {
+            return;
+        }
+        let layer = profile_combat_bonuses_to_static_style(&m);
+        *support_static = merge_static_buff_maps(support_static, &layer);
+    };
+    if gates.cerritos_support {
+        merge_layer(CERRITOS_SUPPORT_GATED_RESEARCH_RIDS);
+    }
+    if gates.titan_fortify {
+        merge_layer(TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS);
+    }
+    if gates.titan_max_fortification {
+        merge_layer(TITAN_MAX_FORTIFICATION_GATED_RESEARCH_RIDS);
+    }
+    if gates.defiant_reinforce {
+        merge_layer(DEFIANT_REINFORCE_GATED_RESEARCH_RIDS);
+    }
+    if gates.cerritos_support && gates.titan_fortify {
+        merge_layer(&[TITAN_CERRITOS_FORTIFIED_DUAL_RESEARCH_RID]);
+    }
 }
 
 /// Load catalog for server/registry; returns `None` if file missing (caller may use empty).
