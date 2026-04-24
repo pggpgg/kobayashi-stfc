@@ -41,6 +41,10 @@ use crate::data::ship::ShipRecord;
 pub struct PlayerProfile {
     #[serde(default)]
     pub bonuses: HashMap<String, f64>,
+    /// Selected alliance / ship support buff ids persisted with the profile UI state.
+    /// Combat request handling still resolves ids against the support buff catalog per scenario.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub support_buffs: Vec<String>,
     /// Optional Operations Center level override. When set, building bonus context uses this
     /// instead of inferring from synced buildings (ops_center level). Lets you simulate without sync.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -70,6 +74,31 @@ fn validate_positive_unique_ids(issues: &mut Vec<String>, field: &str, ids: Opti
     }
 }
 
+fn validate_and_canonicalize_support_buff_ids(
+    issues: &mut Vec<String>,
+    ids: &[String],
+) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut canonical = Vec::new();
+    for raw_id in ids {
+        let id = raw_id.trim();
+        if id.is_empty() {
+            issues.push("support_buffs contains an empty id".to_string());
+            continue;
+        }
+        if id != raw_id {
+            issues.push(format!(
+                "support_buffs id `{raw_id}` must not contain surrounding whitespace"
+            ));
+            continue;
+        }
+        if seen.insert(id.to_string()) {
+            canonical.push(id.to_string());
+        }
+    }
+    canonical
+}
+
 /// Validate and canonicalize a profile payload before persisting it.
 ///
 /// Profile bonus keys are the combat stat names consumed by [`apply_profile_to_attacker`] and related
@@ -80,6 +109,8 @@ pub fn validate_player_profile_payload(
 ) -> Result<PlayerProfile, Vec<String>> {
     let mut issues = Vec::new();
     let mut canonical_bonuses: HashMap<String, f64> = HashMap::new();
+    let support_buffs =
+        validate_and_canonicalize_support_buff_ids(&mut issues, &profile.support_buffs);
 
     for (raw_key, value) in &profile.bonuses {
         let key = raw_key.trim();
@@ -126,6 +157,7 @@ pub fn validate_player_profile_payload(
 
     Ok(PlayerProfile {
         bonuses: canonical_bonuses,
+        support_buffs,
         ..profile
     })
 }
@@ -1648,6 +1680,8 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use std::path::Path;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::combat::{AttackerStats, Combatant};
     use crate::data::building::{
@@ -1670,6 +1704,40 @@ mod tests {
             normalize_profile_combat_stat("isolytic_cascade_damage"),
             Some("isolytic_cascade_damage")
         );
+    }
+
+    #[test]
+    fn load_profile_round_trips_support_buffs() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join(format!("profile_support_buffs_{nanos}.json"));
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &path,
+            r#"{
+                "bonuses": {"weapon_damage": 0.1},
+                "support_buffs": ["cerritos_support", "defiant_reinforce"]
+            }"#,
+        )
+        .unwrap();
+
+        let profile = load_profile(path.to_string_lossy().as_ref());
+        let serialized = serde_json::to_string(&profile).unwrap();
+        let reloaded: PlayerProfile = serde_json::from_str(&serialized).unwrap();
+        let _ = std::fs::remove_file(&path);
+
+        assert_eq!(
+            reloaded.support_buffs,
+            vec![
+                "cerritos_support".to_string(),
+                "defiant_reinforce".to_string()
+            ]
+        );
+        assert_eq!(reloaded.bonuses.get("weapon_damage"), Some(&0.1));
     }
 
     #[test]
