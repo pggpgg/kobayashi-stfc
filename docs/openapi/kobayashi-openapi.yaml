@@ -1453,6 +1453,12 @@ components:
           type: integer
         tiered_scout_uniform:
           type: boolean
+        tiered_confirm_budget_cap_mult:
+          type: number
+          description: >
+            Tiered strategy only. When set, scales down per-top-K confirmation iterations so their
+            sum does not exceed floor(mult * tiered_top_k * sims). Omit for no global cap (default).
+            Typical values 1.5–3; must be in (0, 20].
         warm_start_crews:
           type: array
           items:

@@ -139,6 +139,9 @@ pub struct OptimizeRequest {
     /// When true, tiered scouting uses one uniform pass at the scout cap (legacy). Omitted or false = adaptive coarse→refine scout.
     #[serde(default)]
     pub tiered_scout_uniform: Option<bool>,
+    /// When set (tiered): cap total confirmation iterations across the top-K crews to `floor(mult * tiered_top_k * sims)` after per-crew adaptive allocation.
+    #[serde(default)]
+    pub tiered_confirm_budget_cap_mult: Option<f64>,
     /// Optional crews prepended before generated candidates (deduped); e.g. UI warm-start persistence.
     #[serde(default)]
     pub warm_start_crews: Option<Vec<WarmStartCrewDto>>,
@@ -283,6 +286,17 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
             errors.push(ValidationIssue {
                 field: "tiered_top_k",
                 messages: vec![format!("if set, must be between 1 and {MAX_TIERED_TOP_K}")],
+            });
+        }
+    }
+
+    if let Some(m) = request.tiered_confirm_budget_cap_mult {
+        if !m.is_finite() || m <= 0.0 || m > 20.0 {
+            errors.push(ValidationIssue {
+                field: "tiered_confirm_budget_cap_mult",
+                messages: vec![
+                    "if set, must be a finite number in (0, 20] (typical: 1.5–3)".to_string(),
+                ],
             });
         }
     }

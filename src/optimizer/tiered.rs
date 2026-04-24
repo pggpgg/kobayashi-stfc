@@ -6,7 +6,7 @@
 //! When [`run_tiered_with_registry_with_progress`] is called with `scout_adaptive: true`, scouting
 //! uses two stages:
 //! 1. **Coarse** — every non-cached crew is simulated at [`scout_coarse_sims_from_cap`] trials
-//!    (derived from the resolved ceiling `S` from [`tiered_scout_sims_for_workload`] or API).
+//!    (derived from the resolved ceiling `S`, candidate count `N`, and top-`K`; see function docs).
 //! 2. **Refine** — crews whose **95% win-rate Wilson interval** overlaps the **top-K cut band**
 //!    get a fresh scout at the full cap `S` (replacing the coarse row). The cut band is the union
 //!    of Wilson intervals for coarse ranks `K−1` through `K−1 + SCOUT_REFINE_BAND_BUFFER` (0-based
@@ -22,6 +22,7 @@ use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::chain::ChainGrindParams;
+use crate::optimizer::chain::ChainSimulationSummary;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, DefenderOpponent, SharedScenarioData,
@@ -78,14 +79,49 @@ pub fn tiered_top_k_for_workload(n_candidates: usize) -> usize {
     k.min(56)
 }
 
-/// Coarse scout iterations per crew from the resolved tiered scout ceiling `cap_s`.
-pub fn scout_coarse_sims_from_cap(cap_s: usize) -> usize {
+/// Coarse scout iterations per crew from the resolved tiered scout ceiling `cap_s`,
+/// optionally nudged by candidate pool size and `top_k` relative to `N`.
+pub fn scout_coarse_sims_from_cap(cap_s: usize, n_candidates: usize, top_k: usize) -> usize {
     let s = cap_s.max(1);
     if s <= 2 {
         return 1;
     }
-    let q = s.saturating_mul(9).saturating_div(20).max(200);
-    q.min(s.saturating_sub(1)).max(1)
+    let mut q = s.saturating_mul(9).saturating_div(20).max(200);
+    q = q.min(s.saturating_sub(1)).max(1);
+
+    // Large pools: trim coarse slightly so total scout work does not grow without bound.
+    let n = n_candidates.max(1);
+    if n >= 20_000 {
+        q = q.saturating_mul(92).saturating_div(100).max(200);
+        q = q.min(s.saturating_sub(1)).max(1);
+    }
+
+    // Wide top-K relative to N: nudge coarse up so the Wilson cut band is a bit sharper.
+    let k = top_k.max(1);
+    if n >= 100 && k.saturating_mul(4) >= n {
+        q = ((q as f64) * 1.05).round() as usize;
+        q = q.clamp(200, s.saturating_sub(1)).max(1);
+    }
+
+    q
+}
+
+/// Scalar uncertainty width aligned with how [`rank_results`] scores crews (win + hull blend, or chain lexicographic).
+pub(crate) fn confirm_ranking_uncertainty_width(r: &RankedCrewResult) -> f64 {
+    if let Some(ref c) = r.chain {
+        return chain_ranking_uncertainty_width(c);
+    }
+    let w_win = (r.win_rate_ci_high - r.win_rate_ci_low).max(1e-12);
+    let w_hull = (r.avg_hull_remaining_ci_high - r.avg_hull_remaining_ci_low).max(0.0);
+    // Conservative: noisy hull matters for the 0.8·win + 0.2·hull score proxy.
+    w_win.max(w_hull).max(1e-12)
+}
+
+fn chain_ranking_uncertainty_width(c: &ChainSimulationSummary) -> f64 {
+    let w_p = (c.primary_ci_high - c.primary_ci_low).max(1e-12);
+    let w_s = (c.secondary_ci_high - c.secondary_ci_low).max(0.0);
+    // Secondary breaks ties after primary; widen budget when either signal is noisy.
+    w_p.max(0.35 * w_s).max(1e-12)
 }
 
 /// Upper bound on how many crews may receive a full-cap scout refine pass.
@@ -93,13 +129,13 @@ pub fn max_scout_refine_contenders(k: usize, n: usize) -> usize {
     k.saturating_mul(64).min(4096).max(k.min(n))
 }
 
-/// Wilson-interval widths from the scouting pass (95% win-rate CI) for each top-K crew, ordered by
-/// scout ranking. Wider width ⇒ lower confidence ⇒ more confirmation simulations.
-pub(crate) fn confirm_sims_from_scout_wilson_widths(
-    win_rate_ci_widths: &[f64],
+/// Uncertainty widths from the scouting pass for each top-K crew (scout ranking order).
+/// Wider width ⇒ lower confidence ⇒ more confirmation simulations.
+pub(crate) fn confirm_sims_from_uncertainty_widths(
+    uncertainty_widths: &[f64],
     base_full_sims: usize,
 ) -> Vec<usize> {
-    let k = win_rate_ci_widths.len();
+    let k = uncertainty_widths.len();
     if k == 0 {
         return Vec::new();
     }
@@ -108,7 +144,7 @@ pub(crate) fn confirm_sims_from_scout_wilson_widths(
         return vec![base];
     }
 
-    let widths: Vec<f64> = win_rate_ci_widths
+    let widths: Vec<f64> = uncertainty_widths
         .iter()
         .copied()
         .map(|w| w.max(1e-9))
@@ -131,6 +167,47 @@ pub(crate) fn confirm_sims_from_scout_wilson_widths(
         .collect()
 }
 
+/// When `cap_mult` is `Some(f)`, shrink per-crew confirmation targets so the sum does not exceed
+/// `floor(f * k * base_full)` (after `base_full` clamping), while keeping at least one trial per crew.
+/// No-op when `cap_mult` is absent or non-finite.
+pub(crate) fn apply_confirm_sims_budget_cap(
+    sims: &mut [usize],
+    k: usize,
+    base_full: usize,
+    cap_mult: Option<f64>,
+) {
+    let Some(mult) = cap_mult.filter(|m| m.is_finite() && *m > 0.0) else {
+        return;
+    };
+    let kk = k.max(1);
+    let base = base_full.max(1);
+    let cap_total = (mult * kk as f64 * base as f64).floor() as usize;
+    let cap_total = cap_total.max(sims.len());
+    let sum: usize = sims.iter().sum();
+    if sum <= cap_total {
+        return;
+    }
+    let scale = cap_total as f64 / sum as f64;
+    for s in sims.iter_mut() {
+        *s = ((*s as f64) * scale).floor().max(1.0) as usize;
+    }
+    loop {
+        let sum2: usize = sims.iter().sum();
+        if sum2 <= cap_total {
+            break;
+        }
+        let Some((i, _)) = sims
+            .iter()
+            .enumerate()
+            .max_by_key(|(_, v)| *v)
+            .filter(|(_, v)| **v > 1)
+        else {
+            break;
+        };
+        sims[i] -= 1;
+    }
+}
+
 /// Crew hashes that should receive a full-cap scout refine (`S` trials), excluding preconfirmed.
 pub(crate) fn scout_refine_candidate_hashes(
     ranked: &[RankedCrewResult],
@@ -147,9 +224,11 @@ pub(crate) fn scout_refine_candidate_hashes(
     let i1 = (i0 + band_buffer).min(n.saturating_sub(1));
     let mut band_lo = ranked[i0].win_rate_ci_low;
     let mut band_hi = ranked[i0].win_rate_ci_high;
-    for idx in (i0 + 1)..=i1 {
-        band_lo = band_lo.min(ranked[idx].win_rate_ci_low);
-        band_hi = band_hi.max(ranked[idx].win_rate_ci_high);
+    if let Some(tail) = ranked.get((i0 + 1)..=i1) {
+        for r in tail {
+            band_lo = band_lo.min(r.win_rate_ci_low);
+            band_hi = band_hi.max(r.win_rate_ci_high);
+        }
     }
 
     let mut scored: Vec<(u64, f64)> = Vec::new();
@@ -173,7 +252,7 @@ pub(crate) fn scout_refine_candidate_hashes(
 }
 
 /// Trial accounting for tiered scouting (coarse pass, optional refine pass, final per-crew totals).
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, serde::Serialize)]
 pub struct TieredScoutBudgetStats {
     /// Sum of `trials_run` after the coarse scout pass (one row per crew).
     pub coarse_pass_trials: u64,
@@ -181,6 +260,11 @@ pub struct TieredScoutBudgetStats {
     pub refine_pass_trials: u64,
     /// Sum of final per-crew `trials_run` after coarse + refine (used for total scout cost).
     pub scout_trials_final: u64,
+    /// Sum of `trials_run` across the top-K confirmation phase (includes optimize-history cache hits).
+    pub confirm_trials_total: u64,
+    /// Min / max confirmation iterations allocated per top-K crew (after optional global cap shrink).
+    pub confirm_sims_alloc_min: usize,
+    pub confirm_sims_alloc_max: usize,
 }
 
 fn simulation_trials_sum(rows: &[SimulationResult]) -> u64 {
@@ -313,6 +397,8 @@ pub fn run_tiered_with_registry_with_progress<F>(
     // When set, matching crews skip scout and/or confirm Monte Carlo using stored aggregates.
     preconfirmed: Option<&HashMap<u64, SimulationResult>>,
     scout_adaptive: bool,
+    // When `Some(f)`, shrink confirmation totals so `sum ≤ floor(f * K * full_sims)`.
+    confirm_budget_cap_mult: Option<f64>,
     mut on_progress: F,
 ) -> (Vec<RankedCrewResult>, TieredScoutBudgetStats)
 where
@@ -349,7 +435,7 @@ where
 
     let scout_cap = scout_sims.max(1);
     let coarse_sims = if scout_adaptive {
-        scout_coarse_sims_from_cap(scout_cap)
+        scout_coarse_sims_from_cap(scout_cap, total_candidates, k)
     } else {
         scout_cap
     };
@@ -456,14 +542,21 @@ where
         "optimize_tiered_scout_budget"
     );
 
-    // Rank scouting results and take top K (reuse Wilson widths for adaptive confirm budget).
+    // Rank scouting results and take top K (ranking-aligned uncertainty widths for confirm budget).
     let ranked_scout = rank_results(scout_ordered);
     let top_ranked: Vec<RankedCrewResult> = ranked_scout.into_iter().take(k).collect();
-    let wilson_widths: Vec<f64> = top_ranked
+    let uncertainty_widths: Vec<f64> = top_ranked
         .iter()
-        .map(|r| r.win_rate_ci_high - r.win_rate_ci_low)
+        .map(confirm_ranking_uncertainty_width)
         .collect();
-    let confirm_sims = confirm_sims_from_scout_wilson_widths(&wilson_widths, full_sims.max(1));
+    let mut confirm_sims =
+        confirm_sims_from_uncertainty_widths(&uncertainty_widths, full_sims.max(1));
+    apply_confirm_sims_budget_cap(
+        &mut confirm_sims,
+        k,
+        full_sims.max(1),
+        confirm_budget_cap_mult,
+    );
     let top_crews: Vec<CrewCandidate> = top_ranked
         .into_iter()
         .map(|r| CrewCandidate {
@@ -564,13 +657,19 @@ where
         return (Vec::new(), budget);
     }
 
+    let trial_per_crew: Vec<usize> = confirmation_results.iter().map(|r| r.trials_run).collect();
+    budget.confirm_trials_total = trial_per_crew.iter().map(|t| *t as u64).sum();
+    budget.confirm_sims_alloc_min = trial_per_crew.iter().min().copied().unwrap_or(0);
+    budget.confirm_sims_alloc_max = trial_per_crew.iter().max().copied().unwrap_or(0);
+
     (rank_results(confirmation_results), budget)
 }
 
 #[cfg(test)]
 mod workload_tests {
     use super::{
-        confirm_sims_from_scout_wilson_widths, max_scout_refine_contenders,
+        apply_confirm_sims_budget_cap, confirm_ranking_uncertainty_width,
+        confirm_sims_from_uncertainty_widths, max_scout_refine_contenders,
         scout_coarse_sims_from_cap, scout_refine_candidate_hashes, tiered_scout_sims_for_workload,
         tiered_top_k_for_workload, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
     };
@@ -634,8 +733,46 @@ mod workload_tests {
 
     #[test]
     fn scout_coarse_below_cap() {
-        assert!(scout_coarse_sims_from_cap(500) < 500);
-        assert!(scout_coarse_sims_from_cap(500) >= 200);
+        assert!(scout_coarse_sims_from_cap(500, 100, 20) < 500);
+        assert!(scout_coarse_sims_from_cap(500, 100, 20) >= 200);
+    }
+
+    #[test]
+    fn scout_coarse_large_pool_trims_vs_small_pool() {
+        let small = scout_coarse_sims_from_cap(500, 8_000, 20);
+        let large = scout_coarse_sims_from_cap(500, 20_000, 20);
+        assert!(
+            large <= small,
+            "large pool should not increase coarse vs mid pool"
+        );
+    }
+
+    #[test]
+    fn combined_width_exceeds_win_only_when_hull_ci_wide() {
+        let mut tight_hull = ranked_row("a", 0.45, 0.55);
+        tight_hull.avg_hull_remaining_ci_low = 0.48;
+        tight_hull.avg_hull_remaining_ci_high = 0.52;
+        let mut wide_hull = ranked_row("b", 0.45, 0.55);
+        wide_hull.avg_hull_remaining_ci_low = 0.05;
+        wide_hull.avg_hull_remaining_ci_high = 0.95;
+        let w_tight = confirm_ranking_uncertainty_width(&tight_hull);
+        let w_wide = confirm_ranking_uncertainty_width(&wide_hull);
+        assert!(
+            w_wide > w_tight,
+            "wide hull CI should raise ranking uncertainty width"
+        );
+    }
+
+    #[test]
+    fn confirm_budget_cap_scales_down_total() {
+        let base = 5_000usize;
+        let mut sims = vec![8_000usize, 8_000, 8_000];
+        apply_confirm_sims_budget_cap(&mut sims, 3, base, Some(1.2));
+        let after: usize = sims.iter().sum();
+        let cap = (1.2_f64 * 3.0 * base as f64).floor() as usize;
+        assert!(after <= cap, "after={after} cap={cap} sims={sims:?}");
+        assert!(after < 24_000, "expected shrink from 24k trials");
+        assert!(sims.iter().all(|&s| s >= 1));
     }
 
     #[test]
@@ -685,7 +822,7 @@ mod workload_tests {
     fn confirm_sims_uniform_widths_match_base() {
         let base = 5_000usize;
         let w = 0.2f64;
-        let sims = confirm_sims_from_scout_wilson_widths(&[w, w, w], base);
+        let sims = confirm_sims_from_uncertainty_widths(&[w, w, w], base);
         assert_eq!(sims, vec![base, base, base]);
     }
 
@@ -693,12 +830,40 @@ mod workload_tests {
     fn confirm_sims_wider_scout_width_gets_more_iterations() {
         let base = 4_000usize;
         // Wider Wilson band ⇒ lower confidence ⇒ more confirmation sims for that crew.
-        let sims = confirm_sims_from_scout_wilson_widths(&[0.1, 0.5], base);
+        let sims = confirm_sims_from_uncertainty_widths(&[0.1, 0.5], base);
         assert_eq!(sims.len(), 2);
         assert!(
             sims[1] > sims[0],
             "expected wider CI to increase confirm budget: {:?}",
             sims
+        );
+    }
+
+    #[test]
+    fn confirm_sims_wide_hull_width_increases_vs_win_only() {
+        let base = 4_000usize;
+        let win_only = [0.1_f64, 0.1];
+        let sims_win = confirm_sims_from_uncertainty_widths(&win_only, base);
+        let combined = [
+            confirm_ranking_uncertainty_width(&{
+                let mut r = ranked_row("x", 0.45, 0.55);
+                r.avg_hull_remaining_ci_low = 0.0;
+                r.avg_hull_remaining_ci_high = 0.95;
+                r
+            }),
+            confirm_ranking_uncertainty_width(&{
+                let mut r = ranked_row("y", 0.45, 0.55);
+                r.avg_hull_remaining_ci_low = 0.0;
+                r.avg_hull_remaining_ci_high = 0.95;
+                r
+            }),
+        ];
+        let sims_combined = confirm_sims_from_uncertainty_widths(&combined, base);
+        let sum_win: usize = sims_win.iter().sum();
+        let sum_combined: usize = sims_combined.iter().sum();
+        assert!(
+            sum_combined >= sum_win,
+            "combined hull+win widths should not reduce total confirm vs win-only: win={sum_win} combined={sum_combined}"
         );
     }
 }

@@ -642,11 +642,11 @@ mod tests {
     use super::{
         crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig,
     };
-    use std::sync::atomic::Ordering;
     use crate::combat::rng::Rng;
     use crate::optimizer::crew_generator::{
         CrewCandidate, OfficerPools, DEFAULT_BELOW_DECKS_SLOTS,
     };
+    use std::sync::atomic::Ordering;
 
     fn small_pools() -> OfficerPools {
         OfficerPools {

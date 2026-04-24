@@ -240,6 +240,124 @@ pub fn resolve_damage_application_single_hit(
     }
 }
 
+pub fn compute_damage_after_apex_batch_scalar(
+    damage_after_attack_phase: &[f64],
+    isolytic_taken: &[f64],
+    apex_damage_factor: f64,
+    output_damage_after_apex: &mut [f64],
+) -> Result<(), DamageKernelBatchError> {
+    let len = damage_after_attack_phase.len();
+    if isolytic_taken.len() != len || output_damage_after_apex.len() != len {
+        return Err(DamageKernelBatchError::LengthMismatch);
+    }
+    for idx in 0..len {
+        output_damage_after_apex[idx] =
+            (damage_after_attack_phase[idx] + isolytic_taken[idx]) * apex_damage_factor;
+    }
+    Ok(())
+}
+
+pub fn compute_damage_after_apex_batch(
+    damage_after_attack_phase: &[f64],
+    isolytic_taken: &[f64],
+    apex_damage_factor: f64,
+    output_damage_after_apex: &mut [f64],
+) -> Result<KernelExecutionPath, DamageKernelBatchError> {
+    let len = damage_after_attack_phase.len();
+    if isolytic_taken.len() != len || output_damage_after_apex.len() != len {
+        return Err(DamageKernelBatchError::LengthMismatch);
+    }
+    if avx2_supported() {
+        compute_damage_after_apex_batch_avx2(
+            damage_after_attack_phase,
+            isolytic_taken,
+            apex_damage_factor,
+            output_damage_after_apex,
+        )?;
+        Ok(KernelExecutionPath::Avx2)
+    } else {
+        compute_damage_after_apex_batch_scalar(
+            damage_after_attack_phase,
+            isolytic_taken,
+            apex_damage_factor,
+            output_damage_after_apex,
+        )?;
+        Ok(KernelExecutionPath::Scalar)
+    }
+}
+
+pub fn compute_damage_after_apex_batch_avx2(
+    damage_after_attack_phase: &[f64],
+    isolytic_taken: &[f64],
+    apex_damage_factor: f64,
+    output_damage_after_apex: &mut [f64],
+) -> Result<(), DamageKernelBatchError> {
+    let len = damage_after_attack_phase.len();
+    if isolytic_taken.len() != len || output_damage_after_apex.len() != len {
+        return Err(DamageKernelBatchError::LengthMismatch);
+    }
+
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        if !avx2_supported() {
+            return Err(DamageKernelBatchError::UnsupportedSimd);
+        }
+        // SAFETY:
+        // - AVX2 availability is checked above.
+        // - Bounds are validated by equal-length slices and loop limits.
+        unsafe {
+            compute_damage_after_apex_batch_avx2_impl(
+                damage_after_attack_phase,
+                isolytic_taken,
+                apex_damage_factor,
+                output_damage_after_apex,
+            )
+        };
+        Ok(())
+    }
+    #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+    {
+        let _ = damage_after_attack_phase;
+        let _ = isolytic_taken;
+        let _ = apex_damage_factor;
+        let _ = output_damage_after_apex;
+        Err(DamageKernelBatchError::UnsupportedSimd)
+    }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[target_feature(enable = "avx2")]
+unsafe fn compute_damage_after_apex_batch_avx2_impl(
+    damage_after_attack_phase: &[f64],
+    isolytic_taken: &[f64],
+    apex_damage_factor: f64,
+    output_damage_after_apex: &mut [f64],
+) {
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    let len = damage_after_attack_phase.len();
+    let mut idx = 0usize;
+    let apex = _mm256_set1_pd(apex_damage_factor);
+    while idx + 4 <= len {
+        let damage = _mm256_loadu_pd(damage_after_attack_phase.as_ptr().add(idx));
+        let isolytic = _mm256_loadu_pd(isolytic_taken.as_ptr().add(idx));
+        let damage_before_apex = _mm256_add_pd(damage, isolytic);
+        let damage_after_apex = _mm256_mul_pd(damage_before_apex, apex);
+        _mm256_storeu_pd(
+            output_damage_after_apex.as_mut_ptr().add(idx),
+            damage_after_apex,
+        );
+        idx += 4;
+    }
+    for tail_idx in idx..len {
+        output_damage_after_apex[tail_idx] =
+            (damage_after_attack_phase[tail_idx] + isolytic_taken[tail_idx]) * apex_damage_factor;
+    }
+}
+
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
 unsafe fn compute_damage_kernel_batch_avx2_impl(
@@ -390,6 +508,28 @@ mod tests {
         ));
         assert!(approx_eq(shield_damage, expected_shield_damage, 1e-12));
         assert!(approx_eq(hull_damage, expected_hull_damage, 1e-12));
+    }
+
+    #[test]
+    fn damage_after_apex_batch_matches_scalar_formula() {
+        let damage_after_attack_phase = vec![100.0_f64, 150.0, 1200.5, 9.0, 44.4, 71.7, 95.25];
+        let isolytic_taken = vec![2.0_f64, 0.0, 10.0, 3.3, 0.1, 8.5, 4.75];
+        let apex_damage_factor = 0.81_f64;
+        let mut output = vec![0.0_f64; damage_after_attack_phase.len()];
+
+        let _ = compute_damage_after_apex_batch(
+            &damage_after_attack_phase,
+            &isolytic_taken,
+            apex_damage_factor,
+            &mut output,
+        )
+        .unwrap();
+
+        for idx in 0..output.len() {
+            let expected =
+                (damage_after_attack_phase[idx] + isolytic_taken[idx]) * apex_damage_factor;
+            assert!(approx_eq(output[idx], expected, 1e-12));
+        }
     }
 
     #[test]

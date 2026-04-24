@@ -1067,7 +1067,10 @@ mod tests {
             1,
             || calls.fetch_add(1, Ordering::Relaxed) < 2,
         );
-        assert!(out.is_none(), "expected cooperative stop before third unique chunk");
+        assert!(
+            out.is_none(),
+            "expected cooperative stop before third unique chunk"
+        );
     }
 
     #[test]

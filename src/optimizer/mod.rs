@@ -216,6 +216,8 @@ pub struct OptimizationScenario<'a> {
     pub tiered_top_k: Option<usize>,
     /// Tiered only: when true, use a single uniform scout pass at the resolved scout cap (legacy). When false (default), use adaptive coarse→refine scout.
     pub tiered_scout_uniform: bool,
+    /// Tiered only: when set, shrink per-top-K confirmation totals so the sum does not exceed `floor(mult * K * simulation_count)`.
+    pub tiered_confirm_budget_cap_mult: Option<f64>,
     /// When set, keep only this many crews after analytical expected-hull-damage ranking before Monte Carlo. Genetic ignores this.
     pub analytical_prefilter_keep: Option<usize>,
     /// Below-decks slot count for candidate generation (resolved from API / tier defaults upstream).
@@ -251,6 +253,7 @@ impl Default for OptimizationScenario<'_> {
             tiered_scout_sims: None,
             tiered_top_k: None,
             tiered_scout_uniform: false,
+            tiered_confirm_budget_cap_mult: None,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -295,6 +298,8 @@ fn tiered_preconfirmed_map(
                 n_tiered,
                 tiered_scout_allocator_id(scenario),
                 &scenario.chain_grind,
+                crate::data::optimize_history::TIERED_BUDGET_POLICY_V2,
+                scenario.tiered_confirm_budget_cap_mult.map(|x| x as f32),
                 candidates,
             )
         }
@@ -504,6 +509,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.defender_opponent,
         pre_ref,
         !scenario.tiered_scout_uniform,
+        scenario.tiered_confirm_budget_cap_mult,
         |_| true,
     )
     .0
@@ -686,6 +692,7 @@ where
                 tiered_scout_sims: scenario.tiered_scout_sims,
                 tiered_top_k: scenario.tiered_top_k,
                 tiered_scout_uniform: scenario.tiered_scout_uniform,
+                tiered_confirm_budget_cap_mult: scenario.tiered_confirm_budget_cap_mult,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
                 below_decks_slots: scenario.below_decks_slots,
                 constraints: scenario.constraints.clone(),
@@ -885,6 +892,7 @@ where
                 scenario.defender_opponent,
                 pre_ref,
                 scout_adaptive,
+                scenario.tiered_confirm_budget_cap_mult,
                 &mut on_progress,
             );
             OptimizeRunOutcome {
@@ -1064,6 +1072,7 @@ pub fn optimize_crew(
         tiered_scout_sims: None,
         tiered_top_k: None,
         tiered_scout_uniform: false,
+        tiered_confirm_budget_cap_mult: None,
         analytical_prefilter_keep: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
@@ -1107,6 +1116,7 @@ mod tests {
             tiered_scout_sims: None,
             tiered_top_k: None,
             tiered_scout_uniform: false,
+            tiered_confirm_budget_cap_mult: None,
             analytical_prefilter_keep: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
@@ -1246,6 +1256,7 @@ mod tests {
             tiered_scout_sims: None,
             tiered_top_k: None,
             tiered_scout_uniform: false,
+            tiered_confirm_budget_cap_mult: None,
             analytical_prefilter_keep: Some(4),
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,

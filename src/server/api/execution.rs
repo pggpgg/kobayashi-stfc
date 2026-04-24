@@ -23,6 +23,7 @@ use crate::optimizer::monte_carlo::{
     SimulationResult,
 };
 use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
+use crate::optimizer::tiered::TieredScoutBudgetStats;
 use crate::optimizer::{
     count_effective_optimize_candidates, optimize_scenario_with_progress_with_registry,
     OptimizationScenario, OptimizeProgressTick, OptimizerStrategy,
@@ -271,6 +272,9 @@ pub struct ScenarioSummary {
     /// True when this run updated `optimize_history.json` for `optimize_cache_key`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub optimize_history_wrote: Option<bool>,
+    /// Tiered runs: scout/confirm trial accounting (see `TieredScoutBudgetStats`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tiered_scout_budget: Option<TieredScoutBudgetStats>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -333,6 +337,7 @@ struct OptimizeGatherMeta {
     optimize_constraints: Option<OptimizeConstraintsSummary>,
     optimize_history_confirm_hits: u32,
     optimize_history_wrote: bool,
+    tiered_scout_budget: Option<TieredScoutBudgetStats>,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -545,6 +550,7 @@ fn gather_optimize_simulation_results(
     });
     let mut optimize_history_confirm_hits = 0u32;
     let mut optimize_history_wrote = false;
+    let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
 
     let mut h_candidates = if heuristics_seeds_nonempty {
         load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
@@ -676,6 +682,7 @@ fn gather_optimize_simulation_results(
             tiered_scout_sims: request.tiered_scout_sims.map(|n| n as usize),
             tiered_top_k: request.tiered_top_k.map(|n| n as usize),
             tiered_scout_uniform: matches!(request.tiered_scout_uniform, Some(true)),
+            tiered_confirm_budget_cap_mult: request.tiered_confirm_budget_cap_mult,
             analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
             below_decks_slots,
             constraints: crew_constraints.clone(),
@@ -703,6 +710,7 @@ fn gather_optimize_simulation_results(
             return Err(());
         }
         optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
+        tiered_scout_budget_for_response = outcome.tiered_scout_budget;
         if strategy == OptimizerStrategy::Tiered {
             if let (Some(pid), Some(key), Some((n, scout, tk))) = (
                 profile_id,
@@ -722,6 +730,8 @@ fn gather_optimize_simulation_results(
                     n,
                     tiered_scout_allocator,
                     &chain_grind,
+                    optimize_history::TIERED_BUDGET_POLICY_V2,
+                    request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
                     &outcome.ranked,
                 );
                 optimize_history_wrote =
@@ -762,6 +772,7 @@ fn gather_optimize_simulation_results(
         optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
         optimize_history_confirm_hits,
         optimize_history_wrote,
+        tiered_scout_budget: tiered_scout_budget_for_response,
     };
     info!(
         effective_strategy = optimizer_strategy_to_api_label(meta.strategy),
@@ -920,6 +931,7 @@ fn build_optimize_response(
             optimize_history_confirm_hits: (meta.optimize_history_confirm_hits > 0)
                 .then_some(meta.optimize_history_confirm_hits),
             optimize_history_wrote: meta.optimize_history_wrote.then_some(true),
+            tiered_scout_budget: meta.tiered_scout_budget,
         },
         recommendations: ranked_results
             .iter()

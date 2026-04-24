@@ -40,7 +40,7 @@ use crate::combat::evolutionary_assimilation::evolutionary_assimilation_instant_
 use crate::combat::proc::{accumulate_proc_attack_effects, roll_weapon_intrinsic_proc};
 use crate::combat::rng::Rng;
 use crate::combat::simd_damage_kernel::{
-    experimental_engine_kernel_enabled, resolve_damage_application_single_hit,
+    avx2_supported, compute_damage_after_apex_batch, experimental_engine_kernel_enabled,
 };
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
 
@@ -287,6 +287,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
     let mut rng = Rng::new(config.seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
+    let use_experimental_simd_damage_after_apex =
+        experimental_engine_kernel_enabled() && avx2_supported() && !trace.is_enabled();
     let mut total_hull_damage = 0.0;
     let mut total_shield_damage = 0.0;
     let mut defender_shield_remaining = defender.shield_health.max(0.0);
@@ -899,6 +901,30 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             let base_shots = attacker.weapon_base_shots(weapon_index);
             let effective_shots = effective_shots_for_weapon(base_shots, b_shots);
             let shield_before_weapon = defender_shield_remaining;
+            let mut simd_damage_batch: Vec<f64> =
+                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                    Vec::with_capacity(4)
+                } else {
+                    Vec::new()
+                };
+            let mut simd_isolytic_batch: Vec<f64> =
+                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                    Vec::with_capacity(4)
+                } else {
+                    Vec::new()
+                };
+            let mut simd_shield_mitigation_batch: Vec<f64> =
+                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                    Vec::with_capacity(4)
+                } else {
+                    Vec::new()
+                };
+            let mut simd_damage_after_apex_batch: Vec<f64> =
+                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                    Vec::with_capacity(4)
+                } else {
+                    Vec::new()
+                };
 
             let weapon_index_u = weapon_index as u32;
             for hit_index in 0..effective_shots {
@@ -1234,26 +1260,51 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     } else {
                         0.0
                     };
-                    let (damage_after_apex, actual_shield_damage, hull_damage_this_round) =
-                        if experimental_engine_kernel_enabled() {
-                            let (simd_damage_after_apex, simd_shield_damage, simd_hull_damage, _) =
-                                resolve_damage_application_single_hit(
-                                    damage,
-                                    isolytic_taken,
-                                    apex_damage_factor,
-                                    shield_mitigation,
-                                    defender_shield_remaining,
-                                );
-                            (simd_damage_after_apex, simd_shield_damage, simd_hull_damage)
-                        } else {
-                            let (shield_damage_scalar, hull_damage_scalar) =
-                                apply_shield_hull_split(
-                                    damage_after_apex,
-                                    shield_mitigation,
-                                    defender_shield_remaining,
-                                );
-                            (damage_after_apex, shield_damage_scalar, hull_damage_scalar)
-                        };
+
+                    if use_experimental_simd_damage_after_apex {
+                        simd_damage_batch.push(damage);
+                        simd_isolytic_batch.push(isolytic_taken);
+                        simd_shield_mitigation_batch.push(effective_shield_mitigation);
+
+                        let flush_batch =
+                            simd_damage_batch.len() == 4 || hit_index + 1 == effective_shots;
+                        if flush_batch {
+                            simd_damage_after_apex_batch.resize(simd_damage_batch.len(), 0.0);
+                            let _ = compute_damage_after_apex_batch(
+                                &simd_damage_batch,
+                                &simd_isolytic_batch,
+                                apex_damage_factor,
+                                &mut simd_damage_after_apex_batch,
+                            );
+                            for lane in 0..simd_damage_after_apex_batch.len() {
+                                let lane_shield_mitigation = if defender_shield_remaining > 0.0 {
+                                    simd_shield_mitigation_batch[lane]
+                                } else {
+                                    0.0
+                                };
+                                let (actual_shield_damage, hull_damage_this_round) =
+                                    apply_shield_hull_split(
+                                        simd_damage_after_apex_batch[lane],
+                                        lane_shield_mitigation,
+                                        defender_shield_remaining,
+                                    );
+                                defender_shield_remaining =
+                                    (defender_shield_remaining - actual_shield_damage).max(0.0);
+                                total_hull_damage += hull_damage_this_round;
+                                total_shield_damage += actual_shield_damage;
+                            }
+                            simd_damage_batch.clear();
+                            simd_isolytic_batch.clear();
+                            simd_shield_mitigation_batch.clear();
+                        }
+                        continue;
+                    }
+
+                    let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
+                        damage_after_apex,
+                        shield_mitigation,
+                        defender_shield_remaining,
+                    );
 
                     defender_shield_remaining =
                         (defender_shield_remaining - actual_shield_damage).max(0.0);
@@ -1459,7 +1510,43 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
                 let mut counter_hull_damage_this_subround = false;
 
-                for _hit_index in 0..def_effective_shots {
+                let counter_apex_factor = compute_apex_damage_factor(
+                    defender.apex_shred.max(0.0),
+                    attacker.apex_barrier.max(0.0),
+                );
+
+                let mut counter_simd_damage_batch: Vec<f64> =
+                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                        Vec::with_capacity(4)
+                    } else {
+                        Vec::new()
+                    };
+                let mut counter_simd_isolytic_batch: Vec<f64> =
+                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                        Vec::with_capacity(4)
+                    } else {
+                        Vec::new()
+                    };
+                let mut counter_simd_shield_mit_batch: Vec<f64> =
+                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                        Vec::with_capacity(4)
+                    } else {
+                        Vec::new()
+                    };
+                let mut counter_simd_crit_batch: Vec<bool> =
+                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                        Vec::with_capacity(4)
+                    } else {
+                        Vec::new()
+                    };
+                let mut counter_simd_after_apex_batch: Vec<f64> =
+                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                        Vec::with_capacity(4)
+                    } else {
+                        Vec::new()
+                    };
+
+                for hit_index in 0..def_effective_shots {
                     let defender_attack_phase_assimilated =
                         defender_assimilated_rounds_remaining > 0;
                     roll_assimilated_extensions_from_effects(
@@ -1585,12 +1672,269 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                             .composed_isolytic_cascade_damage_bonus()
                             .max(0.0),
                     );
-                    let counter_before_apex = counter_after_attack_phase + counter_iso_taken;
-                    let counter_apex_factor = compute_apex_damage_factor(
-                        defender.apex_shred.max(0.0),
-                        attacker.apex_barrier.max(0.0),
-                    );
-                    let counter_after_apex = counter_before_apex * counter_apex_factor;
+                    if use_experimental_simd_damage_after_apex {
+                        let att_mit_for_batch = attacker.shield_mitigation.clamp(0.0, 1.0);
+                        counter_simd_damage_batch.push(counter_after_attack_phase);
+                        counter_simd_isolytic_batch.push(counter_iso_taken);
+                        counter_simd_shield_mit_batch.push(att_mit_for_batch);
+                        counter_simd_crit_batch.push(def_is_crit);
+
+                        let flush_batch = counter_simd_damage_batch.len() == 4
+                            || hit_index + 1 == def_effective_shots;
+                        if flush_batch {
+                            counter_simd_after_apex_batch
+                                .resize(counter_simd_damage_batch.len(), 0.0);
+                            let _ = compute_damage_after_apex_batch(
+                                &counter_simd_damage_batch,
+                                &counter_simd_isolytic_batch,
+                                counter_apex_factor,
+                                &mut counter_simd_after_apex_batch,
+                            );
+                            for lane in 0..counter_simd_after_apex_batch.len() {
+                                let att_shield_before_counter = attacker_shield_remaining;
+                                let lane_mit = if attacker_shield_remaining > 0.0 {
+                                    counter_simd_shield_mit_batch[lane]
+                                } else {
+                                    0.0
+                                };
+                                let (att_actual_shield_damage, att_hull_damage_this_round) =
+                                    apply_shield_hull_split(
+                                        counter_simd_after_apex_batch[lane],
+                                        lane_mit,
+                                        attacker_shield_remaining,
+                                    );
+                                attacker_shield_remaining =
+                                    (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
+                                total_attacker_hull_damage += att_hull_damage_this_round;
+                                attacker_hull_gross_damage_this_round += att_hull_damage_this_round;
+                                attacker_shield_gross_damage_this_round += att_actual_shield_damage;
+
+                                let def_is_crit_lane = counter_simd_crit_batch[lane];
+                                if att_hull_damage_this_round > 0.0 {
+                                    for effect in defender_attack_filtered
+                                        .iter()
+                                        .chain(defender_defense_filtered.iter())
+                                    {
+                                        let effective_effect = scale_effect(effect.effect, false);
+                                        if let AbilityEffect::HullBreach {
+                                            chance,
+                                            duration_rounds,
+                                            requires_critical,
+                                        } = effective_effect
+                                        {
+                                            if requires_critical && !def_is_crit_lane {
+                                                continue;
+                                            }
+                                            let hull_breach_roll =
+                                                (rng.next_u64() as f64) / (u64::MAX as f64);
+                                            let triggered =
+                                                hull_breach_roll < chance.clamp(0.0, 1.0);
+                                            let breach_before = attacker_hull_breach_rounds;
+                                            if triggered {
+                                                attacker_hull_breach_rounds =
+                                                    attacker_hull_breach_rounds
+                                                        .max(duration_rounds.max(1));
+                                            }
+                                            if breach_before == 0 && attacker_hull_breach_rounds > 0
+                                            {
+                                                let mut ctx_hb = combat_ctx.clone();
+                                                ctx_hb.attacker_hull_pct = 1.0
+                                                    - (total_attacker_hull_damage
+                                                        / attacker.hull_health.max(0.0))
+                                                    .min(1.0);
+                                                ctx_hb.attacker_shield_pct =
+                                                    if attacker.shield_health > 0.0 {
+                                                        attacker_shield_remaining
+                                                            / attacker.shield_health
+                                                    } else {
+                                                        0.0
+                                                    };
+                                                apply_attacker_hull_breach_timing_window(
+                                                    &mut trace,
+                                                    round_index,
+                                                    attacker,
+                                                    &hull_breach_effects,
+                                                    ctx_hb,
+                                                    assimilated_rounds_remaining > 0,
+                                                    defender_weapon_attack,
+                                                    &mut phase_effects_round,
+                                                    &mut rng,
+                                                    &mut defender_burning_rounds,
+                                                );
+                                            }
+                                            trace.record_if(|| CombatEvent {
+                                                event_type: "hull_breach_trigger".to_string(),
+                                                round_index,
+                                                phase: "counter".to_string(),
+                                                source: EventSource {
+                                                    hostile_ability_id: Some(format!(
+                                                        "{}_counter_hull_breach",
+                                                        defender.id
+                                                    )),
+                                                    ..EventSource::default()
+                                                },
+                                                weapon_index: Some(weapon_index as u32),
+                                                values: Map::from_iter([
+                                                    (
+                                                        "roll".to_string(),
+                                                        Value::from(round_f64(hull_breach_roll)),
+                                                    ),
+                                                    (
+                                                        "triggered".to_string(),
+                                                        Value::Bool(triggered),
+                                                    ),
+                                                    (
+                                                        "chance".to_string(),
+                                                        Value::from(round_f64(chance)),
+                                                    ),
+                                                    (
+                                                        "duration_rounds".to_string(),
+                                                        Value::from(duration_rounds),
+                                                    ),
+                                                    (
+                                                        "requires_critical".to_string(),
+                                                        Value::Bool(requires_critical),
+                                                    ),
+                                                    (
+                                                        "target".to_string(),
+                                                        Value::String("attacker".to_string()),
+                                                    ),
+                                                    (
+                                                        "ability".to_string(),
+                                                        Value::String(effect.ability_name.clone()),
+                                                    ),
+                                                ]),
+                                            });
+                                        }
+                                        roll_burning_triggers(
+                                            std::slice::from_ref(effect),
+                                            false,
+                                            &mut rng,
+                                            &mut trace,
+                                            round_index,
+                                            "counter",
+                                            &defender.id,
+                                            Some(weapon_index as u32),
+                                            &mut attacker_burning_rounds,
+                                        );
+                                    }
+                                }
+
+                                let attacker_own_shields_broke = att_shield_before_counter > 0.0
+                                    && attacker_shield_remaining <= 0.0;
+                                if attacker_own_shields_broke {
+                                    let mut ctx_self_sb = combat_ctx.clone();
+                                    ctx_self_sb.attacker_shield_pct =
+                                        if attacker.shield_health > 0.0 {
+                                            attacker_shield_remaining / attacker.shield_health
+                                        } else {
+                                            0.0
+                                        };
+                                    ctx_self_sb.attacker_hull_pct = 1.0
+                                        - (total_attacker_hull_damage
+                                            / attacker.hull_health.max(0.0))
+                                        .min(1.0);
+                                    let self_sb_filtered = filter_effects_by_condition(
+                                        &self_shield_break_effects,
+                                        &ctx_self_sb,
+                                    );
+                                    record_ability_activations(
+                                        &mut trace,
+                                        round_index,
+                                        "self_shield_break",
+                                        attacker,
+                                        &self_sb_filtered,
+                                        attack_phase_assimilated,
+                                    );
+                                    for e in &self_sb_filtered {
+                                        match scale_effect(e.effect, attack_phase_assimilated) {
+                                            AbilityEffect::ShieldRegen(v) => {
+                                                attacker_shield_remaining =
+                                                    (attacker_shield_remaining + v)
+                                                        .min(attacker.shield_health.max(0.0));
+                                            }
+                                            AbilityEffect::HullRegen(v) => {
+                                                total_attacker_hull_damage =
+                                                    (total_attacker_hull_damage - v).max(0.0);
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                    let self_sb_combat: Vec<ActiveAbilityEffect> =
+                                        self_sb_filtered
+                                            .iter()
+                                            .filter(|e| {
+                                                !matches!(
+                                    scale_effect(e.effect, attack_phase_assimilated),
+                                    AbilityEffect::ShieldRegen(_)
+                                        | AbilityEffect::HullRegen(_)
+                                        | AbilityEffect::HullRegenPrevRoundFraction(_)
+                                        | AbilityEffect::ShieldRegenPrevRoundFraction(_)
+                                )
+                                            })
+                                            .cloned()
+                                            .collect();
+                                    phase_effects_round.add_effects(
+                                        TimingWindow::SelfShieldBreak,
+                                        &self_sb_combat,
+                                        weapon_base,
+                                        attack_phase_assimilated,
+                                        round_index,
+                                    );
+                                    roll_burning_triggers(
+                                        &self_sb_combat,
+                                        attack_phase_assimilated,
+                                        &mut rng,
+                                        &mut trace,
+                                        round_index,
+                                        "self_shield_break",
+                                        &attacker.id,
+                                        None,
+                                        &mut defender_burning_rounds,
+                                    );
+                                }
+                                if att_hull_damage_this_round > 0.0 {
+                                    counter_hull_damage_this_subround = true;
+                                    let receive_damage_assimilated =
+                                        assimilated_rounds_remaining > 0;
+                                    let mut ctx_receive = combat_ctx.clone();
+                                    ctx_receive.attacker_hull_pct = 1.0
+                                        - (total_attacker_hull_damage
+                                            / attacker.hull_health.max(0.0))
+                                        .min(1.0);
+                                    ctx_receive.attacker_shield_pct =
+                                        if attacker.shield_health > 0.0 {
+                                            attacker_shield_remaining / attacker.shield_health
+                                        } else {
+                                            0.0
+                                        };
+                                    let receive_damage_filtered = filter_effects_by_condition(
+                                        &receive_damage_effects,
+                                        &ctx_receive,
+                                    );
+                                    roll_burning_triggers(
+                                        &receive_damage_filtered,
+                                        receive_damage_assimilated,
+                                        &mut rng,
+                                        &mut trace,
+                                        round_index,
+                                        "receive_damage",
+                                        &attacker.id,
+                                        None,
+                                        &mut attacker_burning_rounds,
+                                    );
+                                }
+                            }
+                            counter_simd_damage_batch.clear();
+                            counter_simd_isolytic_batch.clear();
+                            counter_simd_shield_mit_batch.clear();
+                            counter_simd_crit_batch.clear();
+                        }
+                        continue;
+                    }
+
+                    let counter_after_apex =
+                        (counter_after_attack_phase + counter_iso_taken) * counter_apex_factor;
                     let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
                         attacker.shield_mitigation.clamp(0.0, 1.0)
                     } else {

@@ -79,6 +79,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         tiered_scout_sims: Some(row.tiered_scout_sims),
         tiered_top_k: Some(row.tiered_top_k),
         tiered_scout_uniform: uniform,
+        tiered_confirm_budget_cap_mult: None,
         analytical_prefilter_keep: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
