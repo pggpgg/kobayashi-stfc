@@ -167,6 +167,7 @@ pub fn building_combat_summary_for_profile(profile_id: &str) -> BuildingCombatSu
     let mut scratch = PlayerProfile {
         ops_level: player.ops_level,
         bonuses: HashMap::new(),
+        support_buffs: Vec::new(),
         forbidden_tech_override: None,
         chaos_tech_override: None,
     };

@@ -228,7 +228,7 @@ async fn profile_put_accepts_and_canonicalizes_valid_payload() {
     let response = route_request(
         "PUT",
         &format!("/api/profile?profile={profile_id}"),
-        r#"{"bonuses":{"weapon_damage":0.1,"armor_pierce":5.0},"ops_level":40,"forbidden_tech_override":[123],"chaos_tech_override":[456]}"#,
+        r#"{"bonuses":{"weapon_damage":0.1,"armor_pierce":5.0},"support_buffs":["cerritos_support","defiant_reinforce","cerritos_support"],"ops_level":40,"forbidden_tech_override":[123],"chaos_tech_override":[456]}"#,
     )
     .await;
     assert_eq!(response.status_code, 200, "{}", response.body);
@@ -243,6 +243,10 @@ async fn profile_put_accepts_and_canonicalizes_valid_payload() {
     assert_eq!(payload["bonuses"]["weapon_damage"], 0.1);
     assert_eq!(payload["bonuses"]["pierce"], 5.0);
     assert!(payload["bonuses"]["armor_pierce"].is_null());
+    assert_eq!(
+        payload["support_buffs"],
+        serde_json::json!(["cerritos_support", "defiant_reinforce"])
+    );
     assert_eq!(payload["ops_level"], 40);
 }
 
