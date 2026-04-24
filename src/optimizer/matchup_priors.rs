@@ -2,14 +2,16 @@
 //!
 //! Closed-form [`crate::optimizer::analytical::expected_damage`] ignores conditional abilities; we add a
 //! small **prior** so crews with gates that match this fight (hull class, faction, PvE/PvP, Tal) and
-//! crews overlapping UI warm-start winners sort ahead when truncating before Monte Carlo.
+//! crews overlapping UI warm-start or persisted optimize-history reference crews sort ahead when
+//! truncating before Monte Carlo. Catalog-backed synergy bumps are deferred (see `src/data/synergy.rs`).
 
 use std::collections::HashSet;
 
 use crate::combat::{
-    attacker_crew_tal_assigned_captain_or_bridge, AbilityCondition, CrewConfiguration,
+    attacker_crew_tal_assigned_captain_or_bridge, AbilityCondition, CrewConfiguration, EnemyType,
     OpponentFactionTag,
 };
+use crate::data::upstream_hostile_ship_type::upstream_hostile_ship_type_profile;
 use crate::optimizer::analytical::expected_damage;
 use crate::optimizer::constraints::normalize_officer_name;
 use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS};
@@ -162,12 +164,25 @@ fn static_matchup_gate_score(shared: &SharedScenarioData, crew: &CrewConfigurati
     score
 }
 
-/// Light heuristic: upstream `is_scout` / `is_outpost` with ability name hints (LCARS slug text).
+/// Encounter hints: scout/outpost flags, armada-related upstream or engagement tags, Conqueror Borg hostile tags.
+/// Ability name substrings are LCARS slug text — kept conservative; capped so priors stay subordinate to [`expected_damage`].
 fn encounter_tag_score(shared: &SharedScenarioData, crew: &CrewConfiguration) -> f32 {
     let Some(h) = shared.hostile_rec.as_ref() else {
         return 0.0;
     };
-    if !h.is_scout && !h.is_outpost {
+    let engagement = h.engagement_enemy_types_for_combat();
+    let armada_ctx = upstream_hostile_ship_type_profile(h.upstream_ship_type).is_armada_target
+        || engagement.contains(EnemyType::SoloArmadas)
+        || engagement.contains(EnemyType::GroupArmadas)
+        || engagement.contains(EnemyType::OutpostArmadas);
+    let borg_ctx = h.hostile_tags.iter().any(|t| {
+        let x = t.to_lowercase().replace('-', "_");
+        x == "conqueror_borg"
+            || x == "conqueror_borg_suppressor"
+            || x == "conqueror_borg_obliterator"
+    });
+    let scout_outpost_ctx = h.is_scout || h.is_outpost;
+    if !scout_outpost_ctx && !armada_ctx && !borg_ctx {
         return 0.0;
     }
     let mut s = 0.0f32;
@@ -179,8 +194,14 @@ fn encounter_tag_score(shared: &SharedScenarioData, crew: &CrewConfiguration) ->
         if h.is_scout && name.contains("scout") {
             s += 1.0;
         }
+        if armada_ctx && name.contains("armada") {
+            s += 1.0;
+        }
+        if borg_ctx && name.contains("conqueror") && name.contains("borg") {
+            s += 1.0;
+        }
     }
-    s.min(2.0)
+    s.min(3.0)
 }
 
 fn officer_material_set(c: &CrewCandidate) -> HashSet<String> {
@@ -328,6 +349,23 @@ mod tests {
         }
     }
 
+    fn seat_named(name: &str) -> CrewSeatContext {
+        CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: name.to_string(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::AttackPhase,
+                boostable: false,
+                effect: crate::combat::AbilityEffect::AttackMultiplier(1.05),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: crate::combat::NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }
+    }
+
     #[test]
     fn static_gate_passes_for_matching_defender_ship_type() {
         let h: HostileRecord = serde_json::from_value(serde_json::json!({
@@ -411,5 +449,51 @@ mod tests {
         }];
         let s = captain_bridge_warm_score(&c, &warm);
         assert!((s - 0.5).abs() < 1e-5, "got {s}");
+    }
+
+    #[test]
+    fn encounter_tag_armada_upstream_matches_ability_substring() {
+        let h: HostileRecord = serde_json::from_value(serde_json::json!({
+            "id": "h1",
+            "hostile_name": "Armada Target",
+            "level": 1,
+            "ship_class": "Battleship",
+            "armor": 0.0,
+            "shield_deflection": 0.0,
+            "dodge": 0.0,
+            "hull_health": 100.0,
+            "shield_health": 0.0,
+            "faction": { "id": 42 },
+            "upstream_ship_type": 1
+        }))
+        .unwrap();
+        let shared = minimal_shared_with_hostile(h);
+        let crew = CrewConfiguration {
+            seats: vec![seat_named("strike_vs_armada")],
+        };
+        assert!(encounter_tag_score(&shared, &crew) > 0.0);
+    }
+
+    #[test]
+    fn encounter_tag_conqueror_borg_hostile_matches_ability_substring() {
+        let h: HostileRecord = serde_json::from_value(serde_json::json!({
+            "id": "h1",
+            "hostile_name": "Borg",
+            "level": 1,
+            "ship_class": "Battleship",
+            "armor": 0.0,
+            "shield_deflection": 0.0,
+            "dodge": 0.0,
+            "hull_health": 100.0,
+            "shield_health": 0.0,
+            "faction": { "id": 42 },
+            "hostile_tags": ["conqueror_borg"]
+        }))
+        .unwrap();
+        let shared = minimal_shared_with_hostile(h);
+        let crew = CrewConfiguration {
+            seats: vec![seat_named("conqueror_borg_suppression")],
+        };
+        assert!(encounter_tag_score(&shared, &crew) > 0.0);
     }
 }

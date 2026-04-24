@@ -16,7 +16,7 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 ### Next optimizer upgrades
 
-- **Matchup-aware pruning rules** — Add captain/bridge synergy priors, encounter-specific tags, and learned “family” priors from prior winning crews before expensive simulation.
+- **Matchup-aware pruning rules** — *(Partial: analytical prefilter uses [`src/optimizer/matchup_priors.rs`](../src/optimizer/matchup_priors.rs) — static gates, encounter heuristics armada/Borg/scout/outpost, client warm-start overlap, and **optimize_history** reference crews for the same `optimize_cache_key` + chain fingerprint.)* **Open:** catalog-backed captain/bridge synergy priors when [`src/data/synergy.rs`](../src/data/synergy.rs) grows loadable pair rows.
 - **Novelty-aware ranking** — Reward crews that are both strong and materially different from already-known winners so discovery does not collapse into the same few lineages.
 - **Automatic local learning loop** — *(Partial: per-profile `optimize_history.json` stores tiered and exhaustive two-phase results for `optimize_cache_key` and re-injects matching crews on the next run — see `src/data/optimize_history.rs` and `src/server/api/execution.rs`.)* Still open: use history to tune exploration limits automatically and broader “learn” feedback loops.
 - **First-class fast-discovery mode** — *(Shipped: `fast_discovery` on optimize merges expanded `heuristics_seeds` crews into the main warm-start path so they share analytical prefilter + tiered or exhaustive Monte Carlo; workspace Strategy panel checkbox; OpenAPI field.)* Optional genetic refinement pass after tiered confirm remains future work.

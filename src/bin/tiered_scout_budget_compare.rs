@@ -7,6 +7,9 @@
 //! officer pools are non-empty (the default API profile may have no roster file on disk).
 //!
 //! Compare `scout_trials_final` from [`kobayashi::optimizer::OptimizeRunOutcome::tiered_scout_budget`].
+//!
+//! Scenarios set `prior_reference_crews` empty; production runs may populate it from optimize history
+//! for analytical rank only (see `kobayashi::data::optimize_history::prior_reference_crews_for_matchup_priors`).
 
 use std::time::Instant;
 
@@ -89,6 +92,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
         warm_start: Vec::new(),
+        prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
     }
 }

@@ -12,6 +12,7 @@ pub mod tiered;
 
 pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
 
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use tracing::info;
 
@@ -106,11 +107,19 @@ fn analytical_prefilter_unless_chain(
     keep: Option<usize>,
     chain_grind: &Option<ChainGrindParams>,
     warm_start: &[CrewCandidate],
+    prior_reference_crews: &[CrewCandidate],
 ) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
     if chain_grind.is_some() {
         (candidates, None)
     } else {
-        sort_and_analytical_prefilter(shared, candidates, seed, keep, warm_start)
+        sort_and_analytical_prefilter(
+            shared,
+            candidates,
+            seed,
+            keep,
+            warm_start,
+            prior_reference_crews,
+        )
     }
 }
 
@@ -121,13 +130,23 @@ fn sort_candidates_by_analytical_expected_damage(
     candidates: Vec<CrewCandidate>,
     seed: u64,
     warm_start: &[CrewCandidate],
+    prior_reference_crews: &[CrewCandidate],
 ) -> Vec<CrewCandidate> {
+    let rank_refs: Cow<'_, [CrewCandidate]> = if prior_reference_crews.is_empty() {
+        Cow::Borrowed(warm_start)
+    } else {
+        let mut m = Vec::with_capacity(warm_start.len() + prior_reference_crews.len());
+        m.extend_from_slice(warm_start);
+        m.extend_from_slice(prior_reference_crews);
+        Cow::Owned(m)
+    };
+    let refs = rank_refs.as_ref();
     let mut indexed: Vec<(usize, CrewCandidate)> = candidates.into_iter().enumerate().collect();
     indexed.sort_by(|(ia, ca), (ib, cb)| {
         let input_a = scenario_to_combat_input_from_shared(shared, ca, seed);
         let input_b = scenario_to_combat_input_from_shared(shared, cb, seed);
-        let sa = analytical_prefilter_rank_score(shared, &input_a, ca, warm_start);
-        let sb = analytical_prefilter_rank_score(shared, &input_b, cb, warm_start);
+        let sa = analytical_prefilter_rank_score(shared, &input_a, ca, refs);
+        let sb = analytical_prefilter_rank_score(shared, &input_b, cb, refs);
         sb.total_cmp(&sa).then_with(|| ia.cmp(ib))
     });
     indexed.into_iter().map(|(_, c)| c).collect()
@@ -141,10 +160,16 @@ pub(crate) fn sort_and_analytical_prefilter(
     seed: u64,
     keep: Option<usize>,
     warm_start: &[CrewCandidate],
+    prior_reference_crews: &[CrewCandidate],
 ) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
     let generated = candidates.len();
-    let mut sorted =
-        sort_candidates_by_analytical_expected_damage(shared, candidates, seed, warm_start);
+    let mut sorted = sort_candidates_by_analytical_expected_damage(
+        shared,
+        candidates,
+        seed,
+        warm_start,
+        prior_reference_crews,
+    );
     let Some(k) = keep.filter(|n| *n > 0) else {
         return (sorted, None);
     };
@@ -242,6 +267,9 @@ pub struct OptimizationScenario<'a> {
     pub defender_opponent: DefenderOpponent,
     /// Optional crews prepended before generated candidates (deduped by stable hash); e.g. warm-start from UI.
     pub warm_start: Vec<CrewCandidate>,
+    /// Crews used only for matchup priors in analytical ranking (not prepended to the candidate list).
+    /// Typically populated from [`crate::data::optimize_history`] when `optimize_cache_key` matches.
+    pub prior_reference_crews: Vec<CrewCandidate>,
     /// Opaque client fingerprint for [`crate::data::optimize_history`] when `profile_id` is set.
     pub optimize_cache_key: Option<String>,
 }
@@ -273,6 +301,7 @@ impl Default for OptimizationScenario<'_> {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
         }
     }
@@ -520,6 +549,7 @@ fn optimize_scenario_tiered_with_registry(
         keep,
         &scenario.chain_grind,
         &scenario.warm_start,
+        &scenario.prior_reference_crews,
     );
     let n_tiered = candidates.len();
     let scout_sims = scenario
@@ -610,6 +640,7 @@ fn optimize_scenario_exhaustive_with_registry(
         keep,
         &scenario.chain_grind,
         &scenario.warm_start,
+        &scenario.prior_reference_crews,
     );
     if let Some((scout_s, top_keep)) =
         scenario.exhaustive_scout_sims.zip(scenario.exhaustive_scout_top_keep)
@@ -680,6 +711,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         keep,
         &scenario.chain_grind,
         &scenario.warm_start,
+        &scenario.prior_reference_crews,
     );
     let simulation_results = run_monte_carlo_parallel(
         scenario.ship,
@@ -782,6 +814,7 @@ where
                 chain_grind: scenario.chain_grind.clone(),
                 defender_opponent: scenario.defender_opponent,
                 warm_start: scenario.warm_start.clone(),
+                prior_reference_crews: scenario.prior_reference_crews.clone(),
                 optimize_cache_key: scenario.optimize_cache_key.clone(),
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
@@ -807,6 +840,7 @@ where
                 keep,
                 &scenario.chain_grind,
                 &scenario.warm_start,
+                &scenario.prior_reference_crews,
             );
             let total = candidates.len();
             if total == 0 {
@@ -939,6 +973,7 @@ where
                 keep,
                 &scenario.chain_grind,
                 &scenario.warm_start,
+                &scenario.prior_reference_crews,
             );
             let n_tiered = candidates.len();
             let scout_sims = scenario
@@ -1020,6 +1055,7 @@ where
                 keep,
                 &scenario.chain_grind,
                 &scenario.warm_start,
+                &scenario.prior_reference_crews,
             );
             let total = candidates.len();
             if total == 0 {
@@ -1221,6 +1257,7 @@ pub fn optimize_crew(
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
         warm_start: Vec::new(),
+        prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
     })
 }
@@ -1269,6 +1306,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
         };
         let results = super::optimize_scenario(&scenario);
@@ -1411,6 +1449,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
         };
         let strat = super::candidate_strategy_from_scenario(&scenario);
@@ -1472,6 +1511,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
         };
         let out =
@@ -1527,6 +1567,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             warm_start: Vec::new(),
+            prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
         };
         let mut adaptive = uniform.clone();

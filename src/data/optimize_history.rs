@@ -22,6 +22,9 @@ pub const MAX_OPTIMIZE_CACHE_KEYS: usize = 200;
 pub const MAX_OPTIMIZE_HISTORY_CREWS: usize = 24;
 pub const MAX_OPTIMIZE_CACHE_KEY_BYTES: usize = 512;
 
+/// Max persisted-history crews merged into analytical **matchup priors** only (not prepended as candidates).
+pub const MAX_PRIOR_REFERENCE_CREWS_FROM_HISTORY: usize = 16;
+
 /// Entries without [`OptimizeHistoryEntry::tiered_budget_policy`] deserialize as this value.
 pub const TIERED_BUDGET_POLICY_LEGACY: u8 = 0;
 /// Current tiered Monte Carlo budget allocator (adaptive coarse fraction, ranking-aligned confirm widths, optional confirm cap).
@@ -242,6 +245,51 @@ pub fn save_history_file(profile_id: &str, file: &OptimizeHistoryFile) -> io::Re
     fs::write(&tmp, json)?;
     fs::rename(&tmp, &path)?;
     Ok(())
+}
+
+/// Build [`CrewCandidate`] rows from a history entry for [`crate::optimizer::matchup_priors`]
+/// when the entry’s [`OptimizeHistoryEntry::chain_fingerprint`] matches `chain` (same grind mode as the current run).
+///
+/// Does **not** require `entry_matches_run` metadata equality: priors intentionally reuse past winners
+/// for the same client fingerprint and chain, even when sim counts or seeds differ.
+pub fn prior_reference_crews_from_entry(
+    entry: &OptimizeHistoryEntry,
+    chain: &Option<ChainGrindParams>,
+) -> Vec<CrewCandidate> {
+    let chain_fp = chain_fingerprint(chain);
+    if entry.chain_fingerprint != chain_fp {
+        return Vec::new();
+    }
+    let mut rows: Vec<&OptimizeHistoryCrewRecord> = entry.crews.iter().collect();
+    rows.sort_by(|a, b| {
+        b.win_rate
+            .partial_cmp(&a.win_rate)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    rows.into_iter()
+        .take(MAX_PRIOR_REFERENCE_CREWS_FROM_HISTORY)
+        .map(|r| CrewCandidate {
+            captain: r.captain.trim().to_string(),
+            bridge: r.bridge.clone(),
+            below_decks: r.below_decks.clone(),
+        })
+        .collect()
+}
+
+/// Load [`prior_reference_crews_from_entry`] for `profile_id` + `cache_key` when the on-disk entry exists.
+pub fn prior_reference_crews_for_matchup_priors(
+    profile_id: &str,
+    cache_key: &str,
+    chain: &Option<ChainGrindParams>,
+) -> Vec<CrewCandidate> {
+    if !validate_optimize_cache_key(cache_key) {
+        return Vec::new();
+    }
+    let file = load_history_file(profile_id);
+    let Some(entry) = file.entries.get(cache_key) else {
+        return Vec::new();
+    };
+    prior_reference_crews_from_entry(entry, chain)
 }
 
 pub fn upsert_entry(
@@ -733,5 +781,107 @@ mod tests {
         }
         evict_oldest_if_needed(&mut entries);
         assert!(entries.len() <= MAX_OPTIMIZE_CACHE_KEYS);
+    }
+
+    fn dummy_sim(candidate: CrewCandidate, win_rate: f64) -> SimulationResult {
+        SimulationResult {
+            candidate,
+            trials_run: 100,
+            win_rate,
+            win_rate_ci_low: 0.0,
+            win_rate_ci_high: 1.0,
+            stall_rate: 0.0,
+            stall_rate_ci_low: 0.0,
+            stall_rate_ci_high: 0.0,
+            loss_rate: 0.0,
+            loss_rate_ci_low: 0.0,
+            loss_rate_ci_high: 0.0,
+            r1_kill_rate: 0.0,
+            r1_kill_rate_ci_low: 0.0,
+            r1_kill_rate_ci_high: 0.0,
+            avg_hull_remaining: 0.5,
+            avg_hull_remaining_ci_low: 0.0,
+            avg_hull_remaining_ci_high: 1.0,
+            avg_defender_hull_remaining: 0.0,
+            avg_defender_hull_remaining_ci_low: 0.0,
+            avg_defender_hull_remaining_ci_high: 0.0,
+            chain: None,
+        }
+    }
+
+    #[test]
+    fn prior_reference_crews_from_entry_orders_by_win_rate() {
+        let entry = OptimizeHistoryEntry {
+            updated_at_ms: 1,
+            sims: 100,
+            seed: 2,
+            tiered_scout_sims: 500,
+            tiered_top_k: 20,
+            n_candidates: 50,
+            optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
+            tiered_scout_allocator: 1,
+            tiered_budget_policy: TIERED_BUDGET_POLICY_V2,
+            tiered_confirm_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
+            exhaustive_confirm_policy: 0,
+            chain_fingerprint: "0".into(),
+            crews: vec![
+                OptimizeHistoryCrewRecord::from_simulation(&dummy_sim(
+                    CrewCandidate {
+                        captain: "LowWR".into(),
+                        bridge: vec![],
+                        below_decks: vec![],
+                    },
+                    0.2,
+                )),
+                OptimizeHistoryCrewRecord::from_simulation(&dummy_sim(
+                    CrewCandidate {
+                        captain: "HighWR".into(),
+                        bridge: vec!["B1".into()],
+                        below_decks: vec![],
+                    },
+                    0.95,
+                )),
+            ],
+        };
+        let priors = super::prior_reference_crews_from_entry(&entry, &None);
+        assert_eq!(priors.len(), 2);
+        assert_eq!(priors[0].captain, "HighWR");
+        assert_eq!(priors[0].bridge, vec!["B1".to_string()]);
+        assert_eq!(priors[1].captain, "LowWR");
+    }
+
+    #[test]
+    fn prior_reference_crews_from_entry_chain_mismatch_empty() {
+        let entry = OptimizeHistoryEntry {
+            updated_at_ms: 1,
+            sims: 100,
+            seed: 2,
+            tiered_scout_sims: 500,
+            tiered_top_k: 20,
+            n_candidates: 50,
+            optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
+            tiered_scout_allocator: 1,
+            tiered_budget_policy: TIERED_BUDGET_POLICY_V2,
+            tiered_confirm_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
+            exhaustive_confirm_policy: 0,
+            chain_fingerprint: "0".into(),
+            crews: vec![OptimizeHistoryCrewRecord::from_simulation(&dummy_sim(
+                CrewCandidate {
+                    captain: "Solo".into(),
+                    bridge: vec![],
+                    below_decks: vec![],
+                },
+                0.9,
+            ))],
+        };
+        let chain = Some(crate::optimizer::chain::ChainGrindParams {
+            kills_target: 2,
+            secondary: crate::optimizer::chain::ChainSecondaryObjective::MinHullDamage,
+        });
+        assert!(super::prior_reference_crews_from_entry(&entry, &chain).is_empty());
     }
 }

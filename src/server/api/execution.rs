@@ -589,6 +589,16 @@ fn gather_optimize_simulation_results(
         (dto_warm, false)
     };
 
+    let prior_reference_crews = match (
+        profile_id,
+        cache_key_normalized.as_deref(),
+    ) {
+        (Some(pid), Some(key)) => {
+            optimize_history::prior_reference_crews_for_matchup_priors(pid, key, &chain_grind)
+        }
+        _ => Vec::new(),
+    };
+
     let (strategy, strategy_auto) = resolve_effective_optimize_strategy(
         registry,
         request,
@@ -704,6 +714,7 @@ fn gather_optimize_simulation_results(
             chain_grind: chain_grind.clone(),
             defender_opponent: request.defender_opponent,
             warm_start: scenario_warm_start,
+            prior_reference_crews,
             optimize_cache_key: cache_key_normalized.clone(),
         };
         let cancel_for_eval: Option<Arc<AtomicBool>> = match &*sink {
