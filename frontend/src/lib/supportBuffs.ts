@@ -1,3 +1,30 @@
+import supportBuffCatalogJson from "../../../data/support_buffs.json";
+
+interface SupportBuffCatalogEntry {
+  id?: string;
+  label?: string;
+  display_name?: string;
+  description?: string;
+  source?: string;
+  provenance_notes?: string[];
+  exclusive_group?: string;
+  priority?: number;
+  stat_targets?: SupportBuffStatTarget[];
+}
+
+interface SupportBuffCatalog {
+  buffs: Record<string, SupportBuffCatalogEntry>;
+}
+
+export interface SupportBuffStatTarget {
+  stat: string;
+  value: number;
+  stacking: "additive" | "multiplicative";
+  layer?: string;
+}
+
+const SUPPORT_BUFF_CATALOG = supportBuffCatalogJson as SupportBuffCatalog;
+
 /**
  * Support buff ids that represent in-game **Titan-A Fortify** (you become **Fortified**).
  * When either is selected (after exclusive-group resolution on the server), Kobayashi applies
@@ -45,40 +72,53 @@ export function isDefiantReinforceBuff(id: string): id is typeof DEFIANT_REINFOR
   return id === DEFIANT_REINFORCE_BUFF_ID;
 }
 
-const TITAN_A_FORTIFY_OPTIONS = [
-  {
-    id: "titan_a_fortification" satisfies TitanAFortifySupportBuffId,
-    label: "Fortification",
-    description:
-      "Titan-A Fortify: Fortifies your ships and 2–13 alliance ships (+25% Critical Hit Damage). Checking this marks you Fortified for combat research that requires Fortify.",
-  },
-  {
-    id: "titan_a_max_fortification" satisfies TitanAFortifySupportBuffId,
-    label: "Max fortification",
-    description:
-      "Titan-A Fortify (max): all Fortified effects +250% base weapon damage. Checking this marks you Fortified for combat research that requires Fortify.",
-  },
+const SUPPORT_BUFF_OPTION_IDS = [
+  "titan_a_fortification",
+  "titan_a_max_fortification",
+  CERRITOS_SUPPORT_BUFF_ID,
+  DEFIANT_REINFORCE_BUFF_ID,
 ] as const;
 
-const CERRITOS_SUPPORT_OPTION = {
-  id: CERRITOS_SUPPORT_BUFF_ID,
-  label: "Cerritos Support",
-  description:
-    "Marks Cerritos-supported combat research as active (catalog nodes gated to this alliance buff).",
-} as const;
+export type SupportBuffId = (typeof SUPPORT_BUFF_OPTION_IDS)[number];
 
-const DEFIANT_REINFORCE_OPTION = {
-  id: DEFIANT_REINFORCE_BUFF_ID,
-  label: "Defiant Reinforce",
-  description:
-    "Marks Defiant-reinforced combat research as active (catalog nodes gated to this buff).",
-} as const;
+export interface SupportBuffOption {
+  id: SupportBuffId;
+  label: string;
+  description: string;
+  source: string;
+  provenanceNotes: readonly string[];
+  statTargets: readonly SupportBuffStatTarget[];
+  exclusiveGroup?: string;
+  priority: number;
+}
+
+function optionFromCatalog(id: SupportBuffId): SupportBuffOption {
+  const entry = SUPPORT_BUFF_CATALOG.buffs[id];
+  if (!entry) {
+    throw new Error(`Missing support buff catalog entry: ${id}`);
+  }
+  if (entry.id !== id) {
+    throw new Error(`Support buff catalog entry id mismatch: ${id}`);
+  }
+  const displayName = entry.display_name ?? entry.label;
+  if (!displayName || !entry.description || !entry.source) {
+    throw new Error(`Support buff catalog entry is missing display metadata: ${id}`);
+  }
+  if (!entry.provenance_notes?.some((note) => note.length > 0)) {
+    throw new Error(`Support buff catalog entry is missing provenance notes: ${id}`);
+  }
+  return {
+    id,
+    label: displayName,
+    description: entry.description,
+    source: entry.source,
+    provenanceNotes: entry.provenance_notes,
+    statTargets: entry.stat_targets ?? [],
+    exclusiveGroup: entry.exclusive_group,
+    priority: entry.priority ?? 0,
+  };
+}
 
 /** Alliance / ship support buffs selectable in the workspace (sent to the API as `support_buffs`). */
-export const SUPPORT_BUFF_OPTIONS = [
-  ...TITAN_A_FORTIFY_OPTIONS,
-  CERRITOS_SUPPORT_OPTION,
-  DEFIANT_REINFORCE_OPTION,
-] as const;
-
-export type SupportBuffId = (typeof SUPPORT_BUFF_OPTIONS)[number]["id"];
+export const SUPPORT_BUFF_OPTIONS: readonly SupportBuffOption[] =
+  SUPPORT_BUFF_OPTION_IDS.map(optionFromCatalog);

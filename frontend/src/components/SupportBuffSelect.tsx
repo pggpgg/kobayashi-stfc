@@ -82,7 +82,7 @@ export default function SupportBuffSelect({
           <label
             key={opt.id}
             style={rowStyle}
-            title={"description" in opt ? opt.description : opt.label}
+            title={opt.description}
           >
             <input
               type="checkbox"

@@ -28,12 +28,35 @@ pub struct SupportBuffResearchLevel {
     pub level: u32,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct SupportBuffStatTarget {
+    pub stat: String,
+    pub value: f64,
+    pub stacking: String,
+    #[serde(default)]
+    pub layer: Option<String>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct SupportBuffDef {
+    #[serde(default)]
+    pub id: Option<String>,
+    #[serde(default)]
+    pub label: Option<String>,
+    #[serde(default)]
+    pub display_name: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub provenance_notes: Vec<String>,
     #[serde(default)]
     pub exclusive_group: Option<String>,
     #[serde(default)]
     pub priority: i32,
+    #[serde(default)]
+    pub stat_targets: Vec<SupportBuffStatTarget>,
     #[serde(default)]
     pub research_levels: Vec<SupportBuffResearchLevel>,
     #[serde(default)]
@@ -315,8 +338,7 @@ mod tests {
             SupportBuffDef {
                 exclusive_group: Some("g1".into()),
                 priority: 1,
-                research_levels: vec![],
-                static_bonuses: HashMap::new(),
+                ..Default::default()
             },
         );
         buffs.insert(
@@ -324,8 +346,7 @@ mod tests {
             SupportBuffDef {
                 exclusive_group: Some("g1".into()),
                 priority: 2,
-                research_levels: vec![],
-                static_bonuses: HashMap::new(),
+                ..Default::default()
             },
         );
         SupportBuffCatalog { buffs }
@@ -336,6 +357,58 @@ mod tests {
         let c = tiny_catalog();
         let (resolved, _) = resolve_selected_support_buff_ids(&c, &["a".into(), "b".into()]);
         assert_eq!(resolved, vec!["b".to_string()]);
+    }
+
+    #[test]
+    fn catalog_loads_display_metadata() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        let fortify = c.get("titan_a_fortification").unwrap();
+        assert_eq!(fortify.id.as_deref(), Some("titan_a_fortification"));
+        assert_eq!(fortify.label.as_deref(), Some("Fortification"));
+        assert_eq!(fortify.display_name.as_deref(), Some("Fortification"));
+        assert_eq!(
+            fortify.source.as_deref(),
+            Some("Titan-A Fortify alliance support")
+        );
+        assert!(!fortify.provenance_notes.is_empty());
+        assert!(fortify
+            .description
+            .as_deref()
+            .unwrap()
+            .contains("Titan-A Fortify"));
+
+        let cerritos = c.get("cerritos_support").unwrap();
+        assert_eq!(cerritos.label.as_deref(), Some("Cerritos Support"));
+        assert_eq!(cerritos.display_name.as_deref(), Some("Cerritos Support"));
+    }
+
+    #[test]
+    fn catalog_entries_define_canonical_schema_metadata() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        for (id, def) in &c.buffs {
+            assert_eq!(def.id.as_deref(), Some(id.as_str()));
+            assert!(def.display_name.as_deref().is_some_and(|s| !s.is_empty()));
+            assert!(def.source.as_deref().is_some_and(|s| !s.is_empty()));
+            assert!(
+                def.provenance_notes.iter().any(|note| !note.is_empty()),
+                "{id} should include provenance notes"
+            );
+
+            for (stat, value) in &def.static_bonuses {
+                let target = def
+                    .stat_targets
+                    .iter()
+                    .find(|target| target.stat == *stat)
+                    .unwrap_or_else(|| panic!("{id} missing stat target metadata for {stat}"));
+                assert_eq!(target.value, *value);
+                assert_eq!(target.layer.as_deref(), Some("static_bonuses"));
+                if is_static_mult_key(stat) {
+                    assert_eq!(target.stacking, "multiplicative");
+                } else {
+                    assert_eq!(target.stacking, "additive");
+                }
+            }
+        }
     }
 
     #[test]

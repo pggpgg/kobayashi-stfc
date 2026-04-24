@@ -1,16 +1,56 @@
 {
   "buffs": {
     "titan_a_fortification": {
+      "id": "titan_a_fortification",
+      "label": "Fortification",
+      "display_name": "Fortification",
+      "description": "Titan-A Fortify: Fortifies your ships and 2-13 alliance ships (+25% Critical Hit Damage). Checking this marks you Fortified for combat research that requires Fortify.",
+      "source": "Titan-A Fortify alliance support",
+      "provenance_notes": [
+        "Static +25% critical hit damage comes from the player-facing Titan-A Fortify support text.",
+        "Fortified-gated combat research is curated separately in src/data/profile.rs and applied only when this support buff resolves."
+      ],
       "exclusive_group": "titan_a_fort",
       "priority": 1,
+      "stat_targets": [
+        {
+          "stat": "crit_damage",
+          "value": 1.25,
+          "stacking": "multiplicative",
+          "layer": "static_bonuses"
+        }
+      ],
       "research_levels": [],
       "static_bonuses": {
         "crit_damage": 1.25
       }
     },
     "titan_a_max_fortification": {
+      "id": "titan_a_max_fortification",
+      "label": "Max fortification",
+      "display_name": "Max fortification",
+      "description": "Titan-A Fortify (max): all Fortified effects +250% base weapon damage. Checking this marks you Fortified for combat research that requires Fortify.",
+      "source": "Titan-A Fortify max alliance support",
+      "provenance_notes": [
+        "Max Fortification keeps the Fortify critical damage slice and adds the player-facing +250% base weapon damage support text.",
+        "Max-only Fortified combat research is curated separately in src/data/profile.rs and applied only when this support buff resolves."
+      ],
       "exclusive_group": "titan_a_fort",
       "priority": 2,
+      "stat_targets": [
+        {
+          "stat": "crit_damage",
+          "value": 1.25,
+          "stacking": "multiplicative",
+          "layer": "static_bonuses"
+        },
+        {
+          "stat": "weapon_damage",
+          "value": 3.5,
+          "stacking": "multiplicative",
+          "layer": "static_bonuses"
+        }
+      ],
       "research_levels": [],
       "static_bonuses": {
         "crit_damage": 1.25,
@@ -18,12 +58,39 @@
       }
     },
     "cerritos_support": {
+      "id": "cerritos_support",
+      "label": "Cerritos Support",
+      "display_name": "Cerritos Support",
+      "description": "Marks Cerritos-supported combat research as active (catalog nodes gated to this alliance buff).",
+      "source": "Cerritos alliance support",
+      "provenance_notes": [
+        "The static weapon damage slice is a maintained simulator assumption until an authoritative support value is imported.",
+        "Cerritos-gated combat research is curated separately in src/data/profile.rs and applied only when this support buff resolves."
+      ],
+      "stat_targets": [
+        {
+          "stat": "weapon_damage",
+          "value": 1.25,
+          "stacking": "multiplicative",
+          "layer": "static_bonuses"
+        }
+      ],
       "research_levels": [],
       "static_bonuses": {
         "weapon_damage": 1.25
       }
     },
     "defiant_reinforce": {
+      "id": "defiant_reinforce",
+      "label": "Defiant Reinforce",
+      "display_name": "Defiant Reinforce",
+      "description": "Marks Defiant-reinforced combat research as active (catalog nodes gated to this buff).",
+      "source": "Defiant Reinforce alliance support",
+      "provenance_notes": [
+        "No direct static combat stat is modeled yet for this support buff.",
+        "Defiant-gated combat research is curated separately in src/data/profile.rs and applied only when this support buff resolves."
+      ],
+      "stat_targets": [],
       "research_levels": [],
       "static_bonuses": {}
     }
