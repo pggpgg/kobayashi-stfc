@@ -372,12 +372,12 @@ fn map_condition_token(
             }),
         }),
         "SelfCloaked" | "SelfMining" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
-        "CargoEmpty" | "EnemyNotToaTrialHostile" => Ok(AbilityConditionSpec::LiteralBool {
-            value: true,
-        }),
+        "CargoEmpty" | "EnemyNotToaTrialHostile" => {
+            Ok(AbilityConditionSpec::LiteralBool { value: true })
+        }
         "CargoFull" | "EnemyStronger" | "HitEnemyWithEnergy" | "HitEnemyWithKinetic" => {
             Ok(AbilityConditionSpec::LiteralBool { value: false })
-        },
+        }
         "EnemyHullFaction" => {
             let Some(attrs) = ability_attributes.map(str::trim).filter(|s| !s.is_empty()) else {
                 return Err("unmapped_condition:EnemyHullFaction".into());
@@ -755,9 +755,9 @@ mod tests {
         ]);
         let spec = try_stfc_cc_string_record_to_spec(&rec, &h).expect("spec");
         assert!(
-            spec.conditions.iter().any(|c| {
-                matches!(c, AbilityConditionSpec::LiteralBool { value: true })
-            }),
+            spec.conditions
+                .iter()
+                .any(|c| { matches!(c, AbilityConditionSpec::LiteralBool { value: true }) }),
             "expected TargetNotASB → literal_bool true, got {:?}",
             spec.conditions
         );

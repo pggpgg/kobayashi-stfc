@@ -503,14 +503,29 @@ where
             .map(|o| o.expect("preconfirmed fills all top-K slots"))
             .collect()
     } else {
-        let fresh = run_monte_carlo_with_shared_variable_iterations(
-            shared,
-            &pending_crews,
-            &pending_sims,
-            seed.wrapping_add(1), // distinct seed for confirmation phase
-            true,
-            chain_grind.clone(),
-        );
+        let n_pending = pending_crews.len();
+        let num_batches = monte_carlo_batch_count_for_candidates(n_pending).max(1);
+        let ranges = batch_ranges(n_pending, num_batches);
+        let mut fresh: Vec<SimulationResult> = Vec::with_capacity(n_pending);
+        for (start, end) in ranges {
+            if !on_progress(OptimizeProgressTick {
+                crews_done: (total_candidates + start) as u32,
+                total_crews: total_work as u32,
+                phase: "tiered_confirm",
+                partial_top: None,
+            }) {
+                return (Vec::new(), budget);
+            }
+            let part = run_monte_carlo_with_shared_variable_iterations(
+                shared.clone(),
+                &pending_crews[start..end],
+                &pending_sims[start..end],
+                seed.wrapping_add(1), // distinct seed for confirmation phase
+                true,
+                chain_grind.clone(),
+            );
+            fresh.extend(part);
+        }
         let mut fi = 0usize;
         for slot in &mut confirmation_slots {
             if slot.is_none() {

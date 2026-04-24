@@ -566,6 +566,98 @@ pub fn run_monte_carlo_parallel_deduped(
         .collect()
 }
 
+/// Like [`run_monte_carlo_parallel_deduped`], but evaluates distinct crews in sequential chunks of
+/// at most `max_unique_per_chunk`, calling `should_continue` before each chunk. Returns `None` if
+/// `should_continue` is false (cooperative cancel); otherwise full results in input order.
+pub fn run_monte_carlo_parallel_deduped_chunked(
+    ship: &str,
+    hostile: &str,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    support_buffs: Option<&[String]>,
+    chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
+    max_unique_per_chunk: usize,
+    mut should_continue: impl FnMut() -> bool,
+) -> Option<Vec<SimulationResult>> {
+    if candidates.is_empty() {
+        return Some(Vec::new());
+    }
+
+    let mut seen_hashes: HashSet<u64> = HashSet::with_capacity(candidates.len());
+    let mut unique_indices: Vec<usize> = Vec::new();
+    for (i, c) in candidates.iter().enumerate() {
+        let k = crew_candidate_stable_hash(c);
+        if seen_hashes.insert(k) {
+            unique_indices.push(i);
+        }
+    }
+
+    let uniq: Vec<CrewCandidate> = unique_indices
+        .iter()
+        .map(|&i| candidates[i].clone())
+        .collect();
+
+    let chunk_sz = max_unique_per_chunk.max(1);
+    let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq.len());
+    for chunk in uniq.chunks(chunk_sz) {
+        if !should_continue() {
+            return None;
+        }
+        let part = run_monte_carlo_parallel(
+            ship,
+            hostile,
+            chunk,
+            iterations,
+            seed,
+            support_buffs,
+            chain_grind.clone(),
+            defender_opponent,
+        );
+        for (c, r) in chunk.iter().zip(part) {
+            by_hash.insert(
+                crew_candidate_stable_hash(c),
+                SimulationResult {
+                    candidate: c.clone(),
+                    trials_run: r.trials_run,
+                    win_rate: r.win_rate,
+                    win_rate_ci_low: r.win_rate_ci_low,
+                    win_rate_ci_high: r.win_rate_ci_high,
+                    stall_rate: r.stall_rate,
+                    stall_rate_ci_low: r.stall_rate_ci_low,
+                    stall_rate_ci_high: r.stall_rate_ci_high,
+                    loss_rate: r.loss_rate,
+                    loss_rate_ci_low: r.loss_rate_ci_low,
+                    loss_rate_ci_high: r.loss_rate_ci_high,
+                    r1_kill_rate: r.r1_kill_rate,
+                    r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+                    r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
+                    avg_hull_remaining: r.avg_hull_remaining,
+                    avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+                    avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+                    avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+                    avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+                    avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
+                    chain: r.chain.clone(),
+                },
+            );
+        }
+    }
+
+    Some(
+        candidates
+            .iter()
+            .map(|c| {
+                by_hash
+                    .get(&crew_candidate_stable_hash(c))
+                    .expect("dedup chunked MC: hash present")
+                    .clone()
+            })
+            .collect(),
+    )
+}
+
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
 #[allow(clippy::too_many_arguments)]
@@ -941,6 +1033,41 @@ mod tests {
         assert!(lo <= 0.5 && 0.5 <= hi, "p=0.5 should lie in [{lo}, {hi}]");
         let (lo0, hi0) = super::wilson_95_interval(0, 50);
         assert!(lo0 <= 0.0 && 0.0 <= hi0);
+    }
+
+    #[test]
+    fn deduped_chunked_returns_none_when_should_continue_false() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let a = CrewCandidate {
+            captain: "A".into(),
+            bridge: vec!["B".into(), "C".into()],
+            below_decks: vec!["D".into(), "E".into(), "F".into()],
+        };
+        let b = CrewCandidate {
+            captain: "G".into(),
+            bridge: vec!["H".into(), "I".into()],
+            below_decks: vec!["J".into(), "K".into(), "L".into()],
+        };
+        let c = CrewCandidate {
+            captain: "M".into(),
+            bridge: vec!["N".into(), "O".into()],
+            below_decks: vec!["P".into(), "Q".into(), "R".into()],
+        };
+        let pop = vec![a.clone(), b.clone(), c.clone(), a.clone()];
+        let calls = AtomicUsize::new(0);
+        let out = super::run_monte_carlo_parallel_deduped_chunked(
+            "enterprise",
+            "swarm",
+            &pop,
+            4,
+            42,
+            None,
+            None,
+            DefenderOpponent::Hostile,
+            1,
+            || calls.fetch_add(1, Ordering::Relaxed) < 2,
+        );
+        assert!(out.is_none(), "expected cooperative stop before third unique chunk");
     }
 
     #[test]

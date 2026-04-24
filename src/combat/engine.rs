@@ -39,6 +39,9 @@ use crate::combat::events::round_f64;
 use crate::combat::evolutionary_assimilation::evolutionary_assimilation_instant_loss;
 use crate::combat::proc::{accumulate_proc_attack_effects, roll_weapon_intrinsic_proc};
 use crate::combat::rng::Rng;
+use crate::combat::simd_damage_kernel::{
+    experimental_engine_kernel_enabled, resolve_damage_application_single_hit,
+};
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
 
 /// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
@@ -1231,11 +1234,26 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     } else {
                         0.0
                     };
-                    let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
-                        damage_after_apex,
-                        shield_mitigation,
-                        defender_shield_remaining,
-                    );
+                    let (damage_after_apex, actual_shield_damage, hull_damage_this_round) =
+                        if experimental_engine_kernel_enabled() {
+                            let (simd_damage_after_apex, simd_shield_damage, simd_hull_damage, _) =
+                                resolve_damage_application_single_hit(
+                                    damage,
+                                    isolytic_taken,
+                                    apex_damage_factor,
+                                    shield_mitigation,
+                                    defender_shield_remaining,
+                                );
+                            (simd_damage_after_apex, simd_shield_damage, simd_hull_damage)
+                        } else {
+                            let (shield_damage_scalar, hull_damage_scalar) =
+                                apply_shield_hull_split(
+                                    damage_after_apex,
+                                    shield_mitigation,
+                                    defender_shield_remaining,
+                                );
+                            (damage_after_apex, shield_damage_scalar, hull_damage_scalar)
+                        };
 
                     defender_shield_remaining =
                         (defender_shield_remaining - actual_shield_damage).max(0.0);

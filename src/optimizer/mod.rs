@@ -433,7 +433,7 @@ fn resolved_analytical_prefilter_keep(
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
     match scenario.strategy {
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive(scenario),
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true, || true),
         OptimizerStrategy::Tiered => optimize_scenario_exhaustive(scenario), // Tiered requires registry; fallback when none
     }
 }
@@ -518,7 +518,7 @@ pub fn optimize_scenario_with_registry(
         OptimizerStrategy::Exhaustive => {
             optimize_scenario_exhaustive_with_registry(registry, scenario)
         }
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true, || true),
         OptimizerStrategy::Tiered => optimize_scenario_tiered_with_registry(registry, scenario),
     }
 }
@@ -611,12 +611,16 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
 /// Genetic path: GA with progress callback, then final MC on top candidates, then rank.
 /// When `scenario.seed_population` is non-empty, uses seeded config (larger pop, adaptive mutation).
 /// Progress callback returns true to continue, false to abort.
-pub fn optimize_scenario_genetic<F>(
+/// `eval_should_continue` is polled between deduplicated Monte Carlo chunks within each generation
+/// (for async cancel); sync callers should pass `|| true`.
+pub fn optimize_scenario_genetic<F, G>(
     scenario: &OptimizationScenario<'_>,
     on_progress: F,
+    eval_should_continue: G,
 ) -> Vec<RankedCrewResult>
 where
     F: FnMut(usize, usize, f32) -> bool,
+    G: FnMut() -> bool,
 {
     let filtered_seeds: Vec<CrewCandidate> =
         apply_crew_constraints(scenario.seed_population.clone(), scenario);
@@ -650,6 +654,7 @@ where
         scenario.seed,
         scenario.simulation_count.max(1),
         on_progress,
+        eval_should_continue,
     )
 }
 
@@ -785,26 +790,34 @@ where
 
             rank_results(all_results)
         }
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |gen, max_gen, _| {
-            on_progress(OptimizeProgressTick {
-                crews_done: gen as u32,
-                total_crews: max_gen.max(1) as u32,
-                phase: "genetic",
-                partial_top: None,
-            })
-        }),
+        OptimizerStrategy::Genetic => optimize_scenario_genetic(
+            scenario,
+            |gen, max_gen, _| {
+                on_progress(OptimizeProgressTick {
+                    crews_done: gen as u32,
+                    total_crews: max_gen.max(1) as u32,
+                    phase: "genetic",
+                    partial_top: None,
+                })
+            },
+            || true,
+        ),
     }
 }
 
 /// Like [optimize_scenario_with_progress] but uses [DataRegistry] for exhaustive path (no reload).
 /// Progress callback returns true to continue, false to abort (e.g. user cancelled).
-pub fn optimize_scenario_with_progress_with_registry<F>(
+/// `eval_should_continue` is polled between genetic dedupe Monte Carlo chunks and at the start of
+/// each exhaustive batch; use `|| true` when no cooperative cancel is needed.
+pub fn optimize_scenario_with_progress_with_registry<F, G>(
     registry: &DataRegistry,
     scenario: &OptimizationScenario<'_>,
     mut on_progress: F,
+    mut eval_should_continue: G,
 ) -> OptimizeRunOutcome
 where
     F: FnMut(OptimizeProgressTick) -> bool,
+    G: FnMut() -> bool,
 {
     match scenario.strategy {
         OptimizerStrategy::Tiered => {
@@ -945,6 +958,9 @@ where
             let sim_count = scenario.simulation_count.max(1);
 
             for (batch_index, (start, end)) in ranges.into_iter().enumerate() {
+                if !eval_should_continue() {
+                    break;
+                }
                 info!(
                     phase = "monte_carlo",
                     strategy = "exhaustive",
@@ -1007,14 +1023,18 @@ where
             }
         }
         OptimizerStrategy::Genetic => OptimizeRunOutcome {
-            ranked: optimize_scenario_genetic(scenario, |gen, max_gen, _| {
-                on_progress(OptimizeProgressTick {
-                    crews_done: gen as u32,
-                    total_crews: max_gen.max(1) as u32,
-                    phase: "genetic",
-                    partial_top: None,
-                })
-            }),
+            ranked: optimize_scenario_genetic(
+                scenario,
+                |gen, max_gen, _| {
+                    on_progress(OptimizeProgressTick {
+                        crews_done: gen as u32,
+                        total_crews: max_gen.max(1) as u32,
+                        phase: "genetic",
+                        partial_top: None,
+                    })
+                },
+                || eval_should_continue(),
+            ),
             analytical_prefilter: None,
             tiered_resolved: None,
             tiered_scout_budget: None,
@@ -1245,7 +1265,8 @@ mod tests {
             strat,
             &scenario.warm_start,
         );
-        let out = optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true);
+        let out =
+            optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true, || true);
         assert!(
             out.ranked.len() <= n.min(4),
             "ranked crews {} exceed min(n, keep) with n={n}",

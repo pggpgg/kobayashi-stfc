@@ -82,6 +82,11 @@ name = "monte_carlo_parallel"
 harness = false
 path = "benches/monte_carlo_parallel_bench.rs"
 
+[[bench]]
+name = "simd_damage_kernel"
+harness = false
+path = "benches/simd_damage_kernel_bench.rs"
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 axum = { version = "0.7", features = ["macros"] }

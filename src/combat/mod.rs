@@ -16,6 +16,7 @@ pub mod mitigation;
 pub mod mitigation_sensitivity;
 pub mod proc;
 pub mod rng;
+pub mod simd_damage_kernel;
 pub mod stacking;
 pub mod types;
 

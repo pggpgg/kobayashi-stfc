@@ -17,8 +17,8 @@ pub use scenario::DefenderOpponent;
 pub use simulation::{
     crew_candidate_stable_hash, replay_optimize_iteration_with_registry, run_monte_carlo,
     run_monte_carlo_parallel, run_monte_carlo_parallel_deduped,
-    run_monte_carlo_parallel_with_registry, run_monte_carlo_with_registry, MonteCarloSeedReplay,
-    SimulationResult,
+    run_monte_carlo_parallel_deduped_chunked, run_monte_carlo_parallel_with_registry,
+    run_monte_carlo_with_registry, MonteCarloSeedReplay, SimulationResult,
 };
 pub(crate) use simulation::{
     run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared_variable_iterations,

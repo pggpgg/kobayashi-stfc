@@ -27,6 +27,7 @@ use crate::optimizer::{
     count_effective_optimize_candidates, optimize_scenario_with_progress_with_registry,
     OptimizationScenario, OptimizeProgressTick, OptimizerStrategy,
 };
+use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
 use super::requests::{
     build_crew_search_constraints, chain_grind_params_from_request, parse_below_decks_strategy,
@@ -619,20 +620,32 @@ fn gather_optimize_simulation_results(
         if heuristics_seeds_nonempty && !is_seeded_genetic && !fast_discovery {
             let h_total = h_candidates.len() as u32;
             sink.on_heuristics_start(h_total);
-            let (results, _) = run_monte_carlo_parallel_with_registry(
-                registry,
-                &request.ship,
-                &request.hostile,
-                request.ship_tier,
-                request.ship_level,
-                &h_candidates,
-                sims as usize,
-                seed,
-                profile_id,
-                request.support_buffs.as_deref(),
-                chain_grind.clone(),
-                request.defender_opponent,
-            );
+            let h_len = h_candidates.len();
+            let num_batches = monte_carlo_batch_count_for_candidates(h_len).max(1);
+            let ranges = batch_ranges(h_len, num_batches);
+            let mut results: Vec<SimulationResult> = Vec::with_capacity(h_len);
+            for (start, end) in ranges {
+                if sink.job_cancelled() {
+                    warn!("optimize_cancelled");
+                    return Err(());
+                }
+                let batch = &h_candidates[start..end];
+                let (batch_results, _) = run_monte_carlo_parallel_with_registry(
+                    registry,
+                    &request.ship,
+                    &request.hostile,
+                    request.ship_tier,
+                    request.ship_level,
+                    batch,
+                    sims as usize,
+                    seed,
+                    profile_id,
+                    request.support_buffs.as_deref(),
+                    chain_grind.clone(),
+                    request.defender_opponent,
+                );
+                results.extend(batch_results);
+            }
             sink.on_heuristics_complete(heuristics_only, h_total, &results);
             info!(
                 heuristic_results = results.len() as u64,
@@ -672,9 +685,19 @@ fn gather_optimize_simulation_results(
             warm_start: scenario_warm_start,
             optimize_cache_key: cache_key_normalized.clone(),
         };
-        let outcome = optimize_scenario_with_progress_with_registry(registry, &scenario, |tick| {
-            sink.on_optimize_tick(tick)
-        });
+        let cancel_for_eval: Option<Arc<AtomicBool>> = match &*sink {
+            OptimizeProgressSink::Job { cancel, .. } => Some(Arc::clone(cancel)),
+            OptimizeProgressSink::None => None,
+        };
+        let outcome = optimize_scenario_with_progress_with_registry(
+            registry,
+            &scenario,
+            |tick| sink.on_optimize_tick(tick),
+            || match cancel_for_eval.as_ref() {
+                None => true,
+                Some(c) => !c.load(Ordering::Relaxed),
+            },
+        );
         if sink.job_cancelled() {
             warn!("optimize_cancelled");
             return Err(());

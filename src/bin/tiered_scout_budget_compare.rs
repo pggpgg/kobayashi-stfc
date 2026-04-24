@@ -108,15 +108,19 @@ fn main() {
 
     for row in ROWS {
         let t0 = Instant::now();
-        let uniform_out =
-            optimize_scenario_with_progress_with_registry(&registry, &scenario(row, true), |_| {
-                true
-            });
+        let uniform_out = optimize_scenario_with_progress_with_registry(
+            &registry,
+            &scenario(row, true),
+            |_| true,
+            || true,
+        );
         let t1 = Instant::now();
-        let adaptive_out =
-            optimize_scenario_with_progress_with_registry(&registry, &scenario(row, false), |_| {
-                true
-            });
+        let adaptive_out = optimize_scenario_with_progress_with_registry(
+            &registry,
+            &scenario(row, false),
+            |_| true,
+            || true,
+        );
         let elapsed = t0.elapsed().as_secs_f64() + t1.elapsed().as_secs_f64();
 
         let n = adaptive_out.tiered_resolved.map(|(n, _, _)| n).unwrap_or(0);

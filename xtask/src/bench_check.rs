@@ -81,9 +81,13 @@ fn parse_baseline_log(text: &str) -> Result<BTreeMap<String, u64>> {
             );
         }
         let ns_str = parts.pop().unwrap();
-        let ns: u64 = ns_str
-            .parse()
-            .with_context(|| format!("benchmark_results.log:{}: bad median_ns {:?}", lineno + 1, ns_str))?;
+        let ns: u64 = ns_str.parse().with_context(|| {
+            format!(
+                "benchmark_results.log:{}: bad median_ns {:?}",
+                lineno + 1,
+                ns_str
+            )
+        })?;
         let id = parts.join(" ");
         if m.insert(id.clone(), ns).is_some() {
             bail!("benchmark_results.log: duplicate bench_id {:?}", id);
@@ -211,7 +215,10 @@ fn status_label(s: RowStatus) -> &'static str {
 }
 
 pub fn print_text_table(outcome: &CompareOutcome) {
-    eprintln!("{:<45} {:>12} {:>12} {:>10} status", "benchmark", "baseline_ns", "current_ns", "delta_%");
+    eprintln!(
+        "{:<45} {:>12} {:>12} {:>10} status",
+        "benchmark", "baseline_ns", "current_ns", "delta_%"
+    );
     for r in &outcome.rows {
         let delta = r
             .delta_pct
@@ -260,7 +267,11 @@ pub fn markdown_summary(outcome: &CompareOutcome, regression_pct: f64) -> String
 pub fn load_baseline(path: &Path) -> Result<BTreeMap<String, u64>> {
     let text = fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
     if !text.lines().any(|l| l.trim() == SCHEMA_HEADER) {
-        eprintln!("warning: {} missing `{}` header", path.display(), SCHEMA_HEADER);
+        eprintln!(
+            "warning: {} missing `{}` header",
+            path.display(),
+            SCHEMA_HEADER
+        );
     }
     parse_baseline_log(&text)
 }
@@ -278,10 +289,7 @@ pub fn run(
     let current = collect_criterion_medians(&criterion_root)?;
 
     if write_baseline {
-        let note = format!(
-            "generated {}",
-            chrono_nowish()
-        );
+        let note = format!("generated {}", chrono_nowish());
         write_baseline_file(&baseline_path, &current, &note)?;
         eprintln!(
             "Wrote {} with {} benchmarks.",

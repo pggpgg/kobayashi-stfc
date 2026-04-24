@@ -19,10 +19,12 @@ use crate::optimizer::crew_generator::{
 };
 use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel, run_monte_carlo_parallel_deduped, SimulationResult,
+    run_monte_carlo_parallel, run_monte_carlo_parallel_deduped_chunked, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use std::collections::HashSet;
+#[cfg(test)]
+use std::sync::atomic::AtomicUsize;
 
 /// Single-fight: hull-weighted win rate. Chain: lexicographic proxy (primary then conditional secondary).
 fn fitness_from_result(result: &SimulationResult) -> f32 {
@@ -456,7 +458,9 @@ fn mutate(
     repair_crew(crew, pools, rng, below_decks_slots);
 }
 
-/// Run genetic optimization. Returns top individuals for final ranking.
+/// Run genetic optimization. Returns top individuals for final ranking and whether the run
+/// stopped early because [`on_progress`] returned false or [`eval_should_continue`] returned false
+/// (cooperative cancel). When `aborted` is true, callers should not run an expensive final Monte Carlo pass.
 /// Progress callback: (generation, max_generations, best_fitness); returns false to abort.
 pub fn run_genetic_optimizer(
     ship: &str,
@@ -464,7 +468,8 @@ pub fn run_genetic_optimizer(
     config: &GeneticConfig,
     seed: u64,
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
-) -> Vec<CrewCandidate> {
+    mut eval_should_continue: impl FnMut() -> bool,
+) -> (Vec<CrewCandidate>, bool) {
     let bd_slots = config.below_decks_slots;
     let pools = match build_officer_pools(
         config.only_below_decks_with_ability,
@@ -472,7 +477,7 @@ pub fn run_genetic_optimizer(
         config.roster_profile_id.as_deref(),
     ) {
         Some(p) => p,
-        None => return Vec::new(),
+        None => return (Vec::new(), false),
     };
 
     let mut population = init_population_seeded(
@@ -484,7 +489,7 @@ pub fn run_genetic_optimizer(
         config.constraints.as_ref(),
     );
     if population.is_empty() {
-        return Vec::new();
+        return (Vec::new(), false);
     }
 
     // Adaptive mutation: start low when seeded, ramp up on stagnation.
@@ -501,8 +506,10 @@ pub fn run_genetic_optimizer(
 
     let support_slice =
         (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
+    let mut last_stable_best: Vec<CrewCandidate> = Vec::new();
+    let uniq_chunk = (config.population_size / 8).max(1).min(64);
     for generation in 0..config.generations {
-        let sim_results = run_monte_carlo_parallel_deduped(
+        let sim_results = match run_monte_carlo_parallel_deduped_chunked(
             ship,
             hostile,
             &population,
@@ -511,7 +518,12 @@ pub fn run_genetic_optimizer(
             support_slice,
             config.chain_grind.clone(),
             config.defender_opponent,
-        );
+            uniq_chunk,
+            || eval_should_continue(),
+        ) {
+            Some(rows) => rows,
+            None => return (last_stable_best, true),
+        };
         let fitness: Vec<f32> = sim_results.iter().map(fitness_from_result).collect();
 
         let mut indexed: Vec<(usize, f32)> = fitness.iter().copied().enumerate().collect();
@@ -535,12 +547,12 @@ pub fn run_genetic_optimizer(
         }
 
         if !on_progress(generation + 1, config.generations, best_fitness) {
-            break;
+            return (best_individuals, true);
         }
 
         if let Some(limit) = config.stagnation_limit {
             if stagnation >= limit {
-                break;
+                return (best_individuals, false);
             }
         }
 
@@ -576,9 +588,10 @@ pub fn run_genetic_optimizer(
             next_pop.push(child);
         }
         population = next_pop;
+        last_stable_best = best_individuals.clone();
     }
 
-    best_individuals
+    (best_individuals, false)
 }
 
 /// Run genetic optimization and return ranked results (same shape as optimize_scenario).
@@ -591,11 +604,21 @@ pub fn run_genetic_optimizer_ranked(
     seed: u64,
     final_sims: usize,
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
+    mut eval_should_continue: impl FnMut() -> bool,
 ) -> Vec<RankedCrewResult> {
-    let top = run_genetic_optimizer(ship, hostile, config, seed, &mut on_progress);
-    if top.is_empty() {
+    let (top, aborted) = run_genetic_optimizer(
+        ship,
+        hostile,
+        config,
+        seed,
+        &mut on_progress,
+        &mut eval_should_continue,
+    );
+    if top.is_empty() || aborted {
         return Vec::new();
     }
+    #[cfg(test)]
+    FINAL_GENETIC_FULL_MC_CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let support_slice =
         (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
     let final_results = run_monte_carlo_parallel(
@@ -612,10 +635,14 @@ pub fn run_genetic_optimizer_ranked(
 }
 
 #[cfg(test)]
+pub(crate) static FINAL_GENETIC_FULL_MC_CALLS: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg(test)]
 mod tests {
     use super::{
         crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig,
     };
+    use std::sync::atomic::Ordering;
     use crate::combat::rng::Rng;
     use crate::optimizer::crew_generator::{
         CrewCandidate, OfficerPools, DEFAULT_BELOW_DECKS_SLOTS,
@@ -779,6 +806,31 @@ mod tests {
     }
 
     #[test]
+    fn genetic_progress_abort_skips_final_full_mc() {
+        let config = GeneticConfig {
+            population_size: 8,
+            generations: 4,
+            sims_per_eval: 4,
+            ..GeneticConfig::default()
+        };
+        super::FINAL_GENETIC_FULL_MC_CALLS.store(0, Ordering::Relaxed);
+        let _ = super::run_genetic_optimizer_ranked(
+            "enterprise",
+            "swarm",
+            &config,
+            99,
+            2000,
+            |gen, _, _| gen < 1,
+            || true,
+        );
+        assert_eq!(
+            super::FINAL_GENETIC_FULL_MC_CALLS.load(Ordering::Relaxed),
+            0,
+            "final full-sim MC must not run when progress callback aborts"
+        );
+    }
+
+    #[test]
     fn ga_run_is_deterministic_for_same_seed() {
         let config = GeneticConfig {
             population_size: 4,
@@ -786,19 +838,33 @@ mod tests {
             sims_per_eval: 10,
             ..GeneticConfig::default()
         };
-        let a = super::run_genetic_optimizer("enterprise", "swarm", &config, 12345, |_, _, _| true);
-        let b = super::run_genetic_optimizer("enterprise", "swarm", &config, 12345, |_, _, _| true);
-        if a.is_empty() && b.is_empty() {
+        let a = super::run_genetic_optimizer(
+            "enterprise",
+            "swarm",
+            &config,
+            12345,
+            |_, _, _| true,
+            || true,
+        );
+        let b = super::run_genetic_optimizer(
+            "enterprise",
+            "swarm",
+            &config,
+            12345,
+            |_, _, _| true,
+            || true,
+        );
+        if a.0.is_empty() && b.0.is_empty() {
             return;
         }
         assert_eq!(
-            a.len(),
-            b.len(),
+            a.0.len(),
+            b.0.len(),
             "same seed should yield same number of results"
         );
-        assert_eq!(a[0].captain, b[0].captain);
-        assert_eq!(a[0].bridge, b[0].bridge);
-        assert_eq!(a[0].below_decks, b[0].below_decks);
+        assert_eq!(a.0[0].captain, b.0[0].captain);
+        assert_eq!(a.0[0].bridge, b.0[0].bridge);
+        assert_eq!(a.0[0].below_decks, b.0[0].below_decks);
     }
 }
 
@@ -828,6 +894,7 @@ mod integration_tests {
                 assert!(gen <= max_gen);
                 true
             },
+            || true,
         );
         if results.is_empty() {
             return;

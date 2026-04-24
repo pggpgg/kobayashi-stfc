@@ -521,20 +521,23 @@ mod tests {
         for (tok, expected) in [
             ("TargetNotASB", AbilityCondition::LiteralBool(true)),
             ("SelfAttacking", AbilityCondition::LiteralBool(true)),
-            ("TargetNotPlayerStation", AbilityCondition::LiteralBool(true)),
+            (
+                "TargetNotPlayerStation",
+                AbilityCondition::LiteralBool(true),
+            ),
             ("SelfDefending", AbilityCondition::LiteralBool(false)),
             ("EnemySentinel", AbilityCondition::LiteralBool(false)),
             ("CombatGameContext", AbilityCondition::LiteralBool(false)),
-            ("TargetNotInvadingEntity", AbilityCondition::LiteralBool(true)),
+            (
+                "TargetNotInvadingEntity",
+                AbilityCondition::LiteralBool(true),
+            ),
         ] {
             let lc = map_canonical_condition_token(tok).expect(tok);
             let ac = resolve_lcars_condition(&lc).expect(tok);
             assert_eq!(ac, expected, "{tok}");
         }
-        let raw = vec![
-            "TargetNotASB".to_string(),
-            "EnemyHostile".to_string(),
-        ];
+        let raw = vec!["TargetNotASB".to_string(), "EnemyHostile".to_string()];
         let out = canonical_conditions_to_lcars(&raw, "x", "y").expect("and");
         assert_eq!(out.condition_type, "and");
     }

@@ -1,24 +1,58 @@
-# Additional development tasks (supplementary)
+# Additional Development Tasks (Post-Roadmap)
 
-Twenty improvement ideas for Kobayashi that sit **outside** the phased backlog described in [`ROADMAP.md`](ROADMAP.md). Use checkboxes locally to track progress.
+New tasks below are intentionally outside the work already tracked in `docs/ROADMAP.md`, and are ordered in a practical build sequence: guardrails -> correctness evidence -> performance execution -> UX -> operations.
 
-- [ ] Add explicit **HTTP health and readiness** routes (e.g. separate liveness vs “data registry loaded”) and document expected status codes for reverse proxies and container orchestrators.
-- [ ] Ship a **`cargo xtask doctor`** (or equivalent) that prints a single report: Rust/toolchain versions, required env vars, presence of `data/` artifacts, profile path validity, and optional mod-sync reachability hints.
-- [ ] Introduce **Content-Security-Policy** (and related security headers) for the static SPA + API static file path, with a short runbook for adjusting nonces/hashes when the bundle changes.
-- [ ] Wire **end-to-end correlation IDs**: accept `X-Request-Id` (or generate one), attach it to all `tracing` spans for that HTTP session, and return it in error JSON for support workflows.
-- [ ] Add a **`cargo fuzz`** target (or `libfuzzer-sys` harness) for the **LCARS parser** and golden-parse fixtures to catch panics and undefined behavior on hostile inputs.
-- [ ] Publish a **`NOTICES` / third-party attribution** file covering vendored or generated data sources, npm dependency summaries, and any upstream scraper/mod credits required for redistribution.
-- [ ] Add **frontend bundle size budgets** (e.g. `rollup-plugin-visualizer` + a small CI script) so accidental dependency regressions fail PRs with a diff-friendly artifact.
-- [ ] Stand up **component isolation** (Storybook, Ladle, or similar) for the heaviest React surfaces (`CrewBuilder`, `OptimizePanel`, roster tables) to speed UI iteration without a full backend.
-- [ ] Implement **graceful server shutdown**: stop accepting new optimize/sim jobs, surface in-flight job status to clients where feasible, and document timeout expectations for deploys.
-- [ ] Define a small **API stability/versioning policy** (e.g. `/api/v1` prefix or version field in responses) and enforce it in the OpenAPI document before the next breaking JSON change.
-- [ ] Expand **mechanics coverage reporting** (`src/mechanics/coverage.rs`) into a **CI-uploaded artifact** or a dedicated “Mechanics coverage” section in an existing internal doc, with trend tracking over time.
-- [ ] Build a **profile diff utility** (CLI or SPA page) that compares two saved profiles for officers, research levels, buildings, and forbidden tech—aimed at auditing sync drift or alt-account comparisons.
-- [ ] Add a **keyboard shortcuts cheat sheet** modal (common actions in workspace: run sim, run optimize, save preset) with sensible defaults and screen-reader friendly labels.
-- [ ] Harden **PR review ergonomics for `data/`**: CODEOWNERS, required labels, or a GitHub Action comment summarizing touched hostile/officer files and suggested reviewer checklist items.
-- [ ] Create a **load-test harness** (e.g. `k6` or `oha`) for concurrent read-heavy endpoints and small optimize jobs, with documented baseline numbers on a reference machine—not a regression gate yet, just reproducible stress scripts.
-- [ ] Add **PGO (profile-guided optimization)** as an optional release build path for the Rust binary, documenting capture methodology and expected win bounds on the Monte Carlo hot path.
-- [ ] Add **structured export** of optimize result tables (CSV or Parquet) from the SPA or a small CLI wrapper around existing JSON responses for spreadsheet-centric workflows beyond current combat CSV export.
-- [ ] Introduce **mutation testing** (e.g. `cargo-mutants`) scoped to a few high-risk modules (`src/combat/damage.rs`, mitigation, proc resolution) with a weekly scheduled job rather than every PR.
-- [ ] Improve **syndicate reputation UX**: surface `syndicate_combat` / reputation-derived bonuses where they affect scenarios, with clear “assumption” callouts when game evidence is thin.
-- [ ] Add **offline-friendly static hosting** polish: `manifest.json`/PWA shell, cache busting strategy, and a documented “air-gapped install” path that does not assume live mod sync.
+## 1) Foundations and guardrails
+
+- [ ] **1. Add a deterministic scenario snapshot format**
+  - Persist fully-resolved simulation inputs (ship stats, crew effects, buffs, hostile state, seed) to a single JSON artifact for reproducible debugging.
+- [ ] **2. Introduce a scenario snapshot loader CLI**
+  - Add a CLI entry point to run a simulation directly from a saved snapshot artifact and verify parity with live pipeline output.
+- [ ] **3. Add profile merge precedence golden tests**
+  - Lock down merge order and override rules across synced data, manual profile JSON, support buffs, and static bonuses using fixture-based tests.
+- [ ] **4. Add property-based tests for combat stacking invariants**
+  - Use randomized inputs to validate operator order, cap behavior, and monotonicity constraints in core stacking and mitigation math.
+
+## 2) Correctness evidence and explainability
+
+- [ ] **5. Build a combat trace explain mode**
+  - Add an optional trace payload that explains per-round stat deltas and damage contributors without changing core combat outcomes.
+- [ ] **6. Add ability-level contribution attribution**
+  - Aggregate and surface per-ability contribution totals (damage gained, mitigation gained, survivability impact) for post-fight analysis.
+- [ ] **7. Create an assumptions registry for approximate mechanics**
+  - Add a machine-readable assumptions file tied to tests so uncertain mechanics are explicit, searchable, and versioned.
+- [ ] **8. Add hostile and officer modeling coverage dashboards**
+  - Generate docs artifacts that show which entities have high-fidelity modeling, partial approximations, or no combat impact coverage.
+- [ ] **9. Add parity tests for optimizer request variants**
+  - Assert equivalent outcomes across sync and standalone execution paths for identical logical scenarios and constraints.
+- [ ] **10. Add regression fixtures for support-buff interactions**
+  - Create targeted fixtures that validate additive/multiplicative interaction boundaries and exclusivity-group conflict resolution.
+
+## 3) Runtime execution and throughput
+
+- [x] **11. Add SIMD feasibility prototype for hot combat math** *(shipped: `src/combat/simd_damage_kernel.rs` scalar + AVX2 paths with parity tests; Criterion bench `benches/simd_damage_kernel_bench.rs`, registered in `Cargo.toml` as `simd_damage_kernel`; experimental engine integration via `KOBAYASHI_EXPERIMENTAL_SIMD_DAMAGE_KERNEL=1` in outbound per-hit damage application.)*
+  - Prototype SIMD acceleration in isolated hot-path kernels and compare accuracy/perf against current scalar implementation.
+- [ ] **12. Introduce allocator and cache-efficiency profiling harness**
+  - Add repeatable profiling scripts and reports focused on allocations, cache misses, and branch misprediction in simulation loops.
+- [x] **13. Improve cancellation responsiveness for long optimize jobs** *(shipped: batched heuristic MC with cancel between batches in `gather_optimize_simulation_results`; `eval_should_continue` + exhaustive batch gates and genetic `run_monte_carlo_parallel_deduped_chunked` between unique chunks; GA skips final full-sim MC when aborted; tiered confirm MC split with `on_progress` between slices; tests in `genetic.rs` / `monte_carlo/simulation.rs`.)*
+  - Add cooperative cancellation checkpoints so stop requests are honored quickly during large candidate evaluations.
+- [ ] **14. Add backpressure-aware SSE progress publishing**
+  - Prevent progress stream pressure from degrading optimize throughput by coalescing or sampling progress updates.
+- [ ] **15. Add API-level latency budgets and SLO tests**
+  - Create route-specific latency targets with automated tests that fail when p95 exceeds guardrail thresholds.
+
+## 4) UX and workflow quality
+
+- [ ] **16. Add a simulation diff view in the frontend**
+  - Provide side-by-side outcome deltas for two crews, including key stat swings and round-window impact summaries.
+- [ ] **17. Add preset validation and repair UX**
+  - Detect stale officer/ship/hostile references in saved presets and offer guided repair actions instead of hard failures.
+- [ ] **18. Add first-class reproducibility export/import in UI**
+  - Let users export a run as a reproducible snapshot and import it later for replay, sharing, or bug reports.
+
+## 5) Operations and release confidence
+
+- [ ] **19. Add a diagnostics bundle command**
+  - Package profile-safe logs, environment metadata, version hashes, and reproducible scenario snapshots into a support artifact.
+- [ ] **20. Add release-readiness quality gates for simulation confidence**
+  - Require a minimum suite of calibration, parity, and performance checks to pass before tagging a release.

@@ -14,7 +14,7 @@ CI ([`.github/workflows/benchmark-regression.yml`](../.github/workflows/benchmar
 ```bash
 export CI=true
 export KOBAYASHI_RAYON_THREADS=2
-cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
+cargo bench --bench simulator --bench monte_carlo_parallel --bench simd_damage_kernel -- --noplot
 cargo xtask bench-check --write-baseline
 ```
 
@@ -64,5 +64,6 @@ Yes, the sim runs faster with these fixes. Criterion reported significant improv
 
 - `**KOBAYASHI_RAYON_THREADS`**: positive integer → use a Rayon pool with that many worker threads for code paths that use `WorkerPool::install` (`src/parallel/pool.rs`; default remains “all cores” when unset or `0`).
 - `**KOBAYASHI_PERF_LOG=1**`: logs wall-clock for crew generation and full Monte Carlo batches with shared scenario data (stderr); zero overhead when unset.
+- `**KOBAYASHI_EXPERIMENTAL_SIMD_DAMAGE_KERNEL=1**`: routes outbound per-hit post-attack damage application through `simd_damage_kernel` integration in `src/combat/engine.rs` (experimental feasibility path; keep off by default while measuring).
 
 Tiered optimization reuses one `SharedScenarioData` build per phase (`src/optimizer/monte_carlo/scenario.rs`), uses adaptive batch counts via `monte_carlo_batch_count_for_candidates` (`src/parallel/batch.rs`), and runs the scout pass with Wilson-bound early stopping where safe (confirmation pass unchanged).
