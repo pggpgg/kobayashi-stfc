@@ -828,6 +828,49 @@ async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn optimize_replay_seed_trace_reports_applied_support_buffs() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","seed":77,"sim_index":12,"max_trace_events":1,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},"support_buffs":["cerritos_support","not_a_real_support_buff_id"]}"#;
+    let response = route_request("POST", "/api/optimize/replay-seed", body).await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+
+    let p: serde_json::Value = serde_json::from_str(&response.body).expect("replay json");
+    let support = &p["trace"]["external_buffs"]["support_buffs"];
+    assert_eq!(
+        support["resolved_ids"]
+            .as_array()
+            .expect("resolved support ids"),
+        &[serde_json::json!("cerritos_support")]
+    );
+    assert_eq!(
+        support["unknown_ids"]
+            .as_array()
+            .expect("unknown support ids"),
+        &[serde_json::json!("not_a_real_support_buff_id")]
+    );
+    assert_eq!(
+        support["aggregate_static_bonuses"]["weapon_damage"]
+            .as_f64()
+            .expect("weapon_damage aggregate"),
+        1.25
+    );
+
+    let applied = support["applied"]
+        .as_array()
+        .expect("applied support buffs");
+    assert_eq!(applied.len(), 1);
+    assert_eq!(applied[0]["id"], "cerritos_support");
+    assert_eq!(applied[0]["display_name"], "Cerritos Support");
+    assert_eq!(applied[0]["static_bonuses"]["weapon_damage"], 1.25);
+    assert!(
+        p["warnings"].as_array().expect("warnings").iter().any(|w| w
+            .as_str()
+            .is_some_and(|s| s.contains("not_a_real_support_buff_id"))),
+        "expected unknown support buff warning"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn compare_crews_returns_distribution_payload() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":400,"seed":3,"crews":[
         {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},

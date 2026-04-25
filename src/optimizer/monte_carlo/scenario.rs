@@ -44,7 +44,7 @@ use crate::data::profile_index::{
 use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
-use crate::data::support_buffs::{self, SupportBuffCatalog};
+use crate::data::support_buffs::{self, AppliedSupportBuffTrace, SupportBuffCatalog};
 use crate::lcars::{
     index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
 };
@@ -410,6 +410,8 @@ pub(crate) struct SharedScenarioData {
     /// Resolved support buff ids (after exclusive-group rules).
     #[allow(dead_code)]
     pub resolved_support_buffs: Vec<String>,
+    /// Display/debug metadata for resolved support buffs, included in trace replay output.
+    pub applied_support_buffs: Vec<AppliedSupportBuffTrace>,
     /// Static combat keys from support buff definitions; merged with crew LCARS static buffs in combat input.
     pub support_static_buffs: HashMap<String, f64>,
     /// Request ids not present in the support buff catalog (for API warnings).
@@ -1250,6 +1252,10 @@ pub(crate) fn build_shared_scenario_data_standalone(
             );
         }
     }
+    let applied_support_buffs = support_cat
+        .as_ref()
+        .map(|cat| support_buffs::describe_resolved_support_buffs(cat, &resolved_support_buffs))
+        .unwrap_or_default();
 
     let lcars_data = if use_lcars_officer_source_standalone() {
         load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
@@ -1389,6 +1395,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         cached_defender_mitigation,
         using_placeholder_combatants,
         resolved_support_buffs,
+        applied_support_buffs,
         support_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
@@ -1567,6 +1574,10 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             );
         }
     }
+    let applied_support_buffs = registry
+        .support_buffs_catalog()
+        .map(|cat| support_buffs::describe_resolved_support_buffs(cat, &resolved_support_buffs))
+        .unwrap_or_default();
 
     let lcars_data = registry
         .lcars_officers()
@@ -1699,6 +1710,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         cached_defender_mitigation,
         using_placeholder_combatants,
         resolved_support_buffs,
+        applied_support_buffs,
         support_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
@@ -2159,6 +2171,7 @@ mod tests {
             cached_defender_mitigation: None,
             using_placeholder_combatants: true,
             resolved_support_buffs: vec![],
+            applied_support_buffs: vec![],
             support_static_buffs: HashMap::new(),
             unknown_support_buff_ids: vec![],
             research_derived_seats: vec![],

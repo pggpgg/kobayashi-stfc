@@ -11,7 +11,8 @@ use crate::optimizer::chain::{
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::perf_log;
 use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
+use serde_json::{json, Value};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 
 use super::crew_resolution::seeded_variance;
@@ -746,7 +747,26 @@ pub struct MonteCarloSeedReplay {
     pub trace_event_count: usize,
     pub trace_events_returned: usize,
     pub trace_truncated: bool,
+    pub external_buffs: Value,
     pub trace_events: Vec<CombatEvent>,
+}
+
+fn external_buffs_trace_payload(shared: &SharedScenarioData) -> Value {
+    let aggregate_static_bonuses: BTreeMap<String, f64> = shared
+        .support_static_buffs
+        .iter()
+        .map(|(stat, value)| (stat.clone(), *value))
+        .collect();
+
+    json!({
+        "support_buffs": {
+            "resolved_ids": &shared.resolved_support_buffs,
+            "unknown_ids": &shared.unknown_support_buff_ids,
+            "applied": &shared.applied_support_buffs,
+            "aggregate_static_bonuses": aggregate_static_bonuses,
+            "aggregate_static_bonuses_note": "Includes selected support buff static_bonuses plus support-gated imported research bonuses when present."
+        }
+    })
 }
 
 /// Replay a single iteration from an optimize/simulate Monte Carlo run (`scenario_seed` matches the request seed).
@@ -776,6 +796,7 @@ pub fn replay_optimize_iteration_with_registry(
         defender_opponent,
     );
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
+    let external_buffs = external_buffs_trace_payload(&shared);
     let iteration_seed = input.base_seed.wrapping_add(sim_index);
     let effective_defender_hull = input.defender_hull * seeded_variance(iteration_seed);
 
@@ -848,6 +869,7 @@ pub fn replay_optimize_iteration_with_registry(
         trace_event_count,
         trace_events_returned,
         trace_truncated,
+        external_buffs,
         trace_events,
     }
 }

@@ -1,11 +1,11 @@
 //! Alliance / ship support buff definitions (`data/support_buffs.json`).
 //! Virtual research rows and static combat keys apply only in-memory during scenario build.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 use std::sync::Arc;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::data::import::ResearchEntry;
 use crate::data::profile::{
@@ -22,13 +22,13 @@ pub const DEFAULT_SUPPORT_BUFFS_PATH: &str = "data/support_buffs.json";
 /// Max selectable buff ids per request (abuse guard).
 pub const MAX_SUPPORT_BUFFS_PER_REQUEST: usize = 8;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SupportBuffResearchLevel {
     pub rid: i64,
     pub level: u32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SupportBuffStatTarget {
     pub stat: String,
     pub value: f64,
@@ -61,6 +61,21 @@ pub struct SupportBuffDef {
     pub research_levels: Vec<SupportBuffResearchLevel>,
     #[serde(default)]
     pub static_bonuses: HashMap<String, f64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AppliedSupportBuffTrace {
+    pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub stat_targets: Vec<SupportBuffStatTarget>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub static_bonuses: BTreeMap<String, f64>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub research_levels: Vec<SupportBuffResearchLevel>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -403,6 +418,30 @@ pub fn aggregate_support_static_bonuses(
         }
     }
     out
+}
+
+pub fn describe_resolved_support_buffs(
+    catalog: &SupportBuffCatalog,
+    resolved_ids: &[String],
+) -> Vec<AppliedSupportBuffTrace> {
+    resolved_ids
+        .iter()
+        .filter_map(|id| {
+            let def = catalog.get(id)?;
+            Some(AppliedSupportBuffTrace {
+                id: id.clone(),
+                display_name: def.display_name.clone().or_else(|| def.label.clone()),
+                source: def.source.clone(),
+                stat_targets: def.stat_targets.clone(),
+                static_bonuses: def
+                    .static_bonuses
+                    .iter()
+                    .map(|(stat, value)| (stat.clone(), *value))
+                    .collect(),
+                research_levels: def.research_levels.clone(),
+            })
+        })
+        .collect()
 }
 
 /// Keys where LCARS/static buff maps use multiplicative stacking (see `apply_static_buffs_to_combatant`).

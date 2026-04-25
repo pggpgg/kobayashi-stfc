@@ -860,6 +860,16 @@ pub fn replay_optimize_seed_payload(
                 .to_string(),
         );
     }
+    for id in replay
+        .external_buffs
+        .pointer("/support_buffs/unknown_ids")
+        .and_then(|v| v.as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(|v| v.as_str())
+    {
+        warnings.push(format!("Unknown support_buff id: {id}"));
+    }
 
     let response_json = serde_json::json!({
         "status": "ok",
@@ -887,6 +897,7 @@ pub fn replay_optimize_seed_payload(
             "event_count": replay.trace_event_count,
             "events_returned": replay.trace_events_returned,
             "truncated": replay.trace_truncated,
+            "external_buffs": replay.external_buffs,
             "events": replay.trace_events,
         },
         "warnings": warnings,

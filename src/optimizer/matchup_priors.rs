@@ -319,6 +319,7 @@ mod tests {
             cached_defender_mitigation: None,
             using_placeholder_combatants: false,
             resolved_support_buffs: vec![],
+            applied_support_buffs: vec![],
             support_static_buffs: Default::default(),
             unknown_support_buff_ids: vec![],
             research_derived_seats: vec![],
