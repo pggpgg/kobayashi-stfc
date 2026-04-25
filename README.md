@@ -132,6 +132,14 @@ The project-maintained officer catalog (full officer list + tier progression) is
 
 For canonical officer data provenance, `officers.canonical.json` uses neutral metadata labels: each officer `source.workbook` value is set to `manual_curation` rather than storing a specific workbook filename.
 
+### Support Buffs
+
+Workspace simulations and optimizations can include request-scoped support buffs, such as Cerritos support, Defiant reinforcement, and Titan-A Fortification. Select them in the Workspace support buff panel, or pass `support_buffs: string[]` in API requests that run or compare crews. These selections are not saved into `profile.json`; they represent the current fight setup and are applied only to that simulation or optimization request.
+
+Support buffs are resolved from `data/support_buffs.json`. The server deduplicates ids, applies `exclusive_group` priority rules for incompatible choices, and emits warnings for unknown ids. Some research catalog rows are support-buff gated: they are intentionally excluded from normal profile research summaries and only merge into combat stats when the matching support buff is active.
+
+Known limitations: support buffs currently apply to the attacker side only, defender-side alliance buffs and debuffs are not modeled as separate scenario inputs, and non-catalog support values are modeled only where `data/support_buffs.json` has explicit static bonuses or curated gated research ids. When in-game mechanics are uncertain, prefer updating the catalog with provenance notes rather than hard-coding a one-off combat exception.
+
 ---
 
 ## How It Works

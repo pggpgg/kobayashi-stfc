@@ -272,10 +272,10 @@ fn captain_bridge_warm_score(candidate: &CrewCandidate, warm_start: &[CrewCandid
 }
 
 // Weights: keep priors subordinate to [`expected_damage`] scale (typically 1e3–1e5 hull proxy).
-const W_GATE: f32 = 8.0;
-const W_ENCOUNTER: f32 = 6.0;
-const W_WARM_JACCARD: f32 = 18.0;
-const W_WARM_CAP_BRIDGE: f32 = 14.0;
+const W_GATE: f64 = 8.0;
+const W_ENCOUNTER: f64 = 6.0;
+const W_WARM_JACCARD: f64 = 18.0;
+const W_WARM_CAP_BRIDGE: f64 = 14.0;
 
 /// Scalar for sorting candidates before analytical truncation (higher explores first).
 pub(crate) fn analytical_prefilter_rank_score(
@@ -283,12 +283,12 @@ pub(crate) fn analytical_prefilter_rank_score(
     input: &CombatSimulationInput,
     candidate: &CrewCandidate,
     warm_start: &[CrewCandidate],
-) -> f32 {
-    let base = expected_damage(input);
-    let gate = static_matchup_gate_score(shared, &input.crew);
-    let enc = encounter_tag_score(shared, &input.crew);
-    let warm = warm_start_family_score(candidate, warm_start);
-    let cap_br = captain_bridge_warm_score(candidate, warm_start);
+) -> f64 {
+    let base = f64::from(expected_damage(input));
+    let gate = f64::from(static_matchup_gate_score(shared, &input.crew));
+    let enc = f64::from(encounter_tag_score(shared, &input.crew));
+    let warm = f64::from(warm_start_family_score(candidate, warm_start));
+    let cap_br = f64::from(captain_bridge_warm_score(candidate, warm_start));
     base + W_GATE * gate + W_ENCOUNTER * enc + W_WARM_JACCARD * warm + W_WARM_CAP_BRIDGE * cap_br
 }
 

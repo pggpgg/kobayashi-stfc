@@ -112,10 +112,14 @@ pub fn save_profile_index(index: &ProfileIndex) -> std::io::Result<()> {
 
 /// Get the effective profile id to use (from index default or fallback).
 pub fn effective_profile_id(index: &ProfileIndex) -> String {
+    if let Some(id) = index.default_id.as_ref().filter(|id| !id.is_empty()) {
+        return id.clone();
+    }
+
     index
-        .default_id
-        .clone()
-        .filter(|id| !id.is_empty())
+        .profiles
+        .iter()
+        .find_map(|p| (!p.id.is_empty()).then(|| p.id.clone()))
         .unwrap_or_else(|| DEFAULT_PROFILE_ID.to_string())
 }
 
@@ -433,4 +437,47 @@ pub fn delete_profile(index: &mut ProfileIndex, id: &str) -> Result<(), String> 
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn effective_profile_uses_explicit_default() {
+        let index = ProfileIndex {
+            profiles: vec![ProfileEntry {
+                id: "demo".to_string(),
+                name: "Demo".to_string(),
+                sync_token: "token".to_string(),
+                is_default: None,
+            }],
+            default_id: Some("higgsbozo".to_string()),
+        };
+
+        assert_eq!(effective_profile_id(&index), "higgsbozo");
+    }
+
+    #[test]
+    fn effective_profile_falls_back_to_first_indexed_profile() {
+        let index = ProfileIndex {
+            profiles: vec![ProfileEntry {
+                id: "higgsbozo".to_string(),
+                name: "HiggsBozo".to_string(),
+                sync_token: "token".to_string(),
+                is_default: None,
+            }],
+            default_id: None,
+        };
+
+        assert_eq!(effective_profile_id(&index), "higgsbozo");
+    }
+
+    #[test]
+    fn effective_profile_falls_back_to_legacy_default_when_index_empty() {
+        assert_eq!(
+            effective_profile_id(&ProfileIndex::default()),
+            DEFAULT_PROFILE_ID
+        );
+    }
 }

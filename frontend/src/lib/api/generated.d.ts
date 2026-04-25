@@ -1894,6 +1894,12 @@ export interface components {
             tiered_scout_sims?: number;
             tiered_top_k?: number;
             tiered_scout_uniform?: boolean;
+            /** @description Tiered: when set, scales down per-top-K confirmation iterations so their sum does not exceed floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the width-based confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no global cap (default). Typical values 1.5–3; must be in (0, 20]. */
+            tiered_confirm_budget_cap_mult?: number;
+            /** @description Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep. Scout-phase Monte Carlo trials per remaining candidate after analytical prefilter; then full `sims` run only on the top exhaustive_scout_top_keep crews by scout ranking. */
+            exhaustive_scout_sims?: number;
+            /** @description Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked crews receive the full per-crew simulation_count (others keep scout statistics). */
+            exhaustive_scout_top_keep?: number;
             warm_start_crews?: components["schemas"]["WarmStartCrewDto"][];
             below_decks_slots?: number;
             constraints?: components["schemas"]["OptimizeConstraintsDto"];
@@ -1903,6 +1909,7 @@ export interface components {
             novelty_lambda?: number;
             novelty_diverse_top?: number;
             novelty_pool?: number;
+            /** @description Opaque client fingerprint (e.g. workspace warm-start key). When set and the request runs with an active profile, the server may load matching `optimize_history.json` rows for Monte Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors (reference crews from history only; same chain fingerprint as this request’s `chain`). */
             optimize_cache_key?: string;
         };
         ReplaySeedCrew: {

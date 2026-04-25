@@ -5,11 +5,9 @@ use std::collections::HashMap;
 use serde::Serialize;
 
 use crate::data::import;
-use crate::data::profile::{
-    accumulate_combat_only_bonuses_from_raw, combat_research_bonuses_from_import, PlayerProfile,
-};
+use crate::data::profile::combat_research_bonuses_from_import;
 use crate::data::profile_index::{profile_path, RESEARCH_IMPORTED};
-use crate::data::research::{cumulative_research_level_bonuses, ResearchCatalog};
+use crate::data::research::ResearchCatalog;
 
 /// One row from `research.imported.json` with catalog resolution and per-row combat slice.
 #[derive(Debug, Clone, Serialize)]
@@ -66,6 +64,14 @@ pub fn research_combat_summary_for_profile(
         .to_string();
     let imported = import::load_imported_research(&research_path).unwrap_or_default();
 
+    research_combat_summary_from_imported(profile_id, &imported, catalog)
+}
+
+fn research_combat_summary_from_imported(
+    profile_id: &str,
+    imported: &[import::ResearchEntry],
+    catalog: Option<&ResearchCatalog>,
+) -> ResearchCombatSummary {
     let catalog_nonempty = catalog.filter(|c| !c.items.is_empty());
     let catalog_by_rid: Option<HashMap<i64, &crate::data::research::ResearchRecord>> =
         catalog_nonempty.map(by_rid);
@@ -81,11 +87,11 @@ pub fn research_combat_summary_for_profile(
                         let name = map.get(&e.rid).and_then(|r| r.name.clone());
                         let lvl_u32 = effective_level_u32(e.level);
                         let combat_bonuses_from_row = if present && lvl_u32 > 0 {
-                            let rec = map.get(&e.rid).copied().unwrap();
-                            let raw = cumulative_research_level_bonuses(rec, lvl_u32);
-                            let mut slice = PlayerProfile::default();
-                            accumulate_combat_only_bonuses_from_raw(&mut slice, &raw);
-                            slice.bonuses
+                            let one = [e.clone()];
+                            match catalog_nonempty {
+                                Some(cat) => combat_research_bonuses_from_import(&one, cat),
+                                None => HashMap::new(),
+                            }
                         } else {
                             HashMap::new()
                         };
@@ -139,7 +145,10 @@ pub fn research_combat_summary_for_profile(
 mod tests {
     use super::*;
     use crate::data::import::ResearchEntry;
-    use crate::data::profile::merge_research_bonuses_into_profile;
+    use crate::data::profile::{
+        merge_research_bonuses_into_profile, PlayerProfile,
+        TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS,
+    };
     use crate::data::research::{ResearchBonusEntry, ResearchLevel, ResearchRecord};
 
     fn tiny_catalog() -> ResearchCatalog {
@@ -201,5 +210,112 @@ mod tests {
             .map(|e| e.rid)
             .collect();
         assert_eq!(unmapped, vec![99999]);
+    }
+
+    #[test]
+    fn summary_aggregate_matches_profile_merge_for_representative_import() {
+        let gated_rid = TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS[0];
+        let cat = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![
+                ResearchRecord {
+                    rid: 42,
+                    name: Some("Weapon Lab".to_string()),
+                    data_version: None,
+                    source_note: None,
+                    levels: vec![
+                        ResearchLevel {
+                            level: 1,
+                            bonuses: vec![ResearchBonusEntry {
+                                stat: "weapon_damage".to_string(),
+                                value: 0.03,
+                                operator: "add".to_string(),
+                                condition: Default::default(),
+                            }],
+                        },
+                        ResearchLevel {
+                            level: 2,
+                            bonuses: vec![ResearchBonusEntry {
+                                stat: "weapon_damage".to_string(),
+                                value: 0.02,
+                                operator: "add".to_string(),
+                                condition: Default::default(),
+                            }],
+                        },
+                    ],
+                },
+                ResearchRecord {
+                    rid: 7,
+                    name: Some("Hull Lab".to_string()),
+                    data_version: None,
+                    source_note: None,
+                    levels: vec![ResearchLevel {
+                        level: 1,
+                        bonuses: vec![ResearchBonusEntry {
+                            stat: "hull_hp".to_string(),
+                            value: 100.0,
+                            operator: "add".to_string(),
+                            condition: Default::default(),
+                        }],
+                    }],
+                },
+                ResearchRecord {
+                    rid: gated_rid,
+                    name: Some("Titan Gated Lab".to_string()),
+                    data_version: None,
+                    source_note: None,
+                    levels: vec![ResearchLevel {
+                        level: 1,
+                        bonuses: vec![ResearchBonusEntry {
+                            stat: "weapon_damage".to_string(),
+                            value: 9.99,
+                            operator: "add".to_string(),
+                            condition: Default::default(),
+                        }],
+                    }],
+                },
+            ],
+        };
+        let imported = vec![
+            ResearchEntry { rid: 42, level: 1 },
+            ResearchEntry { rid: 42, level: 2 },
+            ResearchEntry { rid: 7, level: 1 },
+            ResearchEntry {
+                rid: gated_rid,
+                level: 1,
+            },
+            ResearchEntry {
+                rid: 99999,
+                level: 5,
+            },
+        ];
+
+        let summary = research_combat_summary_from_imported("higgsbozo", &imported, Some(&cat));
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &imported, &cat);
+
+        assert_eq!(summary.profile_id, "higgsbozo");
+        assert_eq!(summary.synced_research_count, imported.len());
+        assert_eq!(summary.unmapped_rids, vec![99999]);
+        assert_eq!(summary.combat_bonuses_from_research, profile.bonuses);
+        assert_eq!(
+            summary.combat_bonuses_from_research.get("weapon_damage"),
+            Some(&0.05)
+        );
+        assert_eq!(
+            summary.combat_bonuses_from_research.get("hull_hp"),
+            Some(&100.0)
+        );
+        assert!(
+            summary
+                .research
+                .iter()
+                .find(|row| row.rid == gated_rid)
+                .expect("gated research row present")
+                .combat_bonuses_from_row
+                .is_empty(),
+            "support-buff-gated research must not appear in default profile research summaries"
+        );
     }
 }

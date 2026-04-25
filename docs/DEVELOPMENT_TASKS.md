@@ -8,19 +8,19 @@ Ordered checklist for tracking near-term Kobayashi simulator and optimizer work.
 4. [x] Normalize support buff catalog entries so frontend and backend use the same identifiers and metadata.
 5. [x] Add validation for support buff catalog data and profile payloads.
 6. [x] Extend profile loading and saving tests to cover support buff round trips.
-7. [ ] Verify research summary merge behavior against representative HiggsBozo profile data.
+7. [x] Verify research summary merge behavior against representative HiggsBozo profile data.
 8. [x] Add focused parity tests for combat effect specs that combine research and support buffs.
 9. [x] Review Monte Carlo scenario construction to ensure support buffs, research buffs, and crew effects are resolved once per simulation request.
 10. [x] Improve combat trace output for externally supplied buffs so users can see which bonuses were applied.
 11. [x] Add API contract coverage for optimize and simulate requests that include support buffs.
-12. [ ] Regenerate or update frontend API types if request or response schemas changed.
+12. [x] Regenerate or update frontend API types if request or response schemas changed.
 13. [x] Update the support buff selector UI to group buffs by source and stat category.
 14. [x] Add frontend validation for incompatible, duplicate, or unsupported support buff selections.
 15. [x] Add frontend tests for support buff selection, persistence, and request serialization.
-16. [ ] Run targeted Rust tests for profile, research, scenario, and combat parity behavior.
-17. [ ] Run targeted frontend tests for support buff selector and API payload generation.
-18. [ ] Run full local CI or the closest practical subset before opening a PR.
-19. [ ] Update user-facing docs for support buff usage, limitations, and known uncertain mechanics.
+16. [x] Run targeted Rust tests for profile, research, scenario, and combat parity behavior.
+17. [x] Run targeted frontend tests for support buff selector and API payload generation.
+18. [x] Run full local CI or the closest practical subset before opening a PR.
+19. [x] Update user-facing docs for support buff usage, limitations, and known uncertain mechanics.
 20. [ ] Prepare a PR summary with simulator mechanics changed, test coverage, and remaining uncertainty.
 
 ## Task 2 Audit: Support Buff Data Path
