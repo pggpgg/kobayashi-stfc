@@ -12,7 +12,7 @@ Ordered checklist for tracking near-term Kobayashi simulator and optimizer work.
 8. [x] Add focused parity tests for combat effect specs that combine research and support buffs.
 9. [x] Review Monte Carlo scenario construction to ensure support buffs, research buffs, and crew effects are resolved once per simulation request.
 10. [x] Improve combat trace output for externally supplied buffs so users can see which bonuses were applied.
-11. [ ] Add API contract coverage for optimize and simulate requests that include support buffs.
+11. [x] Add API contract coverage for optimize and simulate requests that include support buffs.
 12. [ ] Regenerate or update frontend API types if request or response schemas changed.
 13. [ ] Update the support buff selector UI to group buffs by source and stat category.
 14. [ ] Add frontend validation for incompatible, duplicate, or unsupported support buff selections.
