@@ -30,7 +30,10 @@ import {
   loadWarmStartCrews,
   saveWarmStartFromRecommendations,
 } from "./optimizeWarmStart";
-import type { SupportBuffId } from "./supportBuffs";
+import {
+  normalizeSupportBuffSelection,
+  type SupportBuffId,
+} from "./supportBuffs";
 import {
   belowDeckSlotCount,
   type CrewState,
@@ -131,6 +134,9 @@ export function useWorkspace() {
   const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
     SupportBuffId[]
   >([]);
+  const setValidatedSelectedSupportBuffs = (ids: readonly string[]) => {
+    setSelectedSupportBuffs(normalizeSupportBuffSelection(ids).ids);
+  };
 
   // Heuristics state
   const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
@@ -796,7 +802,7 @@ export function useWorkspace() {
     prioritizeBelowDecksAbility,
     setPrioritizeBelowDecksAbility,
     selectedSupportBuffs,
-    setSelectedSupportBuffs,
+    setSelectedSupportBuffs: setValidatedSelectedSupportBuffs,
     // Heuristics
     availableSeeds,
     selectedSeeds,

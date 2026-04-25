@@ -4,7 +4,7 @@ import type {
   OptimizerStrategyType,
   WarmStartCrewBody,
 } from "./api";
-import type { SupportBuffId } from "./supportBuffs";
+import { normalizeSupportBuffSelection } from "./supportBuffs";
 import type { CrewState } from "./types";
 
 /** Params for POST /api/simulate from workspace UI (single-crew Monte Carlo). */
@@ -15,7 +15,7 @@ export function buildWorkspaceSimulateParams(args: {
   simsPerCrew: number;
   shipTier: number;
   shipLevel: number;
-  supportBuffs?: SupportBuffId[];
+  supportBuffs?: readonly string[];
 }): {
   ship: string;
   hostile: string;
@@ -30,10 +30,7 @@ export function buildWorkspaceSimulateParams(args: {
   support_buffs?: string[];
 } | null {
   if (!args.crew.captain) return null;
-  const support_buffs =
-    args.supportBuffs && args.supportBuffs.length > 0
-      ? [...args.supportBuffs]
-      : undefined;
+  const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
   return {
     ship: args.shipId || "Saladin",
     hostile: args.scenarioId || "2918121098",
@@ -45,7 +42,7 @@ export function buildWorkspaceSimulateParams(args: {
     num_sims: args.simsPerCrew,
     ship_tier: args.shipTier,
     ship_level: args.shipLevel,
-    ...(support_buffs ? { support_buffs } : {}),
+    ...(support_buffs.length > 0 ? { support_buffs } : {}),
   };
 }
 
@@ -193,7 +190,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
   belowDecksStrategy: "ordered" | "exploration";
   shipTier: number;
   shipLevel: number;
-  supportBuffs?: SupportBuffId[];
+  supportBuffs?: readonly string[];
   optimizeConstraints?: {
     mustIncludeComma: string;
     excludeComma: string;
@@ -223,10 +220,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
     : undefined;
 
-  const support_buffs =
-    args.supportBuffs && args.supportBuffs.length > 0
-      ? [...args.supportBuffs]
-      : undefined;
+  const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
 
   return {
     ship: args.shipId || "Saladin",
@@ -245,7 +239,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
         : undefined,
     ship_tier: args.shipTier,
     ship_level: args.shipLevel,
-    ...(support_buffs ? { support_buffs } : {}),
+    ...(support_buffs.length > 0 ? { support_buffs } : {}),
     ...(constraints ? { constraints } : {}),
     ...(args.chainGrind?.enabled
       ? {

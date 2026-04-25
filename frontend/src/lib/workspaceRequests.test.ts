@@ -44,6 +44,32 @@ describe("buildWorkspaceSimulateParams", () => {
       }),
     );
   });
+
+  it("serializes normalized support buffs when present", () => {
+    const crew = createEmptyCrew(50);
+    crew.captain = "Kirk";
+
+    const params = buildWorkspaceSimulateParams({
+      shipId: "Enterprise",
+      scenarioId: "hostile1",
+      crew,
+      simsPerCrew: 1000,
+      shipTier: 2,
+      shipLevel: 45,
+      supportBuffs: [
+        "cerritos_support",
+        "unknown_buff",
+        "cerritos_support",
+        "titan_a_fortification",
+        "titan_a_max_fortification",
+      ],
+    });
+
+    expect(params?.support_buffs).toEqual([
+      "cerritos_support",
+      "titan_a_max_fortification",
+    ]);
+  });
 });
 
 describe("buildWorkspaceOptimizeStartBody", () => {
@@ -103,6 +129,33 @@ describe("buildWorkspaceOptimizeStartBody", () => {
       fastDiscovery: true,
     });
     expect(body.fast_discovery).toBe(true);
+  });
+
+  it("serializes normalized support buffs for optimize/start", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: 50,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      supportBuffs: [
+        "defiant_reinforce",
+        "bogus",
+        "titan_a_fortification",
+        "titan_a_max_fortification",
+      ],
+    });
+
+    expect(body.support_buffs).toEqual([
+      "defiant_reinforce",
+      "titan_a_max_fortification",
+    ]);
   });
 
   it("includes chain when chainGrind.enabled with kills_target", () => {

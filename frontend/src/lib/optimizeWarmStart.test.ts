@@ -15,11 +15,11 @@ describe("buildOptimizeWarmStartKey", () => {
   it("changes when support buff selection changes", () => {
     const a = buildOptimizeWarmStartKey({
       ...baseArgs,
-      supportBuffIds: ["z", "a"],
+      supportBuffIds: ["cerritos_support"],
     });
     const b = buildOptimizeWarmStartKey({
       ...baseArgs,
-      supportBuffIds: ["a", "z", "extra"],
+      supportBuffIds: ["cerritos_support", "defiant_reinforce"],
     });
     expect(a).not.toBe(b);
   });
@@ -27,11 +27,11 @@ describe("buildOptimizeWarmStartKey", () => {
   it("is stable for same support buff ids in different order", () => {
     const a = buildOptimizeWarmStartKey({
       ...baseArgs,
-      supportBuffIds: ["b", "a"],
+      supportBuffIds: ["defiant_reinforce", "cerritos_support"],
     });
     const b = buildOptimizeWarmStartKey({
       ...baseArgs,
-      supportBuffIds: ["a", "b"],
+      supportBuffIds: ["cerritos_support", "defiant_reinforce"],
     });
     expect(a).toBe(b);
   });

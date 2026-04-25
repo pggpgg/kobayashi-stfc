@@ -115,6 +115,57 @@ describe("useWorkspace", () => {
     expect(result.current.simResult?.n).toBe(100);
   });
 
+  it("validates support buff selections before storing workspace state", async () => {
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.activeProfileId).toBe("p1");
+    });
+
+    act(() => {
+      result.current.setSelectedSupportBuffs([
+        "titan_a_fortification",
+        "titan_a_max_fortification",
+        "unknown_buff",
+        "titan_a_max_fortification",
+      ]);
+    });
+
+    expect(result.current.selectedSupportBuffs).toEqual([
+      "titan_a_max_fortification",
+    ]);
+  });
+
+  it("passes selected support buffs through simulate requests", async () => {
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.activeProfileId).toBe("p1");
+    });
+
+    act(() => {
+      result.current.setShipId("saladin");
+      result.current.setScenarioId("2918121098");
+      result.current.setSelectedSupportBuffs(["cerritos_support"]);
+      result.current.setCrew({
+        captain: "officer-1",
+        bridge: [null, null],
+        belowDeck: [null, null, null],
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleRunSim();
+    });
+
+    expect(apiMocks.mockSimulate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        support_buffs: ["cerritos_support"],
+      }),
+      "p1",
+    );
+  });
+
   it("calls savePreset when saving a preset", async () => {
     const { result } = renderHook(() => useWorkspace(), { wrapper });
 

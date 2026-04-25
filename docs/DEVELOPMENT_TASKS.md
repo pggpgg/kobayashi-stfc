@@ -14,9 +14,9 @@ Ordered checklist for tracking near-term Kobayashi simulator and optimizer work.
 10. [x] Improve combat trace output for externally supplied buffs so users can see which bonuses were applied.
 11. [x] Add API contract coverage for optimize and simulate requests that include support buffs.
 12. [ ] Regenerate or update frontend API types if request or response schemas changed.
-13. [ ] Update the support buff selector UI to group buffs by source and stat category.
-14. [ ] Add frontend validation for incompatible, duplicate, or unsupported support buff selections.
-15. [ ] Add frontend tests for support buff selection, persistence, and request serialization.
+13. [x] Update the support buff selector UI to group buffs by source and stat category.
+14. [x] Add frontend validation for incompatible, duplicate, or unsupported support buff selections.
+15. [x] Add frontend tests for support buff selection, persistence, and request serialization.
 16. [ ] Run targeted Rust tests for profile, research, scenario, and combat parity behavior.
 17. [ ] Run targeted frontend tests for support buff selector and API payload generation.
 18. [ ] Run full local CI or the closest practical subset before opening a PR.

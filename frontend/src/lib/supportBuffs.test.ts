@@ -1,5 +1,8 @@
 import supportBuffCatalogJson from "../../../data/support_buffs.json";
-import { SUPPORT_BUFF_OPTIONS } from "./supportBuffs";
+import {
+  normalizeSupportBuffSelection,
+  SUPPORT_BUFF_OPTIONS,
+} from "./supportBuffs";
 
 interface SupportBuffCatalogEntry {
   id?: string;
@@ -44,5 +47,41 @@ describe("support buff catalog", () => {
         expect(target.layer).toBe("static_bonuses");
       }
     }
+  });
+});
+
+describe("normalizeSupportBuffSelection", () => {
+  it("drops unsupported ids and duplicate selections", () => {
+    const result = normalizeSupportBuffSelection([
+      "cerritos_support",
+      "unknown_buff",
+      "cerritos_support",
+    ]);
+
+    expect(result.ids).toEqual(["cerritos_support"]);
+    expect(result.issues.map((issue) => issue.type)).toEqual([
+      "unsupported",
+      "duplicate",
+    ]);
+  });
+
+  it("resolves incompatible exclusive groups by highest priority", () => {
+    const result = normalizeSupportBuffSelection([
+      "titan_a_fortification",
+      "titan_a_max_fortification",
+      "defiant_reinforce",
+    ]);
+
+    expect(result.ids).toEqual([
+      "defiant_reinforce",
+      "titan_a_max_fortification",
+    ]);
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        type: "incompatible",
+        id: "titan_a_fortification",
+        keptId: "titan_a_max_fortification",
+      }),
+    ]);
   });
 });
