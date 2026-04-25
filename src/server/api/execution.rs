@@ -20,7 +20,7 @@ use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
 };
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel_with_registry, scenario::build_shared_scenario_data_from_registry,
+    run_monte_carlo_with_shared, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
 };
 use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
@@ -623,7 +623,7 @@ fn gather_optimize_simulation_results(
         *sink_skip = fast_discovery && !is_seeded_genetic;
     }
 
-    let using_placeholder_combatants = build_shared_scenario_data_from_registry(
+    let shared_scenario = build_shared_scenario_data_from_registry(
         registry,
         &request.ship,
         &request.hostile,
@@ -632,8 +632,8 @@ fn gather_optimize_simulation_results(
         profile_id,
         request.support_buffs.as_deref(),
         request.defender_opponent,
-    )
-    .using_placeholder_combatants;
+    );
+    let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
 
     let mut all_results: Vec<SimulationResult> =
         if heuristics_seeds_nonempty && !is_seeded_genetic && !fast_discovery {
@@ -649,19 +649,13 @@ fn gather_optimize_simulation_results(
                     return Err(());
                 }
                 let batch = &h_candidates[start..end];
-                let (batch_results, _) = run_monte_carlo_parallel_with_registry(
-                    registry,
-                    &request.ship,
-                    &request.hostile,
-                    request.ship_tier,
-                    request.ship_level,
+                let batch_results = run_monte_carlo_with_shared(
+                    shared_scenario.clone(),
                     batch,
                     sims as usize,
                     seed,
-                    profile_id,
-                    request.support_buffs.as_deref(),
+                    true,
                     chain_grind.clone(),
-                    request.defender_opponent,
                 );
                 results.extend(batch_results);
             }

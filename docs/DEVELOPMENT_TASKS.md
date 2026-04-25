@@ -10,7 +10,7 @@ Ordered checklist for tracking near-term Kobayashi simulator and optimizer work.
 6. [x] Extend profile loading and saving tests to cover support buff round trips.
 7. [ ] Verify research summary merge behavior against representative HiggsBozo profile data.
 8. [x] Add focused parity tests for combat effect specs that combine research and support buffs.
-9. [ ] Review Monte Carlo scenario construction to ensure support buffs, research buffs, and crew effects are resolved once per simulation request.
+9. [x] Review Monte Carlo scenario construction to ensure support buffs, research buffs, and crew effects are resolved once per simulation request.
 10. [ ] Improve combat trace output for externally supplied buffs so users can see which bonuses were applied.
 11. [ ] Add API contract coverage for optimize and simulate requests that include support buffs.
 12. [ ] Regenerate or update frontend API types if request or response schemas changed.
@@ -35,3 +35,11 @@ Completed audit of the existing support buff path from React selection through R
 - `src/data/data_registry.rs`, `src/data/support_buffs.rs`, `src/server/api.rs`, `src/server/api/requests.rs`, and `src/optimizer/monte_carlo/scenario.rs` load the catalog, resolve requested ids, cap/dedupe selections, apply exclusive groups, merge virtual support research and static bonuses into scenario-local state, and surface unknown-id warnings for simulate/compare.
 
 Known follow-up risks are tracked by later checklist items: optimize/replay warning behavior is inconsistent with simulate/compare, missing support-buff catalog data becomes a silent no-op, `apply_support_buffs_for_request` is currently unused, and frontend/backend support id plus gated research rid lists require manual synchronization.
+
+## Task 9 Review: Monte Carlo Scenario Resolution
+
+Reviewed optimize/simulate Monte Carlo entry points around `SharedScenarioData`, `scenario_to_combat_input_from_shared`, and the tiered/exhaustive optimizer paths.
+
+- Support buff id resolution, support static buff aggregation, imported research loading, research profile merge, and support-gated research seat derivation are scenario-level work in `SharedScenarioData`.
+- Per-candidate crew LCARS/effect resolution is still done once before that candidate's Monte Carlo trial loop, then reused for each seeded trial.
+- Updated exhaustive and heuristic batch paths to reuse already-built shared scenario state instead of rebuilding registry/standalone scenario state per batch.

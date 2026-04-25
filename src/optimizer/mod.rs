@@ -29,8 +29,7 @@ use crate::optimizer::monte_carlo::scenario::{
     scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
-    crew_candidate_stable_hash, run_monte_carlo_parallel, run_monte_carlo_parallel_with_registry,
-    SimulationResult,
+    crew_candidate_stable_hash, run_monte_carlo_with_shared, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
@@ -675,19 +674,13 @@ fn optimize_scenario_exhaustive_with_registry(
         }
         return Vec::new();
     }
-    let (simulation_results, _) = run_monte_carlo_parallel_with_registry(
-        registry,
-        scenario.ship,
-        scenario.hostile,
-        scenario.ship_tier,
-        scenario.ship_level,
+    let simulation_results = run_monte_carlo_with_shared(
+        shared_ex,
         &candidates,
         scenario.simulation_count.max(1),
         scenario.seed,
-        scenario.profile_id,
-        scenario_support_slice(scenario),
+        true,
         scenario.chain_grind.clone(),
-        scenario.defender_opponent,
     );
     rank_results(simulation_results)
 }
@@ -714,15 +707,13 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         &scenario.warm_start,
         &scenario.prior_reference_crews,
     );
-    let simulation_results = run_monte_carlo_parallel(
-        scenario.ship,
-        scenario.hostile,
+    let simulation_results = run_monte_carlo_with_shared(
+        shared,
         &candidates,
         scenario.simulation_count.max(1),
         scenario.seed,
-        scenario_support_slice(scenario),
+        true,
         scenario.chain_grind.clone(),
-        scenario.defender_opponent,
     );
     rank_results(simulation_results)
 }
@@ -877,15 +868,13 @@ where
                     "optimize_sim_batch_started"
                 );
                 let batch = &candidates[start..end];
-                let batch_results = run_monte_carlo_parallel(
-                    scenario.ship,
-                    scenario.hostile,
+                let batch_results = run_monte_carlo_with_shared(
+                    shared.clone(),
                     batch,
                     sim_count,
                     scenario.seed,
-                    scenario_support_slice(scenario),
+                    true,
                     scenario.chain_grind.clone(),
-                    scenario.defender_opponent,
                 );
                 all_results.extend(batch_results);
                 info!(
@@ -1158,19 +1147,13 @@ where
                     "optimize_sim_batch_started"
                 );
                 let batch = &candidates[start..end];
-                let (batch_results, _) = run_monte_carlo_parallel_with_registry(
-                    registry,
-                    scenario.ship,
-                    scenario.hostile,
-                    scenario.ship_tier,
-                    scenario.ship_level,
+                let batch_results = run_monte_carlo_with_shared(
+                    shared_ex.clone(),
                     batch,
                     sim_count,
                     scenario.seed,
-                    scenario.profile_id,
-                    scenario_support_slice(scenario),
+                    true,
                     scenario.chain_grind.clone(),
-                    scenario.defender_opponent,
                 );
                 all_results.extend(batch_results);
                 info!(
