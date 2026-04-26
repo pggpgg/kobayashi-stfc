@@ -14,7 +14,11 @@ use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
+use crate::data::import::{
+    load_imported_roster_ids_unlocked_only_status, ImportedRosterIdsLoadStatus,
+};
 use crate::data::optimize_history;
+use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
@@ -26,8 +30,9 @@ use crate::optimizer::monte_carlo::{
 use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
 use crate::optimizer::tiered::TieredScoutBudgetStats;
 use crate::optimizer::{
-    count_effective_optimize_candidates, optimize_scenario_with_progress_with_registry,
-    OptimizationScenario, OptimizeProgressTick, OptimizerStrategy,
+    count_effective_optimize_candidates, enforce_candidate_legality_with_registry,
+    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeProgressTick,
+    OptimizerStrategy,
 };
 use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
@@ -343,6 +348,26 @@ struct OptimizeGatherMeta {
     optimize_history_wrote: bool,
     tiered_scout_budget: Option<TieredScoutBudgetStats>,
     exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
+    dropped_illegal_warm_start: usize,
+    dropped_illegal_heuristics: usize,
+    roster_filter_warning: Option<String>,
+}
+
+fn roster_filter_warning_for_profile(profile_id: Option<&str>) -> Option<String> {
+    let pid = profile_id
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+        .unwrap_or_else(|| resolve_profile_id_for_api(None));
+    let roster_path = profile_path(&pid, ROSTER_IMPORTED);
+    match load_imported_roster_ids_unlocked_only_status(roster_path.to_string_lossy().as_ref()) {
+        ImportedRosterIdsLoadStatus::Loaded(_) => None,
+        ImportedRosterIdsLoadStatus::MissingFile => Some(
+            "No imported roster file was found for this profile; optimizer fell back to full officer catalog filtering.".to_string(),
+        ),
+        ImportedRosterIdsLoadStatus::InvalidFile => Some(
+            "Imported roster data is invalid for this profile; optimizer fell back to full officer catalog filtering.".to_string(),
+        ),
+    }
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -563,6 +588,13 @@ fn gather_optimize_simulation_results(
     } else {
         Vec::new()
     };
+    let (h_candidates_legal, h_legality) = enforce_candidate_legality_with_registry(
+        registry,
+        profile_id,
+        below_decks_slots,
+        h_candidates,
+    );
+    h_candidates = h_candidates_legal;
     if let Some(ref c) = crew_constraints {
         h_candidates = filter_candidates(h_candidates, c);
     }
@@ -572,6 +604,8 @@ fn gather_optimize_simulation_results(
     );
 
     let dto_warm = warm_start_crews_from_request_dtos(request);
+    let (dto_warm, warm_legality) =
+        enforce_candidate_legality_with_registry(registry, profile_id, below_decks_slots, dto_warm);
     let fast_discovery_requested =
         request.fast_discovery == Some(true) && heuristics_seeds_nonempty && !heuristics_only;
     let fast_discovery_no_resolved_crews = fast_discovery_requested && h_candidates.is_empty();
@@ -817,6 +851,13 @@ fn gather_optimize_simulation_results(
         optimize_history_wrote,
         tiered_scout_budget: tiered_scout_budget_for_response,
         exhaustive_adaptive_budget: exhaustive_adaptive_budget_for_response,
+        dropped_illegal_warm_start: warm_legality.dropped_wrong_shape
+            + warm_legality.dropped_duplicates
+            + warm_legality.dropped_seat_incompatible,
+        dropped_illegal_heuristics: h_legality.dropped_wrong_shape
+            + h_legality.dropped_duplicates
+            + h_legality.dropped_seat_incompatible,
+        roster_filter_warning: roster_filter_warning_for_profile(profile_id),
     };
     info!(
         effective_strategy = optimizer_strategy_to_api_label(meta.strategy),
@@ -982,6 +1023,21 @@ fn build_optimize_response(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats. Results do not reflect real ship/hostile values."
                 .to_string(),
         );
+    }
+    if meta.dropped_illegal_heuristics > 0 {
+        warnings.push(format!(
+            "Ignored {} heuristic-expanded crew(s) that were not roster/seat legal for this scenario.",
+            meta.dropped_illegal_heuristics
+        ));
+    }
+    if meta.dropped_illegal_warm_start > 0 {
+        warnings.push(format!(
+            "Ignored {} warm-start crew(s) that were not roster/seat legal for this scenario.",
+            meta.dropped_illegal_warm_start
+        ));
+    }
+    if let Some(message) = &meta.roster_filter_warning {
+        warnings.push(message.clone());
     }
 
     OptimizeResponse {

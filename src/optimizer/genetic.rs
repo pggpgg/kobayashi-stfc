@@ -215,6 +215,44 @@ fn random_crew_constrained(
     None
 }
 
+fn candidate_respects_pools(
+    candidate: &CrewCandidate,
+    pools: &OfficerPools,
+    below_decks_slots: usize,
+) -> bool {
+    if candidate.bridge.len() != BRIDGE_SLOTS || candidate.below_decks.len() != below_decks_slots {
+        return false;
+    }
+    let captain_pool: HashSet<&str> = pools.captains.iter().map(String::as_str).collect();
+    let bridge_pool: HashSet<&str> = pools.bridge.iter().map(String::as_str).collect();
+    let below_pool: HashSet<&str> = pools.below_decks.iter().map(String::as_str).collect();
+
+    if !captain_pool.contains(candidate.captain.as_str())
+        || !bridge_pool.contains(candidate.captain.as_str())
+        || candidate
+            .bridge
+            .iter()
+            .any(|n| !bridge_pool.contains(n.as_str()))
+        || candidate
+            .below_decks
+            .iter()
+            .any(|n| !below_pool.contains(n.as_str()))
+    {
+        return false;
+    }
+
+    let mut used = HashSet::new();
+    for name in std::iter::once(candidate.captain.as_str())
+        .chain(candidate.bridge.iter().map(String::as_str))
+        .chain(candidate.below_decks.iter().map(String::as_str))
+    {
+        if !used.insert(name) {
+            return false;
+        }
+    }
+    true
+}
+
 /// Initialize population with optional seed candidates, filling remaining slots randomly.
 /// When `seed_candidates` is empty, this behaves identically to pure random initialization.
 fn init_population_seeded(
@@ -229,7 +267,9 @@ fn init_population_seeded(
 
     // Inject seed candidates (up to population_size, preserving order = author priority).
     for candidate in seed_candidates.iter().take(population_size) {
-        if constraints.is_none_or(|co| co.satisfies(candidate)) {
+        if constraints.is_none_or(|co| co.satisfies(candidate))
+            && candidate_respects_pools(candidate, pools, below_decks_slots)
+        {
             pop.push(candidate.clone());
         }
     }

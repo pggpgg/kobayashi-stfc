@@ -101,6 +101,12 @@ export default function WorkspaceHeader({
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
   const [tiers, setTiers] = useState<number[]>([1]);
   const [levels, setLevels] = useState<number[]>([1, 10, 20, 30, 40, 50, 60]);
+  const selectedRosterShip = ships.find((s) => s.id === shipId);
+  const rosterLocksShipProgress =
+    ownedOnly &&
+    selectedRosterShip != null &&
+    selectedRosterShip.tier != null &&
+    selectedRosterShip.level != null;
 
   useEffect(() => {
     let c = false;
@@ -264,6 +270,7 @@ export default function WorkspaceHeader({
         value={shipTier}
         onChange={(e) => onShipTierChange(Number(e.target.value))}
         style={selectStyle}
+        disabled={rosterLocksShipProgress}
       >
         {tiers.map((t) => (
           <option key={t} value={t}>
@@ -276,6 +283,7 @@ export default function WorkspaceHeader({
         value={shipLevel}
         onChange={(e) => onShipLevelChange(Number(e.target.value))}
         style={selectStyle}
+        disabled={rosterLocksShipProgress}
       >
         {levels.map((l) => (
           <option key={l} value={l}>
@@ -292,6 +300,11 @@ export default function WorkspaceHeader({
         selected={selectedSupportBuffs}
         onChange={onSelectedSupportBuffsChange}
       />
+      {rosterLocksShipProgress ? (
+        <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+          Roster mode locks ship tier/level to owned ship data.
+        </span>
+      ) : null}
       <select
         aria-label="Preset"
         style={{

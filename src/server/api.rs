@@ -19,6 +19,7 @@ use crate::data::hostile_loca::resolve_hostile_display_name;
 use crate::data::import::load_imported_ships;
 use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
+    load_imported_roster_ids_unlocked_only_status, ImportedRosterIdsLoadStatus,
 };
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::profile::{validate_player_profile_payload, PlayerProfile};
@@ -32,6 +33,7 @@ use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate, CrewGenerator,
     BRIDGE_SLOTS,
 };
+use crate::optimizer::enforce_candidate_legality_with_registry;
 use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
 use crate::optimizer::monte_carlo::{
     compare_crews_monte_carlo_with_registry, replay_optimize_iteration_with_registry,
@@ -101,6 +103,22 @@ fn parse_owned_only(path: &str) -> bool {
         p.trim().eq_ignore_ascii_case("owned_only=1")
             || p.trim().eq_ignore_ascii_case("owned_only=true")
     })
+}
+
+fn roster_filter_warning_message(profile_id: Option<&str>) -> Option<String> {
+    let id = resolve_profile_id(profile_id);
+    let roster_path = profile_path(&id, ROSTER_IMPORTED);
+    match load_imported_roster_ids_unlocked_only_status(roster_path.to_string_lossy().as_ref()) {
+        ImportedRosterIdsLoadStatus::Loaded(_) => None,
+        ImportedRosterIdsLoadStatus::MissingFile => Some(
+            "No imported roster file was found for this profile; fell back to full officer catalog filtering."
+                .to_string(),
+        ),
+        ImportedRosterIdsLoadStatus::InvalidFile => Some(
+            "Imported roster data is invalid for this profile; fell back to full officer catalog filtering."
+                .to_string(),
+        ),
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -573,7 +591,17 @@ pub fn simulate_payload(
         bridge,
         below_decks,
     } = candidate.clone();
-    let candidates = vec![candidate];
+    let (candidates, _) = enforce_candidate_legality_with_registry(
+        registry,
+        profile_id,
+        below_decks_slots,
+        vec![candidate],
+    );
+    if candidates.is_empty() {
+        return Err(SimulateError::Validation(
+            "crew is not roster/seat legal for this scenario".to_string(),
+        ));
+    }
     let (results, using_placeholder_combatants) = run_monte_carlo_with_registry(
         registry,
         &req.ship,
@@ -642,6 +670,9 @@ pub fn simulate_payload(
                 .to_string(),
         );
     }
+    if let Some(message) = roster_filter_warning_message(profile_id) {
+        warnings.push(message);
+    }
 
     let response = SimulateResponse {
         status: "ok",
@@ -709,6 +740,17 @@ pub fn compare_crews_payload(
         .map_err(CompareCrewsError::Validation)?;
         candidates.push(cand);
     }
+    let (candidates, _) = enforce_candidate_legality_with_registry(
+        registry,
+        profile_id,
+        below_decks_slots,
+        candidates,
+    );
+    if candidates.len() != crew_count {
+        return Err(CompareCrewsError::Validation(
+            "one or more crews are not roster/seat legal for this scenario".to_string(),
+        ));
+    }
 
     let outcome = compare_crews_monte_carlo_with_registry(
         registry,
@@ -747,6 +789,9 @@ pub fn compare_crews_payload(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
                 .to_string(),
         );
+    }
+    if let Some(message) = roster_filter_warning_message(profile_id) {
+        warnings.push(message);
     }
 
     let response = CompareCrewsResponse {
@@ -831,6 +876,17 @@ pub fn replay_optimize_seed_payload(
         below_decks_slots,
     )
     .map_err(ReplaySeedError::Validation)?;
+    let (candidates, _) = enforce_candidate_legality_with_registry(
+        registry,
+        profile_id,
+        below_decks_slots,
+        vec![candidate],
+    );
+    let Some(candidate) = candidates.into_iter().next() else {
+        return Err(ReplaySeedError::Validation(
+            "crew is not roster/seat legal for this scenario".to_string(),
+        ));
+    };
 
     let scenario_seed = req.seed.unwrap_or(0);
     let max_trace = req
@@ -859,6 +915,9 @@ pub fn replay_optimize_seed_payload(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
                 .to_string(),
         );
+    }
+    if let Some(message) = roster_filter_warning_message(profile_id) {
+        warnings.push(message);
     }
     for id in replay
         .external_buffs

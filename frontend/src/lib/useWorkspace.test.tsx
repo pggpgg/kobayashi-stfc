@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider } from "../contexts/ProfileContext";
+import { WorkspaceModeProvider } from "../contexts/WorkspaceModeContext";
 import type { Preset } from "./api";
 import { useWorkspace } from "./useWorkspace";
 
@@ -41,6 +42,12 @@ const { apiMocks, doneOptimizeStatus } = vi.hoisted(() => {
       estimated_seconds: 2,
     }),
     mockFetchHeuristics: vi.fn().mockResolvedValue([]),
+    mockFetchOfficers: vi.fn().mockResolvedValue([
+      { id: "officer-1", name: "Officer 1", slot: "captain" },
+      { id: "bridge-1", name: "Bridge 1", slot: "bridge" },
+      { id: "below-1", name: "Below 1", slot: "below_decks" },
+      { id: "cerritos_support", name: "Dummy", slot: "bridge" },
+    ]),
     mockOptimizeStart: vi
       .fn()
       .mockRejectedValue(new Error("skip optimize in test")),
@@ -54,10 +61,16 @@ vi.mock("./api", () => ({
     profiles: [{ id: "p1", name: "Main", sync_token: "tok" }],
     default_id: "p1",
   }),
+  formatApiError: vi.fn((e: unknown) =>
+    e instanceof Error ? e.message : String(e),
+  ),
+  API_ERROR_CPU_BUSY: "cpu_busy",
+  ApiError: class extends Error {},
   simulate: apiMocks.mockSimulate,
   savePreset: apiMocks.mockSavePreset,
   getOptimizeEstimate: apiMocks.mockGetEstimate,
   fetchHeuristics: apiMocks.mockFetchHeuristics,
+  fetchOfficers: apiMocks.mockFetchOfficers,
   optimizeStart: apiMocks.mockOptimizeStart,
   getOptimizeStatus: apiMocks.mockGetOptimizeStatus,
   getOptimizeStreamUrl: vi.fn(() => "http://test/stream"),
@@ -67,7 +80,9 @@ vi.mock("./api", () => ({
 function wrapper({ children }: { children: ReactNode }) {
   return (
     <MemoryRouter>
-      <ProfileProvider>{children}</ProfileProvider>
+      <ProfileProvider>
+        <WorkspaceModeProvider>{children}</WorkspaceModeProvider>
+      </ProfileProvider>
     </MemoryRouter>
   );
 }
@@ -94,12 +109,16 @@ describe("useWorkspace", () => {
   it("calls simulate when captain is set", async () => {
     const { result } = renderHook(() => useWorkspace(), { wrapper });
 
+    await waitFor(() => {
+      expect(result.current.activeProfileId).toBe("p1");
+    });
+
     act(() => {
       result.current.setShipId("saladin");
       result.current.setScenarioId("2918121098");
       result.current.setCrew({
         captain: "officer-1",
-        bridge: [null, null],
+        bridge: ["bridge-1", null],
         belowDeck: [null, null, null],
       });
     });
@@ -113,6 +132,31 @@ describe("useWorkspace", () => {
     expect(result.current.errorSeverity).toBeNull();
     expect(result.current.simResult).not.toBeNull();
     expect(result.current.simResult?.n).toBe(100);
+  });
+
+  it("rejects roster-illegal seat assignments before simulate", async () => {
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.activeProfileId).toBe("p1");
+    });
+
+    act(() => {
+      result.current.setShipId("saladin");
+      result.current.setScenarioId("2918121098");
+      result.current.setCrew({
+        captain: "below-1",
+        bridge: [null, null],
+        belowDeck: [null, null, null],
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleRunSim();
+    });
+
+    expect(result.current.error).toMatch(/not legal for that seat/i);
+    expect(apiMocks.mockSimulate).not.toHaveBeenCalled();
   });
 
   it("validates support buff selections before storing workspace state", async () => {
@@ -149,7 +193,7 @@ describe("useWorkspace", () => {
       result.current.setSelectedSupportBuffs(["cerritos_support"]);
       result.current.setCrew({
         captain: "officer-1",
-        bridge: [null, null],
+        bridge: ["bridge-1", null],
         belowDeck: [null, null, null],
       });
     });
@@ -164,6 +208,31 @@ describe("useWorkspace", () => {
       }),
       "p1",
     );
+  });
+
+  it("sends explicit below-decks slot count on optimize/start", async () => {
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.activeProfileId).toBe("p1");
+    });
+
+    act(() => {
+      result.current.setShipId("saladin");
+      result.current.setScenarioId("2918121098");
+      result.current.setShipLevel(30);
+      result.current.setBelowDeckUnlockLevels([5, 10, 20, 30, 40, 45]);
+    });
+
+    await act(async () => {
+      await result.current.handleRunOptimize();
+    });
+
+    expect(apiMocks.mockOptimizeStart).toHaveBeenCalled();
+    const firstArg = apiMocks.mockOptimizeStart.mock.calls[0]?.[0] as {
+      below_decks_slots?: number;
+    };
+    expect(firstArg.below_decks_slots).toBe(4);
   });
 
   it("calls savePreset when saving a preset", async () => {
@@ -216,7 +285,9 @@ describe("useWorkspace", () => {
     const { result } = renderHook(() => useWorkspace(), {
       wrapper: ({ children }) => (
         <MemoryRouter initialEntries={[{ pathname: "/", state: { preset } }]}>
-          <ProfileProvider>{children}</ProfileProvider>
+          <ProfileProvider>
+            <WorkspaceModeProvider>{children}</WorkspaceModeProvider>
+          </ProfileProvider>
         </MemoryRouter>
       ),
     });

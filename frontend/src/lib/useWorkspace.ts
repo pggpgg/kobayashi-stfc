@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
+import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import {
   API_ERROR_CPU_BUSY,
   ApiError,
   type CrewRecommendation,
   cancelOptimizeJob,
   fetchHeuristics,
+  fetchOfficers,
   formatApiError,
   getOptimizeEstimate,
   getOptimizeStatus,
@@ -55,10 +57,33 @@ const SSE_BACKOFF_CAP_MS = 30_000;
 
 export type OptimizeStreamMode = "sse" | "reconnecting" | "polling";
 
+type OfficerSeat = "captain" | "bridge" | "below_decks" | "officer";
+
+function seatAllowsRole(
+  officerSeat: string | null | undefined,
+  role: "captain_or_bridge" | "below_decks",
+): boolean {
+  if (!officerSeat) {
+    return true;
+  }
+  const seat = officerSeat.toLowerCase() as OfficerSeat | string;
+  switch (seat) {
+    case "captain":
+    case "bridge":
+    case "officer":
+      return role === "captain_or_bridge";
+    case "below_decks":
+      return role === "below_decks";
+    default:
+      return true;
+  }
+}
+
 export function useWorkspace() {
   const location = useLocation();
   const navigate = useNavigate();
   const { activeProfileId } = useProfile();
+  const { ownedOnly } = useWorkspaceMode();
 
   // Scenario state
   const [shipTier, setShipTier] = useState(1);
@@ -206,6 +231,12 @@ export function useWorkspace() {
   >(null);
   /** Non-error feedback (e.g. after cancel). */
   const [workspaceInfo, setWorkspaceInfo] = useState<string | null>(null);
+  const [officerSeatById, setOfficerSeatById] = useState<Map<string, string>>(
+    new Map(),
+  );
+  const [rosterLoadState, setRosterLoadState] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
 
   const setError = (message: string | null) => {
     setErrorState(message);
@@ -319,6 +350,35 @@ export function useWorkspace() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    setRosterLoadState("loading");
+    fetchOfficers(ownedOnly, activeProfileId)
+      .then((list) => {
+        if (cancelled) {
+          return;
+        }
+        const next = new Map<string, string>();
+        for (const officer of list) {
+          if (officer.id.trim()) {
+            next.set(officer.id, officer.slot ?? "");
+          }
+        }
+        setOfficerSeatById(next);
+        setRosterLoadState("done");
+      })
+      .catch(() => {
+        if (cancelled) {
+          return;
+        }
+        setOfficerSeatById(new Map());
+        setRosterLoadState("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownedOnly, activeProfileId]);
+
+  useEffect(() => {
     if (optimizerStrategy === "genetic" && fastDiscovery)
       setFastDiscovery(false);
   }, [optimizerStrategy, fastDiscovery]);
@@ -345,7 +405,101 @@ export function useWorkspace() {
   }, [shipLevel, belowDeckUnlockLevels]);
 
   // Handle running a simulation
+  const rosterAnchoringError = (): string | null => {
+    const bdSlots = belowDeckSlotCount(shipLevel, belowDeckUnlockLevels);
+    const selectedCrewIds = [
+      crew.captain,
+      ...crew.bridge,
+      ...crew.belowDeck.slice(0, bdSlots),
+    ]
+      .filter(
+        (id): id is string => typeof id === "string" && id.trim().length > 0,
+      )
+      .map((id) => id.trim());
+
+    const uniqueCrewIds = new Set(selectedCrewIds);
+    if (uniqueCrewIds.size !== selectedCrewIds.length) {
+      return "Crew slots contain duplicate officers. Each officer can only appear once.";
+    }
+
+    if (
+      ownedOnly &&
+      selectedCrewIds.length > 0 &&
+      rosterLoadState === "loading"
+    ) {
+      return "Roster data is still loading. Wait for owned officers to finish loading, then retry.";
+    }
+
+    if (
+      ownedOnly &&
+      selectedCrewIds.length > 0 &&
+      rosterLoadState === "error"
+    ) {
+      return "Could not load owned officers for this profile. Retry after syncing roster data.";
+    }
+
+    const validateSeat = (
+      officerId: string | null,
+      role: "captain_or_bridge" | "below_decks",
+      label: string,
+    ): string | null => {
+      if (!officerId) {
+        return null;
+      }
+      const slot = officerSeatById.get(officerId);
+      if (ownedOnly && !slot) {
+        return `${label} officer is not in the active profile roster.`;
+      }
+      if (slot && !seatAllowsRole(slot, role)) {
+        return `${label} officer is not legal for that seat.`;
+      }
+      return null;
+    };
+
+    const captainErr = validateSeat(
+      crew.captain,
+      "captain_or_bridge",
+      "Captain",
+    );
+    if (captainErr) {
+      return captainErr;
+    }
+    const bridgeOneErr = validateSeat(
+      crew.bridge[0],
+      "captain_or_bridge",
+      "Bridge 1",
+    );
+    if (bridgeOneErr) {
+      return bridgeOneErr;
+    }
+    const bridgeTwoErr = validateSeat(
+      crew.bridge[1],
+      "captain_or_bridge",
+      "Bridge 2",
+    );
+    if (bridgeTwoErr) {
+      return bridgeTwoErr;
+    }
+    for (let i = 0; i < bdSlots; i += 1) {
+      const err = validateSeat(
+        crew.belowDeck[i] ?? null,
+        "below_decks",
+        `Below deck ${i + 1}`,
+      );
+      if (err) {
+        return err;
+      }
+    }
+
+    return null;
+  };
+
   const handleRunSim = async () => {
+    const preflightError = rosterAnchoringError();
+    if (preflightError) {
+      setError(preflightError);
+      return;
+    }
     const simParams = buildWorkspaceSimulateParams({
       shipId,
       scenarioId,
@@ -609,6 +763,11 @@ export function useWorkspace() {
 
   // Handle running optimization
   const handleRunOptimize = async () => {
+    const preflightError = rosterAnchoringError();
+    if (preflightError) {
+      setError(preflightError);
+      return;
+    }
     setError(null);
     setWorkspaceInfo(null);
     setCachedWarmStartBadge(false);
@@ -636,6 +795,7 @@ export function useWorkspace() {
           belowDecksStrategy,
           shipTier,
           shipLevel,
+          belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
           supportBuffs: selectedSupportBuffs,
           optimizeConstraints: {
             mustIncludeComma: optimizeMustInclude,

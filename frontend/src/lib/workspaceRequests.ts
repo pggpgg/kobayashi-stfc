@@ -190,6 +190,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
   belowDecksStrategy: "ordered" | "exploration";
   shipTier: number;
   shipLevel: number;
+  belowDecksSlots?: number;
   supportBuffs?: readonly string[];
   optimizeConstraints?: {
     mustIncludeComma: string;
@@ -241,6 +242,10 @@ export function buildWorkspaceOptimizeStartBody(args: {
         : undefined,
     ship_tier: args.shipTier,
     ship_level: args.shipLevel,
+    below_decks_slots:
+      args.belowDecksSlots != null && args.belowDecksSlots >= 0
+        ? args.belowDecksSlots
+        : undefined,
     ...(support_buffs.length > 0 ? { support_buffs } : {}),
     ...(constraints ? { constraints } : {}),
     ...(args.chainGrind?.enabled

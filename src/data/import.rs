@@ -148,16 +148,14 @@ impl ImportReport {
     }
 }
 
-/// Max officer tier (e.g. 3 in STFC). Used when only name is given.
-const MAX_OFFICER_TIER: u8 = 3;
+/// Max officer tier supported by synced imports.
+/// STFC officers can reach higher tiers than legacy 1..=3 imports; keep this aligned with sync payloads.
+const MAX_OFFICER_TIER: u8 = 5;
 
-/// Max level for a given tier (tier 1 -> 10, tier 2 -> 20, tier 3 -> 30). Used when tier is given but level is not.
+/// Max level for a given tier. We model a simple tier*10 cap for import defaults/sanity checks.
+/// This is an import-side guardrail, not combat math.
 fn max_level_for_tier(tier: u8) -> u16 {
-    match tier {
-        1 => 10,
-        2 => 20,
-        _ => 30,
-    }
+    u16::from(tier.max(1)) * 10
 }
 
 #[derive(Debug)]
@@ -784,20 +782,47 @@ pub fn load_imported_roster_ids_unlocked_only(path: &str) -> Option<HashSet<Stri
     load_imported_roster_ids_inner(path, true)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ImportedRosterIdsLoadStatus {
+    Loaded(HashSet<String>),
+    MissingFile,
+    InvalidFile,
+}
+
+pub fn load_imported_roster_ids_unlocked_only_status(path: &str) -> ImportedRosterIdsLoadStatus {
+    load_imported_roster_ids_inner_status(path, true)
+}
+
 fn load_imported_roster_ids_inner(path: &str, unlocked_only: bool) -> Option<HashSet<String>> {
+    match load_imported_roster_ids_inner_status(path, unlocked_only) {
+        ImportedRosterIdsLoadStatus::Loaded(ids) => Some(ids),
+        ImportedRosterIdsLoadStatus::MissingFile | ImportedRosterIdsLoadStatus::InvalidFile => None,
+    }
+}
+
+fn load_imported_roster_ids_inner_status(
+    path: &str,
+    unlocked_only: bool,
+) -> ImportedRosterIdsLoadStatus {
     #[derive(Debug, Deserialize)]
     struct ImportedRosterPayload {
         officers: Vec<RosterEntry>,
     }
-    let raw = fs::read_to_string(path).ok()?;
-    let payload: ImportedRosterPayload = serde_json::from_str(&raw).ok()?;
+    let raw = match fs::read_to_string(path) {
+        Ok(v) => v,
+        Err(_) => return ImportedRosterIdsLoadStatus::MissingFile,
+    };
+    let payload: ImportedRosterPayload = match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        Err(_) => return ImportedRosterIdsLoadStatus::InvalidFile,
+    };
     let ids = payload
         .officers
         .into_iter()
         .filter(|e| !unlocked_only || is_unlocked(e))
         .map(|e| e.canonical_officer_id)
         .collect();
-    Some(ids)
+    ImportedRosterIdsLoadStatus::Loaded(ids)
 }
 
 // ----- Loaders for synced research / buildings / ships -----
@@ -884,6 +909,7 @@ pub fn load_imported_battlelogs(path: &str) -> Option<Vec<Value>> {
 #[cfg(test)]
 mod roster_import_diag_tests {
     use super::*;
+    use std::io::Write;
 
     #[test]
     fn csv_invalid_tier_returns_parse_line() {
@@ -909,6 +935,34 @@ mod roster_import_diag_tests {
     fn tier_level_diagnostic_level_above_tier_cap() {
         let d = roster_tier_level_diagnostics(0, "Test", Some(1), Some(99));
         assert!(d.iter().any(|x| x.code == "level_above_tier_cap"));
+    }
+
+    #[test]
+    fn parse_tier_cell_accepts_tier_five() {
+        assert_eq!(parse_tier_cell("T5"), Some(5));
+        assert_eq!(parse_tier_cell("Tier 5"), Some(5));
+    }
+
+    #[test]
+    fn roster_ids_status_reports_missing_and_invalid_files() {
+        let missing = load_imported_roster_ids_unlocked_only_status(
+            "/tmp/kobayashi_missing_roster_file_test.json",
+        );
+        assert!(matches!(missing, ImportedRosterIdsLoadStatus::MissingFile));
+
+        let dir = std::env::temp_dir().join(format!(
+            "kobayashi_invalid_roster_test_{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).expect("mkdir");
+        let path = dir.join("roster.imported.json");
+        let mut f = fs::File::create(&path).expect("create");
+        write!(f, "{{ this is not json }}").expect("write");
+        let invalid =
+            load_imported_roster_ids_unlocked_only_status(path.to_str().expect("utf8 path"));
+        assert!(matches!(invalid, ImportedRosterIdsLoadStatus::InvalidFile));
+        let _ = fs::remove_file(&path);
+        let _ = fs::remove_dir(&dir);
     }
 }
 

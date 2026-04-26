@@ -17,9 +17,12 @@ use std::collections::{HashMap, HashSet};
 use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
-use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
+use crate::optimizer::constraints::{
+    filter_candidates, normalize_officer_name, CrewSearchConstraints,
+};
 use crate::optimizer::crew_generator::{
-    CandidateStrategy, CrewCandidate, CrewGenerator, DEFAULT_BELOW_DECKS_SLOTS,
+    build_officer_pools_from_registry, CandidateStrategy, CrewCandidate, CrewGenerator,
+    BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
 use crate::optimizer::exhaustive_adaptive::run_exhaustive_scout_then_full_mc;
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
@@ -99,6 +102,103 @@ fn apply_crew_constraints(
     }
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct CandidateLegalitySummary {
+    pub dropped_wrong_shape: usize,
+    pub dropped_duplicates: usize,
+    pub dropped_seat_incompatible: usize,
+}
+
+pub fn enforce_candidate_legality_with_registry(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    candidates: Vec<CrewCandidate>,
+) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
+    let mut summary = CandidateLegalitySummary::default();
+    let Some(pools) =
+        build_officer_pools_from_registry(registry, false, profile_id, below_decks_slots, None)
+    else {
+        summary.dropped_wrong_shape = candidates.len();
+        return (Vec::new(), summary);
+    };
+
+    let captain_pool: HashSet<String> = pools
+        .captains
+        .into_iter()
+        .map(|name| normalize_officer_name(&name))
+        .collect();
+    let bridge_pool: HashSet<String> = pools
+        .bridge
+        .into_iter()
+        .map(|name| normalize_officer_name(&name))
+        .collect();
+    let below_pool: HashSet<String> = pools
+        .below_decks
+        .into_iter()
+        .map(|name| normalize_officer_name(&name))
+        .collect();
+
+    let mut accepted = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        if candidate.bridge.len() != BRIDGE_SLOTS
+            || candidate.below_decks.len() != below_decks_slots
+        {
+            summary.dropped_wrong_shape += 1;
+            continue;
+        }
+
+        let captain_key = normalize_officer_name(&candidate.captain);
+        let bridge_keys: Vec<String> = candidate
+            .bridge
+            .iter()
+            .map(|name| normalize_officer_name(name))
+            .collect();
+        let below_keys: Vec<String> = candidate
+            .below_decks
+            .iter()
+            .map(|name| normalize_officer_name(name))
+            .collect();
+
+        if captain_key.is_empty()
+            || bridge_keys.iter().any(|k| k.is_empty())
+            || below_keys.iter().any(|k| k.is_empty())
+        {
+            summary.dropped_wrong_shape += 1;
+            continue;
+        }
+
+        let mut seen = HashSet::new();
+        let mut unique = true;
+        for key in std::iter::once(&captain_key)
+            .chain(bridge_keys.iter())
+            .chain(below_keys.iter())
+        {
+            if !seen.insert(key.clone()) {
+                unique = false;
+                break;
+            }
+        }
+        if !unique {
+            summary.dropped_duplicates += 1;
+            continue;
+        }
+
+        let seat_legal = captain_pool.contains(&captain_key)
+            && bridge_pool.contains(&captain_key)
+            && bridge_keys.iter().all(|k| bridge_pool.contains(k))
+            && below_keys.iter().all(|k| below_pool.contains(k));
+        if !seat_legal {
+            summary.dropped_seat_incompatible += 1;
+            continue;
+        }
+
+        accepted.push(candidate);
+    }
+
+    (accepted, summary)
+}
+
 fn analytical_prefilter_unless_chain(
     shared: &SharedScenarioData,
     candidates: Vec<CrewCandidate>,
@@ -147,20 +247,10 @@ fn sort_candidates_by_analytical_expected_damage(
     indexed.sort_by(|(ia, ca), (ib, cb)| {
         let input_a = scenario_to_combat_input_from_shared(shared, ca, seed);
         let input_b = scenario_to_combat_input_from_shared(shared, cb, seed);
-        let sa = analytical_prefilter_rank_score(
-            shared,
-            &input_a,
-            ca,
-            refs,
-            enable_learned_pair_prior,
-        );
-        let sb = analytical_prefilter_rank_score(
-            shared,
-            &input_b,
-            cb,
-            refs,
-            enable_learned_pair_prior,
-        );
+        let sa =
+            analytical_prefilter_rank_score(shared, &input_a, ca, refs, enable_learned_pair_prior);
+        let sb =
+            analytical_prefilter_rank_score(shared, &input_b, cb, refs, enable_learned_pair_prior);
         sb.total_cmp(&sa).then_with(|| ia.cmp(ib))
     });
     indexed.into_iter().map(|(_, c)| c).collect()
@@ -1279,8 +1369,8 @@ pub fn optimize_crew(
 mod tests {
     use super::{
         analytical_prefilter_keep_auto, count_effective_optimize_candidates,
-        optimize_scenario_with_progress_with_registry, AnalyticalPrefilterWorkload,
-        CandidateStrategy, OptimizationScenario, OptimizerStrategy,
+        enforce_candidate_legality_with_registry, optimize_scenario_with_progress_with_registry,
+        AnalyticalPrefilterWorkload, CandidateStrategy, OptimizationScenario, OptimizerStrategy,
     };
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
@@ -1319,12 +1409,47 @@ mod tests {
         let input = scenario_to_combat_input_from_shared(&shared, &cand, seed);
         let s0 = analytical_prefilter_rank_score(&shared, &input, &cand, &[], true);
         let prior = vec![cand.clone()];
-        let s1 =
-            analytical_prefilter_rank_score(&shared, &input, &cand, prior.as_slice(), true);
+        let s1 = analytical_prefilter_rank_score(&shared, &input, &cand, prior.as_slice(), true);
         assert!(
             s1 > s0,
             "history-shaped prior refs should raise composite rank score: s0={s0} s1={s1}"
         );
+    }
+
+    #[test]
+    fn enforce_candidate_legality_rejects_duplicate_and_wrong_seat_candidates() {
+        let registry = DataRegistry::load().expect("data registry");
+        let candidates = vec![
+            CrewCandidate {
+                captain: "James T. Kirk".into(),
+                bridge: vec!["Spock".into(), "Spock".into()],
+                below_decks: vec![
+                    "Montgomery Scott".into(),
+                    "Hikaru Sulu".into(),
+                    "Nyota Uhura".into(),
+                ],
+            },
+            CrewCandidate {
+                captain: "T'Laan".into(),
+                bridge: vec!["Spock".into(), "Leonard McCoy".into()],
+                below_decks: vec![
+                    "Montgomery Scott".into(),
+                    "Hikaru Sulu".into(),
+                    "Nyota Uhura".into(),
+                ],
+            },
+        ];
+
+        let (kept, summary) = enforce_candidate_legality_with_registry(
+            &registry,
+            Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            3,
+            candidates,
+        );
+
+        assert!(kept.is_empty(), "invalid candidates should be filtered");
+        assert_eq!(summary.dropped_duplicates, 1);
+        assert_eq!(summary.dropped_seat_incompatible, 1);
     }
 
     #[test]

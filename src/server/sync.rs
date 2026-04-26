@@ -258,6 +258,8 @@ struct SyncOfficerItem {
     #[serde(default)]
     rank: Option<i32>,
     #[serde(default)]
+    tier: Option<i32>,
+    #[serde(default)]
     level: Option<i32>,
     #[serde(default, rename = "shard_count")]
     _shard_count: Option<i32>,
@@ -298,7 +300,12 @@ fn apply_officer_sync(
             .unwrap_or_else(|| canonical_id.clone());
         let rank = item.rank.and_then(|r| u8::try_from(r).ok());
         let level = item.level.and_then(|l| u16::try_from(l).ok());
-        let tier = rank;
+        // Some sync payloads provide an explicit tier distinct from rank.
+        // Fall back to rank for backward compatibility when tier is absent.
+        let tier = item
+            .tier
+            .and_then(|t| u8::try_from(t).ok())
+            .or(rank);
 
         let entry = import::RosterEntry {
             canonical_officer_id: canonical_id,
@@ -958,6 +965,28 @@ mod tests {
             ingress_payload(r#"[{"type":"research","rid":1,"level":1}]"#, Some(&token));
         assert_eq!(status, StatusCode::OK);
         assert!(body.contains("research"));
+    }
+
+    #[test]
+    fn ingress_officer_sync_prefers_explicit_tier_over_rank() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
+        let payload = r#"[{"type":"officer","oid":"497650232","rank":2,"tier":5,"level":30}]"#;
+        let (status, body) = ingress_payload(payload, Some(&token));
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("officer(1)"));
+
+        let roster_path = profile_path(&profile_id, crate::data::profile_index::ROSTER_IMPORTED)
+            .to_string_lossy()
+            .to_string();
+        let entries = import::load_imported_roster(&roster_path).expect("roster imported");
+        let neelix = entries
+            .iter()
+            .find(|e| e.canonical_officer_id == "neelix-c8a380")
+            .expect("neelix roster row");
+        assert_eq!(neelix.rank, Some(2));
+        assert_eq!(neelix.tier, Some(5));
+        assert_eq!(neelix.level, Some(30));
     }
 
     #[test]

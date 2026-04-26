@@ -379,8 +379,7 @@ pub(crate) fn analytical_prefilter_rank_score(
     } else {
         0.0
     };
-    base
-        + W_GATE * gate
+    base + W_GATE * gate
         + W_ENCOUNTER * enc
         + W_WARM_JACCARD * warm
         + W_WARM_CAP_BRIDGE * cap_br

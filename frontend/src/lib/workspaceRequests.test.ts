@@ -92,6 +92,7 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     expect(body.max_candidates).toBe(200);
     expect(body.prioritize_below_decks_ability).toBe(true);
     expect(body.below_decks_strategy).toBeUndefined();
+    expect(body.below_decks_slots).toBeUndefined();
   });
 
   it("includes heuristics_seeds when non-empty", () => {
@@ -156,6 +157,25 @@ describe("buildWorkspaceOptimizeStartBody", () => {
       "defiant_reinforce",
       "titan_a_max_fortification",
     ]);
+  });
+
+  it("serializes explicit below_decks_slots when provided", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: 50,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      belowDecksSlots: 6,
+    });
+
+    expect(body.below_decks_slots).toBe(6);
   });
 
   it("includes chain when chainGrind.enabled with kills_target", () => {
