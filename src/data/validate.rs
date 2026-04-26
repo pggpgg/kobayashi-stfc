@@ -10,7 +10,7 @@ use crate::data::building::DEFAULT_BUILDINGS_INDEX_PATH;
 use crate::data::forbidden_chaos::{forbidden_chaos_sync_readiness_issues, load_forbidden_chaos};
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::mapping_gap_report::{
-    scan_canonical_officer_conditions, unmapped_canonical_condition_rows,
+    scan_building_bonus_gaps, scan_canonical_officer_conditions, unmapped_canonical_condition_rows,
 };
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
 use crate::data::registry::Registry;
@@ -1233,16 +1233,25 @@ pub fn validate_support_buffs_catalog_data(data_root: &Path) -> Result<Validatio
     Ok(report)
 }
 
+fn env_flag_truthy(name: &str) -> bool {
+    matches!(
+        std::env::var(name).ok().as_deref(),
+        Some("1") | Some("true") | Some("yes")
+    )
+}
+
 /// When `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS` is `1` / `true` / `yes`, unmapped canonical
 /// officer `conditions` tokens are validation **errors** instead of warnings (see
 /// `docs/CANONICAL_CONDITIONS.md` § After editing canonical officers).
 fn strict_canonical_officer_condition_maps_required() -> bool {
-    matches!(
-        std::env::var("KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS")
-            .ok()
-            .as_deref(),
-        Some("1") | Some("true") | Some("yes")
-    )
+    env_flag_truthy("KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS")
+}
+
+/// When `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS` is `1` / `true` / `yes`, opaque `buff_*` building
+/// stats and unrecognized building `conditions` tokens are validation **errors** instead of
+/// warnings (see `data/buildings/IMPORTING.md` § Mapping coverage).
+fn strict_building_bonus_maps_required() -> bool {
+    env_flag_truthy("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS")
 }
 
 /// Warnings (or errors when `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS` is set) for canonical
@@ -1491,8 +1500,11 @@ pub fn validate_all_startup_data() -> Result<(), String> {
 /// Validate building index + per-building files for basic structure and provenance.
 /// `path` should be the directory containing `index.json` (typically `data/buildings`).
 ///
-/// **Mapping coverage:** Opaque `buff_*` bonus stats and unknown `conditions` values are summarized
-/// as a small number of warnings (not one per bonus row). For the full distinct-value table, run
+/// **Mapping coverage:** Opaque `buff_*` bonus stats and unknown `conditions` values are emitted as
+/// **one diagnostic per distinct entry** (severity `Warning` by default). When
+/// `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1` is set (e.g. via `cargo run --bin validate_data --
+/// --strict`), those rows are upgraded to `Error` so CI / strict reports fail until the catalog is
+/// extended. The same gap data is also available as Markdown via
 /// `cargo run --bin report_building_mapping_gaps`.
 pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String> {
     let base = Path::new(path);
@@ -1523,8 +1535,6 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
     };
 
     let mut seen_ids = HashSet::new();
-    let mut opaque_buff_stats: BTreeMap<String, (usize, Vec<String>)> = BTreeMap::new();
-    let mut unknown_conditions: BTreeMap<String, (usize, Vec<String>)> = BTreeMap::new();
 
     for (idx, entry) in buildings.iter().enumerate() {
         let ctx = format!("buildings.index.buildings[{idx}]");
@@ -1589,7 +1599,9 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
             continue;
         }
 
-        // Structural and semantic checks on the per-building file.
+        // Structural and semantic checks on the per-building file. Mapping-gap aggregation runs
+        // separately below via the shared `scan_building_bonus_gaps` helper so the per-row
+        // diagnostics line up with `report_building_mapping_gaps`.
         if let Ok(rec_raw) = fs::read_to_string(&record_path) {
             if let Ok(rec_json) = serde_json::from_str::<Value>(&rec_raw) {
                 let Some(levels) = rec_json.get("levels").and_then(Value::as_array) else {
@@ -1641,43 +1653,12 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
 
                     for (bonus_index, bonus) in bonuses.iter().enumerate() {
                         let bonus_ctx = format!("{}.bonuses[{bonus_index}]", level_ctx);
-                        let Some(bonus_obj) = bonus.as_object() else {
+                        if !bonus.is_object() {
                             report.push(
                                 ValidationSeverity::Error,
                                 bonus_ctx,
                                 "bonus entry is not an object",
                             );
-                            continue;
-                        };
-
-                        if let Some(stat) = bonus_obj.get("stat").and_then(Value::as_str) {
-                            if stat.starts_with("buff_") {
-                                let slot = opaque_buff_stats
-                                    .entry(stat.to_string())
-                                    .or_insert_with(|| (0, Vec::new()));
-                                slot.0 += 1;
-                                if slot.1.len() < 4 && !slot.1.contains(&id) {
-                                    slot.1.push(id.clone());
-                                }
-                            }
-                        }
-
-                        if let Some(conditions) =
-                            bonus_obj.get("conditions").and_then(Value::as_array)
-                        {
-                            for condition in conditions.iter() {
-                                if let Some(condition) = condition.as_str() {
-                                    if !is_known_building_condition(condition) {
-                                        let slot = unknown_conditions
-                                            .entry(condition.to_string())
-                                            .or_insert_with(|| (0, Vec::new()));
-                                        slot.0 += 1;
-                                        if slot.1.len() < 4 && !slot.1.contains(&id) {
-                                            slot.1.push(id.clone());
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -1691,25 +1672,39 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
         }
     }
 
-    if !opaque_buff_stats.is_empty() {
-        let distinct = opaque_buff_stats.len();
-        let total_rows: usize = opaque_buff_stats.values().map(|(n, _)| *n).sum();
+    let gaps = scan_building_bonus_gaps(base)?;
+    let severity = if strict_building_bonus_maps_required() {
+        ValidationSeverity::Error
+    } else {
+        ValidationSeverity::Warning
+    };
+    for (stat, agg) in &gaps.opaque_buff_stats {
+        let samples = if agg.samples.is_empty() {
+            "<none>".to_string()
+        } else {
+            agg.samples.join(", ")
+        };
         report.push(
-            ValidationSeverity::Warning,
+            severity,
             "buildings.bonuses.opaque_buff",
             format!(
-                "{distinct} distinct buff_* stats ({total_rows} bonus rows) are not merged into combat profile via normalize_profile_combat_stat; run `cargo run --bin report_building_mapping_gaps` for the full table"
+                "stat `{stat}`: {} bonus row(s); samples: {samples}; not merged via normalize_profile_combat_stat (data/profile.rs)",
+                agg.count
             ),
         );
     }
-    if !unknown_conditions.is_empty() {
-        let distinct = unknown_conditions.len();
-        let total: usize = unknown_conditions.values().map(|(n, _)| *n).sum();
+    for (token, agg) in &gaps.unknown_conditions {
+        let samples = if agg.samples.is_empty() {
+            "<none>".to_string()
+        } else {
+            agg.samples.join(", ")
+        };
         report.push(
-            ValidationSeverity::Warning,
-            "buildings.bonuses.conditions",
+            severity,
+            "buildings.bonuses.unknown_condition",
             format!(
-                "{distinct} unrecognized condition value(s) ({total} occurrence(s)); run `cargo run --bin report_building_mapping_gaps` for the full list (extend is_known_building_condition when semantics are confirmed)"
+                "condition `{token}`: {} occurrence(s); samples: {samples}; not in is_known_building_condition (data/validate.rs)",
+                agg.count
             ),
         );
     }

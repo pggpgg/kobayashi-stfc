@@ -4,6 +4,7 @@ Planned features and priorities for Kobayashi.
 
 ## Recently shipped
 
+- Strict building validation report: `validate_buildings_dataset` now emits one `Warning` per distinct opaque `buff_*` stat and per unmapped `conditions` token, and `cargo run --bin validate_data -- --strict` (or `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`) upgrades those rows to errors so CI / strict reports fail until coverage is extended. The shared scan helper backs both `report_building_mapping_gaps` and `validate_data`.
 - Roster guardrails in roster mode now block duplicate/off-roster/wrong-seat crews across preflight and backend validation, with fallback warnings for missing/invalid roster imports.
 - `fast_discovery` is wired through optimize (heuristics expansion merged into the warm-start path), with workspace Strategy UI and OpenAPI support.
 - CombatEffectSpec adapter cutover shipped for dynamic officer effect compilation (`resolve_effect` / `resolve_officer_ability`).
@@ -113,7 +114,6 @@ Buildings are **fully modeled for ship combat** per the “buildings full modeli
 
 - **Building id ↔ bid in index** — Add bid (or a small mapping file) to the building index for clarity and fallback resolution.
 - **Conditions for station defense** — When station/starbase defense is in scope: populate `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) from import or mapping; support `BuildingMode::StationDefense` in the optimizer.
-- **Strict validation report** — Report that lists all `buff`_* and unmapped conditions (e.g. strict mode or separate script).
 
 ---
 

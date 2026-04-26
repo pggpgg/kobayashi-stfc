@@ -4,6 +4,17 @@
 //! Run from repo root: `cargo run --bin validate_data`
 //!
 //! Exit code **1** if any diagnostic has severity `error`. Warnings do not fail the process.
+//!
+//! ## Strict mode
+//!
+//! Pass `--strict` to upgrade mapping-coverage warnings to errors. Today this covers:
+//! - Building bonus mapping gaps (opaque `buff_*` stats and unknown `conditions` tokens), via
+//!   `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1` (see `validate_buildings_dataset`).
+//! - Unmapped canonical officer `conditions` tokens, via
+//!   `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS=1` (see `validate_unmapped_canonical_officer_conditions`).
+//!
+//! Strict mode therefore causes exit code `1` until the relevant catalog or mapping table is
+//! extended; use it as an opt-in gate while iterating on coverage.
 
 use std::fs;
 use std::path::PathBuf;
@@ -32,6 +43,12 @@ struct Args {
     /// Crate / repo root containing `data/` (default: `CARGO_MANIFEST_DIR`).
     #[arg(long)]
     manifest_dir: Option<PathBuf>,
+
+    /// Promote mapping-coverage warnings (building bonus gaps, unmapped canonical conditions)
+    /// to errors. Sets `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1` and
+    /// `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS=1` for this process.
+    #[arg(long)]
+    strict: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, clap::ValueEnum)]
@@ -46,8 +63,16 @@ fn main() {
     let args = Args::parse();
     let manifest_dir = args
         .manifest_dir
+        .clone()
         .or_else(|| std::env::var("CARGO_MANIFEST_DIR").ok().map(PathBuf::from))
         .unwrap_or_else(|| PathBuf::from("."));
+
+    if args.strict {
+        // Set before `validate_all_data_for_report` so the per-category validators observe the
+        // strict env vars. Both validators read these via their own helpers.
+        std::env::set_var("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS", "1");
+        std::env::set_var("KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS", "1");
+    }
 
     let report = validate_all_data_for_report(&manifest_dir);
 

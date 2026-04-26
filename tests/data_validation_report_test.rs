@@ -6,11 +6,45 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use kobayashi::data::validate::{
     full_validation_report_to_json, hostile_ship_class_is_recognized, validate_all_data_for_report,
-    validate_registry_dataset, validate_support_buffs_catalog_data,
+    validate_buildings_dataset, validate_registry_dataset, validate_support_buffs_catalog_data,
     validate_unmapped_canonical_officer_conditions, ValidationSeverity,
 };
 
 static CANONICAL_CONDITION_VALIDATE_TEST_LOCK: Mutex<()> = Mutex::new(());
+static BUILDING_BONUS_GAPS_VALIDATE_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+fn write_building_gap_fixture(dir: &Path) {
+    std::fs::create_dir_all(dir).unwrap();
+    std::fs::write(
+        dir.join("index.json"),
+        r#"{"data_version":"test","buildings":[
+            {"id":"alpha","building_name":"Alpha","file":"alpha"},
+            {"id":"beta","building_name":"Beta","file":"beta"}
+        ]}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("alpha.json"),
+        r#"{"id":"alpha","building_name":"Alpha","levels":[
+            {"level":1,"bonuses":[
+                {"stat":"buff_unknown_x","value":0.1,"operator":"add"},
+                {"stat":"weapon_damage","value":0.05,"operator":"add",
+                 "conditions":["mystery_condition"]}
+            ]}
+        ]}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("beta.json"),
+        r#"{"id":"beta","building_name":"Beta","levels":[
+            {"level":1,"bonuses":[
+                {"stat":"hull_hp","value":0.05,"operator":"add",
+                 "conditions":["ship_combat_only"]}
+            ]}
+        ]}"#,
+    )
+    .unwrap();
+}
 
 #[test]
 fn hostile_ship_class_recognition() {
@@ -138,6 +172,98 @@ fn strict_canonical_condition_maps_upgrade_unmapped_to_error() {
     );
     assert!(strict.diagnostics.iter().any(|d| {
         d.severity == ValidationSeverity::Error && d.context == "canonical.unmapped_condition"
+    }));
+}
+
+#[test]
+fn building_bonus_gaps_default_warns_per_row() {
+    let _guard = BUILDING_BONUS_GAPS_VALIDATE_TEST_LOCK.lock().unwrap();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let tmp = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("target")
+        .join(format!("buildings_validate_default_{nanos}"));
+    let _ = std::fs::remove_dir_all(&tmp);
+    write_building_gap_fixture(&tmp);
+
+    std::env::remove_var("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS");
+    let report = validate_buildings_dataset(tmp.to_str().unwrap()).expect("validate buildings");
+    let _ = std::fs::remove_dir_all(&tmp);
+
+    assert!(
+        !report.has_errors(),
+        "default mode should not produce errors, got {:?}",
+        report.diagnostics
+    );
+
+    let buff_diags: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.context == "buildings.bonuses.opaque_buff")
+        .collect();
+    assert_eq!(buff_diags.len(), 1, "one diagnostic per distinct buff_* stat");
+    let buff = buff_diags[0];
+    assert_eq!(buff.severity, ValidationSeverity::Warning);
+    assert!(buff.message.contains("buff_unknown_x"));
+    assert!(buff.message.contains("alpha"));
+    assert!(buff
+        .message
+        .contains("not merged via normalize_profile_combat_stat"));
+
+    let cond_diags: Vec<_> = report
+        .diagnostics
+        .iter()
+        .filter(|d| d.context == "buildings.bonuses.unknown_condition")
+        .collect();
+    assert_eq!(
+        cond_diags.len(),
+        1,
+        "one diagnostic per distinct unknown condition"
+    );
+    let cond = cond_diags[0];
+    assert_eq!(cond.severity, ValidationSeverity::Warning);
+    assert!(cond.message.contains("mystery_condition"));
+    assert!(cond.message.contains("alpha"));
+    assert!(cond
+        .message
+        .contains("not in is_known_building_condition"));
+}
+
+#[test]
+fn building_bonus_gaps_strict_env_upgrades_to_error() {
+    let _guard = BUILDING_BONUS_GAPS_VALIDATE_TEST_LOCK.lock().unwrap();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let tmp = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("target")
+        .join(format!("buildings_validate_strict_{nanos}"));
+    let _ = std::fs::remove_dir_all(&tmp);
+    write_building_gap_fixture(&tmp);
+
+    std::env::set_var("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS", "1");
+    let strict =
+        validate_buildings_dataset(tmp.to_str().unwrap()).expect("validate buildings strict");
+    std::env::remove_var("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS");
+    let _ = std::fs::remove_dir_all(&tmp);
+
+    assert!(
+        strict.has_errors(),
+        "strict env should upgrade gap warnings to errors, got {:?}",
+        strict.diagnostics
+    );
+    assert!(strict.diagnostics.iter().any(|d| {
+        d.severity == ValidationSeverity::Error
+            && d.context == "buildings.bonuses.opaque_buff"
+            && d.message.contains("buff_unknown_x")
+    }));
+    assert!(strict.diagnostics.iter().any(|d| {
+        d.severity == ValidationSeverity::Error
+            && d.context == "buildings.bonuses.unknown_condition"
+            && d.message.contains("mystery_condition")
     }));
 }
 

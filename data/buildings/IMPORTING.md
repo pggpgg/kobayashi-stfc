@@ -116,7 +116,28 @@ For stfc.space, building data is imported via the public JSON API:
 
 ---
 
-### 4. Logging and issue tracking
+### 4. Mapping coverage (validation report)
+
+Building bonus stats and `conditions` tags only affect simulation when they are recognized by the
+combat profile and condition allowlists. Two checks surface gaps:
+
+- `cargo run --bin report_building_mapping_gaps` prints a Markdown table of every distinct opaque
+  `buff_*` stat (not lowered into a combat key by `normalize_profile_combat_stat` in
+  `src/data/profile.rs`) and every `conditions` token not in `is_known_building_condition`
+  (`src/data/validate.rs`), with sample building ids per row. Same shape as the `validate_data`
+  diagnostics, just rendered for human triage.
+- `cargo run --bin validate_data` emits one `Warning` diagnostic per gap row by default; pass
+  `--strict` (or set `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`) to upgrade them to `Error` and
+  exit `1`. Use this as a gate while extending `normalize_profile_combat_stat` or
+  `is_known_building_condition`; leave it off for routine runs until the catalog is clean.
+
+The strict flag also upgrades unmapped canonical officer `conditions`
+(`KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS`) so a single `--strict` run is uniform across
+mapping-coverage categories.
+
+---
+
+### 5. Logging and issue tracking
 
 Import tools (normalizer, spreadsheet importer, stfc.space importer) should:
 
