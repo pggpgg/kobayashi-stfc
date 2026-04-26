@@ -107,6 +107,7 @@ fn analytical_prefilter_unless_chain(
     chain_grind: &Option<ChainGrindParams>,
     warm_start: &[CrewCandidate],
     prior_reference_crews: &[CrewCandidate],
+    enable_learned_pair_prior: bool,
 ) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
     if chain_grind.is_some() {
         (candidates, None)
@@ -118,6 +119,7 @@ fn analytical_prefilter_unless_chain(
             keep,
             warm_start,
             prior_reference_crews,
+            enable_learned_pair_prior,
         )
     }
 }
@@ -130,6 +132,7 @@ fn sort_candidates_by_analytical_expected_damage(
     seed: u64,
     warm_start: &[CrewCandidate],
     prior_reference_crews: &[CrewCandidate],
+    enable_learned_pair_prior: bool,
 ) -> Vec<CrewCandidate> {
     let rank_refs: Cow<'_, [CrewCandidate]> = if prior_reference_crews.is_empty() {
         Cow::Borrowed(warm_start)
@@ -144,8 +147,20 @@ fn sort_candidates_by_analytical_expected_damage(
     indexed.sort_by(|(ia, ca), (ib, cb)| {
         let input_a = scenario_to_combat_input_from_shared(shared, ca, seed);
         let input_b = scenario_to_combat_input_from_shared(shared, cb, seed);
-        let sa = analytical_prefilter_rank_score(shared, &input_a, ca, refs);
-        let sb = analytical_prefilter_rank_score(shared, &input_b, cb, refs);
+        let sa = analytical_prefilter_rank_score(
+            shared,
+            &input_a,
+            ca,
+            refs,
+            enable_learned_pair_prior,
+        );
+        let sb = analytical_prefilter_rank_score(
+            shared,
+            &input_b,
+            cb,
+            refs,
+            enable_learned_pair_prior,
+        );
         sb.total_cmp(&sa).then_with(|| ia.cmp(ib))
     });
     indexed.into_iter().map(|(_, c)| c).collect()
@@ -160,6 +175,7 @@ pub(crate) fn sort_and_analytical_prefilter(
     keep: Option<usize>,
     warm_start: &[CrewCandidate],
     prior_reference_crews: &[CrewCandidate],
+    enable_learned_pair_prior: bool,
 ) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
     let generated = candidates.len();
     let mut sorted = sort_candidates_by_analytical_expected_damage(
@@ -168,6 +184,7 @@ pub(crate) fn sort_and_analytical_prefilter(
         seed,
         warm_start,
         prior_reference_crews,
+        enable_learned_pair_prior,
     );
     let Some(k) = keep.filter(|n| *n > 0) else {
         return (sorted, None);
@@ -271,6 +288,8 @@ pub struct OptimizationScenario<'a> {
     pub prior_reference_crews: Vec<CrewCandidate>,
     /// Opaque client fingerprint for [`crate::data::optimize_history`] when `profile_id` is set.
     pub optimize_cache_key: Option<String>,
+    /// Analytical prefilter only: include learned pair co-occurrence prior from warm-start/history refs.
+    pub enable_learned_pair_prior: bool,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -302,6 +321,7 @@ impl Default for OptimizationScenario<'_> {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            enable_learned_pair_prior: true,
         }
     }
 }
@@ -549,6 +569,7 @@ fn optimize_scenario_tiered_with_registry(
         &scenario.chain_grind,
         &scenario.warm_start,
         &scenario.prior_reference_crews,
+        scenario.enable_learned_pair_prior,
     );
     let n_tiered = candidates.len();
     let scout_sims = scenario
@@ -640,6 +661,7 @@ fn optimize_scenario_exhaustive_with_registry(
         &scenario.chain_grind,
         &scenario.warm_start,
         &scenario.prior_reference_crews,
+        scenario.enable_learned_pair_prior,
     );
     if let Some((scout_s, top_keep)) = scenario
         .exhaustive_scout_sims
@@ -706,6 +728,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         &scenario.chain_grind,
         &scenario.warm_start,
         &scenario.prior_reference_crews,
+        scenario.enable_learned_pair_prior,
     );
     let simulation_results = run_monte_carlo_with_shared(
         shared,
@@ -808,6 +831,7 @@ where
                 warm_start: scenario.warm_start.clone(),
                 prior_reference_crews: scenario.prior_reference_crews.clone(),
                 optimize_cache_key: scenario.optimize_cache_key.clone(),
+                enable_learned_pair_prior: scenario.enable_learned_pair_prior,
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -833,6 +857,7 @@ where
                 &scenario.chain_grind,
                 &scenario.warm_start,
                 &scenario.prior_reference_crews,
+                scenario.enable_learned_pair_prior,
             );
             let total = candidates.len();
             if total == 0 {
@@ -964,6 +989,7 @@ where
                 &scenario.chain_grind,
                 &scenario.warm_start,
                 &scenario.prior_reference_crews,
+                scenario.enable_learned_pair_prior,
             );
             let n_tiered = candidates.len();
             let scout_sims = scenario
@@ -1046,6 +1072,7 @@ where
                 &scenario.chain_grind,
                 &scenario.warm_start,
                 &scenario.prior_reference_crews,
+                scenario.enable_learned_pair_prior,
             );
             let total = candidates.len();
             if total == 0 {
@@ -1244,6 +1271,7 @@ pub fn optimize_crew(
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
+        enable_learned_pair_prior: true,
     })
 }
 
@@ -1289,9 +1317,10 @@ mod tests {
             ],
         };
         let input = scenario_to_combat_input_from_shared(&shared, &cand, seed);
-        let s0 = analytical_prefilter_rank_score(&shared, &input, &cand, &[]);
+        let s0 = analytical_prefilter_rank_score(&shared, &input, &cand, &[], true);
         let prior = vec![cand.clone()];
-        let s1 = analytical_prefilter_rank_score(&shared, &input, &cand, prior.as_slice());
+        let s1 =
+            analytical_prefilter_rank_score(&shared, &input, &cand, prior.as_slice(), true);
         assert!(
             s1 > s0,
             "history-shaped prior refs should raise composite rank score: s0={s0} s1={s1}"
@@ -1332,6 +1361,7 @@ mod tests {
             Some(1),
             &[],
             &[],
+            true,
         );
         let (keep_prior, _) = super::sort_and_analytical_prefilter(
             &shared,
@@ -1340,6 +1370,7 @@ mod tests {
             Some(1),
             &[],
             std::slice::from_ref(&history_shape),
+            true,
         );
         assert_eq!(keep_empty.len(), 1);
         assert_eq!(keep_prior.len(), 1);
@@ -1382,6 +1413,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            enable_learned_pair_prior: true,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -1525,6 +1557,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            enable_learned_pair_prior: true,
         };
         let strat = super::candidate_strategy_from_scenario(&scenario);
         let n = count_effective_optimize_candidates(
@@ -1587,6 +1620,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            enable_learned_pair_prior: true,
         };
         let out =
             optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true, || true);
@@ -1643,6 +1677,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            enable_learned_pair_prior: true,
         };
         let mut adaptive = uniform.clone();
         adaptive.tiered_scout_uniform = false;

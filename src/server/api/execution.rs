@@ -707,6 +707,7 @@ fn gather_optimize_simulation_results(
             warm_start: scenario_warm_start,
             prior_reference_crews,
             optimize_cache_key: cache_key_normalized.clone(),
+            enable_learned_pair_prior: request.enable_learned_pair_prior.unwrap_or(true),
         };
         let cancel_for_eval: Option<Arc<AtomicBool>> = match &*sink {
             OptimizeProgressSink::Job { cancel, .. } => Some(Arc::clone(cancel)),

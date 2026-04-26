@@ -259,6 +259,24 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     expect(body.optimize_cache_key).toBe("3|k|v1");
   });
 
+  it("includes enable_learned_pair_prior when disabled", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: 10,
+      optimizerStrategy: "tiered",
+      prioritizeBelowDecksAbility: false,
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      enableLearnedPairPrior: false,
+    });
+    expect(body.enable_learned_pair_prior).toBe(false);
+  });
+
   it("includes warm_start_crews when non-empty", () => {
     const warmStartCrews = [
       { captain: "A", bridge: ["B", "C"], below_decks: ["D", "E", "F"] },

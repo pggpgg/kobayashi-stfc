@@ -124,6 +124,8 @@ export function useWorkspace() {
   const [tieredScoutSims, setTieredScoutSims] = useState<number | null>(null);
   /** Tiered: top K for confirmation; null = omit (server default 20). */
   const [tieredTopK, setTieredTopK] = useState<number | null>(null);
+  /** Analytical prefilter: learned pair co-occurrence prior (default on). */
+  const [enableLearnedPairPrior, setEnableLearnedPairPrior] = useState(true);
 
   /** Novelty (MMR): optional text fields; blank lambda = omit (pure strength order). */
   const [noveltyLambdaText, setNoveltyLambdaText] = useState("");
@@ -187,6 +189,7 @@ export function useWorkspace() {
       prioritizeBelowDecksAbility,
       belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
       fastDiscovery,
+      enableLearnedPairPrior,
     });
 
   // Preset saving state
@@ -665,6 +668,7 @@ export function useWorkspace() {
             activeProfileId != null && activeProfileId !== ""
               ? optimizeWarmStartCacheKey()
               : undefined,
+          enableLearnedPairPrior,
         }),
         activeProfileId,
         {
@@ -825,6 +829,8 @@ export function useWorkspace() {
     setTieredScoutSims,
     tieredTopK,
     setTieredTopK,
+    enableLearnedPairPrior,
+    setEnableLearnedPairPrior,
     noveltyLambdaText,
     setNoveltyLambdaText,
     noveltyDiverseTopText,

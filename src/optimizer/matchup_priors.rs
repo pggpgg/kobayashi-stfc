@@ -367,13 +367,18 @@ pub(crate) fn analytical_prefilter_rank_score(
     input: &CombatSimulationInput,
     candidate: &CrewCandidate,
     warm_start: &[CrewCandidate],
+    enable_learned_pair_prior: bool,
 ) -> f64 {
     let base = f64::from(expected_damage(input));
     let gate = f64::from(static_matchup_gate_score(shared, &input.crew));
     let enc = f64::from(encounter_tag_score(shared, &input.crew));
     let warm = f64::from(warm_start_family_score(candidate, warm_start));
     let cap_br = f64::from(captain_bridge_warm_score(candidate, warm_start));
-    let pair = f64::from(learned_pair_prior_score(candidate, warm_start));
+    let pair = if enable_learned_pair_prior {
+        f64::from(learned_pair_prior_score(candidate, warm_start))
+    } else {
+        0.0
+    };
     base
         + W_GATE * gate
         + W_ENCOUNTER * enc

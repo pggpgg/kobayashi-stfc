@@ -38,6 +38,8 @@ interface OptimizePanelProps {
   onOptimizerStrategyChange: (
     value: import("../lib/api").OptimizerStrategyType,
   ) => void;
+  enableLearnedPairPrior: boolean;
+  onEnableLearnedPairPriorChange: (value: boolean) => void;
   /** Tiered only: scout sims per crew; null = server default (500). */
   tieredScoutSims: number | null;
   onTieredScoutSimsChange: (value: number | null) => void;
@@ -168,6 +170,8 @@ export default function OptimizePanel({
   onBelowDecksStrategyChange,
   optimizerStrategy,
   onOptimizerStrategyChange,
+  enableLearnedPairPrior,
+  onEnableLearnedPairPriorChange,
   tieredScoutSims,
   onTieredScoutSimsChange,
   tieredTopK,
@@ -417,6 +421,18 @@ export default function OptimizePanel({
           <option value="tiered">Tiered (scout → confirm)</option>
         </select>
       </div>
+      <label style={checkboxLabelStyle}>
+        <input
+          type="checkbox"
+          checked={enableLearnedPairPrior}
+          onChange={(e) => onEnableLearnedPairPriorChange(e.target.checked)}
+          style={{ margin: 0 }}
+        />
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          Learned pair prior
+          <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
+        </span>
+      </label>
 
       {optimizerStrategy === "tiered" && (
         <>

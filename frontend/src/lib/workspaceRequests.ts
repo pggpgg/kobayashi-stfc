@@ -215,6 +215,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   noveltyPoolText?: string;
   /** Opaque key for server-side optimize history (`profiles/{id}/optimize_history.json`). */
   optimizeCacheKey?: string | null;
+  /** Analytical prefilter: learned pair co-occurrence prior toggle (default true). */
+  enableLearnedPairPrior?: boolean;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -274,6 +276,9 @@ export function buildWorkspaceOptimizeStartBody(args: {
     }),
     ...(args.optimizeCacheKey != null && args.optimizeCacheKey.trim() !== ""
       ? { optimize_cache_key: args.optimizeCacheKey.trim() }
+      : {}),
+    ...(args.enableLearnedPairPrior === false
+      ? { enable_learned_pair_prior: false }
       : {}),
   };
 }

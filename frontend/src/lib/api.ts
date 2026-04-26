@@ -740,6 +740,7 @@ export async function optimizeStart(
     tiered_scout_sims?: number;
     tiered_top_k?: number;
     fast_discovery?: boolean;
+    enable_learned_pair_prior?: boolean;
     novelty_lambda?: number;
     novelty_diverse_top?: number;
     novelty_pool?: number;
@@ -809,6 +810,9 @@ export async function optimizeStart(
   }
   if (params.fast_discovery === true) {
     body.fast_discovery = true;
+  }
+  if (params.enable_learned_pair_prior === false) {
+    body.enable_learned_pair_prior = false;
   }
   if (
     params.novelty_lambda != null &&

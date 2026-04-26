@@ -35,6 +35,8 @@ export function buildOptimizeWarmStartKey(args: {
   belowDecksSlots?: number;
   /** Fast discovery merges heuristic seeds into warm-start; affects which persisted wins apply. */
   fastDiscovery?: boolean;
+  /** Learned pair prior toggle affects analytical prefilter ranking. */
+  enableLearnedPairPrior?: boolean;
 }): string {
   const mc =
     args.maxCandidates === null || args.maxCandidates <= 0
@@ -56,6 +58,7 @@ export function buildOptimizeWarmStartKey(args: {
       ? String(args.belowDecksSlots)
       : "";
   const fd = args.fastDiscovery === true ? "1" : "0";
+  const lpp = args.enableLearnedPairPrior === false ? "0" : "1";
   return stableKey([
     String(SCHEMA),
     args.profileId ?? "",
@@ -71,6 +74,7 @@ export function buildOptimizeWarmStartKey(args: {
     pbd,
     bdSlots,
     fd,
+    lpp,
   ]);
 }
 

@@ -32,6 +32,8 @@ const baseProps = {
   onBelowDecksStrategyChange: vi.fn(),
   optimizerStrategy: "tiered" as const,
   onOptimizerStrategyChange: vi.fn(),
+  enableLearnedPairPrior: true,
+  onEnableLearnedPairPriorChange: vi.fn(),
   tieredScoutSims: null as number | null,
   onTieredScoutSimsChange: vi.fn(),
   tieredTopK: null as number | null,
@@ -196,6 +198,13 @@ describe("OptimizePanel", () => {
     render(<OptimizePanel {...baseProps} optimizerStrategy="exhaustive" />);
     expect(screen.queryByPlaceholderText("500 (default)")).toBeNull();
     expect(screen.queryByPlaceholderText("20 (default)")).toBeNull();
+  });
+
+  it("toggles learned pair prior checkbox", () => {
+    const fn = vi.fn();
+    render(<OptimizePanel {...baseProps} onEnableLearnedPairPriorChange={fn} />);
+    fireEvent.click(screen.getByRole("checkbox", { name: /Learned pair prior/i }));
+    expect(fn).toHaveBeenCalledWith(false);
   });
 
   it("calls onTieredScoutSimsChange and clamps to 100,000", () => {

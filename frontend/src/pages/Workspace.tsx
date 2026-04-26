@@ -223,6 +223,8 @@ export default function Workspace() {
           onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
           optimizerStrategy={ws.optimizerStrategy}
           onOptimizerStrategyChange={ws.setOptimizerStrategy}
+          enableLearnedPairPrior={ws.enableLearnedPairPrior}
+          onEnableLearnedPairPriorChange={ws.setEnableLearnedPairPrior}
           tieredScoutSims={ws.tieredScoutSims}
           onTieredScoutSimsChange={ws.setTieredScoutSims}
           tieredTopK={ws.tieredTopK}
