@@ -114,7 +114,6 @@ Buildings are **fully modeled for ship combat** per the “buildings full modeli
 - **Building id ↔ bid in index** — Add bid (or a small mapping file) to the building index for clarity and fallback resolution.
 - **Conditions for station defense** — When station/starbase defense is in scope: populate `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) from import or mapping; support `BuildingMode::StationDefense` in the optimizer.
 - **Strict validation report** — Report that lists all `buff`_* and unmapped conditions (e.g. strict mode or separate script).
-- **Building summary API/UI follow-up** — Add editable building levels in the UI (today levels come from sync or manual JSON/tooling such as `building_combat_bonuses`).
 
 ---
 
