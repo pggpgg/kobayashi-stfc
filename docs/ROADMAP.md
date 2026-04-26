@@ -51,6 +51,10 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 | Outpost Armadas, Outpost Retaliation Attackers  | `[HostileRecord::is_outpost](../src/data/hostile.rs)` exists; no LCARS condition wired yet—confirm in-game vs logs before adding `defender_is_outpost`-style gates. |
 
 
+### Roadmap / backlog
+
+- **Officer stat → ship bonus bridge** — Convert synced officer Attack/Defense/Health progression into scenario ship attack/defense/health bonuses so officer growth affects combat math.
+
 ---
 
 ## Unified CombatEffectSpec (cross-source normalization)

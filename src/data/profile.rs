@@ -2262,6 +2262,9 @@ mod tests {
         let provided_attack = 39_549.0;
         let provided_defense = 36_262.0;
         let provided_health = 35_473.0;
+        let lower_bound_attack = 731.0;
+        let lower_bound_defense = 658.0;
+        let lower_bound_health = 658.0;
 
         // Conservative imported baseline (slightly stale) before profile combat bonuses.
         let base_attack = provided_attack * 0.94;
@@ -2286,6 +2289,9 @@ mod tests {
         assert!(modeled_attack < provided_attack);
         assert!(modeled_defense < provided_defense);
         assert!(modeled_health < provided_health);
+        assert!(modeled_attack >= lower_bound_attack);
+        assert!(modeled_defense >= lower_bound_defense);
+        assert!(modeled_health >= lower_bound_health);
 
         // Keep calibration within a bounded "slightly lower" window to avoid brittle expectations.
         let tolerance = 0.10;
