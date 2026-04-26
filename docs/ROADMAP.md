@@ -54,6 +54,7 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 ### Roadmap / backlog
 
 - **Officer stat → ship bonus bridge** — Convert synced officer Attack/Defense/Health progression into scenario ship attack/defense/health bonuses so officer growth affects combat math.
+- **Modeling of officer abilities based on officer stats** — Implement mechanics where abilities scale from officer Attack/Defense/Health (for example, defense-based mitigation buffs) instead of treating them as fixed values.
 
 ---
 
