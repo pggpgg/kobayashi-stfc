@@ -5,7 +5,7 @@
 //! crews overlapping UI warm-start or persisted optimize-history reference crews sort ahead when
 //! truncating before Monte Carlo. Catalog-backed synergy bumps are deferred (see `src/data/synergy.rs`).
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, AbilityCondition, CrewConfiguration, EnemyType,
@@ -271,11 +271,95 @@ fn captain_bridge_warm_score(candidate: &CrewCandidate, warm_start: &[CrewCandid
     best
 }
 
+fn officer_material_vec_sorted(c: &CrewCandidate) -> Vec<String> {
+    let mut v = Vec::with_capacity(1 + c.bridge.len() + c.below_decks.len());
+    v.push(normalize_officer_name(&c.captain));
+    for o in &c.bridge {
+        v.push(normalize_officer_name(o));
+    }
+    for o in &c.below_decks {
+        v.push(normalize_officer_name(o));
+    }
+    v.retain(|k| !k.is_empty());
+    v.sort();
+    v.dedup();
+    v
+}
+
+fn material_pair_key(a: &str, b: &str) -> Option<(String, String)> {
+    if a.is_empty() || b.is_empty() || a == b {
+        return None;
+    }
+    if a < b {
+        Some((a.to_string(), b.to_string()))
+    } else {
+        Some((b.to_string(), a.to_string()))
+    }
+}
+
+/// Learned pair prior from reference crews (warm-start + optimize-history).
+///
+/// The score is the mean co-occurrence frequency of candidate officer pairs across references,
+/// capped and support-gated so sparse history does not dominate analytical ranking.
+fn learned_pair_prior_score(candidate: &CrewCandidate, reference_crews: &[CrewCandidate]) -> f32 {
+    const MIN_REF_CREWS_FOR_PRIOR: usize = 3;
+    const MIN_PAIR_SUPPORT: u32 = 2;
+    const MAX_SCORE: f32 = 1.5;
+    if reference_crews.len() < MIN_REF_CREWS_FOR_PRIOR {
+        return 0.0;
+    }
+    let cand = officer_material_vec_sorted(candidate);
+    if cand.len() < 2 {
+        return 0.0;
+    }
+
+    let mut pair_counts: HashMap<(String, String), u32> = HashMap::new();
+    for r in reference_crews {
+        let names = officer_material_vec_sorted(r);
+        if names.len() < 2 {
+            continue;
+        }
+        for i in 0..names.len() {
+            for j in (i + 1)..names.len() {
+                if let Some(k) = material_pair_key(&names[i], &names[j]) {
+                    *pair_counts.entry(k).or_insert(0) += 1;
+                }
+            }
+        }
+    }
+    if pair_counts.is_empty() {
+        return 0.0;
+    }
+
+    let mut sum = 0.0f32;
+    let mut used = 0_u32;
+    let denom = reference_crews.len() as f32;
+    for i in 0..cand.len() {
+        for j in (i + 1)..cand.len() {
+            let Some(k) = material_pair_key(&cand[i], &cand[j]) else {
+                continue;
+            };
+            let c = pair_counts.get(&k).copied().unwrap_or(0);
+            if c < MIN_PAIR_SUPPORT {
+                continue;
+            }
+            sum += c as f32 / denom;
+            used += 1;
+        }
+    }
+    if used == 0 {
+        0.0
+    } else {
+        (sum / used as f32).min(MAX_SCORE)
+    }
+}
+
 // Weights: keep priors subordinate to [`expected_damage`] scale (typically 1e3–1e5 hull proxy).
 const W_GATE: f64 = 8.0;
 const W_ENCOUNTER: f64 = 6.0;
 const W_WARM_JACCARD: f64 = 18.0;
 const W_WARM_CAP_BRIDGE: f64 = 14.0;
+const W_LEARNED_PAIR_PRIOR: f64 = 12.0;
 
 /// Scalar for sorting candidates before analytical truncation (higher explores first).
 pub(crate) fn analytical_prefilter_rank_score(
@@ -289,7 +373,13 @@ pub(crate) fn analytical_prefilter_rank_score(
     let enc = f64::from(encounter_tag_score(shared, &input.crew));
     let warm = f64::from(warm_start_family_score(candidate, warm_start));
     let cap_br = f64::from(captain_bridge_warm_score(candidate, warm_start));
-    base + W_GATE * gate + W_ENCOUNTER * enc + W_WARM_JACCARD * warm + W_WARM_CAP_BRIDGE * cap_br
+    let pair = f64::from(learned_pair_prior_score(candidate, warm_start));
+    base
+        + W_GATE * gate
+        + W_ENCOUNTER * enc
+        + W_WARM_JACCARD * warm
+        + W_WARM_CAP_BRIDGE * cap_br
+        + W_LEARNED_PAIR_PRIOR * pair
 }
 
 #[cfg(test)]
@@ -450,6 +540,63 @@ mod tests {
         }];
         let s = captain_bridge_warm_score(&c, &warm);
         assert!((s - 0.5).abs() < 1e-5, "got {s}");
+    }
+
+    #[test]
+    fn learned_pair_prior_prefers_supported_pairings() {
+        let candidate_with_pair = CrewCandidate {
+            captain: "A".into(),
+            bridge: vec!["B".into(), "X".into()],
+            below_decks: vec!["Y".into()],
+        };
+        let candidate_without_pair = CrewCandidate {
+            captain: "A".into(),
+            bridge: vec!["Q".into(), "X".into()],
+            below_decks: vec!["Y".into()],
+        };
+        let refs = vec![
+            CrewCandidate {
+                captain: "A".into(),
+                bridge: vec!["B".into(), "C".into()],
+                below_decks: vec!["D".into()],
+            },
+            CrewCandidate {
+                captain: "A".into(),
+                bridge: vec!["B".into(), "E".into()],
+                below_decks: vec!["F".into()],
+            },
+            CrewCandidate {
+                captain: "A".into(),
+                bridge: vec!["B".into(), "G".into()],
+                below_decks: vec!["H".into()],
+            },
+        ];
+        let s_pair = learned_pair_prior_score(&candidate_with_pair, &refs);
+        let s_none = learned_pair_prior_score(&candidate_without_pair, &refs);
+        assert!(s_pair > s_none, "s_pair={s_pair} s_none={s_none}");
+        assert!(s_pair > 0.0);
+    }
+
+    #[test]
+    fn learned_pair_prior_requires_enough_references() {
+        let candidate = CrewCandidate {
+            captain: "A".into(),
+            bridge: vec!["B".into(), "C".into()],
+            below_decks: vec![],
+        };
+        let sparse_refs = vec![
+            CrewCandidate {
+                captain: "A".into(),
+                bridge: vec!["B".into(), "D".into()],
+                below_decks: vec![],
+            },
+            CrewCandidate {
+                captain: "A".into(),
+                bridge: vec!["B".into(), "E".into()],
+                below_decks: vec![],
+            },
+        ];
+        assert_eq!(learned_pair_prior_score(&candidate, &sparse_refs), 0.0);
     }
 
     #[test]
