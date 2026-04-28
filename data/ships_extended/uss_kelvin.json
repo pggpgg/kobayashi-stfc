@@ -2,6 +2,7 @@
   "id": "uss_kelvin",
   "ship_name": "U.S.S. KELVIN",
   "ship_class": "battleship",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

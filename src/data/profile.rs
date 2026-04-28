@@ -1145,6 +1145,11 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         // Apex: same units as Combatant / engine (shred decimal; barrier pool vs hostile barrier formula).
         "apex_shred" => Some("apex_shred"),
         "apex_barrier" => Some("apex_barrier"),
+        // Building-only conditional profile keys: resolved in scenario to conditional ship seats / gated scalars.
+        "player_crit_damage_reduction" => Some("player_crit_damage_reduction"),
+        "apex_barrier_vs_player_tal_not_on_bridge" => {
+            Some("apex_barrier_vs_player_tal_not_on_bridge")
+        }
         "crit_chance" => Some("crit_chance"),
         "crit_damage" => Some("crit_damage"),
         "pierce" | "armor_pierce" | "shield_pierce" => Some("pierce"),
@@ -1860,6 +1865,9 @@ mod tests {
             &BuildingBonusContext {
                 ops_level: Some(30),
                 mode: BuildingMode::ShipCombat,
+                defender_opponent: crate::data::building::BuildingDefenderOpponent::Unknown,
+                attacker_faction: crate::data::building::BuildingAttackerFaction::Unknown,
+                attacker_tal_assigned_captain_or_bridge: false,
             },
         );
 
@@ -2697,6 +2705,7 @@ mod tests {
             id: "t".into(),
             ship_name: "T".into(),
             ship_class: "battleship".into(),
+            faction: None,
             armor_piercing: 0.0,
             shield_piercing: 0.0,
             accuracy: 100.0,
@@ -2792,6 +2801,7 @@ mod tests {
             id: "e".into(),
             ship_name: "E".into(),
             ship_class: "explorer".into(),
+            faction: None,
             armor_piercing: 0.0,
             shield_piercing: 0.0,
             accuracy: 100.0,
@@ -2810,6 +2820,7 @@ mod tests {
             id: "b".into(),
             ship_name: "B".into(),
             ship_class: "battleship".into(),
+            faction: None,
             armor_piercing: 0.0,
             shield_piercing: 0.0,
             accuracy: 100.0,

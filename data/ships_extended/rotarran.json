@@ -2,6 +2,7 @@
   "id": "rotarran",
   "ship_name": "ROTARRAN",
   "ship_class": "battleship",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

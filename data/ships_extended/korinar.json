@@ -2,6 +2,7 @@
   "id": "korinar",
   "ship_name": "KORINAR",
   "ship_class": "interceptor",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

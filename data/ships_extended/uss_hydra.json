@@ -2,6 +2,7 @@
   "id": "uss_hydra",
   "ship_name": "U.S.S. HYDRA",
   "ship_class": "survey",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

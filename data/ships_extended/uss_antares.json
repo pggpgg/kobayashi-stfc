@@ -2,6 +2,7 @@
   "id": "uss_antares",
   "ship_name": "U.S.S. ANTARES",
   "ship_class": "survey",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

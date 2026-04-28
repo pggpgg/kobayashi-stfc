@@ -2,6 +2,7 @@
   "id": "quv_sompek",
   "ship_name": "QUV'SOMPEK",
   "ship_class": "interceptor",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

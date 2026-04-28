@@ -2,6 +2,7 @@
   "id": "i_k_s_ak_voh",
   "ship_name": "I.K.S. AK'VOH",
   "ship_class": "interceptor",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

@@ -3,13 +3,15 @@
 use std::collections::HashMap;
 
 use crate::combat::{
-    mitigation, mitigation_for_hostile, pierce_damage_through_bonus, Ability, AbilityClass,
-    AbilityCondition, AbilityEffect, AttackerStats, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, DefenderStats, EnemyTypes, ShipType, TimingWindow, MITIGATION_CEILING,
-    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    attacker_crew_tal_assigned_captain_or_bridge, mitigation, mitigation_for_hostile,
+    pierce_damage_through_bonus, Ability, AbilityClass, AbilityCondition, AbilityEffect,
+    AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
+    EnemyTypes, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
-    self, BuildingBonusContext, BuildingMode, DEFAULT_BUILDINGS_INDEX_PATH,
+    self, BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingMode,
+    DEFAULT_BUILDINGS_INDEX_PATH,
 };
 use crate::data::building_bid_resolver::{
     load_bid_to_building_id, DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
@@ -197,6 +199,64 @@ fn extend_crew_with_research_derived_attack_phase_seats(
         return;
     }
     seats.extend(derived.iter().cloned());
+}
+
+/// Building/profile conditional scalar: Apex Barrier only in PvP scenarios and only when Tal is
+/// **not** assigned on Captain/Bridge (DTI Headquarters copy).
+fn apply_profile_player_apex_barrier_tal_gate(
+    attacker: &mut Combatant,
+    profile: &PlayerProfile,
+    defender_opponent: DefenderOpponent,
+    attacker_tal_assigned_captain_or_bridge: bool,
+) {
+    if defender_opponent != DefenderOpponent::Player || attacker_tal_assigned_captain_or_bridge {
+        return;
+    }
+    let v = profile
+        .bonuses
+        .get("apex_barrier_vs_player_tal_not_on_bridge")
+        .copied()
+        .unwrap_or(0.0);
+    if v.is_finite() && v != 0.0 {
+        attacker.apex_barrier += v;
+    }
+}
+
+/// Building/profile conditional effect: reduce incoming crit damage from opponent player ships.
+/// Implemented as an always-on combat-begin seat in PvP scenarios.
+fn extend_crew_with_player_crit_damage_reduction_profile_bonus(
+    seats: &mut Vec<CrewSeatContext>,
+    profile: &PlayerProfile,
+    defender_opponent: DefenderOpponent,
+) {
+    if defender_opponent != DefenderOpponent::Player {
+        return;
+    }
+    let v = profile
+        .bonuses
+        .get("player_crit_damage_reduction")
+        .copied()
+        .unwrap_or(0.0);
+    if !v.is_finite() || v <= 0.0 {
+        return;
+    }
+    seats.push(CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: "profile_player_crit_damage_reduction".to_string(),
+            class: AbilityClass::ShipAbility,
+            timing: TimingWindow::CombatBegin,
+            boostable: false,
+            effect: AbilityEffect::HostileCritDamageReduction {
+                reduction: v.clamp(0.0, 0.95),
+                duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+            },
+            condition: None,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    });
 }
 
 /// [`AttackerStats`] for hostile mitigation and player pierce-through: ship components, profile
@@ -518,6 +578,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
+    let attacker_tal_assigned_captain_or_bridge =
+        attacker_crew_tal_assigned_captain_or_bridge(&CrewConfiguration {
+            seats: crew_seats.clone(),
+        });
 
     let hostile_ability_catalog =
         load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
@@ -600,6 +664,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 attacker.hull_health *= 1.0 + h;
             }
         }
+        apply_profile_player_apex_barrier_tal_gate(
+            &mut attacker,
+            &shared.profile,
+            shared.defender_opponent,
+            attacker_tal_assigned_captain_or_bridge,
+        );
         if shared.defender_opponent == DefenderOpponent::Hostile {
             if let Some(d) = shared.class_gated_torpedo_family_hostile_shield_mitigation_sum {
                 if d.is_finite() && d != 0.0 {
@@ -617,6 +687,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             &mut seats,
             &shared.profile,
             static_cascade_bonus,
+        );
+        extend_crew_with_player_crit_damage_reduction_profile_bonus(
+            &mut seats,
+            &shared.profile,
+            shared.defender_opponent,
         );
         extend_crew_with_research_derived_attack_phase_seats(
             &mut seats,
@@ -685,6 +760,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             attacker.hull_health *= 1.0 + h;
         }
     }
+    apply_profile_player_apex_barrier_tal_gate(
+        &mut attacker,
+        &shared.profile,
+        shared.defender_opponent,
+        attacker_tal_assigned_captain_or_bridge,
+    );
     if shared.defender_opponent == DefenderOpponent::Hostile {
         if let Some(d) = shared.class_gated_torpedo_family_hostile_shield_mitigation_sum {
             if d.is_finite() && d != 0.0 {
@@ -703,6 +784,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &mut seats,
         &shared.profile,
         static_cascade_bonus,
+    );
+    extend_crew_with_player_crit_damage_reduction_profile_bonus(
+        &mut seats,
+        &shared.profile,
+        shared.defender_opponent,
     );
     extend_crew_with_research_derived_attack_phase_seats(
         &mut seats,
@@ -1508,6 +1594,16 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                             .ops_level
                             .or_else(|| infer_ops_level(&imported_buildings, &bid_to_id)),
                         mode: BuildingMode::ShipCombat,
+                        defender_opponent: match defender_opponent {
+                            DefenderOpponent::Hostile => BuildingDefenderOpponent::NpcHostile,
+                            DefenderOpponent::Player => BuildingDefenderOpponent::PlayerShip,
+                        },
+                        attacker_faction: resolve_ship(ship)
+                            .and_then(|s| s.faction)
+                            .as_deref()
+                            .map(BuildingAttackerFaction::from_ship_faction_slug)
+                            .unwrap_or(BuildingAttackerFaction::Unknown),
+                        attacker_tal_assigned_captain_or_bridge: false,
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
@@ -1873,6 +1969,7 @@ mod tests {
             id: "t".into(),
             ship_name: "T".into(),
             ship_class: "explorer".into(),
+            faction: None,
             armor_piercing: 100.0,
             shield_piercing: 100.0,
             accuracy: 400.0,
@@ -1956,6 +2053,7 @@ mod tests {
             id: "s".into(),
             ship_name: "S".into(),
             ship_class: "battleship".into(),
+            faction: None,
             armor_piercing: 100.0,
             shield_piercing: 100.0,
             accuracy: 100.0,
@@ -2086,6 +2184,7 @@ mod tests {
             id: "test_ship".into(),
             ship_name: "Test".into(),
             ship_class: "explorer".into(),
+            faction: None,
             armor_piercing: 150.0,
             shield_piercing: 150.0,
             accuracy: 120.0,
@@ -2123,6 +2222,7 @@ mod tests {
             id: "test_ship".into(),
             ship_name: "Test".into(),
             ship_class: "battleship".into(),
+            faction: None,
             armor_piercing: 100.0,
             shield_piercing: 100.0,
             accuracy: 100.0,
@@ -2358,5 +2458,89 @@ mod tests {
             "expected weapon_damage ≈ 0.12, got {wd} (bonuses={:?})",
             shared.profile.bonuses
         );
+    }
+
+    #[test]
+    fn player_crit_reduction_profile_bonus_emits_pvp_only_seat() {
+        let mut seats = Vec::new();
+        let mut profile = PlayerProfile::default();
+        profile
+            .bonuses
+            .insert("player_crit_damage_reduction".to_string(), 0.18);
+
+        extend_crew_with_player_crit_damage_reduction_profile_bonus(
+            &mut seats,
+            &profile,
+            DefenderOpponent::Hostile,
+        );
+        assert!(seats.is_empty(), "hostile fights must not receive pvp-only crit reduction seat");
+
+        extend_crew_with_player_crit_damage_reduction_profile_bonus(
+            &mut seats,
+            &profile,
+            DefenderOpponent::Player,
+        );
+        assert_eq!(seats.len(), 1);
+        match seats[0].ability.effect {
+            AbilityEffect::HostileCritDamageReduction {
+                reduction,
+                duration_rounds,
+            } => {
+                assert!((reduction - 0.18).abs() < 1e-12);
+                assert_eq!(duration_rounds, crate::combat::types::MAX_COMBAT_ROUNDS);
+            }
+            _ => panic!("unexpected effect emitted for player_crit_damage_reduction"),
+        }
+    }
+
+    #[test]
+    fn player_apex_barrier_profile_bonus_respects_tal_gate() {
+        let mut profile = PlayerProfile::default();
+        profile
+            .bonuses
+            .insert("apex_barrier_vs_player_tal_not_on_bridge".to_string(), 0.22);
+        let mut attacker = Combatant {
+            id: "s".into(),
+            attack: 1.0,
+            mitigation: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            weapons: vec![],
+            end_of_round_damage: 0.0,
+            hull_health: 1.0,
+            shield_health: 1.0,
+            shield_mitigation: 0.8,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+        };
+
+        apply_profile_player_apex_barrier_tal_gate(
+            &mut attacker,
+            &profile,
+            DefenderOpponent::Hostile,
+            false,
+        );
+        assert_eq!(attacker.apex_barrier, 0.0);
+
+        apply_profile_player_apex_barrier_tal_gate(
+            &mut attacker,
+            &profile,
+            DefenderOpponent::Player,
+            true,
+        );
+        assert_eq!(attacker.apex_barrier, 0.0);
+
+        apply_profile_player_apex_barrier_tal_gate(
+            &mut attacker,
+            &profile,
+            DefenderOpponent::Player,
+            false,
+        );
+        assert!((attacker.apex_barrier - 0.22).abs() < 1e-12);
     }
 }

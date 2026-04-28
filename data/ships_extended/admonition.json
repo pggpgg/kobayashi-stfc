@@ -2,6 +2,7 @@
   "id": "admonition",
   "ship_name": "ADMONITION",
   "ship_class": "explorer",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

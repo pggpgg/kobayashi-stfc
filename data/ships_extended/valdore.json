@@ -2,6 +2,7 @@
   "id": "valdore",
   "ship_name": "VALDORE",
   "ship_class": "interceptor",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

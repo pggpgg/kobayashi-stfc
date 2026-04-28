@@ -2,6 +2,7 @@
   "id": "minerva",
   "ship_name": "MINERVA",
   "ship_class": "interceptor",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

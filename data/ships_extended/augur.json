@@ -2,6 +2,7 @@
   "id": "augur",
   "ship_name": "AUGUR",
   "ship_class": "explorer",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

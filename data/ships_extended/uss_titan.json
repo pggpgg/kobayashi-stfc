@@ -2,6 +2,7 @@
   "id": "uss_titan",
   "ship_name": "U.S.S. TITAN",
   "ship_class": "explorer",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

@@ -2,6 +2,7 @@
   "id": "valkis",
   "ship_name": "VALKIS",
   "ship_class": "survey",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

@@ -1,0 +1,183 @@
+{
+  "96795919": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Transogen Forge: Increases base Isolytic Damage for all ships."
+  },
+  "1030529782": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Shuttle Bay: Increases weapon damage of ships."
+  },
+  "1124780421": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "The War Room: Increases base SHP for all ships."
+  },
+  "119659407": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Syndicate line: Weapon damage increased for all ships."
+  },
+  "1474824297": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Armory: Increases Hull Health for all ships."
+  },
+  "1639441900": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "conditions": [],
+    "notes": "The War Room: Increases base Isolytic Damage for all ships."
+  },
+  "1743492763": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "The Nova Squadron: Increases base SHP for all ships."
+  },
+  "1768821190": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "conditions": [
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Court of Q: Critical hit damage increased against hostiles."
+  },
+  "1776779724": {
+    "stat": "shield_mitigation",
+    "operator": "add",
+    "conditions": [],
+    "notes": "District 56: Increases base mitigation stats for all ships."
+  },
+  "1944989778": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Syndicate line: Hull health increased for all ships."
+  },
+  "194992291": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Syndicate line: Shield health increased for all ships."
+  },
+  "2054906083": {
+    "stat": "player_crit_damage_reduction",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "District 56: Reduces critical hit damage of opponent player ships (not station defense)."
+  },
+  "2236011365": {
+    "stat": "apex_barrier_vs_player_tal_not_on_bridge",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
+  },
+  "975669671": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": [
+      "attacker_ship_faction_any_fed_klg_rom"
+    ],
+    "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
+  },
+  "1400315411": {
+    "stat": "dodge",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Engine Technology Lab: increases ship dodge."
+  },
+  "256687942": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Artifact Gallery: increases ship shield health."
+  },
+  "2625691766": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Subspace Relay: increases ship hull health."
+  },
+  "2856283939": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Armory: increases ship shield health."
+  },
+  "3089815719": {
+    "stat": "shield_mitigation",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Science Lab: increases ship shield deflection/mitigation."
+  },
+  "322722281": {
+    "stat": "apex_barrier",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "District 56: increases apex barrier in PvP only (no station defense)."
+  },
+  "3665944915": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Artifact Gallery: increases ship hull health."
+  },
+  "3681138930": {
+    "stat": "player_crit_damage_reduction",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Court of Q: reduces incoming player crit damage."
+  },
+  "3707508878": {
+    "stat": "armor",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Foundry: increases ship armor."
+  },
+  "3834969959": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Mess Hall: increases ship weapon damage."
+  },
+  "1446678821": {
+    "stat": "apex_barrier_vs_player_tal_not_on_bridge",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Transogen Forge: PvP apex barrier bonus disabled when Tal is on bridge."
+  },
+  "2334827430": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Ship Hangar: increases ship hull health."
+  },
+  "2485048539": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "conditions": [],
+    "notes": "The Nova Squadron: increases ship weapon damage."
+  }
+}

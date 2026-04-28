@@ -2,6 +2,7 @@
   "id": "uss_mayflower",
   "ship_name": "U.S.S. MAYFLOWER",
   "ship_class": "interceptor",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

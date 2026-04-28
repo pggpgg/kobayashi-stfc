@@ -120,6 +120,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let context = kobayashi::data::building::BuildingBonusContext {
                 ops_level,
                 mode: kobayashi::data::building::BuildingMode::ShipCombat,
+                defender_opponent: kobayashi::data::building::BuildingDefenderOpponent::Unknown,
+                attacker_faction: kobayashi::data::building::BuildingAttackerFaction::Unknown,
+                attacker_tal_assigned_captain_or_bridge: false,
             };
             let bonuses = kobayashi::data::building::cumulative_building_bonuses_with_context(
                 &records,

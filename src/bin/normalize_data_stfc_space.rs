@@ -160,6 +160,16 @@ fn raw_to_extended(
     ship_class: &str,
     ability_catalog: Option<&std::collections::HashMap<String, AbilityCatalogEntry>>,
 ) -> Result<ExtendedShipRecord, Box<dyn std::error::Error>> {
+    let faction = raw
+        .get("faction")
+        .and_then(|v| v.get("loca_id"))
+        .and_then(Value::as_u64)
+        .and_then(|id| match id {
+            1 => Some("federation".to_string()),
+            2 => Some("klingon".to_string()),
+            3 => Some("romulan".to_string()),
+            _ => None,
+        });
     let tiers_arr = raw
         .get("tiers")
         .and_then(Value::as_array)
@@ -335,6 +345,7 @@ fn raw_to_extended(
         id: canonical_id.to_string(),
         ship_name: ship_name.to_string(),
         ship_class: ship_class.to_string(),
+        faction,
         tiers,
         levels,
         crew_slots,

@@ -2,6 +2,7 @@
   "id": "hijacked_uss_mayflower",
   "ship_name": "HIJACKED U.S.S. MAYFLOWER",
   "ship_class": "interceptor",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

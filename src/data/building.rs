@@ -17,9 +17,38 @@ pub enum BuildingMode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BuildingDefenderOpponent {
+    Unknown,
+    NpcHostile,
+    PlayerShip,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BuildingAttackerFaction {
+    Unknown,
+    Federation,
+    Klingon,
+    Romulan,
+}
+
+impl BuildingAttackerFaction {
+    pub fn from_ship_faction_slug(slug: &str) -> Self {
+        match slug.trim().to_ascii_lowercase().as_str() {
+            "federation" | "fed" => Self::Federation,
+            "klingon" | "klg" => Self::Klingon,
+            "romulan" | "rom" => Self::Romulan,
+            _ => Self::Unknown,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BuildingBonusContext {
     pub ops_level: Option<u32>,
     pub mode: BuildingMode,
+    pub defender_opponent: BuildingDefenderOpponent,
+    pub attacker_faction: BuildingAttackerFaction,
+    pub attacker_tal_assigned_captain_or_bridge: bool,
 }
 
 impl Default for BuildingBonusContext {
@@ -27,6 +56,9 @@ impl Default for BuildingBonusContext {
         Self {
             ops_level: None,
             mode: BuildingMode::Unknown,
+            defender_opponent: BuildingDefenderOpponent::Unknown,
+            attacker_faction: BuildingAttackerFaction::Unknown,
+            attacker_tal_assigned_captain_or_bridge: false,
         }
     }
 }
@@ -182,11 +214,49 @@ fn condition_matches_mode(condition: &str, mode: BuildingMode) -> bool {
     }
 }
 
+fn condition_matches_defender(condition: &str, opponent: BuildingDefenderOpponent) -> bool {
+    let normalized = normalize_condition(condition);
+    match normalized.as_str() {
+        "defender_is_npc_hostile" => opponent == BuildingDefenderOpponent::NpcHostile,
+        "defender_is_player_ship" => opponent == BuildingDefenderOpponent::PlayerShip,
+        _ => true,
+    }
+}
+
+fn condition_matches_attacker_tal(condition: &str, tal_assigned: bool) -> bool {
+    let normalized = normalize_condition(condition);
+    match normalized.as_str() {
+        "attacker_officer_tal_not_on_bridge" => !tal_assigned,
+        _ => true,
+    }
+}
+
+fn condition_matches_attacker_faction(
+    condition: &str,
+    attacker_faction: BuildingAttackerFaction,
+) -> bool {
+    let normalized = normalize_condition(condition);
+    match normalized.as_str() {
+        "attacker_ship_faction_any_fed_klg_rom" => matches!(
+            attacker_faction,
+            BuildingAttackerFaction::Federation
+                | BuildingAttackerFaction::Klingon
+                | BuildingAttackerFaction::Romulan
+        ),
+        _ => true,
+    }
+}
+
 fn bonus_matches_context(bonus: &BonusEntry, context: &BuildingBonusContext) -> bool {
-    bonus
-        .conditions
-        .iter()
-        .all(|condition| condition_matches_mode(condition, context.mode))
+    bonus.conditions.iter().all(|condition| {
+        condition_matches_mode(condition, context.mode)
+            && condition_matches_defender(condition, context.defender_opponent)
+            && condition_matches_attacker_tal(
+                condition,
+                context.attacker_tal_assigned_captain_or_bridge,
+            )
+            && condition_matches_attacker_faction(condition, context.attacker_faction)
+    })
 }
 
 /// Maximum level defined in this building record (highest level in `levels`).
@@ -363,6 +433,9 @@ mod tests {
             &BuildingBonusContext {
                 ops_level: Some(10),
                 mode: BuildingMode::ShipCombat,
+                defender_opponent: BuildingDefenderOpponent::Unknown,
+                attacker_faction: BuildingAttackerFaction::Unknown,
+                attacker_tal_assigned_captain_or_bridge: false,
             },
         );
         assert_eq!(out.get("weapon_damage"), Some(&0.05));
@@ -378,6 +451,9 @@ mod tests {
             &BuildingBonusContext {
                 ops_level: Some(25),
                 mode: BuildingMode::ShipCombat,
+                defender_opponent: BuildingDefenderOpponent::Unknown,
+                attacker_faction: BuildingAttackerFaction::Unknown,
+                attacker_tal_assigned_captain_or_bridge: false,
             },
         );
         assert_eq!(out.get("shield_hp"), Some(&0.10));
@@ -401,6 +477,9 @@ mod tests {
             &BuildingBonusContext {
                 ops_level: Some(25),
                 mode: BuildingMode::ShipCombat,
+                defender_opponent: BuildingDefenderOpponent::Unknown,
+                attacker_faction: BuildingAttackerFaction::Unknown,
+                attacker_tal_assigned_captain_or_bridge: false,
             },
         );
         let hull = out.get("hull_hp").copied().unwrap_or_default();
@@ -408,5 +487,126 @@ mod tests {
             (hull - 0.32).abs() < 1e-9,
             "expected multiplicative stacking, got {hull}"
         );
+    }
+
+    #[test]
+    fn defender_and_tal_conditions_gate_bonus_rows() {
+        let record = BuildingRecord {
+            id: "test_conditional".to_string(),
+            building_name: "Conditional".to_string(),
+            data_version: None,
+            source_note: None,
+            levels: vec![BuildingLevel {
+                level: 1,
+                ops_min: None,
+                ops_max: None,
+                bonuses: vec![
+                    BonusEntry {
+                        stat: "crit_damage".to_string(),
+                        value: 0.1,
+                        operator: "add".to_string(),
+                        conditions: vec!["defender_is_npc_hostile".to_string()],
+                        notes: None,
+                    },
+                    BonusEntry {
+                        stat: "apex_barrier".to_string(),
+                        value: 0.2,
+                        operator: "add".to_string(),
+                        conditions: vec![
+                            "defender_is_player_ship".to_string(),
+                            "attacker_officer_tal_not_on_bridge".to_string(),
+                        ],
+                        notes: None,
+                    },
+                ],
+            }],
+        };
+        let hostile_ctx = BuildingBonusContext {
+            ops_level: Some(1),
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::NpcHostile,
+            attacker_faction: BuildingAttackerFaction::Unknown,
+            attacker_tal_assigned_captain_or_bridge: false,
+        };
+        let player_with_tal_ctx = BuildingBonusContext {
+            ops_level: Some(1),
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::PlayerShip,
+            attacker_faction: BuildingAttackerFaction::Unknown,
+            attacker_tal_assigned_captain_or_bridge: true,
+        };
+        let player_without_tal_ctx = BuildingBonusContext {
+            ops_level: Some(1),
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::PlayerShip,
+            attacker_faction: BuildingAttackerFaction::Unknown,
+            attacker_tal_assigned_captain_or_bridge: false,
+        };
+        let hostile_out = cumulative_building_level_bonuses_with_context(&record, 1, &hostile_ctx);
+        assert_eq!(hostile_out.get("crit_damage"), Some(&0.1));
+        assert!(!hostile_out.contains_key("apex_barrier"));
+
+        let player_with_tal =
+            cumulative_building_level_bonuses_with_context(&record, 1, &player_with_tal_ctx);
+        assert!(!player_with_tal.contains_key("crit_damage"));
+        assert!(!player_with_tal.contains_key("apex_barrier"));
+
+        let player_without_tal =
+            cumulative_building_level_bonuses_with_context(&record, 1, &player_without_tal_ctx);
+        assert_eq!(player_without_tal.get("apex_barrier"), Some(&0.2));
+    }
+
+    #[test]
+    fn attacker_faction_any_fed_klg_rom_condition_is_enforced() {
+        let record = BuildingRecord {
+            id: "test_faction".to_string(),
+            building_name: "Faction".to_string(),
+            data_version: None,
+            source_note: None,
+            levels: vec![BuildingLevel {
+                level: 1,
+                ops_min: None,
+                ops_max: None,
+                bonuses: vec![BonusEntry {
+                    stat: "hull_hp".to_string(),
+                    value: 0.12,
+                    operator: "add".to_string(),
+                    conditions: vec!["attacker_ship_faction_any_fed_klg_rom".to_string()],
+                    notes: None,
+                }],
+            }],
+        };
+
+        for faction in [
+            BuildingAttackerFaction::Federation,
+            BuildingAttackerFaction::Klingon,
+            BuildingAttackerFaction::Romulan,
+        ] {
+            let out = cumulative_building_level_bonuses_with_context(
+                &record,
+                1,
+                &BuildingBonusContext {
+                    ops_level: Some(1),
+                    mode: BuildingMode::ShipCombat,
+                    defender_opponent: BuildingDefenderOpponent::Unknown,
+                    attacker_faction: faction,
+                    attacker_tal_assigned_captain_or_bridge: false,
+                },
+            );
+            assert_eq!(out.get("hull_hp"), Some(&0.12));
+        }
+
+        let out_unknown = cumulative_building_level_bonuses_with_context(
+            &record,
+            1,
+            &BuildingBonusContext {
+                ops_level: Some(1),
+                mode: BuildingMode::ShipCombat,
+                defender_opponent: BuildingDefenderOpponent::Unknown,
+                attacker_faction: BuildingAttackerFaction::Unknown,
+                attacker_tal_assigned_captain_or_bridge: false,
+            },
+        );
+        assert!(!out_unknown.contains_key("hull_hp"));
     }
 }

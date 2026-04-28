@@ -2,6 +2,7 @@
   "id": "uss_saladin",
   "ship_name": "U.S.S. SALADIN",
   "ship_class": "battleship",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

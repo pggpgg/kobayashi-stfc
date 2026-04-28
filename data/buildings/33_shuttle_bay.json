@@ -1,20 +1,20 @@
 {
   "id": "building_33",
   "building_name": "Shuttle Bay",
-  "data_version": "stfcspace-2026-03-14",
+  "data_version": "stfcspace-2026-04-28",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
       "level": 1,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.01,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -34,15 +34,15 @@
     },
     {
       "level": 2,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.02,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -62,15 +62,15 @@
     },
     {
       "level": 3,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.03,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -90,15 +90,15 @@
     },
     {
       "level": 4,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.04,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -118,15 +118,15 @@
     },
     {
       "level": 5,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -146,15 +146,15 @@
     },
     {
       "level": 6,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.06,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -174,15 +174,15 @@
     },
     {
       "level": 7,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.07,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -202,15 +202,15 @@
     },
     {
       "level": 8,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.08,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -230,15 +230,15 @@
     },
     {
       "level": 9,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.09,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -258,15 +258,15 @@
     },
     {
       "level": 10,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -286,15 +286,15 @@
     },
     {
       "level": 11,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.11,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -314,15 +314,15 @@
     },
     {
       "level": 12,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -342,15 +342,15 @@
     },
     {
       "level": 13,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.13,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -370,15 +370,15 @@
     },
     {
       "level": 14,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.14,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -398,15 +398,15 @@
     },
     {
       "level": 15,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -426,15 +426,15 @@
     },
     {
       "level": 16,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.16,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -454,15 +454,15 @@
     },
     {
       "level": 17,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.17,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -482,15 +482,15 @@
     },
     {
       "level": 18,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.18,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -510,15 +510,15 @@
     },
     {
       "level": 19,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.19,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -538,15 +538,15 @@
     },
     {
       "level": 20,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -566,15 +566,15 @@
     },
     {
       "level": 21,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.23,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -594,15 +594,15 @@
     },
     {
       "level": 22,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.26,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -622,15 +622,15 @@
     },
     {
       "level": 23,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.29,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -650,15 +650,15 @@
     },
     {
       "level": 24,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.32,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -678,15 +678,15 @@
     },
     {
       "level": 25,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -706,15 +706,15 @@
     },
     {
       "level": 26,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.38,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -734,15 +734,15 @@
     },
     {
       "level": 27,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.41,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -762,15 +762,15 @@
     },
     {
       "level": 28,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.44,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -790,15 +790,15 @@
     },
     {
       "level": 29,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.47,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -818,15 +818,15 @@
     },
     {
       "level": 30,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -846,15 +846,15 @@
     },
     {
       "level": 31,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -874,15 +874,15 @@
     },
     {
       "level": 32,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -902,15 +902,15 @@
     },
     {
       "level": 33,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -930,15 +930,15 @@
     },
     {
       "level": 34,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -958,15 +958,15 @@
     },
     {
       "level": 35,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -986,15 +986,15 @@
     },
     {
       "level": 36,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1014,15 +1014,15 @@
     },
     {
       "level": 37,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1042,15 +1042,15 @@
     },
     {
       "level": 38,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1070,15 +1070,15 @@
     },
     {
       "level": 39,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 0.95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1098,15 +1098,15 @@
     },
     {
       "level": 40,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1126,15 +1126,15 @@
     },
     {
       "level": 41,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1154,15 +1154,15 @@
     },
     {
       "level": 42,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1182,15 +1182,15 @@
     },
     {
       "level": 43,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1210,15 +1210,15 @@
     },
     {
       "level": 44,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1238,15 +1238,15 @@
     },
     {
       "level": 45,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1266,15 +1266,15 @@
     },
     {
       "level": 46,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1294,15 +1294,15 @@
     },
     {
       "level": 47,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1322,15 +1322,15 @@
     },
     {
       "level": 48,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1350,15 +1350,15 @@
     },
     {
       "level": 49,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1378,15 +1378,15 @@
     },
     {
       "level": 50,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1406,15 +1406,15 @@
     },
     {
       "level": 51,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1434,15 +1434,15 @@
     },
     {
       "level": 52,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1462,15 +1462,15 @@
     },
     {
       "level": 53,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1490,15 +1490,15 @@
     },
     {
       "level": 54,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1518,15 +1518,15 @@
     },
     {
       "level": 55,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1546,15 +1546,15 @@
     },
     {
       "level": 56,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1574,15 +1574,15 @@
     },
     {
       "level": 57,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1602,15 +1602,15 @@
     },
     {
       "level": 58,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1630,15 +1630,15 @@
     },
     {
       "level": 59,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 1.95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1658,15 +1658,15 @@
     },
     {
       "level": 60,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1686,15 +1686,15 @@
     },
     {
       "level": 61,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 2.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1714,15 +1714,15 @@
     },
     {
       "level": 62,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 2.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1742,15 +1742,15 @@
     },
     {
       "level": 63,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 2.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1770,15 +1770,15 @@
     },
     {
       "level": 64,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 2.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1798,15 +1798,15 @@
     },
     {
       "level": 65,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 2.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1826,15 +1826,15 @@
     },
     {
       "level": 66,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 3.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1854,15 +1854,15 @@
     },
     {
       "level": 67,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 3.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1882,15 +1882,15 @@
     },
     {
       "level": 68,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 3.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1910,15 +1910,15 @@
     },
     {
       "level": 69,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 4.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1938,15 +1938,15 @@
     },
     {
       "level": 70,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1966,15 +1966,15 @@
     },
     {
       "level": 71,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 5.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -1994,15 +1994,15 @@
     },
     {
       "level": 72,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 6.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2022,15 +2022,15 @@
     },
     {
       "level": 73,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 7.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2050,15 +2050,15 @@
     },
     {
       "level": 74,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 7.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2078,15 +2078,15 @@
     },
     {
       "level": 75,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 8.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2106,15 +2106,15 @@
     },
     {
       "level": 76,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 9.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2134,15 +2134,15 @@
     },
     {
       "level": 77,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 9.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2162,15 +2162,15 @@
     },
     {
       "level": 78,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 10.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2190,15 +2190,15 @@
     },
     {
       "level": 79,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 11.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",
@@ -2218,15 +2218,15 @@
     },
     {
       "level": 80,
-      "ops_min": null,
+      "ops_min": 8,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1030529782",
+          "stat": "weapon_damage",
           "value": 12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=3002"
+          "notes": "Shuttle Bay: Increases weapon damage of ships."
         },
         {
           "stat": "buff_1847534232",

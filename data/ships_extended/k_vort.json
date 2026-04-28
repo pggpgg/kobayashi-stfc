@@ -2,6 +2,7 @@
   "id": "k_vort",
   "ship_name": "K'VORT",
   "ship_class": "survey",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

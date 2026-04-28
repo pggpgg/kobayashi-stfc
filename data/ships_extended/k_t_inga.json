@@ -2,6 +2,7 @@
   "id": "k_t_inga",
   "ship_name": "K'T'INGA",
   "ship_class": "explorer",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

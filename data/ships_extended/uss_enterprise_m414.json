@@ -2,6 +2,7 @@
   "id": "uss_enterprise_m414",
   "ship_name": "U.S.S. ENTERPRISE M414",
   "ship_class": "interceptor",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

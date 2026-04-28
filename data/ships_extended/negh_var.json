@@ -2,6 +2,7 @@
   "id": "negh_var",
   "ship_name": "NEGH'VAR",
   "ship_class": "explorer",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

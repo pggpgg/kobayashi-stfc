@@ -2,6 +2,7 @@
   "id": "mow_ga",
   "ship_name": "MOW'GA",
   "ship_class": "survey",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

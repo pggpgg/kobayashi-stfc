@@ -18,6 +18,13 @@ const OUT_DIR = path.join(REPO_ROOT, "data", "buildings");
 const IMPORT_LOG_DIR = path.join(REPO_ROOT, "data", "import_logs");
 /** Optional JSON file: { "<buff_id>": "stat_name", ... }. Merged into common combat buff normalization at run time. */
 const BUFF_ID_TO_STAT_PATH = path.join(REPO_ROOT, "data", "buildings", "buff_id_to_stat.json");
+/** Optional JSON file: { "<buff_id>": { stat, operator?, conditions?, notes? }, ... } for conditional/non-trivial mappings. */
+const BUFF_ID_TO_SEMANTICS_PATH = path.join(
+  REPO_ROOT,
+  "data",
+  "buildings",
+  "buff_id_to_semantics.json",
+);
 const UPSTREAM_SUMMARY_PATH = path.join(
   REPO_ROOT,
   "data",
@@ -151,6 +158,7 @@ const COMMON_COMBAT_BUFF_NORMALIZATION_BASE = {
   // pierce, shield_mitigation, armor, dodge, damage_reduction.
 };
 let commonCombatBuffNormalization = { ...COMMON_COMBAT_BUFF_NORMALIZATION_BASE };
+let conditionalCombatBuffSemantics = {};
 
 async function fetchJson(relativePath) {
   const url = `${BASE_URL}/${relativePath.replace(/^\/+/, "")}`;
@@ -172,6 +180,18 @@ const ABS_MAX_LEVEL = 80;
 function resolveBuffMapping(buff) {
   const known = BUFF_MAPPING[buff.id];
   if (known) return known;
+
+  const semantic = conditionalCombatBuffSemantics[buff.id];
+  if (semantic) {
+    return {
+      stat: semantic.stat,
+      operator: semantic.operator ?? "add",
+      conditions: Array.isArray(semantic.conditions) ? semantic.conditions : [],
+      notes:
+        semantic.notes ??
+        `normalized from buff_${buff.id} (conditional combat semantics) at import`,
+    };
+  }
 
   const normalizedStat = commonCombatBuffNormalization[buff.id];
   if (normalizedStat) {
@@ -300,6 +320,19 @@ async function main() {
   } catch (_) {
     // missing or invalid: use COMMON_COMBAT_BUFF_NORMALIZATION_BASE only
   }
+  try {
+    const raw = await fs.readFile(BUFF_ID_TO_SEMANTICS_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      conditionalCombatBuffSemantics = parsed;
+      const n = Object.keys(parsed).length;
+      if (n > 0) {
+        console.log(`Loaded ${n} buff id → semantic mappings from buff_id_to_semantics.json`);
+      }
+    }
+  } catch (_) {
+    // missing or invalid: optional file
+  }
 
   if (FROM_UPSTREAM) {
     console.log("Reading building summary from data/upstream/data-stfc-space/summary-building.json …");
@@ -349,7 +382,8 @@ async function main() {
         buff &&
         typeof buff.id === "number" &&
         !Object.prototype.hasOwnProperty.call(BUFF_MAPPING, buff.id) &&
-        !Object.prototype.hasOwnProperty.call(commonCombatBuffNormalization, buff.id)
+        !Object.prototype.hasOwnProperty.call(commonCombatBuffNormalization, buff.id) &&
+        !Object.prototype.hasOwnProperty.call(conditionalCombatBuffSemantics, buff.id)
       ) {
         unmappedBuffs.add(buff.id);
       }
@@ -396,6 +430,9 @@ async function main() {
 
   const validFileStems = new Set(fileStems);
   validFileStems.add("index");
+  validFileStems.add("buff_id_to_stat");
+  validFileStems.add("buff_id_to_semantics");
+  validFileStems.add("hull_id_registry");
   const dirEntries = await fs.readdir(OUT_DIR, { withFileTypes: true });
   for (const dirent of dirEntries) {
     if (!dirent.isFile() || !dirent.name.endsWith(".json")) continue;

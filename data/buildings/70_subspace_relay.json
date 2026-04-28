@@ -1,12 +1,12 @@
 {
   "id": "building_70",
   "building_name": "Subspace Relay",
-  "data_version": "stfcspace-2026-03-14",
+  "data_version": "stfcspace-2026-04-28",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
       "level": 1,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -24,17 +24,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 0.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 2,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -52,17 +52,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 0.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 3,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -80,17 +80,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 1.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 4,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -108,17 +108,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 1.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 5,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -136,17 +136,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 6,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -164,17 +164,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 2.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 7,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -192,17 +192,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 2.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 8,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -220,17 +220,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 3.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 9,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -248,17 +248,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 3.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 10,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -276,17 +276,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 11,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -304,17 +304,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 4.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 12,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -332,17 +332,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 4.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 13,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -360,17 +360,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 5.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 14,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -388,17 +388,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 5.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 15,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -416,17 +416,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 16,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -444,17 +444,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 6.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 17,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -472,17 +472,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 6.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 18,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -500,17 +500,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 7.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 19,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -528,17 +528,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 7.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 20,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -556,17 +556,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 21,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -584,17 +584,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 8.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 22,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -612,17 +612,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 8.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 23,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -640,17 +640,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 9.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 24,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -668,17 +668,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 9.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 25,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -696,17 +696,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 10,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 26,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -724,17 +724,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 10.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 27,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -752,17 +752,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 10.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 28,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -780,17 +780,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 11.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 29,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -808,17 +808,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 11.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 30,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -836,17 +836,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 31,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -864,17 +864,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 12.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 32,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -892,17 +892,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 12.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 33,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -920,17 +920,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 13.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 34,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -948,17 +948,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 13.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 35,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -976,17 +976,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 14,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 36,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1004,17 +1004,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 14.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 37,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1032,17 +1032,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 14.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 38,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1060,17 +1060,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 15.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 39,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1088,17 +1088,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 15.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 40,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1116,17 +1116,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 16,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 41,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1144,17 +1144,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 16.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 42,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1172,17 +1172,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 16.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 43,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1200,17 +1200,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 17.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 44,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1228,17 +1228,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 17.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 45,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1256,17 +1256,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 18.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 46,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1284,17 +1284,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 18.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 47,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1312,17 +1312,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 19.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 48,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1340,17 +1340,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 19.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 49,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1368,17 +1368,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 20.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 50,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1396,17 +1396,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 20.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 51,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1424,17 +1424,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 20.95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 52,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1452,17 +1452,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 21.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 53,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1480,17 +1480,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 21.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 54,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1508,17 +1508,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 22.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 55,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1536,17 +1536,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 22.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 56,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1564,17 +1564,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 23.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 57,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1592,17 +1592,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 23.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 58,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1620,17 +1620,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 24.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 59,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1648,17 +1648,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 24.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 60,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1676,17 +1676,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 61,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1704,17 +1704,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 62,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1732,17 +1732,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 63,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1760,17 +1760,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 64,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1788,17 +1788,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 65,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1816,17 +1816,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 66,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1844,17 +1844,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 67,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1872,17 +1872,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 68,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1900,17 +1900,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 69,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1928,17 +1928,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 70,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1956,17 +1956,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 71,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -1984,17 +1984,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 72,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2012,17 +2012,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 73,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2040,17 +2040,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 74,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2068,17 +2068,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 75,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2096,17 +2096,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 76,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2124,17 +2124,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 77,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2152,17 +2152,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 78,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2180,17 +2180,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 79,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2208,17 +2208,17 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     },
     {
       "level": 80,
-      "ops_min": null,
+      "ops_min": 25,
       "ops_max": null,
       "bonuses": [
         {
@@ -2236,11 +2236,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=44101"
         },
         {
-          "stat": "buff_2625691766",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=44102"
+          "notes": "Subspace Relay: increases ship hull health."
         }
       ]
     }

@@ -2,6 +2,7 @@
   "id": "corvus",
   "ship_name": "CORVUS",
   "ship_class": "interceptor",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

@@ -2,6 +2,7 @@
   "id": "kos_karii",
   "ship_name": "KOS'KARII",
   "ship_class": "interceptor",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

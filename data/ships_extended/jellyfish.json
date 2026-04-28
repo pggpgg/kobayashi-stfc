@@ -2,6 +2,7 @@
   "id": "jellyfish",
   "ship_name": "JELLYFISH",
   "ship_class": "interceptor",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

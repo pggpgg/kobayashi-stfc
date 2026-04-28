@@ -2,6 +2,7 @@
   "id": "i_k_s_gre_thor",
   "ship_name": "I.K.S. GRE'THOR",
   "ship_class": "battleship",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

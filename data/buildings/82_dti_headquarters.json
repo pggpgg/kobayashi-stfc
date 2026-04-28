@@ -1,20 +1,23 @@
 {
   "id": "building_82",
   "building_name": "DTI Headquarters",
-  "data_version": "stfcspace-2026-03-14",
+  "data_version": "stfcspace-2026-04-28",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
       "level": 1,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -55,15 +58,18 @@
     },
     {
       "level": 2,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -104,15 +110,18 @@
     },
     {
       "level": 3,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -153,15 +162,18 @@
     },
     {
       "level": 4,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -202,15 +214,18 @@
     },
     {
       "level": 5,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -251,15 +266,18 @@
     },
     {
       "level": 6,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -300,15 +318,18 @@
     },
     {
       "level": 7,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -349,15 +370,18 @@
     },
     {
       "level": 8,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -398,15 +422,18 @@
     },
     {
       "level": 9,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -447,15 +474,18 @@
     },
     {
       "level": 10,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -496,15 +526,18 @@
     },
     {
       "level": 11,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -545,15 +578,18 @@
     },
     {
       "level": 12,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -594,15 +630,18 @@
     },
     {
       "level": 13,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -643,15 +682,18 @@
     },
     {
       "level": 14,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -692,15 +734,18 @@
     },
     {
       "level": 15,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -741,15 +786,18 @@
     },
     {
       "level": 16,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -790,15 +838,18 @@
     },
     {
       "level": 17,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -839,15 +890,18 @@
     },
     {
       "level": 18,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -888,15 +942,18 @@
     },
     {
       "level": 19,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 375,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -937,15 +994,18 @@
     },
     {
       "level": 20,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -986,15 +1046,18 @@
     },
     {
       "level": 21,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1035,15 +1098,18 @@
     },
     {
       "level": 22,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1084,15 +1150,18 @@
     },
     {
       "level": 23,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1133,15 +1202,18 @@
     },
     {
       "level": 24,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1182,15 +1254,18 @@
     },
     {
       "level": 25,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1231,15 +1306,18 @@
     },
     {
       "level": 26,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1280,15 +1358,18 @@
     },
     {
       "level": 27,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1329,15 +1410,18 @@
     },
     {
       "level": 28,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1378,15 +1462,18 @@
     },
     {
       "level": 29,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1427,15 +1514,18 @@
     },
     {
       "level": 30,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1125,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1476,15 +1566,18 @@
     },
     {
       "level": 31,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1125,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1525,15 +1618,18 @@
     },
     {
       "level": 32,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1125,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1574,15 +1670,18 @@
     },
     {
       "level": 33,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1623,15 +1722,18 @@
     },
     {
       "level": 34,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1672,15 +1774,18 @@
     },
     {
       "level": 35,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1721,15 +1826,18 @@
     },
     {
       "level": 36,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1650,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1770,15 +1878,18 @@
     },
     {
       "level": 37,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1800,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1819,15 +1930,18 @@
     },
     {
       "level": 38,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 1950,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1868,15 +1982,18 @@
     },
     {
       "level": 39,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 2100,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1917,15 +2034,18 @@
     },
     {
       "level": 40,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 2250,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -1966,15 +2086,18 @@
     },
     {
       "level": 41,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 2400,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2015,15 +2138,18 @@
     },
     {
       "level": 42,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 2550,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2064,15 +2190,18 @@
     },
     {
       "level": 43,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 2700,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2113,15 +2242,18 @@
     },
     {
       "level": 44,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 2850,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2162,15 +2294,18 @@
     },
     {
       "level": 45,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 3000,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2211,15 +2346,18 @@
     },
     {
       "level": 46,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 3150,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2260,15 +2398,18 @@
     },
     {
       "level": 47,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 3300,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2309,15 +2450,18 @@
     },
     {
       "level": 48,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 3450,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2358,15 +2502,18 @@
     },
     {
       "level": 49,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 3600,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2407,15 +2554,18 @@
     },
     {
       "level": 50,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 3750,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2456,15 +2606,18 @@
     },
     {
       "level": 51,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 3900,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2505,15 +2658,18 @@
     },
     {
       "level": 52,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 4050,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2554,15 +2710,18 @@
     },
     {
       "level": 53,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 4200,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2603,15 +2762,18 @@
     },
     {
       "level": 54,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 4350,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2652,15 +2814,18 @@
     },
     {
       "level": 55,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 4500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2701,15 +2866,18 @@
     },
     {
       "level": 56,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 4650,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2750,15 +2918,18 @@
     },
     {
       "level": 57,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 4800,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2799,15 +2970,18 @@
     },
     {
       "level": 58,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 4950,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2848,15 +3022,18 @@
     },
     {
       "level": 59,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5100,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2897,15 +3074,18 @@
     },
     {
       "level": 60,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5250,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2946,15 +3126,18 @@
     },
     {
       "level": 61,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5400,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -2995,15 +3178,18 @@
     },
     {
       "level": 62,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5550,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3044,15 +3230,18 @@
     },
     {
       "level": 63,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5700,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3093,15 +3282,18 @@
     },
     {
       "level": 64,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5850,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3142,15 +3334,18 @@
     },
     {
       "level": 65,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6000,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3191,15 +3386,18 @@
     },
     {
       "level": 66,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6300,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3240,15 +3438,18 @@
     },
     {
       "level": 67,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6600,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3289,15 +3490,18 @@
     },
     {
       "level": 68,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6900,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3338,15 +3542,18 @@
     },
     {
       "level": 69,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7200,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3387,15 +3594,18 @@
     },
     {
       "level": 70,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3436,15 +3646,18 @@
     },
     {
       "level": 71,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3485,15 +3698,18 @@
     },
     {
       "level": 72,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3534,15 +3750,18 @@
     },
     {
       "level": 73,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3583,15 +3802,18 @@
     },
     {
       "level": 74,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3632,15 +3854,18 @@
     },
     {
       "level": 75,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3681,15 +3906,18 @@
     },
     {
       "level": 76,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3730,15 +3958,18 @@
     },
     {
       "level": 77,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3779,15 +4010,18 @@
     },
     {
       "level": 78,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3828,15 +4062,18 @@
     },
     {
       "level": 79,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",
@@ -3877,15 +4114,18 @@
     },
     {
       "level": 80,
-      "ops_min": null,
+      "ops_min": 42,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2236011365",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74003"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
         },
         {
           "stat": "buff_469165341",

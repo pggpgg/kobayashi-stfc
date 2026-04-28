@@ -2,6 +2,7 @@
   "id": "velox",
   "ship_name": "VELOX",
   "ship_class": "battleship",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

@@ -2,6 +2,7 @@
   "id": "centurion",
   "ship_name": "CENTURION",
   "ship_class": "interceptor",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

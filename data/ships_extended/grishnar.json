@@ -2,6 +2,7 @@
   "id": "grishnar",
   "ship_name": "GRISHNAR",
   "ship_class": "survey",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

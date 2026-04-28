@@ -1,41 +1,20 @@
 {
   "id": "ship_hangar",
   "building_name": "Ship Hangar",
-  "data_version": "stfcspace-2026-03-14",
+  "data_version": "stfcspace-2026-04-28",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
       "level": 1,
-      "ops_min": null,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
+          "stat": "hull_hp",
           "value": 0.03,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
-        },
-        {
-          "stat": "buff_3940777734",
-          "value": 43,
-          "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=1062"
-        }
-      ]
-    },
-    {
-      "level": 2,
-      "ops_min": null,
-      "ops_max": null,
-      "bonuses": [
-        {
-          "stat": "buff_2334827430",
-          "value": 0.06,
-          "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -47,16 +26,16 @@
       ]
     },
     {
-      "level": 3,
-      "ops_min": null,
+      "level": 2,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.09,
+          "stat": "hull_hp",
+          "value": 0.06,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -68,16 +47,16 @@
       ]
     },
     {
-      "level": 4,
-      "ops_min": null,
+      "level": 3,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.12,
+          "stat": "hull_hp",
+          "value": 0.09,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -89,16 +68,16 @@
       ]
     },
     {
-      "level": 5,
-      "ops_min": null,
+      "level": 4,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.15,
+          "stat": "hull_hp",
+          "value": 0.12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -110,16 +89,16 @@
       ]
     },
     {
-      "level": 6,
-      "ops_min": null,
+      "level": 5,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.18,
+          "stat": "hull_hp",
+          "value": 0.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -131,16 +110,16 @@
       ]
     },
     {
-      "level": 7,
-      "ops_min": null,
+      "level": 6,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.21,
+          "stat": "hull_hp",
+          "value": 0.18,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -152,16 +131,16 @@
       ]
     },
     {
-      "level": 8,
-      "ops_min": null,
+      "level": 7,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.24,
+          "stat": "hull_hp",
+          "value": 0.21,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -173,16 +152,16 @@
       ]
     },
     {
-      "level": 9,
-      "ops_min": null,
+      "level": 8,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.27,
+          "stat": "hull_hp",
+          "value": 0.24,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -194,16 +173,16 @@
       ]
     },
     {
-      "level": 10,
-      "ops_min": null,
+      "level": 9,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.3,
+          "stat": "hull_hp",
+          "value": 0.27,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -215,16 +194,16 @@
       ]
     },
     {
-      "level": 11,
-      "ops_min": null,
+      "level": 10,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.33,
+          "stat": "hull_hp",
+          "value": 0.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -236,16 +215,16 @@
       ]
     },
     {
-      "level": 12,
-      "ops_min": null,
+      "level": 11,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.36,
+          "stat": "hull_hp",
+          "value": 0.33,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -257,16 +236,16 @@
       ]
     },
     {
-      "level": 13,
-      "ops_min": null,
+      "level": 12,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.39,
+          "stat": "hull_hp",
+          "value": 0.36,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -278,16 +257,16 @@
       ]
     },
     {
-      "level": 14,
-      "ops_min": null,
+      "level": 13,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.42,
+          "stat": "hull_hp",
+          "value": 0.39,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -299,16 +278,16 @@
       ]
     },
     {
-      "level": 15,
-      "ops_min": null,
+      "level": 14,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.45,
+          "stat": "hull_hp",
+          "value": 0.42,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -320,16 +299,16 @@
       ]
     },
     {
-      "level": 16,
-      "ops_min": null,
+      "level": 15,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.48,
+          "stat": "hull_hp",
+          "value": 0.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -341,16 +320,16 @@
       ]
     },
     {
-      "level": 17,
-      "ops_min": null,
+      "level": 16,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.51,
+          "stat": "hull_hp",
+          "value": 0.48,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -362,16 +341,16 @@
       ]
     },
     {
-      "level": 18,
-      "ops_min": null,
+      "level": 17,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.54,
+          "stat": "hull_hp",
+          "value": 0.51,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -383,16 +362,16 @@
       ]
     },
     {
-      "level": 19,
-      "ops_min": null,
+      "level": 18,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.57,
+          "stat": "hull_hp",
+          "value": 0.54,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -404,16 +383,16 @@
       ]
     },
     {
-      "level": 20,
-      "ops_min": null,
+      "level": 19,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.6,
+          "stat": "hull_hp",
+          "value": 0.57,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -425,16 +404,16 @@
       ]
     },
     {
-      "level": 21,
-      "ops_min": null,
+      "level": 20,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.63,
+          "stat": "hull_hp",
+          "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -446,16 +425,16 @@
       ]
     },
     {
-      "level": 22,
-      "ops_min": null,
+      "level": 21,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.66,
+          "stat": "hull_hp",
+          "value": 0.63,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -467,16 +446,16 @@
       ]
     },
     {
-      "level": 23,
-      "ops_min": null,
+      "level": 22,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.69,
+          "stat": "hull_hp",
+          "value": 0.66,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -488,16 +467,16 @@
       ]
     },
     {
-      "level": 24,
-      "ops_min": null,
+      "level": 23,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.72,
+          "stat": "hull_hp",
+          "value": 0.69,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -509,16 +488,16 @@
       ]
     },
     {
-      "level": 25,
-      "ops_min": null,
+      "level": 24,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.75,
+          "stat": "hull_hp",
+          "value": 0.72,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -530,20 +509,20 @@
       ]
     },
     {
-      "level": 26,
-      "ops_min": null,
+      "level": 25,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.78,
+          "stat": "hull_hp",
+          "value": 0.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 69,
+          "value": 68,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -551,16 +530,16 @@
       ]
     },
     {
-      "level": 27,
-      "ops_min": null,
+      "level": 26,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.81,
+          "stat": "hull_hp",
+          "value": 0.78,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -572,20 +551,20 @@
       ]
     },
     {
-      "level": 28,
-      "ops_min": null,
+      "level": 27,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.84,
+          "stat": "hull_hp",
+          "value": 0.81,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 73,
+          "value": 71,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -593,16 +572,16 @@
       ]
     },
     {
-      "level": 29,
-      "ops_min": null,
+      "level": 28,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.87,
+          "stat": "hull_hp",
+          "value": 0.84,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -614,16 +593,16 @@
       ]
     },
     {
-      "level": 30,
-      "ops_min": null,
+      "level": 29,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.9,
+          "stat": "hull_hp",
+          "value": 0.87,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -635,16 +614,16 @@
       ]
     },
     {
-      "level": 31,
-      "ops_min": null,
+      "level": 30,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.93,
+          "stat": "hull_hp",
+          "value": 0.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -656,20 +635,20 @@
       ]
     },
     {
-      "level": 32,
-      "ops_min": null,
+      "level": 31,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.96,
+          "stat": "hull_hp",
+          "value": 0.93,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 78,
+          "value": 77,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -677,16 +656,16 @@
       ]
     },
     {
-      "level": 33,
-      "ops_min": null,
+      "level": 32,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 0.99,
+          "stat": "hull_hp",
+          "value": 0.96,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -698,16 +677,16 @@
       ]
     },
     {
-      "level": 34,
-      "ops_min": null,
+      "level": 33,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.02,
+          "stat": "hull_hp",
+          "value": 0.99,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -719,20 +698,20 @@
       ]
     },
     {
-      "level": 35,
-      "ops_min": null,
+      "level": 34,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.05,
+          "stat": "hull_hp",
+          "value": 1.02,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 82,
+          "value": 81,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -740,16 +719,16 @@
       ]
     },
     {
-      "level": 36,
-      "ops_min": null,
+      "level": 35,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.08,
+          "stat": "hull_hp",
+          "value": 1.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -761,16 +740,16 @@
       ]
     },
     {
-      "level": 37,
-      "ops_min": null,
+      "level": 36,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.11,
+          "stat": "hull_hp",
+          "value": 1.08,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -782,16 +761,16 @@
       ]
     },
     {
-      "level": 38,
-      "ops_min": null,
+      "level": 37,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.14,
+          "stat": "hull_hp",
+          "value": 1.11,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -803,16 +782,16 @@
       ]
     },
     {
-      "level": 39,
-      "ops_min": null,
+      "level": 38,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.17,
+          "stat": "hull_hp",
+          "value": 1.14,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -824,20 +803,20 @@
       ]
     },
     {
-      "level": 40,
-      "ops_min": null,
+      "level": 39,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.2,
+          "stat": "hull_hp",
+          "value": 1.17,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 91,
+          "value": 87,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -845,16 +824,16 @@
       ]
     },
     {
-      "level": 41,
-      "ops_min": null,
+      "level": 40,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.23,
+          "stat": "hull_hp",
+          "value": 1.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -866,20 +845,20 @@
       ]
     },
     {
-      "level": 42,
-      "ops_min": null,
+      "level": 41,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.26,
+          "stat": "hull_hp",
+          "value": 1.23,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 94,
+          "value": 93,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -887,16 +866,16 @@
       ]
     },
     {
-      "level": 43,
-      "ops_min": null,
+      "level": 42,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.29,
+          "stat": "hull_hp",
+          "value": 1.26,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -908,16 +887,16 @@
       ]
     },
     {
-      "level": 44,
-      "ops_min": null,
+      "level": 43,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.32,
+          "stat": "hull_hp",
+          "value": 1.29,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -929,20 +908,20 @@
       ]
     },
     {
-      "level": 45,
-      "ops_min": null,
+      "level": 44,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.35,
+          "stat": "hull_hp",
+          "value": 1.32,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 98,
+          "value": 97,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -950,16 +929,16 @@
       ]
     },
     {
-      "level": 46,
-      "ops_min": null,
+      "level": 45,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.38,
+          "stat": "hull_hp",
+          "value": 1.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -971,16 +950,16 @@
       ]
     },
     {
-      "level": 47,
-      "ops_min": null,
+      "level": 46,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.41,
+          "stat": "hull_hp",
+          "value": 1.38,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -992,16 +971,16 @@
       ]
     },
     {
-      "level": 48,
-      "ops_min": null,
+      "level": 47,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.44,
+          "stat": "hull_hp",
+          "value": 1.41,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1013,16 +992,16 @@
       ]
     },
     {
-      "level": 49,
-      "ops_min": null,
+      "level": 48,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.47,
+          "stat": "hull_hp",
+          "value": 1.44,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1034,16 +1013,16 @@
       ]
     },
     {
-      "level": 50,
-      "ops_min": null,
+      "level": 49,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.5,
+          "stat": "hull_hp",
+          "value": 1.47,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1055,20 +1034,20 @@
       ]
     },
     {
-      "level": 51,
-      "ops_min": null,
+      "level": 50,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.53,
+          "stat": "hull_hp",
+          "value": 1.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 119,
+          "value": 104,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -1076,16 +1055,16 @@
       ]
     },
     {
-      "level": 52,
-      "ops_min": null,
+      "level": 51,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.56,
+          "stat": "hull_hp",
+          "value": 1.53,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1097,16 +1076,16 @@
       ]
     },
     {
-      "level": 53,
-      "ops_min": null,
+      "level": 52,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.59,
+          "stat": "hull_hp",
+          "value": 1.56,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1118,16 +1097,16 @@
       ]
     },
     {
-      "level": 54,
-      "ops_min": null,
+      "level": 53,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.62,
+          "stat": "hull_hp",
+          "value": 1.59,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1139,16 +1118,16 @@
       ]
     },
     {
-      "level": 55,
-      "ops_min": null,
+      "level": 54,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.65,
+          "stat": "hull_hp",
+          "value": 1.62,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1160,16 +1139,16 @@
       ]
     },
     {
-      "level": 56,
-      "ops_min": null,
+      "level": 55,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.68,
+          "stat": "hull_hp",
+          "value": 1.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1181,16 +1160,16 @@
       ]
     },
     {
-      "level": 57,
-      "ops_min": null,
+      "level": 56,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.71,
+          "stat": "hull_hp",
+          "value": 1.68,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1202,16 +1181,16 @@
       ]
     },
     {
-      "level": 58,
-      "ops_min": null,
+      "level": 57,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.74,
+          "stat": "hull_hp",
+          "value": 1.71,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1223,16 +1202,16 @@
       ]
     },
     {
-      "level": 59,
-      "ops_min": null,
+      "level": 58,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.77,
+          "stat": "hull_hp",
+          "value": 1.74,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1244,16 +1223,16 @@
       ]
     },
     {
-      "level": 60,
-      "ops_min": null,
+      "level": 59,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.8,
+          "stat": "hull_hp",
+          "value": 1.77,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1265,16 +1244,16 @@
       ]
     },
     {
-      "level": 61,
-      "ops_min": null,
+      "level": 60,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 1.85,
+          "stat": "hull_hp",
+          "value": 1.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1286,16 +1265,16 @@
       ]
     },
     {
-      "level": 62,
-      "ops_min": null,
+      "level": 61,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 2.05,
+          "stat": "hull_hp",
+          "value": 1.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1307,16 +1286,16 @@
       ]
     },
     {
-      "level": 63,
-      "ops_min": null,
+      "level": 62,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 2.25,
+          "stat": "hull_hp",
+          "value": 2.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1328,20 +1307,20 @@
       ]
     },
     {
-      "level": 64,
-      "ops_min": null,
+      "level": 63,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 2.5,
+          "stat": "hull_hp",
+          "value": 2.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 133,
+          "value": 132,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -1349,16 +1328,16 @@
       ]
     },
     {
-      "level": 65,
-      "ops_min": null,
+      "level": 64,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 2.75,
+          "stat": "hull_hp",
+          "value": 2.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1370,20 +1349,41 @@
       ]
     },
     {
-      "level": 66,
-      "ops_min": null,
+      "level": 65,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 3.1,
+          "stat": "hull_hp",
+          "value": 2.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 136,
+          "value": 135,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=1062"
+        }
+      ]
+    },
+    {
+      "level": 66,
+      "ops_min": 18,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "hull_hp",
+          "value": 3.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Ship Hangar: increases ship hull health."
+        },
+        {
+          "stat": "buff_3940777734",
+          "value": 137,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -1392,19 +1392,19 @@
     },
     {
       "level": 67,
-      "ops_min": null,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
+          "stat": "hull_hp",
           "value": 3.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 138,
+          "value": 139,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -1413,19 +1413,19 @@
     },
     {
       "level": 68,
-      "ops_min": null,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
+          "stat": "hull_hp",
           "value": 3.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 140,
+          "value": 141,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -1434,36 +1434,15 @@
     },
     {
       "level": 69,
-      "ops_min": null,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
+          "stat": "hull_hp",
           "value": 4.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
-        },
-        {
-          "stat": "buff_3940777734",
-          "value": 142,
-          "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=1062"
-        }
-      ]
-    },
-    {
-      "level": 70,
-      "ops_min": null,
-      "ops_max": null,
-      "bonuses": [
-        {
-          "stat": "buff_2334827430",
-          "value": 5,
-          "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1475,20 +1454,20 @@
       ]
     },
     {
-      "level": 71,
-      "ops_min": null,
+      "level": 70,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 5.7,
+          "stat": "hull_hp",
+          "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
-          "value": 156,
+          "value": 144,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"
@@ -1496,16 +1475,16 @@
       ]
     },
     {
-      "level": 72,
-      "ops_min": null,
+      "level": 71,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 6.4,
+          "stat": "hull_hp",
+          "value": 5.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1517,16 +1496,16 @@
       ]
     },
     {
-      "level": 73,
-      "ops_min": null,
+      "level": 72,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 7.1,
+          "stat": "hull_hp",
+          "value": 6.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1538,16 +1517,16 @@
       ]
     },
     {
-      "level": 74,
-      "ops_min": null,
+      "level": 73,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 7.8,
+          "stat": "hull_hp",
+          "value": 7.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1559,16 +1538,16 @@
       ]
     },
     {
-      "level": 75,
-      "ops_min": null,
+      "level": 74,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 8.5,
+          "stat": "hull_hp",
+          "value": 7.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1580,16 +1559,16 @@
       ]
     },
     {
-      "level": 76,
-      "ops_min": null,
+      "level": 75,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 9.2,
+          "stat": "hull_hp",
+          "value": 8.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1601,16 +1580,16 @@
       ]
     },
     {
-      "level": 77,
-      "ops_min": null,
+      "level": 76,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 9.9,
+          "stat": "hull_hp",
+          "value": 9.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1622,16 +1601,16 @@
       ]
     },
     {
-      "level": 78,
-      "ops_min": null,
+      "level": 77,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 10.6,
+          "stat": "hull_hp",
+          "value": 9.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1643,16 +1622,16 @@
       ]
     },
     {
-      "level": 79,
-      "ops_min": null,
+      "level": 78,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 11.3,
+          "stat": "hull_hp",
+          "value": 10.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
@@ -1664,20 +1643,41 @@
       ]
     },
     {
-      "level": 80,
-      "ops_min": null,
+      "level": 79,
+      "ops_min": 18,
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_2334827430",
-          "value": 12,
+          "stat": "hull_hp",
+          "value": 11.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=2"
+          "notes": "Ship Hangar: increases ship hull health."
         },
         {
           "stat": "buff_3940777734",
           "value": 165,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=1062"
+        }
+      ]
+    },
+    {
+      "level": 80,
+      "ops_min": 18,
+      "ops_max": null,
+      "bonuses": [
+        {
+          "stat": "hull_hp",
+          "value": 12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Ship Hangar: increases ship hull health."
+        },
+        {
+          "stat": "buff_3940777734",
+          "value": 166,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1062"

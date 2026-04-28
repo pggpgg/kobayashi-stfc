@@ -1,7 +1,7 @@
 {
   "id": "tritanium_generator_b",
   "building_name": "Tritanium Generator B",
-  "data_version": "stfcspace-2026-03-14",
+  "data_version": "stfcspace-2026-04-28",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -38,11 +38,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.01,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -80,11 +80,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.02,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -122,11 +122,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.03,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -164,11 +164,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.04,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -206,11 +206,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -248,11 +248,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.06,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -290,11 +290,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.07,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -332,11 +332,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.08,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -374,11 +374,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.09,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -416,11 +416,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -458,11 +458,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.11,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -500,11 +500,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -542,11 +542,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.13,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -584,11 +584,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.14,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -626,11 +626,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -668,11 +668,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.17,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -710,11 +710,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.19,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -752,11 +752,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.21,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -794,11 +794,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.23,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -836,11 +836,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -878,11 +878,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -920,11 +920,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -962,11 +962,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1004,11 +1004,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1046,11 +1046,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1088,11 +1088,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1130,11 +1130,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1172,11 +1172,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1214,11 +1214,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1256,11 +1256,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1298,11 +1298,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1340,11 +1340,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1382,11 +1382,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1424,11 +1424,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 0.95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1466,11 +1466,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1508,11 +1508,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1550,11 +1550,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1592,11 +1592,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1634,11 +1634,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1676,11 +1676,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1718,11 +1718,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1760,11 +1760,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1802,11 +1802,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1844,11 +1844,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 1.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1886,11 +1886,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1928,11 +1928,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -1970,11 +1970,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2012,11 +2012,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2054,11 +2054,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2096,11 +2096,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2138,11 +2138,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2180,11 +2180,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2222,11 +2222,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 2.95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2264,11 +2264,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 3.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2306,11 +2306,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 3.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2348,11 +2348,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 3.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2390,11 +2390,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 3.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2432,11 +2432,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 3.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2474,11 +2474,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 3.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2516,11 +2516,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2558,11 +2558,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 4.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2600,11 +2600,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 4.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2642,11 +2642,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 4.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2684,11 +2684,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 4.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2726,11 +2726,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 4.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2768,11 +2768,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2810,11 +2810,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 5.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2852,11 +2852,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 5.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2894,11 +2894,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 5.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2936,11 +2936,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -2978,11 +2978,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 6.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3020,11 +3020,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 6.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3062,11 +3062,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 7.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3104,11 +3104,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 7.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3146,11 +3146,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3188,11 +3188,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 8.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3230,11 +3230,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 8.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3272,11 +3272,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 9.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3314,11 +3314,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 9.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     },
@@ -3356,11 +3356,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=1005"
         },
         {
-          "stat": "buff_194992291",
+          "stat": "shield_hp",
           "value": 10,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=45006"
+          "notes": "Syndicate line: Shield health increased for all ships."
         }
       ]
     }

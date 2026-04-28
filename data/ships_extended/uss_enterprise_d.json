@@ -2,6 +2,7 @@
   "id": "uss_enterprise_d",
   "ship_name": "U.S.S. ENTERPRISE-D",
   "ship_class": "interceptor",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

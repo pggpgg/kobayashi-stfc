@@ -117,6 +117,9 @@ pub struct ShipRecord {
     pub id: String,
     pub ship_name: String,
     pub ship_class: String,
+    /// Optional owner faction slug (`federation`, `klingon`, `romulan`, ...).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub faction: Option<String>,
     /// Aggregated armor piercing (from weapon components).
     pub armor_piercing: f64,
     /// Aggregated shield piercing (from weapon components).
@@ -196,6 +199,9 @@ pub struct ExtendedShipRecord {
     pub id: String,
     pub ship_name: String,
     pub ship_class: String,
+    /// Optional owner faction slug (`federation`, `klingon`, `romulan`, ...).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub faction: Option<String>,
     pub tiers: Vec<TierStats>,
     pub levels: Vec<LevelBonus>,
     /// Below-decks slot unlock schedule from upstream `crew_slots` (optional; when empty, UI/API use tier/level heuristics).
@@ -241,6 +247,7 @@ impl ExtendedShipRecord {
             id: self.id.clone(),
             ship_name: self.ship_name.clone(),
             ship_class: self.ship_class.clone(),
+            faction: self.faction.clone(),
             armor_piercing: t.armor_piercing,
             shield_piercing: t.shield_piercing,
             accuracy: t.accuracy,

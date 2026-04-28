@@ -2,6 +2,7 @@
   "id": "hegh_ta",
   "ship_name": "HEGH'TA",
   "ship_class": "battleship",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

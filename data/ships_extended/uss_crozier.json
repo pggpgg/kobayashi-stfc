@@ -2,6 +2,7 @@
   "id": "uss_crozier",
   "ship_name": "U.S.S. CROZIER",
   "ship_class": "explorer",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

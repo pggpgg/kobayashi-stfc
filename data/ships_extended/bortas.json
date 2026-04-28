@@ -2,6 +2,7 @@
   "id": "bortas",
   "ship_name": "BORTAS",
   "ship_class": "explorer",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

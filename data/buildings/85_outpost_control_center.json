@@ -1,12 +1,12 @@
 {
   "id": "building_85",
   "building_name": "Outpost Control Center",
-  "data_version": "stfcspace-2026-03-14",
+  "data_version": "stfcspace-2026-04-28",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
       "level": 1,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -45,11 +45,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -62,7 +64,7 @@
     },
     {
       "level": 2,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -101,11 +103,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -118,7 +122,7 @@
     },
     {
       "level": 3,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -157,11 +161,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.03,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -174,7 +180,7 @@
     },
     {
       "level": 4,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -213,11 +219,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -230,7 +238,7 @@
     },
     {
       "level": 5,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -269,11 +277,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.09,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -286,7 +296,7 @@
     },
     {
       "level": 6,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -325,11 +335,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.13,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -342,7 +354,7 @@
     },
     {
       "level": 7,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -381,11 +393,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.17,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -398,7 +412,7 @@
     },
     {
       "level": 8,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -437,11 +451,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.22,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -454,7 +470,7 @@
     },
     {
       "level": 9,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -493,11 +509,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.28,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -510,7 +528,7 @@
     },
     {
       "level": 10,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -549,11 +567,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.34,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -566,7 +586,7 @@
     },
     {
       "level": 11,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -605,11 +625,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.41,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -622,7 +644,7 @@
     },
     {
       "level": 12,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -661,11 +683,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.48,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -678,7 +702,7 @@
     },
     {
       "level": 13,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -717,11 +741,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.56,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -734,7 +760,7 @@
     },
     {
       "level": 14,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -773,11 +799,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.64,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -790,7 +818,7 @@
     },
     {
       "level": 15,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -829,11 +857,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.73,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -846,7 +876,7 @@
     },
     {
       "level": 16,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -885,11 +915,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.82,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -902,7 +934,7 @@
     },
     {
       "level": 17,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -941,11 +973,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 1.92,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -958,7 +992,7 @@
     },
     {
       "level": 18,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -997,11 +1031,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.02,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1014,7 +1050,7 @@
     },
     {
       "level": 19,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1053,11 +1089,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.12,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1070,7 +1108,7 @@
     },
     {
       "level": 20,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1109,11 +1147,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.23,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1126,7 +1166,7 @@
     },
     {
       "level": 21,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1165,11 +1205,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.34,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1182,7 +1224,7 @@
     },
     {
       "level": 22,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1221,11 +1263,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.46,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1238,7 +1282,7 @@
     },
     {
       "level": 23,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1277,11 +1321,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.58,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1294,7 +1340,7 @@
     },
     {
       "level": 24,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1333,11 +1379,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1350,7 +1398,7 @@
     },
     {
       "level": 25,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1389,11 +1437,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.83,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1406,7 +1456,7 @@
     },
     {
       "level": 26,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1445,11 +1495,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 2.96,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1462,7 +1514,7 @@
     },
     {
       "level": 27,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1501,11 +1553,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 3.09,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1518,7 +1572,7 @@
     },
     {
       "level": 28,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1557,11 +1611,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 3.23,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1574,7 +1630,7 @@
     },
     {
       "level": 29,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1613,11 +1669,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 3.37,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1630,7 +1688,7 @@
     },
     {
       "level": 30,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1669,11 +1727,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 3.52,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1686,7 +1746,7 @@
     },
     {
       "level": 31,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1725,11 +1785,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 3.67,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1742,7 +1804,7 @@
     },
     {
       "level": 32,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1781,11 +1843,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 3.82,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1798,7 +1862,7 @@
     },
     {
       "level": 33,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1837,11 +1901,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 3.98,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1854,7 +1920,7 @@
     },
     {
       "level": 34,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1893,11 +1959,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 4.14,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1910,7 +1978,7 @@
     },
     {
       "level": 35,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -1949,11 +2017,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 4.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -1966,7 +2036,7 @@
     },
     {
       "level": 36,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2005,11 +2075,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 4.47,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2022,7 +2094,7 @@
     },
     {
       "level": 37,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2061,11 +2133,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 4.64,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2078,7 +2152,7 @@
     },
     {
       "level": 38,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2117,11 +2191,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 4.81,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2134,7 +2210,7 @@
     },
     {
       "level": 39,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2173,11 +2249,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 4.99,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2190,7 +2268,7 @@
     },
     {
       "level": 40,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2229,11 +2307,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 5.17,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2246,7 +2326,7 @@
     },
     {
       "level": 41,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2285,11 +2365,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 5.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2302,7 +2384,7 @@
     },
     {
       "level": 42,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2341,11 +2423,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 5.54,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2358,7 +2442,7 @@
     },
     {
       "level": 43,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2397,11 +2481,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 5.73,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2414,7 +2500,7 @@
     },
     {
       "level": 44,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2453,11 +2539,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 5.92,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2470,7 +2558,7 @@
     },
     {
       "level": 45,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2509,11 +2597,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 6.12,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2526,7 +2616,7 @@
     },
     {
       "level": 46,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2565,11 +2655,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 6.32,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2582,7 +2674,7 @@
     },
     {
       "level": 47,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2621,11 +2713,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 6.52,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2638,7 +2732,7 @@
     },
     {
       "level": 48,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2677,11 +2771,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 6.73,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2694,7 +2790,7 @@
     },
     {
       "level": 49,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2733,11 +2829,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 6.94,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2750,7 +2848,7 @@
     },
     {
       "level": 50,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2789,11 +2887,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 7.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2806,7 +2906,7 @@
     },
     {
       "level": 51,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2845,11 +2945,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 7.36,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2862,7 +2964,7 @@
     },
     {
       "level": 52,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2901,11 +3003,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 7.58,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2918,7 +3022,7 @@
     },
     {
       "level": 53,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -2957,11 +3061,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 7.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -2974,7 +3080,7 @@
     },
     {
       "level": 54,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3013,11 +3119,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 8.02,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3030,7 +3138,7 @@
     },
     {
       "level": 55,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3069,11 +3177,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 8.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3086,7 +3196,7 @@
     },
     {
       "level": 56,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3125,11 +3235,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 8.48,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3142,7 +3254,7 @@
     },
     {
       "level": 57,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3181,11 +3293,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 8.71,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3198,7 +3312,7 @@
     },
     {
       "level": 58,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3237,11 +3351,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 8.95,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3254,7 +3370,7 @@
     },
     {
       "level": 59,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3293,11 +3409,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 9.19,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3310,7 +3428,7 @@
     },
     {
       "level": 60,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3349,11 +3467,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 9.43,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3366,7 +3486,7 @@
     },
     {
       "level": 61,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3405,11 +3525,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 9.67,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3422,7 +3544,7 @@
     },
     {
       "level": 62,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3461,11 +3583,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 9.92,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3478,7 +3602,7 @@
     },
     {
       "level": 63,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3517,11 +3641,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 10.17,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3534,7 +3660,7 @@
     },
     {
       "level": 64,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3573,11 +3699,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 10.42,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3590,7 +3718,7 @@
     },
     {
       "level": 65,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3629,11 +3757,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 10.68,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3646,7 +3776,7 @@
     },
     {
       "level": 66,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3685,11 +3815,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 10.94,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3702,7 +3834,7 @@
     },
     {
       "level": 67,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3741,11 +3873,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 11.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3758,7 +3892,7 @@
     },
     {
       "level": 68,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3797,11 +3931,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 11.46,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3814,7 +3950,7 @@
     },
     {
       "level": 69,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3853,11 +3989,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 11.73,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3870,7 +4008,7 @@
     },
     {
       "level": 70,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3909,11 +4047,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 12,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3926,7 +4066,7 @@
     },
     {
       "level": 71,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -3965,11 +4105,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 12.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -3982,7 +4124,7 @@
     },
     {
       "level": 72,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4021,11 +4163,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 12.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4038,7 +4182,7 @@
     },
     {
       "level": 73,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4077,11 +4221,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 13.65,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4094,7 +4240,7 @@
     },
     {
       "level": 74,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4133,11 +4279,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 14.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4150,7 +4298,7 @@
     },
     {
       "level": 75,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4189,11 +4337,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 16.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4206,7 +4356,7 @@
     },
     {
       "level": 76,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4245,11 +4395,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 17.55,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4262,7 +4414,7 @@
     },
     {
       "level": 77,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4301,11 +4453,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 19.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4318,7 +4472,7 @@
     },
     {
       "level": 78,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4357,11 +4511,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 21,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4374,7 +4530,7 @@
     },
     {
       "level": 79,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4413,11 +4569,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 22.95,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",
@@ -4430,7 +4588,7 @@
     },
     {
       "level": 80,
-      "ops_min": null,
+      "ops_min": 51,
       "ops_max": null,
       "bonuses": [
         {
@@ -4469,11 +4627,13 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84701"
         },
         {
-          "stat": "buff_975669671",
+          "stat": "hull_hp",
           "value": 25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84702"
+          "conditions": [
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
         },
         {
           "stat": "buff_3192800019",

@@ -2,6 +2,7 @@
   "id": "uss_beatty",
   "ship_name": "U.S.S. BEATTY",
   "ship_class": "survey",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

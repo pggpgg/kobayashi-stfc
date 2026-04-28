@@ -2,6 +2,7 @@
   "id": "scimitar",
   "ship_name": "SCIMITAR",
   "ship_class": "explorer",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

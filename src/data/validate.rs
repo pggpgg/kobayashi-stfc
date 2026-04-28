@@ -756,6 +756,10 @@ pub fn is_known_building_condition(raw: &str) -> bool {
             | "defense_platform_only"
             | "platform_only"
             | "base_defense"
+            | "defender_is_npc_hostile"
+            | "defender_is_player_ship"
+            | "attacker_officer_tal_not_on_bridge"
+            | "attacker_ship_faction_any_fed_klg_rom"
     )
 }
 

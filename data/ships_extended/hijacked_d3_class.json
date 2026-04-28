@@ -2,6 +2,7 @@
   "id": "hijacked_d3_class",
   "ship_name": "HIJACKED D3 CLASS",
   "ship_class": "battleship",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

@@ -629,6 +629,7 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
         id: id.to_string(),
         ship_name: raw.ship_name.clone(),
         ship_class: raw.ship_class.clone(),
+        faction: None,
         armor_piercing,
         shield_piercing,
         accuracy,

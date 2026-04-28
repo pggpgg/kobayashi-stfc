@@ -274,10 +274,27 @@ pub struct BuildingGapAgg {
     pub count: usize,
     /// Up to [`MAX_GAP_SAMPLES`] deduped building ids that contain the key, in encounter order.
     pub samples: Vec<String>,
+    /// For opaque `buff_*` stats: first `loca_id` from any `BonusEntry.notes` (e.g. `loca_id=49007`)
+    /// so we can look up the description in `translations-starbase_modules.json`.
+    pub first_loca_id: Option<u32>,
 }
 
 impl BuildingGapAgg {
-    fn record(&mut self, building_id: &str) {
+    fn record_opaque_buff(&mut self, building_id: &str, notes: Option<&str>) {
+        self.count += 1;
+        if self.first_loca_id.is_none() {
+            if let Some(n) = notes {
+                self.first_loca_id = parse_loca_id_from_building_notes(n);
+            }
+        }
+        if self.samples.len() < MAX_GAP_SAMPLES
+            && !self.samples.iter().any(|s| s == building_id)
+        {
+            self.samples.push(building_id.to_string());
+        }
+    }
+
+    fn record_unknown_condition(&mut self, building_id: &str) {
         self.count += 1;
         if self.samples.len() < MAX_GAP_SAMPLES
             && !self.samples.iter().any(|s| s == building_id)
@@ -285,6 +302,57 @@ impl BuildingGapAgg {
             self.samples.push(building_id.to_string());
         }
     }
+}
+
+fn parse_loca_id_from_building_notes(notes: &str) -> Option<u32> {
+    let i = notes.find("loca_id=")?;
+    let after = &notes[i + 8..];
+    let end = after
+        .char_indices()
+        .find(|(_, c)| !c.is_ascii_digit())
+        .map(|(e, _)| e)
+        .unwrap_or(after.len());
+    after[..end].parse().ok()
+}
+
+/// Load `id` → description text for starbase module buffs (`key` = `starbase_module_buff_description`).
+fn load_starbase_module_buff_descriptions(path: &Path) -> HashMap<u32, String> {
+    let raw = match fs::read_to_string(path) {
+        Ok(s) => s,
+        Err(_) => return HashMap::new(),
+    };
+    let Value::Array(arr) = (match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        Err(_) => return HashMap::new(),
+    }) else {
+        return HashMap::new();
+    };
+    let mut out: HashMap<u32, String> = HashMap::new();
+    for v in arr {
+        let Some(obj) = v.as_object() else {
+            continue;
+        };
+        if obj.get("key").and_then(Value::as_str) != Some("starbase_module_buff_description") {
+            continue;
+        }
+        let id_u64 = obj
+            .get("id")
+            .and_then(|i| {
+                i.as_u64()
+                    .or(i.as_i64().and_then(|k| (k >= 0).then_some(k as u64)))
+            });
+        let Some(id_u64) = id_u64 else {
+            continue;
+        };
+        let Ok(id) = u32::try_from(id_u64) else {
+            continue;
+        };
+        let Some(text) = obj.get("text").and_then(Value::as_str) else {
+            continue;
+        };
+        out.insert(id, text.to_string());
+    }
+    out
 }
 
 /// Aggregated mapping gaps for the buildings dataset.
@@ -299,6 +367,8 @@ impl BuildingGapAgg {
 pub struct BuildingBonusGapsReport {
     pub opaque_buff_stats: BTreeMap<String, BuildingGapAgg>,
     pub unknown_conditions: BTreeMap<String, BuildingGapAgg>,
+    /// `building_id` → `building_name` from `index.json` (for display in the maintainer report).
+    pub building_id_to_name: HashMap<String, String>,
 }
 
 impl BuildingBonusGapsReport {
@@ -324,7 +394,30 @@ pub fn scan_building_bonus_gaps(buildings_dir: &Path) -> Result<BuildingBonusGap
         .and_then(Value::as_array)
         .ok_or_else(|| format!("{}: missing 'buildings' array", index_path.display()))?;
 
-    let mut report = BuildingBonusGapsReport::default();
+    let mut building_id_to_name: HashMap<String, String> = HashMap::new();
+    for entry in buildings {
+        let Some(obj) = entry.as_object() else {
+            continue;
+        };
+        let Some(bid) = obj
+            .get("id")
+            .and_then(Value::as_str)
+            .filter(|s| !s.is_empty())
+        else {
+            continue;
+        };
+        let name = obj
+            .get("building_name")
+            .and_then(Value::as_str)
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or(bid);
+        building_id_to_name.insert(bid.to_string(), name.to_string());
+    }
+
+    let mut report = BuildingBonusGapsReport {
+        building_id_to_name,
+        ..Default::default()
+    };
 
     for entry in buildings {
         let Some(obj) = entry.as_object() else {
@@ -363,11 +456,12 @@ pub fn scan_building_bonus_gaps(buildings_dir: &Path) -> Result<BuildingBonusGap
                 };
                 if let Some(stat) = bo.get("stat").and_then(Value::as_str) {
                     if stat.starts_with("buff_") {
+                        let notes = bo.get("notes").and_then(Value::as_str);
                         report
                             .opaque_buff_stats
                             .entry(stat.to_string())
                             .or_default()
-                            .record(id);
+                            .record_opaque_buff(id, notes);
                     }
                 }
                 if let Some(conds) = bo.get("conditions").and_then(Value::as_array) {
@@ -378,7 +472,7 @@ pub fn scan_building_bonus_gaps(buildings_dir: &Path) -> Result<BuildingBonusGap
                                     .unknown_conditions
                                     .entry(s.to_string())
                                     .or_default()
-                                    .record(id);
+                                    .record_unknown_condition(id);
                             }
                         }
                     }
@@ -390,28 +484,61 @@ pub fn scan_building_bonus_gaps(buildings_dir: &Path) -> Result<BuildingBonusGap
     Ok(report)
 }
 
-/// Maintainer Markdown for the building bonus mapping gap tables (matches the shape historically
-/// emitted by `report_building_mapping_gaps`).
+/// Maintainer Markdown for the building bonus mapping gap tables.
+///
+/// Descriptions are resolved from `../upstream/data-stfc-space/translations-starbase_modules.json`
+/// (relative to `buildings_dir`) using `loca_id` in bonus `notes`. Building display names use
+/// `index.json`’s `building_name` (with samples capped at [`MAX_GAP_SAMPLES`], same as ids).
 pub fn format_building_bonus_gaps_markdown(
     report: &BuildingBonusGapsReport,
     buildings_dir: &Path,
 ) -> String {
+    fn display_building_names(report: &BuildingBonusGapsReport, sample_ids: &[String]) -> String {
+        sample_ids
+            .iter()
+            .map(|bid| {
+                report
+                    .building_id_to_name
+                    .get(bid)
+                    .map(String::as_str)
+                    .unwrap_or(bid.as_str())
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    let trans_path = buildings_dir.join("../upstream/data-stfc-space/translations-starbase_modules.json");
+    let desc_by_loca = load_starbase_module_buff_descriptions(&trans_path);
+
     let mut out = String::new();
     out.push_str("# Building bonus mapping gaps\n\n");
     out.push_str(&format!("Directory: `{}`\n\n", buildings_dir.display()));
 
     out.push_str("## Opaque `buff_*` stats\n\n");
     out.push_str(
-        "These keys are not merged into the player combat profile (see `merge_building_bonuses_into_profile` / `normalize_profile_combat_stat` in `src/data/profile.rs`).\n\n",
+        "These keys are not merged into the player combat profile (see `merge_building_bonuses_into_profile` / `normalize_profile_combat_stat` in `src/data/profile.rs`). Descriptions are from stfc.space / game translations (`starbase_module_buff_description`) matched via `loca_id` in each bonus’s `notes` field.\n\n",
     );
     if report.opaque_buff_stats.is_empty() {
         out.push_str("None.\n\n");
     } else {
-        out.push_str("| Stat | Bonus rows | Sample building ids |\n");
-        out.push_str("| --- | ---: | --- |\n");
+        if !trans_path.is_file() {
+            out.push_str(&format!(
+                "_(Description column empty: file not found: `{}`.)_\n\n",
+                trans_path.display()
+            ));
+        }
+        out.push_str("| Stat | Description | Building name(s) |\n");
+        out.push_str("| --- | --- | --- |\n");
         for (k, v) in &report.opaque_buff_stats {
-            let samples = v.samples.join(", ");
-            out.push_str(&format!("| `{k}` | {} | {samples} |\n", v.count));
+            let desc = v
+                .first_loca_id
+                .and_then(|id| desc_by_loca.get(&id).map(|s| s.as_str()))
+                .unwrap_or("—");
+            let name_cell = md_escape_cell(&display_building_names(report, &v.samples));
+            out.push_str(&format!(
+                "| `{k}` | {} | {name_cell} |\n",
+                md_escape_cell(desc)
+            ));
         }
         out.push('\n');
     }
@@ -420,11 +547,12 @@ pub fn format_building_bonus_gaps_markdown(
     if report.unknown_conditions.is_empty() {
         out.push_str("None.\n\n");
     } else {
-        out.push_str("| Condition | Occurrences | Sample building ids |\n");
-        out.push_str("| --- | ---: | --- |\n");
+        out.push_str("| Condition | Building name(s) |\n");
+        out.push_str("| --- | --- |\n");
         for (k, v) in &report.unknown_conditions {
-            let samples = v.samples.join(", ");
-            out.push_str(&format!("| `{k}` | {} | {samples} |\n", v.count));
+            let name_cell = md_escape_cell(&display_building_names(report, &v.samples));
+            let cond = md_escape_cell(k);
+            out.push_str(&format!("| `{cond}` | {name_cell} |\n"));
         }
         out.push('\n');
     }
@@ -542,22 +670,36 @@ mod tests {
     }
 
     #[test]
-    fn format_building_bonus_gaps_markdown_renders_tables() {
+    fn format_building_bonus_gaps_renders_description_and_building_name_columns() {
         let mut report = BuildingBonusGapsReport::default();
         report
-            .opaque_buff_stats
-            .entry("buff_x".to_string())
-            .or_default()
-            .record("alpha");
+            .building_id_to_name
+            .insert("alpha".to_string(), "Alpha Building".to_string());
         report
-            .unknown_conditions
-            .entry("mystery_condition".to_string())
-            .or_default()
-            .record("beta");
+            .building_id_to_name
+            .insert("beta".to_string(), "Beta Building".to_string());
+        report.opaque_buff_stats.insert(
+            "buff_x".to_string(),
+            BuildingGapAgg {
+                count: 1,
+                samples: vec!["alpha".to_string()],
+                first_loca_id: None,
+            },
+        );
+        report.unknown_conditions.insert(
+            "mystery_condition".to_string(),
+            BuildingGapAgg {
+                count: 1,
+                samples: vec!["beta".to_string()],
+                first_loca_id: None,
+            },
+        );
 
         let md = format_building_bonus_gaps_markdown(&report, Path::new("data/buildings"));
         assert!(md.contains("# Building bonus mapping gaps"));
-        assert!(md.contains("| `buff_x` | 1 | alpha |"));
-        assert!(md.contains("| `mystery_condition` | 1 | beta |"));
+        assert!(md.contains("| Stat | Description | Building name(s) |"));
+        assert!(md.contains("Alpha Building"));
+        assert!(md.contains("Beta Building"));
+        assert!(md.contains("mystery_condition"));
     }
 }

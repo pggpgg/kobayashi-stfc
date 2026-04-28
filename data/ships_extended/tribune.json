@@ -2,6 +2,7 @@
   "id": "tribune",
   "ship_name": "TRIBUNE",
   "ship_class": "explorer",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

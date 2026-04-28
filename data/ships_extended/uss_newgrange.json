@@ -2,6 +2,7 @@
   "id": "uss_newgrange",
   "ship_name": "U.S.S. NEWGRANGE",
   "ship_class": "survey",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

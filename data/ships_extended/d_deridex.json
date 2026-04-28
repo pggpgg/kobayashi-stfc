@@ -2,6 +2,7 @@
   "id": "d_deridex",
   "ship_name": "D'DERIDEX",
   "ship_class": "explorer",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

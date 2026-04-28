@@ -2,6 +2,7 @@
   "id": "uss_stargazer",
   "ship_name": "U.S.S. STARGAZER",
   "ship_class": "explorer",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

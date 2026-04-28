@@ -2,6 +2,7 @@
   "id": "praefortis",
   "ship_name": "PRAEFORTIS",
   "ship_class": "interceptor",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

@@ -2,6 +2,7 @@
   "id": "uss_akira",
   "ship_name": "U.S.S. AKIRA",
   "ship_class": "battleship",
+  "faction": "federation",
   "tiers": [
     {
       "tier": 1,

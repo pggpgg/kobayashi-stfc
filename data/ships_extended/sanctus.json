@@ -2,6 +2,7 @@
   "id": "sanctus",
   "ship_name": "SANCTUS",
   "ship_class": "battleship",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

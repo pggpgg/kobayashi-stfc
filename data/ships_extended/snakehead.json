@@ -2,6 +2,7 @@
   "id": "snakehead",
   "ship_name": "SNAKEHEAD",
   "ship_class": "battleship",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

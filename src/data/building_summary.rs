@@ -163,6 +163,9 @@ pub fn building_combat_summary_for_profile(profile_id: &str) -> BuildingCombatSu
     let context = BuildingBonusContext {
         ops_level: ops_effective,
         mode: BuildingMode::ShipCombat,
+        defender_opponent: crate::data::building::BuildingDefenderOpponent::Unknown,
+        attacker_faction: crate::data::building::BuildingAttackerFaction::Unknown,
+        attacker_tal_assigned_captain_or_bridge: false,
     };
     let mut scratch = PlayerProfile {
         ops_level: player.ops_level,

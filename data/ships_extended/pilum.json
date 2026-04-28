@@ -2,6 +2,7 @@
   "id": "pilum",
   "ship_name": "PILUM",
   "ship_class": "battleship",
+  "faction": "romulan",
   "tiers": [
     {
       "tier": 1,

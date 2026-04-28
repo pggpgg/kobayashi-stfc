@@ -2,6 +2,7 @@
   "id": "i_k_s_boreth",
   "ship_name": "I.K.S. BORETH",
   "ship_class": "explorer",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,

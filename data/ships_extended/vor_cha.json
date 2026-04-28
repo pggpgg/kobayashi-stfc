@@ -2,6 +2,7 @@
   "id": "vor_cha",
   "ship_name": "VOR'CHA",
   "ship_class": "explorer",
+  "faction": "klingon",
   "tiers": [
     {
       "tier": 1,
