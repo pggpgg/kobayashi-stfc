@@ -250,7 +250,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_787978047` | The Repair Costs for the ship that is affiliated to this Drydock is decreased every time you upgrade it. | Drydock D |
 | `buff_802394140` | The base Dilithium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Dilithium Generator E |
 | `buff_848074636` | The amount of Tritanium that cannot be stolen when your station gets attacked is increased each time you upgrade the Tritanium Vault. | Tritanium Vault |
-| `buff_864495595` | Increases all Mitigation stats for all ships. | Armory |
 | `buff_885203147` | The Maximum amount of Dilithium you can stock from the Generators is increased each time you upgrade the Dilithium Warehouse. | Dilithium Warehouse |
 | `buff_891466842` | The amount of Magnetic Plasma which can be stored within this harvester. | Magnetic Plasma Harvester B |
 | `buff_90336722` | The Σ-Tritanium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Tritanium Generator H |

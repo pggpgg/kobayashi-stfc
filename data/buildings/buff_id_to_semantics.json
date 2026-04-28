@@ -274,5 +274,15 @@
       "defender_is_npc_hostile"
     ],
     "notes": "Signal Observatory: crit damage vs non-Armada hostiles (G5+ FKR). Sim: NPC hostile ship combat only; Armada hostiles and G5/FKR gates are not distinguished in building merge context."
+  },
+  "864495595": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses.",
+    "targets": [
+      { "stat": "armor" },
+      { "stat": "dodge" },
+      { "stat": "shield_mitigation" }
+    ]
   }
 }

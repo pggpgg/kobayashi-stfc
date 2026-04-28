@@ -24,11 +24,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.05,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.05,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -52,11 +66,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -80,11 +108,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -108,11 +150,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -136,11 +192,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -164,11 +234,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -192,11 +276,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -220,11 +318,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -248,11 +360,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -276,11 +402,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -304,11 +444,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.55,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.55,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -332,11 +486,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -360,11 +528,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -388,11 +570,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -416,11 +612,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -444,11 +654,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.81,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.81,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.81,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -472,11 +696,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.87,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.87,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.87,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -500,11 +738,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.93,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.93,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.93,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -528,11 +780,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 0.99,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 0.99,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 0.99,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -556,11 +822,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.05,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.05,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.05,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -584,11 +864,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -612,11 +906,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.19,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.19,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.19,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -640,11 +948,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.26,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.26,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.26,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -668,11 +990,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.33,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.33,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.33,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -696,11 +1032,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -724,11 +1074,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.47,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.47,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.47,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -752,11 +1116,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.54,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.54,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.54,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -780,11 +1158,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.61,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.61,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.61,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -808,11 +1200,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.68,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.68,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.68,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -836,11 +1242,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -864,11 +1284,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.82,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.82,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.82,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -892,11 +1326,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.89,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.89,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.89,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -920,11 +1368,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 1.96,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 1.96,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 1.96,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -948,11 +1410,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.03,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.03,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.03,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -976,11 +1452,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.11,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.11,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.11,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1004,11 +1494,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.19,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.19,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.19,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1032,11 +1536,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.27,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.27,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.27,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1060,11 +1578,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1088,11 +1620,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.43,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.43,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.43,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1116,11 +1662,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.51,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.51,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.51,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1144,11 +1704,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.59,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.59,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.59,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1172,11 +1746,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.67,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.67,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.67,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1200,11 +1788,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1228,11 +1830,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.83,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.83,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.83,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1256,11 +1872,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 2.92,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 2.92,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 2.92,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1284,11 +1914,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.01,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.01,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.01,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1312,11 +1956,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1340,11 +1998,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.19,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.19,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.19,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1368,11 +2040,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.28,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.28,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.28,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1396,11 +2082,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.38,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.38,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.38,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1424,11 +2124,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.48,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.48,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.48,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1452,11 +2166,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.58,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.58,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.58,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1480,11 +2208,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1508,11 +2250,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.82,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.82,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.82,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1536,11 +2292,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 3.96,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 3.96,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 3.96,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1564,11 +2334,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 4.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 4.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 4.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1592,11 +2376,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 4.26,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 4.26,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 4.26,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1620,11 +2418,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 4.42,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 4.42,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 4.42,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1648,11 +2460,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 4.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 4.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 4.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1676,11 +2502,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 4.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 4.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 4.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1704,11 +2544,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1732,11 +2586,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 5.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 5.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 5.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1760,11 +2628,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 5.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 5.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 5.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1788,11 +2670,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 5.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 5.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 5.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1816,11 +2712,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 5.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 5.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 5.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1844,11 +2754,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1872,11 +2796,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 6.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 6.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 6.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1900,11 +2838,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 6.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 6.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 6.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1928,11 +2880,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 6.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 6.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 6.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1956,11 +2922,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -1984,11 +2964,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 7.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 7.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 7.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2012,11 +3006,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 7.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 7.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 7.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2040,11 +3048,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 7.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 7.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 7.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2068,11 +3090,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 8.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 8.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 8.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2096,11 +3132,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 8.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 8.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 8.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2124,11 +3174,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 8.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 8.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 8.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2152,11 +3216,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 9.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 9.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 9.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2180,11 +3258,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 9.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 9.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 9.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2208,11 +3300,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 9.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 9.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 9.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     },
@@ -2236,11 +3342,25 @@
           "notes": "Armory: increases ship shield health."
         },
         {
-          "stat": "buff_864495595",
+          "stat": "armor",
           "value": 10,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=48102"
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "dodge",
+          "value": 10,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
+        },
+        {
+          "stat": "shield_mitigation",
+          "value": 10,
+          "operator": "add",
+          "conditions": [],
+          "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses."
         }
       ]
     }
