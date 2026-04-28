@@ -35,7 +35,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_1293910107` | A one time reward of Uncommon Skill Points is granted each time you upgrade the Command Center. | Command Center |
 | `buff_1311541559` | The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator can hold at once. It increases each time you upgrade it. | Tritanium Generator H |
 | `buff_1322427309` | Increases Cost Efficiency of Parsteel, Tritanium, and Dilithium for all Buildings | INDEPENDENT ARCHIVES |
-| `buff_1328584071` | The Damage dealt by Critical Hits against Players is increased each time you upgrade the Court of Q. | Court of Q |
 | `buff_1361889997` | The base Parsteel Production Rate Per Hour of this Generator is increased each time you upgrade it. | Parsteel Generator B |
 | `buff_1384123882` | The maximum cargo capacity of all ships is increased when the Treasury is upgraded. | Treasury |
 | `buff_1393830736` | Increase the Damage of the Alliance Starbase. | EPS Distributor C |
@@ -128,7 +127,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_2993973268` | The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator can hold at once. It increases each time you upgrade it. | Dilithium Generator H |
 | `buff_3005330147` | Upgrade the Signal Observatory to obtain Challenge Track Gifts.   Level 10, Level 20, Level 30, Level 40, Level 50, Level 60, Level 70, Level 80 | Signal Observatory |
 | `buff_301108821` | Increases FKR Isolytic Damage against Conqueror Borg Solo Armadas. | The Warp Dive Bar |
-| `buff_3012721624` | Increases the Critical Damage of all G5+ FKR ships vs non-Armada Hostiles. | Signal Observatory |
 | `buff_3029261688` | The base Parsteel Production Rate Per Hour of this Generator is increased each time you upgrade it. | Parsteel Generator C |
 | `buff_3053201411` | The Repair Speed for the ship that is affiliated to this Drydock is increased every time you upgrade it. | Drydock A |
 | `buff_3058492167` | The Tritanium Storage indicates how much Tritanium this Generator can hold at once. It increases each time you upgrade it. | Tritanium Generator C |

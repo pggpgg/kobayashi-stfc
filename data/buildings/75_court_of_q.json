@@ -17,11 +17,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -57,11 +60,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -97,11 +103,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -137,11 +146,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -177,11 +189,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -217,11 +232,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -257,11 +275,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -297,11 +318,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -337,11 +361,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -377,11 +404,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -417,11 +447,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -457,11 +490,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -497,11 +533,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -537,11 +576,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -577,11 +619,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -617,11 +662,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.18,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -657,11 +705,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.21,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -697,11 +748,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.24,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -737,11 +791,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.27,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -777,11 +834,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -817,11 +877,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.33,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -857,11 +920,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.36,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -897,11 +963,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.39,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -937,11 +1006,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.42,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -977,11 +1049,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1017,11 +1092,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.83,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1057,11 +1135,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.86,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1097,11 +1178,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.89,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1137,11 +1221,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.92,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1177,11 +1264,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.95,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1217,11 +1307,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 0.98,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1257,11 +1350,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1297,11 +1393,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.04,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1337,11 +1436,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.07,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1377,11 +1479,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1417,11 +1522,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.13,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1457,11 +1565,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.16,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1497,11 +1608,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.19,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1537,11 +1651,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.22,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1577,11 +1694,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1617,11 +1737,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.53,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1657,11 +1780,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.56,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1697,11 +1823,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.59,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1737,11 +1866,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.62,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1777,11 +1909,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.65,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1817,11 +1952,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.68,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1857,11 +1995,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.71,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1897,11 +2038,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.74,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1937,11 +2081,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.77,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -1977,11 +2124,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.81,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2017,11 +2167,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.85,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2057,11 +2210,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.89,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2097,11 +2253,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.93,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2137,11 +2296,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 1.97,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2177,11 +2339,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2217,11 +2382,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2257,11 +2425,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.09,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2297,11 +2468,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.13,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2337,11 +2511,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.17,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2377,11 +2554,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2417,11 +2597,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.55,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2457,11 +2640,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2497,11 +2683,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.65,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2537,11 +2726,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2577,11 +2769,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2617,11 +2812,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2657,11 +2855,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.85,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2697,11 +2898,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2737,11 +2941,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 2.95,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2777,11 +2984,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2817,11 +3027,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2857,11 +3070,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2897,11 +3113,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2937,11 +3156,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -2977,11 +3199,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -3017,11 +3242,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -3057,11 +3285,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -3097,11 +3328,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -3137,11 +3371,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",
@@ -3177,11 +3414,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "buff_1328584071",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=56102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
         },
         {
           "stat": "crit_damage",

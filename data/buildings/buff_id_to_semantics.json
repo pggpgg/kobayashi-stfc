@@ -256,5 +256,23 @@
       "defender_is_npc_hostile"
     ],
     "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
+  },
+  "1328584071": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+  },
+  "3012721624": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Signal Observatory: crit damage vs non-Armada hostiles (G5+ FKR). Sim: NPC hostile ship combat only; Armada hostiles and G5/FKR gates are not distinguished in building merge context."
   }
 }
