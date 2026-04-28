@@ -179,5 +179,65 @@
     "operator": "add",
     "conditions": [],
     "notes": "The Nova Squadron: increases ship weapon damage."
+  },
+  "334143899": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Command Center: Attack, Defense, and Health of all Officers increased per upgrade (loca_id=50090).",
+    "targets": [
+      { "stat": "officer_attack" },
+      { "stat": "officer_defense" },
+      { "stat": "officer_health" }
+    ]
+  },
+  "3655026185": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Academy: Attack, Defense and Health of all Officers increased per upgrade.",
+    "targets": [
+      { "stat": "officer_attack" },
+      { "stat": "officer_defense" },
+      { "stat": "officer_health" }
+    ]
+  },
+  "3665061326": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers.",
+    "targets": [
+      { "stat": "officer_attack" },
+      { "stat": "officer_defense" },
+      { "stat": "officer_health" }
+    ]
+  },
+  "660954013": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "The War Room: Base Attack, Defense, and Health for all Officers.",
+    "targets": [
+      { "stat": "officer_attack" },
+      { "stat": "officer_defense" },
+      { "stat": "officer_health" }
+    ]
+  },
+  "717321813": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Mess Hall: Attack, Defense, and Health of all Officers increased per upgrade.",
+    "targets": [
+      { "stat": "officer_attack" },
+      { "stat": "officer_defense" },
+      { "stat": "officer_health" }
+    ]
+  },
+  "724896192": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers.",
+    "targets": [
+      { "stat": "officer_attack" },
+      { "stat": "officer_defense" },
+      { "stat": "officer_health" }
+    ]
   }
 }

@@ -1120,6 +1120,8 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 /// | Key | Flat merge into `profile.bonuses` | Applied via |
 /// |-----|-----------------------------------|---------------|
 /// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` (alias `isolytic_cascade`), `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] for most keys; `isolytic_cascade_damage` is merged into `profile.bonuses` but applied in Monte Carlo scenario build as an attack-phase `IsolyticCascadeDamageBonus` seat (with LCARS static buff keys of the same name), not as a [`Combatant`] field |
+/// | `officer_attack`, `officer_health` | yes | Multiplicative with `weapon_damage` / `hull_hp`: attack × `(1+weapon_damage)×(1+officer_attack)`, hull × `(1+hull_hp)×(1+officer_health)` |
+/// | `officer_defense` | yes | Additive with `shield_mitigation` into [`Combatant::shield_mitigation`] (same cap `[0,1]`) |
 /// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
 /// | `isolytic_damage_morale` | yes | `scenario.rs` — `extend_crew_with_morale_gated_profile_bonuses` (round-start seat, morale gate) |
 /// | Conditional `weapon_damage`, `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
@@ -1127,11 +1129,11 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 /// Aliases: `armor_pierce`, `shield_pierce` → `pierce`.
 pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> {
     match stat {
-        // Officer stat aggregate bonuses (e.g. syndicate Officer_Stats columns) feed the same
-        // effective combat keys used by profile + static-buff application.
-        "officer_attack" => Some("weapon_damage"),
-        "officer_defense" => Some("shield_mitigation"),
-        "officer_health" => Some("hull_hp"),
+        // Officer Attack/Defense/Health (syndicate Officer_Stats columns, Command Center, etc.):
+        // kept distinct from ship-level keys so [`apply_profile_to_attacker`] can compound them.
+        "officer_attack" => Some("officer_attack"),
+        "officer_defense" => Some("officer_defense"),
+        "officer_health" => Some("officer_health"),
         "weapon_damage" => Some("weapon_damage"),
         "hull_hp" => Some("hull_hp"),
         "shield_hp" => Some("shield_hp"),
@@ -1166,7 +1168,7 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
 
 /// Merges combat stat bonuses from player's synced buildings into `profile.bonuses`.
 /// Resolves bid → building id via `bid_to_id`, loads building records, computes cumulative
-/// bonuses, and adds only combat keys (weapon_damage, hull_hp, etc.). armor_pierce and
+/// bonuses, and adds only combat keys (weapon_damage, hull_hp, officer_attack, …). armor_pierce and
 /// shield_pierce are folded into pierce.
 pub fn merge_building_bonuses_into_profile(
     profile: &mut PlayerProfile,
@@ -1647,25 +1649,34 @@ pub fn apply_profile_accuracy_to_attacker_stats(
 
 /// Estimate effective officer Attack/Defense/Health after merged profile combat bonuses.
 ///
-/// This keeps officer stat-derived scaling explicit and separate from ship combatant fields:
-/// - Attack uses `weapon_damage` fractional bonus
-/// - Defense uses `shield_mitigation` fractional bonus
-/// - Health uses `hull_hp` fractional bonus
+/// Compounds officer-stat bonuses with ship-level research/building bonuses:
+/// - Attack: `base * (1 + weapon_damage) * (1 + officer_attack)`
+/// - Defense: `base * (1 + shield_mitigation + officer_defense)` (additive mitigation fractions)
+/// - Health: `base * (1 + hull_hp) * (1 + officer_health)`
 pub fn estimate_officer_stats_with_profile_bonuses(
     base_attack: f64,
     base_defense: f64,
     base_health: f64,
     profile: &PlayerProfile,
 ) -> (f64, f64, f64) {
-    let attack = (base_attack * (1.0 + get_bonus(profile, "weapon_damage"))).max(0.0);
-    let defense = (base_defense * (1.0 + get_bonus(profile, "shield_mitigation"))).max(0.0);
-    let health = (base_health * (1.0 + get_bonus(profile, "hull_hp"))).max(0.0);
+    let attack = (base_attack
+        * (1.0 + get_bonus(profile, "weapon_damage"))
+        * (1.0 + get_bonus(profile, "officer_attack")))
+    .max(0.0);
+    let defense = (base_defense
+        * (1.0 + get_bonus(profile, "shield_mitigation") + get_bonus(profile, "officer_defense")))
+    .max(0.0);
+    let health = (base_health
+        * (1.0 + get_bonus(profile, "hull_hp"))
+        * (1.0 + get_bonus(profile, "officer_health")))
+    .max(0.0);
     (attack, defense, health)
 }
 
 /// Apply effective_bonuses to attacker Combatant (multipliers and additive bonuses).
-/// Keys: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce (additive),
-/// shield_mitigation (additive to base), armor/dodge/damage_reduction (additive to mitigation),
+/// Keys: weapon_damage × officer_attack on [`Combatant::attack`]; hull_hp × officer_health on hull;
+/// shield_mitigation + officer_defense on [`Combatant::shield_mitigation`]; shield_hp, crit_chance, crit_damage, pierce (additive),
+/// armor/dodge/damage_reduction (additive to mitigation),
 /// isolytic_damage / isolytic_defense, apex_shred / apex_barrier (additive; counter-attack uses player apex_barrier).
 /// `isolytic_damage_morale` stays in `profile.bonuses` for the scenario morale seat (not added to flat `isolytic_damage` here).
 /// `isolytic_cascade_damage` stays in `profile.bonuses` for the scenario attack-phase cascade seat.
@@ -1674,7 +1685,9 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
         return attacker;
     }
     let weapon = 1.0 + get_bonus(profile, "weapon_damage");
+    let officer_attack_mult = 1.0 + get_bonus(profile, "officer_attack");
     let hull_hp = 1.0 + get_bonus(profile, "hull_hp");
+    let officer_health_mult = 1.0 + get_bonus(profile, "officer_health");
     let shield_hp = 1.0 + get_bonus(profile, "shield_hp");
     let isolytic_damage_add = get_bonus(profile, "isolytic_damage");
     let isolytic_defense_add = get_bonus(profile, "isolytic_defense");
@@ -1684,19 +1697,21 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
     let crit_damage_mult = 1.0 + get_bonus(profile, "crit_damage");
     let pierce_add = get_bonus(profile, "pierce");
     let shield_mit_add = get_bonus(profile, "shield_mitigation");
+    let officer_def_add = get_bonus(profile, "officer_defense");
     let mitigation_add = get_bonus(profile, "armor")
         + get_bonus(profile, "dodge")
         + get_bonus(profile, "damage_reduction");
 
     Combatant {
-        attack: attacker.attack * weapon,
-        hull_health: attacker.hull_health * hull_hp,
+        attack: attacker.attack * weapon * officer_attack_mult,
+        hull_health: attacker.hull_health * hull_hp * officer_health_mult,
         shield_health: attacker.shield_health * shield_hp,
         crit_chance: (attacker.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (attacker.crit_multiplier * crit_damage_mult).max(0.0),
         pierce: (attacker.pierce + pierce_add).max(0.0),
         mitigation: (attacker.mitigation + mitigation_add).clamp(0.0, 1.0),
-        shield_mitigation: (attacker.shield_mitigation + shield_mit_add).clamp(0.0, 1.0),
+        shield_mitigation: (attacker.shield_mitigation + shield_mit_add + officer_def_add)
+            .clamp(0.0, 1.0),
         isolytic_damage: (attacker.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (attacker.isolytic_defense + isolytic_defense_add).max(0.0),
         apex_shred: (attacker.apex_shred + apex_shred_add).max(0.0),
@@ -1735,13 +1750,13 @@ mod tests {
     }
 
     #[test]
-    fn normalize_profile_combat_stat_maps_officer_stat_aliases() {
-        assert_eq!(normalize_profile_combat_stat("officer_attack"), Some("weapon_damage"));
+    fn normalize_profile_combat_stat_keeps_officer_stats_distinct() {
+        assert_eq!(normalize_profile_combat_stat("officer_attack"), Some("officer_attack"));
         assert_eq!(
             normalize_profile_combat_stat("officer_defense"),
-            Some("shield_mitigation")
+            Some("officer_defense")
         );
-        assert_eq!(normalize_profile_combat_stat("officer_health"), Some("hull_hp"));
+        assert_eq!(normalize_profile_combat_stat("officer_health"), Some("officer_health"));
     }
 
     #[test]
@@ -2309,17 +2324,23 @@ mod tests {
     }
 
     #[test]
-    fn officer_stat_alias_bonuses_flow_into_attacker_math() {
+    fn officer_stat_compounds_with_ship_bonuses_in_attacker_math() {
         let mut profile = PlayerProfile::default();
         let mut raw = HashMap::new();
+        raw.insert("weapon_damage".to_string(), 0.10);
         raw.insert("officer_attack".to_string(), 0.10);
+        raw.insert("shield_mitigation".to_string(), 0.05);
         raw.insert("officer_defense".to_string(), 0.05);
+        raw.insert("hull_hp".to_string(), 0.20);
         raw.insert("officer_health".to_string(), 0.20);
         accumulate_combat_only_bonuses_from_raw(&mut profile, &raw);
 
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.10));
+        assert_eq!(profile.bonuses.get("officer_attack"), Some(&0.10));
         assert_eq!(profile.bonuses.get("shield_mitigation"), Some(&0.05));
+        assert_eq!(profile.bonuses.get("officer_defense"), Some(&0.05));
         assert_eq!(profile.bonuses.get("hull_hp"), Some(&0.20));
+        assert_eq!(profile.bonuses.get("officer_health"), Some(&0.20));
 
         let attacker = Combatant {
             id: "test".to_string(),
@@ -2341,9 +2362,59 @@ mod tests {
             weapons: vec![],
         };
         let out = apply_profile_to_attacker(attacker, &profile);
-        assert!((out.attack - 110.0).abs() < 1e-9);
-        assert!((out.hull_health - 1200.0).abs() < 1e-9);
-        assert!((out.shield_mitigation - 0.25).abs() < 1e-9);
+        // 100 × 1.1 × 1.1; 1000 × 1.2 × 1.2; 0.2 + 0.05 + 0.05
+        assert!((out.attack - 121.0).abs() < 1e-9);
+        assert!((out.hull_health - 1440.0).abs() < 1e-9);
+        assert!((out.shield_mitigation - 0.30).abs() < 1e-9);
+    }
+
+    #[test]
+    fn merge_building_bonuses_into_profile_routes_officer_stats_to_officer_bucket() {
+        let mut profile = PlayerProfile::default();
+        let imported_buildings = vec![BuildingEntry { bid: 1, level: 1 }];
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(1i64, "test_officer_stat_building".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "test_officer_stat_building".to_string(),
+                building_name: "Test".to_string(),
+                file: None,
+                bid: None,
+            }],
+        };
+        let data_dir = std::env::temp_dir().join("kobayashi_profile_officer_stat_building_test");
+        let _ = std::fs::create_dir_all(&data_dir);
+        let building_json = r#"{
+            "id": "test_officer_stat_building",
+            "building_name": "Test",
+            "levels": [{
+                "level": 1,
+                "bonuses": [
+                    {"stat": "officer_attack", "value": 0.05, "operator": "add"},
+                    {"stat": "weapon_damage", "value": 0.03, "operator": "add"}
+                ]
+            }]
+        }"#;
+        std::fs::write(
+            data_dir.join("test_officer_stat_building.json"),
+            building_json,
+        )
+        .unwrap();
+
+        merge_building_bonuses_into_profile(
+            &mut profile,
+            &imported_buildings,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &BuildingBonusContext::default(),
+        );
+
+        assert_eq!(profile.bonuses.get("officer_attack"), Some(&0.05));
+        assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.03));
+        let _ = std::fs::remove_dir_all(&data_dir);
     }
 
     #[test]

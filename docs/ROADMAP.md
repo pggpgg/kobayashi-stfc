@@ -4,6 +4,7 @@ Planned features and priorities for Kobayashi.
 
 ## Recently shipped
 
+- **Officer stat compounding:** `officer_attack` / `officer_defense` / `officer_health` merge as distinct profile buckets (syndicate Officer_Stats columns; Command Center / Academy / DTI HQ / War Room / Mess Hall / Facade building buffs via `targets[]` in `data/buildings/buff_id_to_semantics.json`). [`apply_profile_to_attacker`](../src/data/profile.rs) compounds them with ship-level `weapon_damage` / `hull_hp` / `shield_mitigation` instead of folding officer stats into those keys.
 - Strict building validation report: `validate_buildings_dataset` now emits one `Warning` per distinct opaque `buff_*` stat and per unmapped `conditions` token, and `cargo run --bin validate_data -- --strict` (or `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`) upgrades those rows to errors so CI / strict reports fail until coverage is extended. The shared scan helper backs both `report_building_mapping_gaps` and `validate_data`.
 - Roster guardrails in roster mode now block duplicate/off-roster/wrong-seat crews across preflight and backend validation, with fallback warnings for missing/invalid roster imports.
 - `fast_discovery` is wired through optimize (heuristics expansion merged into the warm-start path), with workspace Strategy UI and OpenAPI support.
@@ -54,7 +55,6 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 
 ### Roadmap / backlog
 
-- **Officer stat → ship bonus bridge** — Convert synced officer Attack/Defense/Health progression into scenario ship attack/defense/health bonuses so officer growth affects combat math.
 - **Modeling of officer abilities based on officer stats** — Implement mechanics where abilities scale from officer Attack/Defense/Health (for example, defense-based mitigation buffs) instead of treating them as fixed values.
 
 ---

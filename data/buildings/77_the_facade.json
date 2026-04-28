@@ -24,11 +24,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.02,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.02,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.02,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -59,11 +73,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.04,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.04,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.04,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -94,11 +122,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.06,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.06,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.06,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -129,11 +171,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.08,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.08,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.08,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -164,11 +220,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -199,11 +269,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -234,11 +318,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.14,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.14,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -269,11 +367,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.16,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.16,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.16,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -304,11 +416,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.18,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.18,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.18,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -339,11 +465,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -374,11 +514,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.22,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.22,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.22,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -409,11 +563,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.24,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.24,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.24,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -444,11 +612,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.26,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.26,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.26,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -479,11 +661,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.28,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.28,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.28,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -514,11 +710,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -549,11 +759,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.32,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.32,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.32,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -584,11 +808,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.36,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.36,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.36,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -619,11 +857,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -654,11 +906,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.44,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.44,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.44,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -689,11 +955,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.48,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.48,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.48,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -724,11 +1004,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.52,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.52,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.52,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -759,11 +1053,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.56,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.56,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.56,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -794,11 +1102,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -829,11 +1151,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.64,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.64,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.64,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -864,11 +1200,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.68,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.68,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.68,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -899,11 +1249,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.72,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.72,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.72,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -934,11 +1298,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.76,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.76,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.76,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -969,11 +1347,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1004,11 +1396,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.85,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.85,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1039,11 +1445,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1074,11 +1494,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1109,11 +1543,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1144,11 +1592,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1179,11 +1641,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1214,11 +1690,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1249,11 +1739,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1284,11 +1788,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1319,11 +1837,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1354,11 +1886,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1389,11 +1935,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 1.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1424,11 +1984,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1459,11 +2033,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1494,11 +2082,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1529,11 +2131,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1564,11 +2180,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1599,11 +2229,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1634,11 +2278,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1669,11 +2327,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1704,11 +2376,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1739,11 +2425,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 2.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1774,11 +2474,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1809,11 +2523,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 3.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1844,11 +2572,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 3.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1879,11 +2621,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 3.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1914,11 +2670,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 3.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1949,11 +2719,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -1984,11 +2768,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 4.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 4.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 4.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2019,11 +2817,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 4.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 4.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 4.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2054,11 +2866,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 4.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 4.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 4.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2089,11 +2915,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2124,11 +2964,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2159,11 +3013,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2194,11 +3062,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2229,11 +3111,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2264,11 +3160,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2299,11 +3209,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2334,11 +3258,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2369,11 +3307,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2404,11 +3356,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2439,11 +3405,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2474,11 +3454,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2509,11 +3503,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2544,11 +3552,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2579,11 +3601,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2614,11 +3650,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2649,11 +3699,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2684,11 +3748,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2719,11 +3797,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2754,11 +3846,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",
@@ -2789,11 +3895,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
-          "stat": "buff_724896192",
+          "stat": "officer_attack",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61003"
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3069298570",

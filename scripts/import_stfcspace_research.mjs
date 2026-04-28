@@ -68,6 +68,9 @@ const BASE_URL = "https://data.stfc.space";
  */
 const ALLOWED_COMBAT_STATS = new Set([
   "weapon_damage",
+  "officer_attack",
+  "officer_defense",
+  "officer_health",
   "hull_hp",
   "shield_hp",
   "isolytic_damage",

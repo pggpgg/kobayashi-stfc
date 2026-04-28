@@ -34,11 +34,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -86,11 +100,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -138,11 +166,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -190,11 +232,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -242,11 +298,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -294,11 +364,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -346,11 +430,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -398,11 +496,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -450,11 +562,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -502,11 +628,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -554,11 +694,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 0.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 0.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 0.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -606,11 +760,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -658,11 +826,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -710,11 +892,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -762,11 +958,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -814,11 +1024,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -866,11 +1090,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -918,11 +1156,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -970,11 +1222,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 1.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 1.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 1.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1022,11 +1288,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 2.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1074,11 +1354,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 2.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1126,11 +1420,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 2.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 2.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 2.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1178,11 +1486,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1230,11 +1552,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 3.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1282,11 +1618,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 3.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1334,11 +1684,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 3.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 3.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 3.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1386,11 +1750,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1438,11 +1816,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 4.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 4.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 4.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1490,11 +1882,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 4.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 4.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 4.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1542,11 +1948,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1594,11 +2014,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 5.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 5.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 5.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1646,11 +2080,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 5.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 5.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 5.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1698,11 +2146,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 5.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 5.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 5.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1750,11 +2212,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1802,11 +2278,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 6.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 6.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 6.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1854,11 +2344,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 6.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 6.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 6.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1906,11 +2410,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 6.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 6.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 6.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -1958,11 +2476,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2010,11 +2542,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 7.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 7.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 7.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2062,11 +2608,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 7.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 7.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 7.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2114,11 +2674,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 8.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 8.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 8.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2166,11 +2740,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 8.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 8.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 8.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2218,11 +2806,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 9.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 9.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 9.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2270,11 +2872,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 9.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 9.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 9.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2322,11 +2938,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 10.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 10.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 10.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2374,11 +3004,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 10.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 10.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 10.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2426,11 +3070,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 11.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 11.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 11.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2478,11 +3136,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 11.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 11.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 11.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2530,11 +3202,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 12.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 12.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 12.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2582,11 +3268,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 12.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 12.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 12.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2634,11 +3334,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 13.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 13.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 13.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2686,11 +3400,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 14.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 14.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 14.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2738,11 +3466,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2790,11 +3532,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 15.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 15.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 15.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2842,11 +3598,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 16.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 16.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 16.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2894,11 +3664,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 16.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 16.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 16.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2946,11 +3730,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 17.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 17.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 17.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -2998,11 +3796,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 18.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 18.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 18.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3050,11 +3862,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 18.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 18.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 18.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3102,11 +3928,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 20,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 20,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 20,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3154,11 +3994,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 20.65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 20.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 20.65,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3206,11 +4060,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 21.25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 21.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 21.25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3258,11 +4126,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 21.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 21.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 21.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3310,11 +4192,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 22.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 22.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 22.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3362,11 +4258,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 23.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 23.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 23.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3414,11 +4324,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 23.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 23.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 23.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3466,11 +4390,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 24.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 24.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 24.4,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3518,11 +4456,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3570,11 +4522,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 26.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 26.55,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 26.55,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3622,11 +4588,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3674,11 +4654,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3726,11 +4720,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3778,11 +4786,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3830,11 +4852,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3882,11 +4918,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3934,11 +4984,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -3986,11 +5050,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -4038,11 +5116,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -4090,11 +5182,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",
@@ -4142,11 +5248,25 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74005"
         },
         {
-          "stat": "buff_3665061326",
+          "stat": "officer_attack",
           "value": 28.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74006"
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_defense",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
+        },
+        {
+          "stat": "officer_health",
+          "value": 28.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "buff_3318715228",

@@ -159,7 +159,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_3309277866` | Resets the cooldown and increase rewards of the <color=#ffc926>District 56</color> free claim in the <color=#FFC926>Mirror Refinery</color> | District 56 |
 | `buff_3318715228` | Increases the base amount of Broken Ship Parts dropped from hostiles | DTI Headquarters |
 | `buff_3333967977` | Increases the cost efficiency of Merits of Honor when used for research. | Shuttle Bay |
-| `buff_334143899` | The Attack, Defense, and Health of all of your Officers are increased each time you upgrade the Command Center. | Command Center |
 | `buff_3376274396` | The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator can hold at once. It increases each time you upgrade it. | Parsteel Generator F |
 | `buff_3383388089` | The base Parsteel Production Rate Per Hour of this Generator is increased each time you upgrade it. | Parsteel Generator A |
 | `buff_3401661757` | Increases the Weapon Damage of your ships when they take part in an Armada attack on a Hostile target. | Armada Control Center |
@@ -184,9 +183,7 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_3637014985` | The amount of Parsteel that cannot be stolen when your station gets attacked is increased each time you upgrade the Parsteel Vault. | Parsteel Vault |
 | `buff_3647094777` | The base Dilithium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Dilithium Generator C |
 | `buff_3650968419` | Increases base Cost Efficiency of 7⇵ Uncommon Ore, Gas, and Crystal for Station buildings. | Signal Observatory |
-| `buff_3655026185` | The Attack, Defense and Health of all your Officer are increased each time you upgrade the Academy. | Academy |
 | `buff_366051680` | The amount of Collisional Plasma that is protected when your Alliance Starbase is attacked. | Collisional Plasma Vault A |
-| `buff_3665061326` | Base Attack, Defense, and Health are increased for all Officers. | DTI Headquarters |
 | `buff_3670025699` | Borg Type 03 Solo Armadas found near <link="fleetcommand://link/navigation/galaxy?ID=806106205"><color=#3db4cc>Veridian</color></link> can only be fought with 1 ship instead of 3 due to Q's Interference. | Armada Control Center |
 | `buff_371097431` | The Σ-Tritanium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Tritanium Generator G |
 | `buff_3725874398` | Increases base Cost Efficiency of Section 31 Transmitters, Emblems of Assessment, Quantum Communicators, Subspace Relay Upgrades, and Holo-Field Amplifiers. | The Nova Squadron |
@@ -245,12 +242,9 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_638568962` | Increases the Hull Health of the Alliance Starbase. | Command Control |
 | `buff_639634280` | Increases Cost Efficiency of Crystal, Gas, and Ore for all Buildings | INDEPENDENT ARCHIVES |
 | `buff_65043874` | The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator can hold at once. It increases each time you upgrade it. | Dilithium Generator A |
-| `buff_660954013` | Increases base Attack, Defense, and Health for all Officers | The War Room |
 | `buff_667990520` | The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator can hold at once. It increases each time you upgrade it. | Parsteel Generator B |
 | `buff_673935722` | Upgrade the Signal Observatory to increase the Challenge Credits earned from the V'ger Challenge Track.  Level 20: 20%  Level 30: 30%  Level 40: 40%  Level 50: 50%  Level 60: 60%  Level 70: 90%  Level 75: 120% | Signal Observatory |
 | `buff_711561428` | The Tritanium Storage indicates how much Tritanium this Generator can hold at once. It increases each time you upgrade it. | Tritanium Generator B |
-| `buff_717321813` | The Attack, Defense, and Health of all of your Officers are increased each time you upgrade the Mess Hall. | Mess Hall |
-| `buff_724896192` | Base Attack, Defense, and Health are increased for all Officers. | The Facade |
 | `buff_727283729` | The base Parsteel Production Rate Per Hour of this Generator is increased each time you upgrade it. | Parsteel Generator F |
 | `buff_729229730` | The base Parsteel Production Rate Per Hour of this Generator is increased each time you upgrade it. | Parsteel Generator D |
 | `buff_746818829` | Unlocks a Transogen Exocomp Slot. | Transogen Forge |

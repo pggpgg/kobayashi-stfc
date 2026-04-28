@@ -177,43 +177,69 @@ function bMetaOrNull(buildingId) {
 
 const ABS_MAX_LEVEL = 80;
 
+/** @returns {Array<{stat: string, operator: string, conditions: string[], notes: string}>} */
 function resolveBuffMapping(buff) {
   const known = BUFF_MAPPING[buff.id];
-  if (known) return known;
+  if (known) return [known];
 
-  const semantic = conditionalCombatBuffSemantics[buff.id];
-  if (semantic) {
-    return {
-      stat: semantic.stat,
-      operator: semantic.operator ?? "add",
-      conditions: Array.isArray(semantic.conditions) ? semantic.conditions : [],
-      notes:
+  const semantic =
+    conditionalCombatBuffSemantics[String(buff.id)] ??
+    conditionalCombatBuffSemantics[buff.id];
+  if (semantic && typeof semantic === "object") {
+    if (Array.isArray(semantic.targets) && semantic.targets.length > 0) {
+      const baseOp = semantic.operator ?? "add";
+      const conds = Array.isArray(semantic.conditions) ? semantic.conditions : [];
+      const notesBase =
         semantic.notes ??
-        `normalized from buff_${buff.id} (conditional combat semantics) at import`,
-    };
+        `normalized from buff_${buff.id} (conditional combat semantics) at import`;
+      return semantic.targets.map((t) => ({
+        stat: t.stat,
+        operator: t.operator ?? baseOp,
+        conditions: conds,
+        notes: notesBase,
+      }));
+    }
+    if (semantic.stat) {
+      return [
+        {
+          stat: semantic.stat,
+          operator: semantic.operator ?? "add",
+          conditions: Array.isArray(semantic.conditions) ? semantic.conditions : [],
+          notes:
+            semantic.notes ??
+            `normalized from buff_${buff.id} (conditional combat semantics) at import`,
+        },
+      ];
+    }
   }
 
-  const normalizedStat = commonCombatBuffNormalization[buff.id];
+  const normalizedStat =
+    commonCombatBuffNormalization[String(buff.id)] ??
+    commonCombatBuffNormalization[buff.id];
   if (normalizedStat) {
-    return {
-      stat: normalizedStat,
-      operator: "add",
-      conditions: [],
-      notes: `normalized from buff_${buff.id} (common combat) at import`,
-    };
+    return [
+      {
+        stat: normalizedStat,
+        operator: "add",
+        conditions: [],
+        notes: `normalized from buff_${buff.id} (common combat) at import`,
+      },
+    ];
   }
 
   // Fallback: treat as an opaque buff keyed by id. This preserves numeric
   // values now and allows us to refine the mapping later once we have labels.
-  return {
-    stat: `buff_${buff.id}`,
-    operator: "add",
-    conditions: [],
-    notes:
-      buff && typeof buff.loca_id === "number"
-        ? `auto-imported from data.stfc.space; loca_id=${buff.loca_id}`
-        : "auto-imported from data.stfc.space; unknown buff label",
-  };
+  return [
+    {
+      stat: `buff_${buff.id}`,
+      operator: "add",
+      conditions: [],
+      notes:
+        buff && typeof buff.loca_id === "number"
+          ? `auto-imported from data.stfc.space; loca_id=${buff.loca_id}`
+          : "auto-imported from data.stfc.space; unknown buff label",
+    },
+  ];
 }
 
 function buildLevelsFromSummaryEntry(entry) {
@@ -250,7 +276,7 @@ function buildLevelsFromSummaryEntry(entry) {
     const bonuses = [];
 
     for (const buff of buffs) {
-      const mapping = resolveBuffMapping(buff);
+      const mappings = resolveBuffMapping(buff);
       const values = Array.isArray(buff.values) ? buff.values : [];
 
       const idx = level - 1; // 0-based index: level 1 -> values[0]
@@ -261,13 +287,15 @@ function buildLevelsFromSummaryEntry(entry) {
 
       const value = raw.value; // already fractional if value_is_percentage is true
 
-      bonuses.push({
-        stat: mapping.stat,
-        value,
-        operator: mapping.operator ?? "add",
-        conditions: mapping.conditions ?? [],
-        notes: mapping.notes ?? null,
-      });
+      for (const mapping of mappings) {
+        bonuses.push({
+          stat: mapping.stat,
+          value,
+          operator: mapping.operator ?? "add",
+          conditions: mapping.conditions ?? [],
+          notes: mapping.notes ?? null,
+        });
+      }
     }
 
     levels.push({

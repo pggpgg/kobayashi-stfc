@@ -17,6 +17,12 @@
 //! | Combat > Damage (main)         | weapon_damage           |
 //! | Combat > Defense_Platform_Damage| defense_platform_damage |
 //! | Combat > Damage_to_Stations    | damage_to_stations      |
+//!
+//! **Profile merge:** `officer_attack` / `officer_defense` / `officer_health` are stored as their own
+//! keys in [`crate::data::profile::PlayerProfile::bonuses`] (not aliased onto ship `weapon_damage` /
+//! `shield_mitigation` / `hull_hp`). [`crate::data::profile::apply_profile_to_attacker`] compounds
+//! officer buckets with ship-level bonuses (multiply attack and hull health; add `officer_defense`
+//! into shield mitigation alongside `shield_mitigation`).
 
 use std::collections::HashMap;
 
