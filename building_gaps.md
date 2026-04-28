@@ -60,7 +60,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_1712157842` | The Repair Costs for the ship that is affiliated to this Drydock is decreased every time you upgrade it. | Drydock A |
 | `buff_1725504841` | The amount of Collisional Plasma that is protected when your Alliance Starbase is attacked. | Collisional Plasma Vault B |
 | `buff_1738545464` | The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator can hold at once. It increases each time you upgrade it. | Parsteel Generator A |
-| `buff_1761515720` | The Shield Health of all your Interceptors is increased each time you upgrade the Engine Technology Lab building. | Engine Technology Lab |
 | `buff_1764042681` | The Dilithium Storage indicates how much Dilithium this Generator can hold at once. It increases each time you upgrade it. | Dilithium Generator A |
 | `buff_1768483334` | The Repair Speed for the ship that is affiliated to this Drydock is increased every time you upgrade it. | Drydock F |
 | `buff_1786572787` | The amount of Dilithium that cannot be stolen when your station gets attacked is increased each time you upgrade the Dilithium Vault. | Dilithium Vault |
@@ -92,7 +91,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_2313460695` | The amount of Active Plasma that can be processed by the Alliance Starbase before it needs to relocate to a different Plasma Storm. It is increased each time it is upgraded. | Plasma Processor |
 | `buff_2327416739` | The Repair Costs for the ship that is affiliated to this Drydock is decreased every time you upgrade it. | Drydock G |
 | `buff_2334409927` | Increases the Armor Piercing, Accuracy and Shield Piercing of the Alliance Starbase. | Exographic Targeting Array A |
-| `buff_2337243763` | Increases base Isolytic Damage for all ships | DTI Headquarters |
 | `buff_234221410` | The base Tritanium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Tritanium Generator D |
 | `buff_2365854482` | The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator can hold at once. It increases each time you upgrade it. | Tritanium Generator B |
 | `buff_2383989383` | The Σ-Parsteel Production Rate Per Hour of this Generator is increased each time you upgrade it. | Parsteel Generator A |
@@ -224,7 +222,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_439788362` | Defense Platforms protect your Station from other players' attacks. | Defense Platform F |
 | `buff_444879361` | The amount of Active Plasma that can be harvested per hour. | Active Plasma Harvester A |
 | `buff_459056552` | The amount of Magnetic Plasma which can be stored within this harvester. | Magnetic Plasma Harvester C |
-| `buff_469165341` | Increases base Isolytic Defense for all ships | DTI Headquarters |
 | `buff_473361651` | The base Piercing stats of all your ships against hostiles is increased each time you upgrade the Holodeck building. | Holodeck |
 | `buff_503510825` | The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator can hold at once. It increases each time you upgrade it. | Dilithium Generator G |
 | `buff_509573507` | The Σ-Dilithium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Dilithium Generator F |
@@ -256,7 +253,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_802394140` | The base Dilithium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Dilithium Generator E |
 | `buff_848074636` | The amount of Tritanium that cannot be stolen when your station gets attacked is increased each time you upgrade the Tritanium Vault. | Tritanium Vault |
 | `buff_864495595` | Increases all Mitigation stats for all ships. | Armory |
-| `buff_866732757` | Increases the Isolytic Defense of all G5+ FKR ships vs Players. | Signal Observatory |
 | `buff_885203147` | The Maximum amount of Dilithium you can stock from the Generators is increased each time you upgrade the Dilithium Warehouse. | Dilithium Warehouse |
 | `buff_891466842` | The amount of Magnetic Plasma which can be stored within this harvester. | Magnetic Plasma Harvester B |
 | `buff_90336722` | The Σ-Tritanium Production Rate Per Hour of this Generator is increased each time you upgrade it. | Tritanium Generator H |
@@ -264,7 +260,6 @@ These keys are not merged into the player combat profile (see `merge_building_bo
 | `buff_924439393` | Increases base speed of constructing Station Modules | Recon Locus |
 | `buff_92563433` | Increases the amount of Common, <color=#00ed4b>Uncommon</color> and <color=#00b4ff>Rare</color> Solo Outpost Components your ship receives from Solo Outpost Retaliation attacks. | Outpost Control Center |
 | `buff_934971217` | The amount of Collisional Plasma that can be processed by the Alliance Starbase before it needs to relocate to a different Plasma Storm. It is increased each time it is upgraded. | Plasma Processor |
-| `buff_952223325` | Increases base Damage against Wave Defense hostiles | The Facade |
 | `buff_979710652` | The amount of additional Cardassian Loot or Superior Cardassian Loot awarded to Alliance Members when they destroy a Cardassian Station. | Salvage Yard |
 
 ## Conditions not in `is_known_building_condition`

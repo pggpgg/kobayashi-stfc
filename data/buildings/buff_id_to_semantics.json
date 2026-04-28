@@ -239,5 +239,22 @@
       { "stat": "officer_defense" },
       { "stat": "officer_health" }
     ]
+  },
+  "866732757": {
+    "stat": "isolytic_defense",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Signal Observatory: Isolytic Defense for G5+ FKR vs players. Simulator applies in PvP (player defender); no G5/FKR hull-class gate in profile merge."
+  },
+  "952223325": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "conditions": [
+      "defender_is_npc_hostile"
+    ],
+    "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
   }
 }

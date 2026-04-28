@@ -139,3 +139,120 @@ pub fn cumulative_combat_bonuses(
 
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::data::syndicate_reputation::{
+        SyndicateBonusEntry, SyndicateLevelEntry, SyndicateReputationList,
+    };
+
+    use super::{cumulative_combat_bonuses, ops_level_to_band};
+
+    #[test]
+    fn ops_level_to_band_uses_expected_boundaries() {
+        assert_eq!(ops_level_to_band(1), "10-19");
+        assert_eq!(ops_level_to_band(19), "10-19");
+        assert_eq!(ops_level_to_band(20), "20-29");
+        assert_eq!(ops_level_to_band(29), "20-29");
+        assert_eq!(ops_level_to_band(30), "30-39");
+        assert_eq!(ops_level_to_band(39), "30-39");
+        assert_eq!(ops_level_to_band(40), "40-50");
+        assert_eq!(ops_level_to_band(50), "40-50");
+        assert_eq!(ops_level_to_band(51), "51-60");
+        assert_eq!(ops_level_to_band(60), "51-60");
+        assert_eq!(ops_level_to_band(61), "61-70");
+        assert_eq!(ops_level_to_band(99), "61-70");
+    }
+
+    #[test]
+    fn cumulative_combat_bonuses_keeps_damage_columns_distinct() {
+        let data = SyndicateReputationList {
+            source: None,
+            last_updated: None,
+            levels: vec![SyndicateLevelEntry {
+                level: 1,
+                bonuses: vec![
+                    SyndicateBonusEntry {
+                        stat: "40-50_Officer_Stats_>_Officer_Attack".into(),
+                        value: 0.10,
+                        operator: "add".into(),
+                    },
+                    SyndicateBonusEntry {
+                        stat: "40-50_Officer_Stats_>_Officer_Defense".into(),
+                        value: 0.02,
+                        operator: "add".into(),
+                    },
+                    SyndicateBonusEntry {
+                        stat: "40-50_Ship_Stats_>_Mitigation".into(),
+                        value: 0.05,
+                        operator: "add".into(),
+                    },
+                    SyndicateBonusEntry {
+                        stat: "40-50_Combat_>_Damage_>".into(),
+                        value: 0.20,
+                        operator: "add".into(),
+                    },
+                    SyndicateBonusEntry {
+                        stat: "40-50_Combat_>_Defense_Platform_Damage".into(),
+                        value: 0.30,
+                        operator: "add".into(),
+                    },
+                    SyndicateBonusEntry {
+                        stat: "40-50_Combat_>_Damage_to_Stations".into(),
+                        value: 0.40,
+                        operator: "add".into(),
+                    },
+                ],
+            }],
+        };
+
+        let out = cumulative_combat_bonuses(&data, 1, 40);
+        assert_eq!(out.get("officer_attack"), Some(&0.10));
+        assert_eq!(out.get("officer_defense"), Some(&0.02));
+        assert_eq!(out.get("shield_mitigation"), Some(&0.05));
+        assert_eq!(out.get("weapon_damage"), Some(&0.20));
+        assert_eq!(out.get("defense_platform_damage"), Some(&0.30));
+        assert_eq!(out.get("damage_to_stations"), Some(&0.40));
+    }
+
+    #[test]
+    fn cumulative_combat_bonuses_applies_band_filter_and_mult_formula() {
+        let data = SyndicateReputationList {
+            source: None,
+            last_updated: None,
+            levels: vec![
+                SyndicateLevelEntry {
+                    level: 1,
+                    bonuses: vec![
+                        SyndicateBonusEntry {
+                            stat: "40-50_Combat_>_Damage_>".into(),
+                            value: 0.10,
+                            operator: "add".into(),
+                        },
+                        SyndicateBonusEntry {
+                            stat: "51-60_Combat_>_Damage_>".into(),
+                            value: 0.99,
+                            operator: "add".into(),
+                        },
+                    ],
+                },
+                SyndicateLevelEntry {
+                    level: 2,
+                    bonuses: vec![SyndicateBonusEntry {
+                        stat: "40-50_Combat_>_Damage_>".into(),
+                        value: 0.20,
+                        operator: "multiply".into(),
+                    }],
+                },
+            ],
+        };
+
+        let out = cumulative_combat_bonuses(&data, 2, 40);
+        let expected = (1.0_f64 + 0.10) * (1.0_f64 + 0.20) - 1.0;
+        let actual = out.get("weapon_damage").copied().unwrap_or(0.0);
+        assert!(
+            (actual - expected).abs() < 1e-12,
+            "expected weapon_damage {expected}, got {actual}"
+        );
+    }
+}

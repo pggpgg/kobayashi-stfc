@@ -27,6 +27,7 @@
   "1536447388": "weapon_damage",
   "1606929203": "crit_damage",
   "1660585629": "weapon_damage",
+  "1761515720": "shield_hp",
   "1742688098": "shield_mitigation",
   "1779738336": "pierce",
   "1907287260": "shield_hp",
@@ -62,5 +63,7 @@
   "4118409286": "hull_hp",
   "4153220787": "weapon_damage",
   "4191797822": "shield_hp",
+  "2337243763": "isolytic_damage",
+  "469165341": "isolytic_defense",
   "4251825190": "shield_mitigation"
 }

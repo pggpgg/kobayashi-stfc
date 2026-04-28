@@ -10,11 +10,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -59,11 +61,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -108,11 +112,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -157,11 +163,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -206,11 +214,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -255,11 +265,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -304,11 +316,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -353,11 +367,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.4,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -402,11 +418,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.45,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -451,11 +469,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -500,11 +520,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.55,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -549,11 +571,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -598,11 +622,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.65,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -647,11 +673,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -696,11 +724,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -745,11 +775,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -794,11 +826,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.85,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -843,11 +877,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -892,11 +928,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0.95,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -941,11 +979,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -990,11 +1030,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1039,11 +1081,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1088,11 +1132,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1137,11 +1183,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1186,11 +1234,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1235,11 +1285,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1284,11 +1336,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1333,11 +1387,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.4,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1382,11 +1438,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.45,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1431,11 +1489,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1480,11 +1540,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.55,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1529,11 +1591,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1578,11 +1642,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1627,11 +1693,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1676,11 +1744,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 1.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1725,11 +1795,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1774,11 +1846,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 2.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1823,11 +1897,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 2.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1872,11 +1948,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 2.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1921,11 +1999,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -1970,11 +2050,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 3.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2019,11 +2101,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 3.4,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2068,11 +2152,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 3.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2117,11 +2203,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 3.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2166,11 +2254,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 4,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2215,11 +2305,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 4.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2264,11 +2356,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2313,11 +2407,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 5.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2362,11 +2458,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2411,11 +2509,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 6.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2460,11 +2560,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2509,11 +2611,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2558,11 +2662,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2607,11 +2713,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 10,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2656,11 +2764,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 11.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2705,11 +2815,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 13,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2754,11 +2866,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 14.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2803,11 +2917,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 16,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2852,11 +2968,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 17.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2901,11 +3019,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 20,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2950,11 +3070,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -2999,11 +3121,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3048,11 +3172,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3097,11 +3223,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3146,11 +3274,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3195,11 +3325,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3244,11 +3376,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3293,11 +3427,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3342,11 +3478,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3391,11 +3529,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3440,11 +3580,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3489,11 +3631,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3538,11 +3682,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3587,11 +3733,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3636,11 +3784,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3685,11 +3835,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3734,11 +3886,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3783,11 +3937,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3832,11 +3988,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
@@ -3881,11 +4039,13 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_952223325",
+          "stat": "weapon_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61001"
+          "conditions": [
+            "defender_is_npc_hostile"
+          ],
+          "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
           "stat": "buff_4020372601",
