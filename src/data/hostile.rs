@@ -214,20 +214,25 @@ impl HostileRecord {
 
     /// Same weapon rows as [`Self::weapons_from_components`], with per-weapon damage-through pierce
     /// derived from this hostile’s piercing/accuracy vs the player hull class (counter-attack path).
-    pub fn weapons_for_counter_attack(&self, player_ship_type: ShipType) -> Vec<WeaponStats> {
+    ///
+    /// `player_defender` is the player ship's [`DefenderStats`] (from
+    /// [`crate::data::ShipRecord::to_defender_stats`]). When the upstream ship JSON has not populated
+    /// raw armor/shield/dodge values these will be zero, in which case the per-weapon pierce
+    /// collapses to the historical constant. As soon as those fields are sourced, hostile
+    /// `accuracy`/`armor_piercing`/`shield_piercing` start moving the counter-fire pierce-through.
+    pub fn weapons_for_counter_attack(
+        &self,
+        player_ship_type: ShipType,
+        player_defender: DefenderStats,
+    ) -> Vec<WeaponStats> {
         let base = self.to_attacker_stats();
-        let defender_zero = DefenderStats {
-            armor: 0.0,
-            shield_deflection: 0.0,
-            dodge: 0.0,
-        };
         sorted_weapon_component_data(&self.components)
             .into_iter()
             .filter_map(|data| {
                 weapon_stats_from_component_data(data).map(|mut w| {
                     let atk = hostile_weapon_row_attacker_stats(data, &base);
                     w.pierce = Some(pierce_damage_through_bonus(
-                        defender_zero,
+                        player_defender,
                         atk,
                         player_ship_type,
                     ));
@@ -251,17 +256,18 @@ impl HostileRecord {
 
     /// Additive pierce damage-through bonus for this hostile firing at the player (engine counter-attack path).
     ///
-    /// **Assumption:** [`ShipRecord`] does not yet expose player hull `DefenderStats` (armor / deflection /
-    /// dodge components). We use [`DefenderStats::default`] (zeros) so hostile piercing is still
-    /// reflected in the pierce-through term; the player’s profile-based [`crate::combat::Combatant::mitigation`]
-    /// continues to apply separately on incoming fire.
-    pub fn counter_pierce_damage_through_bonus(&self, player_ship_type: ShipType) -> f64 {
+    /// `player_defender` should come from [`crate::data::ShipRecord::to_defender_stats`]. When those
+    /// raw stats are zero (legacy ship data) the formula collapses to a constant for a given player
+    /// hull class — hostile `accuracy`/piercing have no effect — preserving historical behavior. With
+    /// real values the hostile attacker stats start moving the pierce-through term symmetric to the
+    /// player→hostile direction.
+    pub fn counter_pierce_damage_through_bonus(
+        &self,
+        player_ship_type: ShipType,
+        player_defender: DefenderStats,
+    ) -> f64 {
         crate::combat::pierce_damage_through_bonus(
-            DefenderStats {
-                armor: 0.0,
-                shield_deflection: 0.0,
-                dodge: 0.0,
-            },
+            player_defender,
             self.to_attacker_stats(),
             player_ship_type,
         )
@@ -701,7 +707,7 @@ mod tests {
         assert_eq!(w.len(), 2);
         assert!((w[0].attack - 10.0).abs() < 1e-9);
         assert!((w[1].attack - 50.0).abs() < 1e-9);
-        let wc = r.weapons_for_counter_attack(ShipType::Battleship);
+        let wc = r.weapons_for_counter_attack(ShipType::Battleship, DefenderStats::default());
         assert_eq!(wc.len(), 2);
         let p0 = wc[0].pierce.expect("pierce filled for counter-attack");
         let p1 = wc[1].pierce.expect("pierce filled for counter-attack");
@@ -719,7 +725,84 @@ mod tests {
             "armor_piercing":500.0,"shield_piercing":400.0,"accuracy":300.0
         }"#;
         let r: HostileRecord = serde_json::from_str(j).unwrap();
-        let p = r.counter_pierce_damage_through_bonus(ShipType::Explorer);
+        let p = r.counter_pierce_damage_through_bonus(ShipType::Explorer, DefenderStats::default());
         assert!(p > 0.0 && p <= crate::combat::PIERCE_CAP);
+    }
+
+    #[test]
+    fn counter_pierce_invariant_to_hostile_accuracy_when_player_defender_is_zero() {
+        // With a zero player DefenderStats, component_mitigation collapses to a constant
+        // regardless of attacker accuracy/piercing — the documented historical placeholder.
+        let weak = r#"{
+            "id":"hw","hostile_name":"W","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "armor_piercing":10.0,"shield_piercing":10.0,"accuracy":10.0
+        }"#;
+        let strong = r#"{
+            "id":"hs","hostile_name":"S","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "armor_piercing":50000.0,"shield_piercing":50000.0,"accuracy":50000.0
+        }"#;
+        let rw: HostileRecord = serde_json::from_str(weak).unwrap();
+        let rs: HostileRecord = serde_json::from_str(strong).unwrap();
+        let pw = rw.counter_pierce_damage_through_bonus(ShipType::Battleship, DefenderStats::default());
+        let ps = rs.counter_pierce_damage_through_bonus(ShipType::Battleship, DefenderStats::default());
+        assert!((pw - ps).abs() < 1e-12, "zero player defender → constant counter pierce");
+    }
+
+    #[test]
+    fn counter_pierce_responds_to_hostile_accuracy_when_player_has_dodge() {
+        // Once player DefenderStats are populated (e.g. real upstream `Impulse.dodge`), hostile
+        // accuracy must move counter-fire pierce-through. Higher accuracy → more pierce.
+        let player_def = DefenderStats {
+            armor: 5000.0,
+            shield_deflection: 5000.0,
+            dodge: 5000.0,
+        };
+        let weak = r#"{
+            "id":"hw","hostile_name":"W","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "armor_piercing":1000.0,"shield_piercing":1000.0,"accuracy":1000.0
+        }"#;
+        let strong = r#"{
+            "id":"hs","hostile_name":"S","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "armor_piercing":50000.0,"shield_piercing":50000.0,"accuracy":50000.0
+        }"#;
+        let rw: HostileRecord = serde_json::from_str(weak).unwrap();
+        let rs: HostileRecord = serde_json::from_str(strong).unwrap();
+        let pw = rw.counter_pierce_damage_through_bonus(ShipType::Battleship, player_def);
+        let ps = rs.counter_pierce_damage_through_bonus(ShipType::Battleship, player_def);
+        assert!(
+            ps > pw + 1e-9,
+            "stronger hostile attacker stats should raise counter pierce-through (weak={pw}, strong={ps})"
+        );
+    }
+
+    #[test]
+    fn counter_pierce_drops_when_player_dodge_increases() {
+        // Symmetric to player→hostile: more player defense → less hostile pierce-through.
+        let weak_def = DefenderStats {
+            armor: 100.0,
+            shield_deflection: 100.0,
+            dodge: 100.0,
+        };
+        let strong_def = DefenderStats {
+            armor: 100000.0,
+            shield_deflection: 100000.0,
+            dodge: 100000.0,
+        };
+        let j = r#"{
+            "id":"h","hostile_name":"H","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "armor_piercing":10000.0,"shield_piercing":10000.0,"accuracy":10000.0
+        }"#;
+        let r: HostileRecord = serde_json::from_str(j).unwrap();
+        let p_weak = r.counter_pierce_damage_through_bonus(ShipType::Battleship, weak_def);
+        let p_strong = r.counter_pierce_damage_through_bonus(ShipType::Battleship, strong_def);
+        assert!(
+            p_weak > p_strong + 1e-9,
+            "stronger player defender should reduce counter pierce-through (weak_def={p_weak}, strong_def={p_strong})"
+        );
     }
 }

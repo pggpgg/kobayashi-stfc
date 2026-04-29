@@ -154,7 +154,7 @@ pub enum ShipType {
     Interceptor,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct DefenderStats {
     pub armor: f64,
     pub shield_deflection: f64,

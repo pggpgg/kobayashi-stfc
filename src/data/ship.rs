@@ -11,7 +11,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::{AttackerStats, ShipType, WeaponStats};
+use crate::combat::{AttackerStats, DefenderStats, ShipType, WeaponStats};
 
 /// Per-weapon attack (and optional base shots) for sub-round resolution. When present on ShipRecord, used to build Combatant.weapons.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -126,6 +126,17 @@ pub struct ShipRecord {
     pub shield_piercing: f64,
     /// Aggregated accuracy (from weapon components).
     pub accuracy: f64,
+    /// Raw armor stat (defender side). Symmetric to [`crate::data::HostileRecord::armor`]; feeds
+    /// [`Self::to_defender_stats`] for hostile→player counter-fire mitigation. Default 0 when upstream
+    /// data does not provide it; in that case counter-fire pierce/dodge collapses to a constant.
+    #[serde(default)]
+    pub armor: f64,
+    /// Raw shield deflection stat (defender side). See [`Self::armor`].
+    #[serde(default)]
+    pub shield_deflection: f64,
+    /// Raw dodge stat (defender side). See [`Self::armor`].
+    #[serde(default)]
+    pub dodge: f64,
     /// Representative attack/damage (e.g. damage_per_round from primary weapon).
     pub attack: f64,
     pub crit_chance: f64,
@@ -156,6 +167,14 @@ pub struct TierStats {
     pub armor_piercing: f64,
     pub shield_piercing: f64,
     pub accuracy: f64,
+    /// Raw armor stat for the defender side (hostile→player counter-fire). Default 0 until upstream
+    /// ship data populates it; see [`ShipRecord::armor`].
+    #[serde(default)]
+    pub armor: f64,
+    #[serde(default)]
+    pub shield_deflection: f64,
+    #[serde(default)]
+    pub dodge: f64,
     pub attack: f64,
     pub crit_chance: f64,
     pub crit_damage: f64,
@@ -251,6 +270,9 @@ impl ExtendedShipRecord {
             armor_piercing: t.armor_piercing,
             shield_piercing: t.shield_piercing,
             accuracy: t.accuracy,
+            armor: t.armor,
+            shield_deflection: t.shield_deflection,
+            dodge: t.dodge,
             attack: t.attack,
             crit_chance: t.crit_chance,
             crit_damage: t.crit_damage,
@@ -288,6 +310,18 @@ impl ShipRecord {
             armor_piercing: self.armor_piercing,
             shield_piercing: self.shield_piercing,
             accuracy: self.accuracy,
+        }
+    }
+
+    /// Raw defender stats for the hostile→player counter-fire path. Symmetric to
+    /// [`crate::data::HostileRecord::to_defender_stats`]. Returns zeros until upstream ship data
+    /// populates `armor` / `shield_deflection` / `dodge`; in that case hostile counter-fire
+    /// pierce-through and dodge collapse to a constant (the historical placeholder).
+    pub fn to_defender_stats(&self) -> DefenderStats {
+        DefenderStats {
+            armor: self.armor,
+            shield_deflection: self.shield_deflection,
+            dodge: self.dodge,
         }
     }
 

@@ -197,6 +197,9 @@ fn raw_to_extended(
             hull_health,
             shield_health,
             shield_mitigation,
+            armor,
+            shield_deflection,
+            dodge,
             weapons,
         ) = extract_tier_combat(components)?;
         parsed_tiers.push(TierStats {
@@ -204,6 +207,9 @@ fn raw_to_extended(
             armor_piercing,
             shield_piercing,
             accuracy,
+            armor,
+            shield_deflection,
+            dodge,
             attack,
             crit_chance,
             crit_damage,
@@ -370,6 +376,9 @@ fn extract_tier_combat(
         f64,
         f64,
         f64,
+        f64,
+        f64,
+        f64,
         Option<Vec<WeaponRecord>>,
     ),
     Box<dyn std::error::Error>,
@@ -377,6 +386,11 @@ fn extract_tier_combat(
     let mut hull_health = 0.0;
     let mut shield_health = 0.0;
     let mut shield_mitigation = 0.8;
+    // Player defender stats for hostile→player counter-fire mitigation.
+    // Sources: `Armor.plating`, `Deflector.deflection`, `Impulse.dodge` on data.stfc.space tier components.
+    let mut armor_stat = 0.0;
+    let mut shield_deflection_stat = 0.0;
+    let mut dodge_stat = 0.0;
 
     // Collect weapon components with their order for deterministic sorting (primary first).
     let mut weapon_components: Vec<(i64, &Value)> = Vec::new();
@@ -404,6 +418,19 @@ fn extract_tier_combat(
             }
             "Armor" => {
                 hull_health = data.get("hp").and_then(Value::as_f64).unwrap_or(0.0);
+                if let Some(p) = data.get("plating").and_then(Value::as_f64) {
+                    armor_stat = p;
+                }
+            }
+            "Deflector" => {
+                if let Some(d) = data.get("deflection").and_then(Value::as_f64) {
+                    shield_deflection_stat = d;
+                }
+            }
+            "Impulse" => {
+                if let Some(d) = data.get("dodge").and_then(Value::as_f64) {
+                    dodge_stat = d;
+                }
             }
             _ => {}
         }
@@ -517,6 +544,9 @@ fn extract_tier_combat(
         hull_health,
         shield_health,
         shield_mitigation,
+        armor_stat,
+        shield_deflection_stat,
+        dodge_stat,
         weapons,
     ))
 }

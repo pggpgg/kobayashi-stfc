@@ -382,19 +382,25 @@ pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
 
 /// Defender [`Combatant`] from [`HostileRecord`], including weapons and pierce/crit used on the
 /// engine’s counter-attack path (see `engine.rs` — hostile fire vs player).
+///
+/// `player_defender` is sourced from [`crate::data::ShipRecord::to_defender_stats`] and feeds
+/// hostile→player pierce-through (per-weapon and scalar). Until upstream ship data fills raw
+/// armor/shield/dodge values these are zero and the formula collapses to the historical constant;
+/// once they are populated, hostile `accuracy` and piercing actually move counter-fire pierce-through.
 fn defender_combatant_from_hostile_record(
     hostile_lookup_id: &str,
     hostile_rec: &HostileRecord,
     defender_mitigation: f64,
     player_ship_type: ShipType,
+    player_defender: DefenderStats,
 ) -> Combatant {
-    let weapons = hostile_rec.weapons_for_counter_attack(player_ship_type);
+    let weapons = hostile_rec.weapons_for_counter_attack(player_ship_type, player_defender);
     let attack = if weapons.is_empty() {
         hostile_rec.scalar_attack_fallback()
     } else {
         0.0
     };
-    let pierce = hostile_rec.counter_pierce_damage_through_bonus(player_ship_type);
+    let pierce = hostile_rec.counter_pierce_damage_through_bonus(player_ship_type, player_defender);
     let crit_chance = hostile_rec.crit_chance.clamp(0.0, 1.0);
     let crit_multiplier = if hostile_rec.crit_damage.is_finite() && hostile_rec.crit_damage > 0.0 {
         hostile_rec.crit_damage
@@ -1060,6 +1066,7 @@ pub(crate) fn scenario_to_combat_input(
                 &hostile_rec,
                 defender_mitigation,
                 ship_rec.ship_type(),
+                ship_rec.to_defender_stats(),
             ),
             defender_crew,
             crew: CrewConfiguration { seats },
@@ -1444,6 +1451,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
             hostile_r,
             defender_mitigation,
             ship_r.ship_type(),
+            ship_r.to_defender_stats(),
         );
         let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
@@ -1769,6 +1777,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             hostile_r,
             defender_mitigation,
             ship_r.ship_type(),
+            ship_r.to_defender_stats(),
         );
         let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
@@ -1862,6 +1871,78 @@ mod tests {
     static SHARED_SCENARIO_RESEARCH_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
+    fn defender_combatant_inherits_top_level_hostile_crit_damage_and_chance() {
+        // Hostile JSON without per-weapon crit fields: top-level `crit_damage` / `crit_chance`
+        // should flow into Combatant.crit_multiplier / crit_chance so the engine's counter-fire
+        // accessors (`weapon_crit_multiplier(idx)` / `weapon_crit_chance(idx)`) fall back to them.
+        let j = r#"{
+            "id":"hh","hostile_name":"H","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "crit_chance":0.27,"crit_damage":2.4
+        }"#;
+        let rec: HostileRecord = serde_json::from_str(j).unwrap();
+        let d = defender_combatant_from_hostile_record(
+            "hh",
+            &rec,
+            0.0,
+            ShipType::Battleship,
+            DefenderStats::default(),
+        );
+        assert!((d.crit_chance - 0.27).abs() < 1e-12);
+        assert!((d.crit_multiplier - 2.4).abs() < 1e-12);
+        // No weapon rows: weapon accessor index 0 falls back to the scalar fields.
+        assert!((d.weapon_crit_chance(0) - 0.27).abs() < 1e-12);
+        assert!((d.weapon_crit_multiplier(0) - 2.4).abs() < 1e-12);
+    }
+
+    #[test]
+    fn defender_combatant_per_weapon_crit_overrides_top_level() {
+        // When a hostile weapon component carries its own `crit_chance` / `crit_modifier`, the
+        // per-weapon accessor must prefer the row over the top-level fallback.
+        let j = r#"{
+            "id":"hh2","hostile_name":"H2","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "crit_chance":0.10,"crit_damage":1.5,
+            "components":[
+                {"order":1,"data":{"tag":"Weapon","minimum_damage":10,"maximum_damage":20,
+                  "crit_chance":0.5,"crit_modifier":3.0}}
+            ]
+        }"#;
+        let rec: HostileRecord = serde_json::from_str(j).unwrap();
+        let d = defender_combatant_from_hostile_record(
+            "hh2",
+            &rec,
+            0.0,
+            ShipType::Battleship,
+            DefenderStats::default(),
+        );
+        assert_eq!(d.weapons.len(), 1);
+        assert!((d.weapon_crit_chance(0) - 0.5).abs() < 1e-12);
+        assert!((d.weapon_crit_multiplier(0) - 3.0).abs() < 1e-12);
+        // Combatant scalars still hold the top-level values (consumed when a row is silent).
+        assert!((d.crit_chance - 0.10).abs() < 1e-12);
+        assert!((d.crit_multiplier - 1.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn defender_combatant_clamps_hostile_crit_chance_to_unit_interval() {
+        let j = r#"{
+            "id":"hh3","hostile_name":"H3","level":1,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "crit_chance":1.5
+        }"#;
+        let rec: HostileRecord = serde_json::from_str(j).unwrap();
+        let d = defender_combatant_from_hostile_record(
+            "hh3",
+            &rec,
+            0.0,
+            ShipType::Battleship,
+            DefenderStats::default(),
+        );
+        assert!((d.crit_chance - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
     fn bundled_numeric_hostile_maps_weapon_components_for_scenario() {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/hostiles");
         let rec = load_hostile_record(&dir, "2918121098").expect("bundled hostile 2918121098.json");
@@ -1870,7 +1951,13 @@ mod tests {
             !w.is_empty(),
             "expected data.stfc.space style hostile to yield per-weapon stats from components"
         );
-        let d = defender_combatant_from_hostile_record("2918121098", &rec, 0.5, ShipType::Explorer);
+        let d = defender_combatant_from_hostile_record(
+            "2918121098",
+            &rec,
+            0.5,
+            ShipType::Explorer,
+            DefenderStats::default(),
+        );
         assert!(!d.weapons.is_empty());
         assert!(d.pierce > 0.0, "counter pierce-through should be positive");
     }
@@ -1973,6 +2060,9 @@ mod tests {
             armor_piercing: 100.0,
             shield_piercing: 100.0,
             accuracy: 400.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
             attack: 1.0,
             crit_chance: 0.0,
             crit_damage: 1.0,
@@ -2057,6 +2147,9 @@ mod tests {
             armor_piercing: 100.0,
             shield_piercing: 100.0,
             accuracy: 100.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
             attack: 50.0,
             crit_chance: 0.0,
             crit_damage: 1.0,
@@ -2188,6 +2281,9 @@ mod tests {
             armor_piercing: 150.0,
             shield_piercing: 150.0,
             accuracy: 120.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
             attack: 100.0,
             crit_chance: 0.1,
             crit_damage: 1.5,
@@ -2226,6 +2322,9 @@ mod tests {
             armor_piercing: 100.0,
             shield_piercing: 100.0,
             accuracy: 100.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
             attack: 50.0,
             crit_chance: 0.0,
             crit_damage: 1.0,
