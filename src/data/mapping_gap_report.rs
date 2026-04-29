@@ -287,18 +287,14 @@ impl BuildingGapAgg {
                 self.first_loca_id = parse_loca_id_from_building_notes(n);
             }
         }
-        if self.samples.len() < MAX_GAP_SAMPLES
-            && !self.samples.iter().any(|s| s == building_id)
-        {
+        if self.samples.len() < MAX_GAP_SAMPLES && !self.samples.iter().any(|s| s == building_id) {
             self.samples.push(building_id.to_string());
         }
     }
 
     fn record_unknown_condition(&mut self, building_id: &str) {
         self.count += 1;
-        if self.samples.len() < MAX_GAP_SAMPLES
-            && !self.samples.iter().any(|s| s == building_id)
-        {
+        if self.samples.len() < MAX_GAP_SAMPLES && !self.samples.iter().any(|s| s == building_id) {
             self.samples.push(building_id.to_string());
         }
     }
@@ -335,12 +331,10 @@ fn load_starbase_module_buff_descriptions(path: &Path) -> HashMap<u32, String> {
         if obj.get("key").and_then(Value::as_str) != Some("starbase_module_buff_description") {
             continue;
         }
-        let id_u64 = obj
-            .get("id")
-            .and_then(|i| {
-                i.as_u64()
-                    .or(i.as_i64().and_then(|k| (k >= 0).then_some(k as u64)))
-            });
+        let id_u64 = obj.get("id").and_then(|i| {
+            i.as_u64()
+                .or(i.as_i64().and_then(|k| (k >= 0).then_some(k as u64)))
+        });
         let Some(id_u64) = id_u64 else {
             continue;
         };
@@ -386,8 +380,8 @@ pub fn scan_building_bonus_gaps(buildings_dir: &Path) -> Result<BuildingBonusGap
     let index_path = buildings_dir.join("index.json");
     let raw = fs::read_to_string(&index_path)
         .map_err(|e| format!("read {}: {e}", index_path.display()))?;
-    let payload: Value = serde_json::from_str(&raw)
-        .map_err(|e| format!("parse {}: {e}", index_path.display()))?;
+    let payload: Value =
+        serde_json::from_str(&raw).map_err(|e| format!("parse {}: {e}", index_path.display()))?;
 
     let buildings = payload
         .get("buildings")
@@ -507,7 +501,8 @@ pub fn format_building_bonus_gaps_markdown(
             .join(", ")
     }
 
-    let trans_path = buildings_dir.join("../upstream/data-stfc-space/translations-starbase_modules.json");
+    let trans_path =
+        buildings_dir.join("../upstream/data-stfc-space/translations-starbase_modules.json");
     let desc_by_loca = load_starbase_module_buff_descriptions(&trans_path);
 
     let mut out = String::new();
@@ -664,7 +659,12 @@ mod tests {
         );
         assert_eq!(
             agg.samples,
-            vec!["a".to_string(), "b".to_string(), "c".to_string(), "d".to_string()],
+            vec![
+                "a".to_string(),
+                "b".to_string(),
+                "c".to_string(),
+                "d".to_string()
+            ],
             "samples are deduped per building and preserve encounter order"
         );
     }

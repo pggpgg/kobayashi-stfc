@@ -832,12 +832,12 @@ pub fn roster_import_fallback_warning_message(profile_id: Option<&str>) -> Optio
     let roster_path = profile_path(&id, ROSTER_IMPORTED);
     match load_imported_roster_ids_unlocked_only_status(roster_path.to_string_lossy().as_ref()) {
         ImportedRosterIdsLoadStatus::Loaded(_) => None,
-        ImportedRosterIdsLoadStatus::MissingFile => Some(
-            "No roster import for this profile; using full officer catalog.".to_string(),
-        ),
-        ImportedRosterIdsLoadStatus::InvalidFile => Some(
-            "Roster import invalid or unreadable; using full officer catalog.".to_string(),
-        ),
+        ImportedRosterIdsLoadStatus::MissingFile => {
+            Some("No roster import for this profile; using full officer catalog.".to_string())
+        }
+        ImportedRosterIdsLoadStatus::InvalidFile => {
+            Some("Roster import invalid or unreadable; using full officer catalog.".to_string())
+        }
     }
 }
 

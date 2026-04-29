@@ -58,6 +58,20 @@ jobs:
         # Includes CombatEffectSpec integration tests (research / LCARS / mixed).
         run: cargo test
 
+      - name: Mitigation calibration drift gate
+        run: |
+          set -o pipefail
+          cargo test --test mitigation_feedback_calibration_tests mitigation_sensitivity_feedback_matches_drift_fixtures -- --nocapture \
+            | tee mitigation-damage-through-drift-report.txt
+
+      - name: Upload mitigation drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mitigation-damage-through-drift-report
+          path: mitigation-damage-through-drift-report.txt
+          retention-days: 21
+
       - name: Strict data validation report
         run: |
           cargo run --bin validate_data -- \

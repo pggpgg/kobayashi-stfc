@@ -72,6 +72,29 @@ impl HostileMitigationBaseline {
     }
 }
 
+/// Row from already-resolved mitigation/pierce scalars (useful for fixture feedback loops).
+pub fn direct_scalar_row(
+    label: &'static str,
+    mitigation: f64,
+    pierce_additive: f64,
+    defense_mitigation_bonus: f64,
+) -> MitigationSensitivityRow {
+    let mitigation_multiplier = (1.0 - mitigation).max(0.0);
+    let damage_through_factor = compute_damage_through_factor(
+        mitigation_multiplier,
+        pierce_additive,
+        defense_mitigation_bonus,
+    );
+    MitigationSensitivityRow {
+        label,
+        mitigation,
+        mitigation_multiplier,
+        pierce_additive,
+        defense_mitigation_bonus,
+        damage_through_factor,
+    }
+}
+
 /// Default sensitivity rows: baseline plus ±`pct` multiplicative bumps on each defense and piercing scalar.
 /// `pct` is a fraction (e.g. `0.1` for +10%).
 pub fn default_percent_sensitivity_rows(
@@ -220,5 +243,12 @@ mod tests {
         let arm = rows.iter().find(|r| r.label == "def_armor_up_pct").unwrap();
         assert!(arm.mitigation >= b.mitigation);
         assert!(arm.damage_through_factor <= b.damage_through_factor + 1e-9);
+    }
+
+    #[test]
+    fn direct_scalar_row_matches_damage_through_formula() {
+        let row = direct_scalar_row("fixture_baseline", 0.42, 0.11, 0.03);
+        assert!((row.mitigation_multiplier - 0.58).abs() < 1e-9);
+        assert!((row.damage_through_factor - 0.72).abs() < 1e-9);
     }
 }

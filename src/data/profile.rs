@@ -1751,12 +1751,18 @@ mod tests {
 
     #[test]
     fn normalize_profile_combat_stat_keeps_officer_stats_distinct() {
-        assert_eq!(normalize_profile_combat_stat("officer_attack"), Some("officer_attack"));
+        assert_eq!(
+            normalize_profile_combat_stat("officer_attack"),
+            Some("officer_attack")
+        );
         assert_eq!(
             normalize_profile_combat_stat("officer_defense"),
             Some("officer_defense")
         );
-        assert_eq!(normalize_profile_combat_stat("officer_health"), Some("officer_health"));
+        assert_eq!(
+            normalize_profile_combat_stat("officer_health"),
+            Some("officer_health")
+        );
     }
 
     #[test]

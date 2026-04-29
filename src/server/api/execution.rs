@@ -1030,16 +1030,10 @@ fn build_optimize_response(
     if dropped_total > 0 {
         let mut segs: Vec<String> = Vec::new();
         if meta.dropped_illegal_warm_start > 0 {
-            segs.push(format!(
-                "warm-start: {}",
-                meta.dropped_illegal_warm_start
-            ));
+            segs.push(format!("warm-start: {}", meta.dropped_illegal_warm_start));
         }
         if meta.dropped_illegal_heuristics > 0 {
-            segs.push(format!(
-                "heuristics: {}",
-                meta.dropped_illegal_heuristics
-            ));
+            segs.push(format!("heuristics: {}", meta.dropped_illegal_heuristics));
         }
         if meta.dropped_illegal_prior_refs > 0 {
             segs.push(format!(

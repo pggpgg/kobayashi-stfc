@@ -2473,7 +2473,10 @@ mod tests {
             &profile,
             DefenderOpponent::Hostile,
         );
-        assert!(seats.is_empty(), "hostile fights must not receive pvp-only crit reduction seat");
+        assert!(
+            seats.is_empty(),
+            "hostile fights must not receive pvp-only crit reduction seat"
+        );
 
         extend_crew_with_player_crit_damage_reduction_profile_bonus(
             &mut seats,

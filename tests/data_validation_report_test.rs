@@ -203,7 +203,11 @@ fn building_bonus_gaps_default_warns_per_row() {
         .iter()
         .filter(|d| d.context == "buildings.bonuses.opaque_buff")
         .collect();
-    assert_eq!(buff_diags.len(), 1, "one diagnostic per distinct buff_* stat");
+    assert_eq!(
+        buff_diags.len(),
+        1,
+        "one diagnostic per distinct buff_* stat"
+    );
     let buff = buff_diags[0];
     assert_eq!(buff.severity, ValidationSeverity::Warning);
     assert!(buff.message.contains("buff_unknown_x"));
@@ -226,9 +230,7 @@ fn building_bonus_gaps_default_warns_per_row() {
     assert_eq!(cond.severity, ValidationSeverity::Warning);
     assert!(cond.message.contains("mystery_condition"));
     assert!(cond.message.contains("alpha"));
-    assert!(cond
-        .message
-        .contains("not in is_known_building_condition"));
+    assert!(cond.message.contains("not in is_known_building_condition"));
 }
 
 #[test]

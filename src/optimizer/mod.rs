@@ -1472,7 +1472,10 @@ mod tests {
             3,
             vec![not_in_demo_pools],
         );
-        assert!(kept.is_empty(), "expected fake officers absent from demo roster pools");
+        assert!(
+            kept.is_empty(),
+            "expected fake officers absent from demo roster pools"
+        );
         assert!(
             summary.dropped_wrong_shape > 0 || summary.dropped_seat_incompatible > 0,
             "expected illegality summary: {summary:?}"

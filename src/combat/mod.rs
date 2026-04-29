@@ -55,8 +55,8 @@ pub use log_ingest::{
     parse_combat_log_json, IngestedCombatLog, IngestedEvent,
 };
 pub use mitigation_sensitivity::{
-    default_percent_sensitivity_rows, format_sensitivity_tsv, HostileMitigationBaseline,
-    MitigationSensitivityRow,
+    default_percent_sensitivity_rows, direct_scalar_row, format_sensitivity_tsv,
+    HostileMitigationBaseline, MitigationSensitivityRow,
 };
 pub use stacking::{
     aggregate_contributions, compose_totals, CategoryTotals, StackCategory, StackContribution,

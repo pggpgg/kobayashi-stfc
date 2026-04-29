@@ -302,10 +302,7 @@ fn apply_officer_sync(
         let level = item.level.and_then(|l| u16::try_from(l).ok());
         // Some sync payloads provide an explicit tier distinct from rank.
         // Fall back to rank for backward compatibility when tier is absent.
-        let tier = item
-            .tier
-            .and_then(|t| u8::try_from(t).ok())
-            .or(rank);
+        let tier = item.tier.and_then(|t| u8::try_from(t).ok()).or(rank);
 
         let entry = import::RosterEntry {
             canonical_officer_id: canonical_id,

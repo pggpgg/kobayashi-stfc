@@ -14,10 +14,7 @@ use kobayashi::data::profile::{
 fn command_center_level_80_officer_attack_multiplies_when_weapon_damage_absent() {
     let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
     let mut profile = PlayerProfile::default();
-    let imported = vec![BuildingEntry {
-        bid: 71,
-        level: 80,
-    }];
+    let imported = vec![BuildingEntry { bid: 71, level: 80 }];
     let mut bid_to_id = HashMap::new();
     bid_to_id.insert(71_i64, "building_71".to_string());
     let building_index = BuildingIndex {
