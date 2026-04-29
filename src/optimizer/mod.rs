@@ -1452,6 +1452,33 @@ mod tests {
         assert_eq!(summary.dropped_seat_incompatible, 1);
     }
 
+    /// Matchup-prior injection from `optimize_history` uses the same legality gate as warm-start
+    /// and heuristics: crews referencing officers not in the roster-filtered pools are dropped.
+    #[test]
+    fn enforce_candidate_legality_drops_injected_crew_not_in_rostered_pools() {
+        let registry = DataRegistry::load().expect("data registry");
+        let not_in_demo_pools = CrewCandidate {
+            captain: "Totally Fake Captain XYZ789".into(),
+            bridge: vec!["Fake Bridge A".into(), "Fake Bridge B".into()],
+            below_decks: vec![
+                "Fake Below 1".into(),
+                "Fake Below 2".into(),
+                "Fake Below 3".into(),
+            ],
+        };
+        let (kept, summary) = enforce_candidate_legality_with_registry(
+            &registry,
+            Some(crate::data::profile_index::DEMO_PROFILE_ID),
+            3,
+            vec![not_in_demo_pools],
+        );
+        assert!(kept.is_empty(), "expected fake officers absent from demo roster pools");
+        assert!(
+            summary.dropped_wrong_shape > 0 || summary.dropped_seat_incompatible > 0,
+            "expected illegality summary: {summary:?}"
+        );
+    }
+
     #[test]
     fn sort_and_analytical_prefilter_prior_reference_changes_keep_one_winner() {
         let registry = DataRegistry::load().expect("data registry");

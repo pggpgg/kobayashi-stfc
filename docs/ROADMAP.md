@@ -4,7 +4,8 @@ Planned features and priorities for Kobayashi.
 
 ## Recently shipped
 
-- **Officer stat compounding:** `officer_attack` / `officer_defense` / `officer_health` merge as distinct profile buckets (syndicate Officer_Stats columns; Command Center / Academy / DTI HQ / War Room / Mess Hall / Facade building buffs via `targets[]` in `data/buildings/buff_id_to_semantics.json`). [`apply_profile_to_attacker`](../src/data/profile.rs) compounds them with ship-level `weapon_damage` / `hull_hp` / `shield_mitigation` instead of folding officer stats into those keys.
+- Optimize **matchup priors** from `optimize_history.json` are filtered with the same roster/seat legality gate as warm-start and heuristic seeds (`enforce_candidate_legality_with_registry` in `src/server/api/execution.rs`). Shared roster-import fallback warnings live in `roster_import_fallback_warning_message` (`src/data/import.rs`).
+- **Officer stat compounding:** `officer_attack` / `officer_defense` / `officer_health` merge as distinct profile buckets (syndicate Officer_Stats columns; Command Center / Academy / DTI HQ / War Room / Mess Hall / Facade building buffs via `targets[]` in `data/buildings/buff_id_to_semantics.json`). `[apply_profile_to_attacker](../src/data/profile.rs)` compounds them with ship-level `weapon_damage` / `hull_hp` / `shield_mitigation` instead of folding officer stats into those keys.
 - Strict building validation report: `validate_buildings_dataset` now emits one `Warning` per distinct opaque `buff_*` stat and per unmapped `conditions` token, and `cargo run --bin validate_data -- --strict` (or `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`) upgrades those rows to errors so CI / strict reports fail until coverage is extended. The shared scan helper backs both `report_building_mapping_gaps` and `validate_data`.
 - Roster guardrails in roster mode now block duplicate/off-roster/wrong-seat crews across preflight and backend validation, with fallback warnings for missing/invalid roster imports.
 - `fast_discovery` is wired through optimize (heuristics expansion merged into the warm-start path), with workspace Strategy UI and OpenAPI support.
@@ -15,10 +16,6 @@ Planned features and priorities for Kobayashi.
 ## Codex Speed Demon
 
 Speeding up crew discovery is primarily a search-efficiency problem, not a raw simulator-throughput problem. The simulator is already fast; the roadmap here is about spending Monte Carlo budget on the most promising crews first and learning from prior runs.
-
-### Near-term priorities
-
-- **Stay anchored to the real roster** — Extend profile-aware constraints to any remaining candidate injection path and keep warning UX concise when roster data is missing or invalid.
 
 ### Next optimizer upgrades
 
@@ -145,3 +142,4 @@ Research sync + catalog merge are in place for ship-combat stats; remaining road
 - **Other combat stats** — Any future stat keys must be added to `normalize_profile_combat_stat` and wired in `apply_profile_to_attacker` / `apply_static_buffs_to_combatant` (or the mitigation path) before research mappings affect simulation.
 - **Conditional bonuses** — Armada-, class-, PvP-, or faction-scoped lines may be mapped as **global** ship bonuses when descriptions look generic; tightening requires engine/scenario context or buff-level overrides in `data/research/buff_id_to_stat.json`.
 - **Catalog refresh** — After upstream drops, re-run `fetch_stfcspace_research.mjs` then `import_stfcspace_research.mjs`; use `--dump-unmapped` to extend `data/research/buff_id_to_stat.json` / `loca_id_to_stat.json` for buff ids that still do not resolve.
+

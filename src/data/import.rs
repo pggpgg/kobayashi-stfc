@@ -825,6 +825,22 @@ fn load_imported_roster_ids_inner_status(
     ImportedRosterIdsLoadStatus::Loaded(ids)
 }
 
+/// Short API warning when `roster.imported.json` is missing or unreadable for the profile:
+/// officer pools fall back to the full canonical catalog (same behavior as unlock-filtered roster loads).
+pub fn roster_import_fallback_warning_message(profile_id: Option<&str>) -> Option<String> {
+    let id = resolve_profile_id_for_api(profile_id);
+    let roster_path = profile_path(&id, ROSTER_IMPORTED);
+    match load_imported_roster_ids_unlocked_only_status(roster_path.to_string_lossy().as_ref()) {
+        ImportedRosterIdsLoadStatus::Loaded(_) => None,
+        ImportedRosterIdsLoadStatus::MissingFile => Some(
+            "No roster import for this profile; using full officer catalog.".to_string(),
+        ),
+        ImportedRosterIdsLoadStatus::InvalidFile => Some(
+            "Roster import invalid or unreadable; using full officer catalog.".to_string(),
+        ),
+    }
+}
+
 // ----- Loaders for synced research / buildings / ships -----
 
 #[derive(Debug, Deserialize)]

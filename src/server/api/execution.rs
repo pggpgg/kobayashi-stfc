@@ -14,11 +14,8 @@ use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
-use crate::data::import::{
-    load_imported_roster_ids_unlocked_only_status, ImportedRosterIdsLoadStatus,
-};
+use crate::data::import::roster_import_fallback_warning_message;
 use crate::data::optimize_history;
-use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
@@ -124,6 +121,7 @@ fn resolve_effective_optimize_strategy(
         only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
         below_decks_slots,
         constraints: crew_constraints.cloned(),
+        roster_profile_id: profile_id.filter(|s| !s.is_empty()).map(String::from),
         ..CandidateStrategy::default()
     };
     // Must match crews after generation, warm-start prepend, and constraint filter.
@@ -350,24 +348,8 @@ struct OptimizeGatherMeta {
     exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
     dropped_illegal_warm_start: usize,
     dropped_illegal_heuristics: usize,
+    dropped_illegal_prior_refs: usize,
     roster_filter_warning: Option<String>,
-}
-
-fn roster_filter_warning_for_profile(profile_id: Option<&str>) -> Option<String> {
-    let pid = profile_id
-        .filter(|s| !s.is_empty())
-        .map(String::from)
-        .unwrap_or_else(|| resolve_profile_id_for_api(None));
-    let roster_path = profile_path(&pid, ROSTER_IMPORTED);
-    match load_imported_roster_ids_unlocked_only_status(roster_path.to_string_lossy().as_ref()) {
-        ImportedRosterIdsLoadStatus::Loaded(_) => None,
-        ImportedRosterIdsLoadStatus::MissingFile => Some(
-            "No imported roster file was found for this profile; optimizer fell back to full officer catalog filtering.".to_string(),
-        ),
-        ImportedRosterIdsLoadStatus::InvalidFile => Some(
-            "Imported roster data is invalid for this profile; optimizer fell back to full officer catalog filtering.".to_string(),
-        ),
-    }
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -623,12 +605,26 @@ fn gather_optimize_simulation_results(
         (dto_warm, false)
     };
 
-    let prior_reference_crews = match (profile_id, cache_key_normalized.as_deref()) {
+    let prior_reference_crews_raw = match (profile_id, cache_key_normalized.as_deref()) {
         (Some(pid), Some(key)) => {
             optimize_history::prior_reference_crews_for_matchup_priors(pid, key, &chain_grind)
         }
         _ => Vec::new(),
     };
+    let prior_refs_in = prior_reference_crews_raw.len();
+    let (prior_reference_crews, prior_legality) = enforce_candidate_legality_with_registry(
+        registry,
+        profile_id,
+        below_decks_slots,
+        prior_reference_crews_raw,
+    );
+    let dropped_illegal_prior_refs = prior_legality.dropped_wrong_shape
+        + prior_legality.dropped_duplicates
+        + prior_legality.dropped_seat_incompatible;
+    debug_assert_eq!(
+        prior_refs_in,
+        prior_reference_crews.len() + dropped_illegal_prior_refs
+    );
 
     let (strategy, strategy_auto) = resolve_effective_optimize_strategy(
         registry,
@@ -857,7 +853,8 @@ fn gather_optimize_simulation_results(
         dropped_illegal_heuristics: h_legality.dropped_wrong_shape
             + h_legality.dropped_duplicates
             + h_legality.dropped_seat_incompatible,
-        roster_filter_warning: roster_filter_warning_for_profile(profile_id),
+        dropped_illegal_prior_refs,
+        roster_filter_warning: roster_import_fallback_warning_message(profile_id),
     };
     info!(
         effective_strategy = optimizer_strategy_to_api_label(meta.strategy),
@@ -1024,20 +1021,36 @@ fn build_optimize_response(
                 .to_string(),
         );
     }
-    if meta.dropped_illegal_heuristics > 0 {
-        warnings.push(format!(
-            "Ignored {} heuristic-expanded crew(s) that were not roster/seat legal for this scenario.",
-            meta.dropped_illegal_heuristics
-        ));
-    }
-    if meta.dropped_illegal_warm_start > 0 {
-        warnings.push(format!(
-            "Ignored {} warm-start crew(s) that were not roster/seat legal for this scenario.",
-            meta.dropped_illegal_warm_start
-        ));
-    }
     if let Some(message) = &meta.roster_filter_warning {
         warnings.push(message.clone());
+    }
+    let dropped_total = meta.dropped_illegal_warm_start
+        + meta.dropped_illegal_heuristics
+        + meta.dropped_illegal_prior_refs;
+    if dropped_total > 0 {
+        let mut segs: Vec<String> = Vec::new();
+        if meta.dropped_illegal_warm_start > 0 {
+            segs.push(format!(
+                "warm-start: {}",
+                meta.dropped_illegal_warm_start
+            ));
+        }
+        if meta.dropped_illegal_heuristics > 0 {
+            segs.push(format!(
+                "heuristics: {}",
+                meta.dropped_illegal_heuristics
+            ));
+        }
+        if meta.dropped_illegal_prior_refs > 0 {
+            segs.push(format!(
+                "optimize-history priors: {}",
+                meta.dropped_illegal_prior_refs
+            ));
+        }
+        warnings.push(format!(
+            "Ignored {dropped_total} injected crew(s) not roster/seat legal ({}).",
+            segs.join("; ")
+        ));
     }
 
     OptimizeResponse {
