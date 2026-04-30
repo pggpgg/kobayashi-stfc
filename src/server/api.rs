@@ -646,6 +646,17 @@ pub fn simulate_payload(
             for u in unk {
                 warnings.push(format!("Unknown support_buff id: {u}"));
             }
+            let inactive = support_buffs::inactive_defender_static_support_buff_labels(
+                cat,
+                sb,
+                req.defender_opponent.defender_is_player_ship(),
+            );
+            if !inactive.is_empty() {
+                warnings.push(format!(
+                    "Direct static bonuses for support buff(s) {} apply only vs a player-shaped defender (defender_opponent: player); they are ignored vs NPC hostiles.",
+                    inactive.join(", ")
+                ));
+            }
         }
     }
     if using_placeholder_combatants {
@@ -765,6 +776,17 @@ pub fn compare_crews_payload(
             let (_, unk) = support_buffs::resolve_selected_support_buff_ids(cat, sb);
             for u in unk {
                 warnings.push(format!("Unknown support_buff id: {u}"));
+            }
+            let inactive = support_buffs::inactive_defender_static_support_buff_labels(
+                cat,
+                sb,
+                req.defender_opponent.defender_is_player_ship(),
+            );
+            if !inactive.is_empty() {
+                warnings.push(format!(
+                    "Direct static bonuses for support buff(s) {} apply only vs a player-shaped defender (defender_opponent: player); they are ignored vs NPC hostiles.",
+                    inactive.join(", ")
+                ));
             }
         }
     }
@@ -912,6 +934,21 @@ pub fn replay_optimize_seed_payload(
         .filter_map(|v| v.as_str())
     {
         warnings.push(format!("Unknown support_buff id: {id}"));
+    }
+    if let Some(sb) = req.support_buffs.as_deref() {
+        if let Some(cat) = registry.support_buffs_catalog() {
+            let inactive = support_buffs::inactive_defender_static_support_buff_labels(
+                cat,
+                sb,
+                req.defender_opponent.defender_is_player_ship(),
+            );
+            if !inactive.is_empty() {
+                warnings.push(format!(
+                    "Direct static bonuses for support buff(s) {} apply only vs a player-shaped defender (defender_opponent: player); they are ignored vs NPC hostiles.",
+                    inactive.join(", ")
+                ));
+            }
+        }
     }
 
     let response_json = serde_json::json!({

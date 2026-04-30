@@ -27,7 +27,7 @@ const supportBuffCatalog = supportBuffCatalogJson as SupportBuffCatalog;
 
 describe("support buff catalog", () => {
   it("derives selectable options from shared catalog metadata", () => {
-    expect(SUPPORT_BUFF_OPTIONS).toHaveLength(4);
+    expect(SUPPORT_BUFF_OPTIONS).toHaveLength(5);
 
     for (const option of SUPPORT_BUFF_OPTIONS) {
       const catalogEntry = supportBuffCatalog.buffs[option.id];

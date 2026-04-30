@@ -37,6 +37,17 @@ pub struct SupportBuffStatTarget {
     pub layer: Option<String>,
 }
 
+/// Where [`SupportBuffDef::static_bonuses`] merge in combat ([`crate::optimizer::monte_carlo::scenario`]).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SupportBuffStaticBonusTarget {
+    /// Merge with crew static buffs on the optimizing attacker (default when field omitted).
+    #[default]
+    Attacker,
+    /// Merge only onto the defender [`crate::combat::Combatant`] when [`DefenderOpponent::Player`] (PvP-shaped).
+    DefenderIfPlayerOpponent,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct SupportBuffDef {
     #[serde(default)]
@@ -61,6 +72,16 @@ pub struct SupportBuffDef {
     pub research_levels: Vec<SupportBuffResearchLevel>,
     #[serde(default)]
     pub static_bonuses: HashMap<String, f64>,
+    /// When set, [`Self::static_bonuses`] route to attacker vs defender (see [`SupportBuffStaticBonusTarget`]).
+    #[serde(default)]
+    pub static_bonus_target: Option<SupportBuffStaticBonusTarget>,
+}
+
+impl SupportBuffDef {
+    #[inline]
+    pub fn static_bonus_target_effective(&self) -> SupportBuffStaticBonusTarget {
+        self.static_bonus_target.unwrap_or_default()
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -395,29 +416,113 @@ pub fn apply_support_buff_research_to_profile(
     }
 }
 
-/// Aggregate `static_bonuses` from resolved buff defs into one map (mult keys multiply across buffs).
-pub fn aggregate_support_static_bonuses(
+/// Keys where LCARS/static buff maps use multiplicative stacking (see `apply_static_buffs_to_combatant`).
+const STATIC_MULT_KEYS: &[&str] = &[
+    "weapon_damage",
+    "hull_hp",
+    "shield_hp",
+    "crit_damage",
+    "accuracy_cb_mult",
+];
+
+fn is_static_mult_key(k: &str) -> bool {
+    STATIC_MULT_KEYS.contains(&k)
+}
+
+fn merge_def_static_bonuses_into(out: &mut HashMap<String, f64>, def: &SupportBuffDef) {
+    for (k, v) in &def.static_bonuses {
+        out.entry(k.clone())
+            .and_modify(|e| {
+                if is_static_mult_key(k) {
+                    *e *= *v;
+                } else {
+                    *e += *v;
+                }
+            })
+            .or_insert(*v);
+    }
+}
+
+/// Split `static_bonuses` by [`SupportBuffDef::static_bonus_target_effective`] for attacker vs PvP defender merge paths.
+pub fn aggregate_support_static_bonuses_split(
     catalog: &SupportBuffCatalog,
     resolved_ids: &[String],
-) -> HashMap<String, f64> {
-    let mut out: HashMap<String, f64> = HashMap::new();
+) -> (HashMap<String, f64>, HashMap<String, f64>) {
+    let mut attacker: HashMap<String, f64> = HashMap::new();
+    let mut defender_player: HashMap<String, f64> = HashMap::new();
     for id in resolved_ids {
         let Some(def) = catalog.get(id) else {
             continue;
         };
-        for (k, v) in &def.static_bonuses {
-            out.entry(k.clone())
-                .and_modify(|e| {
-                    if is_static_mult_key(k) {
-                        *e *= *v;
-                    } else {
-                        *e += *v;
-                    }
-                })
-                .or_insert(*v);
+        match def.static_bonus_target_effective() {
+            SupportBuffStaticBonusTarget::Attacker => merge_def_static_bonuses_into(&mut attacker, def),
+            SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent => {
+                merge_def_static_bonuses_into(&mut defender_player, def);
+            }
         }
     }
-    out
+    (attacker, defender_player)
+}
+
+/// Aggregate attacker-routed `static_bonuses` only (same as split `.0`).
+pub fn aggregate_support_static_bonuses(
+    catalog: &SupportBuffCatalog,
+    resolved_ids: &[String],
+) -> HashMap<String, f64> {
+    aggregate_support_static_bonuses_split(catalog, resolved_ids).0
+}
+
+/// Resolved ids whose `static_bonuses` apply only vs a player-shaped defender (`defender_opponent: player`).
+pub fn resolved_defender_routed_support_buff_ids(
+    catalog: &SupportBuffCatalog,
+    resolved_ids: &[String],
+) -> Vec<String> {
+    resolved_ids
+        .iter()
+        .filter(|id| {
+            catalog
+                .get(id.as_str())
+                .is_some_and(|d| {
+                    d.static_bonus_target_effective()
+                        == SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent
+                })
+        })
+        .cloned()
+        .collect()
+}
+
+/// Human-readable labels for [`SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent`] entries (warnings / notes).
+pub fn inactive_defender_static_support_buff_labels(
+    catalog: &SupportBuffCatalog,
+    requested: &[String],
+    defender_is_player_ship: bool,
+) -> Vec<String> {
+    if defender_is_player_ship {
+        return Vec::new();
+    }
+    let (resolved, _) = resolve_selected_support_buff_ids(catalog, requested);
+    let mut labels: Vec<String> = Vec::new();
+    for id in resolved {
+        let Some(def) = catalog.get(&id) else {
+            continue;
+        };
+        if def.static_bonus_target_effective() != SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent
+        {
+            continue;
+        }
+        if def.static_bonuses.is_empty() {
+            continue;
+        }
+        let label = def
+            .display_name
+            .clone()
+            .or_else(|| def.label.clone())
+            .unwrap_or_else(|| id.clone());
+        labels.push(label);
+    }
+    labels.sort();
+    labels.dedup();
+    labels
 }
 
 pub fn describe_resolved_support_buffs(
@@ -442,19 +547,6 @@ pub fn describe_resolved_support_buffs(
             })
         })
         .collect()
-}
-
-/// Keys where LCARS/static buff maps use multiplicative stacking (see `apply_static_buffs_to_combatant`).
-const STATIC_MULT_KEYS: &[&str] = &[
-    "weapon_damage",
-    "hull_hp",
-    "shield_hp",
-    "crit_damage",
-    "accuracy_cb_mult",
-];
-
-fn is_static_mult_key(k: &str) -> bool {
-    STATIC_MULT_KEYS.contains(&k)
 }
 
 /// Merge crew LCARS static buffs with support static bonuses for mitigation + combatant application.
@@ -545,7 +637,7 @@ pub fn apply_support_buffs_for_request(
     };
     let (resolved, unknown) = resolve_selected_support_buff_ids(cat, req);
     apply_support_buff_research_to_profile(profile, cat, &resolved, research_catalog);
-    let support_static = aggregate_support_static_bonuses(cat, &resolved);
+    let (support_static, _) = aggregate_support_static_bonuses_split(cat, &resolved);
     (resolved, support_static, unknown)
 }
 
@@ -579,6 +671,40 @@ mod tests {
         let c = tiny_catalog();
         let (resolved, _) = resolve_selected_support_buff_ids(&c, &["a".into(), "b".into()]);
         assert_eq!(resolved, vec!["b".to_string()]);
+    }
+
+    #[test]
+    fn aggregate_split_routes_fortify_static_to_defender_map() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        let (att, def) =
+            aggregate_support_static_bonuses_split(&c, &["titan_a_fortification".to_string()]);
+        assert!(!att.contains_key("crit_damage"));
+        assert!((def.get("crit_damage").copied().unwrap_or(0.0) - 1.25).abs() < 1e-9);
+    }
+
+    #[test]
+    fn aggregate_split_cerritos_stays_on_attacker() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        let (att, def) = aggregate_support_static_bonuses_split(&c, &["cerritos_support".to_string()]);
+        assert!(def.is_empty());
+        assert!(att.contains_key("weapon_damage"));
+    }
+
+    #[test]
+    fn inactive_defender_labels_only_when_static_present_and_npc_defender() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        let labels = inactive_defender_static_support_buff_labels(
+            &c,
+            &["titan_a_fortification".to_string()],
+            false,
+        );
+        assert_eq!(labels, vec!["Fortification".to_string()]);
+        assert!(inactive_defender_static_support_buff_labels(
+            &c,
+            &["titan_a_fortification".to_string()],
+            true,
+        )
+        .is_empty());
     }
 
     #[test]

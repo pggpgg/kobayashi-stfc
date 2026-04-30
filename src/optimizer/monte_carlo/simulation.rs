@@ -761,6 +761,11 @@ fn external_buffs_trace_payload(shared: &SharedScenarioData) -> Value {
         .iter()
         .map(|(stat, value)| (stat.clone(), *value))
         .collect();
+    let defender_static_bonuses: BTreeMap<String, f64> = shared
+        .support_defender_static_buffs
+        .iter()
+        .map(|(stat, value)| (stat.clone(), *value))
+        .collect();
 
     json!({
         "support_buffs": {
@@ -768,7 +773,9 @@ fn external_buffs_trace_payload(shared: &SharedScenarioData) -> Value {
             "unknown_ids": &shared.unknown_support_buff_ids,
             "applied": &shared.applied_support_buffs,
             "aggregate_static_bonuses": aggregate_static_bonuses,
-            "aggregate_static_bonuses_note": "Includes selected support buff static_bonuses plus support-gated imported research bonuses when present."
+            "aggregate_static_bonuses_note": "Attacker merge: selected support buff static_bonuses routed to attacker plus support-gated imported research bonuses when present.",
+            "defender_static_bonuses_vs_player": defender_static_bonuses,
+            "defender_static_bonuses_note": "Applied to the defender Combatant only when defender_opponent is player (PvP-shaped)."
         }
     })
 }

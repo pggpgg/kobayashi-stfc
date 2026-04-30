@@ -54,6 +54,19 @@ export const CERRITOS_SUPPORT_BUFF_ID = "cerritos_support" as const;
  */
 export const DEFIANT_REINFORCE_BUFF_ID = "defiant_reinforce" as const;
 
+/** Mantis sting placeholder id (`data/support_buffs.json`); static stats TBD. */
+export const MANTIS_STING_BUFF_ID = "mantis_sting" as const;
+
+/**
+ * Ids whose direct `static_bonuses` merge onto the defender when `defender_opponent` is player (PvP-shaped).
+ * Keep aligned with `static_bonus_target: defender_if_player_opponent` in `data/support_buffs.json`.
+ */
+export const SUPPORT_BUFF_DEFENDER_ROUTED_WHEN_PLAYER_IDS = [
+  ...TITAN_A_FORTIFY_SUPPORT_BUFF_IDS,
+  DEFIANT_REINFORCE_BUFF_ID,
+  MANTIS_STING_BUFF_ID,
+] as const;
+
 export type TitanAFortifySupportBuffId =
   (typeof TITAN_A_FORTIFY_SUPPORT_BUFF_IDS)[number];
 
@@ -81,11 +94,21 @@ export function isDefiantReinforceBuff(
   return id === DEFIANT_REINFORCE_BUFF_ID;
 }
 
+export function isMantisStingBuff(id: string): id is typeof MANTIS_STING_BUFF_ID {
+  return id === MANTIS_STING_BUFF_ID;
+}
+
+/** True when the catalog routes this buff's direct static bonuses to the defender in PvP-shaped runs. */
+export function isDefenderRoutedWhenPlayerSupportBuff(id: string): boolean {
+  return (SUPPORT_BUFF_DEFENDER_ROUTED_WHEN_PLAYER_IDS as readonly string[]).includes(id);
+}
+
 export const SUPPORT_BUFF_OPTION_IDS = [
   "titan_a_fortification",
   "titan_a_max_fortification",
   CERRITOS_SUPPORT_BUFF_ID,
   DEFIANT_REINFORCE_BUFF_ID,
+  MANTIS_STING_BUFF_ID,
 ] as const;
 
 export type SupportBuffId = (typeof SUPPORT_BUFF_OPTION_IDS)[number];

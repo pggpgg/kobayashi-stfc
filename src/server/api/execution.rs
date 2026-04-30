@@ -16,6 +16,7 @@ use crate::data::heuristics::{
 };
 use crate::data::import::roster_import_fallback_warning_message;
 use crate::data::optimize_history;
+use crate::data::support_buffs;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
@@ -354,6 +355,8 @@ struct OptimizeGatherMeta {
     dropped_illegal_heuristics: usize,
     dropped_illegal_prior_refs: usize,
     roster_filter_warning: Option<String>,
+    /// Display names for support buffs whose direct static bonuses are inactive (NPC defender).
+    defender_static_support_inactive_labels: Vec<String>,
 }
 
 /// Progress / cancellation hooks for optimize. Sync path uses [`OptimizeProgressSink::None`].
@@ -568,6 +571,18 @@ fn gather_optimize_simulation_results(
     let mut optimize_history_wrote = false;
     let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
     let mut exhaustive_adaptive_budget_for_response: Option<TieredScoutBudgetStats> = None;
+
+    let defender_static_support_inactive_labels = match (
+        registry.support_buffs_catalog(),
+        request.support_buffs.as_deref(),
+    ) {
+        (Some(cat), Some(sb))
+            if !sb.is_empty() && !request.defender_opponent.defender_is_player_ship() =>
+        {
+            support_buffs::inactive_defender_static_support_buff_labels(cat, sb, false)
+        }
+        _ => Vec::new(),
+    };
 
     let mut h_candidates = if heuristics_seeds_nonempty {
         load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
@@ -859,6 +874,7 @@ fn gather_optimize_simulation_results(
             + h_legality.dropped_seat_incompatible,
         dropped_illegal_prior_refs,
         roster_filter_warning: roster_import_fallback_warning_message(profile_id),
+        defender_static_support_inactive_labels,
     };
     info!(
         effective_strategy = optimizer_strategy_to_api_label(meta.strategy),
@@ -1085,6 +1101,12 @@ fn build_optimize_response(
         warnings.push(format!(
             "Ignored {dropped_total} injected crew(s) not roster/seat legal ({}).",
             segs.join("; ")
+        ));
+    }
+    if !meta.defender_static_support_inactive_labels.is_empty() {
+        warnings.push(format!(
+            "Direct static bonuses for support buff(s) {} apply only vs a player-shaped defender (defender_opponent: player); they are ignored vs NPC hostiles.",
+            meta.defender_static_support_inactive_labels.join(", ")
         ));
     }
 

@@ -478,8 +478,10 @@ pub(crate) struct SharedScenarioData {
     pub resolved_support_buffs: Vec<String>,
     /// Display/debug metadata for resolved support buffs, included in trace replay output.
     pub applied_support_buffs: Vec<AppliedSupportBuffTrace>,
-    /// Static combat keys from support buff definitions; merged with crew LCARS static buffs in combat input.
+    /// Static combat keys from support buff definitions; merged with crew LCARS static buffs on the attacker.
     pub support_static_buffs: HashMap<String, f64>,
+    /// Support buff `static_bonuses` that apply to the defender only when [`Self::defender_opponent`] is [`DefenderOpponent::Player`].
+    pub support_defender_static_buffs: HashMap<String, f64>,
     /// Request ids not present in the support buff catalog (for API warnings).
     #[allow(dead_code)]
     pub unknown_support_buff_ids: Vec<String>,
@@ -553,6 +555,19 @@ pub(crate) struct CombatSimulationInput {
     pub attacker_roster_officer_ids: Vec<String>,
 }
 
+fn apply_support_defender_static_if_pvp(
+    shared: &SharedScenarioData,
+    defender: &mut Combatant,
+) {
+    if shared.defender_opponent != DefenderOpponent::Player {
+        return;
+    }
+    if shared.support_defender_static_buffs.is_empty() {
+        return;
+    }
+    *defender = apply_static_buffs_to_combatant(defender.clone(), &shared.support_defender_static_buffs);
+}
+
 /// Build combat input from pre-resolved shared data and candidate. Resolves ship/hostile only once per run.
 pub(crate) fn scenario_to_combat_input_from_shared(
     shared: &SharedScenarioData,
@@ -624,6 +639,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             });
         let mut defender = cached_defender.clone();
         defender.mitigation = defender_mitigation;
+        apply_support_defender_static_if_pvp(shared, &mut defender);
 
         let mut attacker = apply_profile_to_attacker(
             Combatant {
@@ -808,27 +824,29 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     let weapon_damage_profile_additive_pool =
         weapon_damage_profile_additive_pool_from_env(&shared.profile);
     let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(&shared.profile);
+    let mut defender = Combatant {
+        id: shared.hostile.clone(),
+        attack: 0.0,
+        mitigation: defender_mitigation,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        weapons: vec![],
+        end_of_round_damage: 0.0,
+        hull_health: defender_hull,
+        shield_health: 400.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+    };
+    apply_support_defender_static_if_pvp(shared, &mut defender);
     CombatSimulationInput {
         attacker,
-        defender: Combatant {
-            id: shared.hostile.clone(),
-            attack: 0.0,
-            mitigation: defender_mitigation,
-            pierce: 0.0,
-            crit_chance: 0.0,
-            crit_multiplier: 1.0,
-            proc_chance: 0.0,
-            proc_multiplier: 1.0,
-            weapons: vec![],
-            end_of_round_damage: 0.0,
-            hull_health: defender_hull,
-            shield_health: 400.0,
-            shield_mitigation: 0.8,
-            apex_barrier: 0.0,
-            apex_shred: 0.0,
-            isolytic_damage: 0.0,
-            isolytic_defense: 0.0,
-        },
+        defender,
         defender_crew,
         crew: CrewConfiguration { seats },
         rounds: 3 + (hostile_hash % 4) as u32,
@@ -1324,10 +1342,10 @@ pub(crate) fn build_shared_scenario_data_standalone(
     } else {
         None
     };
-    let mut support_static_buffs = support_cat
-        .as_ref()
-        .map(|c| support_buffs::aggregate_support_static_bonuses(c, &resolved_support_buffs))
-        .unwrap_or_default();
+    let (mut support_static_buffs, support_defender_static_buffs) = match support_cat.as_ref() {
+        Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
+        None => (HashMap::new(), HashMap::new()),
+    };
     if let Some(ref cat) = shared_research_catalog {
         support_buffs::augment_static_buffs_with_support_gated_research(
             &mut support_static_buffs,
@@ -1493,6 +1511,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         resolved_support_buffs,
         applied_support_buffs,
         support_static_buffs,
+        support_defender_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
         forbidden_tech_derived_seats,
@@ -1659,10 +1678,11 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     } else {
         None
     };
-    let mut support_static_buffs = registry
-        .support_buffs_catalog()
-        .map(|c| support_buffs::aggregate_support_static_bonuses(c, &resolved_support_buffs))
-        .unwrap_or_default();
+    let (mut support_static_buffs, support_defender_static_buffs) =
+        match registry.support_buffs_catalog() {
+            Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
+            None => (HashMap::new(), HashMap::new()),
+        };
     if let Some(cat) = registry.research_catalog() {
         support_buffs::augment_static_buffs_with_support_gated_research(
             &mut support_static_buffs,
@@ -1821,6 +1841,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         resolved_support_buffs,
         applied_support_buffs,
         support_static_buffs,
+        support_defender_static_buffs,
         unknown_support_buff_ids,
         research_derived_seats,
         forbidden_tech_derived_seats,
@@ -2377,6 +2398,7 @@ mod tests {
             resolved_support_buffs: vec![],
             applied_support_buffs: vec![],
             support_static_buffs: HashMap::new(),
+            support_defender_static_buffs: HashMap::new(),
             unknown_support_buff_ids: vec![],
             research_derived_seats: vec![],
             forbidden_tech_derived_seats: vec![],

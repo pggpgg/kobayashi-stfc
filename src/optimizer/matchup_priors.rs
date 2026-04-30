@@ -415,6 +415,7 @@ mod tests {
             resolved_support_buffs: vec![],
             applied_support_buffs: vec![],
             support_static_buffs: Default::default(),
+            support_defender_static_buffs: Default::default(),
             unknown_support_buff_ids: vec![],
             research_derived_seats: vec![],
             forbidden_tech_derived_seats: vec![],
