@@ -311,6 +311,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let mut defender_assimilated_rounds_remaining = 0_u32;
     // Active shots bonuses: (bonus_pct, expires_round). B_shots(r) = sum of bonus where expires_round >= r.
     let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
+    // Defender crew shots bonuses for counter-fire path.
+    let mut defender_shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
     let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_ctx = CombatContext {
         round_index: 0,
@@ -432,6 +434,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
+    defender_shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
     let mut rounds_completed = 0u32;
 
     for round_index in 1..=rounds_to_simulate {
@@ -730,6 +733,55 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             }
         }
 
+        // Defender crew ShotsBonus for counter-fire: process RoundStart effects similarly
+        // to the attacker's ShotsBonus above, using the same combat context for conditions.
+        {
+            let defender_rstart_filtered =
+                filter_effects_by_condition(&defender_round_start_effects, &combat_ctx);
+            let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
+            for effect in &defender_rstart_filtered {
+                let effective_effect =
+                    scale_effect(effect.effect, defender_rstart_assimilated);
+                if let AbilityEffect::ShotsBonus {
+                    chance,
+                    bonus_pct,
+                    duration_rounds,
+                } = effective_effect
+                {
+                    let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                    let triggered = shots_roll < chance.clamp(0.0, 1.0);
+                    if triggered {
+                        let duration = duration_rounds.max(1);
+                        defender_shots_bonus_entries
+                            .push((bonus_pct, round_index + duration));
+                    }
+                    trace.record_if(|| CombatEvent {
+                        event_type: "defender_shots_bonus_trigger".to_string(),
+                        round_index,
+                        phase: "round_start".to_string(),
+                        source: EventSource {
+                            hostile_ability_id: Some(effect.ability_name.clone()),
+                            ..EventSource::default()
+                        },
+                        weapon_index: None,
+                        values: Map::from_iter([
+                            ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                            ("triggered".to_string(), Value::Bool(triggered)),
+                            ("chance".to_string(), Value::from(round_f64(chance))),
+                            (
+                                "bonus_pct".to_string(),
+                                Value::from(round_f64(bonus_pct)),
+                            ),
+                            (
+                                "duration_rounds".to_string(),
+                                Value::from(duration_rounds),
+                            ),
+                        ]),
+                    });
+                }
+            }
+        }
+
         // Morale proc after other round-start RNG consumers (assimilated, hull breach, burning, shots).
         // Sets [CombatContext::attacker_morale_active] for [AbilityCondition::MoraleActive] and pierce.
         let morale_triggered = {
@@ -849,6 +901,12 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         // Prune expired shots bonuses and compute B_shots(r) for this round.
         shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
         let b_shots: f64 = shots_bonus_entries.iter().map(|(b, _)| b).sum();
+        defender_shots_bonus_entries
+            .retain(|(_, expires)| *expires >= round_index);
+        let def_b_shots: f64 = defender_shots_bonus_entries
+            .iter()
+            .map(|(b, _)| b)
+            .sum();
 
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
         let round_end_filtered = filter_effects_by_condition(&round_end_effects, &combat_ctx);
@@ -1469,10 +1527,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {
                 // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
                 // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
-                // so the two paths stay in sync. Shot count matches outbound: `effective_shots_for_weapon`
-                // on `defender.weapon_base_shots` (defender crew `ShotsBonus` is not wired here yet).
+                // so the two paths stay in sync. Shot count mirrors outbound: `effective_shots_for_weapon`
+                // on `defender.weapon_base_shots` with defender crew `ShotsBonus`.
                 let def_base_shots = defender.weapon_base_shots(weapon_index);
-                let def_effective_shots = effective_shots_for_weapon(def_base_shots, 0.0);
+                let def_effective_shots = effective_shots_for_weapon(def_base_shots, def_b_shots);
 
                 let eff_player_mitigation =
                     (attacker.mitigation + attacker_mitigation_additive).clamp(0.0, 1.0);
@@ -2603,6 +2661,75 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         &combat_end_filtered,
         false,
     );
+
+    // Apply CombatEnd timing window effects: hull/shield damage, healing, and regen from
+    // attacker crew abilities that trigger at combat end (e.g. final-blow damage, deathrattle,
+    // combat-summary bonuses). Mirrors the RoundEnd pattern: build an EffectAccumulator,
+    // add CombatEnd-tagged effects, then apply regen and damage to the appropriate sides.
+    {
+        let mut combat_end_acc = EffectAccumulator::default();
+        combat_end_acc.add_effects(
+            TimingWindow::CombatEnd,
+            &combat_end_filtered,
+            attacker.attack,
+            false,
+            rounds_completed,
+        );
+
+        // Regen from attacker crew CombatEnd effects (applies to attacker's ship).
+        let ce_shield_regen = combat_end_acc.composed_shield_regen();
+        let ce_hull_regen = combat_end_acc.composed_hull_regen();
+        let ce_shield_regen_frac = combat_end_acc.composed_shield_regen_max_fraction();
+        let ce_hull_regen_frac = combat_end_acc.composed_hull_regen_max_fraction();
+        let ce_shield_heal =
+            ce_shield_regen + ce_shield_regen_frac * attacker.shield_health.max(0.0);
+        let ce_hull_heal =
+            ce_hull_regen + ce_hull_regen_frac * attacker.hull_health.max(0.0);
+        attacker_shield_remaining =
+            (attacker_shield_remaining + ce_shield_heal).min(attacker.shield_health.max(0.0));
+        total_attacker_hull_damage =
+            (total_attacker_hull_damage - ce_hull_heal).max(0.0);
+
+        // Apply CombatEnd damage from attacker crew effects to the defender.
+        let ce_defender_damage =
+            combat_end_acc.compose_round_end_damage(0.0);
+        if ce_defender_damage > 0.0 {
+            let (dmg_to_shield, dmg_to_hull) = apply_shield_hull_split(
+                ce_defender_damage,
+                defender.shield_mitigation,
+                defender_shield_remaining,
+            );
+            defender_shield_remaining =
+                (defender_shield_remaining - dmg_to_shield).max(0.0);
+            total_shield_damage += dmg_to_shield;
+            total_hull_damage += dmg_to_hull;
+        }
+
+        trace.record_if(|| CombatEvent {
+            event_type: "combat_end_effects".to_string(),
+            round_index: rounds_completed,
+            phase: "combat_end".to_string(),
+            source: EventSource {
+                player_bonus_source: Some("combat_end".to_string()),
+                ..EventSource::default()
+            },
+            weapon_index: None,
+            values: Map::from_iter([
+                (
+                    "attacker_shield_heal".to_string(),
+                    Value::from(round_f64(ce_shield_heal)),
+                ),
+                (
+                    "attacker_hull_heal".to_string(),
+                    Value::from(round_f64(ce_hull_heal)),
+                ),
+                (
+                    "defender_damage".to_string(),
+                    Value::from(round_f64(ce_defender_damage)),
+                ),
+            ]),
+        });
+    }
 
     let total_damage = total_hull_damage + total_shield_damage;
     let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);

@@ -3448,7 +3448,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     assert_eq!(first.events, second.events);
     assert_eq!(first.total_damage, second.total_damage);
 
-    assert_eq!(first.events.len(), 20);
+    assert_eq!(first.events.len(), 21);
     let expected_event_types = [
         "round_start",
         "attack_roll",
@@ -3465,6 +3465,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         assert_eq!(first.events[index].event_type, *expected);
         assert_eq!(first.events[index + 10].event_type, *expected);
     }
+    assert_eq!(first.events[20].event_type, "combat_end_effects");
     assert_eq!(first.events[4].phase, "attack");
     assert_eq!(first.events[8].phase, "counter");
 
