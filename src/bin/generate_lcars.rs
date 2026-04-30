@@ -19,6 +19,11 @@
 //! taken last round”; Kobayashi applies that heal at **round start** as `stat_modify` /
 //! `hull_hp_repair_prev_round` (resolver `HullRegenPrevRoundFraction`). Regenerated LCARS therefore
 //! uses `on_round_start` for this modifier regardless of canonical trigger string.
+//!
+//! **`Accuracy`:** `MultiplyAdd` with **no** canonical `conditions` and **no** `attributes` maps to
+//! passive `stat_modify` / `multiply` with per-rank `1.0 + value` (resolver `accuracy_cb_mult` for
+//! hostile dodge / pierce precompute). Rows with officer-stat attributes, non-`MultiplyAdd`
+//! operations, or gated conditions stay `accuracy:unmapped` until modeled.
 
 use std::collections::HashMap;
 use std::fs;
@@ -529,6 +534,13 @@ fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64
                 val
             }
         }
+        "Accuracy" => {
+            if op.eq_ignore_ascii_case("MultiplyAdd") {
+                1.0 + val
+            } else {
+                val
+            }
+        }
         "ShipArmor" | "OfficerStatDefense" => val,
         "AllDefenses" => {
             if op.eq_ignore_ascii_case("MultiplySub") {
@@ -728,12 +740,16 @@ fn effect_condition_from_canonical(
 
 fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option<LcarsEffect> {
     let modifier = a.modifier.as_deref().unwrap_or("");
+    let mapped = map_modifier(modifier, a)?;
     let trigger = if modifier == "HullRepair" || modifier == "ShieldRepairPrevRound" {
         "on_round_start"
+    } else if matches!(&mapped, MappedEffect::StatModify(ref stat, _, _) if stat == "accuracy") {
+        // Resolver folds this into `static_buffs.accuracy_cb_mult` (combat-begin timing). Canonical
+        // RoundStart / ShipLaunched still becomes `passive` so the accuracy loop picks it up.
+        "passive"
     } else {
         map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"))
     };
-    let mapped = map_modifier(modifier, a)?;
     let target = map_target(a);
     let op = a.operation.as_deref().unwrap_or("Add");
     let ability_label = a.ability_id.as_deref().unwrap_or(modifier);
@@ -1051,6 +1067,15 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             };
             MappedEffect::StatModify("weapon_damage".into(), op_str.into(), v)
         }
+        "Accuracy" => {
+            let attrs = a.attributes.as_deref().unwrap_or("").trim();
+            if !a.conditions.is_empty() || !attrs.is_empty() || !op.eq_ignore_ascii_case("MultiplyAdd")
+            {
+                MappedEffect::Tag("accuracy:unmapped".into())
+            } else {
+                MappedEffect::StatModify("accuracy".into(), "multiply".into(), 1.0 + val)
+            }
+        }
         "ShipArmor" | "OfficerStatDefense" => {
             MappedEffect::StatModify("armor".into(), "add".into(), val)
         }
@@ -1287,6 +1312,28 @@ mod canonical_condition_tests {
         )
         .expect("scaling");
         assert_eq!(scaling.officer_stat, Some(OfficerStat::Health));
+    }
+
+    #[test]
+    fn spock_accuracy_maps_to_passive_multiply_scaling() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "ability_id": "869555258",
+            "modifier": "Accuracy",
+            "operation": "MultiplyAdd",
+            "trigger": "RoundStart",
+            "target": "SelfShip",
+            "chance_by_rank": [1.0, 1.0, 1.0],
+            "value_by_rank": [0.15, 0.05, 0.1],
+            "conditions": []
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&a, "Spock").expect("effect");
+        assert_eq!(e.effect_type, "stat_modify");
+        assert_eq!(e.stat.as_deref(), Some("accuracy"));
+        assert_eq!(e.operator.as_deref(), Some("multiply"));
+        assert_eq!(e.trigger.as_deref(), Some("passive"));
+        let vals = e.scaling.as_ref().unwrap().values.as_ref().unwrap();
+        assert_eq!(vals, &vec![1.15, 1.05, 1.1]);
     }
 
     #[test]

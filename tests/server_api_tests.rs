@@ -604,6 +604,27 @@ async fn optimize_endpoint_requires_novelty_lambda_when_novelty_pool_set() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn optimize_endpoint_requires_novelty_lambda_when_novelty_history_anchors_true() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"2918121098","sims":100,"novelty_history_anchors":true}"#,
+    )
+    .await;
+    assert_eq!(response.status_code, 400);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(
+        errors.iter().any(|e| e["field"] == "novelty_lambda"),
+        "expected novelty_lambda required when novelty_history_anchors is true"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":800,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
     let response = route_request("POST", "/api/optimize", body).await;

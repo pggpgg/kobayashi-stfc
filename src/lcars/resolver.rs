@@ -544,6 +544,10 @@ pub fn resolve_crew_to_buff_set(
                     .map(|s| s.value_at_rank(officer_tier))
             });
             if let (Some(stat), Some(v)) = (effect.stat.as_deref(), value) {
+                if stat.eq_ignore_ascii_case("accuracy") {
+                    // Folded into `accuracy` / `accuracy_cb_mult` in the combat-begin accuracy loop below.
+                    continue;
+                }
                 if effect.operator.as_deref() == Some("multiply") {
                     static_buffs
                         .entry(stat.to_string())

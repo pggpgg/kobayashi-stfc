@@ -15,7 +15,7 @@ use crate::data::profile_index::{profile_path, OPTIMIZE_HISTORY_JSON};
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::{crew_candidate_stable_hash, SimulationResult};
-use crate::optimizer::ranking::RankedCrewResult;
+use crate::optimizer::ranking::{RankedCrewResult, RankingScore};
 
 pub const OPTIMIZE_HISTORY_SCHEMA: u32 = 1;
 pub const MAX_OPTIMIZE_CACHE_KEYS: usize = 200;
@@ -290,6 +290,76 @@ pub fn prior_reference_crews_for_matchup_priors(
         return Vec::new();
     };
     prior_reference_crews_from_entry(entry, chain)
+}
+
+fn crew_record_to_ranked_anchor(r: &OptimizeHistoryCrewRecord) -> RankedCrewResult {
+    let score_val = if r.chain.is_some() {
+        r.win_rate as f32 * 1e4 + r.avg_hull_remaining.min(1.0) as f32
+    } else {
+        (r.win_rate * 0.8 + r.avg_hull_remaining * 0.2) as f32
+    };
+    RankedCrewResult {
+        captain: r.captain.trim().to_string(),
+        bridge: r.bridge.clone(),
+        below_decks: r.below_decks.clone(),
+        trials_run: r.trials_run,
+        win_rate: r.win_rate,
+        win_rate_ci_low: r.win_rate_ci_low,
+        win_rate_ci_high: r.win_rate_ci_high,
+        stall_rate: r.stall_rate,
+        stall_rate_ci_low: r.stall_rate_ci_low,
+        stall_rate_ci_high: r.stall_rate_ci_high,
+        loss_rate: r.loss_rate,
+        loss_rate_ci_low: r.loss_rate_ci_low,
+        loss_rate_ci_high: r.loss_rate_ci_high,
+        r1_kill_rate: r.r1_kill_rate,
+        r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+        r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
+        avg_hull_remaining: r.avg_hull_remaining,
+        avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+        avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+        avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+        avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+        avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
+        score: RankingScore { value: score_val },
+        chain: r.chain.clone(),
+    }
+}
+
+/// Persisted top crews from `optimize_history.json` for novelty MMR redundancy only (never emitted as recommendations).
+pub fn novelty_anchor_rows_for_profile_cache_key(
+    profile_id: &str,
+    cache_key: &str,
+    chain: &Option<ChainGrindParams>,
+) -> Vec<RankedCrewResult> {
+    if !validate_optimize_cache_key(cache_key) {
+        return Vec::new();
+    }
+    let file = load_history_file(profile_id);
+    let Some(entry) = file.entries.get(cache_key) else {
+        return Vec::new();
+    };
+    novelty_anchor_rows_from_history_entry(entry, chain)
+}
+
+fn novelty_anchor_rows_from_history_entry(
+    entry: &OptimizeHistoryEntry,
+    chain: &Option<ChainGrindParams>,
+) -> Vec<RankedCrewResult> {
+    let chain_fp = chain_fingerprint(chain);
+    if entry.chain_fingerprint != chain_fp {
+        return Vec::new();
+    }
+    let mut rows: Vec<&OptimizeHistoryCrewRecord> = entry.crews.iter().collect();
+    rows.sort_by(|a, b| {
+        b.win_rate
+            .partial_cmp(&a.win_rate)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    rows.into_iter()
+        .take(MAX_PRIOR_REFERENCE_CREWS_FROM_HISTORY)
+        .map(crew_record_to_ranked_anchor)
+        .collect()
 }
 
 pub fn upsert_entry(

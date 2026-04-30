@@ -12,6 +12,7 @@ Planned features and priorities for Kobayashi.
 - CombatEffectSpec adapter cutover shipped for dynamic officer effect compilation (`resolve_effect` / `resolve_officer_ability`).
 - Buildings summary endpoint and UI ship today via `GET /api/profile/buildings-summary` and the Profile view.
 - Research-side `apex_shred` / `apex_barrier` normalization is wired through profile merge and attacker application.
+- **Novelty-aware optimize ranking:** `POST /api/optimize` supports maximal marginal relevance (MMR) on officer-set Jaccard similarity (`novelty_lambda`, optional `novelty_diverse_top` / `novelty_pool`). The MMR relevance term matches [`rank_results`](../src/optimizer/ranking.rs) strength ordering (non-chain blend + chain lexicographic proxy). Optional `novelty_history_anchors` treats persisted top crews from `profiles/{id}/optimize_history.json` (matching `optimize_cache_key` and chain fingerprint via [`novelty_anchor_rows_for_profile_cache_key`](../src/data/optimize_history.rs)) as redundancy-only anchors—the UI exposes this when λ is set and an active profile is selected.
 
 ## Codex Speed Demon
 
@@ -19,7 +20,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 ### Next optimizer upgrades
 
-- **Novelty-aware ranking** — Reward crews that are both strong and materially different from already-known winners so discovery does not collapse into the same few lineages.
 - **Automatic local learning loop** — *(Partial: per-profile `optimize_history.json` stores tiered and exhaustive two-phase results for `optimize_cache_key` and re-injects matching crews on the next run — see `src/data/optimize_history.rs` and `src/server/api/execution.rs`.)* Still open: use history to tune exploration limits automatically and broader “learn” feedback loops.
 - **First-class fast-discovery mode (follow-up)** — Add optional genetic refinement after tiered confirm and tune how discovery/exploitation handoff is configured.
 

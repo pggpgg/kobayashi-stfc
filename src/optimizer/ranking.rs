@@ -110,6 +110,11 @@ fn material_officer_set(r: &RankedCrewResult) -> HashSet<&str> {
     s
 }
 
+/// Relevance term for MMR: matches [`rank_results`] strength ordering (`RankingScore::value`).
+fn mmr_relevance_value(r: &RankedCrewResult) -> f64 {
+    r.score.value as f64
+}
+
 /// Jaccard similarity on the set of officer names (captain + bridge + below decks).
 pub(crate) fn material_jaccard_similarity(a: &RankedCrewResult, b: &RankedCrewResult) -> f64 {
     let sa = material_officer_set(a);
@@ -124,14 +129,18 @@ pub(crate) fn material_jaccard_similarity(a: &RankedCrewResult, b: &RankedCrewRe
 }
 
 /// Maximal Marginal Relevance on the strength-sorted list: reorders the first `diverse_top` positions
-/// using officer-set overlap as redundancy, keeping the tail in original win-rate order.
+/// using officer-set overlap as redundancy, keeping the tail in original strength order.
 ///
-/// `lambda` ∈ (0, 1]: higher values keep scores closer to pure win-rate ordering within the diverse head.
+/// `lambda` ∈ (0, 1]: higher values keep scores closer to pure strength ordering within the diverse head.
+///
+/// `history_anchors` — optional crews from past runs (e.g. `optimize_history`); each contributes to the
+/// redundancy term like an already-selected row but is never emitted in the output.
 pub fn apply_novelty_mmr_reordering(
     ranked: Vec<RankedCrewResult>,
     lambda: f32,
     diverse_top: usize,
     pool: usize,
+    history_anchors: &[RankedCrewResult],
 ) -> Vec<RankedCrewResult> {
     let n = ranked.len();
     if n <= 1 || diverse_top == 0 {
@@ -156,11 +165,16 @@ pub fn apply_novelty_mmr_reordering(
         let mut best_j: usize = remaining[0];
         let mut best_score = f64::NEG_INFINITY;
         for &j in &remaining {
-            let rel = ranked[j].win_rate;
-            let max_sim = selected
+            let rel = mmr_relevance_value(&ranked[j]);
+            let max_sim_selected = selected
                 .iter()
                 .map(|&i| material_jaccard_similarity(&ranked[j], &ranked[i]))
                 .fold(0.0_f64, f64::max);
+            let max_sim_anchors = history_anchors
+                .iter()
+                .map(|a| material_jaccard_similarity(&ranked[j], a))
+                .fold(0.0_f64, f64::max);
+            let max_sim = max_sim_selected.max(max_sim_anchors);
             let mmr = lam * rel - (1.0 - lam) * max_sim;
             if mmr > best_score || (mmr == best_score && j < best_j) {
                 best_score = mmr;
@@ -193,6 +207,7 @@ pub fn apply_novelty_mmr_if_configured(
     novelty_lambda: Option<f32>,
     novelty_diverse_top: Option<usize>,
     novelty_pool_limit: Option<usize>,
+    history_anchors: &[RankedCrewResult],
 ) -> Vec<RankedCrewResult> {
     let Some(lambda) = novelty_lambda else {
         return ranked;
@@ -210,7 +225,7 @@ pub fn apply_novelty_mmr_if_configured(
         .map(|p| p.max(diverse).min(n))
         .unwrap_or(pool_default)
         .min(n);
-    apply_novelty_mmr_reordering(ranked, lambda, diverse, pool)
+    apply_novelty_mmr_reordering(ranked, lambda, diverse, pool, history_anchors)
 }
 
 #[cfg(test)]
@@ -254,7 +269,7 @@ mod novelty_tests {
         let b = dummy("CapA", ["B1", "B2"], &["D1", "D2", "D4"], 0.6);
         let c = dummy("CapZ", ["X1", "X2"], &["Y1", "Y2", "Y3"], 0.6);
         let ranked = vec![a, b, c];
-        let out = apply_novelty_mmr_reordering(ranked, 0.65, 2, 3);
+        let out = apply_novelty_mmr_reordering(ranked, 0.65, 2, 3, &[]);
         assert_eq!(out[0].captain, "CapA");
         // Second slot should be c (more different from CapA/B1/B2 than b is), not near-duplicate b.
         assert_eq!(out[1].captain, "CapZ");
@@ -268,7 +283,7 @@ mod novelty_tests {
                 dummy("C", ["b1", "b2"], &["d1", "d2", "d3"], wr)
             })
             .collect();
-        let out = apply_novelty_mmr_reordering(crews, 1.0, 3, 4);
+        let out = apply_novelty_mmr_reordering(crews, 1.0, 3, 4, &[]);
         assert_eq!(out.len(), 4);
         assert!((out[0].win_rate - 0.9).abs() < 1e-9);
         assert!((out[1].win_rate - 0.89).abs() < 1e-9);
@@ -282,7 +297,7 @@ mod novelty_tests {
             dummy("B", ["b1", "b2"], &["d1", "d2", "d4"], 0.8),
         ];
         let expected: Vec<String> = ranked.iter().map(|r| r.captain.clone()).collect();
-        let out = apply_novelty_mmr_if_configured(ranked, None, Some(2), Some(64));
+        let out = apply_novelty_mmr_if_configured(ranked, None, Some(2), Some(64), &[]);
         assert_eq!(
             out.iter().map(|r| r.captain.as_str()).collect::<Vec<_>>(),
             expected.iter().map(|s| s.as_str()).collect::<Vec<_>>()
@@ -298,7 +313,7 @@ mod novelty_tests {
         let expected: Vec<String> = ranked.iter().map(|r| r.captain.clone()).collect();
         for bad_lambda in [0.0_f32, -0.5_f32, 1.000_000_1_f32] {
             let dup = ranked.clone();
-            let out = apply_novelty_mmr_reordering(dup, bad_lambda, 2, 2);
+            let out = apply_novelty_mmr_reordering(dup, bad_lambda, 2, 2, &[]);
             assert_eq!(
                 out.iter().map(|r| r.captain.as_str()).collect::<Vec<_>>(),
                 expected.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
@@ -314,7 +329,7 @@ mod novelty_tests {
             dummy("B", ["x1", "x2"], &["y1", "y2", "y3"], 0.8),
         ];
         let expected: Vec<String> = ranked.iter().map(|r| r.captain.clone()).collect();
-        let out = apply_novelty_mmr_reordering(ranked, 0.65, 0, 4);
+        let out = apply_novelty_mmr_reordering(ranked, 0.65, 0, 4, &[]);
         assert_eq!(
             out.iter().map(|r| r.captain.as_str()).collect::<Vec<_>>(),
             expected.iter().map(|s| s.as_str()).collect::<Vec<_>>()
@@ -331,7 +346,7 @@ mod novelty_tests {
         let p4 = dummy("P4", ["m1", "m2"], &["n1", "n2", "n3"], 0.50);
         let p5 = dummy("P5", ["m1", "m2"], &["n1", "n2", "n4"], 0.40);
         let ranked = vec![p0, p1, p2, p3, p4, p5];
-        let out = apply_novelty_mmr_reordering(ranked, 0.65, 2, 4);
+        let out = apply_novelty_mmr_reordering(ranked, 0.65, 2, 4, &[]);
         assert_eq!(out.len(), 6);
         // Anchor P0; second pick favors material diversity → P2 over near-duplicate P1.
         assert_eq!(out[0].captain, "P0");
@@ -352,9 +367,42 @@ mod novelty_tests {
         let near_c = dummy("Cap", ["B1", "B2"], &["D1", "D2", "D5"], 0.60);
         let far = dummy("CapZ", ["X1", "X2"], &["Y1", "Y2", "Y3"], 0.595);
         let ranked = vec![near_a, near_b, near_c, far];
-        let out = apply_novelty_mmr_reordering(ranked, 0.05, 2, 4);
+        let out = apply_novelty_mmr_reordering(ranked, 0.05, 2, 4, &[]);
         assert_eq!(out[0].captain, "Cap");
         // With tiny λ, redundancy penalty dominates: pick materially different second row.
         assert_eq!(out[1].captain, "CapZ");
+    }
+
+    /// Strength order by blended score: B (0.87) > C (~0.744) > A (0.74), but win_rate alone would rank A > C.
+    #[test]
+    fn mmr_relevance_uses_ranking_score_not_raw_win_rate_for_non_chain() {
+        let mut b = dummy("B", ["b1", "b2"], &["d1", "d2", "d3"], 0.85);
+        b.avg_hull_remaining = 0.95;
+        b.score.value = (0.85_f64 * 0.8 + 0.95 * 0.2) as f32;
+        let mut c = dummy("C", ["b1", "b2"], &["d1", "d2", "d4"], 0.88);
+        c.avg_hull_remaining = 0.2;
+        c.score.value = (0.88 * 0.8 + 0.2 * 0.2) as f32;
+        let mut a = dummy("A", ["x1", "x2"], &["y1", "y2", "y3"], 0.9);
+        a.avg_hull_remaining = 0.1;
+        a.score.value = (0.9 * 0.8 + 0.1 * 0.2) as f32;
+        let ranked = vec![b, c, a];
+        let out = apply_novelty_mmr_reordering(ranked, 1.0, 3, 3, &[]);
+        assert_eq!(out[0].captain, "B");
+        assert_eq!(out[1].captain, "C");
+        assert_eq!(out[2].captain, "A");
+    }
+
+    #[test]
+    fn mmr_history_anchor_penalizes_overlap_even_when_first_anchor_not_in_pool() {
+        // Historical winner overlaps crew P0 (same officers); current run has P0 strongest then near-dup P1 then diverse P2.
+        let anchor = dummy("P0", ["b1", "b2"], &["d1", "d2", "d3"], 0.99);
+        let p0 = dummy("P0", ["b1", "b2"], &["d1", "d2", "d3"], 0.95);
+        let p1 = dummy("P1", ["b1", "b2"], &["d1", "d2", "d4"], 0.94);
+        let p2 = dummy("P2", ["x1", "x2"], &["y1", "y2", "y3"], 0.93);
+        let ranked = vec![p0, p1, p2];
+        let out = apply_novelty_mmr_reordering(ranked, 0.65, 2, 3, &[anchor]);
+        assert_eq!(out[0].captain, "P0");
+        // Second slot prefers P2 over near-duplicate P1 because anchor overlaps P0/P1 lineage.
+        assert_eq!(out[1].captain, "P2");
     }
 }

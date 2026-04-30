@@ -268,6 +268,9 @@ pub struct ScenarioSummary {
     pub novelty_diverse_top: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub novelty_pool: Option<u32>,
+    /// When true, history-backed redundancy anchors were requested for novelty MMR (see `approximate_notes`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub novelty_history_anchors: Option<bool>,
     /// When true, heuristic seed crews were merged into warm-start for the main optimize path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fast_discovery: Option<bool>,
@@ -909,9 +912,36 @@ fn build_optimize_response(
     all_results: Vec<SimulationResult>,
     duration_ms: u64,
     meta: &OptimizeGatherMeta,
+    profile_id: Option<&str>,
 ) -> OptimizeResponse {
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     let seed = request.seed.unwrap_or(0);
+    let chain_grind = request
+        .chain
+        .as_ref()
+        .and_then(|c| chain_grind_params_from_request(c).ok().flatten());
+
+    let mut novelty_anchor_storage: Vec<RankedCrewResult> = Vec::new();
+    if request.novelty_lambda.is_some() && request.novelty_history_anchors == Some(true) {
+        if let Some(pid) = profile_id {
+            if let Some(ck) = request.optimize_cache_key.as_ref().and_then(|s| {
+                let t = s.trim();
+                if t.is_empty() {
+                    None
+                } else {
+                    Some(t.to_string())
+                }
+            }) {
+                novelty_anchor_storage = optimize_history::novelty_anchor_rows_for_profile_cache_key(
+                    pid,
+                    &ck,
+                    &chain_grind,
+                );
+            }
+        }
+    }
+    let novelty_history_anchors_slice: &[RankedCrewResult] = novelty_anchor_storage.as_slice();
+
     let mut ranked_results = rank_results(all_results);
     if request.novelty_lambda.is_some() {
         ranked_results = apply_novelty_mmr_if_configured(
@@ -919,6 +949,7 @@ fn build_optimize_response(
             request.novelty_lambda,
             request.novelty_diverse_top.map(|n| n as usize),
             request.novelty_pool.map(|n| n as usize),
+            novelty_history_anchors_slice,
         );
     }
 
@@ -998,10 +1029,19 @@ fn build_optimize_response(
         );
     }
     if request.novelty_lambda.is_some() {
-        approximate_notes.push(
-            "The leading recommendations use novelty-aware ordering (maximal marginal relevance on officer sets). Remaining rows stay in strength order."
-                .to_string(),
-        );
+        let mut s = "The leading recommendations use novelty-aware ordering (maximal marginal relevance on officer sets). Remaining rows stay in strength order.".to_string();
+        if request.novelty_history_anchors == Some(true) {
+            if !novelty_anchor_storage.is_empty() {
+                s.push_str(
+                    " Persisted optimize_history crews were used as extra redundancy anchors.",
+                );
+            } else {
+                s.push_str(
+                    " novelty_history_anchors was enabled but no matching history rows were loaded (missing cache key, profile, entry, or chain fingerprint mismatch).",
+                );
+            }
+        }
+        approximate_notes.push(s);
     }
 
     let mut warnings = Vec::new();
@@ -1068,6 +1108,7 @@ fn build_optimize_response(
             novelty_lambda: request.novelty_lambda,
             novelty_diverse_top: request.novelty_diverse_top,
             novelty_pool: request.novelty_pool,
+            novelty_history_anchors: request.novelty_history_anchors,
             fast_discovery: meta.fast_discovery.then_some(true),
             optimize_history_confirm_hits: (meta.optimize_history_confirm_hits > 0)
                 .then_some(meta.optimize_history_confirm_hits),
@@ -1108,7 +1149,7 @@ pub fn run_optimize(
         gather_optimize_simulation_results(registry, request, profile_id, &mut sink)
             .expect("sync optimize does not cancel");
     let duration_ms = start.elapsed().as_millis() as u64;
-    let response = build_optimize_response(request, all_results, duration_ms, &meta);
+    let response = build_optimize_response(request, all_results, duration_ms, &meta, profile_id);
     info!(
         duration_ms,
         recommendations = response.recommendations.len() as u64,
@@ -1343,7 +1384,13 @@ pub fn start_optimize_job(
         match gather {
             Ok((all_results, meta)) => {
                 let duration_ms = start.elapsed().as_millis() as u64;
-                let response = build_optimize_response(&request, all_results, duration_ms, &meta);
+                let response = build_optimize_response(
+                    &request,
+                    all_results,
+                    duration_ms,
+                    &meta,
+                    profile_owned.as_deref(),
+                );
                 info!(
                     job_id = %job_id_thread,
                     duration_ms,

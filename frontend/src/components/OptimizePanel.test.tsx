@@ -43,6 +43,8 @@ const baseProps = {
   noveltyDiverseTopText: "",
   onNoveltyDiverseTopTextChange: vi.fn(),
   noveltyPoolText: "",
+  noveltyHistoryAnchors: false,
+  onNoveltyHistoryAnchorsChange: () => {},
   onNoveltyPoolTextChange: vi.fn(),
   optimizeMustInclude: "",
   onOptimizeMustIncludeChange: vi.fn(),

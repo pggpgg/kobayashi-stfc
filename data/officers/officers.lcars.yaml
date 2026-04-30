@@ -112676,18 +112676,27 @@ officers:
   captain_ability:
     name: Logical
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: accuracy
       target: self
-      operator: null
-      value: 0.15
-      trigger: on_round_start
+      operator: multiply
+      value: null
+      trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values:
+        - 1.15
+        - 1.05
+        - 1.1
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
-      tag: accuracy:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -130587,18 +130596,29 @@ officers:
   bridge_ability:
     name: Target That Signal
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: accuracy
       target: self
-      operator: null
-      value: 0.4
+      operator: multiply
+      value: null
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 1.4
+        - 1.5
+        - 1.6
+        - 1.7
+        - 1.8
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
-      tag: accuracy:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null

@@ -1909,6 +1909,8 @@ export interface components {
             novelty_lambda?: number;
             novelty_diverse_top?: number;
             novelty_pool?: number;
+            /** @description When true with novelty_lambda, crews from optimize_history for this profile + optimize_cache_key (matching chain fingerprint) are treated as redundancy anchors for MMR; they are not added as recommendations. */
+            novelty_history_anchors?: boolean;
             /** @description Opaque client fingerprint (e.g. workspace warm-start key). When set and the request runs with an active profile, the server may load matching `optimize_history.json` rows for Monte Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors (reference crews from history only; same chain fingerprint as this request’s `chain`). */
             optimize_cache_key?: string;
         };

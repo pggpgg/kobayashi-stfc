@@ -53,6 +53,8 @@ interface OptimizePanelProps {
   onNoveltyDiverseTopTextChange: (value: string) => void;
   noveltyPoolText: string;
   onNoveltyPoolTextChange: (value: string) => void;
+  noveltyHistoryAnchors: boolean;
+  onNoveltyHistoryAnchorsChange: (value: boolean) => void;
   optimizeMustInclude: string;
   onOptimizeMustIncludeChange: (value: string) => void;
   optimizeExclude: string;
@@ -182,6 +184,8 @@ export default function OptimizePanel({
   onNoveltyDiverseTopTextChange,
   noveltyPoolText,
   onNoveltyPoolTextChange,
+  noveltyHistoryAnchors,
+  onNoveltyHistoryAnchorsChange,
   optimizeMustInclude,
   onOptimizeMustIncludeChange,
   optimizeExclude,
@@ -695,6 +699,18 @@ export default function OptimizePanel({
               color: "var(--text)",
             }}
           />
+        </label>
+        <label style={{ ...checkboxLabelStyle, marginTop: 10, opacity: noveltyLambdaText.trim() ? 1 : 0.45 }}>
+          <input
+            type="checkbox"
+            checked={noveltyHistoryAnchors}
+            disabled={!noveltyLambdaText.trim()}
+            onChange={(e) => onNoveltyHistoryAnchorsChange(e.target.checked)}
+            aria-label="Use optimize history crews as novelty anchors"
+          />
+          <span>
+            Treat persisted optimize_history top crews as redundancy anchors (active profile + warm-start cache key; same chain mode).
+          </span>
         </label>
         <p
           style={{

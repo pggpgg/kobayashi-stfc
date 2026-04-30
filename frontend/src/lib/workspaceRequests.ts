@@ -139,10 +139,12 @@ export function noveltyFieldsForOptimizeBody(args: {
   noveltyLambdaText: string;
   noveltyDiverseTopText: string;
   noveltyPoolText: string;
+  noveltyHistoryAnchors?: boolean;
 }): {
   novelty_lambda?: number;
   novelty_diverse_top?: number;
   novelty_pool?: number;
+  novelty_history_anchors?: boolean;
 } {
   const lamStr = args.noveltyLambdaText.trim();
   if (!lamStr) return {};
@@ -158,6 +160,7 @@ export function noveltyFieldsForOptimizeBody(args: {
     novelty_lambda: number;
     novelty_diverse_top?: number;
     novelty_pool?: number;
+    novelty_history_anchors?: boolean;
   } = { novelty_lambda };
 
   const dStr = args.noveltyDiverseTopText.trim();
@@ -173,6 +176,9 @@ export function noveltyFieldsForOptimizeBody(args: {
     if (Number.isFinite(p) && p >= 2 && p <= MAX_NOVELTY_POOL_UI) {
       out.novelty_pool = p;
     }
+  }
+  if (args.noveltyHistoryAnchors === true) {
+    out.novelty_history_anchors = true;
   }
   return out;
 }
@@ -214,6 +220,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   noveltyLambdaText?: string;
   noveltyDiverseTopText?: string;
   noveltyPoolText?: string;
+  /** Use persisted optimize_history crews as MMR redundancy anchors (profile + cache key + chain). */
+  noveltyHistoryAnchors?: boolean;
   /** Opaque key for server-side optimize history (`profiles/{id}/optimize_history.json`). */
   optimizeCacheKey?: string | null;
   /** Analytical prefilter: learned pair co-occurrence prior toggle (default true). */
@@ -278,6 +286,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
       noveltyLambdaText: args.noveltyLambdaText ?? "",
       noveltyDiverseTopText: args.noveltyDiverseTopText ?? "",
       noveltyPoolText: args.noveltyPoolText ?? "",
+      noveltyHistoryAnchors: args.noveltyHistoryAnchors,
     }),
     ...(args.optimizeCacheKey != null && args.optimizeCacheKey.trim() !== ""
       ? { optimize_cache_key: args.optimizeCacheKey.trim() }

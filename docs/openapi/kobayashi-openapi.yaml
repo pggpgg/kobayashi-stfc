@@ -1497,6 +1497,11 @@ components:
           type: integer
         novelty_pool:
           type: integer
+        novelty_history_anchors:
+          type: boolean
+          description: >
+            When true with novelty_lambda, crews from optimize_history for this profile + optimize_cache_key
+            (matching chain fingerprint) are treated as redundancy anchors for MMR; they are not added as recommendations.
         optimize_cache_key:
           type: string
           description: >

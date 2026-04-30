@@ -460,6 +460,28 @@ describe("noveltyFieldsForOptimizeBody", () => {
       }),
     ).toEqual({ novelty_lambda: 0.65 });
   });
+
+  it("includes novelty_history_anchors when true and lambda valid", () => {
+    expect(
+      noveltyFieldsForOptimizeBody({
+        noveltyLambdaText: "0.6",
+        noveltyDiverseTopText: "",
+        noveltyPoolText: "",
+        noveltyHistoryAnchors: true,
+      }),
+    ).toEqual({ novelty_lambda: 0.6, novelty_history_anchors: true });
+  });
+
+  it("omits novelty_history_anchors when false", () => {
+    expect(
+      noveltyFieldsForOptimizeBody({
+        noveltyLambdaText: "0.6",
+        noveltyDiverseTopText: "",
+        noveltyPoolText: "",
+        noveltyHistoryAnchors: false,
+      }),
+    ).toEqual({ novelty_lambda: 0.6 });
+  });
 });
 
 describe("buildOptimizeConstraintsFromForm", () => {

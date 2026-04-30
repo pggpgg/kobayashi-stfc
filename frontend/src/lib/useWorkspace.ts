@@ -156,6 +156,8 @@ export function useWorkspace() {
   const [noveltyLambdaText, setNoveltyLambdaText] = useState("");
   const [noveltyDiverseTopText, setNoveltyDiverseTopText] = useState("");
   const [noveltyPoolText, setNoveltyPoolText] = useState("");
+  /** MMR: penalize overlap with optimize_history top crews (profile + warm-start cache key). */
+  const [noveltyHistoryAnchors, setNoveltyHistoryAnchors] = useState(false);
 
   // Alliance / ship support buffs (UI + request payload; combat application TBD)
   const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
@@ -824,6 +826,12 @@ export function useWorkspace() {
           noveltyLambdaText,
           noveltyDiverseTopText,
           noveltyPoolText,
+          noveltyHistoryAnchors:
+            noveltyHistoryAnchors &&
+            activeProfileId != null &&
+            activeProfileId !== ""
+              ? true
+              : undefined,
           optimizeCacheKey:
             activeProfileId != null && activeProfileId !== ""
               ? optimizeWarmStartCacheKey()
@@ -997,6 +1005,8 @@ export function useWorkspace() {
     setNoveltyDiverseTopText,
     noveltyPoolText,
     setNoveltyPoolText,
+    noveltyHistoryAnchors,
+    setNoveltyHistoryAnchors,
     optimizeMustInclude,
     setOptimizeMustInclude,
     optimizeExclude,

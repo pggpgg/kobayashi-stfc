@@ -177,6 +177,9 @@ pub struct OptimizeRequest {
     pub novelty_diverse_top: Option<u32>,
     /// Strength-sorted pool size considered for MMR (optional; must be ≥ `novelty_diverse_top` when both are set).
     pub novelty_pool: Option<u32>,
+    /// When true with `novelty_lambda`, treat persisted `optimize_history` top crews as redundancy anchors for MMR (requires profile + `optimize_cache_key`).
+    #[serde(default)]
+    pub novelty_history_anchors: Option<bool>,
     /// Opaque fingerprint (same string as SPA `buildOptimizeWarmStartKey`) for `profiles/{id}/optimize_history.json`.
     #[serde(default)]
     pub optimize_cache_key: Option<String>,
@@ -401,8 +404,9 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         }
     }
 
-    let has_novelty_extras =
-        request.novelty_diverse_top.is_some() || request.novelty_pool.is_some();
+    let has_novelty_extras = request.novelty_diverse_top.is_some()
+        || request.novelty_pool.is_some()
+        || request.novelty_history_anchors == Some(true);
     if has_novelty_extras && request.novelty_lambda.is_none() {
         errors.push(ValidationIssue {
             field: "novelty_lambda",

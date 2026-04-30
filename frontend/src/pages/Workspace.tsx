@@ -235,6 +235,8 @@ export default function Workspace() {
           onNoveltyDiverseTopTextChange={ws.setNoveltyDiverseTopText}
           noveltyPoolText={ws.noveltyPoolText}
           onNoveltyPoolTextChange={ws.setNoveltyPoolText}
+          noveltyHistoryAnchors={ws.noveltyHistoryAnchors}
+          onNoveltyHistoryAnchorsChange={ws.setNoveltyHistoryAnchors}
           optimizeMustInclude={ws.optimizeMustInclude}
           onOptimizeMustIncludeChange={ws.setOptimizeMustInclude}
           optimizeExclude={ws.optimizeExclude}
