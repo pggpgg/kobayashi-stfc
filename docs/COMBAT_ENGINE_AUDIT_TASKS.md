@@ -106,7 +106,7 @@ code to change**, and **uncertainty remaining**.
   correctness against real STFC behavior should be verified with fight
   export comparison.
 
-- [ ] **5. Wire defender crew `ShotsBonus` in counter-fire**
+- [x] **5. Wire defender crew `ShotsBonus` in counter-fire**
 
   **What is wrong:** The counter-fire path in `engine.rs` hardcodes
   `effective_shots_for_weapon(def_base_shots, 0.0)` with the explicit comment:
@@ -126,7 +126,7 @@ code to change**, and **uncertainty remaining**.
   applies the same stacking rules to defender shots bonuses as attacker ones,
   which is almost certainly yes.
 
-- [ ] **6. Apply `CombatEnd` timing window effects to combat math**
+- [x] **6. Apply `CombatEnd` timing window effects to combat math**
 
   **What is wrong:** The `CombatEnd` timing window fires at the end of the
   fight loop, but its effects are only traced via `trace_collector`. No hull
