@@ -61,4 +61,4 @@ pub use stacking::{
     aggregate_contributions, compose_totals, CategoryTotals, StackCategory, StackContribution,
     StatStacking,
 };
-pub use types::{EnemyType, EnemyTypes};
+pub use types::{EnemyType, EnemyTypes, HostileMitigationParams};

@@ -8,10 +8,10 @@ pub use crate::combat::mitigation::{
 };
 pub use crate::combat::types::{
     effective_shots_for_weapon, round_half_even, AttackerStats, CombatEvent, Combatant,
-    DefenderStats, EventSource, OpponentFactionTag, ShipType, SimulationConfig,
-    SimulationResult, TraceCollector, TraceMode, WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON,
-    EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS,
-    MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
+    DefenderStats, EventSource, HostileMitigationParams, OpponentFactionTag, ShipType,
+    SimulationConfig, SimulationResult, TraceCollector, TraceMode, WeaponStats,
+    BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
+    MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -994,7 +994,20 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         ]),
                     });
 
-                    let mitigation_multiplier = (1.0 - defender.mitigation).max(0.0);
+                    let effective_mitigation =
+                        if let Some(params) = &defender.hostile_mitigation_params {
+                            mitigation_for_hostile(
+                                params.defender_stats,
+                                params.base_attacker_stats,
+                                params.ship_type,
+                                params.mystery_mitigation_factor,
+                                params.floor,
+                                params.ceiling,
+                            )
+                        } else {
+                            defender.mitigation
+                        };
+                    let mitigation_multiplier = (1.0 - effective_mitigation).max(0.0);
                     trace.record_if(|| CombatEvent {
                         event_type: "mitigation_calc".to_string(),
                         round_index,
@@ -1005,7 +1018,10 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         },
                         weapon_index: Some(weapon_index_u),
                         values: Map::from_iter([
-                            ("mitigation".to_string(), Value::from(defender.mitigation)),
+                            (
+                                "mitigation".to_string(),
+                                Value::from(round_f64(effective_mitigation)),
+                            ),
                             (
                                 "multiplier".to_string(),
                                 Value::from(round_f64(mitigation_multiplier)),

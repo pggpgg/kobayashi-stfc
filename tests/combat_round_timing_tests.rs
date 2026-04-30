@@ -36,6 +36,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -55,6 +56,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -149,6 +151,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
                 ..Default::default()
             },
         ],
+                hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -168,6 +171,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -243,6 +247,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
                 ..Default::default()
             },
         ],
+                hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "t".to_string(),
@@ -262,6 +267,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -310,6 +316,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".to_string(),
@@ -333,6 +340,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,

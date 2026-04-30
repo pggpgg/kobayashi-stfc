@@ -220,6 +220,7 @@ fn catalog_apex_research_round_trips_through_profile_combatant() {
         weapons: vec![],
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        hostile_mitigation_params: None,
     };
     let out = apply_profile_to_attacker(attacker, &profile);
     assert!(

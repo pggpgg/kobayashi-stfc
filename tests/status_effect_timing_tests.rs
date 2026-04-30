@@ -29,6 +29,7 @@ fn passive_attacker() -> Combatant {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     }
 }
 
@@ -51,6 +52,7 @@ fn huge_defender() -> Combatant {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     }
 }
 
@@ -240,6 +242,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -335,6 +338,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -416,6 +420,7 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let cfg = |seed: u64| SimulationConfig {
         rounds: duration + 2,
@@ -509,6 +514,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,

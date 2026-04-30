@@ -42,6 +42,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "cal_defender".to_string(),
@@ -61,6 +62,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 10,
@@ -116,6 +118,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".to_string(),
@@ -139,6 +142,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
             shots: Some(2),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 10,
@@ -265,6 +269,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "cal_defender".to_string(),
@@ -284,6 +289,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let with_kill_regen = CrewConfiguration {
         seats: vec![CrewSeatContext {

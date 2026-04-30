@@ -2058,6 +2058,7 @@ mod tests {
             weapons: vec![],
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
         };
         let out = apply_profile_to_attacker(attacker, &profile);
         assert!((out.apex_shred - 0.15).abs() < 1e-9, "expected 0.03 + 0.12");
@@ -2083,6 +2084,7 @@ mod tests {
             weapons: vec![],
             isolytic_damage: 2.0,
             isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
         };
         let mut profile = PlayerProfile::default();
         profile
@@ -2185,6 +2187,7 @@ mod tests {
             apex_shred: 0.0,
             isolytic_damage,
             isolytic_defense,
+            hostile_mitigation_params: None,
         }
     }
 
@@ -2230,6 +2233,7 @@ mod tests {
             weapons: vec![],
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
         };
         let mut profile = PlayerProfile::default();
         profile.bonuses.insert("apex_shred".to_string(), 0.15);
@@ -2259,6 +2263,7 @@ mod tests {
             apex_shred: 0.0,
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
         };
         let mut profile = PlayerProfile::default();
         profile.bonuses.insert("armor".to_string(), 0.04);
@@ -2364,6 +2369,7 @@ mod tests {
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
             weapons: vec![],
+            hostile_mitigation_params: None,
         };
         let out = apply_profile_to_attacker(attacker, &profile);
         // 100 × 1.1 × 1.1; 1000 × 1.2 × 1.2; 0.2 + 0.05 + 0.05

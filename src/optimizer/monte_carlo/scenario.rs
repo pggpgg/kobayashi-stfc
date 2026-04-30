@@ -6,8 +6,8 @@ use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, mitigation, mitigation_for_hostile,
     pierce_damage_through_bonus, Ability, AbilityClass, AbilityCondition, AbilityEffect,
     AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
-    EnemyTypes, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    EnemyTypes, HostileMitigationParams, ShipType, TimingWindow, MITIGATION_CEILING,
+    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingMode,
@@ -393,6 +393,7 @@ fn defender_combatant_from_hostile_record(
     defender_mitigation: f64,
     player_ship_type: ShipType,
     player_defender: DefenderStats,
+    hostile_mitigation_params: Option<HostileMitigationParams>,
 ) -> Combatant {
     let weapons = hostile_rec.weapons_for_counter_attack(player_ship_type, player_defender);
     let attack = if weapons.is_empty() {
@@ -425,6 +426,7 @@ fn defender_combatant_from_hostile_record(
         isolytic_damage: 0.0,
         isolytic_defense: hostile_rec.isolytic_defense,
         weapons,
+        hostile_mitigation_params,
     }
 }
 
@@ -671,6 +673,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                         )
                     })
                     .unwrap_or_else(|| ship_rec.to_weapons()),
+                hostile_mitigation_params: None,
             },
             &shared.profile,
         );
@@ -767,6 +770,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
             weapons: vec![],
+            hostile_mitigation_params: None,
         },
         &shared.profile,
     );
@@ -842,6 +846,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
+        hostile_mitigation_params: None,
     };
     apply_support_defender_static_if_pvp(shared, &mut defender);
     CombatSimulationInput {
@@ -1060,6 +1065,7 @@ pub(crate) fn scenario_to_combat_input(
                     profile,
                     &static_buffs,
                 ),
+                hostile_mitigation_params: None,
             },
             profile,
         );
@@ -1078,6 +1084,19 @@ pub(crate) fn scenario_to_combat_input(
             weapon_damage_profile_additive_pool_from_env(profile);
         let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
         let engagement_enemy_types = hostile_rec.engagement_enemy_types_for_combat();
+        let hostile_mitigation_params = HostileMitigationParams {
+            defender_stats: hostile_rec.to_defender_stats(),
+            base_attacker_stats: effective_attacker_stats_for_mitigation(
+                &ship_rec,
+                profile,
+                &static_buffs,
+                hostile_rec.ship_type_for_combat(),
+            ),
+            ship_type: hostile_rec.ship_type_for_combat(),
+            mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+            floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+            ceiling: hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+        };
         return CombatSimulationInput {
             attacker,
             defender: defender_combatant_from_hostile_record(
@@ -1086,6 +1105,7 @@ pub(crate) fn scenario_to_combat_input(
                 defender_mitigation,
                 ship_rec.ship_type(),
                 ship_rec.to_defender_stats(),
+                Some(hostile_mitigation_params),
             ),
             defender_crew,
             crew: CrewConfiguration { seats },
@@ -1124,6 +1144,7 @@ pub(crate) fn scenario_to_combat_input(
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
             weapons: vec![],
+            hostile_mitigation_params: None,
         },
         profile,
     );
@@ -1159,6 +1180,7 @@ pub(crate) fn scenario_to_combat_input(
             apex_shred: 0.0,
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
         },
         defender_crew,
         crew: CrewConfiguration { seats },
@@ -1472,6 +1494,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
             defender_mitigation,
             ship_r.ship_type(),
             ship_r.to_defender_stats(),
+            None,
         );
         let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
@@ -1802,6 +1825,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             defender_mitigation,
             ship_r.ship_type(),
             ship_r.to_defender_stats(),
+            None,
         );
         let rounds = 100u32.min(10u32.saturating_add(hostile_r.level));
         (
@@ -1912,6 +1936,7 @@ mod tests {
             0.0,
             ShipType::Battleship,
             DefenderStats::default(),
+            None,
         );
         assert!((d.crit_chance - 0.27).abs() < 1e-12);
         assert!((d.crit_multiplier - 2.4).abs() < 1e-12);
@@ -1940,6 +1965,7 @@ mod tests {
             0.0,
             ShipType::Battleship,
             DefenderStats::default(),
+            None,
         );
         assert_eq!(d.weapons.len(), 1);
         assert!((d.weapon_crit_chance(0) - 0.5).abs() < 1e-12);
@@ -1963,6 +1989,7 @@ mod tests {
             0.0,
             ShipType::Battleship,
             DefenderStats::default(),
+            None,
         );
         assert!((d.crit_chance - 1.0).abs() < 1e-12);
     }
@@ -1982,6 +2009,7 @@ mod tests {
             0.5,
             ShipType::Explorer,
             DefenderStats::default(),
+            None,
         );
         assert!(!d.weapons.is_empty());
         assert!(d.pierce > 0.0, "counter pierce-through should be positive");
@@ -2646,6 +2674,7 @@ mod tests {
             apex_shred: 0.0,
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
         };
 
         apply_profile_player_apex_barrier_tal_gate(

@@ -353,6 +353,19 @@ pub struct WeaponStats {
     pub proc_multiplier: Option<f64>,
 }
 
+/// Parameters for dynamic hostile mitigation computation at combat time.
+/// When present on a [`Combatant`], the engine calls [`crate::combat::mitigation::mitigation_for_hostile`]
+/// per-shot with morale-adjusted attacker stats instead of using the pre-computed `mitigation` scalar.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HostileMitigationParams {
+    pub defender_stats: DefenderStats,
+    pub base_attacker_stats: AttackerStats,
+    pub ship_type: ShipType,
+    pub mystery_mitigation_factor: f64,
+    pub floor: f64,
+    pub ceiling: f64,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Combatant {
     pub id: String,
@@ -365,27 +378,24 @@ pub struct Combatant {
     pub proc_multiplier: f64,
     pub end_of_round_damage: f64,
     pub hull_health: f64,
-    /// Maximum shield hit points. When defending, damage is split between shield and hull by shield_mitigation until shields are depleted.
     #[serde(default)]
     pub shield_health: f64,
-    /// Fraction of incoming (unmitigated, post-apex) damage that goes to shield; rest goes to hull. Base 0.8 (80% shields, 20% hull). When shields are depleted, all damage goes to hull.
     #[serde(default = "default_shield_mitigation")]
     pub shield_mitigation: f64,
-    /// Defender stat: reduces damage after other mitigation. Effective barrier is divided by (1 + attacker apex_shred).
     #[serde(default)]
     pub apex_barrier: f64,
-    /// Attacker stat: reduces defender's effective apex_barrier. Stored as decimal (1.0 = 100%).
     #[serde(default)]
     pub apex_shred: f64,
-    /// Attacker: isolytic damage bonus (decimal, e.g. 0.15 = 15% of regular damage as isolytic). Used in isolytic_damage().
     #[serde(default)]
     pub isolytic_damage: f64,
-    /// Defender: multiplicative isolytic mitigation. Isolytic taken = Isolytic Damage / (1 + isolytic_defense). Applied after isolytic_damage().
     #[serde(default)]
     pub isolytic_defense: f64,
-    /// Per-weapon attack values for sub-round resolution. If empty, one weapon with scalar `attack` is used (backward compat).
     #[serde(default)]
     pub weapons: Vec<WeaponStats>,
+    /// When set, enables per-shot dynamic mitigation using `mitigation_for_hostile`.
+    /// Morale piercing bonus and MitigationAdditive effects are applied at combat time.
+    #[serde(skip)]
+    pub hostile_mitigation_params: Option<HostileMitigationParams>,
 }
 
 fn default_shield_mitigation() -> f64 {

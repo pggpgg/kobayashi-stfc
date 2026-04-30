@@ -63,6 +63,7 @@ fn command_center_level_80_officer_attack_multiplies_when_weapon_damage_absent()
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let out = apply_profile_to_attacker(attacker, &profile);

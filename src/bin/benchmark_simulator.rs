@@ -35,6 +35,7 @@ fn main() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -54,6 +55,7 @@ fn main() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let rounds_per_combat = 100u32;
     let config = SimulationConfig {

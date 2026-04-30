@@ -205,6 +205,7 @@ impl FixtureCombatant {
             isolytic_damage: self.isolytic_damage,
             isolytic_defense: self.isolytic_defense,
             weapons,
+            hostile_mitigation_params: None,
         }
     }
 }

@@ -349,6 +349,7 @@ pub fn export_to_attacker(
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     }
 }
 
@@ -383,6 +384,7 @@ pub fn export_to_defender(
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     }
 }
 

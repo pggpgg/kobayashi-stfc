@@ -72,6 +72,7 @@ fn defender_counter_respects_weapon_base_shots() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let hostile_one = Combatant {
         id: "h1".into(),
@@ -95,6 +96,7 @@ fn defender_counter_respects_weapon_base_shots() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let mut hostile_three = hostile_one.clone();
     hostile_three.id = "h3".into();
@@ -150,6 +152,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
             shots: Some(3),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let hostile = Combatant {
         id: "hostile".into(),
@@ -169,6 +172,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let res = simulate_combat(&player, &hostile, &cfg, &crew);
     let rolls: Vec<&CombatEvent> = res
@@ -386,6 +390,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "def".to_string(),
@@ -409,6 +414,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let attacker_crew = CrewConfiguration { seats: vec![] };
     let defender_crew = CrewConfiguration {
@@ -502,6 +508,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "def".to_string(),
@@ -525,6 +532,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let attacker_crew = CrewConfiguration { seats: vec![] };
     let defender_crew_sb = CrewConfiguration {
@@ -625,6 +633,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
                 ..Default::default()
             },
         ],
+                hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "npc".to_string(),
@@ -648,6 +657,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let cfg = SimulationConfig {
         rounds: 1,
@@ -791,6 +801,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender_no_barrier = Combatant {
         id: "defender".to_string(),
@@ -810,6 +821,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender_10k_barrier = Combatant {
         id: "defender".to_string(),
@@ -829,6 +841,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -869,6 +882,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let with_shred = simulate_combat(
         &attacker_100_pct_shred,
@@ -902,6 +916,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     // Defender with 500 SHP, 80% shield mitigation â†’ 80% of damage to shield, 20% to hull.
     let defender = Combatant {
@@ -922,6 +937,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -963,6 +979,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     // Defender has only 100 SHP; 80% of 1000 = 800 to shield â†’ 100 absorbed, 700 overflow to hull. 20% = 200 to hull. Total hull = 900.
     let defender = Combatant {
@@ -983,6 +1000,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1023,6 +1041,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1042,6 +1061,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 3,
@@ -1083,6 +1103,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1102,6 +1123,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1170,6 +1192,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender_no_bonus = Combatant {
         id: "defender".to_string(),
@@ -1189,6 +1212,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1258,6 +1282,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1277,6 +1302,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1341,6 +1367,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1360,6 +1387,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1438,6 +1466,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1457,6 +1486,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1523,6 +1553,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1542,6 +1573,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1607,6 +1639,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1626,6 +1659,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1695,6 +1729,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1714,6 +1749,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew_empty = CrewConfiguration { seats: vec![] };
     let cfg = SimulationConfig {
@@ -1806,6 +1842,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1825,6 +1862,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -1910,6 +1948,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1929,6 +1968,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -2015,6 +2055,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2034,6 +2075,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -2121,6 +2163,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2140,6 +2183,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -2254,6 +2298,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2273,6 +2318,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 5,
@@ -2374,6 +2420,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2397,6 +2444,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 3,
@@ -2466,6 +2514,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2489,6 +2538,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2559,6 +2609,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -2578,6 +2629,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let no_morale = CrewConfiguration::default();
@@ -2645,6 +2697,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2664,6 +2717,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew_with_morale_chance = |chance: f64| CrewConfiguration {
@@ -2748,6 +2802,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -2767,6 +2822,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let baseline_crew = CrewConfiguration {
@@ -2881,6 +2937,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2900,6 +2957,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew = CrewConfiguration {
@@ -2974,6 +3032,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -2993,6 +3052,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew = CrewConfiguration {
@@ -3073,6 +3133,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -3092,6 +3153,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew = CrewConfiguration {
@@ -3166,6 +3228,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -3185,6 +3248,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew = CrewConfiguration {
@@ -3246,6 +3310,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -3265,6 +3330,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew = CrewConfiguration {
@@ -3339,6 +3405,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -3358,6 +3425,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 2,
@@ -3571,6 +3639,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -3590,6 +3659,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -3680,6 +3750,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -3699,6 +3770,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -3771,6 +3843,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -3790,6 +3863,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -3885,6 +3959,7 @@ fn burning_deals_one_percent_hull_per_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -3904,6 +3979,7 @@ fn burning_deals_one_percent_hull_per_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let burning_crew = CrewConfiguration {
@@ -4013,6 +4089,7 @@ fn burning_triggers_on_combat_begin() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4032,6 +4109,7 @@ fn burning_triggers_on_combat_begin() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -4074,6 +4152,7 @@ fn burning_triggers_on_defense_phase_per_shot() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4093,6 +4172,7 @@ fn burning_triggers_on_defense_phase_per_shot() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -4135,6 +4215,7 @@ fn burning_triggers_on_round_end_before_tick() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4154,6 +4235,7 @@ fn burning_triggers_on_round_end_before_tick() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -4203,6 +4285,7 @@ fn burning_triggers_on_shield_break() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4222,6 +4305,7 @@ fn burning_triggers_on_shield_break() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -4264,6 +4348,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4283,6 +4368,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     // `TimingWindow::HullBreach` runs when a hull-breach **state** begins (HullBreach proc), not when hull HP crosses a fraction.
     let crew = CrewConfiguration {
@@ -4365,6 +4451,7 @@ fn burning_triggers_on_receive_damage_hull() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4384,6 +4471,7 @@ fn burning_triggers_on_receive_damage_hull() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -4426,6 +4514,7 @@ fn burning_triggers_on_kill() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4445,6 +4534,7 @@ fn burning_triggers_on_kill() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -4487,6 +4577,7 @@ fn burning_triggers_on_after_subround() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".to_string(),
@@ -4506,6 +4597,7 @@ fn burning_triggers_on_after_subround() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,
@@ -4548,6 +4640,7 @@ fn emits_ability_activation_for_each_timing_window() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "swarm".to_string(),
@@ -4567,6 +4660,7 @@ fn emits_ability_activation_for_each_timing_window() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew = CrewConfiguration {
@@ -4712,6 +4806,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -4731,6 +4826,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let two_ten_percent = CrewConfiguration {
@@ -4823,6 +4919,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -4842,6 +4939,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let decay_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -4901,6 +4999,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -4920,6 +5019,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let accumulate_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -4979,6 +5079,7 @@ fn combat_rounds_are_capped_at_100() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -4998,6 +5099,7 @@ fn combat_rounds_are_capped_at_100() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let result = simulate_combat(
@@ -5043,6 +5145,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5062,6 +5165,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew_no_regen = CrewConfiguration::default();
     let crew_with_regen = CrewConfiguration {
@@ -5162,6 +5266,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5181,6 +5286,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let result = simulate_combat(
@@ -5234,6 +5340,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let attacker_no_iso = Combatant {
         id: "attacker".to_string(),
@@ -5253,6 +5360,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let mut attacker_with_iso = attacker_no_iso.clone();
     attacker_with_iso.isolytic_damage = 0.2;
@@ -5305,6 +5413,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let attacker = Combatant {
         id: "attacker".to_string(),
@@ -5324,6 +5433,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -5383,6 +5493,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let attacker = Combatant {
         id: "attacker".to_string(),
@@ -5402,6 +5513,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -5503,6 +5615,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
                 ..Default::default()
             },
         ],
+                hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5522,6 +5635,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -5592,6 +5706,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
                 ..Default::default()
             },
         ],
+                hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5611,6 +5726,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,
@@ -5672,6 +5788,7 @@ fn shots_bonus_increases_damage() {
             shots: None,
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5691,6 +5808,7 @@ fn shots_bonus_increases_damage() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 3,
@@ -5757,6 +5875,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5776,6 +5895,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![
@@ -5861,6 +5981,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5880,6 +6001,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew_with_regen = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -5966,6 +6088,7 @@ fn combat_end_window_respects_condition_filtering() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5985,6 +6108,7 @@ fn combat_end_window_respects_condition_filtering() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![
@@ -6079,6 +6203,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -6098,6 +6223,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let crew = CrewConfiguration {
@@ -6219,6 +6345,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".into(),
@@ -6238,6 +6365,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6293,6 +6421,7 @@ fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".into(),
@@ -6312,6 +6441,7 @@ fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6372,6 +6502,7 @@ fn defender_round_start_hull_regen_heals_defender() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".into(),
@@ -6391,6 +6522,7 @@ fn defender_round_start_hull_regen_heals_defender() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let defender_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6481,6 +6613,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".into(),
@@ -6504,6 +6637,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let hugh_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6593,6 +6727,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let attacker = Combatant {
         id: "player".to_string(),
@@ -6616,6 +6751,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let iso_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6695,6 +6831,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let attacker = Combatant {
         id: "player".to_string(),
@@ -6718,6 +6855,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
             shots: Some(1),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let heal_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {

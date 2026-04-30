@@ -91,6 +91,7 @@ mod tests {
                 isolytic_damage: 0.0,
                 isolytic_defense: 0.0,
                 weapons: vec![],
+                hostile_mitigation_params: None,
             },
             defender: Combatant {
                 id: "d".to_string(),
@@ -110,6 +111,7 @@ mod tests {
                 isolytic_damage: 0.0,
                 isolytic_defense: 0.0,
                 weapons: vec![],
+                hostile_mitigation_params: None,
             },
             defender_crew: CrewConfiguration { seats: vec![] },
             crew: CrewConfiguration { seats: vec![] },

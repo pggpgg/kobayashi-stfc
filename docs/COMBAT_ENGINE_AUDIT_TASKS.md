@@ -80,7 +80,7 @@ code to change**, and **uncertainty remaining**.
 
 ## Phase 2 — Correctness fixes
 
-- [ ] **4. Wire the hostile mitigation formula into the in-shot damage loop**
+- [x] **4. Wire the hostile mitigation formula into the in-shot damage loop**
 
   **What is wrong:** The `mitigation.rs` formulas (component mitigation,
   mystery factor, [0.16, 0.72] hostile clamps) are computed once at

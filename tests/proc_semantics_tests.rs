@@ -29,6 +29,7 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
             shots: Some(3),
             ..Default::default()
         }],
+            hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "d".into(),
@@ -48,6 +49,7 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let r = simulate_combat(
         &attacker,

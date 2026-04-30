@@ -329,6 +329,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
             weapons: vec![],
+            hostile_mitigation_params: None,
         },
         &player_profile,
     );
@@ -350,6 +351,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: parsed.rounds,

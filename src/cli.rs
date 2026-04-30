@@ -232,6 +232,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             isolytic_damage: 0.0,
             isolytic_defense: 0.0,
             weapons: vec![],
+            hostile_mitigation_params: None,
         },
         &player_profile,
     );
@@ -253,6 +254,7 @@ fn handle_simulate(args: &[String]) -> i32 {
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
         weapons: vec![],
+        hostile_mitigation_params: None,
     };
 
     let result = simulate_combat_with_defender_faction(
