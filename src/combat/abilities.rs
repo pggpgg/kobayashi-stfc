@@ -106,6 +106,8 @@ pub enum AbilityEffect {
     IsolyticCascadeDamageBonus(f64),
     /// Officer-granted shield mitigation; additive to base (clamped 0..1).
     ShieldMitigationBonus(f64),
+    /// Officer-granted accuracy bonus; additive fraction (e.g. 0.05 = +5% accuracy). Applied to attacker accuracy for mitigation calculations.
+    AccuracyBonus(f64),
     /// Additive fraction merged into the **player** ship’s mitigation when the hostile returns fire
     /// (counter-attack path). Used as an LCARS proxy for `armor` / “all defenses” rows that are not
     /// folded into [`Combatant::mitigation`] at scenario build. Values are **mitigation fractions**

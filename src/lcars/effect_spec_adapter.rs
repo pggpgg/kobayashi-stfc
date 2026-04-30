@@ -8,6 +8,7 @@ use crate::combat::effect_spec_compile::{
     OFFICER_SPEC_ATTR_LCARS_OP, OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE,
     OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY,
 };
+use crate::combat::TimingWindow;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
     AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource,
@@ -486,9 +487,9 @@ pub fn lcars_effect_to_combat_effect_spec(
 
     let timing = effect_trigger_timing(effect)?;
 
-    // Accuracy is folded into combat-begin static buffs; skip dynamic spec generation
-    // for both native stat_modify and mapped tags that resolve to accuracy.
-    if effective_stat.eq_ignore_ascii_case("accuracy") {
+    // Accuracy at combat-begin is folded into static buffs; skip dynamic spec.
+    // Non-combat-begin accuracy (e.g. round-start) should produce a dynamic spec.
+    if effective_stat.eq_ignore_ascii_case("accuracy") && timing == TimingWindow::CombatBegin {
         return None;
     }
 

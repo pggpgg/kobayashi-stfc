@@ -440,30 +440,6 @@ pub fn lcars_effect_coverage(
             };
         }
     }
-    if effect.effect_type == "stat_modify" || effect.effect_type == "tag" {
-        let stat = if effect.effect_type == "tag" {
-            let tag_str = effect.tag.as_deref().unwrap_or("");
-            crate::lcars::combat_tag_to_stat(tag_str).unwrap_or("")
-        } else {
-            effect.stat.as_deref().unwrap_or("").trim()
-        };
-        if stat.eq_ignore_ascii_case("accuracy") {
-            let pathway = if effect_trigger_timing(effect) == Some(TimingWindow::CombatBegin) {
-                "combat_begin_accuracy_static"
-            } else {
-                "accuracy_non_combat_begin_skipped"
-            };
-            return LcarsEffectCoverage {
-                tier: if pathway.starts_with("combat_begin") {
-                    MechanicCoverageTier::Implemented
-                } else {
-                    MechanicCoverageTier::Partial
-                },
-                pathway: pathway.to_string(),
-            };
-        }
-    }
-
     if effect_trigger_timing(effect).is_none() {
         let tr = effect
             .trigger

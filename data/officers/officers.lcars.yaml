@@ -12516,7 +12516,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -12974,7 +12974,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -12991,7 +12991,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cptmaneuvereffect:non_combat
+      tag: cptmaneuvereffect:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -13447,7 +13447,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpdistance:non_combat
+      tag: warpdistance:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -16531,7 +16531,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: repaircostspost:non_combat
+      tag: repaircostspost:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -17600,7 +17600,7 @@ officers:
         chance_values: null
       condition:
         type: stat_below
-        stat: hull_hp
+        stat: attacker_hull_hp
         threshold_pct: 0.6
         min: null
         max: null
@@ -17708,7 +17708,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:non_combat
+      tag: allreloadspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -18199,7 +18199,7 @@ officers:
     name: Know Your Enemy
     effects:
     - type: stat_modify
-      stat: armor
+      stat: shield_mitigation
       target: enemy
       operator: add
       value: null
@@ -19884,7 +19884,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: jumpandtowcosteff:non_combat
+      tag: jumpandtowcosteff:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -20314,7 +20314,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -20849,7 +20849,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -21306,7 +21306,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatpverewards:non_combat
+      tag: combatpverewards:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -22383,7 +22383,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: trelliumrewards:non_combat
+      tag: trelliumrewards:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -22400,7 +22400,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   stats:
@@ -22915,7 +22915,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: combatxpreward:non_combat
+      tag: combatxpreward:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -25523,7 +25523,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -26503,7 +26503,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: addrandomstate:non_combat
+      tag: addrandomstate:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -27007,7 +27007,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -27454,7 +27454,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -28383,7 +28383,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -29920,7 +29920,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatpverewards:non_combat
+      tag: combatpverewards:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -30438,7 +30438,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -33072,7 +33072,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -33529,7 +33529,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatpverewards:non_combat
+      tag: combatpverewards:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -35011,7 +35011,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatparsteelreward:non_combat
+      tag: combatparsteelreward:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -37119,7 +37119,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: actianvenomandnanoprobeloot:non_combat
+      tag: actianvenomandnanoprobeloot:unmapped
       accumulate: null
       decay: null
   stats:
@@ -37548,7 +37548,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -37565,7 +37565,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpdistance:non_combat
+      tag: warpdistance:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -38533,7 +38533,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatxpreward:non_combat
+      tag: combatxpreward:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -40019,18 +40019,30 @@ officers:
   bridge_ability:
     name: Wartime Chancellor
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: shield_hp
       target: self
-      operator: null
-      value: 2.0
+      operator: multiply
+      value: null
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values:
+        - 2.0
+        - 5.0
+        - 8.0
+        - 11.0
+        - 14.0
+        chance_values: null
+        officer_stat: health
       condition: null
       chance: null
       multiplier: null
-      tag: shields:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -41033,7 +41045,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -41065,7 +41077,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: combatxpreward:non_combat
+      tag: combatxpreward:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -43080,7 +43092,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -43566,7 +43578,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: combatxpreward:non_combat
+      tag: combatxpreward:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -44942,7 +44954,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -49342,7 +49354,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: combatpverewards:non_combat
+      tag: combatpverewards:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -50906,7 +50918,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -51353,7 +51365,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: xindihostileloot:non_combat
+      tag: xindihostileloot:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -56388,7 +56400,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -56846,7 +56858,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -57876,7 +57888,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: repairtime:non_combat
+      tag: repairtime:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -58394,7 +58406,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: cptmaneuvereffect:non_combat
+      tag: cptmaneuvereffect:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -58426,7 +58438,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -59339,7 +59351,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -59827,7 +59839,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:non_combat
+      tag: allreloadspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -59844,7 +59856,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -60274,7 +60286,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -60764,7 +60776,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: omega13cooldown:non_combat
+      tag: omega13cooldown:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -61322,7 +61334,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: combatxpreward:non_combat
+      tag: combatxpreward:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -62807,7 +62819,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: repairtime:non_combat
+      tag: repairtime:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -63792,7 +63804,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: skillcloakingcooldown:non_combat
+      tag: skillcloakingcooldown:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -67796,7 +67808,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: repairtime:non_combat
+      tag: repairtime:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -67813,7 +67825,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -69660,7 +69672,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -70179,7 +70191,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   stats:
@@ -75100,7 +75112,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -76657,7 +76669,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: jumpandtowcosteff:non_combat
+      tag: jumpandtowcosteff:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -76689,7 +76701,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: skillcuttingbeampvpbasedamagepercentage:non_combat
+      tag: skillcuttingbeampvpbasedamagepercentage:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -76706,7 +76718,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: repaircostspost:non_combat
+      tag: repaircostspost:unmapped
       accumulate: null
       decay: null
   stats:
@@ -77648,7 +77660,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: voyagerasace:non_combat
+      tag: voyagerasace:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -79180,7 +79192,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -79197,7 +79209,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cptmaneuvereffect:non_combat
+      tag: cptmaneuvereffect:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -79627,7 +79639,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -83146,7 +83158,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -84510,7 +84522,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -84527,7 +84539,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -85469,7 +85481,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -85942,7 +85954,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: jumpandtowcosteff:non_combat
+      tag: jumpandtowcosteff:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -86463,7 +86475,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   stats:
@@ -86996,7 +87008,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: skillcuttingbeamabilitycost:non_combat
+      tag: skillcuttingbeamabilitycost:unmapped
       accumulate: null
       decay: null
   stats:
@@ -88041,7 +88053,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: brokenshippartsloot:non_combat
+      tag: brokenshippartsloot:unmapped
       accumulate: null
       decay: null
   stats:
@@ -88471,7 +88483,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: miningreward:non_combat
+      tag: miningreward:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -90014,7 +90026,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatxpreward:non_combat
+      tag: combatxpreward:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -90504,7 +90516,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allloadspeed:non_combat
+      tag: allloadspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -91568,7 +91580,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -93136,7 +93148,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   stats:
@@ -94062,7 +94074,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -94581,7 +94593,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allloadspeed:non_combat
+      tag: allloadspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -97741,7 +97753,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: repairtime:non_combat
+      tag: repairtime:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -99351,21 +99363,6 @@ officers:
             enemy_type: null
             battle_types: null
             conditions: null
-        - type: round_range
-          stat: null
-          threshold_pct: null
-          min: 1
-          max: 4
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -99884,7 +99881,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -101959,7 +101956,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combattritaniumreward:non_combat
+      tag: combattritaniumreward:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -102463,7 +102460,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -103956,7 +103953,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   stats:
@@ -104964,7 +104961,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -105999,7 +105996,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: gornhostilevolatileloot:non_combat
+      tag: gornhostilevolatileloot:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -110009,7 +110006,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: miningreward:non_combat
+      tag: miningreward:unmapped
       accumulate: null
       decay: null
   stats:
@@ -111142,7 +111139,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -114878,7 +114875,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:non_combat
+      tag: allreloadspeed:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -115353,7 +115350,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -116946,7 +116943,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatxpreward:non_combat
+      tag: combatxpreward:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -117510,7 +117507,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -117973,7 +117970,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -120017,7 +120014,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatpverewards:non_combat
+      tag: combatpverewards:unmapped
       accumulate: null
       decay: null
   stats:
@@ -120503,7 +120500,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: addrandomstate:non_combat
+      tag: addrandomstate:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -120950,7 +120947,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: cargoprotection:non_combat
+      tag: cargoprotection:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -123511,7 +123508,7 @@ officers:
     name: The Looking Glass
     effects:
     - type: stat_modify
-      stat: armor
+      stat: shield_mitigation
       target: enemy
       operator: add
       value: null
@@ -123565,7 +123562,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   stats:
@@ -125007,7 +125004,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: impulsespeed:non_combat
+      tag: impulsespeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -126141,7 +126138,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -126586,7 +126583,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: warpdistance:non_combat
+      tag: warpdistance:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -126603,7 +126600,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: repaircostspost:non_combat
+      tag: repaircostspost:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -128708,7 +128705,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: hirogenrelicandbiotoxinloot:non_combat
+      tag: hirogenrelicandbiotoxinloot:unmapped
       accumulate: null
       decay: null
   stats:
@@ -129138,7 +129135,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: artifacttokenloot:non_combat
+      tag: artifacttokenloot:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -130605,7 +130602,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:non_combat
+      tag: allreloadspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -131620,7 +131617,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: combatdilithiumreward:non_combat
+      tag: combatdilithiumreward:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -132164,7 +132161,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:non_combat
+      tag: officerstathealth:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -134185,7 +134182,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:non_combat
+      tag: allreloadspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -134730,7 +134727,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:non_combat
+      tag: officerstatall:unmapped
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -136261,7 +136258,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: wokaugmentalllootrewards:non_combat
+      tag: wokaugmentalllootrewards:unmapped
       accumulate: null
       decay: null
   below_decks_ability:
@@ -138923,7 +138920,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: warpspeed:non_combat
+      tag: warpspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -141927,7 +141924,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: addrandomstate:non_combat
+      tag: addrandomstate:unmapped
       accumulate: null
       decay: null
   below_decks_ability:

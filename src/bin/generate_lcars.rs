@@ -1080,7 +1080,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("armor".into(), "add".into(), val)
         }
         "AllDefenses" => {
-            if op.eq_ignore_ascii_case("MultiplySub") {
+            if op.eq_ignore_ascii_case("MultiplySub")
+                || op.eq_ignore_ascii_case("MultiplyBaseSub")
+            {
                 MappedEffect::StatModify("shield_mitigation".into(), "add".into(), -val)
             } else {
                 MappedEffect::StatModify("armor".into(), "add".into(), val)
@@ -1090,6 +1092,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("shield_pierce".into(), "add".into(), val)
         }
         "ShieldHPMax" => MappedEffect::StatModify("shield_hp".into(), "multiply".into(), 1.0 + val),
+        "Shields" => MappedEffect::StatModify("shield_hp".into(), "multiply".into(), val),
         "HullHPMax" => MappedEffect::StatModify("hull_hp".into(), "multiply".into(), 1.0 + val),
         "ApexShred" => MappedEffect::StatModify("apex_shred".into(), "add".into(), val),
         "ApexBarrier" => MappedEffect::StatModify("apex_barrier".into(), "add".into(), val),

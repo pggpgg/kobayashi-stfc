@@ -568,9 +568,6 @@ pub fn compile_officer_combat_spec(
             ))
         }
         AbilityModifierSpec::Armor => {
-            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
-                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
-            }
             let v = scalar_fraction(
                 spec.value
                     .as_ref()
@@ -595,9 +592,6 @@ pub fn compile_officer_combat_spec(
             ))
         }
         AbilityModifierSpec::ShotsBonus => {
-            if !matches!(timing, TimingWindow::RoundStart | TimingWindow::CombatBegin) {
-                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
-            }
             let v = scalar_fraction(
                 spec.value
                     .as_ref()
@@ -682,6 +676,107 @@ pub fn compile_officer_combat_spec(
                     chance,
                     duration_rounds,
                 },
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::Dodge => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
+                "set" => {
+                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                        modifier: spec.modifier,
+                        operation: spec.operation,
+                    });
+                }
+                _ => v,
+            };
+            Ok((
+                timing,
+                AbilityEffect::MitigationAdditive(
+                    mitigation_fraction_from_lcars_armor_value(add),
+                ),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::ShieldHp => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => {
+                    let bonus = v - 1.0;
+                    if bonus.is_finite() && bonus > 0.0 {
+                        Ok((
+                            timing,
+                            AbilityEffect::ShieldRegenMaxFraction(bonus),
+                            compiled_condition.clone(),
+                        ))
+                    } else {
+                        Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                            modifier: spec.modifier,
+                            operation: spec.operation,
+                        })
+                    }
+                }
+                _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                }),
+            }
+        }
+        AbilityModifierSpec::HullHp => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => {
+                    let bonus = v - 1.0;
+                    if bonus.is_finite() && bonus > 0.0 {
+                        Ok((
+                            timing,
+                            AbilityEffect::HullRegenMaxFraction(bonus),
+                            compiled_condition.clone(),
+                        ))
+                    } else {
+                        Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                            modifier: spec.modifier,
+                            operation: spec.operation,
+                        })
+                    }
+                }
+                _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                }),
+            }
+        }
+        AbilityModifierSpec::Accuracy => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let add = match op {
+                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" => -v,
+                _ => v,
+            };
+            Ok((
+                timing,
+                AbilityEffect::AccuracyBonus(add),
                 compiled_condition.clone(),
             ))
         }

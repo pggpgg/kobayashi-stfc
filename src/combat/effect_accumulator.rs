@@ -878,6 +878,7 @@ impl EffectAccumulator {
                         }
                     }
                 }
+                AbilityEffect::AccuracyBonus(_) => {}
             },
             TimingWindow::AttackPhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -996,6 +997,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
+                AbilityEffect::AccuracyBonus(_) => {}
             },
             // Same stacking rules as AttackPhase; evaluated once per sub-round end for carry into later weapons.
             TimingWindow::AfterSubround => match effect {
@@ -1115,6 +1117,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
+                AbilityEffect::AccuracyBonus(_) => {}
             },
             TimingWindow::DefensePhase => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
@@ -1211,7 +1214,8 @@ impl EffectAccumulator {
                 | AbilityEffect::AccumulatingAttackMultiplier { .. }
                 | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
                 | AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. }
-                | AbilityEffect::MitigationAdditive(_) => {}
+                | AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::AccuracyBonus(_) => {}
             },
             // Resolved in the engine only after all weapon sub-rounds for the same round
             // (`engine.rs`: RoundEnd is merged into `phase_effects_round` post-weapon-loop).
@@ -1363,6 +1367,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
+                AbilityEffect::AccuracyBonus(_) => {}
             },
             TimingWindow::ShieldBreak
             | TimingWindow::SelfShieldBreak
@@ -1512,6 +1517,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => {}
                 AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
+                AbilityEffect::AccuracyBonus(_) => {}
             },
         }
     }
@@ -1703,6 +1709,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
         AbilityEffect::ConquerorBorgBeamSuppression => effect,
+        AbilityEffect::AccuracyBonus(_) => effect,
     }
 }
 
