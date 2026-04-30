@@ -328,7 +328,17 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
         .as_ref()
         .map(|d| d.is_permanent())
         .unwrap_or(false);
-    passive && permanent && effect.effect_type == "stat_modify"
+    if !passive || !permanent {
+        return false;
+    }
+    if effect.effect_type == "stat_modify" {
+        return true;
+    }
+    if effect.effect_type == "tag" {
+        let tag_str = effect.tag.as_deref().unwrap_or("");
+        return crate::lcars::combat_tag_to_stat(tag_str).is_some();
+    }
+    false
 }
 
 /// Resolve a single LCARS effect into timing, effect body, and optional AND-combined condition
@@ -392,10 +402,16 @@ pub fn lcars_effect_coverage(
     options: &ResolveOptions,
 ) -> LcarsEffectCoverage {
     if effect.effect_type == "tag" {
-        return LcarsEffectCoverage {
-            tier: MechanicCoverageTier::Ignored,
-            pathway: "tag_non_combat".to_string(),
-        };
+        // Mapped combat tags → treat like stat_modify for coverage reporting.
+        let tag_str = effect.tag.as_deref().unwrap_or("");
+        if crate::lcars::combat_tag_to_stat(tag_str).is_some() {
+            // Fall through to the same checks as stat_modify below.
+        } else {
+            return LcarsEffectCoverage {
+                tier: MechanicCoverageTier::Ignored,
+                pathway: format!("tag_unmapped:{tag_str}"),
+            };
+        }
     }
     if effect.effect_type == "extra_attack" {
         return LcarsEffectCoverage {
@@ -409,8 +425,28 @@ pub fn lcars_effect_coverage(
             pathway: "static_passive_stat_modify".to_string(),
         };
     }
-    if effect.effect_type == "stat_modify" {
-        let stat = effect.stat.as_deref().unwrap_or("").trim();
+    // For mapped tags, we also check for static effects (passive + permanent).
+    if effect.effect_type == "tag" {
+        let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
+        let permanent = effect
+            .duration
+            .as_ref()
+            .map(|d| d.is_permanent())
+            .unwrap_or(false);
+        if passive && permanent {
+            return LcarsEffectCoverage {
+                tier: MechanicCoverageTier::Implemented,
+                pathway: "static_passive_tag_mapped".to_string(),
+            };
+        }
+    }
+    if effect.effect_type == "stat_modify" || effect.effect_type == "tag" {
+        let stat = if effect.effect_type == "tag" {
+            let tag_str = effect.tag.as_deref().unwrap_or("");
+            crate::lcars::combat_tag_to_stat(tag_str).unwrap_or("")
+        } else {
+            effect.stat.as_deref().unwrap_or("").trim()
+        };
         if stat.eq_ignore_ascii_case("accuracy") {
             let pathway = if effect_trigger_timing(effect) == Some(TimingWindow::CombatBegin) {
                 "combat_begin_accuracy_static"
@@ -531,19 +567,29 @@ pub fn resolve_crew_to_buff_set(
                            contribution_batch: u32| {
         let officer_tier = options.tier_for(&officer.id);
         for effect in &ability.effects {
-            if effect.effect_type != "stat_modify"
+            // Determine the effective stat for passive permanent effects.
+            // stat_modify reads from effect.stat; mapped tag effects use the tag→stat table.
+            let effective_stat = if effect.effect_type == "stat_modify" {
+                effect.stat.as_deref().filter(|s| !s.trim().is_empty())
+            } else if effect.effect_type == "tag" {
+                crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
+            } else {
+                None
+            };
+            if effective_stat.is_none()
                 || effect.trigger.as_deref().map(str::trim) != Some("passive")
                 || effect.duration.as_ref().is_some_and(|d| !d.is_permanent())
             {
                 continue;
             }
+            let stat = effective_stat.unwrap();
             let value = effect.value.or_else(|| {
                 effect
                     .scaling
                     .as_ref()
                     .map(|s| s.value_at_rank(officer_tier))
             });
-            if let (Some(stat), Some(v)) = (effect.stat.as_deref(), value) {
+            if let Some(v) = value {
                 if stat.eq_ignore_ascii_case("accuracy") {
                     // Folded into `accuracy` / `accuracy_cb_mult` in the combat-begin accuracy loop below.
                     continue;
@@ -561,17 +607,25 @@ pub fn resolve_crew_to_buff_set(
                 }
             }
         }
-        // Combat-begin `stat_modify` accuracy: stacks into pre-mitigation attacker stats (scenario),
-        // not a crew seat. Multiplicative entries use key `accuracy_cb_mult`.
+        // Combat-begin `stat_modify` / mapped-tag accuracy: stacks into pre-mitigation attacker
+        // stats (scenario), not a crew seat. Multiplicative entries use key `accuracy_cb_mult`.
         for effect in &ability.effects {
-            if effect.effect_type != "stat_modify" {
+            let is_accuracy = if effect.effect_type == "stat_modify" {
+                effect
+                    .stat
+                    .as_deref()
+                    .map(|s| s.trim())
+                    .is_some_and(|s: &str| s.eq_ignore_ascii_case("accuracy"))
+            } else if effect.effect_type == "tag" {
+                crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
+                    .is_some_and(|s: &str| s.eq_ignore_ascii_case("accuracy"))
+            } else {
+                false
+            };
+            if !is_accuracy {
                 continue;
             }
             if effect_trigger_timing(effect) != Some(TimingWindow::CombatBegin) {
-                continue;
-            }
-            let stat = effect.stat.as_deref().unwrap_or("").trim();
-            if !stat.eq_ignore_ascii_case("accuracy") {
                 continue;
             }
             let Some(value) = effect.value.or_else(|| {
