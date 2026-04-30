@@ -28,7 +28,7 @@ code to change**, and **uncertainty remaining**.
   **Uncertainty:** Low. Both items are confirmed dead code by grep and the
   explore audit. Removing them is zero-risk.
 
-- [ ] **2. Add unit tests for core combat math modules**
+- [x] **2. Add unit tests for core combat math modules**
 
   **What is wrong:** `stacking.rs`, `damage.rs`, and `crit.rs` have zero
   `#[test]` blocks. The `compose()` formula (`base × (1 + modifier) + flat`),

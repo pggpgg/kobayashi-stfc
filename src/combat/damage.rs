@@ -70,3 +70,188 @@ pub fn apply_shield_hull_split(
     let hull_damage_this_round = hull_portion + shield_overflow;
     (actual_shield_damage, hull_damage_this_round)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── compute_damage_through_factor ──
+
+    #[test]
+    fn damage_through_zero_mitigation_full_pierce() {
+        // (1 - 0) + 0 + 0 = 1.0 → 100% damage-through
+        let f = compute_damage_through_factor(1.0, 0.0, 0.0);
+        assert!((f - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn damage_through_full_mitigation_no_pierce() {
+        // 80% mitigation with no pierce → 0.2 damage-through
+        let f = compute_damage_through_factor(0.2, 0.0, 0.0);
+        assert!((f - 0.2).abs() < 1e-12);
+    }
+
+    #[test]
+    fn damage_through_mitigation_plus_pierce_plus_bonus() {
+        // (1 - 0.7) + 0.15 + 0.05 = 0.5
+        let f = compute_damage_through_factor(0.3, 0.15, 0.05);
+        assert!((f - 0.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn damage_through_negative_clamped_to_zero() {
+        // mitigation=1.2 would give -0.2 + 0.1 → -0.1, clamped to 0
+        let f = compute_damage_through_factor(-0.2, 0.1, 0.0);
+        assert!((f - 0.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn damage_through_pierce_exceeds_mitigation() {
+        // 60% pierce vs 40% mitigation → (1-0.6) + 0.4 = 0.8
+        let f = compute_damage_through_factor(0.4, 0.4, 0.0);
+        assert!((f - 0.8).abs() < 1e-12);
+    }
+
+    // ── compute_crit_multiplier ──
+
+    #[test]
+    fn crit_multiplier_non_crit_always_one() {
+        let m = compute_crit_multiplier(false, 2.5, true);
+        assert!((m - 1.0).abs() < 1e-12);
+
+        let m = compute_crit_multiplier(false, 2.5, false);
+        assert!((m - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn crit_multiplier_crit_no_hull_breach() {
+        let m = compute_crit_multiplier(true, 2.0, false);
+        assert!((m - 2.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn crit_multiplier_crit_with_hull_breach() {
+        let m = compute_crit_multiplier(true, 2.0, true);
+        // 2.0 * 1.5 = 3.0
+        assert!((m - 3.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn crit_multiplier_crit_base_one_with_hull_breach() {
+        // base multiplier of 1.0 (no bonus) with hull breach → 1.0 * 1.5 = 1.5
+        let m = compute_crit_multiplier(true, 1.0, true);
+        assert!((m - HULL_BREACH_CRIT_BONUS).abs() < 1e-12);
+    }
+
+    // ── compute_apex_damage_factor ──
+
+    #[test]
+    fn apex_zero_barrier_is_full_damage() {
+        let f = compute_apex_damage_factor(0.0, 0.0);
+        assert!((f - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn apex_barrier_reduces_damage() {
+        // 10000 / (10000 + 5000) = 10000/15000 ≈ 0.6667
+        let f = compute_apex_damage_factor(0.0, 5000.0);
+        assert!((f - 10000.0 / 15000.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn apex_shred_weakens_barrier() {
+        // effective_barrier = 5000 / (1 + 1.0) = 2500
+        // 10000 / (10000 + 2500) = 0.8
+        let f = compute_apex_damage_factor(1.0, 5000.0);
+        assert!((f - 0.8).abs() < 1e-12);
+    }
+
+    #[test]
+    fn apex_extreme_barrier_near_zero_damage() {
+        let f = compute_apex_damage_factor(0.0, 1_000_000.0);
+        assert!(f < 0.01); // nearly all damage absorbed
+        assert!(f > 0.0);
+    }
+
+    #[test]
+    fn apex_extreme_shred_near_full_damage() {
+        let f = compute_apex_damage_factor(1_000_000.0, 5000.0);
+        // effective_barrier ≈ 5000 / 1,000,001 ≈ 0.005
+        // 10000 / 10000.005 ≈ 0.9999995
+        assert!(f > 0.999);
+    }
+
+    // ── compute_isolytic_taken ──
+
+    #[test]
+    fn isolytic_taken_zero_damage_yields_zero() {
+        let iso = compute_isolytic_taken(0.0, 0.5, 0.0, 0.0);
+        assert!((iso - 0.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn isolytic_taken_basic_no_defense_no_cascade() {
+        // isolytic_component = 1000 * 0.1 = 100
+        // taken = 100 / (1 + 0) = 100
+        let iso = compute_isolytic_taken(1000.0, 0.1, 0.0, 0.0);
+        assert!((iso - 100.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn isolytic_taken_with_defense_reduces_damage() {
+        // isolytic_component = 1000 * 0.1 = 100
+        // taken = 100 / (1 + 0.5) ≈ 66.6667
+        let iso = compute_isolytic_taken(1000.0, 0.1, 0.5, 0.0);
+        assert!((iso - 100.0 / 1.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn isolytic_taken_with_cascade_amplifies() {
+        // isolytic_component = 1000 * (0.1 + (1 + 0.1) * 0.2) = 1000 * (0.1 + 0.22) = 1000 * 0.32 = 320
+        // taken = 320 / 1 = 320
+        let iso = compute_isolytic_taken(1000.0, 0.1, 0.0, 0.2);
+        assert!((iso - 320.0).abs() < 1e-9);
+    }
+
+    // ── apply_shield_hull_split ──
+
+    #[test]
+    fn shield_split_full_shields_80_percent_mitigation() {
+        let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.8, 1000.0);
+        // shield_portion = 1000 * 0.8 = 800
+        // actual_shield = min(800, 1000) = 800
+        // hull = 1000 * 0.2 + 0 = 200
+        assert!((shield_dmg - 800.0).abs() < 1e-12);
+        assert!((hull_dmg - 200.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn shield_split_no_shields_all_to_hull() {
+        let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.8, 0.0);
+        // shield_portion = 1000 * 0.8 = 800
+        // actual_shield = min(800, 0) = 0
+        // overflow = 800 - 0 = 800
+        // hull = 1000 * 0.2 + 800 = 200 + 800 = 1000
+        assert!((shield_dmg - 0.0).abs() < 1e-12);
+        assert!((hull_dmg - 1000.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn shield_split_partial_depletion_overflow_to_hull() {
+        // shields have 300 remaining, shield_portion would be 500
+        let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.5, 300.0);
+        // shield_portion = 1000 * 0.5 = 500
+        // actual_shield = min(500, 300) = 300
+        // overflow = 500 - 300 = 200
+        // hull = 1000 * 0.5 + 200 = 500 + 200 = 700
+        assert!((shield_dmg - 300.0).abs() < 1e-12);
+        assert!((hull_dmg - 700.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn shield_split_zero_damage_yields_zeros() {
+        let (shield_dmg, hull_dmg) = apply_shield_hull_split(0.0, 0.8, 500.0);
+        assert!((shield_dmg - 0.0).abs() < 1e-12);
+        assert!((hull_dmg - 0.0).abs() < 1e-12);
+    }
+}

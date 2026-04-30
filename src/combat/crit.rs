@@ -68,4 +68,42 @@ mod tests {
         assert!(c.is_crit);
         assert!((c.multiplier - 2.0 * HULL_BREACH_CRIT_BONUS).abs() < 1e-9);
     }
+
+    #[test]
+    fn same_seed_and_params_yields_identical_resolution() {
+        let mut rng_a = Rng::new(42);
+        let mut rng_b = Rng::new(42);
+        let a = resolve_vehicle_weapon_crit(0.5, 0.1, 2.0, 1.2, false, &mut rng_a);
+        let b = resolve_vehicle_weapon_crit(0.5, 0.1, 2.0, 1.2, false, &mut rng_b);
+        assert_eq!(a.is_crit, b.is_crit);
+        assert!((a.roll - b.roll).abs() < 1e-15);
+        assert!((a.multiplier - b.multiplier).abs() < 1e-15);
+    }
+
+    #[test]
+    fn effective_crit_chance_is_clamped_to_one() {
+        let mut rng = Rng::new(7);
+        // weapon 0.9 + bonus 0.5 = 1.4 → clamped to 1.0
+        let c = resolve_vehicle_weapon_crit(0.9, 0.5, 2.0, 1.0, false, &mut rng);
+        assert!(c.is_crit); // chance is 1.0, always crits
+        assert!((c.effective_crit_chance - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn effective_crit_chance_is_clamped_to_zero() {
+        let mut rng = Rng::new(8);
+        // weapon 0.0 + bonus -0.5 = -0.5 → clamped to 0.0
+        let c = resolve_vehicle_weapon_crit(0.0, -0.5, 2.0, 1.0, false, &mut rng);
+        assert!(!c.is_crit);
+        assert!((c.effective_crit_chance - 0.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn crit_chance_bonus_adds_to_weapon_crit_chance() {
+        let mut rng = Rng::new(9);
+        // 25% from weapon + 75% from bonus = 100% → always crits
+        let c = resolve_vehicle_weapon_crit(0.25, 0.75, 2.0, 1.0, false, &mut rng);
+        assert!(c.is_crit);
+        assert!((c.effective_crit_chance - 1.0).abs() < 1e-12);
+    }
 }
