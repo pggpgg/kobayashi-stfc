@@ -10017,7 +10017,7 @@ officers:
     name: The War's Not Over
     effects:
     - type: stat_modify
-      stat: shield_regen
+      stat: shield_regen_max_fraction
       target: self
       operator: add
       value: null
@@ -99184,7 +99184,7 @@ officers:
     name: Lone Operative
     effects:
     - type: stat_modify
-      stat: shield_regen
+      stat: shield_regen_max_fraction
       target: self
       operator: add
       value: null
@@ -105472,7 +105472,7 @@ officers:
     name: Fight for Peace
     effects:
     - type: stat_modify
-      stat: shield_regen
+      stat: shield_regen_max_fraction
       target: self
       operator: add
       value: null

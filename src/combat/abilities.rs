@@ -78,9 +78,13 @@ pub enum AbilityEffect {
     /// entries are applied at the **start** of each combat round; other timings that feed the round
     /// accumulator (e.g. [`TimingWindow::RoundEnd`], [`TimingWindow::ReceiveDamage`]) apply at **round end**.
     ShieldRegen(f64),
+    /// Shield HP restored as `fraction × max shield HP` at the same timings as [`AbilityEffect::ShieldRegen`].
+    ShieldRegenMaxFraction(f64),
     /// Hull HP restored as a **flat** value (reduces cumulative hull damage taken on that ship).
     /// Same timing split as [`AbilityEffect::ShieldRegen`].
     HullRegen(f64),
+    /// Hull HP restored as `fraction × max hull HP` at the same timings as [`AbilityEffect::HullRegen`].
+    HullRegenMaxFraction(f64),
     /// At [`TimingWindow::RoundStart`], heal `fraction ×` hull damage the attacker **took** in the
     /// immediately preceding combat round (gross incoming hull from counter-fire, hostile round-end
     /// hull effects, burning ticks, etc.; excludes prior heals). Round 1 has no prior round, so no

@@ -149,8 +149,12 @@ pub enum AbilityModifierSpec {
     CumulativeOpponentShieldMitigationDebuff,
     /// LCARS `shield_regen` / `shield_hp_repair` → [`crate::combat::abilities::AbilityEffect::ShieldRegen`].
     OfficerShieldRegenFlat,
+    /// LCARS `shield_regen_max_fraction` / `shield_hp_repair_max_fraction` → restore a fraction of max shield HP.
+    OfficerShieldRegenMaxFraction,
     /// LCARS `hull_repair` / `hull_hp_repair` (non-kill timings) → [`crate::combat::abilities::AbilityEffect::HullRegen`].
     OfficerHullRegenFlat,
+    /// LCARS `hull_repair_max_fraction` / `hull_hp_repair_max_fraction` → restore a fraction of max hull HP.
+    OfficerHullRegenMaxFraction,
     /// LCARS `hull_hp_repair_prev_round` (engine timing: round start).
     OfficerHullRegenPrevRoundFraction,
     /// LCARS `shield_hp_repair_prev_round` (engine timing: round start).

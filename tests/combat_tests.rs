@@ -6273,6 +6273,80 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
     approx_eq(res.attacker_hull_remaining, 900.0, 1e-6);
 }
 
+#[test]
+fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
+    let attacker = Combatant {
+        id: "player".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let defender = Combatant {
+        id: "hostile".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+    };
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Bridge,
+            ability: Ability {
+                name: "test_hull_max_fraction_regen_rs".into(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::HullRegenMaxFraction(0.1),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: Some("test-officer".into()),
+            contribution_batch: 1,
+        }],
+    };
+    let config = SimulationConfig {
+        rounds: 3,
+        seed: 42,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 400.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+        engagement_enemy_types: Default::default(),
+        defender_level: None,
+        attacker_roster_officer_ids: Default::default(),
+    };
+    let res = simulate_combat(&attacker, &defender, &config, &crew);
+    // Round 1-3 each heal 10% of max hull: 400 - 3 * 100 = 100 net hull damage.
+    approx_eq(res.attacker_hull_remaining, 900.0, 1e-6);
+}
+
 /// Defender crew [`TimingWindow::RoundStart`] hull regen reduces cumulative hull damage on the hostile.
 #[test]
 fn defender_round_start_hull_regen_heals_defender() {

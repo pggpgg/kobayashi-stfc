@@ -437,7 +437,7 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 
 - **Morale, burning, hull breach** — Optional `condition_morale`, `condition_defender_burning`, `condition_defender_hull_breach` gate effects using round-start `CombatContext` flags. This assumes morale success and DOT state align with those flags for the purpose of the sim (RNG and exact client timing may differ).
 - **Cumulative weapon damage with morale (e.g. U.S.S. Enterprise-D Galaxy class)** — Implemented as `round_start` + `additive_weapon_damage_growth` while morale is active; growth stacks additively with profile `weapon_damage` in the engine (`×(1+g/(1+p))`), not as another term in `pre_attack_multiplier`. **Enterprise-E** and other hulls still use `round_start` + `accumulating_attack_multiplier` where catalogued that way. Neither is modeled as per-weapon-hit or per-sub-round stacks tied to individual shots.
-- **Shield restore when hit while morale (e.g. Enterprise TOS)** — `receive_damage` + `shield_regen` (percentage of max shields). The engine ties this to the receive-damage path; client rules about which hits count may differ.
+- **Shield restore when hit while morale (e.g. Enterprise TOS)** — `receive_damage` + `shield_regen_max_fraction` for percentage-of-max shield restores, or `shield_regen` for flat restores. The engine ties this to the receive-damage path; client rules about which hits count may differ.
 - **Weapon damage increase when hit while morale (e.g. Enterprise-A)** — `receive_damage` + `attack_multiplier` (percentage). Treated as stacking attack bonus on damage taken, not a separate “on hull hit only” layer unless the engine already filters that path.
 - **“Each time hit” + cumulative weapon damage (e.g. Northcutt-style)** — Same `receive_damage` / `attack_multiplier` pattern; true stack caps and reset rules are not copied from the client.
 - **“Each time hit” + cumulative critical damage (e.g. Vor’cha-style)** — **Explicit proxy:** `attack_multiplier` stands in for crit damage scaling because there is no ship-ability hook for “crit damage only” in the catalog resolver.
@@ -1000,4 +1000,3 @@ The combat engine uses a built-in **SplitMix64** implementation (not `rand` on t
 - **GPU acceleration**: Port combat engine to CUDA/WebGPU for billions of sims. Probably overkill but fun.
 - **Mobile companion**: PWA version that talks to the desktop KOBAYASHI instance on the local network.
 - **Direct account sync (deferred)**: If a stable and trusted API emerges, allow one-click refresh of user-owned roster data while keeping the global catalog maintainer-curated.
-

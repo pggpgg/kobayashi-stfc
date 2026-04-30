@@ -37,6 +37,8 @@ pub(crate) enum EffectStatKey {
     ApexBarrierBonus,
     ShieldRegen,
     HullRegen,
+    ShieldRegenMaxFraction,
+    HullRegenMaxFraction,
     IsolyticDamageBonus,
     IsolyticDefenseBonus,
     IsolyticCascadeDamageBonus,
@@ -55,6 +57,8 @@ impl EffectStatKey {
             EffectStatKey::ApexBarrierBonus => "apex_barrier_bonus",
             EffectStatKey::ShieldRegen => "shield_regen",
             EffectStatKey::HullRegen => "hull_regen",
+            EffectStatKey::ShieldRegenMaxFraction => "shield_regen_max_fraction",
+            EffectStatKey::HullRegenMaxFraction => "hull_regen_max_fraction",
             EffectStatKey::IsolyticDamageBonus => "isolytic_damage_bonus",
             EffectStatKey::IsolyticDefenseBonus => "isolytic_defense_bonus",
             EffectStatKey::IsolyticCascadeDamageBonus => "isolytic_cascade_damage_bonus",
@@ -87,6 +91,14 @@ impl Default for EffectAccumulator {
         ));
         stacks.add(StackContribution::base(EffectStatKey::ShieldRegen, 0.0));
         stacks.add(StackContribution::base(EffectStatKey::HullRegen, 0.0));
+        stacks.add(StackContribution::base(
+            EffectStatKey::ShieldRegenMaxFraction,
+            0.0,
+        ));
+        stacks.add(StackContribution::base(
+            EffectStatKey::HullRegenMaxFraction,
+            0.0,
+        ));
         stacks.add(StackContribution::base(
             EffectStatKey::IsolyticDamageBonus,
             0.0,
@@ -339,6 +351,18 @@ impl EffectAccumulator {
             .unwrap_or(0.0)
     }
 
+    pub(crate) fn composed_shield_regen_max_fraction(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::ShieldRegenMaxFraction)
+            .unwrap_or(0.0)
+    }
+
+    pub(crate) fn composed_hull_regen_max_fraction(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::HullRegenMaxFraction)
+            .unwrap_or(0.0)
+    }
+
     /// Sum flat shield restoration from timed effects (used for defender round-start before the main phase accumulator runs).
     pub(crate) fn sum_shield_regen_from_effects(
         effects: &[ActiveAbilityEffect],
@@ -366,6 +390,42 @@ impl EffectAccumulator {
             .filter_map(|e| {
                 if let AbilityEffect::HullRegen(v) = scale_effect(e.effect, assimilated_active) {
                     Some(v)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
+
+    pub(crate) fn sum_shield_regen_max_fraction_from_effects(
+        effects: &[ActiveAbilityEffect],
+        assimilated_active: bool,
+    ) -> f64 {
+        effects
+            .iter()
+            .filter_map(|e| {
+                if let AbilityEffect::ShieldRegenMaxFraction(f) =
+                    scale_effect(e.effect, assimilated_active)
+                {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
+
+    pub(crate) fn sum_hull_regen_max_fraction_from_effects(
+        effects: &[ActiveAbilityEffect],
+        assimilated_active: bool,
+    ) -> f64 {
+        effects
+            .iter()
+            .filter_map(|e| {
+                if let AbilityEffect::HullRegenMaxFraction(f) =
+                    scale_effect(e.effect, assimilated_active)
+                {
+                    Some(f)
                 } else {
                     None
                 }
@@ -415,6 +475,10 @@ impl EffectAccumulator {
     pub(crate) fn clear_shield_hull_regen_stacks(&mut self) {
         self.stacks.remove_totals_for(&EffectStatKey::ShieldRegen);
         self.stacks.remove_totals_for(&EffectStatKey::HullRegen);
+        self.stacks
+            .remove_totals_for(&EffectStatKey::ShieldRegenMaxFraction);
+        self.stacks
+            .remove_totals_for(&EffectStatKey::HullRegenMaxFraction);
     }
 
     pub(crate) fn composed_isolytic_damage_bonus(&self) -> f64 {
@@ -665,6 +729,15 @@ impl EffectAccumulator {
                         "ShieldRegen",
                     );
                 }
+                AbilityEffect::ShieldRegenMaxFraction(f) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ShieldRegenMaxFraction,
+                        f,
+                        timing,
+                        source,
+                        "ShieldRegenMaxFraction",
+                    );
+                }
                 AbilityEffect::HullRegen(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::HullRegen,
@@ -672,6 +745,15 @@ impl EffectAccumulator {
                         timing,
                         source,
                         "HullRegen",
+                    );
+                }
+                AbilityEffect::HullRegenMaxFraction(f) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::HullRegenMaxFraction,
+                        f,
+                        timing,
+                        source,
+                        "HullRegenMaxFraction",
                     );
                 }
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
@@ -820,6 +902,8 @@ impl EffectAccumulator {
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::ShieldRegenMaxFraction(_) => {}
+                AbilityEffect::HullRegenMaxFraction(_) => {}
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
@@ -937,6 +1021,8 @@ impl EffectAccumulator {
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::ShieldRegenMaxFraction(_) => {}
+                AbilityEffect::HullRegenMaxFraction(_) => {}
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
@@ -1058,6 +1144,8 @@ impl EffectAccumulator {
                 AbilityEffect::ShotsBonus { .. } => {}
                 AbilityEffect::ShieldRegen(_) => {}
                 AbilityEffect::HullRegen(_) => {}
+                AbilityEffect::ShieldRegenMaxFraction(_) => {}
+                AbilityEffect::HullRegenMaxFraction(_) => {}
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ShieldRegenPrevRoundFraction(_) => {}
                 AbilityEffect::ApexShredBonus(v) => {
@@ -1156,6 +1244,15 @@ impl EffectAccumulator {
                         "ShieldRegen",
                     );
                 }
+                AbilityEffect::ShieldRegenMaxFraction(f) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ShieldRegenMaxFraction,
+                        f,
+                        timing,
+                        source,
+                        "ShieldRegenMaxFraction",
+                    );
+                }
                 AbilityEffect::HullRegen(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::HullRegen,
@@ -1163,6 +1260,15 @@ impl EffectAccumulator {
                         timing,
                         source,
                         "HullRegen",
+                    );
+                }
+                AbilityEffect::HullRegenMaxFraction(f) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::HullRegenMaxFraction,
+                        f,
+                        timing,
+                        source,
+                        "HullRegenMaxFraction",
                     );
                 }
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
@@ -1292,6 +1398,15 @@ impl EffectAccumulator {
                         "ShieldRegen",
                     );
                 }
+                AbilityEffect::ShieldRegenMaxFraction(f) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::ShieldRegenMaxFraction,
+                        f,
+                        timing,
+                        source,
+                        "ShieldRegenMaxFraction",
+                    );
+                }
                 AbilityEffect::HullRegen(v) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::HullRegen,
@@ -1299,6 +1414,15 @@ impl EffectAccumulator {
                         timing,
                         source,
                         "HullRegen",
+                    );
+                }
+                AbilityEffect::HullRegenMaxFraction(f) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::HullRegenMaxFraction,
+                        f,
+                        timing,
+                        source,
+                        "HullRegenMaxFraction",
                     );
                 }
                 AbilityEffect::HullRegenPrevRoundFraction(_) => {}
@@ -1503,8 +1627,14 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::ShieldRegen(v) => {
             AbilityEffect::ShieldRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
+        AbilityEffect::ShieldRegenMaxFraction(f) => {
+            AbilityEffect::ShieldRegenMaxFraction(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
         AbilityEffect::HullRegen(v) => {
             AbilityEffect::HullRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::HullRegenMaxFraction(f) => {
+            AbilityEffect::HullRegenMaxFraction(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::HullRegenPrevRoundFraction(f) => {
             AbilityEffect::HullRegenPrevRoundFraction(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)

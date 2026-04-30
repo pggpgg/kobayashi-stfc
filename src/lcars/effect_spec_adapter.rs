@@ -267,7 +267,15 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "apex_shred" => Some(AbilityModifierSpec::ApexShred),
         "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
         "shield_regen" | "shield_hp_repair" => Some(AbilityModifierSpec::OfficerShieldRegenFlat),
+        "shield_regen_max_fraction"
+        | "shield_hp_repair_max_fraction"
+        | "shield_regen_max_pct"
+        | "shield_hp_repair_max_pct" => Some(AbilityModifierSpec::OfficerShieldRegenMaxFraction),
         "hull_repair" | "hull_hp_repair" => Some(AbilityModifierSpec::OfficerHullRegenFlat),
+        "hull_repair_max_fraction"
+        | "hull_hp_repair_max_fraction"
+        | "hull_repair_max_pct"
+        | "hull_hp_repair_max_pct" => Some(AbilityModifierSpec::OfficerHullRegenMaxFraction),
         "hull_hp_repair_prev_round" | "hull_repair_prev_round" => {
             Some(AbilityModifierSpec::OfficerHullRegenPrevRoundFraction)
         }
@@ -727,6 +735,42 @@ mod tests {
             lcars_effect_to_combat_effect_spec(&e, "test:id", "gorkon", "cm", None, None).unwrap();
         assert_eq!(spec.modifier, AbilityModifierSpec::WeaponDamage);
         assert_eq!(spec.trigger, AbilityTriggerSpec::AttackPhase);
+    }
+
+    #[test]
+    fn lcars_max_fraction_regen_stats_map_to_distinct_specs() {
+        let e = LcarsEffect {
+            effect_type: "stat_modify".into(),
+            stat: Some("shield_regen_max_fraction".into()),
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.12),
+            trigger: Some("on_round_start".into()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let spec =
+            lcars_effect_to_combat_effect_spec(&e, "test:id", "seska", "ba", None, None).unwrap();
+        assert_eq!(
+            spec.modifier,
+            AbilityModifierSpec::OfficerShieldRegenMaxFraction
+        );
+        assert_eq!(spec.trigger, AbilityTriggerSpec::RoundStart);
+
+        let mut e = e;
+        e.stat = Some("hull_hp_repair_max_fraction".into());
+        let spec = lcars_effect_to_combat_effect_spec(&e, "test:id", "pic-hugh", "bd", None, None)
+            .unwrap();
+        assert_eq!(
+            spec.modifier,
+            AbilityModifierSpec::OfficerHullRegenMaxFraction
+        );
     }
 
     #[test]

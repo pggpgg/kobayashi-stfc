@@ -278,13 +278,13 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | saru-68cf4f | Saru | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | sela-bd6e1b | Sela | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | sesha-631428 | Sesha | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| seska-848b5b | Seska | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | On-hit crit buff should be timed (4 rds, once/weapon); SHP restore is %-of-max in game, flat here. |
+| seska-848b5b | Seska | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | On-hit crit buff should be timed (4 rds, once/weapon). |
 | seven-of-nine-d18a5e | Seven Of Nine | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | severus-93daaf | Severus | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | shaxs-11a808 | Shaxs | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | six-of-eleven-20cbe8 | Six Of Eleven | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-d-chok-34f7ba | SNW D'Chok | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| snw-mbenga-fe38e5 | Snw M’Benga | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Officer-stat scaling is wired from canonical attributes plus upstream officer stats. Remaining gap: bridge SHP restore is %-of-max in game (task 11 in combat-engine-tasks). |
+| snw-mbenga-fe38e5 | Snw M’Benga | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-ortegas-7c79fe | SNW Ortegas | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-pelia-9d33f1 | SNW Pelia | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-sam-kirk-0a77f9 | SNW Sam Kirk | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain enemy SHP drain modeled as negative shield_regen on attacker crew (wrong target in engine). |

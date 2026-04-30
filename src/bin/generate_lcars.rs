@@ -36,6 +36,11 @@ const DEFAULT_OUTPUT_DIR: &str = "data/officers";
 const DEFAULT_SUMMARY: &str = "data/upstream/data-stfc-space/summary-officer.json";
 const DEFAULT_TRANSLATIONS: &str = "data/upstream/data-stfc-space/translations-officer_buffs.json";
 const DEFAULT_OFFICER_DATA_DIR: &str = "data/upstream/data-stfc-space/officers";
+const SHIELD_MAX_FRACTION_ABILITY_IDS: &[&str] = &[
+    "1513489186", // Black Ops M'Benga: per-round SHP restore vs non-armada hostiles.
+    "3196098481", // Seska: per-round SHP restore vs non-armada hostiles.
+    "3634862157", // SNW M'Benga: per-round SHP restore vs non-armada hostiles.
+];
 
 #[derive(Debug, Deserialize)]
 struct CanonicalFile {
@@ -937,6 +942,12 @@ fn officer_stat_from_canonical_attributes(raw: &str) -> Option<OfficerStat> {
     None
 }
 
+fn is_shield_max_fraction_ability(a: &CanonicalAbility) -> bool {
+    a.ability_id
+        .as_deref()
+        .is_some_and(|id| SHIELD_MAX_FRACTION_ABILITY_IDS.contains(&id))
+}
+
 fn hull_health_condition_from_canonical_attributes(
     token: &str,
     attrs: &str,
@@ -1064,9 +1075,15 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         }
         "ShotsPerAttack" => MappedEffect::StatModify("shots_per_attack".into(), "add".into(), val),
         "ArmadaLoot" => MappedEffect::Tag("armadaloot:non_combat".into()),
-        "ShieldHPRepair" | "ShieldRegen" => {
-            MappedEffect::StatModify("shield_regen".into(), "add".into(), val)
-        }
+        "ShieldHPRepair" | "ShieldRegen" => MappedEffect::StatModify(
+            if is_shield_max_fraction_ability(a) {
+                "shield_regen_max_fraction".into()
+            } else {
+                "shield_regen".into()
+            },
+            "add".into(),
+            val,
+        ),
         // Fraction of hull damage taken last round; engine applies at round start.
         "HullRepair" => {
             MappedEffect::StatModify("hull_hp_repair_prev_round".into(), "add".into(), val)
@@ -1270,6 +1287,37 @@ mod canonical_condition_tests {
         )
         .expect("scaling");
         assert_eq!(scaling.officer_stat, Some(OfficerStat::Health));
+    }
+
+    #[test]
+    fn curated_shield_repair_rows_emit_max_fraction_stat() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "ability_id": "3196098481",
+            "modifier": "ShieldHPRepair",
+            "operation": "MultiplyAdd",
+            "trigger": "RoundStart",
+            "target": "SelfShip",
+            "chance_by_rank": [1.0, 1.0],
+            "value_by_rank": [0.12, 0.16],
+            "conditions": []
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&a, "Seska").expect("effect");
+        assert_eq!(e.stat.as_deref(), Some("shield_regen_max_fraction"));
+
+        let ordinary: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "ability_id": "not-curated",
+            "modifier": "ShieldHPRepair",
+            "operation": "MultiplyAdd",
+            "trigger": "RoundStart",
+            "target": "SelfShip",
+            "chance_by_rank": [1.0],
+            "value_by_rank": [10.0],
+            "conditions": []
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&ordinary, "Other").expect("effect");
+        assert_eq!(e.stat.as_deref(), Some("shield_regen"));
     }
 
     #[test]

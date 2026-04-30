@@ -425,6 +425,18 @@ pub fn compile_officer_combat_spec(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::OfficerShieldRegenMaxFraction => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::ShieldRegenMaxFraction(v),
+                compiled_condition.clone(),
+            ))
+        }
         AbilityModifierSpec::OfficerHullRegenFlat => {
             let v = scalar_fraction(
                 spec.value
@@ -444,6 +456,18 @@ pub fn compile_officer_combat_spec(
                     compiled_condition.clone(),
                 ))
             }
+        }
+        AbilityModifierSpec::OfficerHullRegenMaxFraction => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::HullRegenMaxFraction(v),
+                compiled_condition.clone(),
+            ))
         }
         AbilityModifierSpec::OfficerHullRegenPrevRoundFraction => {
             if timing != TimingWindow::RoundStart {
@@ -797,6 +821,45 @@ mod tests {
         assert_eq!(
             compile_trigger(AbilityTriggerSpec::ShipLaunched).unwrap(),
             TimingWindow::CombatBegin
+        );
+    }
+
+    #[test]
+    fn officer_max_fraction_regen_compiles_to_distinct_effects() {
+        let mut spec = CombatEffectSpec {
+            id: "lcars:test:max_shield_regen".into(),
+            source: EffectSource::LcarsOfficer,
+            source_ref: None,
+            text: None,
+            trigger: AbilityTriggerSpec::RoundStart,
+            target: AbilityTargetSpec::SelfShip,
+            modifier: AbilityModifierSpec::OfficerShieldRegenMaxFraction,
+            operation: AbilityOperationSpec::Add,
+            value: Some(ValueSpec {
+                scalar: Some(0.12),
+                by_rank: None,
+                unit: None,
+                officer_stat_scaling: None,
+            }),
+            chance: None,
+            duration: None,
+            conditions: vec![],
+            attributes: serde_json::Map::new(),
+            stacking: None,
+            category: Some(EffectCategory::Combat),
+            confidence: Some(EffectConfidence::Authoritative),
+        };
+        let (_, effect, _) = compile_officer_combat_spec(&spec).expect("shield max fraction");
+        assert!(
+            matches!(effect, AbilityEffect::ShieldRegenMaxFraction(v) if (v - 0.12).abs() < 1e-12)
+        );
+
+        spec.id = "lcars:test:max_hull_regen".into();
+        spec.modifier = AbilityModifierSpec::OfficerHullRegenMaxFraction;
+        spec.value.as_mut().unwrap().scalar = Some(0.25);
+        let (_, effect, _) = compile_officer_combat_spec(&spec).expect("hull max fraction");
+        assert!(
+            matches!(effect, AbilityEffect::HullRegenMaxFraction(v) if (v - 0.25).abs() < 1e-12)
         );
     }
 

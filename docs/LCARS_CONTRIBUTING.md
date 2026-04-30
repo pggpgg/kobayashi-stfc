@@ -65,7 +65,7 @@ When converting from game data or spreadsheets:
 | HullHPMax                                  | stat_modify → hull_hp (multiply)                 |
 | ApexShred, ApexBarrier                     | stat_modify → apex_shred / apex_barrier          |
 | IsolyticDamage, IsolyticDefense            | stat_modify → isolytic_damage / isolytic_defense |
-| ShieldHPRepair, HullHPRepair               | stat_modify → shield_regen / hull_hp_repair      |
+| ShieldHPRepair, HullHPRepair               | stat_modify → shield_regen / hull_hp_repair (flat) or shield_regen_max_fraction / hull_hp_repair_max_fraction (% of max) |
 | AddState (morale)                          | effect type: morale                              |
 | AddState (assimilated/hull breach/burning) | effect type: assimilated / hull_breach / burning |
 | MiningRate, CargoCapacity, etc.            | type: tag (non-combat)                           |
