@@ -52,7 +52,7 @@ code to change**, and **uncertainty remaining**.
   **Uncertainty:** None. These are pure math functions with known
   invariants.
 
-- [ ] **3. Add unit tests for the ability evaluation and accumulator pipeline**
+- [x] **3. Add unit tests for the ability evaluation and accumulator pipeline**
 
   **What is wrong:** `abilities.rs` and `effect_accumulator.rs` (~1700 lines)
   have no `#[test]` blocks. The condition gating (26 `AbilityCondition`
