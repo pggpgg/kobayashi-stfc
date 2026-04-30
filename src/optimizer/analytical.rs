@@ -10,6 +10,7 @@ use crate::combat::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
     compute_isolytic_taken,
 };
+use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::CombatSimulationInput;
 
 /// Expected total hull damage to the defender over `input.rounds`, using expected values for crit
@@ -64,6 +65,37 @@ fn expected_hull_damage_total(input: &CombatSimulationInput) -> f64 {
     }
 
     total_hull
+}
+
+/// Drop candidates whose closed-form expected hull damage falls below
+/// `hull_fraction × defender.hull_health`. These crews deal negligible damage and
+/// cannot kill the hostile in any realistic number of rounds.
+///
+/// The analytical formula underestimates (ignores crit/proc variance, morale, burning)
+/// so it produces false negatives rather than false positives. A conservative threshold
+/// (e.g. 0.05) eliminates only truly hopeless crews.
+///
+/// Returns the filtered list and the count of crews dropped.
+pub(crate) fn prune_candidates_by_expected_hull_damage(
+    shared: &crate::optimizer::monte_carlo::scenario::SharedScenarioData,
+    candidates: Vec<CrewCandidate>,
+    seed: u64,
+    hull_fraction: f64,
+) -> (Vec<CrewCandidate>, usize) {
+    use crate::optimizer::monte_carlo::scenario::scenario_to_combat_input_from_shared;
+
+    let n_before = candidates.len();
+    let filtered: Vec<CrewCandidate> = candidates
+        .into_iter()
+        .filter(|c| {
+            let input = scenario_to_combat_input_from_shared(shared, c, seed);
+            let damage = expected_damage(&input) as f64;
+            let threshold = input.defender_hull * hull_fraction;
+            damage >= threshold
+        })
+        .collect();
+    let dropped = n_before - filtered.len();
+    (filtered, dropped)
 }
 
 #[cfg(test)]

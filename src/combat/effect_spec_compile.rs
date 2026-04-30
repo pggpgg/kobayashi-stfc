@@ -699,9 +699,7 @@ pub fn compile_officer_combat_spec(
             };
             Ok((
                 timing,
-                AbilityEffect::MitigationAdditive(
-                    mitigation_fraction_from_lcars_armor_value(add),
-                ),
+                AbilityEffect::DodgeBonus(mitigation_fraction_from_lcars_armor_value(add)),
                 compiled_condition.clone(),
             ))
         }

@@ -19,7 +19,8 @@ use serde_json::{Map, Value};
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, filter_effects_by_condition,
-    hostile_crit_damage_reduction_from_crew, sum_mitigation_additive, AbilityEffect,
+    hostile_crit_damage_reduction_from_crew, sum_accuracy_bonus, sum_dodge_bonus,
+    sum_mitigation_additive, AbilityEffect,
     ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
@@ -379,6 +380,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         };
     }
     let attacker_mitigation_additive = sum_mitigation_additive(&combat_begin_filtered);
+    let attacker_accuracy_bonus = sum_accuracy_bonus(&combat_begin_filtered);
+    let attacker_dodge_bonus = sum_dodge_bonus(&combat_begin_filtered);
     let shield_break_effects = active_effects_for_timing(&attacker_crew, TimingWindow::ShieldBreak);
     let self_shield_break_effects =
         active_effects_for_timing(&attacker_crew, TimingWindow::SelfShieldBreak);
@@ -1054,9 +1057,11 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
                     let effective_mitigation =
                         if let Some(params) = &defender.hostile_mitigation_params {
+                            let mut adjusted_attacker = params.base_attacker_stats;
+                            adjusted_attacker.accuracy += attacker_accuracy_bonus;
                             mitigation_for_hostile(
                                 params.defender_stats,
-                                params.base_attacker_stats,
+                                adjusted_attacker,
                                 params.ship_type,
                                 params.mystery_mitigation_factor,
                                 params.floor,
@@ -1532,8 +1537,12 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 let def_base_shots = defender.weapon_base_shots(weapon_index);
                 let def_effective_shots = effective_shots_for_weapon(def_base_shots, def_b_shots);
 
-                let eff_player_mitigation =
-                    (attacker.mitigation + attacker_mitigation_additive).clamp(0.0, 1.0);
+                let eff_player_mitigation = {
+                    let (_c_armor, _c_shield, c_dodge) = attacker_ship_type.coefficients();
+                    let dodge_mitigation = attacker_dodge_bonus * c_dodge;
+                    (attacker.mitigation + attacker_mitigation_additive + dodge_mitigation)
+                        .clamp(0.0, 1.0)
+                };
                 let counter_mitigation_mult = (1.0 - eff_player_mitigation).max(0.0);
 
                 // Static hostile buffs for this weapon sub-round; cloned per counter shot so officer

@@ -86,6 +86,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         exhaustive_scout_sims: None,
         exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
+        prune_analytical_hull_fraction: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
         support_buffs: Vec::new(),

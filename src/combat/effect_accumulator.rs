@@ -813,6 +813,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression => {}
@@ -962,6 +963,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression => {}
@@ -1082,6 +1084,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression => {}
@@ -1215,6 +1218,7 @@ impl EffectAccumulator {
                 | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
                 | AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. }
                 | AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::DodgeBonus(_)
                 | AbilityEffect::AccuracyBonus(_) => {}
             },
             // Resolved in the engine only after all weapon sub-rounds for the same round
@@ -1332,6 +1336,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression => {}
@@ -1487,6 +1492,7 @@ impl EffectAccumulator {
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression => {}
@@ -1710,6 +1716,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
         AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::AccuracyBonus(_) => effect,
+        AbilityEffect::DodgeBonus(_) => effect,
     }
 }
 

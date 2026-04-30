@@ -362,6 +362,11 @@ pub struct OptimizationScenario<'a> {
     pub exhaustive_scout_top_keep: Option<usize>,
     /// When set, keep only this many crews after analytical expected-hull-damage ranking before Monte Carlo. Genetic ignores this.
     pub analytical_prefilter_keep: Option<usize>,
+    /// When set, drop candidates whose `expected_damage()` is less than `prune_analytical_hull_fraction × defender.hull_health`.
+    /// These crews deal negligible damage and cannot kill the hostile in any realistic number of rounds.
+    /// Applied just before Monte Carlo simulation, after the analytical ranking/truncation step.
+    /// A conservative value like 0.05 drops only truly hopeless crews while avoiding false negatives.
+    pub prune_analytical_hull_fraction: Option<f64>,
     /// Below-decks slot count for candidate generation (resolved from API / tier defaults upstream).
     pub below_decks_slots: usize,
     /// Optional filters on candidate crews (must-include, exclude, groups, seating).
@@ -404,6 +409,7 @@ impl Default for OptimizationScenario<'_> {
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
+            prune_analytical_hull_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -914,6 +920,7 @@ where
                 exhaustive_scout_sims: scenario.exhaustive_scout_sims,
                 exhaustive_scout_top_keep: scenario.exhaustive_scout_top_keep,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
+                prune_analytical_hull_fraction: scenario.prune_analytical_hull_fraction,
                 below_decks_slots: scenario.below_decks_slots,
                 constraints: scenario.constraints.clone(),
                 support_buffs: scenario.support_buffs.clone(),
@@ -1082,6 +1089,37 @@ where
                 &scenario.prior_reference_crews,
                 scenario.enable_learned_pair_prior,
             );
+            // Prune crews whose analytical expected damage is below a configurable fraction
+            // of the defender's hull — these crews cannot kill the hostile in any realistic
+            // number of rounds. Skipped when chain grind is active (analytical prefilter is
+            // also skipped for chain grind).
+            let prune_frac = scenario
+                .prune_analytical_hull_fraction
+                .filter(|&f| f > 0.0 && scenario.chain_grind.is_none());
+            let analytical_prune_dropped: usize;
+            let candidates = if let Some(frac) = prune_frac {
+                let (kept, dropped) =
+                    crate::optimizer::analytical::prune_candidates_by_expected_hull_damage(
+                        &shared,
+                        candidates,
+                        scenario.seed,
+                        frac,
+                    );
+                analytical_prune_dropped = dropped;
+                kept
+            } else {
+                analytical_prune_dropped = 0;
+                candidates
+            };
+            if analytical_prune_dropped > 0 {
+                info!(
+                    strategy = "tiered",
+                    seed = scenario.seed,
+                    analytical_prune_dropped = analytical_prune_dropped as u64,
+                    analytical_prune_remaining = candidates.len() as u64,
+                    "optimize_hopeless_pruned"
+                );
+            }
             let n_tiered = candidates.len();
             let scout_sims = scenario
                 .tiered_scout_sims
@@ -1165,6 +1203,34 @@ where
                 &scenario.prior_reference_crews,
                 scenario.enable_learned_pair_prior,
             );
+            // Prune hopeless crews (same logic as tiered path).
+            let prune_frac = scenario
+                .prune_analytical_hull_fraction
+                .filter(|&f| f > 0.0 && scenario.chain_grind.is_none());
+            let analytical_prune_dropped: usize;
+            let candidates = if let Some(frac) = prune_frac {
+                let (kept, dropped) =
+                    crate::optimizer::analytical::prune_candidates_by_expected_hull_damage(
+                        &shared_ex,
+                        candidates,
+                        scenario.seed,
+                        frac,
+                    );
+                analytical_prune_dropped = dropped;
+                kept
+            } else {
+                analytical_prune_dropped = 0;
+                candidates
+            };
+            if analytical_prune_dropped > 0 {
+                info!(
+                    strategy = "exhaustive",
+                    seed = scenario.seed,
+                    analytical_prune_dropped = analytical_prune_dropped as u64,
+                    analytical_prune_remaining = candidates.len() as u64,
+                    "optimize_hopeless_pruned"
+                );
+            }
             let total = candidates.len();
             if total == 0 {
                 return OptimizeRunOutcome {
@@ -1354,6 +1420,7 @@ pub fn optimize_crew(
         exhaustive_scout_sims: None,
         exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
+        prune_analytical_hull_fraction: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
         support_buffs: Vec::new(),
@@ -1561,6 +1628,7 @@ mod tests {
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
+        prune_analytical_hull_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -1705,6 +1773,7 @@ mod tests {
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: Some(4),
+            prune_analytical_hull_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -1768,6 +1837,7 @@ mod tests {
             exhaustive_scout_sims: Some(12),
             exhaustive_scout_top_keep: Some(4),
             analytical_prefilter_keep: None,
+        prune_analytical_hull_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -1825,6 +1895,7 @@ mod tests {
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
+        prune_analytical_hull_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),

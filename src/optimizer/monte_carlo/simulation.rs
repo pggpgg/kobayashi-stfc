@@ -970,10 +970,44 @@ fn run_monte_carlo_inner(
         }
     };
 
-    if parallel {
-        candidates.par_iter().map(run_one).collect()
+    // Deduplicate identical crews: compute results only for the first occurrence of each hash,
+    // then clone for later duplicates. This avoids re-simulating the same crew composition
+    // when it appears multiple times in the candidate list (e.g. from warm-start + generation overlap,
+    // or multi-hostile batch consolidation).
+    let n = candidates.len();
+    let hashes: Vec<u64> = candidates.iter().map(crew_candidate_stable_hash).collect();
+    let mut unique_indices: Vec<usize> = Vec::with_capacity(n);
+    let mut seen: HashSet<u64> = HashSet::with_capacity(n);
+    for (i, &h) in hashes.iter().enumerate() {
+        if seen.insert(h) {
+            unique_indices.push(i);
+        }
+    }
+
+    if unique_indices.len() == n {
+        // All candidates are unique — no dedup overhead.
+        if parallel {
+            candidates.par_iter().map(run_one).collect()
+        } else {
+            candidates.iter().map(run_one).collect()
+        }
     } else {
-        candidates.iter().map(run_one).collect()
+        let unique_candidates: Vec<&CrewCandidate> =
+            unique_indices.iter().map(|&i| &candidates[i]).collect();
+        let unique_results: Vec<SimulationResult> = if parallel {
+            unique_candidates.par_iter().map(|c| run_one(c)).collect()
+        } else {
+            unique_candidates.iter().map(|c| run_one(c)).collect()
+        };
+        let result_map: HashMap<u64, SimulationResult> = unique_indices
+            .iter()
+            .zip(unique_results)
+            .map(|(&i, r)| (hashes[i], r))
+            .collect();
+        hashes
+            .iter()
+            .map(|h| result_map.get(h).expect("hash in result map").clone())
+            .collect()
     }
 }
 
@@ -996,17 +1030,51 @@ fn run_monte_carlo_inner_variable_iterations(
         }
     };
 
-    if parallel {
-        candidates
-            .par_iter()
-            .enumerate()
-            .map(|(i, c)| run_at(i, c))
-            .collect()
+    // Deduplicate identical crews (same approach as run_monte_carlo_inner).
+    let n = candidates.len();
+    let hashes: Vec<u64> = candidates.iter().map(crew_candidate_stable_hash).collect();
+    let mut unique_indices: Vec<usize> = Vec::with_capacity(n);
+    let mut seen: HashSet<u64> = HashSet::with_capacity(n);
+    for (i, &h) in hashes.iter().enumerate() {
+        if seen.insert(h) {
+            unique_indices.push(i);
+        }
+    }
+
+    if unique_indices.len() == n {
+        if parallel {
+            candidates
+                .par_iter()
+                .enumerate()
+                .map(|(i, c)| run_at(i, c))
+                .collect()
+        } else {
+            candidates
+                .iter()
+                .enumerate()
+                .map(|(i, c)| run_at(i, c))
+                .collect()
+        }
     } else {
-        candidates
+        let unique_results: Vec<SimulationResult> = if parallel {
+            unique_indices
+                .par_iter()
+                .map(|&i| run_at(i, &candidates[i]))
+                .collect()
+        } else {
+            unique_indices
+                .iter()
+                .map(|&i| run_at(i, &candidates[i]))
+                .collect()
+        };
+        let result_map: HashMap<u64, SimulationResult> = unique_indices
             .iter()
-            .enumerate()
-            .map(|(i, c)| run_at(i, c))
+            .zip(unique_results)
+            .map(|(&i, r)| (hashes[i], r))
+            .collect();
+        hashes
+            .iter()
+            .map(|h| result_map.get(h).expect("hash in result map").clone())
             .collect()
     }
 }

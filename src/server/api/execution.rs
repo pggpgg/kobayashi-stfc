@@ -748,6 +748,7 @@ fn gather_optimize_simulation_results(
                 .map(|n| n as usize)
                 .filter(|_| strategy == OptimizerStrategy::Exhaustive),
             analytical_prefilter_keep: request.analytical_prefilter_keep.map(|n| n as usize),
+            prune_analytical_hull_fraction: None,
             below_decks_slots,
             constraints: crew_constraints.clone(),
             support_buffs: request.support_buffs.clone().unwrap_or_default(),

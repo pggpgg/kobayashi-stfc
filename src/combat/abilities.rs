@@ -113,6 +113,10 @@ pub enum AbilityEffect {
     /// folded into [`Combatant::mitigation`] at scenario build. Values are **mitigation fractions**
     /// in `0..1`; the resolver normalizes sheet-style magnitudes (`> 1`) as percent points (`÷ 100`).
     MitigationAdditive(f64),
+    /// Officer-granted dodge bonus; additive fraction (e.g. 0.10 = +10% dodge).
+    /// Dodge is ship-type-weighted in the mitigation formula: interceptors benefit proportionally
+    /// more from dodge than battleships. Applied to the player's effective mitigation on counter-fire.
+    DodgeBonus(f64),
     /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
     /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
     CritChanceBonus(f64),
@@ -466,6 +470,30 @@ pub fn sum_mitigation_additive(effects: &[ActiveAbilityEffect]) -> f64 {
         .sum()
 }
 
+/// Sum [`AbilityEffect::AccuracyBonus`] from combat-begin (or similar) filtered rows.
+/// Added to the attacker's accuracy stat before computing hostile mitigation,
+/// which reduces the defender's dodge contribution (higher accuracy → lower mitigation).
+pub fn sum_accuracy_bonus(effects: &[ActiveAbilityEffect]) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| match e.effect {
+            AbilityEffect::AccuracyBonus(v) => Some(v),
+            _ => None,
+        })
+        .sum()
+}
+
+/// Sum [`AbilityEffect::DodgeBonus`] from combat-begin (or similar) filtered rows.
+/// Ship-type-weighted and added to player mitigation on hostile counter-fire.
+pub fn sum_dodge_bonus(effects: &[ActiveAbilityEffect]) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| match e.effect {
+            AbilityEffect::DodgeBonus(v) => Some(v),
+            _ => None,
+        })
+        .sum()
+}
 /// Hostile crit damage reduction from ship hull abilities (e.g. U.S.S. Crozier) and gated forbidden-tech
 /// seats (e.g. Borg Operating Table vs Conqueror Borg). When multiple seats match **for the same
 /// [`CombatContext`]**, uses the maximum `reduction` and maximum `duration_rounds`.
