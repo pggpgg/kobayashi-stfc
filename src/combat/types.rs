@@ -7,13 +7,6 @@ use serde_json::Value;
 /// Combat mitigation parity implementation migrated from
 /// `tools/combat_engine/mitigation.py`.
 ///
-/// The formulas and clamps in this module intentionally mirror the Python
-/// reference behavior exactly.
-#[derive(Debug, Clone)]
-pub struct FightResult {
-    pub won: bool,
-}
-
 pub const EPSILON: f64 = 1e-9;
 
 /// Bankers rounding (round half to even). Used for shots per weapon: n_w(r) = round_half_even(n_w0 * (1 + B_shots)).

@@ -8,7 +8,7 @@ pub use crate::combat::mitigation::{
 };
 pub use crate::combat::types::{
     effective_shots_for_weapon, round_half_even, AttackerStats, CombatEvent, Combatant,
-    DefenderStats, EventSource, FightResult, OpponentFactionTag, ShipType, SimulationConfig,
+    DefenderStats, EventSource, OpponentFactionTag, ShipType, SimulationConfig,
     SimulationResult, TraceCollector, TraceMode, WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON,
     EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS,
     MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
@@ -2616,8 +2616,4 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         events: trace.events(),
         conqueror_borg_beam_suppression,
     }
-}
-
-pub fn simulate_once() -> FightResult {
-    FightResult { won: true }
 }
