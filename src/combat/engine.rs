@@ -500,10 +500,24 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             &defender_rs_for_assim,
             def_rs_assim_active,
         );
-        if def_rs_shield != 0.0 || def_rs_hull != 0.0 {
+        let def_rs_shield_frac = EffectAccumulator::sum_shield_regen_max_fraction_from_effects(
+            &defender_rs_for_assim,
+            def_rs_assim_active,
+        );
+        let def_rs_hull_frac = EffectAccumulator::sum_hull_regen_max_fraction_from_effects(
+            &defender_rs_for_assim,
+            def_rs_assim_active,
+        );
+        if def_rs_shield != 0.0
+            || def_rs_hull != 0.0
+            || def_rs_shield_frac != 0.0
+            || def_rs_hull_frac != 0.0
+        {
+            let shield_heal = def_rs_shield + def_rs_shield_frac * defender.shield_health.max(0.0);
+            let hull_heal = def_rs_hull + def_rs_hull_frac * defender.hull_health.max(0.0);
             defender_shield_remaining =
-                (defender_shield_remaining + def_rs_shield).min(defender.shield_health.max(0.0));
-            total_hull_damage = (total_hull_damage - def_rs_hull).max(0.0);
+                (defender_shield_remaining + shield_heal).min(defender.shield_health.max(0.0));
+            total_hull_damage = (total_hull_damage - hull_heal).max(0.0);
         }
 
         let defender_hull_pct_round =
@@ -790,10 +804,18 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         // so it is not applied again at round end with ReceiveDamage/RoundEnd regen.
         let att_rs_shield = phase_effects.composed_shield_regen();
         let att_rs_hull = phase_effects.composed_hull_regen();
-        if att_rs_shield != 0.0 || att_rs_hull != 0.0 {
+        let att_rs_shield_frac = phase_effects.composed_shield_regen_max_fraction();
+        let att_rs_hull_frac = phase_effects.composed_hull_regen_max_fraction();
+        if att_rs_shield != 0.0
+            || att_rs_hull != 0.0
+            || att_rs_shield_frac != 0.0
+            || att_rs_hull_frac != 0.0
+        {
+            let shield_heal = att_rs_shield + att_rs_shield_frac * attacker.shield_health.max(0.0);
+            let hull_heal = att_rs_hull + att_rs_hull_frac * attacker.hull_health.max(0.0);
             attacker_shield_remaining =
-                (attacker_shield_remaining + att_rs_shield).min(attacker.shield_health.max(0.0));
-            total_attacker_hull_damage = (total_attacker_hull_damage - att_rs_hull).max(0.0);
+                (attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
+            total_attacker_hull_damage = (total_attacker_hull_damage - hull_heal).max(0.0);
         }
         phase_effects.clear_shield_hull_regen_stacks();
 
@@ -1411,8 +1433,17 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                             defender_shield_remaining = (defender_shield_remaining + v)
                                 .min(defender.shield_health.max(0.0));
                         }
+                        AbilityEffect::ShieldRegenMaxFraction(f) => {
+                            let heal = f * defender.shield_health.max(0.0);
+                            defender_shield_remaining = (defender_shield_remaining + heal)
+                                .min(defender.shield_health.max(0.0));
+                        }
                         AbilityEffect::HullRegen(v) => {
                             total_hull_damage = (total_hull_damage - v).max(0.0);
+                        }
+                        AbilityEffect::HullRegenMaxFraction(f) => {
+                            let heal = f * defender.hull_health.max(0.0);
+                            total_hull_damage = (total_hull_damage - heal).max(0.0);
                         }
                         _ => defender_shield_break_carry.push(e.clone()),
                     }
@@ -1854,9 +1885,20 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                                     (attacker_shield_remaining + v)
                                                         .min(attacker.shield_health.max(0.0));
                                             }
+                                            AbilityEffect::ShieldRegenMaxFraction(f) => {
+                                                let heal = f * attacker.shield_health.max(0.0);
+                                                attacker_shield_remaining =
+                                                    (attacker_shield_remaining + heal)
+                                                        .min(attacker.shield_health.max(0.0));
+                                            }
                                             AbilityEffect::HullRegen(v) => {
                                                 total_attacker_hull_damage =
                                                     (total_attacker_hull_damage - v).max(0.0);
+                                            }
+                                            AbilityEffect::HullRegenMaxFraction(f) => {
+                                                let heal = f * attacker.hull_health.max(0.0);
+                                                total_attacker_hull_damage =
+                                                    (total_attacker_hull_damage - heal).max(0.0);
                                             }
                                             _ => {}
                                         }
@@ -1869,6 +1911,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                     scale_effect(e.effect, attack_phase_assimilated),
                                     AbilityEffect::ShieldRegen(_)
                                         | AbilityEffect::HullRegen(_)
+                                        | AbilityEffect::ShieldRegenMaxFraction(_)
+                                        | AbilityEffect::HullRegenMaxFraction(_)
                                         | AbilityEffect::HullRegenPrevRoundFraction(_)
                                         | AbilityEffect::ShieldRegenPrevRoundFraction(_)
                                 )
@@ -2079,9 +2123,19 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                     attacker_shield_remaining = (attacker_shield_remaining + v)
                                         .min(attacker.shield_health.max(0.0));
                                 }
+                                AbilityEffect::ShieldRegenMaxFraction(f) => {
+                                    let heal = f * attacker.shield_health.max(0.0);
+                                    attacker_shield_remaining = (attacker_shield_remaining + heal)
+                                        .min(attacker.shield_health.max(0.0));
+                                }
                                 AbilityEffect::HullRegen(v) => {
                                     total_attacker_hull_damage =
                                         (total_attacker_hull_damage - v).max(0.0);
+                                }
+                                AbilityEffect::HullRegenMaxFraction(f) => {
+                                    let heal = f * attacker.hull_health.max(0.0);
+                                    total_attacker_hull_damage =
+                                        (total_attacker_hull_damage - heal).max(0.0);
                                 }
                                 _ => {}
                             }
@@ -2093,6 +2147,8 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                     scale_effect(e.effect, attack_phase_assimilated),
                                     AbilityEffect::ShieldRegen(_)
                                         | AbilityEffect::HullRegen(_)
+                                        | AbilityEffect::ShieldRegenMaxFraction(_)
+                                        | AbilityEffect::HullRegenMaxFraction(_)
                                         | AbilityEffect::HullRegenPrevRoundFraction(_)
                                         | AbilityEffect::ShieldRegenPrevRoundFraction(_)
                                 )
@@ -2337,9 +2393,13 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         // Regen: shield and hull restoration at round end from attacker's crew (officer/data regen effects apply to the ship with the crew).
         let shield_regen = phase_effects_round.composed_shield_regen();
         let hull_regen = phase_effects_round.composed_hull_regen();
+        let shield_regen_frac = phase_effects_round.composed_shield_regen_max_fraction();
+        let hull_regen_frac = phase_effects_round.composed_hull_regen_max_fraction();
+        let shield_heal = shield_regen + shield_regen_frac * attacker.shield_health.max(0.0);
+        let hull_heal = hull_regen + hull_regen_frac * attacker.hull_health.max(0.0);
         attacker_shield_remaining =
-            (attacker_shield_remaining + shield_regen).min(attacker.shield_health.max(0.0));
-        total_attacker_hull_damage = (total_attacker_hull_damage - hull_regen).max(0.0);
+            (attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
+        total_attacker_hull_damage = (total_attacker_hull_damage - hull_heal).max(0.0);
 
         let defender_round_end_filtered =
             filter_effects_by_condition(&defender_round_end_effects, &ctx_after_weapons);
@@ -2362,9 +2422,14 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         );
         let def_re_shield = defender_round_end_acc.composed_shield_regen();
         let def_re_hull = defender_round_end_acc.composed_hull_regen();
+        let def_re_shield_frac = defender_round_end_acc.composed_shield_regen_max_fraction();
+        let def_re_hull_frac = defender_round_end_acc.composed_hull_regen_max_fraction();
+        let def_re_shield_heal =
+            def_re_shield + def_re_shield_frac * defender.shield_health.max(0.0);
+        let def_re_hull_heal = def_re_hull + def_re_hull_frac * defender.hull_health.max(0.0);
         defender_shield_remaining =
-            (defender_shield_remaining + def_re_shield).min(defender.shield_health.max(0.0));
-        total_hull_damage = (total_hull_damage - def_re_hull).max(0.0);
+            (defender_shield_remaining + def_re_shield_heal).min(defender.shield_health.max(0.0));
+        total_hull_damage = (total_hull_damage - def_re_hull_heal).max(0.0);
 
         defender_burning_rounds = defender_burning_rounds.saturating_sub(1);
         defender_hull_breach_rounds = defender_hull_breach_rounds.saturating_sub(1);

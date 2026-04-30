@@ -53,30 +53,20 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 |---:|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|---:|---|---|
 | naga-delvos-aa4e10 | Naga Delvos | 3 | 0/0/1 | 0/0/1 | 0/0/1 | 3 | 0 | 0 | 0 | 0 | 0 | 75 | 0 | F | 0 | combat_tag_gaps | — |
 | cadet-mccoy-13d460 | Cadet McCoy | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| dajash-tolra-1e809f | Dajash Tolra | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | dane-4f7fc1 | Dane | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 2 | — | 0 | 0 | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| french-marshal-q-1f0a28 | French Marshal Q | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 2 | — | 0 | 0 | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | ghrush-6e635b | Ghrush | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | hadley-ae14a1 | Hadley | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| harry-mudd-374d5f | Harry Mudd | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| jaylah-857412 | Jaylah | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | kras-a47042 | Kras | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | kuron-15cda2 | Kuron | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | marla-9732c7 | Marla | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| miles-o-brien-f0c92f | Miles O'Brien | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 2 | — | 0 | 0 | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | next-gen-crusher-0de02d | Next Gen Crusher | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | one-of-eleven-ee0ee9 | One Of Eleven | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | origins-stamets-b0decf | Origins Stamets | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| pic-hugh-75d78e | PIC Hugh | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 2 | — | 0 | 0 | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| rom-621ae3 | Rom | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| seven-of-eleven-e45727 | Seven Of Eleven | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | snw-pike-c94ac4 | SNW Pike | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | strike-team-una-5ec6f6 | Strike Team Una | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| the-hierarch-e1f430 | The Hierarch | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | tos-scotty-c747f6 | TOS Scotty | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | uhura-ea117c | Uhura | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 2 | 0 | 0 | — | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | wok-carol-52a350 | Wok Carol | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 2 | — | 0 | 0 | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
-| wok-scotty-57ed85 | Wok Scotty | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 2 | — | 0 | 0 | 0 | 0 | 50 | 0 | F | 0 | combat_tag_gaps | — |
 | dixon-hill-b7ea10 | Dixon Hill | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 1 | — | 0 | — | 0 | 0 | 25 | 0 | F | 50 | mixed | — |
 | domitia-2e4a05 | Domitia | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 1 | — | 0 | — | 0 | 0 | 25 | 0 | F | 50 | mixed | — |
 | dupont-5deb80 | Dupont | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 1 | — | 0 | — | 0 | 0 | 25 | 0 | F | 50 | mixed | — |
@@ -94,6 +84,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | t-pring-9bade6 | T'Pring | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 1 | — | 0 | — | 0 | 0 | 25 | 0 | F | 50 | mixed | — |
 | three-of-eleven-d5568f | Three Of Eleven | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 1 | — | 0 | — | 0 | 0 | 25 | 0 | F | 50 | mixed | — |
 | tuvok-5ceab0 | Tuvok | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 1 | — | 0 | — | 0 | 0 | 25 | 0 | F | 50 | mixed | — |
+| wok-scotty-57ed85 | Wok Scotty | 1 | 0/0/0 | 0/0/0 | 0/0/1 | 1 | — | — | 0 | 0 | 0 | 25 | 0 | F | 50 | mixed | — |
 | d-vana-tendi-9fabf0 | D'Vana Tendi | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | dezoc-381416 | Dezoc | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | doctor-t-ana-b98f82 | Doctor T'Ana | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
@@ -101,21 +92,20 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | kira-nerys-a5253a | Kira Nerys | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | laliari-87e81a | Laliari | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | neelix-c8a380 | Neelix | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
+| pic-hugh-75d78e | PIC Hugh | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | snw-nurse-chapel-d80ed9 | SNW Nurse Chapel | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
-| suder-d348a9 | Suder | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
-| vil-gul-dukat-c46cb8 | Vil Gul Dukat | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | vil-winn-adami-6c42f3 | Vil Winn Adami | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | zeph-21ee5c | Zeph | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 1 | — | 0 | 100 | 50 | 40 | 25 | 15 | F | 0 | combat_tag_gaps | — |
 | cadet-kirk-a80563 | Cadet Kirk | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
-| carol-freeman-a46be4 | Carol Freeman | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | cath-f0e149 | Cath | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
-| chakotay-a1f5df | Chakotay | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | d-jaoki-baa18f | D'Jaoki | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
+| dajash-tolra-1e809f | Dajash Tolra | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | ent-e-picard-556227 | Ent-E Picard | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | ent-e-riker-516b8d | Ent-E Riker | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | gaila-3d387a | Gaila | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
-| geordi-la-forge-914cec | Geordi La Forge | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
+| harry-mudd-374d5f | Harry Mudd | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | javaid-fdff59 | Javaid | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
+| jaylah-857412 | Jaylah | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | jonathan-archer-4e9cd0 | Jonathan Archer | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | kathryn-janeway-bd4a19 | Kathryn Janeway | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | kerla-6cdf45 | Kerla | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
@@ -134,12 +124,11 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | paul-stamets-4aa6ab | Paul Stamets | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | pon-a2ddd4 | Pon | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | ro-mudd-21a89a | Ro Mudd | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
+| rom-621ae3 | Rom | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | scotty-a83cb5 | Scotty | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | shev-1799cb | Shev | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | snw-james-kirk-6f6300 | SNW James Kirk | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
-| specialist-seven-7b554a | Specialist Seven | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | spock-c04738 | Spock | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
-| strike-team-la-an-84e2a9 | Strike Team La'an | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | t-laan-c4627b | T'Laan | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | tiza-9d38f9 | Tiza | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
 | tos-chekov-0f158d | TOS Chekov | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 1 | 0 | 100 | — | 50 | 43 | 25 | 18 | F | 0 | combat_tag_gaps | — |
@@ -150,11 +139,9 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | chang-ecc238 | Chang | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | Captain weapon bonus should only apply when enemy hull <60%; bridge reload delay vs breached target is tag/unmapped. |
 | culber-b3e4a0 | Culber | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | darwin-b8dc0a | Darwin | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
-| emp-georgiou-1564b5 | Emp. Georgiou | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | five-of-eleven-d9aa11 | Five Of Eleven | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | goon-891942 | Goon | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | gowron-27ac30 | Gowron | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
-| gul-dukat-70e9d7 | Gul Dukat | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | harrison-56cc6c | Harrison | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | Captain: Explorer hostile gate modeled in LCARS; level-70 unlock still not a combat condition; bridge shield ignore is tag/unmapped. |
 | hendorff-549c65 | Hendorff | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | kang-55e67a | Kang | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
@@ -162,16 +149,17 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | mara-bd3ca6 | Mara | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | marcus-073931 | Marcus | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | martok-89ef39 | Martok | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
-| mirror-kira-bc42ce | Mirror Kira | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | qa-ug-a165bf | Qa'Ug | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
+| seven-of-eleven-e45727 | Seven Of Eleven | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | snw-una-2b6e15 | SNW Una | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | strike-team-ortegas-d9df30 | Strike Team Ortegas | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
+| the-hierarch-e1f430 | The Hierarch | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | tos-mccoy-fff2e0 | TOS McCoy | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | tos-uhura-44419b | TOS Uhura | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | vella-7ab77e | Vella | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | wesley-crusher-834fce | Wesley Crusher | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
-| weyoun-e042c4 | Weyoun | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
 | woteln-c67650 | Woteln | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 1 | 100 | 0 | — | 50 | 57 | 25 | 32 | F | 0 | combat_tag_gaps | — |
+| miles-o-brien-f0c92f | Miles O'Brien | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 1 | — | 100 | 0 | 50 | 60 | 25 | 35 | F | 0 | combat_tag_gaps | — |
 | phlox-72c07b | Phlox | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 1 | — | 100 | 0 | 50 | 60 | 25 | 35 | F | 0 | combat_tag_gaps | — |
 | pic-beverly-crusher-26f56a | PIC Beverly Crusher | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 1 | — | 100 | 0 | 50 | 60 | 25 | 35 | F | 0 | combat_tag_gaps | — |
 | reginald-barclay-111169 | Reginald Barclay | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 1 | — | 100 | 0 | 50 | 60 | 25 | 35 | F | 0 | combat_tag_gaps | — |
@@ -182,6 +170,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | trip-tucker-75d4f9 | Trip Tucker | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 1 | — | 100 | 0 | 50 | 60 | 25 | 35 | F | 0 | combat_tag_gaps | — |
 | bones-ddc8a9 | Bones | 1 | 0/0/0 | 0/1/0 | 0/0/0 | 0 | — | 50 | — | 50 | 50 | 0 | 50 | D | 100 | economy_only | — |
 | changeling-kira-666ebe | Changeling Kira | 2 | 1/0/0 | 0/1/0 | 0/0/0 | 0 | 100 | 50 | — | 75 | 79 | 0 | 79 | C | 100 | none | — |
+| gul-dukat-70e9d7 | Gul Dukat | 2 | 1/0/0 | 0/1/0 | 0/0/0 | 0 | 100 | 50 | — | 75 | 79 | 0 | 79 | C | 100 | none | — |
 | 718-0-2509d7 | 718.0 | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ahvix-f90184 | Ahvix | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | airiam-9265fc | Airiam | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
@@ -197,7 +186,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | barot-2d7be0 | Barot | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | beckett-mariner-d93865 | Beckett Mariner | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | benjamin-sisko-5c51f2 | Benjamin Sisko | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| beverly-crusher-74b2d7 | Beverly Crusher | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain/bridge use flat stats; game uses officer health/defense scaling for SHP restore and defenses. |
+| beverly-crusher-74b2d7 | Beverly Crusher | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | black-ops-chapel-814fe8 | Black Ops Chapel | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | black-ops-m-benga-e23e3a | Black Ops M'Benga | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | borg-queen-c8e67d | Borg Queen | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -207,6 +196,8 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | cadet-uhura-3ef15c | Cadet Uhura | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | cap-tilly-070cc9 | Cap. Tilly | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | carol-755a05 | Carol | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| carol-freeman-a46be4 | Carol Freeman | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| chakotay-a1f5df | Chakotay | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | charvanek-0f1b5c | Charvanek | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | chen-cdb1ca | Chen | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | damar-796eb0 | Damar | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -215,11 +206,15 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | decius-8fce68 | Decius | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | demarco-7f2d86 | Demarco | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | eight-of-eleven-cb5f3c | Eight Of Eleven | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| emp-georgiou-1564b5 | Emp. Georgiou | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ent-e-data-871245 | Ent-E Data | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Isolytic cascade line OK for combat start; missing non-Armada hostile filter in LCARS. |
 | ent-e-troi-46cdc3 | Ent-E Troi | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | eurydice-18b643 | Eurydice | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ezri-dax-bb0892 | Ezri Dax | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| fcm-data-3b9e4d | FCM Data | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
+| french-marshal-q-1f0a28 | French Marshal Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | garak-771862 | Garak | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| geordi-la-forge-914cec | Geordi La Forge | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | georgiou-d2bdef | Georgiou | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | gonzales-de640c | Gonzales | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | gorkon-b8d2e7 | Gorkon | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain crit window OK; bridge hull breach proc is tag-only (not hull_breach effect). |
@@ -232,7 +227,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | instr-spock-bba5d7 | Instr. Spock | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | jack-ransom-dfdb38 | Jack Ransom | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | jadzia-dax-736698 | Jadzia Dax | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| jean-luc-picard-e0515c | Jean-Luc Picard | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK. |
+| jean-luc-picard-e0515c | Jean-Luc Picard | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK. Not an officer-stat-scaling gap. |
 | joachim-03587e | Joachim | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | julian-bashir-0551fa | Julian Bashir | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | k-bisch-b6c84c | K'Bisch | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
@@ -246,11 +241,13 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | lorca-d32ec8 | Lorca | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | m-benga-53446d | M'Benga | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | m-ral-986e7a | M'Ral | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| mara-dalen-6827 | Mara Dalen | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mariachi-q-c8cf6e | Mariachi Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | masriad-vael-50cf64 | Masriad Vael | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mirek-953093 | Mirek | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mirror-data-e13d66 | Mirror Data | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mirror-ezri-2f6326 | Mirror Ezri | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| mirror-kira-bc42ce | Mirror Kira | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mirror-picard-7c1a17 | Mirror Picard | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mirror-troi-d237df | Mirror Troi | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mirror-uhura-0a7168 | Mirror Uhura | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -281,13 +278,13 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | saru-68cf4f | Saru | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | sela-bd6e1b | Sela | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | sesha-631428 | Sesha | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| seska-848b5b | Seska | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | On-hit crit buff should be timed (4 rds, once/weapon); SHP restore is %-of-max in game, flat here. |
+| seska-848b5b | Seska | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | On-hit crit buff should be timed (4 rds, once/weapon). |
 | seven-of-nine-d18a5e | Seven Of Nine | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | severus-93daaf | Severus | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | shaxs-11a808 | Shaxs | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | six-of-eleven-20cbe8 | Six Of Eleven | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-d-chok-34f7ba | SNW D'Chok | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| snw-mbenga-fe38e5 | Snw M’Benga | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain should scale mitigation from officer health %; bridge SHP restore is %-of-max in game but modeled as flat shield_regen HP. |
+| snw-mbenga-fe38e5 | Snw M’Benga | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-ortegas-7c79fe | SNW Ortegas | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-pelia-9d33f1 | SNW Pelia | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-sam-kirk-0a77f9 | SNW Sam Kirk | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain enemy SHP drain modeled as negative shield_regen on attacker crew (wrong target in engine). |
@@ -295,7 +292,10 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | snw-spock-40de97 | SNW Spock | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | snw-uhura-ff7333 | SNW Uhura | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | soran-24a024 | Soran | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| specialist-seven-7b554a | Specialist Seven | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | starfleet-q-3c61cb | Starfleet Q | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| strike-team-la-an-84e2a9 | Strike Team La'an | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| suder-d348a9 | Suder | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | sulu-fe562d | Sulu | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | tal-c3e4eb | Tal | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | tasha-yar-b9300c | Tasha Yar | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -310,6 +310,8 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | tyler-1dcc4d | Tyler | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | vartoq-9109e7 | Vartoq | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | vemet-00a218 | Vemet | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| vil-gul-dukat-c46cb8 | Vil Gul Dukat | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| weyoun-e042c4 | Weyoun | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | william-t-riker-ddebb5 | William T. Riker | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | wok-joachim-858f5a | WOK Joachim | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | wok-mccoy-f09b41 | Wok Mccoy | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -322,7 +324,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | alonzo-freeman-ef0f9b | Alonzo Freeman | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | arrock-0791b2 | Arrock | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | b-etor-8fc426 | B'Etor | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
-| fcm-data-3b9e4d | FCM Data | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | — | — | — | — | — | 0 | — | — | 100 | none | — |
 | four-of-eleven-15084c | Four Of Eleven | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | hoshi-sato-3bc529 | Hoshi Sato | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | makinen-a124a0 | Mäkinen | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |

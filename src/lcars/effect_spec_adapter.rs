@@ -10,9 +10,10 @@ use crate::combat::effect_spec_compile::{
 };
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource, ValueSpec,
+    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource,
+    OfficerStatScaling, ValueSpec,
 };
-use crate::lcars::parser::{LcarsCondition, LcarsDuration, LcarsEffect};
+use crate::lcars::parser::{LcarsCondition, LcarsDuration, LcarsEffect, LcarsLevelStats};
 use crate::lcars::resolver::effect_trigger_timing;
 use serde_json::json;
 
@@ -266,7 +267,15 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "apex_shred" => Some(AbilityModifierSpec::ApexShred),
         "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
         "shield_regen" | "shield_hp_repair" => Some(AbilityModifierSpec::OfficerShieldRegenFlat),
+        "shield_regen_max_fraction"
+        | "shield_hp_repair_max_fraction"
+        | "shield_regen_max_pct"
+        | "shield_hp_repair_max_pct" => Some(AbilityModifierSpec::OfficerShieldRegenMaxFraction),
         "hull_repair" | "hull_hp_repair" => Some(AbilityModifierSpec::OfficerHullRegenFlat),
+        "hull_repair_max_fraction"
+        | "hull_hp_repair_max_fraction"
+        | "hull_repair_max_pct"
+        | "hull_hp_repair_max_pct" => Some(AbilityModifierSpec::OfficerHullRegenMaxFraction),
         "hull_hp_repair_prev_round" | "hull_repair_prev_round" => {
             Some(AbilityModifierSpec::OfficerHullRegenPrevRoundFraction)
         }
@@ -301,6 +310,46 @@ fn effect_value_at_officer_tier(effect: &LcarsEffect, tier: Option<u8>) -> Optio
     effect
         .value
         .or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(tier)))
+}
+
+/// Resolve effect value for officer-stat scaling. When `effect.scaling.officer_stat` is set and
+/// per-level stats are available, the rank coefficient is multiplied by the officer's stat divided
+/// by 100. When the officer-stat reference is set but stats are missing, the rank coefficient
+/// passes through unchanged (no-op fallback) — equivalent to the historical behavior, plus the
+/// scaling clause is preserved on `ValueSpec.officer_stat_scaling` for traceability.
+fn effect_value_with_officer_stat(
+    effect: &LcarsEffect,
+    tier: Option<u8>,
+    officer_stats: Option<&LcarsLevelStats>,
+) -> (Option<f64>, Option<OfficerStatScaling>) {
+    let base_value = effect_value_at_officer_tier(effect, tier);
+    let Some(ref scaling) = effect.scaling else {
+        return (base_value, None);
+    };
+    let Some(stat) = scaling.officer_stat else {
+        return (base_value, None);
+    };
+    let coefficients_per_rank = scaling
+        .values
+        .clone()
+        .or_else(|| {
+            let max_rank = scaling.max_rank.unwrap_or(5).max(1) as usize;
+            let base = scaling.base?;
+            let per = scaling.per_rank.unwrap_or(0.0);
+            Some((0..max_rank).map(|i| base + per * i as f64).collect())
+        })
+        .unwrap_or_default();
+    let scaling_spec = OfficerStatScaling {
+        stat,
+        coefficient_per_rank: coefficients_per_rank,
+    };
+    let rank_value = base_value;
+    let resolved = match (rank_value, officer_stats) {
+        (Some(rv), Some(stats)) => Some(rv * stats.value_for(stat) / 100.0),
+        (Some(rv), None) => Some(rv),
+        (None, _) => None,
+    };
+    (resolved, Some(scaling_spec))
 }
 
 fn effect_chance_at_officer_tier(effect: &LcarsEffect, tier: Option<u8>) -> f64 {
@@ -357,12 +406,18 @@ fn op_to_spec(op: &str) -> AbilityOperationSpec {
 /// Returns [`None`] for static-only `stat_modify`, `tag`, `extra_attack`, `accuracy` non-CB timings,
 /// unknown triggers, or a present `condition` that [`lcars_condition_to_spec`] cannot encode
 /// (aligned with [`crate::lcars::resolver::resolve_effect`]).
+///
+/// `officer_stats` is the per-level stat row used to resolve officer-stat scaling (see
+/// [`LcarsScaling::officer_stat`]). Pass `None` when stats are unknown — the rank coefficient
+/// passes through unchanged and the scaling clause is preserved on
+/// [`ValueSpec::officer_stat_scaling`] for traceability.
 pub fn lcars_effect_to_combat_effect_spec(
     effect: &LcarsEffect,
     stable_id: &str,
     officer_id: &str,
     ability_name: &str,
     officer_tier: Option<u8>,
+    officer_stats: Option<&LcarsLevelStats>,
 ) -> Option<CombatEffectSpec> {
     if effect.effect_type == "tag" || effect.effect_type == "extra_attack" {
         return None;
@@ -403,7 +458,9 @@ pub fn lcars_effect_to_combat_effect_spec(
 
     match effect.effect_type.as_str() {
         "stat_modify" => {
-            let value = effect_value_at_officer_tier(effect, officer_tier)?;
+            let (resolved_value, scaling_spec) =
+                effect_value_with_officer_stat(effect, officer_tier, officer_stats);
+            let value = resolved_value?;
             let stat = effect.stat.as_deref().unwrap_or("").trim();
 
             if stat == "weapon_damage" || stat == "attack" {
@@ -432,6 +489,7 @@ pub fn lcars_effect_to_combat_effect_spec(
                             scalar: Some(value),
                             by_rank: None,
                             unit: None,
+                            officer_stat_scaling: scaling_spec.clone(),
                         }),
                         chance: None,
                         duration,
@@ -467,6 +525,7 @@ pub fn lcars_effect_to_combat_effect_spec(
                             scalar: Some(value),
                             by_rank: None,
                             unit: None,
+                            officer_stat_scaling: scaling_spec.clone(),
                         }),
                         chance: None,
                         duration,
@@ -497,6 +556,7 @@ pub fn lcars_effect_to_combat_effect_spec(
                     scalar: Some(value),
                     by_rank: None,
                     unit: None,
+                    officer_stat_scaling: scaling_spec,
                 }),
                 chance: None,
                 duration,
@@ -671,9 +731,46 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        let spec = lcars_effect_to_combat_effect_spec(&e, "test:id", "gorkon", "cm", None).unwrap();
+        let spec =
+            lcars_effect_to_combat_effect_spec(&e, "test:id", "gorkon", "cm", None, None).unwrap();
         assert_eq!(spec.modifier, AbilityModifierSpec::WeaponDamage);
         assert_eq!(spec.trigger, AbilityTriggerSpec::AttackPhase);
+    }
+
+    #[test]
+    fn lcars_max_fraction_regen_stats_map_to_distinct_specs() {
+        let e = LcarsEffect {
+            effect_type: "stat_modify".into(),
+            stat: Some("shield_regen_max_fraction".into()),
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.12),
+            trigger: Some("on_round_start".into()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let spec =
+            lcars_effect_to_combat_effect_spec(&e, "test:id", "seska", "ba", None, None).unwrap();
+        assert_eq!(
+            spec.modifier,
+            AbilityModifierSpec::OfficerShieldRegenMaxFraction
+        );
+        assert_eq!(spec.trigger, AbilityTriggerSpec::RoundStart);
+
+        let mut e = e;
+        e.stat = Some("hull_hp_repair_max_fraction".into());
+        let spec = lcars_effect_to_combat_effect_spec(&e, "test:id", "pic-hugh", "bd", None, None)
+            .unwrap();
+        assert_eq!(
+            spec.modifier,
+            AbilityModifierSpec::OfficerHullRegenMaxFraction
+        );
     }
 
     #[test]
@@ -696,7 +793,7 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None).is_none());
+        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None).is_none());
     }
 
     /// [`lcars_effect_to_combat_effect_spec`] scalar + modifier must stay aligned with
@@ -712,6 +809,8 @@ mod tests {
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let effect = LcarsEffect {
             effect_type: "stat_modify".into(),
@@ -738,6 +837,7 @@ mod tests {
             "parity:id",
             "parity_officer",
             "strike",
+            None,
             None,
         )
         .expect("spec");
@@ -798,7 +898,7 @@ mod tests {
             decay: None,
         };
         assert!(
-            lcars_effect_to_combat_effect_spec(&e_bad, "x", "o", "a", None).is_none(),
+            lcars_effect_to_combat_effect_spec(&e_bad, "x", "o", "a", None, None).is_none(),
             "must not emit spec without encoding the YAML condition"
         );
         let good_c = LcarsCondition {
@@ -834,6 +934,147 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        assert!(lcars_effect_to_combat_effect_spec(&e_ok, "x", "o", "a", None).is_some());
+        assert!(lcars_effect_to_combat_effect_spec(&e_ok, "x", "o", "a", None, None).is_some());
+    }
+
+    fn officer_stat_scaling_effect(
+        stat: &str,
+        coefficient_per_rank: Vec<f64>,
+        officer_stat: crate::data::combat_effect_spec::OfficerStat,
+    ) -> LcarsEffect {
+        LcarsEffect {
+            effect_type: "stat_modify".into(),
+            stat: Some(stat.into()),
+            target: None,
+            operator: Some("add".into()),
+            value: None,
+            trigger: Some("on_combat_start".into()),
+            duration: None,
+            scaling: Some(crate::lcars::parser::LcarsScaling {
+                base: None,
+                per_rank: None,
+                max_rank: Some(coefficient_per_rank.len() as u8),
+                base_chance: None,
+                values: Some(coefficient_per_rank),
+                chance_values: None,
+                officer_stat: Some(officer_stat),
+            }),
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        }
+    }
+
+    #[test]
+    fn officer_stat_scaling_resolves_coefficient_times_stat_over_100() {
+        // Mbenga-style: armor += <coeff>% of officer.health. At rank 3, coefficient = 25%.
+        let e = officer_stat_scaling_effect(
+            "armor",
+            vec![15.0, 15.0, 25.0],
+            crate::data::combat_effect_spec::OfficerStat::Health,
+        );
+        let stats = LcarsLevelStats {
+            level: 30,
+            attack: 800.0,
+            defense: 400.0,
+            health: 400.0,
+        };
+        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "o", "ab", Some(3), Some(&stats))
+            .expect("spec");
+        let v = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
+        // 25 * 400 / 100 = 100.
+        assert!((v - 100.0).abs() < 1e-9, "got {v}");
+        let scaling = spec
+            .value
+            .as_ref()
+            .and_then(|v| v.officer_stat_scaling.as_ref())
+            .expect("officer_stat_scaling preserved");
+        assert_eq!(scaling.coefficient_per_rank, vec![15.0, 15.0, 25.0]);
+        assert_eq!(
+            scaling.stat,
+            crate::data::combat_effect_spec::OfficerStat::Health
+        );
+    }
+
+    #[test]
+    fn officer_stat_scaling_clamps_rank_beyond_table() {
+        // Tier 7 with a 3-entry table → use the highest entry.
+        let e = officer_stat_scaling_effect(
+            "armor",
+            vec![10.0, 20.0, 30.0],
+            crate::data::combat_effect_spec::OfficerStat::Defense,
+        );
+        let stats = LcarsLevelStats {
+            level: 1,
+            attack: 0.0,
+            defense: 200.0,
+            health: 0.0,
+        };
+        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "o", "ab", Some(7), Some(&stats))
+            .expect("spec");
+        let v = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
+        assert!((v - 60.0).abs() < 1e-9, "got {v}");
+    }
+
+    #[test]
+    fn officer_stat_scaling_no_op_when_stats_missing() {
+        // Without per-level stats, the rank coefficient passes through unchanged. Scaling clause
+        // is preserved on ValueSpec for traceability.
+        let e = officer_stat_scaling_effect(
+            "armor",
+            vec![15.0, 15.0, 25.0],
+            crate::data::combat_effect_spec::OfficerStat::Health,
+        );
+        let spec =
+            lcars_effect_to_combat_effect_spec(&e, "tid", "o", "ab", Some(3), None).expect("spec");
+        let v = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
+        assert!(
+            (v - 25.0).abs() < 1e-12,
+            "expected raw rank coefficient, got {v}"
+        );
+        assert!(spec
+            .value
+            .as_ref()
+            .and_then(|v| v.officer_stat_scaling.as_ref())
+            .is_some());
+    }
+
+    #[test]
+    fn officer_stat_scaling_falls_through_when_clause_absent() {
+        // No officer_stat clause → unchanged behavior; no scaling spec on ValueSpec.
+        let e = LcarsEffect {
+            effect_type: "stat_modify".into(),
+            stat: Some("armor".into()),
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.04),
+            trigger: Some("on_combat_start".into()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let stats = LcarsLevelStats {
+            level: 30,
+            attack: 0.0,
+            defense: 0.0,
+            health: 999.0,
+        };
+        let spec = lcars_effect_to_combat_effect_spec(&e, "tid", "o", "ab", Some(3), Some(&stats))
+            .expect("spec");
+        let v = spec.value.as_ref().and_then(|v| v.scalar).expect("scalar");
+        assert!((v - 0.04).abs() < 1e-12);
+        assert!(spec
+            .value
+            .as_ref()
+            .and_then(|v| v.officer_stat_scaling.as_ref())
+            .is_none());
     }
 }

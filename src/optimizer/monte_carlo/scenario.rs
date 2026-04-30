@@ -906,6 +906,7 @@ fn resolve_options_with_candidate_tiers(
         } else {
             Some(officer_tiers)
         },
+        officer_levels: None,
     }
 }
 
@@ -1374,6 +1375,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
                 } else {
                     Some(officer_tiers)
                 },
+                officer_levels: None,
             }
         })
         .unwrap_or_default();
@@ -1701,6 +1703,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 } else {
                     Some(officer_tiers)
                 },
+                officer_levels: None,
             }
         })
         .unwrap_or_default();
@@ -2361,6 +2364,7 @@ mod tests {
             resolve_options: ResolveOptions {
                 tier: None,
                 officer_tiers: None,
+                officer_levels: None,
             },
             ship_rec: Some(ship_rec),
             hostile_rec: None,

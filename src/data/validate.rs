@@ -713,6 +713,20 @@ fn mechanic_support_for_key(key: &str) -> Option<MechanicSupport> {
 
     if matches!(
         key,
+        "shield_regen_max_fraction"
+            | "shield_hp_repair_max_fraction"
+            | "shield_regen_max_pct"
+            | "shield_hp_repair_max_pct"
+            | "hull_repair_max_fraction"
+            | "hull_hp_repair_max_fraction"
+            | "hull_repair_max_pct"
+            | "hull_hp_repair_max_pct"
+    ) {
+        return Some(MechanicSupport::Implemented);
+    }
+
+    if matches!(
+        key,
         "mining_rate" | "repair_speed" | "warp_speed" | "cargo_capacity"
     ) || key.contains("loot")
     {

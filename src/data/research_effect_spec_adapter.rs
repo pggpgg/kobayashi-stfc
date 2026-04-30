@@ -112,6 +112,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                 scalar: Some(value),
                 by_rank: None,
                 unit: None,
+                officer_stat_scaling: None,
             }),
             chance: None,
             duration: None,

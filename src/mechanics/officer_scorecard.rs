@@ -326,6 +326,7 @@ pub fn build_officer_scorecard_rows(
     let opts = ResolveOptions {
         tier: Some(5),
         officer_tiers: None,
+        officer_levels: None,
     };
 
     let mut rows: Vec<OfficerScorecardRow> = officers
@@ -397,6 +398,7 @@ mod tests {
         ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
+            officer_levels: None,
         }
     }
 
@@ -429,6 +431,8 @@ mod tests {
             }),
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let row = scorecard_row_for_officer(&officer, &opts(), "—");
         assert_eq!(row.combat_n, 0);
@@ -466,6 +470,8 @@ mod tests {
             }),
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let row = scorecard_row_for_officer(&officer, &opts(), "—");
         assert_eq!(row.combat_n, 1);
@@ -524,6 +530,8 @@ mod tests {
                 }],
             }),
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let row = scorecard_row_for_officer(&officer, &opts(), "—");
         // raw: 100, 0 → avg 50; weighted: (100*2 + 0*1.5)/3.5 ≈ 57
@@ -544,6 +552,8 @@ mod tests {
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let row = scorecard_row_for_officer(&officer, &opts(), "Manual review: wrong target.");
         assert_eq!(row.fidelity, "Manual review: wrong target.");

@@ -1276,8 +1276,14 @@ pub fn combat_effect_spec_debug_officer_payload(
         let mut effects = Vec::with_capacity(ability.effects.len());
         for (i, e) in ability.effects.iter().enumerate() {
             let stable_id = format!("{}:{}:{}", officer_id, ability.name, i);
-            let spec =
-                lcars_effect_to_combat_effect_spec(e, &stable_id, officer_id, &ability.name, None);
+            let spec = lcars_effect_to_combat_effect_spec(
+                e,
+                &stable_id,
+                officer_id,
+                &ability.name,
+                None,
+                None,
+            );
             effects.push(EffectRow {
                 index: i,
                 effect_type: e.effect_type.clone(),
