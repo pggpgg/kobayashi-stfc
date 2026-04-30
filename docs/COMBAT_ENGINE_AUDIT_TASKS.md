@@ -145,31 +145,7 @@ code to change**, and **uncertainty remaining**.
   officer abilities use CombatEnd triggers — the LCARS data should be
   searched for `trigger: combat_end` to identify affected officers.
 
-- [ ] **7. Add scaling hooks for burning damage**
-
-  **What is wrong:** Burning is hardcoded at 1% of max hull per round
-  (`BURNING_HULL_DAMAGE_PER_ROUND = 0.01`) with the code comment explicitly
-  noting "no officer/research scaling of that rate." Real STFC has officers
-  that amplify burning damage (e.g., SNW Una, or burning-related research
-  nodes).
-
-  **What code to change:** Add a new `AbilityEffect` variant (e.g.,
-  `BurningDamageFraction` or `BurningHullDamageScale`) that stacks via the
-  existing `StatStacking` system. Wire it into the burning tick code in
-  `engine.rs` to replace the constant `0.01` with `0.01 * (1.0 +
-  burning_scale)`. Read the stacked value from the appropriate accumulator
-  (likely the round-end accumulator since burning ticks at round end).
-  Add the modifier to `EffectStatKey` and route it in
-  `EffectAccumulator::add_effects()`.
-
-  **Uncertainty:** Low for the stacking mechanics. Medium for which
-  specific game sources modify burning intensity — the exact scaling formula
-  (additive? multiplicative? separate burn ticks?) should be verified against
-  fight exports before claiming full fidelity.
-
----
-
-- [ ] **8. Expand drift fixture coverage for under-tested scenarios**
+- [ ] **7. Expand drift fixture coverage for under-tested scenarios**
 
   **What is wrong:** Only 5 drift fixtures exist, covering basic soak,
   dual-weapon ordering, stall margin, and research weapon damage pooling.
