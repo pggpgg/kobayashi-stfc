@@ -471,7 +471,7 @@ mod tests {
         };
         let flat = cumulative_research_level_bonuses(&r, 1);
         assert!(
-            flat.get("weapon_damage").is_none(),
+            !flat.contains_key("weapon_damage"),
             "conditional weapon_damage must not merge into flat level bonuses"
         );
         let key = ResearchBonusConditionKey {

@@ -155,7 +155,7 @@ pub fn support_buff_catalog_validation_issues(catalog: &SupportBuffCatalog) -> V
         }
         match def.id.as_deref().map(str::trim) {
             Some(value) if value == id => {}
-            Some(value) if value.is_empty() => {
+            Some("") => {
                 issues.push(format!("{context}: field `id` must not be empty"));
             }
             Some(value) => {

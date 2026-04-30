@@ -682,7 +682,7 @@ async fn optimize_rejects_fast_discovery_without_heuristic_seeds() {
         .filter_map(|e| e["field"].as_str())
         .collect();
     assert!(
-        fields.iter().any(|f| *f == "fast_discovery"),
+        fields.contains(&"fast_discovery"),
         "expected fast_discovery validation issue: {:?}",
         payload
     );

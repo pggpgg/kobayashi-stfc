@@ -547,7 +547,7 @@ pub fn run_genetic_optimizer(
     let support_slice =
         (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
     let mut last_stable_best: Vec<CrewCandidate> = Vec::new();
-    let uniq_chunk = (config.population_size / 8).max(1).min(64);
+    let uniq_chunk = (config.population_size / 8).clamp(1, 64);
     for generation in 0..config.generations {
         let sim_results = match run_monte_carlo_parallel_deduped_chunked(
             ship,
@@ -559,7 +559,7 @@ pub fn run_genetic_optimizer(
             config.chain_grind.clone(),
             config.defender_opponent,
             uniq_chunk,
-            || eval_should_continue(),
+            &mut eval_should_continue,
         ) {
             Some(rows) => rows,
             None => return (last_stable_best, true),
@@ -691,7 +691,14 @@ mod tests {
     fn small_pools() -> OfficerPools {
         OfficerPools {
             captains: vec!["CapA".into(), "CapB".into()],
-            bridge: vec!["B1".into(), "B2".into(), "B3".into(), "B4".into()],
+            bridge: vec![
+                "B1".into(),
+                "B2".into(),
+                "B3".into(),
+                "B4".into(),
+                "CapA".into(),
+                "CapB".into(),
+            ],
             below_decks: vec![
                 "D1".into(),
                 "D2".into(),

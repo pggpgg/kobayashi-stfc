@@ -435,6 +435,7 @@ fn run_candidate_monte_carlo(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo(
     ship: &str,
     hostile: &str,
@@ -460,6 +461,7 @@ pub fn run_monte_carlo(
 
 /// Like [run_monte_carlo] but distributes candidates across all CPU cores via Rayon.
 /// Use for large candidate lists (e.g. optimizer sweeps). Results order matches input order.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_parallel(
     ship: &str,
     hostile: &str,
@@ -485,6 +487,7 @@ pub fn run_monte_carlo_parallel(
 
 /// Monte Carlo for a population that may contain duplicate crews: simulates each distinct crew once
 /// and copies rates for duplicates (deterministic, same seeds as evaluating each separately).
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_parallel_deduped(
     ship: &str,
     hostile: &str,
@@ -570,6 +573,7 @@ pub fn run_monte_carlo_parallel_deduped(
 /// Like [`run_monte_carlo_parallel_deduped`], but evaluates distinct crews in sequential chunks of
 /// at most `max_unique_per_chunk`, calling `should_continue` before each chunk. Returns `None` if
 /// `should_continue` is false (cooperative cancel); otherwise full results in input order.
+#[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo_parallel_deduped_chunked(
     ship: &str,
     hostile: &str,
@@ -874,6 +878,7 @@ pub fn replay_optimize_iteration_with_registry(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_monte_carlo_with_parallelism(
     ship: &str,
     hostile: &str,

@@ -199,6 +199,7 @@ pub fn enforce_candidate_legality_with_registry(
     (accepted, summary)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn analytical_prefilter_unless_chain(
     shared: &SharedScenarioData,
     candidates: Vec<CrewCandidate>,
@@ -678,7 +679,7 @@ fn optimize_scenario_tiered_with_registry(
     };
     let budget_hints_storage = scenario
         .profile_id
-        .and_then(|pid| crate::optimizer::budget_hints::load_for_profile(pid));
+        .and_then(crate::optimizer::budget_hints::load_for_profile);
     run_tiered_with_registry_with_progress(
         registry,
         scenario.ship,
@@ -1100,7 +1101,7 @@ where
             let scout_adaptive = !scenario.tiered_scout_uniform;
             let budget_hints_storage = scenario
                 .profile_id
-                .and_then(|pid| crate::optimizer::budget_hints::load_for_profile(pid));
+                .and_then(crate::optimizer::budget_hints::load_for_profile);
             let (ranked, scout_budget) = run_tiered_with_registry_with_progress(
                 registry,
                 scenario.ship,
@@ -1317,7 +1318,7 @@ where
                         partial_top: None,
                     })
                 },
-                || eval_should_continue(),
+                eval_should_continue,
             ),
             analytical_prefilter: None,
             tiered_resolved: None,

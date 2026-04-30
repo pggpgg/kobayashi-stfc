@@ -94,6 +94,7 @@ fn roll_burning_triggers(
 }
 
 /// Extends attacker or defender Assimilate duration from pre-filtered effects (matches legacy inline proc rules).
+#[allow(clippy::too_many_arguments)] // trace + phase split for assimilation proc logging
 fn roll_assimilated_extensions_from_effects(
     effects: &[ActiveAbilityEffect],
     assimilated_active_for_scale: bool,

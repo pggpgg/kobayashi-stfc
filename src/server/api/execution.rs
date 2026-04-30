@@ -85,6 +85,7 @@ fn merge_fast_discovery_warm_start(
 
 /// Resolve effective optimizer strategy; `strategy_auto` is true only when the client omitted `strategy`
 /// and we picked tiered vs exhaustive from candidate volume (not used for genetic or heuristics-only).
+#[allow(clippy::too_many_arguments)]
 fn resolve_effective_optimize_strategy(
     registry: &DataRegistry,
     request: &OptimizeRequest,
@@ -869,7 +870,7 @@ fn gather_optimize_simulation_results(
 
     let ts_ms = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_millis() as u128)
+        .map(|d| d.as_millis())
         .unwrap_or(0);
     maybe_append_row(
         profile_id,

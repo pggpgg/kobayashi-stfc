@@ -124,7 +124,7 @@ fn research_combat_summary_from_imported(
 
     // Fortify-gated Titan `rid`s are never in this aggregate (they fold into Fortify static in scenario).
     let combat_bonuses_from_research = catalog_nonempty
-        .map(|cat| combat_research_bonuses_from_import(&imported, cat))
+        .map(|cat| combat_research_bonuses_from_import(imported, cat))
         .unwrap_or_default();
 
     let error = catalog_nonempty.is_none().then(|| {

@@ -706,6 +706,7 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 
 /// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates,
 /// optional prioritize_below_decks_ability, optional ship_tier, ship_level, below_decks_slots.
+#[allow(clippy::type_complexity)]
 pub fn parse_optimize_estimate_query(
     query: &str,
 ) -> (

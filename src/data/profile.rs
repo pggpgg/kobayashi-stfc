@@ -1325,11 +1325,9 @@ pub struct SupportBuffResearchGateState {
 impl SupportBuffResearchGateState {
     pub fn from_resolved_support_buff_ids(resolved: &[String]) -> Self {
         Self {
-            titan_fortify: resolved.iter().any(|id| {
-                TITAN_A_FORTIFY_SUPPORT_BUFF_IDS
-                    .iter()
-                    .any(|&known| known == id.as_str())
-            }),
+            titan_fortify: resolved
+                .iter()
+                .any(|id| TITAN_A_FORTIFY_SUPPORT_BUFF_IDS.contains(&id.as_str())),
             titan_max_fortification: resolved
                 .iter()
                 .any(|id| id.as_str() == "titan_a_max_fortification"),
@@ -1424,7 +1422,7 @@ pub fn profile_combat_bonuses_to_static_style(map: &HashMap<String, f64>) -> Has
         if !v.is_finite() || v == 0.0 {
             continue;
         }
-        if PROFILE_TO_STATIC_MULT_KEYS.iter().any(|m| *m == k.as_str()) {
+        if PROFILE_TO_STATIC_MULT_KEYS.contains(&k.as_str()) {
             out.insert(k.clone(), 1.0 + v);
         } else {
             out.insert(k.clone(), v);
@@ -2151,7 +2149,7 @@ mod tests {
         let mut profile = PlayerProfile::default();
         merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
         assert!(
-            profile.bonuses.get("weapon_damage").is_none(),
+            !profile.bonuses.contains_key("weapon_damage"),
             "gated rid must never merge into profile.bonuses"
         );
         let gated = combat_research_bonuses_for_rid_subset(
@@ -2570,9 +2568,9 @@ mod tests {
             &catalog,
             false,
         );
-        assert!(profile.bonuses.get("crit_chance").is_none());
-        assert!(profile.bonuses.get("hull_hp").is_none());
-        assert!(profile.bonuses.get("crit_damage").is_none());
+        assert!(!profile.bonuses.contains_key("crit_chance"));
+        assert!(!profile.bonuses.contains_key("hull_hp"));
+        assert!(!profile.bonuses.contains_key("crit_damage"));
 
         let seats = super::forbidden_tech_derived_attack_phase_seats(
             &imported, &effective, &catalog, false,
@@ -2629,8 +2627,8 @@ mod tests {
             &catalog,
             false,
         );
-        assert!(profile.bonuses.get("crit_damage").is_none());
-        assert!(profile.bonuses.get("apex_shred").is_none());
+        assert!(!profile.bonuses.contains_key("crit_damage"));
+        assert!(!profile.bonuses.contains_key("apex_shred"));
 
         let seats = super::borg_operating_table_forbidden_tech_seats(
             &imported, &effective, &catalog, false,
@@ -2689,7 +2687,7 @@ mod tests {
         );
         assert_eq!(profile.bonuses.get("crit_chance"), Some(&0.16));
         assert_eq!(profile.bonuses.get("shield_hp"), Some(&0.195));
-        assert!(profile.bonuses.get("shield_mitigation").is_none());
+        assert!(!profile.bonuses.contains_key("shield_mitigation"));
 
         let seats = super::quantum_slipstream_forbidden_tech_round_start_seats(
             &imported, &effective, &catalog, false,

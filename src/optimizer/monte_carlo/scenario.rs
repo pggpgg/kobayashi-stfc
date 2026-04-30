@@ -1504,6 +1504,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
 }
 
 /// Build SharedScenarioData from registry (officers, ship, hostile) and load profile/roster/LCARS at call time.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn build_shared_scenario_data_from_registry(
     registry: &crate::data::data_registry::DataRegistry,
     ship: &str,

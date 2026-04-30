@@ -31,7 +31,7 @@ fn chain_n1_primary_rate_matches_single_fight_win_rate() {
         "kobayashi_theoretical_damage_sponge",
         Some(5),
         Some(7),
-        &[candidate.clone()],
+        std::slice::from_ref(&candidate),
         iters,
         seed,
         Some(DEMO_PROFILE_ID),

@@ -929,7 +929,7 @@ mod roster_import_diag_tests {
 
     #[test]
     fn csv_invalid_tier_returns_parse_line() {
-        let err = parse_roster_csv_content("name,tier,level\nBob,5,1\n").unwrap_err();
+        let err = parse_roster_csv_content("name,tier,level\nBob,6,1\n").unwrap_err();
         match err {
             ImportError::ParseLine { line, .. } => assert_eq!(line, 2),
             _ => panic!("expected ParseLine"),

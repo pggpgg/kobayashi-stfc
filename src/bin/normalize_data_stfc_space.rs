@@ -252,15 +252,13 @@ fn raw_to_extended(
         .and_then(Value::as_array)
         .map(|arr| {
             arr.iter()
-                .filter_map(|row| {
-                    Some(CrewSlotUnlock {
-                        slots: row
-                            .get("slots")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string()),
-                        unlock_level: row.get("unlock_level").and_then(Value::as_u64).unwrap_or(0)
-                            as u32,
-                    })
+                .map(|row| CrewSlotUnlock {
+                    slots: row
+                        .get("slots")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
+                    unlock_level: row.get("unlock_level").and_then(Value::as_u64).unwrap_or(0)
+                        as u32,
                 })
                 .collect()
         })
