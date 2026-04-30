@@ -1,0 +1,30 @@
+{
+  "id": "drift_high_mitigation_vs_high_pierce",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: 85% mitigation vs attacker with 80% pierce. Mitigation multiplier = 0.15, damage-through = 0.15 + 0.80 = 0.95×. Verifies high-mitigation high-pierce interaction.",
+  "attacker": {
+    "id": "high_pierce_a",
+    "attack": 200,
+    "mitigation": 0.0,
+    "pierce": 0.80,
+    "crit_chance": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "high_mit_d",
+    "attack": 0,
+    "mitigation": 0.85,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 15,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [2800, 2900],
+    "rounds_simulated": [14, 15],
+    "defender_hull_remaining": [2100, 2200]
+  }
+}

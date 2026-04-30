@@ -145,7 +145,7 @@ code to change**, and **uncertainty remaining**.
   officer abilities use CombatEnd triggers — the LCARS data should be
   searched for `trigger: combat_end` to identify affected officers.
 
-- [ ] **7. Expand drift fixture coverage for under-tested scenarios**
+- [x] **7. Expand drift fixture coverage for under-tested scenarios**
 
   **What is wrong:** Only 5 drift fixtures exist, covering basic soak,
   dual-weapon ordering, stall margin, and research weapon damage pooling.

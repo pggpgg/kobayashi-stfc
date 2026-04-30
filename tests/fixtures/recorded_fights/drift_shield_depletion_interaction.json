@@ -1,0 +1,31 @@
+{
+  "id": "drift_shield_depletion_interaction",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: defender with 1000 shield (80% absorption). Attacker with 200 damage/hit, 0% pierce, 50% mitigation → 100 through/hit. Shield absorbs 80% (80 dmg) → shield lasts 12.5 hits. After depletion, all damage hits hull. Verifies shield → hull transition.",
+  "attacker": {
+    "id": "shield_test_a",
+    "attack": 200,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "shield_test_d",
+    "attack": 0,
+    "mitigation": 0.50,
+    "hull_health": 5000,
+    "shield_health": 1000,
+    "shield_mitigation": 0.8
+  },
+  "simulation": {
+    "rounds": 30,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [2900, 3100],
+    "rounds_simulated": [28, 30],
+    "defender_shield_remaining": [0, 0]
+  }
+}

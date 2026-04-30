@@ -1,5 +1,6 @@
 {
   "id": "drift_stall_margin",
+  "source": "mathematical invariant",
   "description": "Barely enough DPR to threaten a tanky defender; may hit round cap without kill.",
   "attacker": {
     "id": "stall_a",

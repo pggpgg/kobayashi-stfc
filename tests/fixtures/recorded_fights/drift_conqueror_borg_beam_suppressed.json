@@ -1,0 +1,32 @@
+{
+  "id": "drift_conqueror_borg_beam_suppressed",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: Borg Sphere attacker (id='borg_sphere') vs Conqueror Borg Obliterator (tag mask=4). The Borg Sphere hull identity provides effective suppression → no instant loss. Combat proceeds normally: attacker (500 atk) kills defender (2000 hull) in 4 rounds. Verifies beam suppression from Borg Sphere hull identity.",
+  "attacker": {
+    "id": "borg_sphere",
+    "attack": 500,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "oblit_suppressed",
+    "attack": 0,
+    "mitigation": 0.0,
+    "hull_health": 2000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 50,
+    "seed": 42,
+    "defender_hostile_tag_mask": 4
+  },
+  "bands": {
+    "total_damage": [1980, 2020],
+    "rounds_simulated": [4, 4],
+    "defender_hull_remaining": [0, 20]
+  },
+  "expect_attacker_won": true
+}

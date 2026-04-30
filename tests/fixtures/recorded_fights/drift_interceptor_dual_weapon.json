@@ -1,5 +1,6 @@
 {
   "id": "drift_interceptor_dual_weapon",
+  "source": "mathematical invariant",
   "description": "Two-weapon attacker vs single-hull defender; exercises sub-round ordering.",
   "attacker": {
     "id": "int_dual_a",

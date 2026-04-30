@@ -1,5 +1,6 @@
 {
   "id": "drift_survey_soak",
+  "source": "mathematical invariant",
   "description": "Low pierce survey-style attacker vs high-mitigation defender with shields; long horizon soak.",
   "attacker": {
     "id": "survey_soak_a",

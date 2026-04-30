@@ -1,0 +1,31 @@
+{
+  "id": "drift_conqueror_borg_obliterator_instant_loss",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: Conqueror Borg Obliterator (hostile tag mask=4) Hyperthermic Resonance Beam. Non-Borg-Sphere attacker vs Obliterator → instant loss (100% kill rate on non-sphere). Attacker hull=9999, total_damage=0, rounds_simulated=0, attacker_hull_remaining=0.",
+  "attacker": {
+    "id": "normal_ship_2",
+    "attack": 1000,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "hull_health": 9999,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "obliterator",
+    "attack": 0,
+    "mitigation": 0.0,
+    "hull_health": 500,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 50,
+    "seed": 1,
+    "defender_hostile_tag_mask": 4
+  },
+  "bands": {
+    "total_damage": [0, 0],
+    "rounds_simulated": [0, 0],
+    "attacker_hull_remaining": [0, 0]
+  },
+  "expect_attacker_won": false
+}

@@ -1,0 +1,34 @@
+{
+  "id": "drift_hostile_burning_on_attacker",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: defender crew applies Burning (1% max hull/round, 5 rounds duration) to attacker via counter-fire. Attacker hull=3000 → 30 dmg/round from Burning. Defender crew refreshes duration to 5 each RoundStart. Attacker takes 30×5 = 150 Burning + 50×5 = 250 counter-fire = 400 total hull damage over 5 rounds. Final attacker hull: 3000 - 400 = 2600.",
+  "synthetic_crew": {
+    "attacker_burning_rounds": 5
+  },
+  "attacker": {
+    "id": "host_burn_a",
+    "attack": 200,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 3000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "host_burn_d",
+    "attack": 50,
+    "mitigation": 0.0,
+    "hull_health": 1000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 30,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [980, 1020],
+    "rounds_simulated": [5, 5],
+    "attacker_hull_remaining": [2570, 2630]
+  },
+  "expect_attacker_won": true
+}

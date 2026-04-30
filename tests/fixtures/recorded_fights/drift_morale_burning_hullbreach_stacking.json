@@ -1,0 +1,34 @@
+{
+  "id": "drift_morale_burning_hullbreach_stacking",
+  "source": "mathematical invariant (morale piercing bonus not applied — hostile mitigation params not wired through drift)",
+  "description": "Mathematical invariant: Morale, Burning, and Hull Breach all active simultaneously. Morale adds +10% primary piercing (requires hostile mitigation params, not wired). Burning ticks 1% max hull/round = 30. Hull Breach adds 1.5× crit damage (0% crit here). Shot damage: 10×100×0.50 = 500 + 10×30 Burning = 800 total. Verifies all three status effects fire without conflicts.",
+  "synthetic_crew": {
+    "defender_hull_breach_rounds": 10,
+    "defender_burning_rounds": 10,
+    "morale_chance": 1.0
+  },
+  "attacker": {
+    "id": "triple_status_a",
+    "attack": 100,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "triple_status_d",
+    "attack": 0,
+    "mitigation": 0.50,
+    "hull_health": 3000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 10,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [780, 820],
+    "rounds_simulated": [10, 10]
+  }
+}

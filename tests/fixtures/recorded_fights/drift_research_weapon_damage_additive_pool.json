@@ -1,5 +1,6 @@
 {
   "id": "drift_research_weapon_damage_additive_pool",
+  "source": "mathematical invariant",
   "description": "Synthetic calibration slice for merged research/profile weapon_damage: uses weapon_damage_profile_additive_pool with round-start AttackMultiplier (pre_attack path). Companion: drift_research_weapon_damage_layered_no_pool.json (same crew/stats, layered model, higher per-hit effective attack).",
   "synthetic_crew": {
     "round_start_attack_multiplier": 0.5

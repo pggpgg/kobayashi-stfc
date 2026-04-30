@@ -1,0 +1,31 @@
+{
+  "id": "drift_conqueror_borg_suppressor_instant_loss",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: Conqueror Borg Suppressor (hostile tag mask=2) Quantum Resonance Beam. Non-Borg-Sphere attacker vs Suppressor → instant loss. Attacker hull=9999, total_damage=0, rounds_simulated=0, attacker_hull_remaining=0, attacker_won=false.",
+  "attacker": {
+    "id": "normal_ship",
+    "attack": 1000,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "hull_health": 9999,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "suppressor",
+    "attack": 0,
+    "mitigation": 0.0,
+    "hull_health": 500,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 50,
+    "seed": 1,
+    "defender_hostile_tag_mask": 2
+  },
+  "bands": {
+    "total_damage": [0, 0],
+    "rounds_simulated": [0, 0],
+    "attacker_hull_remaining": [0, 0]
+  },
+  "expect_attacker_won": false
+}

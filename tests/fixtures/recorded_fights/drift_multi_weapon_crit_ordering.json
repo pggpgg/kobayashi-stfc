@@ -1,0 +1,42 @@
+{
+  "id": "drift_multi_weapon_crit_ordering",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: Two weapons with different crit stats fire in order each round. Weapon A: 0% crit, 100 attack. Weapon B: 100% crit, 3× multiplier, 50 attack. Verifies sub-round weapon ordering is deterministic and per-weapon crit stats are used.",
+  "attacker": {
+    "id": "multi_weapon_a",
+    "attack": 0,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0,
+    "weapons": [
+      {
+        "attack": 100,
+        "shots": 1,
+        "crit_chance": 0.0
+      },
+      {
+        "attack": 50,
+        "shots": 1,
+        "crit_chance": 1.0,
+        "crit_multiplier": 3.0
+      }
+    ]
+  },
+  "defender": {
+    "id": "multi_weapon_d",
+    "attack": 0,
+    "mitigation": 0.50,
+    "hull_health": 4000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 10,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [1240, 1260],
+    "rounds_simulated": [10, 10],
+    "defender_hull_remaining": [2740, 2760]
+  }
+}

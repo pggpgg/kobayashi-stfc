@@ -1,0 +1,30 @@
+{
+  "id": "drift_extreme_pierce_low_mitigation",
+  "source": "mathematical invariant (hostile floor not wired — defender.mitigation=0.16 used directly)",
+  "description": "Mathematical invariant: 90% pierce on defender at mitigation floor (0.16). Damage-through = (1-0.16) + 0.90 = 1.74×. Verifies pierce is not spuriously clamped below the mitigation multiplier.",
+  "attacker": {
+    "id": "extreme_pierce_a",
+    "attack": 100,
+    "mitigation": 0.0,
+    "pierce": 0.90,
+    "crit_chance": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "extreme_pierce_d",
+    "attack": 0,
+    "mitigation": 0.16,
+    "hull_health": 3000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 10,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [1700, 1800],
+    "rounds_simulated": [9, 10],
+    "defender_hull_remaining": [1200, 1300]
+  }
+}

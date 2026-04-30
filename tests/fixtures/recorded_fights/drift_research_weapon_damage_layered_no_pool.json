@@ -1,5 +1,6 @@
 {
   "id": "drift_research_weapon_damage_layered_no_pool",
+  "source": "mathematical invariant",
   "description": "Same combatants/seed/crew as drift_research_weapon_damage_additive_pool but weapon_damage_profile_additive_pool unset (layered (1+p)×pre_attack path). total_damage should exceed the pooled fixture when pre_attack_multiplier > 1.",
   "synthetic_crew": {
     "round_start_attack_multiplier": 0.5

@@ -1,0 +1,30 @@
+{
+  "id": "drift_mitigation_floor_clamp",
+  "description": "Mathematical invariant: defender with mitigation 0.0 (below hostile floor 0.16). NOTE: hostile mitigation params are not wired through the drift harness yet; this fixture verifies that mitigation=0.0 passes through at 1.0× (no floor clamp). When hostile params are wired, expected damage-through would be 0.84×, and bands should tighten to [830, 850].",
+  "source": "mathematical invariant (placeholder — hostile params not yet wired through drift)",
+  "attacker": {
+    "id": "floor_test_a",
+    "attack": 100,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "floor_test_d",
+    "attack": 0,
+    "mitigation": 0.0,
+    "hull_health": 3000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 10,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [990, 1010],
+    "rounds_simulated": [10, 10],
+    "defender_hull_remaining": [1990, 2010]
+  }
+}

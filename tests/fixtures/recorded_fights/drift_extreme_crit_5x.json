@@ -1,0 +1,31 @@
+{
+  "id": "drift_extreme_crit_5x",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: 100% crit chance with 5× crit multiplier, 50% mitigation, no pierce. Damage-through = 0.50, crit multiplier = 5.0 → effective = 2.5× per hit. Verifies extreme crit damage scaling.",
+  "attacker": {
+    "id": "crit_5x_a",
+    "attack": 100,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 1.0,
+    "crit_multiplier": 5.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "crit_5x_d",
+    "attack": 0,
+    "mitigation": 0.50,
+    "hull_health": 3000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 6,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [1480, 1520],
+    "rounds_simulated": [6, 6],
+    "defender_hull_remaining": [1480, 1520]
+  }
+}

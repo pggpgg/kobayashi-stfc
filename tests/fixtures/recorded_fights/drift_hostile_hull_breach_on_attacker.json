@@ -1,0 +1,37 @@
+{
+  "id": "drift_hostile_hull_breach_on_attacker",
+  "source": "mathematical invariant",
+  "description": "Mathematical invariant: defender crew applies Hull Breach to attacker (duration 10 rounds). Defender has 100% crit chance, 2× multiplier. When attacker is hull-breached, defender's crit gets +1.5× HB bonus → effective crit = 3.5×. Defender deals 50×3.5 = 175 dmg/round vs 50×2.0 = 100 without HB. Attacker kills defender in round 5 (200×5=1000). Attacker takes 5 rounds of counter-fire: 175×5 = 875 total + includes Burning sub-procs from HB timing window.",
+  "synthetic_crew": {
+    "attacker_hull_breach_rounds": 10
+  },
+  "attacker": {
+    "id": "host_hb_a",
+    "attack": 200,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 5000,
+    "shield_health": 0
+  },
+  "defender": {
+    "id": "host_hb_d",
+    "attack": 50,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 1.0,
+    "crit_multiplier": 2.0,
+    "hull_health": 1000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 30,
+    "seed": 42
+  },
+  "bands": {
+    "total_damage": [980, 1020],
+    "rounds_simulated": [5, 5],
+    "attacker_hull_remaining": [3900, 4300]
+  },
+  "expect_attacker_won": true
+}

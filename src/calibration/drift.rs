@@ -7,8 +7,9 @@ use std::path::Path;
 use serde::Deserialize;
 
 use crate::combat::{
-    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
+    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass, AbilityEffect,
+    Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag, ShipType,
+    SimulationConfig, TimingWindow, TraceMode, WeaponStats,
 };
 
 #[derive(Debug, Clone, Deserialize)]
@@ -16,6 +17,10 @@ pub struct DriftFixtureFile {
     pub id: String,
     #[serde(default)]
     pub description: Option<String>,
+    /// Provenance of the reference bands: "mathematical invariant", "community-verified",
+    /// "estimated from fight exports", or a placeholder note when wiring is incomplete.
+    #[serde(default)]
+    pub source: Option<String>,
     pub attacker: FixtureCombatant,
     pub defender: FixtureCombatant,
     pub simulation: FixtureSimulation,
@@ -35,6 +40,33 @@ pub struct DriftSyntheticCrew {
     /// (feeds `pre_attack_modifier_sum`; uses per-round `round_index` ≥ 1 for traces).
     #[serde(default)]
     pub round_start_attack_multiplier: f64,
+    /// Apply [`AbilityEffect::HullBreach`] (chance 1.0, requires_critical: false) at CombatBegin
+    /// for the given duration, targeting the defender. Tests Hull Breach → crit damage interaction.
+    #[serde(default)]
+    pub defender_hull_breach_rounds: Option<u32>,
+    /// Apply [`AbilityEffect::Burning`] (chance 1.0) at CombatBegin for the given duration,
+    /// targeting the defender. Tests Burning → round-end damage tick interaction.
+    #[serde(default)]
+    pub defender_burning_rounds: Option<u32>,
+    /// Apply [`AbilityEffect::Morale`] at RoundStart with the given trigger chance.
+    /// Morale enables the primary piercing bonus and gates [`AbilityCondition::MoraleActive`].
+    #[serde(default)]
+    pub morale_chance: Option<f64>,
+    /// Apply [`AbilityEffect::OnKillHullRegen`] at Kill timing with the given fraction of max hull
+    /// healed per kill. Engine applies `on_kill_regen * attacker.hull_health` as a heal.
+    /// Note: single-combat fixtures fire at most one kill; multi-kill chains require chain-grind tests.
+    #[serde(default)]
+    pub on_kill_hull_regen: Option<f64>,
+    /// Apply [`AbilityEffect::HullBreach`] (chance 1.0, requires_critical: false) via the
+    /// **defender crew** at RoundStart, targeting the **attacker**. Exercises hostile-applied
+    /// status effects (counter-fire HB on the player). Duration applies from the round the
+    /// defender fires.
+    #[serde(default)]
+    pub attacker_hull_breach_rounds: Option<u32>,
+    /// Apply [`AbilityEffect::Burning`] (chance 1.0) via the **defender crew** at RoundStart,
+    /// targeting the **attacker**. Exercises hostile-applied Burning damage ticks on the player.
+    #[serde(default)]
+    pub attacker_burning_rounds: Option<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -51,6 +83,10 @@ pub struct FixtureSimulation {
     /// Forwarded to [`SimulationConfig::initial_attacker_hull_damage`].
     #[serde(default)]
     pub initial_attacker_hull_damage: f64,
+    /// Bitmask for hostile tags on the defender (e.g. [`crate::combat::hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR`]).
+    /// Passed through to [`SimulationConfig::defender_hostile_tag_mask`]. Default 0.
+    #[serde(default)]
+    pub defender_hostile_tag_mask: u32,
 }
 
 fn default_seed() -> u64 {
@@ -133,15 +169,15 @@ pub struct MetricBands {
     pub attacker_hull_remaining: Option<[f64; 2]>,
 }
 
-fn crew_for_drift(synthetic: &Option<DriftSyntheticCrew>) -> CrewConfiguration {
+fn crew_for_drift(synthetic: &Option<DriftSyntheticCrew>) -> (CrewConfiguration, CrewConfiguration) {
     let Some(c) = synthetic else {
-        return CrewConfiguration::default();
+        return (CrewConfiguration::default(), CrewConfiguration::default());
     };
-    if !c.round_start_attack_multiplier.is_finite() || c.round_start_attack_multiplier == 0.0 {
-        return CrewConfiguration::default();
-    }
-    CrewConfiguration {
-        seats: vec![CrewSeatContext::legacy(
+    let mut attacker_seats: Vec<CrewSeatContext> = Vec::new();
+    let mut defender_seats: Vec<CrewSeatContext> = Vec::new();
+
+    if c.round_start_attack_multiplier.is_finite() && c.round_start_attack_multiplier != 0.0 {
+        attacker_seats.push(CrewSeatContext::legacy(
             CrewSeat::Captain,
             Ability {
                 name: "drift_synthetic_attack_mult".to_string(),
@@ -152,8 +188,144 @@ fn crew_for_drift(synthetic: &Option<DriftSyntheticCrew>) -> CrewConfiguration {
                 condition: None,
             },
             false,
-        )],
+        ));
     }
+
+    if let Some(rounds) = c.defender_hull_breach_rounds {
+        if rounds > 0 {
+            attacker_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "drift_synthetic_hull_breach".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::HullBreach {
+                        chance: 1.0,
+                        duration_rounds: rounds,
+                        requires_critical: false,
+                    },
+                    condition: None,
+                },
+                false,
+            ));
+        }
+    }
+
+    if let Some(rounds) = c.defender_burning_rounds {
+        if rounds > 0 {
+            attacker_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "drift_synthetic_burning".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::Burning {
+                        chance: 1.0,
+                        duration_rounds: rounds,
+                    },
+                    condition: None,
+                },
+                false,
+            ));
+        }
+    }
+
+    if let Some(chance) = c.morale_chance {
+        if chance > 0.0 && chance.is_finite() {
+            attacker_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "drift_synthetic_morale".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::Morale(chance),
+                    condition: None,
+                },
+                false,
+            ));
+        }
+    }
+
+    if let Some(regen) = c.on_kill_hull_regen {
+        if regen.is_finite() && regen > 0.0 {
+            attacker_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "drift_synthetic_on_kill_hull_regen".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::Kill,
+                    boostable: false,
+                    effect: AbilityEffect::OnKillHullRegen(regen),
+                    condition: None,
+                },
+                false,
+            ));
+        }
+    }
+
+    // Attacker-targeted status effects: defender crew abilities that apply Burning/HullBreach
+    // to the attacker during counter-fire. Wired as defender AttackPhase abilities so they
+    // fire in the counter-fire processing path (defender shoots attacker). Chance 1.0 ensures
+    // reliable application each round the defender hits.
+    if let Some(rounds) = c.attacker_hull_breach_rounds {
+        if rounds > 0 {
+            defender_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "drift_synthetic_attacker_hull_breach".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::AttackPhase,
+                    boostable: false,
+                    effect: AbilityEffect::HullBreach {
+                        chance: 1.0,
+                        duration_rounds: rounds,
+                        requires_critical: false,
+                    },
+                    condition: None,
+                },
+                false,
+            ));
+        }
+    }
+
+    if let Some(rounds) = c.attacker_burning_rounds {
+        if rounds > 0 {
+            defender_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "drift_synthetic_attacker_burning".to_string(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::AttackPhase,
+                    boostable: false,
+                    effect: AbilityEffect::Burning {
+                        chance: 1.0,
+                        duration_rounds: rounds,
+                    },
+                    condition: None,
+                },
+                false,
+            ));
+        }
+    }
+
+    let attacker_crew = if attacker_seats.is_empty() {
+        CrewConfiguration::default()
+    } else {
+        CrewConfiguration {
+            seats: attacker_seats,
+        }
+    };
+    let defender_crew = if defender_seats.is_empty() {
+        CrewConfiguration::default()
+    } else {
+        CrewConfiguration {
+            seats: defender_seats,
+        }
+    };
+    (attacker_crew, defender_crew)
 }
 
 fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> SimulationConfig {
@@ -165,7 +337,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         weapon_damage_profile_additive_pool: spec.simulation.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: spec.simulation.profile_weapon_damage_fraction,
         defender_hull_faction_id: 0,
-        defender_hostile_tag_mask: 0,
+        defender_hostile_tag_mask: spec.simulation.defender_hostile_tag_mask,
         engagement_enemy_types: crate::combat::EnemyTypes::default(),
         defender_level: None,
         attacker_roster_officer_ids: Vec::new(),
@@ -229,6 +401,7 @@ pub struct DriftMetricRow {
 pub struct DriftRunReport {
     pub fixture_id: String,
     pub description: Option<String>,
+    pub source: Option<String>,
     pub rows: Vec<DriftMetricRow>,
     pub attacker_won_ok: Option<bool>,
     pub all_numeric_ok: bool,
@@ -242,12 +415,26 @@ pub fn load_drift_fixture(path: &Path) -> Result<DriftFixtureFile, String> {
 }
 
 /// Run the simulator for a loaded fixture (default empty crew unless `synthetic_crew` is set).
+/// Uses the full engine entry point so that defender crew effects (hostile-applied status effects)
+/// and hostile-tag-gated beam mechanics (Conqueror Borg) are exercised.
 pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::SimulationResult {
     let attacker = spec.attacker.to_combatant("drift_attacker");
     let defender = spec.defender.to_combatant("drift_defender");
     let config = simulation_config_for_drift(spec, TraceMode::Off);
-    let crew = crew_for_drift(&spec.synthetic_crew);
-    simulate_combat(&attacker, &defender, &config, &crew)
+    let (attacker_crew, defender_crew) = crew_for_drift(&spec.synthetic_crew);
+    let defender_is_npc_hostile = spec.simulation.defender_hostile_tag_mask != 0;
+    simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        defender_is_npc_hostile,
+        false,
+        &defender_crew,
+    )
 }
 
 /// Same as [`simulate_drift_fixture`] but records full combat trace events ([`TraceMode::Events`]).
@@ -255,8 +442,20 @@ pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::
     let attacker = spec.attacker.to_combatant("drift_attacker");
     let defender = spec.defender.to_combatant("drift_defender");
     let config = simulation_config_for_drift(spec, TraceMode::Events);
-    let crew = crew_for_drift(&spec.synthetic_crew);
-    simulate_combat(&attacker, &defender, &config, &crew)
+    let (attacker_crew, defender_crew) = crew_for_drift(&spec.synthetic_crew);
+    let defender_is_npc_hostile = spec.simulation.defender_hostile_tag_mask != 0;
+    simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        defender_is_npc_hostile,
+        false,
+        &defender_crew,
+    )
 }
 
 fn band_mid(low: f64, high: f64) -> f64 {
@@ -350,6 +549,7 @@ pub fn drift_report(
     DriftRunReport {
         fixture_id: id,
         description: spec.description.clone(),
+        source: spec.source.clone(),
         rows,
         attacker_won_ok,
         all_numeric_ok,
@@ -379,6 +579,9 @@ pub fn format_drift_summary(reports: &[DriftRunReport]) -> String {
             fail += 1;
         }
         out.push_str(&format!("=== {} ===\n", r.fixture_id));
+        if let Some(ref s) = r.source {
+            out.push_str(&format!("  source: {s}\n"));
+        }
         if let Some(ref d) = r.description {
             out.push_str(d);
             out.push('\n');
