@@ -28,6 +28,78 @@ pub struct LcarsOfficer {
     pub bridge_ability: Option<LcarsAbility>,
     #[serde(default)]
     pub below_decks_ability: Option<LcarsAbility>,
+    /// Officer's own per-level Attack/Defense/Health stats (sourced from upstream
+    /// `data/upstream/data-stfc-space/officers/{id}.json`). Used to resolve officer-stat scaling
+    /// (see [`LcarsScaling::officer_stat`]). Empty when unknown.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub stats: Vec<LcarsLevelStats>,
+    /// Max level reachable at each rank (index 0 = rank 1). Used to pick a default officer level
+    /// for stat lookups when the caller has not specified one. Empty when unknown.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub max_level_by_rank: Vec<u32>,
+}
+
+/// One row of the officer's own per-level stat table.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LcarsLevelStats {
+    pub level: u32,
+    pub attack: f64,
+    pub defense: f64,
+    pub health: f64,
+}
+
+impl LcarsOfficer {
+    /// Officer level to use for stat lookups: per-officer override → max level for the resolved
+    /// rank → max level overall → 1.
+    pub fn resolve_level(&self, override_level: Option<u32>, rank: Option<u8>) -> Option<u32> {
+        if let Some(l) = override_level {
+            return Some(l);
+        }
+        if let Some(r) = rank {
+            let idx = (r as usize).saturating_sub(1);
+            if let Some(&l) = self.max_level_by_rank.get(idx) {
+                if l > 0 {
+                    return Some(l);
+                }
+            }
+        }
+        let last = self
+            .max_level_by_rank
+            .iter()
+            .rev()
+            .find(|&&l| l > 0)
+            .copied();
+        last.or_else(|| self.stats.iter().map(|s| s.level).max())
+    }
+
+    /// Per-level stat row for the chosen level. Falls back to the closest level ≤ requested
+    /// (typical when the upstream curve doesn't include every level), else the highest available.
+    pub fn stats_at_level(&self, level: u32) -> Option<&LcarsLevelStats> {
+        if self.stats.is_empty() {
+            return None;
+        }
+        let mut best: Option<&LcarsLevelStats> = None;
+        for s in &self.stats {
+            if s.level <= level {
+                best = Some(match best {
+                    Some(prev) if prev.level >= s.level => prev,
+                    _ => s,
+                });
+            }
+        }
+        best.or_else(|| self.stats.iter().max_by_key(|s| s.level))
+    }
+}
+
+impl LcarsLevelStats {
+    pub fn value_for(&self, stat: crate::data::combat_effect_spec::OfficerStat) -> f64 {
+        use crate::data::combat_effect_spec::OfficerStat;
+        match stat {
+            OfficerStat::Attack => self.attack,
+            OfficerStat::Defense => self.defense,
+            OfficerStat::Health => self.health,
+        }
+    }
 }
 
 /// One ability block (captain, bridge, or below decks) with a name and effects.
@@ -129,6 +201,13 @@ pub struct LcarsScaling {
     /// this instead of linear `base_chance`/`base` + `per_rank`.
     #[serde(default)]
     pub chance_values: Option<Vec<f64>>,
+    /// When set, [`Self::values`] (or `base + per_rank`) are interpreted as percentage coefficients
+    /// to multiply by the officer's own stat (Attack / Defense / Health). E.g. `officer_stat:
+    /// health` with `values: [15, 15, 25]` means "+15% / +15% / +25% of officer health". Resolved
+    /// at LCARS-spec compile time when officer per-level stats are available; otherwise the rank
+    /// value passes through unchanged (no-op fallback).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub officer_stat: Option<crate::data::combat_effect_spec::OfficerStat>,
 }
 
 impl LcarsScaling {
@@ -254,4 +333,196 @@ pub fn load_lcars_dir(
         }
     }
     Ok(officers)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::combat_effect_spec::OfficerStat;
+
+    fn sample_stats() -> Vec<LcarsLevelStats> {
+        vec![
+            LcarsLevelStats {
+                level: 1,
+                attack: 100.0,
+                defense: 50.0,
+                health: 50.0,
+            },
+            LcarsLevelStats {
+                level: 5,
+                attack: 150.0,
+                defense: 80.0,
+                health: 80.0,
+            },
+            LcarsLevelStats {
+                level: 10,
+                attack: 250.0,
+                defense: 130.0,
+                health: 130.0,
+            },
+            LcarsLevelStats {
+                level: 30,
+                attack: 800.0,
+                defense: 400.0,
+                health: 400.0,
+            },
+        ]
+    }
+
+    #[test]
+    fn lcars_officer_round_trips_stats_and_max_level_by_rank_through_yaml() {
+        let officer = LcarsOfficer {
+            id: "x".into(),
+            name: "X".into(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: sample_stats(),
+            max_level_by_rank: vec![5, 10, 15, 25, 30],
+        };
+        let s = serde_yaml::to_string(&officer).expect("serialize");
+        let back: LcarsOfficer = serde_yaml::from_str(&s).expect("deserialize");
+        assert_eq!(back.stats.len(), 4);
+        assert_eq!(back.max_level_by_rank, vec![5, 10, 15, 25, 30]);
+        assert!((back.stats[3].health - 400.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn lcars_officer_yaml_back_compat_when_stats_absent() {
+        let yaml = r#"
+id: legacy
+name: Legacy
+captain_ability: null
+"#;
+        let o: LcarsOfficer = serde_yaml::from_str(yaml).expect("legacy yaml deserialize");
+        assert!(o.stats.is_empty());
+        assert!(o.max_level_by_rank.is_empty());
+    }
+
+    #[test]
+    fn lcars_scaling_yaml_back_compat_when_officer_stat_absent() {
+        let yaml = r#"
+base: 0.1
+per_rank: 0.05
+max_rank: 5
+"#;
+        let s: LcarsScaling = serde_yaml::from_str(yaml).expect("legacy yaml deserialize");
+        assert!(s.officer_stat.is_none());
+        assert_eq!(s.max_rank, Some(5));
+    }
+
+    #[test]
+    fn lcars_scaling_round_trips_officer_stat_clause() {
+        let s = LcarsScaling {
+            base: None,
+            per_rank: None,
+            max_rank: Some(3),
+            base_chance: None,
+            values: Some(vec![15.0, 15.0, 25.0]),
+            chance_values: None,
+            officer_stat: Some(OfficerStat::Health),
+        };
+        let yaml = serde_yaml::to_string(&s).expect("serialize");
+        assert!(
+            yaml.contains("officer_stat: health"),
+            "expected officer_stat: health in:\n{yaml}"
+        );
+        let back: LcarsScaling = serde_yaml::from_str(&yaml).expect("deserialize");
+        assert_eq!(back.officer_stat, Some(OfficerStat::Health));
+    }
+
+    #[test]
+    fn resolve_level_prefers_explicit_override() {
+        let officer = LcarsOfficer {
+            id: "o".into(),
+            name: "O".into(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: sample_stats(),
+            max_level_by_rank: vec![5, 10, 15, 25, 30],
+        };
+        assert_eq!(officer.resolve_level(Some(7), Some(2)), Some(7));
+    }
+
+    #[test]
+    fn resolve_level_uses_rank_max_when_no_override() {
+        let officer = LcarsOfficer {
+            id: "o".into(),
+            name: "O".into(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: sample_stats(),
+            max_level_by_rank: vec![5, 10, 15, 25, 30],
+        };
+        assert_eq!(officer.resolve_level(None, Some(2)), Some(10));
+        assert_eq!(officer.resolve_level(None, Some(5)), Some(30));
+    }
+
+    #[test]
+    fn resolve_level_falls_back_to_overall_max_then_stat_table() {
+        let officer = LcarsOfficer {
+            id: "o".into(),
+            name: "O".into(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: sample_stats(),
+            max_level_by_rank: Vec::new(),
+        };
+        // No rank table → fall through to highest level on the stats curve.
+        assert_eq!(officer.resolve_level(None, Some(3)), Some(30));
+        assert_eq!(officer.resolve_level(None, None), Some(30));
+    }
+
+    #[test]
+    fn stats_at_level_picks_closest_below_or_overall_max() {
+        let officer = LcarsOfficer {
+            id: "o".into(),
+            name: "O".into(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: sample_stats(),
+            max_level_by_rank: Vec::new(),
+        };
+        // Exact match.
+        let s = officer.stats_at_level(10).expect("level 10 row");
+        assert!((s.attack - 250.0).abs() < 1e-12);
+        // Between sampled levels: pick the closest level ≤ requested.
+        let s = officer.stats_at_level(7).expect("level ≤ 7");
+        assert_eq!(s.level, 5);
+        // Above max sampled level: pick the highest available.
+        let s = officer.stats_at_level(99).expect("highest");
+        assert_eq!(s.level, 30);
+    }
+
+    #[test]
+    fn level_stats_value_for_returns_correct_stat() {
+        let row = LcarsLevelStats {
+            level: 30,
+            attack: 800.0,
+            defense: 400.0,
+            health: 350.0,
+        };
+        assert!((row.value_for(OfficerStat::Attack) - 800.0).abs() < 1e-12);
+        assert!((row.value_for(OfficerStat::Defense) - 400.0).abs() < 1e-12);
+        assert!((row.value_for(OfficerStat::Health) - 350.0).abs() < 1e-12);
+    }
 }

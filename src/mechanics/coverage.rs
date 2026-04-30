@@ -298,6 +298,7 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
     let opts = ResolveOptions {
         tier: Some(5),
         officer_tiers: None,
+        officer_levels: None,
     };
 
     for o in &officers {

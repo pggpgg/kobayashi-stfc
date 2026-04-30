@@ -489,6 +489,7 @@ pub fn try_stfc_cc_string_record_to_spec(
         scalar: Some(scalar),
         by_rank: None,
         unit: None,
+        officer_stat_scaling: None,
     });
 
     let mut attributes = serde_json::Map::new();

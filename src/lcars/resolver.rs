@@ -20,6 +20,9 @@ pub struct ResolveOptions {
     /// scaling via [crate::lcars::parser::LcarsScaling::value_at_rank] / `chance_at_rank` (discrete
     /// `values` / `chance_values` when present, else `base` + `per_rank`).
     pub officer_tiers: Option<HashMap<String, u8>>,
+    /// Per-officer level override for officer-stat scaling lookups (canonical_officer_id → level).
+    /// When unset, [`crate::lcars::parser::LcarsOfficer::resolve_level`] picks the rank's max level.
+    pub officer_levels: Option<HashMap<String, u32>>,
 }
 
 impl ResolveOptions {
@@ -29,6 +32,14 @@ impl ResolveOptions {
             .as_ref()
             .and_then(|m| m.get(officer_id).copied())
             .or(self.tier)
+    }
+
+    /// Per-officer level override for stat-scaling lookups; [`None`] when not specified (resolver
+    /// falls back to the officer's max level for the resolved rank).
+    pub fn level_for(&self, officer_id: &str) -> Option<u32> {
+        self.officer_levels
+            .as_ref()
+            .and_then(|m| m.get(officer_id).copied())
     }
 }
 
@@ -323,6 +334,10 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
 /// Resolve a single LCARS effect into timing, effect body, and optional AND-combined condition
 /// from the CombatEffectSpec compile path when supported.
 ///
+/// `officer` (when provided) supplies the per-level stat row used to resolve
+/// [`crate::lcars::parser::LcarsScaling::officer_stat`] scaling. When `None`, officer-stat scaling
+/// passes through unchanged (the rank coefficient is used as a flat value).
+///
 /// Implementation: [`crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec`] →
 /// [`crate::combat::effect_spec_compile::compile_officer_combat_spec`].
 fn resolve_effect(
@@ -330,12 +345,17 @@ fn resolve_effect(
     ability_name: &str,
     options: &ResolveOptions,
     officer_id: &str,
+    officer: Option<&LcarsOfficer>,
     effect_index: usize,
 ) -> Option<(TimingWindow, AbilityEffect, Option<AbilityCondition>)> {
     if is_static_effect(effect) {
         return None;
     }
     let tier = options.tier_for(officer_id);
+    let stats_row = officer.and_then(|o| {
+        let level = o.resolve_level(options.level_for(officer_id), tier)?;
+        o.stats_at_level(level)
+    });
     let stable_id = format!("lcars:{officer_id}:{ability_name}:{effect_index}");
     let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
         effect,
@@ -343,6 +363,7 @@ fn resolve_effect(
         officer_id,
         ability_name,
         tier,
+        stats_row,
     )?;
     crate::combat::effect_spec_compile::compile_officer_combat_spec(&spec).ok()
 }
@@ -420,7 +441,7 @@ pub fn lcars_effect_coverage(
         };
     }
 
-    if resolve_effect(effect, "", options, officer_id, 0).is_some() {
+    if resolve_effect(effect, "", options, officer_id, None, 0).is_some() {
         return LcarsEffectCoverage {
             tier: MechanicCoverageTier::Implemented,
             pathway: "dynamic_crew_ability".to_string(),
@@ -451,9 +472,14 @@ pub fn resolve_officer_ability(
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
     for (idx, effect) in ability.effects.iter().enumerate() {
-        if let Some((timing, effect_effect, condition)) =
-            resolve_effect(effect, &ability.name, options, &officer.id, idx)
-        {
+        if let Some((timing, effect_effect, condition)) = resolve_effect(
+            effect,
+            &ability.name,
+            options,
+            &officer.id,
+            Some(officer),
+            idx,
+        ) {
             contexts.push(CrewSeatContext {
                 seat,
                 ability: Ability {
@@ -775,6 +801,8 @@ mod tests {
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let mut fc = lcars_condition("defender_faction_is");
         fc.faction = Some("klingon".to_string());
@@ -1391,6 +1419,8 @@ mod tests {
                 )],
             }),
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let mut officers = HashMap::new();
         officers.insert("cap_dual".to_string(), officer);
@@ -1421,6 +1451,8 @@ mod tests {
             captain_ability: None,
             bridge_ability: Some(bridge),
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let mut officers = HashMap::new();
         officers.insert("bd_only_bridge".to_string(), officer);
@@ -1444,10 +1476,13 @@ mod tests {
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
+            officer_levels: None,
         };
         let ability_iso = LcarsAbility {
             name: "iso".to_string(),
@@ -1545,6 +1580,7 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
+            officer_levels: None,
         };
         // Khan (Independent): bridge passive crit_chance uses `scaling.values` at officer tier.
         let khan = resolve_crew_to_buff_set("khan-3f1d1e", &[], &[], &officers, &options);
@@ -1566,6 +1602,153 @@ mod tests {
     }
 
     #[test]
+    fn resolve_options_level_for_returns_per_officer_override_or_none() {
+        let mut levels = HashMap::new();
+        levels.insert("a".to_string(), 25u32);
+        levels.insert("b".to_string(), 30u32);
+        let opts = ResolveOptions {
+            tier: None,
+            officer_tiers: None,
+            officer_levels: Some(levels),
+        };
+        assert_eq!(opts.level_for("a"), Some(25));
+        assert_eq!(opts.level_for("b"), Some(30));
+        assert_eq!(opts.level_for("missing"), None);
+
+        let none = ResolveOptions::default();
+        assert_eq!(none.level_for("anyone"), None);
+    }
+
+    #[test]
+    fn resolve_officer_ability_applies_officer_stat_scaling_end_to_end() {
+        use crate::data::combat_effect_spec::OfficerStat;
+        use crate::lcars::parser::{LcarsLevelStats, LcarsScaling};
+
+        // Mbenga-style on-combat-start ability: armor += <coeff>% of officer.health. Resolver
+        // emits a CombatBegin crew seat carrying [`AbilityEffect::MitigationAdditive`] whose value
+        // is derived from the officer-stat-scaled armor value.
+        let scaling_effect = LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some("armor".to_string()),
+            target: None,
+            operator: Some("add".to_string()),
+            value: None,
+            trigger: Some("on_combat_start".to_string()),
+            duration: None,
+            scaling: Some(LcarsScaling {
+                base: None,
+                per_rank: None,
+                max_rank: Some(3),
+                base_chance: None,
+                values: Some(vec![15.0, 15.0, 25.0]),
+                chance_values: None,
+                officer_stat: Some(OfficerStat::Health),
+            }),
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let ability = LcarsAbility {
+            name: "scale_armor".to_string(),
+            effects: vec![scaling_effect],
+        };
+        let officer = LcarsOfficer {
+            id: "scaling_officer".to_string(),
+            name: "Scale".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(ability.clone()),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: vec![
+                LcarsLevelStats {
+                    level: 1,
+                    attack: 0.0,
+                    defense: 0.0,
+                    health: 100.0,
+                },
+                LcarsLevelStats {
+                    level: 30,
+                    attack: 0.0,
+                    defense: 0.0,
+                    health: 400.0,
+                },
+            ],
+            max_level_by_rank: vec![5, 10, 15, 25, 30],
+        };
+
+        let armor_for = |level: u32| -> f64 {
+            let opts = ResolveOptions {
+                tier: None,
+                officer_tiers: Some([("scaling_officer".to_string(), 3u8)].into_iter().collect()),
+                officer_levels: Some(
+                    [("scaling_officer".to_string(), level)]
+                        .into_iter()
+                        .collect(),
+                ),
+            };
+            let contexts = resolve_officer_ability(
+                &officer,
+                &ability,
+                CrewSeat::Captain,
+                AbilityClass::CaptainManeuver,
+                &opts,
+                0,
+            );
+            assert_eq!(
+                contexts.len(),
+                1,
+                "expected one resolved seat for level {level}"
+            );
+            match contexts[0].ability.effect {
+                AbilityEffect::MitigationAdditive(v) => v,
+                ref e => panic!("expected MitigationAdditive, got {e:?}"),
+            }
+        };
+        let v_l1 = armor_for(1);
+        let v_l30 = armor_for(30);
+        assert!(
+            v_l1 > 0.0,
+            "scaled armor should be positive at level 1, got {v_l1}"
+        );
+        // Level 30 health is 4× level 1 health → mitigation-additive armor should scale upward.
+        assert!(
+            v_l30 > v_l1,
+            "officer-stat scaling must move with level: l1={v_l1}, l30={v_l30}"
+        );
+
+        // Sanity check: when no per-level stats are wired, the rank coefficient passes through
+        // as a flat value (much smaller than the stat-scaled output above).
+        let stripped = LcarsOfficer {
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
+            ..officer.clone()
+        };
+        let opts_no_stats = ResolveOptions {
+            tier: None,
+            officer_tiers: Some([("scaling_officer".to_string(), 3u8)].into_iter().collect()),
+            officer_levels: None,
+        };
+        let no_stat_contexts = resolve_officer_ability(
+            &stripped,
+            &ability,
+            CrewSeat::Captain,
+            AbilityClass::CaptainManeuver,
+            &opts_no_stats,
+            0,
+        );
+        let no_stat_armor = match no_stat_contexts[0].ability.effect {
+            AbilityEffect::MitigationAdditive(v) => v,
+            ref e => panic!("expected MitigationAdditive, got {e:?}"),
+        };
+        assert!(v_l30 > no_stat_armor, "stats must amplify rank coefficient");
+    }
+
+    #[test]
     fn resolve_options_tier_for_uses_per_officer_tier_then_fallback() {
         let mut officer_tiers = HashMap::new();
         officer_tiers.insert("officer_a".to_string(), 1u8);
@@ -1573,6 +1756,7 @@ mod tests {
         let options = ResolveOptions {
             tier: Some(3),
             officer_tiers: Some(officer_tiers),
+            officer_levels: None,
         };
         assert_eq!(options.tier_for("officer_a"), Some(1));
         assert_eq!(options.tier_for("officer_b"), Some(5));
@@ -1580,6 +1764,7 @@ mod tests {
         let options_no_fallback = ResolveOptions {
             tier: None,
             officer_tiers: Some([("x".to_string(), 2u8)].into_iter().collect()),
+            officer_levels: None,
         };
         assert_eq!(options_no_fallback.tier_for("x"), Some(2));
         assert_eq!(options_no_fallback.tier_for("y"), None);
@@ -1603,6 +1788,7 @@ mod tests {
                 base_chance: None,
                 values: None,
                 chance_values: None,
+                officer_stat: None,
             }),
             condition: None,
             chance: None,
@@ -1623,16 +1809,20 @@ mod tests {
             }),
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let mut officers = HashMap::new();
         officers.insert("tiered_officer".to_string(), officer.clone());
         let options_tier1 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 1u8)].into_iter().collect()),
+            officer_levels: None,
         };
         let options_tier5 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("tiered_officer".to_string(), 5u8)].into_iter().collect()),
+            officer_levels: None,
         };
         let buff_tier1 =
             resolve_crew_to_buff_set("tiered_officer", &[], &[], &officers, &options_tier1);
@@ -1679,6 +1869,7 @@ mod tests {
                 base_chance: None,
                 values: Some(table),
                 chance_values: None,
+                officer_stat: None,
             }),
             condition: None,
             chance: None,
@@ -1699,12 +1890,15 @@ mod tests {
             }),
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let mut officers = HashMap::new();
         officers.insert("table_officer".to_string(), officer);
         let options_tier2 = ResolveOptions {
             tier: None,
             officer_tiers: Some([("table_officer".to_string(), 2u8)].into_iter().collect()),
+            officer_levels: None,
         };
         let buff = resolve_crew_to_buff_set("table_officer", &[], &[], &officers, &options_tier2);
         let v2 = buff.static_buffs.get("apex_shred").copied().unwrap_or(0.0);
@@ -1725,6 +1919,8 @@ mod tests {
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let ability = LcarsAbility {
             name: "aliases".to_string(),
@@ -1802,6 +1998,8 @@ mod tests {
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
         };
         let ability = LcarsAbility {
             name: "ops".to_string(),

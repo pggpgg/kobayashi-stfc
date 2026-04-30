@@ -815,6 +815,7 @@ mod tests {
                 scalar: Some(0.01),
                 by_rank: None,
                 unit: None,
+                officer_stat_scaling: None,
             }),
             chance: None,
             duration: None,

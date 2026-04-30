@@ -22,12 +22,15 @@ fn contexts_from_officer_combat_effect_spec(
     for (idx, effect) in ability.effects.iter().enumerate() {
         let tier = options.tier_for(&officer.id);
         let stable_id = format!("lcars:{}:{}:{idx}", officer.id, ability.name);
+        let level = officer.resolve_level(options.level_for(&officer.id), tier);
+        let officer_stats = level.and_then(|l| officer.stats_at_level(l));
         let Some(spec) = lcars_effect_to_combat_effect_spec(
             effect,
             &stable_id,
             &officer.id,
             &ability.name,
             tier,
+            officer_stats,
         ) else {
             continue;
         };
@@ -104,6 +107,7 @@ fn captain_maneuver_spec_path_matches_resolver_all_tiers() {
             let opts = ResolveOptions {
                 tier: None,
                 officer_tiers: Some(tiers),
+                officer_levels: None,
             };
             let batch = 0u32;
             let from_resolver = resolve_officer_ability(
@@ -147,6 +151,7 @@ fn bridge_and_below_decks_spec_path_matches_resolver_sample_tiers() {
             let opts = ResolveOptions {
                 tier: None,
                 officer_tiers: Some(tiers),
+                officer_levels: None,
             };
             if let Some(ref bridge) = o.bridge_ability {
                 let batch = 1u32;

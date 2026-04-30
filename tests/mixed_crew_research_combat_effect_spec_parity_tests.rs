@@ -65,6 +65,8 @@ fn sample_officer_with_bridge(effect: LcarsEffect) -> LcarsOfficer {
             effects: vec![effect],
         }),
         below_decks_ability: None,
+        stats: Vec::new(),
+        max_level_by_rank: Vec::new(),
     }
 }
 

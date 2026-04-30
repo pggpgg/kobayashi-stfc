@@ -188,6 +188,31 @@ pub struct ValueSpec {
     pub by_rank: Option<Vec<f64>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unit: Option<ValueUnit>,
+    /// Officer-stat scaling. When set, the resolved scalar is `coefficient_per_rank[rank]/100 *
+    /// officer.<stat>` at the chosen officer level. Captures the raw scaling for traceability;
+    /// `scalar` carries the already-resolved final value the engine will consume.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub officer_stat_scaling: Option<OfficerStatScaling>,
+}
+
+/// Officer's own stat (Attack / Defense / Health) used as a multiplier source for
+/// [`OfficerStatScaling`]. STFC convention used by upstream canonical attribute encoding
+/// (`officer_stat=1` ⇒ Attack, `=2` ⇒ Defense, `=3` ⇒ Health).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OfficerStat {
+    Attack,
+    Defense,
+    Health,
+}
+
+/// Coefficients-per-rank reference to one of the officer's own stats. Coefficients are interpreted
+/// as percentages: `15.0` means `+15% of officer.<stat>`. Resolution: index 0 → rank 1, last entry
+/// → highest known rank; out-of-range ranks clamp to the table edges.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct OfficerStatScaling {
+    pub stat: OfficerStat,
+    pub coefficient_per_rank: Vec<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -371,6 +396,7 @@ mod tests {
                 scalar: Some(0.01),
                 by_rank: None,
                 unit: Some(ValueUnit::Fraction),
+                officer_stat_scaling: None,
             }),
             chance: None,
             duration: None,

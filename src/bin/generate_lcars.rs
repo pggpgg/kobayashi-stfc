@@ -2,6 +2,7 @@
 //! Run: cargo run --bin generate_lcars [-- path/to/officers.canonical.json] [--output data/officers]
 //!   [--summary data/upstream/data-stfc-space/summary-officer.json]
 //!   [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
+//!   [--officer-data-dir data/upstream/data-stfc-space/officers]
 //! Output: `<output_dir>/officers.lcars.yaml` (all officers, sorted by id).
 //! For legacy per-faction shards, see `merge_lcars` + cached `*.lcars.yaml` workflows in docs.
 //!
@@ -23,9 +24,10 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
+use kobayashi::data::combat_effect_spec::OfficerStat;
 use kobayashi::lcars::{
     canonical_conditions_to_lcars, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect,
-    LcarsFile, LcarsOfficer, LcarsScaling,
+    LcarsFile, LcarsLevelStats, LcarsOfficer, LcarsScaling,
 };
 use serde::Deserialize;
 
@@ -33,6 +35,7 @@ const DEFAULT_INPUT: &str = "data/officers/officers.canonical.json";
 const DEFAULT_OUTPUT_DIR: &str = "data/officers";
 const DEFAULT_SUMMARY: &str = "data/upstream/data-stfc-space/summary-officer.json";
 const DEFAULT_TRANSLATIONS: &str = "data/upstream/data-stfc-space/translations-officer_buffs.json";
+const DEFAULT_OFFICER_DATA_DIR: &str = "data/upstream/data-stfc-space/officers";
 
 #[derive(Debug, Deserialize)]
 struct CanonicalFile {
@@ -108,9 +111,30 @@ struct TranslationRow {
     text: String,
 }
 
+#[derive(Debug, Clone)]
+struct UpstreamOfficerStats {
+    stats: Vec<LcarsLevelStats>,
+    max_level_by_rank: Vec<u32>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpstreamOfficer {
+    #[serde(default)]
+    stats: Vec<LcarsLevelStats>,
+    #[serde(default)]
+    ranks: Vec<UpstreamOfficerRank>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpstreamOfficerRank {
+    rank: u8,
+    max_level: u32,
+}
+
 struct NameResolveContext {
     summary_by_officer: HashMap<u64, SummaryOfficer>,
     name_by_loca: HashMap<u64, String>,
+    upstream_stats_by_officer: HashMap<u64, UpstreamOfficerStats>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -122,6 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut output_dir = base.join(DEFAULT_OUTPUT_DIR);
     let mut summary_path = base.join(DEFAULT_SUMMARY);
     let mut translations_path = base.join(DEFAULT_TRANSLATIONS);
+    let mut officer_data_dir = base.join(DEFAULT_OFFICER_DATA_DIR);
     let mut skip_names = false;
 
     let mut i = 1;
@@ -141,6 +166,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 translations_path = base.join(&translations_path);
             }
             i += 2;
+        } else if args[i] == "--officer-data-dir" && i + 1 < args.len() {
+            officer_data_dir = Path::new(&args[i + 1]).to_path_buf();
+            if !officer_data_dir.is_absolute() {
+                officer_data_dir = base.join(&officer_data_dir);
+            }
+            i += 2;
         } else if args[i] == "--no-ability-names" {
             skip_names = true;
             i += 1;
@@ -157,15 +188,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let raw = fs::read_to_string(&input_path)?;
     let parsed: CanonicalFile = serde_json::from_str(&raw)?;
+    let upstream_stats_by_officer = load_upstream_officer_stats(&officer_data_dir)?;
 
-    let name_ctx = if skip_names {
+    let mut name_ctx = if skip_names {
         NameResolveContext {
             summary_by_officer: HashMap::new(),
             name_by_loca: HashMap::new(),
+            upstream_stats_by_officer: HashMap::new(),
         }
     } else {
         load_name_resolve_context(&summary_path, &translations_path)?
     };
+    name_ctx.upstream_stats_by_officer = upstream_stats_by_officer;
 
     let (officers_by_faction, names_resolved) =
         convert_officers_to_lcars(parsed.officers, &name_ctx);
@@ -236,7 +270,64 @@ fn load_name_resolve_context(
     Ok(NameResolveContext {
         summary_by_officer,
         name_by_loca,
+        upstream_stats_by_officer: HashMap::new(),
     })
+}
+
+fn load_upstream_officer_stats(
+    officer_data_dir: &Path,
+) -> Result<HashMap<u64, UpstreamOfficerStats>, Box<dyn std::error::Error>> {
+    let mut out: HashMap<u64, UpstreamOfficerStats> = HashMap::new();
+    if !officer_data_dir.is_dir() {
+        eprintln!(
+            "Warning: upstream officer data dir not found at {} — LCARS officer stats omitted.",
+            officer_data_dir.display()
+        );
+        return Ok(out);
+    }
+
+    for entry in fs::read_dir(officer_data_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            continue;
+        }
+        let Some(id) = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .and_then(parse_numeric_id)
+        else {
+            continue;
+        };
+        let raw = fs::read_to_string(&path)?;
+        let parsed: UpstreamOfficer = serde_json::from_str(&raw)?;
+        let mut stats = parsed.stats;
+        stats.sort_by_key(|s| s.level);
+
+        let mut max_level_by_rank: Vec<u32> = Vec::new();
+        for rank in parsed.ranks {
+            if rank.rank == 0 {
+                continue;
+            }
+            let idx = (rank.rank as usize).saturating_sub(1);
+            if max_level_by_rank.len() <= idx {
+                max_level_by_rank.resize(idx + 1, 0);
+            }
+            max_level_by_rank[idx] = rank.max_level;
+        }
+
+        if !stats.is_empty() || !max_level_by_rank.is_empty() {
+            out.insert(
+                id,
+                UpstreamOfficerStats {
+                    stats,
+                    max_level_by_rank,
+                },
+            );
+        }
+    }
+
+    Ok(out)
 }
 
 fn faction_to_filename(faction: &str) -> String {
@@ -339,6 +430,11 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
         .as_deref()
         .and_then(parse_numeric_id)
         .and_then(|id| ctx.summary_by_officer.get(&id));
+    let upstream = o
+        .source_officer_id
+        .as_deref()
+        .and_then(parse_numeric_id)
+        .and_then(|id| ctx.upstream_stats_by_officer.get(&id));
 
     let mut captain_abs: Vec<CanonicalAbility> = Vec::new();
     let mut bridge_abs: Vec<CanonicalAbility> = Vec::new();
@@ -407,6 +503,10 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
             captain_ability,
             bridge_ability,
             below_decks_ability,
+            stats: upstream.map(|s| s.stats.clone()).unwrap_or_default(),
+            max_level_by_rank: upstream
+                .map(|s| s.max_level_by_rank.clone())
+                .unwrap_or_default(),
         },
         names_resolved,
     )
@@ -673,7 +773,7 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 value: None,
                 trigger: Some(trigger.to_string()),
                 duration: Some(LcarsDuration::Permanent("permanent".to_string())),
-                scaling: scaling_from_ranks(&[], &a.chance_by_rank, "AddState"),
+                scaling: scaling_from_ranks(&[], &a.chance_by_rank, "AddState", None),
                 condition: cond.clone(),
                 chance: chance_field,
                 multiplier: None,
@@ -689,7 +789,12 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 .copied()
                 .map(|v| transform_canonical_to_lcars_value(modifier, op, v))
                 .collect();
-            let scaling = scaling_from_ranks(&lcars_values, &a.chance_by_rank, modifier);
+            let scaling = scaling_from_ranks(
+                &lcars_values,
+                &a.chance_by_rank,
+                modifier,
+                a.attributes.as_deref(),
+            );
             let value_field = if lcars_values.len() > 1 {
                 None
             } else {
@@ -810,6 +915,24 @@ fn max_level_from_canonical_attributes(raw: &str) -> Option<u32> {
             return None;
         }
         return val.parse::<u32>().ok();
+    }
+    None
+}
+
+fn officer_stat_from_canonical_attributes(raw: &str) -> Option<OfficerStat> {
+    for part in raw.split(',') {
+        let mut it = part.trim().splitn(2, '=');
+        let key = it.next()?.trim();
+        if !key.eq_ignore_ascii_case("officer_stat") {
+            continue;
+        }
+        let val = it.next()?.trim();
+        return match val.parse::<u32>().ok()? {
+            1 => Some(OfficerStat::Attack),
+            2 => Some(OfficerStat::Defense),
+            3 => Some(OfficerStat::Health),
+            _ => None,
+        };
     }
     None
 }
@@ -1004,6 +1127,7 @@ fn scaling_from_ranks(
     value_by_rank: &[f64],
     chance_by_rank: &[f64],
     modifier: &str,
+    attributes: Option<&str>,
 ) -> Option<LcarsScaling> {
     if value_by_rank.is_empty() && chance_by_rank.is_empty() {
         return None;
@@ -1031,6 +1155,11 @@ fn scaling_from_ranks(
         base_chance: None,
         values,
         chance_values,
+        officer_stat: if value_by_rank.is_empty() {
+            None
+        } else {
+            attributes.and_then(officer_stat_from_canonical_attributes)
+        },
     })
 }
 
@@ -1108,6 +1237,39 @@ mod canonical_condition_tests {
             Some(51)
         );
         assert_eq!(super::max_level_from_canonical_attributes("foo=1"), None);
+    }
+
+    #[test]
+    fn officer_stat_from_attributes_maps_stfc_ids() {
+        assert_eq!(
+            super::officer_stat_from_canonical_attributes("num_rounds=1, officer_stat=1"),
+            Some(OfficerStat::Attack)
+        );
+        assert_eq!(
+            super::officer_stat_from_canonical_attributes("officer_stat=2"),
+            Some(OfficerStat::Defense)
+        );
+        assert_eq!(
+            super::officer_stat_from_canonical_attributes("officer_stat=3"),
+            Some(OfficerStat::Health)
+        );
+        assert_eq!(
+            super::officer_stat_from_canonical_attributes("officer_stat=99"),
+            None
+        );
+        assert_eq!(super::officer_stat_from_canonical_attributes("foo=1"), None);
+    }
+
+    #[test]
+    fn scaling_from_ranks_emits_officer_stat_clause() {
+        let scaling = super::scaling_from_ranks(
+            &[15.0, 25.0],
+            &[1.0, 1.0],
+            "AllDefenses",
+            Some("officer_stat=3"),
+        )
+        .expect("scaling");
+        assert_eq!(scaling.officer_stat, Some(OfficerStat::Health));
     }
 
     #[test]

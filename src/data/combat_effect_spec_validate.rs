@@ -141,6 +141,7 @@ mod tests {
                 scalar: Some(0.1),
                 by_rank: None,
                 unit: None,
+                officer_stat_scaling: None,
             }),
             chance: None,
             duration: None,
@@ -187,6 +188,7 @@ mod tests {
             scalar: None,
             by_rank: None,
             unit: None,
+            officer_stat_scaling: None,
         });
         assert!(matches!(
             validate_combat_effect_spec(&s),
