@@ -2,10 +2,10 @@
 # Keys must be LCARS officer ids (see officers.lcars.yaml). Regenerate the doc after edits:
 #   cargo run --bin generate_officer_scorecard
 
-chang-ecc238: "Captain weapon bonus should only apply when enemy hull <60%; bridge reload delay vs breached target is tag/unmapped."
-gorkon-b8d2e7: "Captain crit window OK; bridge hull breach proc is tag-only (not hull_breach effect)."
+chang-ecc238: "Captain weapon bonus condition fixed to hull_hp (enemy hull <60%); bridge reload delay vs breached target is not modeled (reload speed mechanics)."
+gorkon-b8d2e7: "Captain crit window OK; bridge hull breach proc is correctly modeled as hull_breach effect with chance scaling."
 ent-e-data-871245: "Isolytic cascade line OK for combat start; missing non-Armada hostile filter in LCARS."
 jean-luc-picard-e0515c: "Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK. Not an officer-stat-scaling gap."
-snw-sam-kirk-0a77f9: "Captain enemy SHP drain modeled as negative shield_regen on attacker crew (wrong target in engine)."
-seska-848b5b: "On-hit crit buff should be timed (4 rds, once/weapon)."
-harrison-56cc6c: "Captain: Explorer hostile gate modeled in LCARS; level-70 unlock still not a combat condition; bridge shield ignore is tag/unmapped."
+snw-sam-kirk-0a77f9: "Captain enemy SHP drain modeled as negative shield_regen on attacker crew — requires engine changes for enemy-targeted shield drain."
+seska-848b5b: "On-hit crit buff now limited to rounds 1-4 via round_range condition; once-per-weapon gating requires engine refinement."
+harrison-56cc6c: "Captain: Explorer hostile gate modeled in LCARS; level-70 unlock gated via defender_level_at_most condition; bridge shield ignore is mapped via shieldmitigation tag but enemy-targeted mitigation reduction requires engine refinement."

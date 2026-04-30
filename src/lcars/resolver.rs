@@ -484,7 +484,10 @@ pub fn lcars_effect_coverage(
         };
     }
 
-    if effect.effect_type == "stat_modify" {
+    if effect.effect_type == "stat_modify"
+        || (effect.effect_type == "tag"
+            && crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or("")).is_some())
+    {
         return LcarsEffectCoverage {
             tier: MechanicCoverageTier::Partial,
             pathway: "stat_modify_not_modeled_or_timing".to_string(),

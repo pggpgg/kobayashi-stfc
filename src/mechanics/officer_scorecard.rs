@@ -185,8 +185,16 @@ fn process_ability_effects(
         bump_ipc(ipc, cov.tier);
         let mut raw = tier_raw_score(cov.tier);
         if eff.effect_type.trim().eq_ignore_ascii_case("tag") {
-            raw = 0;
-            *unmapped_combat_tags += 1;
+            let tag_str = eff.tag.as_deref().unwrap_or("");
+            // Mapped tags that can be resolved as stat_modify equivalents get the
+            // coverage-tier score; only truly unmapped tags are zero.
+            let mapped = crate::lcars::effect_spec_adapter::combat_tag_to_stat(tag_str).is_some();
+            if mapped {
+                // Keep the raw score from cov.tier and IPC counts as-is.
+            } else {
+                raw = 0;
+                *unmapped_combat_tags += 1;
+            }
         }
         raw_scores.push(raw);
         weighted_pairs.push((raw, w));
@@ -371,7 +379,12 @@ fn mean_slot_raw(
         let cov = lcars_effect_coverage(eff, &officer.id, opts);
         let mut raw = tier_raw_score(cov.tier);
         if eff.effect_type.trim().eq_ignore_ascii_case("tag") {
-            raw = 0;
+            let tag_str = eff.tag.as_deref().unwrap_or("");
+            // Mapped tags use coverage-tier score; only unmapped tags are zero.
+            let mapped = crate::lcars::effect_spec_adapter::combat_tag_to_stat(tag_str).is_some();
+            if !mapped {
+                raw = 0;
+            }
         }
         scores.push(raw);
     }
@@ -463,7 +476,7 @@ mod tests {
                     condition: None,
                     chance: None,
                     multiplier: None,
-                    tag: Some("shieldmitigation:unmapped".into()),
+                    tag: Some("x:unmapped".into()),
                     accumulate: None,
                     decay: None,
                 }],

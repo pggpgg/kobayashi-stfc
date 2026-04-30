@@ -463,17 +463,24 @@ pub fn lcars_effect_to_combat_effect_spec(
         effect.stat.as_deref().unwrap_or("").trim()
     };
 
-    // Passive + permanent effects (both native stat_modify and mapped tags) are static
-    // buffs handled by the resolver; skip dynamic spec generation.
+    // Passive + permanent stat_modify and mapped tag effects are static buffs handled by the
+    // resolver; skip dynamic spec generation. State effects (hull_breach, morale, etc.) with
+    // passive trigger should still produce a CombatBegin spec.
     {
-        let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
-        let permanent = effect
-            .duration
-            .as_ref()
-            .map(|d| d.is_permanent())
-            .unwrap_or(false);
-        if passive && permanent {
-            return None;
+        let is_state_effect = matches!(
+            effect.effect_type.as_str(),
+            "hull_breach" | "morale" | "burning" | "assimilated"
+        );
+        if !is_state_effect {
+            let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
+            let permanent = effect
+                .duration
+                .as_ref()
+                .map(|d| d.is_permanent())
+                .unwrap_or(false);
+            if passive && permanent {
+                return None;
+            }
         }
     }
 
@@ -1120,5 +1127,89 @@ mod tests {
             .as_ref()
             .and_then(|v| v.officer_stat_scaling.as_ref())
             .is_none());
+    }
+
+    #[test]
+    fn combat_tag_to_stat_maps_expected_tags_and_returns_none_for_others() {
+        assert_eq!(combat_tag_to_stat("shieldmitigation:unmapped"), Some("shield_mitigation"));
+        assert_eq!(combat_tag_to_stat("shieldmitigation"), Some("shield_mitigation"));
+        assert_eq!(combat_tag_to_stat("shipdodge:unmapped"), Some("dodge"));
+        assert_eq!(combat_tag_to_stat("shieldpiercing:unmapped"), Some("pierce"));
+        assert_eq!(combat_tag_to_stat("accuracy:unmapped"), Some("accuracy"));
+        assert_eq!(combat_tag_to_stat("shields:unmapped"), Some("shield_hp"));
+        // Economy / unmapped tags
+        assert_eq!(combat_tag_to_stat("cargoprotection:unmapped"), None);
+        assert_eq!(combat_tag_to_stat("impulsespeed:unmapped"), None);
+        assert_eq!(combat_tag_to_stat("officerstathealth:unmapped"), None);
+        assert_eq!(combat_tag_to_stat("miningrate:non_combat"), None);
+    }
+
+    #[test]
+    fn lcars_mapped_tag_produces_spec_like_stat_modify() {
+        let e = LcarsEffect {
+            effect_type: "tag".into(),
+            stat: None,
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.06),
+            trigger: Some("on_round_start".into()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: Some("shieldmitigation:unmapped".into()),
+            accumulate: None,
+            decay: None,
+        };
+        let spec =
+            lcars_effect_to_combat_effect_spec(&e, "test:tag:sm", "o", "ab", None, None)
+                .expect("should produce spec for shieldmitigation tag");
+        assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigation);
+        assert_eq!(spec.trigger, AbilityTriggerSpec::RoundStart);
+        let v = spec.value.as_ref().and_then(|v| v.scalar).unwrap();
+        assert!((v - 0.06).abs() < 1e-12);
+    }
+
+    #[test]
+    fn unmapped_combat_tag_still_returns_none() {
+        let e = LcarsEffect {
+            effect_type: "tag".into(),
+            stat: None,
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.1),
+            trigger: Some("on_round_start".into()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: Some("allreloadspeed:unmapped".into()),
+            accumulate: None,
+            decay: None,
+        };
+        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None).is_none());
+    }
+
+    #[test]
+    fn mapped_tag_passive_permanent_returns_none() {
+        let e = LcarsEffect {
+            effect_type: "tag".into(),
+            stat: None,
+            target: None,
+            operator: Some("add".into()),
+            value: Some(0.2),
+            trigger: Some("passive".into()),
+            duration: Some(LcarsDuration::Permanent("permanent".into())),
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: Some("shieldmitigation:unmapped".into()),
+            accumulate: None,
+            decay: None,
+        };
+        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None).is_none());
     }
 }
