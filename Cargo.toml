@@ -118,6 +118,12 @@ serial_test = "3"
 serde_yaml = "0.9"
 tower = { version = "0.4", features = ["util"] }
 
+# Faster local iteration: minimal debuginfo + quick optimizations for test/profile builds.
+# `cargo test` and `cargo nextest run` both inherit from this profile.
+[profile.dev]
+opt-level = 1
+debug = "line-tables-only"
+
 # Release-grade optimizations with debuginfo for local profilers (samply, Instruments).
 [profile.profiling]
 inherits = "release"

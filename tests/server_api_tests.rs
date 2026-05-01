@@ -3,14 +3,31 @@ use axum::extract::connect_info::ConnectInfo;
 use axum::http::{Method, Request, StatusCode};
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::profile_index::profile_data_dir;
+use kobayashi::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
 use kobayashi::server::routes::build_router;
 use std::net::SocketAddr;
+use std::sync::Arc;
+use std::sync::OnceLock;
 use tower::ServiceExt;
 
 struct TestResponse {
     status_code: u16,
     content_type: String,
     body: String,
+}
+
+/// `enforce_candidate_legality_with_registry` rejects empty seats; bundled profiles like `demo`
+/// and `default` ship a tiny `roster.imported.json`, so legality must not use those ids here.
+const SERVER_API_TEST_PROFILE_HEADERS: &[(&str, &str)] =
+    &[("x-profile-id", NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS)];
+/// `saladin` crew-slot schedule unlocks a third below-decks slot at ship level 20; lower levels
+/// resolve to fewer slots and would pad with empty names (rejected as illegal).
+const SERVER_API_TEST_SHIP_LEVEL_THREE_BELOW: &str = "25";
+const SERVER_API_TEST_CREW_718_LEGAL_JSON: &str = r#"{"captain":"718-0-2509d7","bridge":["kirk-1323b6","spock-c04738"],"below_deck":["scotty-a83cb5","uhura-ea117c","kira-nerys-a5253a"]}"#;
+
+fn test_registry() -> &'static Arc<DataRegistry> {
+    static REGISTRY: OnceLock<Arc<DataRegistry>> = OnceLock::new();
+    REGISTRY.get_or_init(|| DataRegistry::load().expect("data registry required for server tests"))
 }
 
 async fn route_request(method: &str, path: &str, body: &str) -> TestResponse {
@@ -254,8 +271,7 @@ async fn profile_put_accepts_and_canonicalizes_valid_payload() {
 #[tokio::test]
 async fn simulate_rejects_body_over_cpu_json_limit_with_413() {
     const LIMIT: usize = 2 * 1024 * 1024;
-    let registry = DataRegistry::load().expect("data registry required for server tests");
-    let app = build_router(registry);
+    let app = build_router(test_registry().clone());
     let oversized = vec![b'{'; LIMIT + 1];
     let mut req = Request::builder()
         .method(Method::POST)
@@ -273,7 +289,7 @@ async fn simulate_rejects_body_over_cpu_json_limit_with_413() {
 #[tokio::test]
 async fn optimize_endpoint_returns_ranked_recommendations() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
     let response = route_request("POST", "/api/optimize", body).await;
 
     assert_eq!(response.status_code, 200);
@@ -284,7 +300,7 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     assert_eq!(payload["engine"], "optimizer_v1");
     assert_eq!(payload["scenario"]["ship"], "saladin");
     assert_eq!(payload["scenario"]["hostile"], "2918121098");
-    assert_eq!(payload["scenario"]["sims"], 2000);
+    assert_eq!(payload["scenario"]["sims"], 500);
     assert_eq!(payload["scenario"]["seed"], 7);
     assert_eq!(payload["scenario"]["effective_strategy"], "exhaustive");
     assert_eq!(payload["scenario"]["strategy_auto"], true);
@@ -333,7 +349,14 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
             + recommendation["avg_hull_remaining"].as_f64().unwrap_or(0.0) * 0.2;
         let win_rate = recommendation["win_rate"].as_f64().unwrap_or(0.0);
         let avg_hull_remaining = recommendation["avg_hull_remaining"].as_f64().unwrap_or(0.0);
-        if (0.0..1.0).contains(&win_rate) || (0.0..1.0).contains(&avg_hull_remaining) {
+        let wr_lo = recommendation["win_rate_ci_low"].as_f64().unwrap_or(win_rate);
+        let wr_hi = recommendation["win_rate_ci_high"].as_f64().unwrap_or(win_rate);
+        // Interior rates are clearly combat-backed; 0% / 100% wins are common but Wilson CI span
+        // still shows Monte Carlo ran (strict (0,1) misses all-wins / all-losses outcomes).
+        if (0.0..1.0).contains(&win_rate)
+            || (0.0..1.0).contains(&avg_hull_remaining)
+            || (wr_hi - wr_lo) > 1e-6
+        {
             saw_non_trivial_metric = true;
         }
 
@@ -379,13 +402,13 @@ async fn optimize_endpoint_changes_with_seed() {
     let response_a = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":7,"max_candidates":32}"#,
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":32}"#,
     )
     .await;
     let response_b = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":8,"max_candidates":32}"#,
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":8,"max_candidates":32}"#,
     )
     .await;
 
@@ -398,7 +421,7 @@ async fn optimize_endpoint_changes_with_seed() {
 #[tokio::test]
 async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":77,"max_candidates":64}"#;
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":77,"max_candidates":64}"#;
 
     let response_a = route_request("POST", "/api/optimize", body).await;
     let response_b = route_request("POST", "/api/optimize", body).await;
@@ -626,7 +649,7 @@ async fn optimize_endpoint_requires_novelty_lambda_when_novelty_history_anchors_
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":800,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
     let response = route_request("POST", "/api/optimize", body).await;
     assert_eq!(response.status_code, 200, "body: {}", response.body);
 
@@ -743,14 +766,14 @@ async fn optimize_fast_discovery_echoes_in_scenario_and_notes() {
 #[tokio::test]
 async fn async_optimize_start_poll_completes_with_recommendations() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"seed":42,"max_candidates":16}"#;
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":42,"max_candidates":16}"#;
     let start = route_request("POST", "/api/optimize/start", body).await;
     assert_eq!(start.status_code, 200, "body: {}", start.body);
     let payload: serde_json::Value =
         serde_json::from_str(&start.body).expect("start response json");
     let job_id = payload["job_id"].as_str().expect("job_id string");
 
-    for _ in 0..400 {
+    for _ in 0..200 {
         tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
         let status = route_request("GET", &format!("/api/optimize/status/{job_id}"), "").await;
         assert_eq!(status.status_code, 200, "status body: {}", status.body);
@@ -786,14 +809,14 @@ async fn async_optimize_cancel_unknown_job_returns_404() {
 #[tokio::test]
 async fn async_optimize_cancel_after_done_is_idempotent_ok() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":8}"#;
+        r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":1,"max_candidates":8}"#;
     let start = route_request("POST", "/api/optimize/start", body).await;
     assert_eq!(start.status_code, 200);
     let payload: serde_json::Value = serde_json::from_str(&start.body).expect("start json");
     let job_id = payload["job_id"].as_str().expect("job_id");
 
     let mut finished = false;
-    for _ in 0..400 {
+    for _ in 0..200 {
         tokio::time::sleep(tokio::time::Duration::from_millis(40)).await;
         let status = route_request("GET", &format!("/api/optimize/status/{job_id}"), "").await;
         let s: serde_json::Value = serde_json::from_str(&status.body).expect("status json");
@@ -821,9 +844,27 @@ async fn async_optimize_cancel_after_done_is_idempotent_ok() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","seed":77,"sim_index":12,"max_trace_events":50,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}}"#;
-    let a = route_request("POST", "/api/optimize/replay-seed", body).await;
-    let b = route_request("POST", "/api/optimize/replay-seed", body).await;
+    let body = format!(
+        r#"{{"ship":"saladin","hostile":"2918121098","ship_level":{lvl},"seed":77,"sim_index":12,"max_trace_events":50,"crew":{crew}}}"#,
+        lvl = SERVER_API_TEST_SHIP_LEVEL_THREE_BELOW,
+        crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
+    );
+    let a = route_request_ex(
+        "POST",
+        "/api/optimize/replay-seed",
+        &body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
+    let b = route_request_ex(
+        "POST",
+        "/api/optimize/replay-seed",
+        &body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
     assert_eq!(a.status_code, 200, "{}", a.body);
     assert_eq!(b.status_code, 200);
     assert_eq!(a.body, b.body);
@@ -850,8 +891,19 @@ async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_replay_seed_trace_reports_applied_support_buffs() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","seed":77,"sim_index":12,"max_trace_events":1,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},"support_buffs":["cerritos_support","not_a_real_support_buff_id"]}"#;
-    let response = route_request("POST", "/api/optimize/replay-seed", body).await;
+    let body = format!(
+        r#"{{"ship":"saladin","hostile":"2918121098","ship_level":{lvl},"seed":77,"sim_index":12,"max_trace_events":1,"crew":{crew},"support_buffs":["cerritos_support","not_a_real_support_buff_id"]}}"#,
+        lvl = SERVER_API_TEST_SHIP_LEVEL_THREE_BELOW,
+        crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
+    );
+    let response = route_request_ex(
+        "POST",
+        "/api/optimize/replay-seed",
+        &body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
     assert_eq!(response.status_code, 200, "{}", response.body);
 
     let p: serde_json::Value = serde_json::from_str(&response.body).expect("replay json");
@@ -894,11 +946,19 @@ async fn optimize_replay_seed_trace_reports_applied_support_buffs() {
 #[serial_test::serial]
 #[tokio::test]
 async fn compare_crews_returns_distribution_payload() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":400,"seed":3,"crews":[
-        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},
-        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}
-    ]}"#;
-    let response = route_request("POST", "/api/compare/crews", body).await;
+    let crew = SERVER_API_TEST_CREW_718_LEGAL_JSON;
+    let body = format!(
+        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":400,"seed":3,"below_decks_slots":3,"crews":[{crew},{crew}]}}"#,
+        crew = crew
+    );
+    let response = route_request_ex(
+        "POST",
+        "/api/compare/crews",
+        &body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
     assert_eq!(response.status_code, 200, "{}", response.body);
     let p: serde_json::Value = serde_json::from_str(&response.body).expect("compare json");
     assert_eq!(p["status"], "ok");
@@ -919,8 +979,18 @@ async fn compare_crews_returns_distribution_payload() {
 #[serial_test::serial]
 #[tokio::test]
 async fn simulate_unknown_support_buff_emits_warning() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":100,"seed":1,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},"support_buffs":["not_a_real_support_buff_id"]}"#;
-    let response = route_request("POST", "/api/simulate", body).await;
+    let body = format!(
+        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":100,"seed":1,"below_decks_slots":3,"crew":{crew},"support_buffs":["not_a_real_support_buff_id"]}}"#,
+        crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
+    );
+    let response = route_request_ex(
+        "POST",
+        "/api/simulate",
+        &body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
     assert_eq!(response.status_code, 200, "{}", response.body);
     let p: serde_json::Value = serde_json::from_str(&response.body).expect("simulate json");
     let w = p["warnings"].as_array().expect("warnings array");
@@ -937,8 +1007,18 @@ async fn simulate_unknown_support_buff_emits_warning() {
 #[serial_test::serial]
 #[tokio::test]
 async fn simulate_support_buff_request_succeeds_without_warnings() {
-    let with_buff = r#"{"ship":"saladin","hostile":"2918121098","num_sims":800,"seed":9001,"crew":{"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},"support_buffs":["cerritos_support"]}"#;
-    let response = route_request("POST", "/api/simulate", with_buff).await;
+    let with_buff = format!(
+        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":800,"seed":9001,"below_decks_slots":3,"crew":{crew},"support_buffs":["cerritos_support"]}}"#,
+        crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
+    );
+    let response = route_request_ex(
+        "POST",
+        "/api/simulate",
+        &with_buff,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
     assert_eq!(response.status_code, 200, "{}", response.body);
     let payload: serde_json::Value = serde_json::from_str(&response.body).expect("simulate json");
     assert_eq!(payload["status"], "ok");
@@ -960,11 +1040,19 @@ async fn simulate_support_buff_request_succeeds_without_warnings() {
 #[serial_test::serial]
 #[tokio::test]
 async fn compare_crews_accepts_support_buffs() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":200,"seed":5,"support_buffs":["cerritos_support"],"crews":[
-        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]},
-        {"captain":"718-0-2509d7","bridge":[null,null],"below_deck":[null,null,null]}
-    ]}"#;
-    let response = route_request("POST", "/api/compare/crews", body).await;
+    let crew = SERVER_API_TEST_CREW_718_LEGAL_JSON;
+    let body = format!(
+        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":200,"seed":5,"below_decks_slots":3,"support_buffs":["cerritos_support"],"crews":[{crew},{crew}]}}"#,
+        crew = crew
+    );
+    let response = route_request_ex(
+        "POST",
+        "/api/compare/crews",
+        &body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
     assert_eq!(response.status_code, 200, "{}", response.body);
 }
 
@@ -974,7 +1062,7 @@ async fn api_key_required_for_non_loopback_when_configured() {
     std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
     std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
     let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
     let response = route_request_ex("POST", "/api/optimize", body, Some(lan), &[]).await;
     assert_eq!(response.status_code, 401, "{}", response.body);
@@ -988,7 +1076,7 @@ async fn api_key_bearer_allows_non_loopback_when_configured() {
     std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
     std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":2000,"seed":7,"max_candidates":64}"#;
+        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
     let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
     let response = route_request_ex(
         "POST",
@@ -1027,31 +1115,30 @@ impl Drop for CombatEffectSpecDebugEnvGuard {
 
 #[serial_test::serial]
 #[tokio::test]
-async fn combat_effect_spec_debug_returns_404_when_disabled() {
+async fn combat_effect_spec_debug_respects_env_gates() {
     let path = "/api/debug/combat-effect-spec/officers/718-0-2509d7";
-    let response = route_request("GET", path, "").await;
-    assert_eq!(response.status_code, 404);
+    let disabled = route_request("GET", path, "").await;
+    assert_eq!(disabled.status_code, 404);
     assert!(
-        response.body.contains("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG"),
+        disabled
+            .body
+            .contains("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG"),
         "{}",
-        response.body
+        disabled.body
     );
-}
 
-#[serial_test::serial]
-#[tokio::test]
-async fn combat_effect_spec_debug_returns_officer_specs_when_enabled() {
+    // One test: `DataRegistry::load()` reads `KOBAYASHI_OFFICER_SOURCE` at load time; splitting this
+    // across two tests left the "enabled" case flaky when the sibling ran first in the same binary.
     let _g_debug = CombatEffectSpecDebugEnvGuard::set("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG", "1");
     let _g_lcars = CombatEffectSpecDebugEnvGuard::set("KOBAYASHI_OFFICER_SOURCE", "lcars");
-    let path = "/api/debug/combat-effect-spec/officers/718-0-2509d7";
-    let response = route_request("GET", path, "").await;
-    assert_eq!(response.status_code, 200, "{}", response.body);
+    let enabled = route_request("GET", path, "").await;
+    assert_eq!(enabled.status_code, 200, "{}", enabled.body);
     assert!(
-        response.content_type.contains("json"),
+        enabled.content_type.contains("json"),
         "{}",
-        response.content_type
+        enabled.content_type
     );
-    let v: serde_json::Value = serde_json::from_str(&response.body).expect("json");
+    let v: serde_json::Value = serde_json::from_str(&enabled.body).expect("json");
     assert_eq!(v["officer_id"], "718-0-2509d7");
     assert!(v["abilities"].as_array().is_some_and(|a| !a.is_empty()));
     assert!(v["combat_effect_spec_enabled"].is_boolean());

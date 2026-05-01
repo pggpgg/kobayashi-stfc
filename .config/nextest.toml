@@ -1,0 +1,15 @@
+[profile.default]
+# Fail fast on the first failure for quick local feedback.
+fail-fast = true
+# Override status level so skipped tests don't clutter the output.
+status-level = "pass"
+# Final output only shows failures and the summary.
+final-status-level = "flaky"
+# Skip sync tests — they use in-process file locks incompatible with nextest's
+# per-process model.  Use `cargo test` for those.
+filter = "not test(/server::sync::tests/)"
+
+[profile.ci]
+# CI profile: slower but catches flaky tests by retrying once.
+retries = 1
+fail-fast = false

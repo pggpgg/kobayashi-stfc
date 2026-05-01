@@ -21,5 +21,13 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // Run test files in parallel worker processes for isolation from jsdom leaks.
+    pool: "forks",
+    isolate: true,
+    poolOptions: {
+      forks: {
+        singleFork: false,
+      },
+    },
   },
 });
