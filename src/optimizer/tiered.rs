@@ -414,6 +414,14 @@ pub fn run_tiered_with_registry_with_progress<F>(
     confirm_budget_cap_mult: Option<f64>,
     // Optional per-profile coarse-scout multiplier (`profiles/<id>/optimizer_budget_hints.json`).
     budget_hints: Option<&super::budget_hints::OptimizerBudgetHints>,
+    // When true, use priority-queue scout scheduling instead of coarse→refine adaptive scout.
+    scout_priority_queue: bool,
+    // Priority queue: trials for the quick initial pass (min 64, max scout cap). None = default 100.
+    pq_minimal_scout: Option<usize>,
+    // Priority queue: keep top K * mult survivors. None = default 4.
+    pq_selection_mult: Option<usize>,
+    // Priority queue: abandon margin below K-th lower bound. None = default 0.05.
+    pq_abandon_margin: Option<f64>,
     mut on_progress: F,
 ) -> (Vec<RankedCrewResult>, TieredScoutBudgetStats)
 where
@@ -449,90 +457,141 @@ where
     );
 
     let scout_cap = scout_sims.max(1);
-    let coarse_sims = if scout_adaptive {
-        let q = scout_coarse_sims_from_cap(scout_cap, total_candidates, k);
-        super::budget_hints::apply_tiered_coarse_hint(q, scout_cap, budget_hints)
-    } else {
-        scout_cap
-    };
-    let skip_refine = !scout_adaptive || coarse_sims >= scout_cap;
-
-    let num_batches = monte_carlo_batch_count_for_candidates(total_candidates);
-    let ranges = batch_ranges(total_candidates, num_batches);
-    let total_batches = ranges.len();
 
     let mut scout_by_hash: HashMap<u64, SimulationResult> =
         HashMap::with_capacity(total_candidates);
 
-    if !run_tiered_scout_batches(
-        &candidates,
-        &ranges,
-        &mut scout_by_hash,
-        shared.clone(),
-        coarse_sims,
-        seed,
-        &chain_grind,
-        preconfirmed,
-        None,
-        None,
-        "tiered_scout",
-        total_work as u32,
-        total_batches,
-        total_candidates,
-        &mut on_progress,
-    ) {
-        return (Vec::new(), budget);
-    }
+    if scout_priority_queue {
+        // ── Priority-queue scout: replaces coarse + refine with round-based trial allocation ──
+        let min_scout = pq_minimal_scout
+            .map(|m| m.max(64).min(scout_cap))
+            .unwrap_or(100);
+        let sel_mult = pq_selection_mult.unwrap_or(4).max(2).min(16);
+        let abandon = pq_abandon_margin.unwrap_or(0.05).clamp(0.0, 0.5);
 
-    let scout_ordered_coarse: Vec<SimulationResult> = candidates
-        .iter()
-        .map(|c| {
-            scout_by_hash
-                .get(&crew_candidate_stable_hash(c))
-                .expect("scout row for every candidate")
-                .clone()
-        })
-        .collect();
-    budget.coarse_pass_trials = simulation_trials_sum(&scout_ordered_coarse);
+        info!(
+            phase = "tiered_scout_pq",
+            strategy = "tiered",
+            seed,
+            scout_cap,
+            top_k = k,
+            total_candidates = total_candidates as u64,
+            pq_minimal_scout = min_scout as u64,
+            pq_selection_mult = sel_mult as u64,
+            pq_abandon_margin = abandon,
+            "optimize_tiered_scout_pq"
+        );
 
-    if !skip_refine {
-        let ranked_coarse = rank_results(scout_ordered_coarse.clone());
-        let max_c = max_scout_refine_contenders(k, total_candidates);
-        let mut refine_hashes =
-            scout_refine_candidate_hashes(&ranked_coarse, k, SCOUT_REFINE_BAND_BUFFER, max_c);
-        if let Some(pre) = preconfirmed {
-            refine_hashes.retain(|h| !pre.contains_key(h));
+        let pq_results = run_priority_queue_scout_with_shared(
+            shared.clone(),
+            &candidates,
+            scout_cap,
+            k,
+            seed,
+            min_scout,
+            sel_mult,
+            abandon,
+            chain_grind.clone(),
+        );
+
+        for (i, c) in candidates.iter().enumerate() {
+            scout_by_hash.insert(crew_candidate_stable_hash(c), pq_results[i].clone());
         }
-        if !refine_hashes.is_empty() {
-            if !on_progress(OptimizeProgressTick {
-                crews_done: total_candidates as u32,
-                total_crews: total_work as u32,
-                phase: "tiered_scout_refine",
-                partial_top: None,
-            }) {
-                return (Vec::new(), budget);
+        budget.coarse_pass_trials = simulation_trials_sum(&pq_results);
+        budget.scout_trials_final = budget.coarse_pass_trials;
+
+        // Progress tick after priority queue scout completes
+        if !on_progress(OptimizeProgressTick {
+            crews_done: total_candidates as u32,
+            total_crews: total_work as u32,
+            phase: "tiered_scout_pq",
+            partial_top: None,
+        }) {
+            return (Vec::new(), budget);
+        }
+    } else {
+        let coarse_sims = if scout_adaptive {
+            let q = scout_coarse_sims_from_cap(scout_cap, total_candidates, k);
+            super::budget_hints::apply_tiered_coarse_hint(q, scout_cap, budget_hints)
+        } else {
+            scout_cap
+        };
+        let skip_refine = !scout_adaptive || coarse_sims >= scout_cap;
+
+        let num_batches = monte_carlo_batch_count_for_candidates(total_candidates);
+        let ranges = batch_ranges(total_candidates, num_batches);
+        let total_batches = ranges.len();
+
+        if !run_tiered_scout_batches(
+            &candidates,
+            &ranges,
+            &mut scout_by_hash,
+            shared.clone(),
+            coarse_sims,
+            seed,
+            &chain_grind,
+            preconfirmed,
+            None,
+            None,
+            "tiered_scout",
+            total_work as u32,
+            total_batches,
+            total_candidates,
+            &mut on_progress,
+        ) {
+            return (Vec::new(), budget);
+        }
+
+        let scout_ordered_coarse: Vec<SimulationResult> = candidates
+            .iter()
+            .map(|c| {
+                scout_by_hash
+                    .get(&crew_candidate_stable_hash(c))
+                    .expect("scout row for every candidate")
+                    .clone()
+            })
+            .collect();
+        budget.coarse_pass_trials = simulation_trials_sum(&scout_ordered_coarse);
+
+        if !skip_refine {
+            let ranked_coarse = rank_results(scout_ordered_coarse.clone());
+            let max_c = max_scout_refine_contenders(k, total_candidates);
+            let mut refine_hashes =
+                scout_refine_candidate_hashes(&ranked_coarse, k, SCOUT_REFINE_BAND_BUFFER, max_c);
+            if let Some(pre) = preconfirmed {
+                refine_hashes.retain(|h| !pre.contains_key(h));
             }
-            let refine_pass_accum = RefCell::new(0u64);
-            if !run_tiered_scout_batches(
-                &candidates,
-                &ranges,
-                &mut scout_by_hash,
-                shared.clone(),
-                scout_cap,
-                seed,
-                &chain_grind,
-                preconfirmed,
-                Some(&refine_hashes),
-                Some(&refine_pass_accum),
-                "tiered_scout_refine",
-                total_work as u32,
-                total_batches,
-                total_candidates,
-                &mut on_progress,
-            ) {
-                return (Vec::new(), budget);
+            if !refine_hashes.is_empty() {
+                if !on_progress(OptimizeProgressTick {
+                    crews_done: total_candidates as u32,
+                    total_crews: total_work as u32,
+                    phase: "tiered_scout_refine",
+                    partial_top: None,
+                }) {
+                    return (Vec::new(), budget);
+                }
+                let refine_pass_accum = RefCell::new(0u64);
+                if !run_tiered_scout_batches(
+                    &candidates,
+                    &ranges,
+                    &mut scout_by_hash,
+                    shared.clone(),
+                    scout_cap,
+                    seed,
+                    &chain_grind,
+                    preconfirmed,
+                    Some(&refine_hashes),
+                    Some(&refine_pass_accum),
+                    "tiered_scout_refine",
+                    total_work as u32,
+                    total_batches,
+                    total_candidates,
+                    &mut on_progress,
+                ) {
+                    return (Vec::new(), budget);
+                }
+                budget.refine_pass_trials = refine_pass_accum.into_inner();
             }
-            budget.refine_pass_trials = refine_pass_accum.into_inner();
         }
     }
 
@@ -555,6 +614,7 @@ where
         scout_refine_pass_trials = budget.refine_pass_trials,
         scout_trials_final = budget.scout_trials_final,
         scout_adaptive = scout_adaptive,
+        scout_priority_queue = scout_priority_queue,
         "optimize_tiered_scout_budget"
     );
 
@@ -679,6 +739,139 @@ where
     budget.confirm_sims_alloc_max = trial_per_crew.iter().max().copied().unwrap_or(0);
 
     (rank_results(confirmation_results), budget)
+}
+
+// ── Priority-queue Monte Carlo scheduler ────────────────────────────────────
+
+/// Wilson score 95% two-sided interval for a binomial proportion (same formula as in simulation.rs).
+fn pq_wilson_95(successes: usize, trials: usize) -> (f64, f64) {
+    if trials == 0 {
+        return (0.0, 1.0);
+    }
+    const Z: f64 = 1.96;
+    let n = trials as f64;
+    let p = successes as f64 / n;
+    let z2 = Z * Z;
+    let denom = 1.0 + z2 / n;
+    let center = (p + z2 / (2.0 * n)) / denom;
+    let rad = Z / denom * ((p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt());
+    let lo = (center - rad).clamp(0.0, 1.0);
+    let hi = (center + rad).clamp(0.0, 1.0);
+    (lo, hi)
+}
+
+/// Wilson upper bound (95% interval) for binomial win proportion.
+fn pq_wilson_upper(wins: usize, trials: usize) -> f64 {
+    pq_wilson_95(wins, trials).1
+}
+
+/// Priority-queue Monte Carlo scout: replaces the uniform scout phase with
+/// round-based trial allocation. Promising crews (high Wilson upper bound) get
+/// more trials sooner; hopeless crews are abandoned when they can no longer
+/// reach the K‑th best Wilson lower bound.
+///
+/// Algorithm:
+/// 1. Minimal scout (e.g. 100 trials) on every candidate.
+/// 2. Rank by Wilson upper bound, find K‑th best lower bound.
+/// 3. Drop candidates whose upper < (K‑th lower – margin).
+/// 4. Keep the top `K * selection_mult` survivors for the full‑budget scout.
+/// 5. Run full scout only on the survivors, then confirm top‑K as usual.
+pub(crate) fn run_priority_queue_scout_with_shared(
+    shared: SharedScenarioData,
+    candidates: &[CrewCandidate],
+    scout_cap: usize,        // full scout trial budget per surviving crew
+    top_k: usize,
+    seed: u64,
+    minimal_scout: usize,     // trials for the quick initial pass (e.g. 100)
+    selection_mult: usize,    // keep top K * selection_mult (e.g. 4)
+    abandon_margin: f64,      // gap below K‑th lower bound to abandon (e.g. 0.05)
+    chain_grind: Option<ChainGrindParams>,
+) -> Vec<SimulationResult> {
+    let n = candidates.len();
+    if n == 0 {
+        return Vec::new();
+    }
+    let k = top_k.min(n);
+    let min_scout = minimal_scout.max(64).min(scout_cap.max(1));
+
+    // ── Phase 1: minimal scout on all candidates ──────────────────────
+    let minimal_results =
+        run_monte_carlo_scout_phase_with_shared(
+            shared.clone(),
+            candidates,
+            min_scout,
+            seed,
+            true, // parallel
+            chain_grind.clone(),
+        );
+    debug_assert_eq!(minimal_results.len(), n);
+
+    // Build priority scores: (index, wilson_upper)
+    let mut scored: Vec<(usize, f64)> = minimal_results
+        .iter()
+        .enumerate()
+        .map(|(i, r)| (i, pq_wilson_upper(
+            (r.win_rate * r.trials_run as f64).round() as usize,
+            r.trials_run,
+        )))
+        .collect();
+
+    // Sort descending by Wilson upper bound
+    scored.sort_by(|a, b| b.1.total_cmp(&a.1));
+
+    // Compute K‑th best Wilson lower bound (0‑based index k‑1)
+    let kth_lower = if k > 0 && k <= scored.len() {
+        let kth_idx = scored[k.saturating_sub(1)].0;
+        minimal_results[kth_idx].win_rate_ci_low
+    } else {
+        0.0
+    };
+
+    // ── Phase 2: filter – keep top K * selection_mult that beat the cutoff ──
+    let cutoff = (kth_lower - abandon_margin).max(0.0);
+    let max_keep = (k * selection_mult).min(n);
+
+    let mut survivors: Vec<(usize, f64, CrewCandidate)> = Vec::with_capacity(max_keep);
+    for &(idx, upper) in &scored {
+        if survivors.len() >= max_keep {
+            break;
+        }
+        if upper >= cutoff {
+            survivors.push((idx, upper, candidates[idx].clone()));
+        }
+    }
+
+    // If nothing survived the cutoff, fall back to top max_keep by upper bound
+    if survivors.is_empty() {
+        for &(idx, upper) in scored.iter().take(max_keep) {
+            survivors.push((idx, upper, candidates[idx].clone()));
+        }
+    }
+
+    // ── Phase 3: full scout on survivors ──────────────────────────────
+    let survivor_candidates: Vec<CrewCandidate> =
+        survivors.iter().map(|(_, _, c)| c.clone()).collect();
+
+    let full_results = run_monte_carlo_scout_phase_with_shared(
+        shared,
+        &survivor_candidates,
+        scout_cap.max(1),
+        seed.wrapping_add(0xDEAD_BEEF),
+        true,
+        chain_grind,
+    );
+
+    // Merge: survivors keep full results; abandoned crews keep minimal results
+    let mut out: Vec<SimulationResult> = minimal_results;
+    let mut survivor_idx = 0usize;
+    for &(orig_idx, _, _) in &survivors {
+        if survivor_idx < full_results.len() {
+            out[orig_idx] = full_results[survivor_idx].clone();
+            survivor_idx += 1;
+        }
+    }
+
+    out
 }
 
 #[cfg(test)]

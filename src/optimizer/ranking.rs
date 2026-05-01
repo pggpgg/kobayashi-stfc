@@ -6,7 +6,7 @@ use std::collections::HashSet;
 /// Default head size (when the client omits `novelty_diverse_top`) for MMR reordering of optimize results.
 pub(crate) const DEFAULT_NOVELTY_DIVERSE_TOP: usize = 20;
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize, Default)]
 pub struct RankingScore {
     pub value: f32,
 }

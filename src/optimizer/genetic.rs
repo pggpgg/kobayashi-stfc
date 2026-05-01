@@ -19,10 +19,11 @@ use crate::optimizer::crew_generator::{
 };
 use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_parallel, run_monte_carlo_parallel_deduped_chunked, SimulationResult,
+    crew_candidate_stable_hash, run_monte_carlo_parallel, run_monte_carlo_parallel_deduped_chunked,
+    SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 #[cfg(test)]
 use std::sync::atomic::AtomicUsize;
 
@@ -80,6 +81,16 @@ pub struct GeneticConfig {
 
     /// Profile id for `roster.imported.json` when building officer pools (`None` = default API profile).
     pub roster_profile_id: Option<String>,
+
+    /// When true, elite individuals carried over between generations reuse their previous
+    /// simulation results instead of being re-evaluated (incremental fitness).
+    pub incremental_fitness: bool,
+
+    /// Fraction of `sims_per_eval` to use for initial scout evaluation of non-elite
+    /// offspring (mutated + crossover). Only the full `sims_per_eval` is committed if the
+    /// scout estimate exceeds the elite's fitness or its Wilson upper bound suggests potential.
+    /// When `None` or 1.0, all offspring get full `sims_per_eval`. Recommended: 0.25.
+    pub offspring_reduced_budget_mul: Option<f64>,
 }
 
 impl Default for GeneticConfig {
@@ -103,6 +114,8 @@ impl Default for GeneticConfig {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             roster_profile_id: None,
+            incremental_fitness: false,
+            offspring_reduced_budget_mul: None,
         }
     }
 }
@@ -121,6 +134,8 @@ impl GeneticConfig {
             adaptive_mutation: true,
             mutation_rate_floor: 0.05,
             mutation_rate_ceiling: 0.40,
+            incremental_fitness: true,
+            offspring_reduced_budget_mul: Some(0.25),
             ..Self::default()
         }
     }
@@ -548,21 +563,169 @@ pub fn run_genetic_optimizer(
         (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
     let mut last_stable_best: Vec<CrewCandidate> = Vec::new();
     let uniq_chunk = (config.population_size / 8).clamp(1, 64);
+
+    // Incremental fitness: cache simulation results for elite individuals by crew hash
+    // so they are not re-evaluated when carried over to the next generation.
+    let mut elite_cache: HashMap<u64, SimulationResult> = HashMap::new();
+
+    // Fraction of full sims for initial scout on non-elite offspring.
+    let offspring_scout_mul = config
+        .offspring_reduced_budget_mul
+        .filter(|&m| m.is_finite() && m > 0.0 && m < 1.0)
+        .unwrap_or(1.0);
+    let use_reduced_budget = config.incremental_fitness && offspring_scout_mul < 1.0;
+
     for generation in 0..config.generations {
-        let sim_results = match run_monte_carlo_parallel_deduped_chunked(
-            ship,
-            hostile,
-            &population,
-            config.sims_per_eval,
-            seed.wrapping_add(generation as u64),
-            support_slice,
-            config.chain_grind.clone(),
-            config.defender_opponent,
-            uniq_chunk,
-            &mut eval_should_continue,
-        ) {
-            Some(rows) => rows,
-            None => return (last_stable_best, true),
+        // ── Build sim results, reusing cached elite rows when incremental_fitness is on ──
+        let sim_results: Vec<SimulationResult> = if config.incremental_fitness {
+            // Split population: which need fresh MC, which can reuse elite cache
+            let mut uncached_indices: Vec<usize> = Vec::new();
+            let mut uncached_crews: Vec<CrewCandidate> = Vec::new();
+            let mut slot_by_hash: HashMap<u64, SimulationResult> =
+                HashMap::with_capacity(population.len());
+
+            for (i, c) in population.iter().enumerate() {
+                let h = crew_candidate_stable_hash(c);
+                if let Some(cached) = elite_cache.get(&h) {
+                    slot_by_hash.insert(h, cached.clone());
+                } else {
+                    uncached_indices.push(i);
+                    uncached_crews.push(c.clone());
+                }
+            }
+
+            if !uncached_crews.is_empty() {
+                let full_iters = config.sims_per_eval;
+
+                if use_reduced_budget && !elite_cache.is_empty() {
+                    // ── Two-phase: scout then full-sims on promising offspring ──
+                    let scout_iters =
+                        (full_iters as f64 * offspring_scout_mul).round().max(1.0) as usize;
+
+                    // Phase 1: scout on all uncached
+                    let scout_results = match run_monte_carlo_parallel_deduped_chunked(
+                        ship,
+                        hostile,
+                        &uncached_crews,
+                        scout_iters,
+                        seed.wrapping_add(generation as u64),
+                        support_slice,
+                        config.chain_grind.clone(),
+                        config.defender_opponent,
+                        uniq_chunk,
+                        &mut eval_should_continue,
+                    ) {
+                        Some(rows) => rows,
+                        None => return (last_stable_best, true),
+                    };
+
+                    // Find current best fitness from cached rows
+                    let elite_best: f32 = elite_cache
+                        .values()
+                        .map(fitness_from_result)
+                        .fold(-1.0_f32, f32::max);
+
+                    // Phase 2: promote offspring whose scout fitness >= (elite_best * 0.8)
+                    // or whose Wilson upper bound suggests potential.
+                    let mut full_indices: Vec<usize> = Vec::new();
+                    let mut full_crews: Vec<CrewCandidate> = Vec::new();
+
+                    for (idx, row) in scout_results.iter().enumerate() {
+                        let fit = fitness_from_result(row);
+                        // Compute approximate Wilson upper bound using normal approx
+                        let wilson_upper = if row.trials_run > 0 {
+                            let p = row.win_rate;
+                            let n = row.trials_run as f64;
+                            let margin = 1.96 * (p * (1.0 - p) / n).sqrt();
+                            (p + margin).min(1.0)
+                        } else {
+                            0.0
+                        };
+
+                        // Promote to full sims if fit is close to elite or Wilson CI suggests potential
+                        if fit as f64 >= elite_best as f64 * 0.8
+                            || wilson_upper >= elite_best as f64 * 0.9
+                        {
+                            full_indices.push(uncached_indices[idx]);
+                            full_crews.push(uncached_crews[idx].clone());
+                        } else {
+                            // Keep scout results — not promoted
+                            slot_by_hash.insert(
+                                crew_candidate_stable_hash(&uncached_crews[idx]),
+                                row.clone(),
+                            );
+                        }
+                    }
+
+                    if !full_crews.is_empty() {
+                        let full_results = match run_monte_carlo_parallel_deduped_chunked(
+                            ship,
+                            hostile,
+                            &full_crews,
+                            full_iters,
+                            seed.wrapping_add(generation as u64).wrapping_add(0xDEAD),
+                            support_slice,
+                            config.chain_grind.clone(),
+                            config.defender_opponent,
+                            uniq_chunk,
+                            &mut eval_should_continue,
+                        ) {
+                            Some(rows) => rows,
+                            None => return (last_stable_best, true),
+                        };
+                        for (crew, row) in full_crews.iter().zip(full_results) {
+                            slot_by_hash.insert(crew_candidate_stable_hash(crew), row);
+                        }
+                    }
+                } else {
+                    // ── Single-pass: full sims on all uncached ──
+                    let fresh = match run_monte_carlo_parallel_deduped_chunked(
+                        ship,
+                        hostile,
+                        &uncached_crews,
+                        full_iters,
+                        seed.wrapping_add(generation as u64),
+                        support_slice,
+                        config.chain_grind.clone(),
+                        config.defender_opponent,
+                        uniq_chunk,
+                        &mut eval_should_continue,
+                    ) {
+                        Some(rows) => rows,
+                        None => return (last_stable_best, true),
+                    };
+                    for (crew, row) in uncached_crews.iter().zip(fresh) {
+                        slot_by_hash.insert(crew_candidate_stable_hash(crew), row);
+                    }
+                }
+            }
+
+            // Reassemble in population order
+            population
+                .iter()
+                .map(|c| {
+                    slot_by_hash
+                        .remove(&crew_candidate_stable_hash(c))
+                        .expect("every population member has a sim row")
+                })
+                .collect()
+        } else {
+            // ── Legacy: run full sims on the entire population ──
+            match run_monte_carlo_parallel_deduped_chunked(
+                ship,
+                hostile,
+                &population,
+                config.sims_per_eval,
+                seed.wrapping_add(generation as u64),
+                support_slice,
+                config.chain_grind.clone(),
+                config.defender_opponent,
+                uniq_chunk,
+                &mut eval_should_continue,
+            ) {
+                Some(rows) => rows,
+                None => return (last_stable_best, true),
+            }
         };
         let fitness: Vec<f32> = sim_results.iter().map(fitness_from_result).collect();
 
@@ -579,6 +742,19 @@ pub fn run_genetic_optimizer(
                 .collect();
         } else {
             stagnation += 1;
+        }
+
+        // Update elite cache for next generation (incremental fitness).
+        if config.incremental_fitness {
+            elite_cache.clear();
+            for &(idx, _) in indexed.iter().take(config.elitism_count) {
+                if idx < sim_results.len() {
+                    elite_cache.insert(
+                        crew_candidate_stable_hash(&population[idx]),
+                        sim_results[idx].clone(),
+                    );
+                }
+            }
         }
 
         // Adaptive mutation: bump rate by 1.5× every 3 stagnant generations.

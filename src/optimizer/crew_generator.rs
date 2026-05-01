@@ -15,6 +15,7 @@ use crate::data::ship::CrewSlotUnlock;
 use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };
+use crate::optimizer::officer_learning::OfficerPerformanceScores;
 use crate::perf_log;
 
 /// Profile id with no `profiles/<id>/roster.imported.json` in the repo: roster import filter is
@@ -590,6 +591,10 @@ pub struct CandidateStrategy {
     /// Profile id whose `roster.imported.json` restricts officer pools (`None` = API default profile).
     /// Unit tests may set a synthetic id with no roster file to use the full canonical officer list.
     pub roster_profile_id: Option<String>,
+    /// Optional per-officer performance scores for weighted below-decks officer sampling
+    /// (learning-based warm start). When set, `sampled_candidates` uses epsilon-greedy
+    /// weighted sampling instead of stride-based sampling for below-decks officers.
+    pub learned_officer_scores: Option<OfficerPerformanceScores>,
 }
 
 impl Default for CandidateStrategy {
@@ -604,6 +609,7 @@ impl Default for CandidateStrategy {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             roster_profile_id: None,
+            learned_officer_scores: None,
         }
     }
 }
@@ -808,6 +814,8 @@ impl CrewGenerator {
                 &self.strategy,
                 mix_seed(seed ^ 0xA5A5_A5A5_A5A5_A5A5, ship, hostile),
                 k,
+                hostile,
+                ship,
             )
         };
         perf_log::log_duration("crew_generator.generate_candidates_from_pools", t0);
@@ -1111,12 +1119,42 @@ fn sampled_candidates(
     strategy: &CandidateStrategy,
     seed: u64,
     below_decks_slots: usize,
+    hostile: &str,
+    ship: &str,
 ) -> Vec<CrewCandidate> {
+    use crate::optimizer::officer_learning::RngExt as LearningRngExt;
+
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
     let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
     let reserve = strategy.max_candidates.unwrap_or(256).min(4096);
     let mut candidates = Vec::with_capacity(reserve);
-    let stride = ((seed as usize) % 5) + 1;
+
+    // RNG adapter for officer_learning::RngExt
+    struct CgRng {
+        state: u64,
+    }
+    impl LearningRngExt for CgRng {
+        fn index(&mut self, n: usize) -> usize {
+            if n == 0 {
+                return 0;
+            }
+            self.state = self
+                .state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (self.state as usize) % n
+        }
+        fn next_f64(&mut self) -> f64 {
+            self.state = self
+                .state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (self.state >> 11) as f64 / (u64::MAX as f64 + 1.0)
+        }
+    }
+    let mut rng = CgRng { state: seed };
+
+    let use_learning = strategy.learned_officer_scores.is_some();
 
     for captain in captains.iter().take(captain_limit) {
         for (bi, b1) in bridge.iter().take(bridge_limit).enumerate() {
@@ -1127,12 +1165,62 @@ fn sampled_candidates(
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
-                let below_indices: Vec<usize> = (0..below_decks.len())
-                    .step_by(stride)
-                    .filter(|&i| {
-                        !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
-                    })
-                    .collect();
+
+                let below_indices: Vec<usize> = if use_learning {
+                    // Weighted sampling: select non-conflicting below-decks officers
+                    let available: Vec<String> = below_decks
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(_i, name)| {
+                            if !name_conflicts_bridge_captain(name.as_str(), captain, b1, b2) {
+                                Some(name.clone())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+                    if available.len() < below_decks_slots {
+                        continue;
+                    }
+                    // Map back to original below_decks indices
+                    let selected = strategy
+                        .learned_officer_scores
+                        .as_ref()
+                        .expect("scores set when use_learning is true")
+                        .epsilon_greedy_sample(
+                            &available,
+                            below_decks_slots,
+                            hostile,
+                            ship,
+                            &mut rng,
+                        );
+                    // Convert selected names back to original below_decks indices
+                    selected
+                        .iter()
+                        .map(|&si| {
+                            let name = &available[si];
+                            below_decks
+                                .iter()
+                                .position(|n| n == name)
+                                .expect("name from available is in below_decks")
+                        })
+                        .collect()
+                } else {
+                    // Legacy stride-based sampling
+                    let stride = ((seed as usize) % 5) + 1;
+                    (0..below_decks.len())
+                        .step_by(stride)
+                        .filter(|&i| {
+                            !name_conflicts_bridge_captain(
+                                below_decks[i].as_str(),
+                                captain,
+                                b1,
+                                b2,
+                            )
+                        })
+                        .collect()
+                };
+
                 let m = below_indices.len();
                 if below_decks_slots > m {
                     continue;

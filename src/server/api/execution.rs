@@ -739,6 +739,10 @@ fn gather_optimize_simulation_results(
             tiered_top_k: request.tiered_top_k.map(|n| n as usize),
             tiered_scout_uniform: matches!(request.tiered_scout_uniform, Some(true)),
             tiered_confirm_budget_cap_mult: request.tiered_confirm_budget_cap_mult,
+            tiered_scout_priority_queue: false,
+            tiered_pq_minimal_scout: None,
+            tiered_pq_selection_mult: None,
+            tiered_pq_abandon_margin: None,
             exhaustive_scout_sims: request
                 .exhaustive_scout_sims
                 .map(|n| n as usize)

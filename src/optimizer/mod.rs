@@ -7,6 +7,7 @@ pub(crate) mod exhaustive_adaptive;
 pub mod genetic;
 pub mod matchup_priors;
 pub mod monte_carlo;
+pub mod officer_learning;
 pub mod ranking;
 pub mod tiered;
 
@@ -356,6 +357,19 @@ pub struct OptimizationScenario<'a> {
     /// Tiered: when set, shrink per-top-K confirmation totals so the sum does not exceed `floor(mult * K * simulation_count)`.
     /// Exhaustive two-phase: same cap applies to the width-based confirmation pass on the top-`keep` crews.
     pub tiered_confirm_budget_cap_mult: Option<f64>,
+    /// Tiered only: when true, use priority-queue-based scout scheduling instead of the default
+    /// coarse→refine adaptive scout. Promising crews get more trials sooner; hopeless crews are
+    /// abandoned early. Uses `tiered_pq_minimal_scout` (default 100), `tiered_pq_selection_mult`
+    /// (default 4× top-K), and `tiered_pq_abandon_margin` (default 0.05).
+    pub tiered_scout_priority_queue: bool,
+    /// Tiered priority-queue only: trials for the quick initial pass on all candidates (min 64, max scout cap).
+    /// When `None`, defaults to 100.
+    pub tiered_pq_minimal_scout: Option<usize>,
+    /// Tiered priority-queue only: keep top `K * mult` survivors (min 2×, max 16×). When `None`, defaults to 4.
+    pub tiered_pq_selection_mult: Option<usize>,
+    /// Tiered priority-queue only: abandon crews whose Wilson upper bound is below
+    /// `(K-th lower - margin)`. When `None`, defaults to 0.05.
+    pub tiered_pq_abandon_margin: Option<f64>,
     /// Exhaustive only: when **both** this and [`Self::exhaustive_scout_top_keep`] are `Some`, run scout Monte Carlo at this many trials per crew on the full candidate list, then run full [`Self::simulation_count`] only on the top `exhaustive_scout_top_keep` crews by scout rank (others keep scout statistics).
     pub exhaustive_scout_sims: Option<usize>,
     /// Exhaustive only: paired with [`Self::exhaustive_scout_sims`] (see there).
@@ -411,6 +425,10 @@ impl Default for OptimizationScenario<'_> {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            tiered_scout_priority_queue: false,
+            tiered_pq_minimal_scout: None,
+            tiered_pq_selection_mult: None,
+            tiered_pq_abandon_margin: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
@@ -430,7 +448,9 @@ impl Default for OptimizationScenario<'_> {
 }
 
 fn tiered_scout_allocator_id(scenario: &OptimizationScenario<'_>) -> u8 {
-    if scenario.tiered_scout_uniform {
+    if scenario.tiered_scout_priority_queue {
+        2
+    } else if scenario.tiered_scout_uniform {
         0
     } else {
         1
@@ -711,6 +731,10 @@ fn optimize_scenario_tiered_with_registry(
         !scenario.tiered_scout_uniform,
         scenario.tiered_confirm_budget_cap_mult,
         budget_hints_storage.as_ref(),
+        false, // scout_priority_queue
+        None,  // pq_minimal_scout
+        None,  // pq_selection_mult
+        None,  // pq_abandon_margin
         |_| true,
     )
     .0
@@ -923,6 +947,10 @@ where
                 tiered_top_k: scenario.tiered_top_k,
                 tiered_scout_uniform: scenario.tiered_scout_uniform,
                 tiered_confirm_budget_cap_mult: scenario.tiered_confirm_budget_cap_mult,
+                tiered_scout_priority_queue: scenario.tiered_scout_priority_queue,
+                tiered_pq_minimal_scout: scenario.tiered_pq_minimal_scout,
+                tiered_pq_selection_mult: scenario.tiered_pq_selection_mult,
+                tiered_pq_abandon_margin: scenario.tiered_pq_abandon_margin,
                 exhaustive_scout_sims: scenario.exhaustive_scout_sims,
                 exhaustive_scout_top_keep: scenario.exhaustive_scout_top_keep,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
@@ -1195,6 +1223,10 @@ where
                 scout_adaptive,
                 scenario.tiered_confirm_budget_cap_mult,
                 budget_hints_storage.as_ref(),
+                scenario.tiered_scout_priority_queue,
+                scenario.tiered_pq_minimal_scout,
+                scenario.tiered_pq_selection_mult,
+                scenario.tiered_pq_abandon_margin,
                 &mut on_progress,
             );
             OptimizeRunOutcome {
@@ -1480,6 +1512,10 @@ pub fn optimize_crew(
         tiered_top_k: None,
         tiered_scout_uniform: false,
         tiered_confirm_budget_cap_mult: None,
+        tiered_scout_priority_queue: false,
+        tiered_pq_minimal_scout: None,
+        tiered_pq_selection_mult: None,
+        tiered_pq_abandon_margin: None,
         exhaustive_scout_sims: None,
         exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
@@ -1689,11 +1725,15 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            tiered_scout_priority_queue: false,
+            tiered_pq_minimal_scout: None,
+            tiered_pq_selection_mult: None,
+            tiered_pq_abandon_margin: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
-        prune_analytical_hull_fraction: None,
-        prune_static_gate_max_fraction: None,
+            prune_analytical_hull_fraction: None,
+            prune_static_gate_max_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -1835,6 +1875,10 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            tiered_scout_priority_queue: false,
+            tiered_pq_minimal_scout: None,
+            tiered_pq_selection_mult: None,
+            tiered_pq_abandon_margin: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: Some(4),
@@ -1900,6 +1944,10 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            tiered_scout_priority_queue: false,
+            tiered_pq_minimal_scout: None,
+            tiered_pq_selection_mult: None,
+            tiered_pq_abandon_margin: None,
             exhaustive_scout_sims: Some(12),
             exhaustive_scout_top_keep: Some(4),
             analytical_prefilter_keep: None,
@@ -1959,6 +2007,10 @@ mod tests {
             tiered_top_k: Some(10),
             tiered_scout_uniform: true,
             tiered_confirm_budget_cap_mult: None,
+            tiered_scout_priority_queue: false,
+            tiered_pq_minimal_scout: None,
+            tiered_pq_selection_mult: None,
+            tiered_pq_abandon_margin: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
