@@ -41,235 +41,66 @@ use crate::combat::evolutionary_assimilation::evolutionary_assimilation_instant_
 use crate::combat::proc::{accumulate_proc_attack_effects, roll_weapon_intrinsic_proc};
 use crate::combat::rng::Rng;
 use crate::combat::simd_damage_kernel::{
-    avx2_supported, compute_damage_after_apex_batch, experimental_engine_kernel_enabled,
+    avx2_supported, compute_damage_after_apex_batch,
 };
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
 
-/// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
-/// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach state entry;
-/// receive_damage (hull); round_end (before burn tick); kill when defender dies.
-#[allow(clippy::too_many_arguments)] // engine-internal; splitting would obscure round-phase contract
-fn roll_burning_triggers(
-    effects: &[ActiveAbilityEffect],
-    assimilated_active: bool,
-    rng: &mut Rng,
-    trace: &mut TraceCollector,
-    round_index: u32,
-    phase: &'static str,
-    attacker_id: &str,
-    weapon_index: Option<u32>,
-    burning_rounds: &mut u32,
-) {
-    for effect in effects {
-        let effective_effect = scale_effect(effect.effect, assimilated_active);
-        if let AbilityEffect::Burning {
-            chance,
-            duration_rounds,
-        } = effective_effect
-        {
-            let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-            let triggered = burning_roll < chance.clamp(0.0, 1.0);
-            if triggered {
-                let d = duration_rounds.max(1);
-                *burning_rounds = (*burning_rounds).max(d);
-            }
-            trace.record_if(|| CombatEvent {
-                event_type: "burning_trigger".to_string(),
-                round_index,
-                phase: phase.to_string(),
-                source: EventSource {
-                    officer_id: Some(attacker_id.to_string()),
-                    ship_ability_id: Some(effect.ability_name.clone()),
-                    ..EventSource::default()
-                },
-                weapon_index,
-                values: Map::from_iter([
-                    ("roll".to_string(), Value::from(round_f64(burning_roll))),
-                    ("triggered".to_string(), Value::Bool(triggered)),
-                    ("chance".to_string(), Value::from(round_f64(chance))),
-                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                ]),
-            });
-        }
+/// Immutable combat setup precomputed once per crew, reused across multiple trials with different seeds.
+/// Avoids repeated `active_effects_for_timing` calls and crew resolution in Monte Carlo batch workloads.
+pub struct PreCombatSetup {
+    pub attacker: Combatant,
+    pub defender: Combatant,
+    pub config: SimulationConfig,
+    pub attacker_crew: CrewConfiguration,
+    pub defender_crew: CrewConfiguration,
+    pub defender_faction: OpponentFactionTag,
+    pub defender_ship_type: ShipType,
+    pub attacker_ship_type: ShipType,
+    pub defender_is_npc_hostile: bool,
+    pub defender_is_player_ship: bool,
+    pub attacker_tal_assigned_captain_or_bridge: bool,
+    // Precomputed attacker effects by timing window
+    pub combat_begin_effects: Vec<ActiveAbilityEffect>,
+    pub round_start_effects: Vec<ActiveAbilityEffect>,
+    pub attack_phase_effects: Vec<ActiveAbilityEffect>,
+    pub defense_phase_effects: Vec<ActiveAbilityEffect>,
+    pub round_end_effects: Vec<ActiveAbilityEffect>,
+    pub after_subround_effects: Vec<ActiveAbilityEffect>,
+    pub shield_break_effects: Vec<ActiveAbilityEffect>,
+    pub self_shield_break_effects: Vec<ActiveAbilityEffect>,
+    pub kill_effects: Vec<ActiveAbilityEffect>,
+    pub hull_breach_effects: Vec<ActiveAbilityEffect>,
+    pub receive_damage_effects: Vec<ActiveAbilityEffect>,
+    pub combat_end_effects: Vec<ActiveAbilityEffect>,
+    // Precomputed defender effects by timing window
+    pub defender_combat_begin_effects: Vec<ActiveAbilityEffect>,
+    pub defender_round_start_effects: Vec<ActiveAbilityEffect>,
+    pub defender_attack_phase_effects: Vec<ActiveAbilityEffect>,
+    pub defender_defense_phase_effects: Vec<ActiveAbilityEffect>,
+    pub defender_shield_break_effects: Vec<ActiveAbilityEffect>,
+    pub defender_round_end_effects: Vec<ActiveAbilityEffect>,
+    // Combat begin state (initial round 0, all precomputable)
+    pub combat_begin_ctx: CombatContext,
+    pub combat_begin_filtered: Vec<ActiveAbilityEffect>,
+    pub attacker_mitigation_additive: f64,
+    pub attacker_accuracy_bonus: f64,
+    pub attacker_dodge_bonus: f64,
+    pub conqueror_borg_beam_suppression: bool,
+    pub effective_conqueror_borg_beam_suppression: bool,
+    pub quantum_beam_instant_loss: bool,
+    pub evo_assim_instant_loss: bool,
+}
+
+impl PreCombatSetup {
+    /// Whether the fight ends instantly due to conqueror borg / evolutionary assimilation mechanics.
+    pub fn would_end_instantly(&self) -> bool {
+        self.quantum_beam_instant_loss || self.evo_assim_instant_loss
     }
 }
 
-/// Extends attacker or defender Assimilate duration from pre-filtered effects (matches legacy inline proc rules).
-#[allow(clippy::too_many_arguments)] // trace + phase split for assimilation proc logging
-fn roll_assimilated_extensions_from_effects(
-    effects: &[ActiveAbilityEffect],
-    assimilated_active_for_scale: bool,
-    rng: &mut Rng,
-    trace: &mut TraceCollector,
-    round_index: u32,
-    phase: &'static str,
-    ship_id_for_trace: &str,
-    assimilated_rounds: &mut u32,
-) {
-    for effect in effects {
-        let effective_effect = scale_effect(effect.effect, assimilated_active_for_scale);
-        if let AbilityEffect::Assimilated {
-            chance,
-            duration_rounds,
-        } = effective_effect
-        {
-            let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-            let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
-            if triggered {
-                *assimilated_rounds = (*assimilated_rounds).max(duration_rounds.max(1));
-            }
-            trace.record_if(|| CombatEvent {
-                event_type: "assimilated_trigger".to_string(),
-                round_index,
-                phase: phase.to_string(),
-                source: EventSource {
-                    officer_id: Some(ship_id_for_trace.to_string()),
-                    ship_ability_id: Some(effect.ability_name.clone()),
-                    ..EventSource::default()
-                },
-                weapon_index: None,
-                values: Map::from_iter([
-                    ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
-                    ("triggered".to_string(), Value::Bool(triggered)),
-                    ("chance".to_string(), Value::from(round_f64(chance))),
-                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                ]),
-            });
-        }
-    }
-}
-
-/// `on_hull_breach` / [`TimingWindow::HullBreach`] effects run when the defender **enters** the hull-breached
-/// state (first stack of [`AbilityEffect::HullBreach`] duration), not from a hull HP fraction threshold.
-#[allow(clippy::too_many_arguments)]
-fn apply_hull_breach_timing_window(
-    trace: &mut TraceCollector,
-    round_index: u32,
-    attacker: &Combatant,
-    hull_breach_effects: &[ActiveAbilityEffect],
-    mut ctx: CombatContext,
-    assimilated_active: bool,
-    weapon_base: f64,
-    accumulator: &mut EffectAccumulator,
-    rng: &mut Rng,
-    defender_burning_rounds: &mut u32,
-) {
-    ctx.defender_hull_breach_active = true;
-    let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
-    record_ability_activations(
-        trace,
-        round_index,
-        "hull_breach",
-        attacker,
-        &hull_breach_filtered,
-        assimilated_active,
-    );
-    accumulator.add_effects(
-        TimingWindow::HullBreach,
-        &hull_breach_filtered,
-        weapon_base,
-        assimilated_active,
-        round_index,
-    );
-    roll_burning_triggers(
-        &hull_breach_filtered,
-        assimilated_active,
-        rng,
-        trace,
-        round_index,
-        "hull_breach",
-        &attacker.id,
-        None,
-        defender_burning_rounds,
-    );
-}
-
-/// When the **attacker** (player) enters hull breach, run player [`TimingWindow::HullBreach`] follow-ups.
-/// Burning sub-procs from those effects still apply to the **defender** (enemy on fire), same as
-/// [`apply_hull_breach_timing_window`].
-#[allow(clippy::too_many_arguments)]
-fn apply_attacker_hull_breach_timing_window(
-    trace: &mut TraceCollector,
-    round_index: u32,
-    attacker: &Combatant,
-    hull_breach_effects: &[ActiveAbilityEffect],
-    mut ctx: CombatContext,
-    assimilated_active: bool,
-    weapon_base: f64,
-    accumulator: &mut EffectAccumulator,
-    rng: &mut Rng,
-    defender_burning_rounds: &mut u32,
-) {
-    ctx.attacker_hull_breach_active = true;
-    let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
-    record_ability_activations(
-        trace,
-        round_index,
-        "attacker_hull_breach",
-        attacker,
-        &hull_breach_filtered,
-        assimilated_active,
-    );
-    accumulator.add_effects(
-        TimingWindow::HullBreach,
-        &hull_breach_filtered,
-        weapon_base,
-        assimilated_active,
-        round_index,
-    );
-    roll_burning_triggers(
-        &hull_breach_filtered,
-        assimilated_active,
-        rng,
-        trace,
-        round_index,
-        "attacker_hull_breach",
-        &attacker.id,
-        None,
-        defender_burning_rounds,
-    );
-}
-
-/// Same as [`simulate_combat_with_defender_faction`] with [`OpponentFactionTag::Unknown`]
-/// (faction-gated ship abilities never satisfy the faction condition).
-pub fn simulate_combat(
-    attacker: &Combatant,
-    defender: &Combatant,
-    config: &SimulationConfig,
-    attacker_crew: &CrewConfiguration,
-) -> SimulationResult {
-    simulate_combat_with_defender_faction(
-        attacker,
-        defender,
-        config,
-        attacker_crew,
-        OpponentFactionTag::Unknown,
-    )
-}
-
-pub fn simulate_combat_with_defender_faction(
-    attacker: &Combatant,
-    defender: &Combatant,
-    config: &SimulationConfig,
-    attacker_crew: &CrewConfiguration,
-    defender_faction: OpponentFactionTag,
-) -> SimulationResult {
-    simulate_combat_with_defender_faction_and_defender_crew(
-        attacker,
-        defender,
-        config,
-        attacker_crew,
-        defender_faction,
-        ShipType::Battleship,
-        ShipType::Battleship,
-        true,
-        false,
-        &CrewConfiguration { seats: Vec::new() },
-    )
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn simulate_combat_with_defender_faction_and_defender_crew(
+/// Build a [`PreCombatSetup`] from the same inputs as [`simulate_combat_with_defender_faction_and_defender_crew`].
+/// This precomputes all effects filtering and immutable context — useful for batch trials.
+pub fn build_combat_setup(
     attacker: &Combatant,
     defender: &Combatant,
     config: &SimulationConfig,
@@ -280,41 +111,14 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     defender_is_npc_hostile: bool,
     defender_is_player_ship: bool,
     defender_crew: &CrewConfiguration,
-) -> SimulationResult {
-    let config = config.clone();
+) -> PreCombatSetup {
     let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
     let defender_crew = apply_duplicate_officer_policy(defender_crew);
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
-    let mut rng = Rng::new(config.seed);
-    let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
-    let use_experimental_simd_damage_after_apex =
-        experimental_engine_kernel_enabled() && avx2_supported() && !trace.is_enabled();
-    let mut total_hull_damage = 0.0;
-    let mut total_shield_damage = 0.0;
-    let mut defender_shield_remaining = defender.shield_health.max(0.0);
-    let mut attacker_shield_remaining = attacker.shield_health.max(0.0);
-    let max_att_hull = attacker.hull_health.max(0.0);
-    let mut total_attacker_hull_damage =
-        config.initial_attacker_hull_damage.clamp(0.0, max_att_hull);
-    // Gross attacker hull damage this round (counter, hostile round-end hull, burning) for
-    // [`AbilityEffect::HullRegenPrevRoundFraction`] (e.g. PIC Hugh below decks).
-    let mut attacker_hull_gross_damage_this_round: f64 = 0.0;
-    let mut attacker_hull_gross_damage_last_round: f64 = 0.0;
-    let mut attacker_shield_gross_damage_this_round: f64 = 0.0;
-    let mut attacker_shield_gross_damage_last_round: f64 = 0.0;
-    let mut defender_hull_breach_rounds = 0_u32;
-    let mut defender_burning_rounds = 0_u32;
-    let mut attacker_hull_breach_rounds = 0_u32;
-    let mut attacker_burning_rounds = 0_u32;
-    let mut assimilated_rounds_remaining = 0_u32;
-    let mut defender_assimilated_rounds_remaining = 0_u32;
-    // Active shots bonuses: (bonus_pct, expires_round). B_shots(r) = sum of bonus where expires_round >= r.
-    let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
-    // Defender crew shots bonuses for counter-fire path.
-    let mut defender_shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
-    let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
+    let combat_begin_effects =
+        active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_ctx = CombatContext {
         round_index: 0,
         defender_hull_pct: 1.0,
@@ -347,41 +151,31 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));
     let effective_conqueror_borg_beam_suppression =
         effective_conqueror_borg_beam_suppression(conqueror_borg_beam_suppression, &attacker.id);
-    if quantum_resonance_beam_instant_loss(
+    let quantum_beam_instant_loss = quantum_resonance_beam_instant_loss(
         defender_is_npc_hostile,
         config.defender_hostile_tag_mask,
         effective_conqueror_borg_beam_suppression,
         &attacker.id,
-    ) || hyperthermic_resonance_beam_instant_loss(
-        defender_is_npc_hostile,
-        config.defender_hostile_tag_mask,
-        effective_conqueror_borg_beam_suppression,
-        &attacker.id,
-        config.seed,
-    ) || evolutionary_assimilation_instant_loss(
+    );
+    let evo_assim_instant_loss = evolutionary_assimilation_instant_loss(
         defender_is_npc_hostile,
         config.defender_hostile_tag_mask,
         conqueror_borg_beam_suppression,
         &config.attacker_roster_officer_ids,
-    ) {
-        let total_attacker_hull_damage = max_att_hull;
-        let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
-        return SimulationResult {
-            total_damage: 0.0,
-            attacker_won: false,
-            winner_by_round_limit: false,
-            rounds_simulated: 0,
-            attacker_hull_remaining: round_f64(attacker_hull_remaining),
-            defender_hull_remaining: round_f64(defender.hull_health),
-            defender_shield_remaining: round_f64(defender_shield_remaining),
-            attacker_shield_remaining: round_f64(attacker_shield_remaining),
-            events: trace.events(),
-            conqueror_borg_beam_suppression,
-        };
-    }
+    );
+
     let attacker_mitigation_additive = sum_mitigation_additive(&combat_begin_filtered);
     let attacker_accuracy_bonus = sum_accuracy_bonus(&combat_begin_filtered);
     let attacker_dodge_bonus = sum_dodge_bonus(&combat_begin_filtered);
+
+    // Precompute all effect vectors before moving crews into the struct
+    let round_start_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundStart);
+    let attack_phase_effects = active_effects_for_timing(&attacker_crew, TimingWindow::AttackPhase);
+    let defense_phase_effects =
+        active_effects_for_timing(&attacker_crew, TimingWindow::DefensePhase);
+    let round_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundEnd);
+    let after_subround_effects =
+        active_effects_for_timing(&attacker_crew, TimingWindow::AfterSubround);
     let shield_break_effects = active_effects_for_timing(&attacker_crew, TimingWindow::ShieldBreak);
     let self_shield_break_effects =
         active_effects_for_timing(&attacker_crew, TimingWindow::SelfShieldBreak);
@@ -391,16 +185,6 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         active_effects_for_timing(&attacker_crew, TimingWindow::ReceiveDamage);
     let combat_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatEnd);
 
-    // Pre-compute effects by timing once per combat; round loop only filters by condition.
-    let round_start_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundStart);
-    let attack_phase_effects = active_effects_for_timing(&attacker_crew, TimingWindow::AttackPhase);
-    let defense_phase_effects =
-        active_effects_for_timing(&attacker_crew, TimingWindow::DefensePhase);
-    let round_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundEnd);
-    let after_subround_effects =
-        active_effects_for_timing(&attacker_crew, TimingWindow::AfterSubround);
-
-    // Defender-side effects for return fire.
     let defender_combat_begin_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::CombatBegin);
     let defender_round_start_effects =
@@ -414,17 +198,151 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
     let defender_round_end_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::RoundEnd);
 
+    PreCombatSetup {
+        attacker: attacker.clone(),
+        defender: defender.clone(),
+        config: config.clone(),
+        attacker_crew,
+        defender_crew,
+        defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge,
+        combat_begin_effects,
+        combat_begin_ctx,
+        combat_begin_filtered,
+        attacker_mitigation_additive,
+        attacker_accuracy_bonus,
+        attacker_dodge_bonus,
+        conqueror_borg_beam_suppression,
+        effective_conqueror_borg_beam_suppression,
+        quantum_beam_instant_loss,
+        evo_assim_instant_loss,
+        round_start_effects,
+        attack_phase_effects,
+        defense_phase_effects,
+        round_end_effects,
+        after_subround_effects,
+        shield_break_effects,
+        self_shield_break_effects,
+        kill_effects,
+        hull_breach_effects,
+        receive_damage_effects,
+        combat_end_effects,
+        defender_combat_begin_effects,
+        defender_round_start_effects,
+        defender_attack_phase_effects,
+        defender_defense_phase_effects,
+        defender_shield_break_effects,
+        defender_round_end_effects,
+    }
+}
+
+/// Run a single combat trial from a precomputed [`PreCombatSetup`] with a specific seed.
+/// All immutable setup is reused; only per-trial mutable state is freshly initialized.
+pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> SimulationResult {
+    let config = &setup.config;
+    let attacker = &setup.attacker;
+    let defender = &setup.defender;
+    let attacker_crew = &setup.attacker_crew;
+    let defender_faction = setup.defender_faction;
+    let defender_ship_type = setup.defender_ship_type;
+    let attacker_ship_type = setup.attacker_ship_type;
+    let defender_is_npc_hostile = setup.defender_is_npc_hostile;
+    let defender_is_player_ship = setup.defender_is_player_ship;
+    let attacker_tal_assigned_captain_or_bridge = setup.attacker_tal_assigned_captain_or_bridge;
+
+    let mut rng = Rng::new(seed);
+    let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
+    let use_experimental_simd_damage_after_apex =
+        avx2_supported() && !trace.is_enabled();
+    let mut total_hull_damage = 0.0;
+    let mut total_shield_damage = 0.0;
+    let mut defender_shield_remaining = defender.shield_health.max(0.0);
+    let mut attacker_shield_remaining = attacker.shield_health.max(0.0);
+    let max_att_hull = attacker.hull_health.max(0.0);
+    let mut total_attacker_hull_damage =
+        config.initial_attacker_hull_damage.clamp(0.0, max_att_hull);
+    let mut attacker_hull_gross_damage_this_round: f64 = 0.0;
+    let mut attacker_hull_gross_damage_last_round: f64 = 0.0;
+    let mut attacker_shield_gross_damage_this_round: f64 = 0.0;
+    let mut attacker_shield_gross_damage_last_round: f64 = 0.0;
+    let mut defender_hull_breach_rounds = 0_u32;
+    let mut defender_burning_rounds = 0_u32;
+    let mut attacker_hull_breach_rounds = 0_u32;
+    let mut attacker_burning_rounds = 0_u32;
+    let mut assimilated_rounds_remaining = 0_u32;
+    let mut defender_assimilated_rounds_remaining = 0_u32;
+    let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
+    let mut defender_shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
+
+    // Re-use precomputed effects from setup
+    let combat_begin_filtered = &setup.combat_begin_filtered;
+    let attacker_mitigation_additive = setup.attacker_mitigation_additive;
+    let attacker_accuracy_bonus = setup.attacker_accuracy_bonus;
+    let attacker_dodge_bonus = setup.attacker_dodge_bonus;
+    let shield_break_effects = &setup.shield_break_effects;
+    let self_shield_break_effects = &setup.self_shield_break_effects;
+    let kill_effects = &setup.kill_effects;
+    let hull_breach_effects = &setup.hull_breach_effects;
+    let receive_damage_effects = &setup.receive_damage_effects;
+    let combat_end_effects = &setup.combat_end_effects;
+
+    let round_start_effects = &setup.round_start_effects;
+    let attack_phase_effects = &setup.attack_phase_effects;
+    let defense_phase_effects = &setup.defense_phase_effects;
+    let round_end_effects = &setup.round_end_effects;
+    let after_subround_effects = &setup.after_subround_effects;
+
+    let defender_combat_begin_effects = &setup.defender_combat_begin_effects;
+    let defender_round_start_effects = &setup.defender_round_start_effects;
+    let defender_attack_phase_effects = &setup.defender_attack_phase_effects;
+    let defender_defense_phase_effects = &setup.defender_defense_phase_effects;
+    let defender_shield_break_effects = &setup.defender_shield_break_effects;
+    let defender_round_end_effects = &setup.defender_round_end_effects;
+
+    // Per-trial conqueror borg beam hyperthermic check (depends on seed)
+    if setup.quantum_beam_instant_loss
+        || hyperthermic_resonance_beam_instant_loss(
+            defender_is_npc_hostile,
+            config.defender_hostile_tag_mask,
+            setup.effective_conqueror_borg_beam_suppression,
+            &attacker.id,
+            seed,
+        )
+        || setup.evo_assim_instant_loss
+    {
+        let total_attacker_hull_damage = max_att_hull;
+        let attacker_hull_remaining =
+            (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        return SimulationResult {
+            total_damage: 0.0,
+            attacker_won: false,
+            winner_by_round_limit: false,
+            rounds_simulated: 0,
+            attacker_hull_remaining: round_f64(attacker_hull_remaining),
+            defender_hull_remaining: round_f64(defender.hull_health),
+            defender_shield_remaining: round_f64(defender_shield_remaining),
+            attacker_shield_remaining: round_f64(attacker_shield_remaining),
+            events: trace.events(),
+            conqueror_borg_beam_suppression: setup.conqueror_borg_beam_suppression,
+        };
+    }
+
+    let conqueror_borg_beam_suppression = setup.conqueror_borg_beam_suppression;
     let combat_begin_assimilated = assimilated_rounds_remaining > 0;
     record_ability_activations(
         &mut trace,
         0,
         "combat_begin",
         attacker,
-        &combat_begin_filtered,
+        combat_begin_filtered,
         combat_begin_assimilated,
     );
     roll_burning_triggers(
-        &combat_begin_filtered,
+        combat_begin_filtered,
         combat_begin_assimilated,
         &mut rng,
         &mut trace,
@@ -485,7 +403,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_level: config.defender_level,
         };
         let defender_rs_for_assim =
-            filter_effects_by_condition(&defender_round_start_effects, &ctx_def_round_start);
+            filter_effects_by_condition(defender_round_start_effects, &ctx_def_round_start);
         let def_rs_assim_active = defender_assimilated_rounds_remaining > 0;
         roll_assimilated_extensions_from_effects(
             &defender_rs_for_assim,
@@ -563,7 +481,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         let mut phase_effects = EffectAccumulator::default();
         phase_effects.add_effects(
             TimingWindow::CombatBegin,
-            &combat_begin_filtered,
+            combat_begin_filtered,
             attacker.attack,
             assimilated_rounds_remaining > 0,
             round_index,
@@ -590,7 +508,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 
         let round_start_assimilated = assimilated_rounds_remaining > 0;
         // Round-start conditions that do not use [AbilityCondition::MoraleActive] (morale unknown yet).
-        let bench = filter_effects_by_condition(&round_start_effects, &combat_ctx);
+        let bench = filter_effects_by_condition(round_start_effects, &combat_ctx);
         record_ability_activations(
             &mut trace,
             round_index,
@@ -663,7 +581,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         &mut trace,
                         round_index,
                         attacker,
-                        &hull_breach_effects,
+                        hull_breach_effects,
                         combat_ctx.clone(),
                         round_start_assimilated,
                         weapon_base_rs,
@@ -740,7 +658,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         // to the attacker's ShotsBonus above, using the same combat context for conditions.
         {
             let defender_rstart_filtered =
-                filter_effects_by_condition(&defender_round_start_effects, &combat_ctx);
+                filter_effects_by_condition(defender_round_start_effects, &combat_ctx);
             let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
             for effect in &defender_rstart_filtered {
                 let effective_effect =
@@ -830,7 +748,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         };
         combat_ctx.attacker_morale_active = morale_triggered;
 
-        let full_round_start = filter_effects_by_condition(&round_start_effects, &combat_ctx);
+        let full_round_start = filter_effects_by_condition(round_start_effects, &combat_ctx);
         let round_start_extra: Vec<_> = full_round_start
             .iter()
             .filter(|e| !bench.contains(e))
@@ -875,7 +793,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         phase_effects.clear_shield_hull_regen_stacks();
 
         // PIC Hugh: heal a fraction of hull damage taken in the **previous** combat round (round 1: none).
-        let round_start_prev_heal = filter_effects_by_condition(&round_start_effects, &combat_ctx);
+        let round_start_prev_heal = filter_effects_by_condition(round_start_effects, &combat_ctx);
         let prev_round_frac = EffectAccumulator::sum_hull_regen_prev_round_fraction(
             &round_start_prev_heal,
             round_start_assimilated,
@@ -912,7 +830,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             .sum();
 
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
-        let round_end_filtered = filter_effects_by_condition(&round_end_effects, &combat_ctx);
+        let round_end_filtered = filter_effects_by_condition(round_end_effects, &combat_ctx);
         // RoundEnd stacking (apex, isolytic, shield mitigation, round-end damage multipliers, regen)
         // must not feed the same-round weapon sub-rounds. Apply RoundEnd only after all weapons
         // for this round (see merge into `phase_effects_round` below).
@@ -920,9 +838,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
 
         let attack_phase_assimilated = assimilated_rounds_remaining > 0;
-        let attack_phase_filtered = filter_effects_by_condition(&attack_phase_effects, &combat_ctx);
+        let attack_phase_filtered = filter_effects_by_condition(attack_phase_effects, &combat_ctx);
         let defense_phase_filtered =
-            filter_effects_by_condition(&defense_phase_effects, &combat_ctx);
+            filter_effects_by_condition(defense_phase_effects, &combat_ctx);
 
         record_ability_activations(
             &mut trace,
@@ -1217,7 +1135,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                     &mut trace,
                                     round_index,
                                     attacker,
-                                    &hull_breach_effects,
+                                    hull_breach_effects,
                                     ctx_hb,
                                     attack_phase_assimilated,
                                     weapon_base,
@@ -1468,7 +1386,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 shield_before_weapon > 0.0 && defender_shield_remaining <= 0.0;
             if shield_broke_this_round {
                 let shield_break_filtered =
-                    filter_effects_by_condition(&shield_break_effects, &combat_ctx);
+                    filter_effects_by_condition(shield_break_effects, &combat_ctx);
                 record_ability_activations(
                     &mut trace,
                     round_index,
@@ -1497,7 +1415,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 );
 
                 let def_sb_filtered =
-                    filter_effects_by_condition(&defender_shield_break_effects, &combat_ctx);
+                    filter_effects_by_condition(defender_shield_break_effects, &combat_ctx);
                 record_ability_activations(
                     &mut trace,
                     round_index,
@@ -1576,16 +1494,16 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                     defender_level: combat_ctx.defender_level,
                 };
                 let defender_combat_begin_filtered =
-                    filter_effects_by_condition(&defender_combat_begin_effects, &defender_ctx);
+                    filter_effects_by_condition(defender_combat_begin_effects, &defender_ctx);
                 let defender_round_start_filtered =
-                    filter_effects_by_condition(&defender_round_start_effects, &defender_ctx);
+                    filter_effects_by_condition(defender_round_start_effects, &defender_ctx);
                 let defender_attack_filtered =
-                    filter_effects_by_condition(&defender_attack_phase_effects, &defender_ctx);
+                    filter_effects_by_condition(defender_attack_phase_effects, &defender_ctx);
                 let defender_defense_filtered =
-                    filter_effects_by_condition(&defender_defense_phase_effects, &defender_ctx);
+                    filter_effects_by_condition(defender_defense_phase_effects, &defender_ctx);
 
                 let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
-                    hostile_crit_damage_reduction_from_crew(&attacker_crew, &defender_ctx);
+                    hostile_crit_damage_reduction_from_crew(attacker_crew, &defender_ctx);
 
                 defender_phase_template.add_effects(
                     TimingWindow::CombatBegin,
@@ -1868,7 +1786,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                                     &mut trace,
                                                     round_index,
                                                     attacker,
-                                                    &hull_breach_effects,
+                                                    hull_breach_effects,
                                                     ctx_hb,
                                                     assimilated_rounds_remaining > 0,
                                                     defender_weapon_attack,
@@ -1950,7 +1868,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                             / attacker.hull_health.max(0.0))
                                         .min(1.0);
                                     let self_sb_filtered = filter_effects_by_condition(
-                                        &self_shield_break_effects,
+                                        self_shield_break_effects,
                                         &ctx_self_sb,
                                     );
                                     record_ability_activations(
@@ -2037,7 +1955,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                             0.0
                                         };
                                     let receive_damage_filtered = filter_effects_by_condition(
-                                        &receive_damage_effects,
+                                        receive_damage_effects,
                                         &ctx_receive,
                                     );
                                     roll_burning_triggers(
@@ -2118,7 +2036,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                                         &mut trace,
                                         round_index,
                                         attacker,
-                                        &hull_breach_effects,
+                                        hull_breach_effects,
                                         ctx_hb,
                                         assimilated_rounds_remaining > 0,
                                         defender_weapon_attack,
@@ -2191,7 +2109,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         ctx_self_sb.attacker_hull_pct = 1.0
                             - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
                         let self_sb_filtered =
-                            filter_effects_by_condition(&self_shield_break_effects, &ctx_self_sb);
+                            filter_effects_by_condition(self_shield_break_effects, &ctx_self_sb);
                         record_ability_activations(
                             &mut trace,
                             round_index,
@@ -2269,7 +2187,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                             0.0
                         };
                         let receive_damage_filtered =
-                            filter_effects_by_condition(&receive_damage_effects, &ctx_receive);
+                            filter_effects_by_condition(receive_damage_effects, &ctx_receive);
                         roll_burning_triggers(
                             &receive_damage_filtered,
                             receive_damage_assimilated,
@@ -2294,7 +2212,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                         0.0
                     };
                     let receive_damage_filtered =
-                        filter_effects_by_condition(&receive_damage_effects, &ctx_rd);
+                        filter_effects_by_condition(receive_damage_effects, &ctx_rd);
                     record_ability_activations(
                         &mut trace,
                         round_index,
@@ -2350,7 +2268,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 defender_level: combat_ctx.defender_level,
             };
             let after_subround_filtered =
-                filter_effects_by_condition(&after_subround_effects, &ctx_after_subround);
+                filter_effects_by_condition(after_subround_effects, &ctx_after_subround);
             record_ability_activations(
                 &mut trace,
                 round_index,
@@ -2434,7 +2352,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
             defender_level: combat_ctx.defender_level,
         };
         let round_end_burn_filtered =
-            filter_effects_by_condition(&round_end_effects, &ctx_after_weapons);
+            filter_effects_by_condition(round_end_effects, &ctx_after_weapons);
         roll_burning_triggers(
             &round_end_burn_filtered,
             round_end_assimilated_early,
@@ -2485,7 +2403,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         total_attacker_hull_damage = (total_attacker_hull_damage - hull_heal).max(0.0);
 
         let defender_round_end_filtered =
-            filter_effects_by_condition(&defender_round_end_effects, &ctx_after_weapons);
+            filter_effects_by_condition(defender_round_end_effects, &ctx_after_weapons);
         let defender_re_assimilated = defender_assimilated_rounds_remaining > 0;
         record_ability_activations(
             &mut trace,
@@ -2590,7 +2508,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
                 combat_battle_type_id: combat_ctx.combat_battle_type_id,
                 defender_level: combat_ctx.defender_level,
             };
-            let kill_filtered = filter_effects_by_condition(&kill_effects, &kill_ctx);
+            let kill_filtered = filter_effects_by_condition(kill_effects, &kill_ctx);
             let kill_assimilated = assimilated_rounds_remaining > 0;
             record_ability_activations(
                 &mut trace,
@@ -2661,7 +2579,7 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         combat_battle_type_id: None,
         defender_level: config.defender_level,
     };
-    let combat_end_filtered = filter_effects_by_condition(&combat_end_effects, &combat_end_ctx);
+    let combat_end_filtered = filter_effects_by_condition(combat_end_effects, &combat_end_ctx);
     record_ability_activations(
         &mut trace,
         rounds_completed,
@@ -2768,4 +2686,264 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         events: trace.events(),
         conqueror_borg_beam_suppression,
     }
+    }
+
+/// Batch-process M combat trials from a single precomputed setup with different seeds.
+/// Returns M results in the order of the provided seeds.
+pub fn simulate_combat_batch(setup: &PreCombatSetup, seeds: &[u64]) -> Vec<SimulationResult> {
+    seeds
+        .iter()
+        .map(|&seed| simulate_combat_from_setup(setup, seed))
+        .collect()
+}
+
+/// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
+/// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach state entry;
+/// receive_damage (hull); round_end (before burn tick); kill when defender dies.
+#[allow(clippy::too_many_arguments)] // engine-internal; splitting would obscure round-phase contract
+fn roll_burning_triggers(
+    effects: &[ActiveAbilityEffect],
+    assimilated_active: bool,
+    rng: &mut Rng,
+    trace: &mut TraceCollector,
+    round_index: u32,
+    phase: &'static str,
+    attacker_id: &str,
+    weapon_index: Option<u32>,
+    burning_rounds: &mut u32,
+) {
+    for effect in effects {
+        let effective_effect = scale_effect(effect.effect, assimilated_active);
+        if let AbilityEffect::Burning {
+            chance,
+            duration_rounds,
+        } = effective_effect
+        {
+            let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = burning_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let d = duration_rounds.max(1);
+                *burning_rounds = (*burning_rounds).max(d);
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "burning_trigger".to_string(),
+                round_index,
+                phase: phase.to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker_id.to_string()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(burning_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
+}
+
+/// Extends attacker or defender Assimilate duration from pre-filtered effects (matches legacy inline proc rules).
+#[allow(clippy::too_many_arguments)] // trace + phase split for assimilation proc logging
+fn roll_assimilated_extensions_from_effects(
+    effects: &[ActiveAbilityEffect],
+    assimilated_active_for_scale: bool,
+    rng: &mut Rng,
+    trace: &mut TraceCollector,
+    round_index: u32,
+    phase: &'static str,
+    ship_id_for_trace: &str,
+    assimilated_rounds: &mut u32,
+) {
+    for effect in effects {
+        let effective_effect = scale_effect(effect.effect, assimilated_active_for_scale);
+        if let AbilityEffect::Assimilated {
+            chance,
+            duration_rounds,
+        } = effective_effect
+        {
+            let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                *assimilated_rounds = (*assimilated_rounds).max(duration_rounds.max(1));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "assimilated_trigger".to_string(),
+                round_index,
+                phase: phase.to_string(),
+                source: EventSource {
+                    officer_id: Some(ship_id_for_trace.to_string()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
+}
+
+/// `on_hull_breach` / [`TimingWindow::HullBreach`] effects run when the defender **enters** the hull-breached
+/// state (first stack of [`AbilityEffect::HullBreach`] duration), not from a hull HP fraction threshold.
+#[allow(clippy::too_many_arguments)]
+fn apply_hull_breach_timing_window(
+    trace: &mut TraceCollector,
+    round_index: u32,
+    attacker: &Combatant,
+    hull_breach_effects: &[ActiveAbilityEffect],
+    mut ctx: CombatContext,
+    assimilated_active: bool,
+    weapon_base: f64,
+    accumulator: &mut EffectAccumulator,
+    rng: &mut Rng,
+    defender_burning_rounds: &mut u32,
+) {
+    ctx.defender_hull_breach_active = true;
+    let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
+    record_ability_activations(
+        trace,
+        round_index,
+        "hull_breach",
+        attacker,
+        &hull_breach_filtered,
+        assimilated_active,
+    );
+    accumulator.add_effects(
+        TimingWindow::HullBreach,
+        &hull_breach_filtered,
+        weapon_base,
+        assimilated_active,
+        round_index,
+    );
+    roll_burning_triggers(
+        &hull_breach_filtered,
+        assimilated_active,
+        rng,
+        trace,
+        round_index,
+        "hull_breach",
+        &attacker.id,
+        None,
+        defender_burning_rounds,
+    );
+}
+
+/// When the **attacker** (player) enters hull breach, run player [`TimingWindow::HullBreach`] follow-ups.
+/// Burning sub-procs from those effects still apply to the **defender** (enemy on fire), same as
+/// [`apply_hull_breach_timing_window`].
+#[allow(clippy::too_many_arguments)]
+fn apply_attacker_hull_breach_timing_window(
+    trace: &mut TraceCollector,
+    round_index: u32,
+    attacker: &Combatant,
+    hull_breach_effects: &[ActiveAbilityEffect],
+    mut ctx: CombatContext,
+    assimilated_active: bool,
+    weapon_base: f64,
+    accumulator: &mut EffectAccumulator,
+    rng: &mut Rng,
+    defender_burning_rounds: &mut u32,
+) {
+    ctx.attacker_hull_breach_active = true;
+    let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
+    record_ability_activations(
+        trace,
+        round_index,
+        "attacker_hull_breach",
+        attacker,
+        &hull_breach_filtered,
+        assimilated_active,
+    );
+    accumulator.add_effects(
+        TimingWindow::HullBreach,
+        &hull_breach_filtered,
+        weapon_base,
+        assimilated_active,
+        round_index,
+    );
+    roll_burning_triggers(
+        &hull_breach_filtered,
+        assimilated_active,
+        rng,
+        trace,
+        round_index,
+        "attacker_hull_breach",
+        &attacker.id,
+        None,
+        defender_burning_rounds,
+    );
+}
+
+/// Same as [`simulate_combat_with_defender_faction`] with [`OpponentFactionTag::Unknown`]
+/// (faction-gated ship abilities never satisfy the faction condition).
+pub fn simulate_combat(
+    attacker: &Combatant,
+    defender: &Combatant,
+    config: &SimulationConfig,
+    attacker_crew: &CrewConfiguration,
+) -> SimulationResult {
+    simulate_combat_with_defender_faction(
+        attacker,
+        defender,
+        config,
+        attacker_crew,
+        OpponentFactionTag::Unknown,
+    )
+}
+
+pub fn simulate_combat_with_defender_faction(
+    attacker: &Combatant,
+    defender: &Combatant,
+    config: &SimulationConfig,
+    attacker_crew: &CrewConfiguration,
+    defender_faction: OpponentFactionTag,
+) -> SimulationResult {
+    simulate_combat_with_defender_faction_and_defender_crew(
+        attacker,
+        defender,
+        config,
+        attacker_crew,
+        defender_faction,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration { seats: Vec::new() },
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn simulate_combat_with_defender_faction_and_defender_crew(
+    attacker: &Combatant,
+    defender: &Combatant,
+    config: &SimulationConfig,
+    attacker_crew: &CrewConfiguration,
+    defender_faction: OpponentFactionTag,
+    defender_ship_type: ShipType,
+    attacker_ship_type: ShipType,
+    defender_is_npc_hostile: bool,
+    defender_is_player_ship: bool,
+    defender_crew: &CrewConfiguration,
+) -> SimulationResult {
+    let setup = build_combat_setup(
+        attacker,
+        defender,
+        config,
+        attacker_crew,
+        defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        defender_crew,
+    );
+    simulate_combat_from_setup(&setup, config.seed)
 }

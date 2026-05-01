@@ -1,7 +1,8 @@
 //! Simulation orchestration: run_monte_carlo* and SimulationResult.
 
 use crate::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, OpponentFactionTag,
+    simulate_combat_with_defender_faction_and_defender_crew, build_combat_setup,
+    simulate_combat_batch, CombatEvent, OpponentFactionTag,
     SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
@@ -341,7 +342,7 @@ fn run_candidate_monte_carlo(
     let mut def_hull_mean = 0.0f64;
     let mut def_hull_m2 = 0.0f64;
 
-    let mut combat_config = SimulationConfig {
+    let combat_config = SimulationConfig {
         rounds: input.rounds,
         seed: 0,
         trace_mode: TraceMode::Off,
@@ -359,96 +360,120 @@ fn run_candidate_monte_carlo(
         attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
     };
 
+    // Precompute values that don't change per trial
+    let defender_faction = shared
+        .hostile_rec
+        .as_ref()
+        .map(|h| h.opponent_faction_tag())
+        .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_ship_type = shared.defender_ship_type_for_combat();
+    let attacker_ship_type = shared.attacker_ship_type_for_combat();
+    let defender_is_npc = shared.defender_opponent.defender_is_npc_hostile();
+    let defender_is_player = shared.defender_opponent.defender_is_player_ship();
+
+    // Build immutable combat setup once for batch reuse
+    let setup = build_combat_setup(
+        &input.attacker,
+        &input.defender,
+        &combat_config,
+        &input.crew,
+        defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
+        defender_is_npc,
+        defender_is_player,
+        &input.defender_crew,
+    );
+
+    const BATCH_SIZE: usize = 64;
+
     let mut n_done = 0usize;
     while n_done < max_iterations {
-        let iteration_seed = input.base_seed.wrapping_add(n_done as u64);
-        combat_config.seed = iteration_seed;
-        let defender_faction = shared
-            .hostile_rec
-            .as_ref()
-            .map(|h| h.opponent_faction_tag())
-            .unwrap_or(OpponentFactionTag::Unknown);
-        let defender_ship_type = shared.defender_ship_type_for_combat();
-        let attacker_ship_type = shared.attacker_ship_type_for_combat();
-        let result = simulate_combat_with_defender_faction_and_defender_crew(
-            &input.attacker,
-            &input.defender,
-            &combat_config,
-            &input.crew,
-            defender_faction,
-            defender_ship_type,
-            attacker_ship_type,
-            shared.defender_opponent.defender_is_npc_hostile(),
-            shared.defender_opponent.defender_is_player_ship(),
-            &input.defender_crew,
-        );
-        let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
+        let batch_end = (n_done + BATCH_SIZE).min(max_iterations);
 
-        if result.winner_by_round_limit {
-            stalls += 1;
-        } else if result.attacker_won {
-            wins += 1;
-        } else {
-            losses += 1;
-        }
-
-        let hull_draw = if result.attacker_won {
-            let remaining = if result.winner_by_round_limit {
-                (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
-                    .clamp(0.0, 1.0)
-            } else {
-                ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
-            };
-            surviving_hull_sum += remaining;
-            remaining
-        } else {
-            0.0
-        };
-        let i = n_done + 1;
-        let delta = hull_draw - hull_mean;
-        hull_mean += delta / i as f64;
-        let delta2 = hull_draw - hull_mean;
-        hull_m2 += delta * delta2;
-
-        let def_max = input.defender.hull_health.max(1.0);
-        let def_draw = (result.defender_hull_remaining / def_max).clamp(0.0, 1.0);
-        let delta_d = def_draw - def_hull_mean;
-        def_hull_mean += delta_d / i as f64;
-        let delta_d2 = def_draw - def_hull_mean;
-        def_hull_m2 += delta_d * delta_d2;
-
-        if result.attacker_won && !result.winner_by_round_limit && result.rounds_simulated == 1 {
-            r1_kills += 1;
-        }
-
-        n_done += 1;
-
-        if let Some(cfg) = early_scout {
-            if n_done >= cfg.min_trials
-                && n_done < max_iterations
+        // Check early stop / progressive abandon at batch boundaries
+        // when check_every aligns — we also check per-trial below.
+        let should_checkpoint = |trials: usize, cfg: &ScoutEarlyStopCfg| {
+            trials >= cfg.min_trials
+                && trials < max_iterations
                 && cfg.check_every > 0
-                && n_done.is_multiple_of(cfg.check_every)
+                && trials.is_multiple_of(cfg.check_every)
+        };
+
+        // Build seeds for this batch
+        let batch_seeds: Vec<u64> = (n_done..batch_end)
+            .map(|i| input.base_seed.wrapping_add(i as u64))
+            .collect();
+
+        let batch_results = simulate_combat_batch(&setup, &batch_seeds);
+
+        for (batch_idx, result) in batch_results.iter().enumerate() {
+            let iteration_seed = input.base_seed.wrapping_add((n_done + batch_idx) as u64);
+            let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
+
+            if result.winner_by_round_limit {
+                stalls += 1;
+            } else if result.attacker_won {
+                wins += 1;
+            } else {
+                losses += 1;
+            }
+
+            let hull_draw = if result.attacker_won {
+                let remaining = if result.winner_by_round_limit {
+                    (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
+                        .clamp(0.0, 1.0)
+                } else {
+                    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
+                };
+                surviving_hull_sum += remaining;
+                remaining
+            } else {
+                0.0
+            };
+            let i = n_done + batch_idx + 1;
+            let delta = hull_draw - hull_mean;
+            hull_mean += delta / i as f64;
+            let delta2 = hull_draw - hull_mean;
+            hull_m2 += delta * delta2;
+
+            let def_max = input.defender.hull_health.max(1.0);
+            let def_draw = (result.defender_hull_remaining / def_max).clamp(0.0, 1.0);
+            let delta_d = def_draw - def_hull_mean;
+            def_hull_mean += delta_d / i as f64;
+            let delta_d2 = def_draw - def_hull_mean;
+            def_hull_m2 += delta_d * delta_d2;
+
+            if result.attacker_won && !result.winner_by_round_limit && result.rounds_simulated == 1 {
+                r1_kills += 1;
+            }
+        }
+
+        n_done = batch_end;
+
+        // Early stop check after processing the batch
+        if let Some(cfg) = early_scout {
+            if should_checkpoint(n_done, &cfg)
                 && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
             {
                 break;
             }
         }
 
-        // Progressive abandonment: if another candidate is already far ahead,
-        // stop wasting trials on this one.  Only checked when we also have enough
-        // trials for a meaningful Wilson bound.
+        // Progressive abandonment check after batch
         if let (Some(bsf), Some(cfg)) = (best_so_far, progressive_abandon) {
-            if n_done >= cfg.min_trials
-                && n_done < max_iterations
-                && cfg.check_every > 0
-                && n_done.is_multiple_of(cfg.check_every)
-            {
+            if should_checkpoint_abandon(n_done, &cfg) {
                 let leader = bsf.lock().unwrap();
                 if !leader.can_beat_leader(wins, n_done, cfg.margin) {
                     break;
                 }
             }
         }
+    }
+
+    // Add a helper for ProgressiveAbandonCfg checkpoint
+    fn should_checkpoint_abandon(trials: usize, cfg: &ProgressiveAbandonCfg) -> bool {
+        trials >= cfg.min_trials && cfg.check_every > 0 && trials.is_multiple_of(cfg.check_every)
     }
 
     let n = n_done as f64;
