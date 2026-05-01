@@ -132,7 +132,7 @@ change**, and **uncertainty remaining**.
 
 ## Phase 3 — Throughput (more simulations per second)
 
-- [ ] **6. Batch-process multiple combat trials per simulation call (shared setup, amortized dispatch)**
+- [x] **6. Batch-process multiple combat trials per simulation call (shared setup, amortized dispatch)**
 
   **What is wrong:** Each Monte Carlo trial calls `simulate_combat_with_defender_faction_and_defender_crew`
   individually. This means combatant setup, `EffectAccumulator` construction, and crew
@@ -153,7 +153,7 @@ change**, and **uncertainty remaining**.
   gain — the round loop is the dominant cost, so batch savings come from setup amortization
   and reduced Rayon overhead. Estimate 5-20% improvement on large workloads.
 
-- [ ] **7. Implement SIMD/vectorized damage kernel for the per-shot hot path**
+- [x] **7. Implement SIMD/vectorized damage kernel for the per-shot hot path**
 
   **What is wrong:** The round loop in `engine.rs` processes each weapon shot individually,
   computing mitigation, crit, damage-through, apex, and isolytic damage per shot. For
