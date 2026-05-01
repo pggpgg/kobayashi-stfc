@@ -51,6 +51,8 @@ fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
         "weapon_damage" => Some(AbilityModifierSpec::WeaponDamage),
         "crit_chance" => Some(AbilityModifierSpec::CritChance),
         "crit_damage" => Some(AbilityModifierSpec::CritDamage),
+        "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
+        "apex_shred" => Some(AbilityModifierSpec::ApexShred),
         _ => None,
     }
 }
@@ -89,7 +91,9 @@ pub fn research_derived_attack_phase_seats_from_spec(
         let Some(norm) = normalize_profile_combat_stat(&stat) else {
             continue;
         };
-        if norm != "crit_chance" && norm != "crit_damage" && norm != "weapon_damage" {
+        if norm != "crit_chance" && norm != "crit_damage" && norm != "weapon_damage"
+            && norm != "apex_barrier" && norm != "apex_shred"
+        {
             continue;
         }
         let Some(condition_specs) = research_bonus_key_to_condition_specs(&key) else {

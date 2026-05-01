@@ -809,6 +809,8 @@ pub fn compile_research_attack_effect(
         AbilityModifierSpec::CritDamage => Ok(AbilityEffect::CritDamageMultiplier(
             (1.0 + v).max(crate::combat::EPSILON),
         )),
+        AbilityModifierSpec::ApexShred => Ok(AbilityEffect::ApexShredBonus(v)),
+        AbilityModifierSpec::ApexBarrier => Ok(AbilityEffect::ApexBarrierBonus(v)),
         _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
             modifier,
             operation,

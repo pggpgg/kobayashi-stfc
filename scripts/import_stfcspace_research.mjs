@@ -178,6 +178,35 @@ async function loadResearchDescriptionsByLocaId() {
 }
 
 /**
+ * When a combat description mentions a ship class constraint (e.g. "Explorers battling Interceptors"),
+ * extract the defender ship class slug (explorer, interceptor, battleship, survey).
+ */
+function inferShipClassConditional(text, stat) {
+  const t = text.toLowerCase();
+  const defenderClass = (() => {
+    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?interceptors?\b/.test(t)) return "interceptor";
+    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?explorers?\b/.test(t)) return "explorer";
+    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?battleships?\b/.test(t)) return "battleship";
+    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?surve(?:y|yor)s?\b/.test(t)) return "survey";
+    return null;
+  })();
+  // Attacker-class constraint (e.g. "on Explorers battling X") — not modeled as conditional
+  // since the seat is applied to the attacker; we only gate by defender ship class.
+  if (defenderClass) {
+    if (/\bmorale\b/i.test(t)) {
+      return {
+        stat,
+        operator: "add",
+        defender_ship_class: defenderClass,
+        requires_morale: true,
+      };
+    }
+    return { stat, operator: "add", defender_ship_class: defenderClass };
+  }
+  return stat;
+}
+
+/**
  * Infer engine stat from English description text. Conservative: non-ship / economy lines return null.
  * Faction- or mode-specific wording may still map here; catalog is applied as global profile bonuses.
  */
@@ -185,12 +214,15 @@ function inferCombatStatFromDescription(text) {
   if (!text || typeof text !== "string") return null;
   const t = text.toLowerCase();
   if (
-    /construction speed|build speed|repair speed|research speed|mining\b|cargo |cargo\.|cost efficiency|unlock|blueprint|dilithium protection|parsteel|tritanium|for components|foundry|lab building|module upgrade|resource generation|away team|away teams|station defense|defense platform|defensive platform|platforms is|platforms are|defense platforms|survey ship|survey ships|warp speed|tiering up|protected cargo|rewards for defeating|not_convert|get more from hostiles in these systems/.test(
+    /construction speed|build speed|repair speed|research speed|mining\b|cargo |cargo\.|cost efficiency|unlock|blueprint|dilithium protection|parsteel|tritanium|for components|foundry|lab building|module upgrade|resource generation|away team|away teams|warp speed|tiering up|protected cargo|rewards for defeating|not_convert|get more from hostiles in these systems/.test(
       t
     )
   ) {
     return null;
   }
+  // Mode keywords (station / defense platform) are NOT in the general exclusion above because
+  // in-game text often negates them: e.g. "(not applicable to Armadas, Assaults, or station defense)".
+  // Each combat stat pattern below handles mode exclusions individually.
   if (/\bisolytic\b/.test(t)) {
     if (/\b(defense|defence|resist|mitigation against isolytic)\b/.test(t)) return "isolytic_defense";
     if (
@@ -202,14 +234,25 @@ function inferCombatStatFromDescription(text) {
     if (/\b(damage|attack|potency|offense)\b/.test(t)) return "isolytic_damage";
     return null;
   }
-  if (/\bapex barrier\b/.test(t)) return "apex_barrier";
-  if (/\bapex shred\b/.test(t)) return "apex_shred";
+  // Apex barrier / shred: also handle morale-gated varieties and in-game color-tag markup.
+  if (/\bapex barrier\b/i.test(t)) {
+    if (/\bmorale\b/i.test(t)) {
+      return { stat: "apex_barrier", requires_morale: true };
+    }
+    return "apex_barrier";
+  }
+  if (/\bapex shred\b/i.test(t)) {
+    if (/\bmorale\b/i.test(t)) {
+      return { stat: "apex_shred", requires_morale: true };
+    }
+    return "apex_shred";
+  }
   if (
     /damage reduction|reduces? (the )?damage taken|reduces base damage taken|incoming damage|less damage from/.test(
       t
     )
   ) {
-    return "damage_reduction";
+    if (!/defense platform|defensive platform|station defense/i.test(t)) return "damage_reduction";
   }
   if (
     /\baccuracy\b/.test(t) &&
@@ -218,8 +261,16 @@ function inferCombatStatFromDescription(text) {
   ) {
     return "accuracy";
   }
-  if (/critical damage|crit damage|severity of critical|critical hit damage/.test(t)) return "crit_damage";
+  if (/critical damage|crit damage|severity of critical|critical hit damage/.test(t)) {
+    if (/battling|vs\.? |versus/.test(t)) {
+      return inferShipClassConditional(t, "crit_damage");
+    }
+    return "crit_damage";
+  }
   if (/critical hit chance|critical chance|crit chance|chance to (land|score|deal) (a )?critical/.test(t)) {
+    if (/battling|vs\.? |versus/.test(t)) {
+      return inferShipClassConditional(t, "crit_chance");
+    }
     return "crit_chance";
   }
   if (
@@ -234,11 +285,14 @@ function inferCombatStatFromDescription(text) {
   if (/\barmor\b/.test(t) && !/piercing|pierce/.test(t)) {
     if (/ship|hull|all ships|your ships|franklin|vessel/.test(t)) return "armor";
   }
+  // Relax ship-context requirement for hull/shield HP: the general economy exclusions
+  // (construction, mining, cargo, etc.) already filter non-combat descriptions.  Defense
+  // platform / station wording is also excluded in the general guard above.
   if (/hull health|hull hit points|hull points|hull strength|max hull/.test(t)) {
-    if (/all ships|your ships|ship/.test(t)) return "hull_hp";
+    if (!/defense platform|defensive platform|station/.test(t)) return "hull_hp";
   }
   if (/shield health|shield hit points|shield capacity|shield strength|max shield/.test(t)) {
-    if (/all ships|your ships|ship/.test(t)) return "shield_hp";
+    if (!/defense platform|defensive platform|station/.test(t)) return "shield_hp";
   }
   // NS Burning Damage (loca 70106): bonus weapon damage only while the target has Burning.
   if (
@@ -257,7 +311,12 @@ function inferCombatStatFromDescription(text) {
       t
     )
   ) {
-    if (!/defense platform|station|away team/.test(t)) return "weapon_damage";
+    if (!/defense platform|station|away team/.test(t)) {
+      if (/battling|vs\.? |versus/.test(t)) {
+        return inferShipClassConditional(t, "weapon_damage");
+      }
+      return "weapon_damage";
+    }
   }
   return null;
 }
@@ -461,6 +520,15 @@ function normalizeBonusValue(buff, mapping, rawValue) {
   if (buff.value_is_percentage) {
     value = value >= 0 && value <= 1.5 ? value : value / 100;
     return value;
+  }
+  // Apex barrier / shred with value_is_percentage false carry absolute integer values
+  // (e.g. 250, 1000) that map directly to the engine's attacker stats without scaling.
+  if (
+    (mapping.stat === "apex_barrier" || mapping.stat === "apex_shred") &&
+    !buff.value_is_percentage
+  ) {
+    if (value > 0 && Number.isFinite(value)) return value;
+    return null;
   }
   if (!NON_PCT_DECIMAL_STATS.has(mapping.stat)) {
     return null;
