@@ -5,6 +5,7 @@ pub mod constraints;
 pub mod crew_generator;
 pub(crate) mod exhaustive_adaptive;
 pub mod genetic;
+pub mod learning_signals;
 pub mod matchup_priors;
 pub mod monte_carlo;
 pub mod officer_learning;
@@ -405,6 +406,10 @@ pub struct OptimizationScenario<'a> {
     pub optimize_cache_key: Option<String>,
     /// Analytical prefilter only: include learned pair co-occurrence prior from warm-start/history refs.
     pub enable_learned_pair_prior: bool,
+    /// Optional per-officer performance scores loaded from optimize history.
+    /// When set, candidate generation uses epsilon-greedy weighted below-decks
+    /// officer sampling instead of stride-based sampling (closes the learning loop).
+    pub learned_officer_scores: Option<crate::optimizer::officer_learning::OfficerPerformanceScores>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -443,6 +448,7 @@ impl Default for OptimizationScenario<'_> {
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
+            learned_officer_scores: None,
         }
     }
 }
@@ -551,6 +557,7 @@ fn candidate_strategy_from_scenario(scenario: &OptimizationScenario<'_>) -> Cand
         below_decks_slots: scenario.below_decks_slots,
         constraints: scenario.constraints.clone(),
         roster_profile_id: scenario.profile_id.map(String::from),
+        learned_officer_scores: scenario.learned_officer_scores.clone(),
         ..CandidateStrategy::default()
     }
 }
@@ -965,6 +972,7 @@ where
                 prior_reference_crews: scenario.prior_reference_crews.clone(),
                 optimize_cache_key: scenario.optimize_cache_key.clone(),
                 enable_learned_pair_prior: scenario.enable_learned_pair_prior,
+                learned_officer_scores: scenario.learned_officer_scores.clone(),
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -1530,6 +1538,7 @@ pub fn optimize_crew(
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
         enable_learned_pair_prior: true,
+        learned_officer_scores: None,
     })
 }
 
@@ -1743,6 +1752,7 @@ mod tests {
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
+            learned_officer_scores: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -1893,6 +1903,7 @@ mod tests {
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
+            learned_officer_scores: None,
         };
         let strat = super::candidate_strategy_from_scenario(&scenario);
         let n = count_effective_optimize_candidates(
@@ -1962,6 +1973,7 @@ mod tests {
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
+            learned_officer_scores: None,
         };
         let out =
             optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true, || true);
@@ -2025,6 +2037,7 @@ mod tests {
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
+            learned_officer_scores: None,
         };
         let mut adaptive = uniform.clone();
         adaptive.tiered_scout_uniform = false;

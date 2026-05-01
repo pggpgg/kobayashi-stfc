@@ -11,10 +11,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::profile_index::{profile_path, OPTIMIZE_HISTORY_JSON};
+use crate::data::profile_index::{profile_path, OFFICER_LEARNING_JSON, OPTIMIZE_HISTORY_JSON};
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::{crew_candidate_stable_hash, SimulationResult};
+use crate::optimizer::officer_learning::OfficerPerformanceScores;
 use crate::optimizer::ranking::{RankedCrewResult, RankingScore};
 
 pub const OPTIMIZE_HISTORY_SCHEMA: u32 = 1;
@@ -242,6 +243,31 @@ pub fn save_history_file(profile_id: &str, file: &OptimizeHistoryFile) -> io::Re
     }
     let tmp = path.with_extension("json.tmp");
     let json = serde_json::to_string_pretty(file)?;
+    fs::write(&tmp, json)?;
+    fs::rename(&tmp, &path)?;
+    Ok(())
+}
+
+/// Load per-profile learned officer scores from `profiles/{id}/officer_learning.json`.
+/// Returns a fresh empty score set when no file exists or the file is unreadable.
+pub fn load_officer_scores(profile_id: &str) -> OfficerPerformanceScores {
+    let path = profile_path(profile_id, OFFICER_LEARNING_JSON);
+    if !path.exists() {
+        return OfficerPerformanceScores::new();
+    }
+    let raw = fs::read_to_string(&path).unwrap_or_default();
+    serde_json::from_str(&raw).unwrap_or_else(|_| OfficerPerformanceScores::new())
+}
+
+/// Persist learned officer scores to `profiles/{id}/officer_learning.json`.
+/// Atomic write via temp file.
+pub fn save_officer_scores(profile_id: &str, scores: &OfficerPerformanceScores) -> io::Result<()> {
+    let path = profile_path(profile_id, OFFICER_LEARNING_JSON);
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let tmp = path.with_extension("json.tmp");
+    let json = serde_json::to_string_pretty(scores)?;
     fs::write(&tmp, json)?;
     fs::rename(&tmp, &path)?;
     Ok(())

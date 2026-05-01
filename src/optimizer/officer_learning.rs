@@ -5,7 +5,8 @@
 //! to bias below-decks officer selection toward historically strong officers via
 //! epsilon-greedy weighted sampling.
 
-use crate::optimizer::ranking::RankedCrewResult;
+use crate::data::optimize_history::OptimizeHistoryEntry;
+use crate::optimizer::ranking::{RankedCrewResult, RankingScore};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -179,6 +180,11 @@ impl OfficerPerformanceScores {
     pub fn is_empty(&self) -> bool {
         self.scores.is_empty()
     }
+
+    /// Set the exploration rate (epsilon). 0.0 = always weighted, 1.0 = always uniform.
+    pub fn set_epsilon(&mut self, epsilon: f64) {
+        self.epsilon = epsilon.clamp(0.0, 1.0);
+    }
 }
 
 /// Weighted random sampling without replacement using A-ES algorithm (Efraimidis & Spirakis).
@@ -227,6 +233,62 @@ fn fisher_yates_shuffle<T>(items: &mut [T], rng: &mut impl RngExt) {
 pub trait RngExt {
     fn index(&mut self, n: usize) -> usize;
     fn next_f64(&mut self) -> f64;
+}
+
+/// Build per-officer performance scores from a stored optimize-history entry.
+///
+/// Converts the entry's top crew records into ranked results, then calls
+/// [`OfficerPerformanceScores::update_from_results`] to populate scores.
+/// Returns an empty (all-floor) score set when the entry has no crews.
+///
+/// Decay and epsilon use the default values (0.95 decay, 0.20 epsilon, 0.01 floor).
+/// Use [`OfficerPerformanceScores::with_params`] for custom parameters.
+pub fn build_from_history_entry(
+    entry: &OptimizeHistoryEntry,
+    hostile: &str,
+    ship: &str,
+) -> OfficerPerformanceScores {
+    let mut scores = OfficerPerformanceScores::new();
+    if entry.crews.is_empty() {
+        return scores;
+    }
+
+    let ranked: Vec<RankedCrewResult> = entry
+        .crews
+        .iter()
+        .enumerate()
+        .map(|(_rank, crew)| RankedCrewResult {
+            captain: crew.captain.clone(),
+            bridge: crew.bridge.clone(),
+            below_decks: crew.below_decks.clone(),
+            trials_run: crew.trials_run,
+            win_rate: crew.win_rate,
+            win_rate_ci_low: crew.win_rate_ci_low,
+            win_rate_ci_high: crew.win_rate_ci_high,
+            stall_rate: crew.stall_rate,
+            stall_rate_ci_low: crew.stall_rate_ci_low,
+            stall_rate_ci_high: crew.stall_rate_ci_high,
+            loss_rate: crew.loss_rate,
+            loss_rate_ci_low: crew.loss_rate_ci_low,
+            loss_rate_ci_high: crew.loss_rate_ci_high,
+            r1_kill_rate: crew.r1_kill_rate,
+            r1_kill_rate_ci_low: crew.r1_kill_rate_ci_low,
+            r1_kill_rate_ci_high: crew.r1_kill_rate_ci_high,
+            avg_hull_remaining: crew.avg_hull_remaining,
+            avg_hull_remaining_ci_low: crew.avg_hull_remaining_ci_low,
+            avg_hull_remaining_ci_high: crew.avg_hull_remaining_ci_high,
+            avg_defender_hull_remaining: crew.avg_defender_hull_remaining,
+            avg_defender_hull_remaining_ci_low: crew.avg_defender_hull_remaining_ci_low,
+            avg_defender_hull_remaining_ci_high: crew.avg_defender_hull_remaining_ci_high,
+            score: RankingScore {
+                value: crew.win_rate as f32,
+            },
+            chain: crew.chain.clone(),
+        })
+        .collect();
+
+    scores.update_from_results(&ranked, hostile, ship);
+    scores
 }
 
 #[cfg(test)]

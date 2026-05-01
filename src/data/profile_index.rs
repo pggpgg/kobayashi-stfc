@@ -58,6 +58,8 @@ pub const BATTLELOGS_IMPORTED: &str = "battlelogs.imported.json";
 pub const LAST_MOD_SYNC_JSON: &str = "last_mod_sync.json";
 /// Cross-session optimize winners / warm-start stats (per `optimize_cache_key` from the SPA).
 pub const OPTIMIZE_HISTORY_JSON: &str = "optimize_history.json";
+/// Per-profile learned officer scores (`optimizer::officer_learning::OfficerPerformanceScores`).
+pub const OFFICER_LEARNING_JSON: &str = "officer_learning.json";
 /// Optional JSON overrides for scout/coarse budget heuristics (operator-tuned; see `optimizer::budget_hints`).
 pub const OPTIMIZER_BUDGET_HINTS_JSON: &str = "optimizer_budget_hints.json";
 /// Append-only optimize budget telemetry when `KOBAYASHI_BUDGET_TELEMETRY=1` (see `budget_telemetry` module).

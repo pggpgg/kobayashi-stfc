@@ -101,6 +101,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
         enable_learned_pair_prior: true,
+        learned_officer_scores: None,
     }
 }
 
