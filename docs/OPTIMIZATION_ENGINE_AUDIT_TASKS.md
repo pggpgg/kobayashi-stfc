@@ -12,7 +12,7 @@ change**, and **uncertainty remaining**.
 
 ## Phase 1 — Foundation (measurement and caching infrastructure)
 
-- [ ] **1. Add per-run simulation result cache keyed by crew hash**
+- [x] **1. Add per-run simulation result cache keyed by crew hash**
 
   **What is wrong:** Identical crew compositions are re-simulated from scratch every time
   they appear. The `preconfirmed` map in `run_exhaustive_scout_then_full_mc` and
@@ -36,7 +36,7 @@ change**, and **uncertainty remaining**.
   **Uncertainty:** Low for the in-process cache (proven pattern from `preconfirmed`).
   Medium for on-disk persistence — cache invalidation correctness is critical.
 
-- [ ] **2. Add crew enumeration cache for officer pools**
+- [x] **2. Add crew enumeration cache for officer pools**
 
   **What is wrong:** `CrewGenerator::generate_candidates_from_pools` rebuilds officer
   pools from scratch on every call, including loading officers from disk, filtering by
@@ -60,7 +60,7 @@ change**, and **uncertainty remaining**.
 
 ## Phase 2 — Smarter Pruning (drop bad crews before expensive simulation)
 
-- [ ] **3. Wire analytical expected-damage prefilter into the main optimization path**
+- [x] **3. Wire analytical expected-damage prefilter into the main optimization path**
 
   **What is wrong:** `src/optimizer/analytical.rs` contains a closed-form `expected_damage()`
   function that estimates total hull damage from static combatant stats (ignoring per-round
@@ -84,7 +84,7 @@ change**, and **uncertainty remaining**.
   scored low) rather than false positives. A conservative threshold (5% of defender hull)
   should eliminate only truly hopeless crews.
 
-- [ ] **4. Add static-gate prefilter: drop crews whose abilities are conditional on the wrong enemy type**
+- [x] **4. Add static-gate prefilter: drop crews whose abilities are conditional on the wrong enemy type**
 
   **What is wrong:** Crews whose officer abilities are gated on conditions that do not
   match the current hostile (e.g., `DefenderFactionIs(Romulan)` against a Swarm hostile)
@@ -105,7 +105,7 @@ change**, and **uncertainty remaining**.
   for the threshold — 75% might be too aggressive in edge cases where one ungated
   ability is strong enough to carry the crew. Start conservative (95%) and tighten.
 
-- [ ] **5. Implement progressive abandonment in Monte Carlo: dynamically cut crews that can't catch the leader**
+- [x] **5. Implement progressive abandonment in Monte Carlo: dynamically cut crews that can't catch the leader**
 
   **What is wrong:** The current scout early-stop mechanism (`ScoutEarlyStopCfg`) only
   eliminates crews whose win-rate Wilson upper bound falls below a fixed `0.055` threshold.

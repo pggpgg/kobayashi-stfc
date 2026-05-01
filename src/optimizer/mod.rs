@@ -367,6 +367,11 @@ pub struct OptimizationScenario<'a> {
     /// Applied just before Monte Carlo simulation, after the analytical ranking/truncation step.
     /// A conservative value like 0.05 drops only truly hopeless crews while avoiding false negatives.
     pub prune_analytical_hull_fraction: Option<f64>,
+    /// When set, drop candidates whose fraction of statically-failing ability conditions exceeds this
+    /// (e.g. 0.95 drops crews where ≥95% of conditional abilities are gated on a mismatched defender faction,
+    /// ship type, or engagement).  Conservative value like 0.95 only eliminates crews with near-total mismatch
+    /// (Borg officers vs non-Borg hostile, etc.).  Applied alongside `prune_analytical_hull_fraction`.
+    pub prune_static_gate_max_fraction: Option<f64>,
     /// Below-decks slot count for candidate generation (resolved from API / tier defaults upstream).
     pub below_decks_slots: usize,
     /// Optional filters on candidate crews (must-include, exclude, groups, seating).
@@ -410,6 +415,7 @@ impl Default for OptimizationScenario<'_> {
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
             prune_analytical_hull_fraction: None,
+            prune_static_gate_max_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -921,6 +927,7 @@ where
                 exhaustive_scout_top_keep: scenario.exhaustive_scout_top_keep,
                 analytical_prefilter_keep: scenario.analytical_prefilter_keep,
                 prune_analytical_hull_fraction: scenario.prune_analytical_hull_fraction,
+                prune_static_gate_max_fraction: scenario.prune_static_gate_max_fraction,
                 below_decks_slots: scenario.below_decks_slots,
                 constraints: scenario.constraints.clone(),
                 support_buffs: scenario.support_buffs.clone(),
@@ -1120,6 +1127,35 @@ where
                     "optimize_hopeless_pruned"
                 );
             }
+            // Prune crews whose abilities are mostly gated on mismatched conditions
+            // (e.g. Borg officers vs non-Borg hostile). Skipped for chain grind.
+            let gate_frac = scenario
+                .prune_static_gate_max_fraction
+                .filter(|&f| f > 0.0 && f < 1.0 && scenario.chain_grind.is_none());
+            let static_gate_prune_dropped: usize;
+            let candidates = if let Some(frac) = gate_frac {
+                let (kept, dropped) =
+                    crate::optimizer::analytical::prune_candidates_by_static_gates(
+                        &shared,
+                        candidates,
+                        scenario.seed,
+                        frac,
+                    );
+                static_gate_prune_dropped = dropped;
+                kept
+            } else {
+                static_gate_prune_dropped = 0;
+                candidates
+            };
+            if static_gate_prune_dropped > 0 {
+                info!(
+                    strategy = "tiered",
+                    seed = scenario.seed,
+                    static_gate_prune_dropped = static_gate_prune_dropped as u64,
+                    static_gate_prune_remaining = candidates.len() as u64,
+                    "optimize_static_gate_pruned"
+                );
+            }
             let n_tiered = candidates.len();
             let scout_sims = scenario
                 .tiered_scout_sims
@@ -1229,6 +1265,33 @@ where
                     analytical_prune_dropped = analytical_prune_dropped as u64,
                     analytical_prune_remaining = candidates.len() as u64,
                     "optimize_hopeless_pruned"
+                );
+            }
+            let gate_frac = scenario
+                .prune_static_gate_max_fraction
+                .filter(|&f| f > 0.0 && f < 1.0 && scenario.chain_grind.is_none());
+            let static_gate_prune_dropped: usize;
+            let candidates = if let Some(frac) = gate_frac {
+                let (kept, dropped) =
+                    crate::optimizer::analytical::prune_candidates_by_static_gates(
+                        &shared_ex,
+                        candidates,
+                        scenario.seed,
+                        frac,
+                    );
+                static_gate_prune_dropped = dropped;
+                kept
+            } else {
+                static_gate_prune_dropped = 0;
+                candidates
+            };
+            if static_gate_prune_dropped > 0 {
+                info!(
+                    strategy = "exhaustive",
+                    seed = scenario.seed,
+                    static_gate_prune_dropped = static_gate_prune_dropped as u64,
+                    static_gate_prune_remaining = candidates.len() as u64,
+                    "optimize_static_gate_pruned"
                 );
             }
             let total = candidates.len();
@@ -1421,6 +1484,7 @@ pub fn optimize_crew(
         exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
         prune_analytical_hull_fraction: None,
+        prune_static_gate_max_fraction: None,
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
         support_buffs: Vec::new(),
@@ -1629,6 +1693,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
         prune_analytical_hull_fraction: None,
+        prune_static_gate_max_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -1774,6 +1839,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: Some(4),
             prune_analytical_hull_fraction: None,
+            prune_static_gate_max_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -1838,6 +1904,7 @@ mod tests {
             exhaustive_scout_top_keep: Some(4),
             analytical_prefilter_keep: None,
         prune_analytical_hull_fraction: None,
+        prune_static_gate_max_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
@@ -1896,6 +1963,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
         prune_analytical_hull_fraction: None,
+        prune_static_gate_max_fraction: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),

@@ -98,6 +98,39 @@ pub(crate) fn prune_candidates_by_expected_hull_damage(
     (filtered, dropped)
 }
 
+/// Drop candidates where static ability gates fail against the current hostile.
+///
+/// Evaluates each crew's ability conditions against the shared scenario (defender faction,
+/// ship type, PvE/PvP, etc.) and drops crews whose fraction of failing conditional abilities
+/// exceeds `max_gated_fraction`.  A conservative threshold (e.g. 0.95) only eliminates crews
+/// where nearly every conditional ability is mismatched (e.g. all Borg-locked officers
+/// against a non-Borg hostile).
+///
+/// Returns the filtered list and the count of crews dropped.
+pub(crate) fn prune_candidates_by_static_gates(
+    shared: &crate::optimizer::monte_carlo::scenario::SharedScenarioData,
+    candidates: Vec<CrewCandidate>,
+    seed: u64,
+    max_gated_fraction: f64,
+) -> (Vec<CrewCandidate>, usize) {
+    use crate::optimizer::monte_carlo::scenario::scenario_to_combat_input_from_shared;
+
+    let n_before = candidates.len();
+    let filtered: Vec<CrewCandidate> = candidates
+        .into_iter()
+        .filter(|c| {
+            let input = scenario_to_combat_input_from_shared(shared, c, seed);
+            let frac = crate::optimizer::matchup_priors::static_gate_fail_fraction(
+                shared,
+                &input.crew,
+            ) as f64;
+            frac <= max_gated_fraction
+        })
+        .collect();
+    let dropped = n_before - filtered.len();
+    (filtered, dropped)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

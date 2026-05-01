@@ -14,6 +14,7 @@ use rayon::prelude::*;
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
+use std::sync::{Arc, Mutex};
 
 use super::crew_resolution::seeded_variance;
 use super::scenario::{
@@ -108,6 +109,62 @@ impl ScoutEarlyStopCfg {
     }
 }
 
+/// Configuration for progressive abandonment: after `min_trials`, at each `check_every`
+/// checkpoint, compare the candidate's Wilson upper bound against the best crew's Wilson
+/// lower bound.  If the candidate cannot close the gap (upper < lower - margin), abandon it.
+#[derive(Clone, Copy)]
+struct ProgressiveAbandonCfg {
+    min_trials: usize,
+    check_every: usize,
+    /// Gap below the best-crew Wilson lower bound before abandoning a candidate.
+    /// Conservative default: 0.05 (5 percentage points).
+    margin: f64,
+}
+
+impl ProgressiveAbandonCfg {
+    fn for_scout_iterations(max_iterations: usize) -> Self {
+        let min_trials = (max_iterations / 8).max(64).min(max_iterations.max(1));
+        Self {
+            min_trials,
+            check_every: 50,
+            margin: 0.05,
+        }
+    }
+}
+
+/// Shared best-so-far tracker for progressive abandonment.
+///
+/// After each candidate finishes, the best win rate and Wilson bounds are updated.
+/// Running candidates check at their checkpoints whether they can still beat the leader.
+#[derive(Debug, Clone, Default)]
+struct BestSoFar {
+    best_wins: usize,
+    best_trials: usize,
+    best_win_rate: f64,
+    best_win_rate_ci_low: f64,
+}
+
+impl BestSoFar {
+    fn update(&mut self, wins: usize, trials: usize, win_rate: f64, ci_low: f64) {
+        if win_rate > self.best_win_rate {
+            self.best_wins = wins;
+            self.best_trials = trials;
+            self.best_win_rate = win_rate;
+            self.best_win_rate_ci_low = ci_low;
+        }
+    }
+
+    /// Returns true if the candidate can still beat the leader given the configured margin.
+    /// When no leader exists yet (0 best trials), always returns true.
+    fn can_beat_leader(&self, candidate_wins: usize, candidate_trials: usize, margin: f64) -> bool {
+        if self.best_trials == 0 {
+            return true;
+        }
+        let candidate_upper = win_rate_upper_wilson_95(candidate_wins, candidate_trials);
+        candidate_upper >= self.best_win_rate_ci_low - margin
+    }
+}
+
 fn run_candidate_chain_monte_carlo(
     shared: &SharedScenarioData,
     candidate: &CrewCandidate,
@@ -115,6 +172,8 @@ fn run_candidate_chain_monte_carlo(
     max_iterations: usize,
     chain: &ChainGrindParams,
     early_scout: Option<ScoutEarlyStopCfg>,
+    best_so_far: Option<&std::sync::Mutex<BestSoFar>>,
+    progressive_abandon: Option<ProgressiveAbandonCfg>,
 ) -> SimulationResult {
     let input = scenario_to_combat_input_from_shared(shared, candidate, seed);
     let mut primary_ok = 0usize;
@@ -169,6 +228,19 @@ fn run_candidate_chain_monte_carlo(
                 && win_rate_upper_wilson_95(primary_ok, n_done) < cfg.eliminate_upper_below
             {
                 break;
+            }
+        }
+
+        if let (Some(bsf), Some(cfg)) = (best_so_far, progressive_abandon) {
+            if n_done >= cfg.min_trials
+                && n_done < max_iterations
+                && cfg.check_every > 0
+                && n_done.is_multiple_of(cfg.check_every)
+            {
+                let leader = bsf.lock().unwrap();
+                if !leader.can_beat_leader(primary_ok, n_done, cfg.margin) {
+                    break;
+                }
             }
         }
     }
@@ -255,6 +327,8 @@ fn run_candidate_monte_carlo(
     seed: u64,
     max_iterations: usize,
     early_scout: Option<ScoutEarlyStopCfg>,
+    best_so_far: Option<&std::sync::Mutex<BestSoFar>>,
+    progressive_abandon: Option<ProgressiveAbandonCfg>,
 ) -> SimulationResult {
     let input = scenario_to_combat_input_from_shared(shared, candidate, seed);
     let mut wins = 0usize;
@@ -357,6 +431,22 @@ fn run_candidate_monte_carlo(
                 && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
             {
                 break;
+            }
+        }
+
+        // Progressive abandonment: if another candidate is already far ahead,
+        // stop wasting trials on this one.  Only checked when we also have enough
+        // trials for a meaningful Wilson bound.
+        if let (Some(bsf), Some(cfg)) = (best_so_far, progressive_abandon) {
+            if n_done >= cfg.min_trials
+                && n_done < max_iterations
+                && cfg.check_every > 0
+                && n_done.is_multiple_of(cfg.check_every)
+            {
+                let leader = bsf.lock().unwrap();
+                if !leader.can_beat_leader(wins, n_done, cfg.margin) {
+                    break;
+                }
             }
         }
     }
@@ -963,11 +1053,40 @@ fn run_monte_carlo_inner(
     early_scout: Option<ScoutEarlyStopCfg>,
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
-    let run_one = |candidate: &CrewCandidate| match chain_grind.as_ref() {
-        None => run_candidate_monte_carlo(&shared, candidate, seed, iterations, early_scout),
-        Some(c) => {
-            run_candidate_chain_monte_carlo(&shared, candidate, seed, iterations, c, early_scout)
+    // Shared best-so-far for progressive abandonment: candidates that fall hopelessly
+    // behind the current leader can terminate early, saving sim budget.
+    let best_so_far = Arc::new(Mutex::new(BestSoFar::default()));
+    let progressive_abandon = if early_scout.is_some() {
+        Some(ProgressiveAbandonCfg::for_scout_iterations(
+            iterations.max(1),
+        ))
+    } else {
+        None
+    };
+
+    let run_one = |candidate: &CrewCandidate| {
+        let result = match chain_grind.as_ref() {
+            None => run_candidate_monte_carlo(
+                &shared, candidate, seed, iterations,
+                early_scout,
+                Some(&*best_so_far),
+                progressive_abandon,
+            ),
+            Some(c) => run_candidate_chain_monte_carlo(
+                &shared, candidate, seed, iterations, c,
+                early_scout,
+                Some(&*best_so_far),
+                progressive_abandon,
+            ),
+        };
+        // Update the shared leaderboard so other running candidates can compare
+        // at their next checkpoint.
+        if progressive_abandon.is_some() {
+            let wins = (result.win_rate * result.trials_run as f64).round() as usize;
+            let mut best = best_so_far.lock().unwrap();
+            best.update(wins, result.trials_run, result.win_rate, result.win_rate_ci_low);
         }
+        result
     };
 
     // Deduplicate identical crews: compute results only for the first occurrence of each hash,
@@ -1025,8 +1144,10 @@ fn run_monte_carlo_inner_variable_iterations(
     let run_at = |idx: usize, candidate: &CrewCandidate| {
         let it = iterations_per_crew.get(idx).copied().unwrap_or(1).max(1);
         match chain_grind.as_ref() {
-            None => run_candidate_monte_carlo(&shared, candidate, seed, it, None),
-            Some(c) => run_candidate_chain_monte_carlo(&shared, candidate, seed, it, c, None),
+            None => run_candidate_monte_carlo(&shared, candidate, seed, it, None, None, None),
+            Some(c) => {
+                run_candidate_chain_monte_carlo(&shared, candidate, seed, it, c, None, None, None)
+            }
         }
     };
 

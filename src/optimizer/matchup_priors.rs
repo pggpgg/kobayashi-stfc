@@ -164,6 +164,32 @@ fn static_matchup_gate_score(shared: &SharedScenarioData, crew: &CrewConfigurati
     score
 }
 
+/// Fraction of crew abilities whose static conditions fail against the current matchup.
+///
+/// An ability without a condition is treated as always passing (not counted toward the fail fraction).
+/// Conditions that resolve to [`StaticGate::Unknown`] (stateful / morale) are excluded so the fraction
+/// only reflects truly mismatched gates.  Returns 0.0 when no abilities have conditions.
+pub(crate) fn static_gate_fail_fraction(
+    shared: &SharedScenarioData,
+    crew: &CrewConfiguration,
+) -> f32 {
+    let mut total_conditional = 0u32;
+    let mut failed = 0u32;
+    for seat in &crew.seats {
+        if let Some(ref cond) = seat.ability.condition {
+            total_conditional += 1;
+            if eval_static_gate(cond, shared, crew) == StaticGate::Fail {
+                failed += 1;
+            }
+        }
+    }
+    if total_conditional == 0 {
+        0.0
+    } else {
+        failed as f32 / total_conditional as f32
+    }
+}
+
 /// Encounter hints: scout/outpost flags, armada-related upstream or engagement tags, Conqueror Borg hostile tags.
 /// Ability name substrings are LCARS slug text — kept conservative; capped so priors stay subordinate to [`expected_damage`].
 fn encounter_tag_score(shared: &SharedScenarioData, crew: &CrewConfiguration) -> f32 {

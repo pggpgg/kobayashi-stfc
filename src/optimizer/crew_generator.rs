@@ -1,4 +1,10 @@
+use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
+use std::num::NonZeroUsize;
+use std::sync::Mutex;
+
+use lru::LruCache;
 
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::load_imported_roster_ids_unlocked_only;
@@ -602,9 +608,65 @@ impl Default for CandidateStrategy {
     }
 }
 
-#[derive(Debug, Clone)]
+/// Cache key for officer pools. Captures every input that affects pool construction + narrowing
+/// so repeated calls with the same strategy, roster, and constraints skip rebuild.
+#[derive(Hash, Eq, PartialEq, Clone, Debug)]
+struct OfficerPoolCacheKey {
+    only_below_decks_with_ability: bool,
+    below_decks_slots: usize,
+    roster_profile_id: String,
+    constraints_fingerprint: u64,
+    from_registry: bool,
+}
+
+/// Deterministic 64-bit fingerprint of constraint state so the cache key stays small and cheap to compare.
+fn constraints_fingerprint(constraints: Option<&CrewSearchConstraints>) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    if let Some(c) = constraints {
+        c.must_include.hash(&mut hasher);
+        c.exclude.hash(&mut hasher);
+        for g in &c.groups {
+            g.officers.hash(&mut hasher);
+            g.min_count.hash(&mut hasher);
+        }
+        c.captain_must_be.hash(&mut hasher);
+        c.bridge_must_include.hash(&mut hasher);
+        c.below_decks_must_include.hash(&mut hasher);
+    } else {
+        false.hash(&mut hasher);
+    }
+    hasher.finish()
+}
+
+/// Default cache capacity — comfortably holds entries for dozens of (ship, hostile, strategy)
+/// combinations without noticeable memory pressure.
+const POOL_CACHE_CAPACITY: usize = 64;
+
 pub struct CrewGenerator {
     strategy: CandidateStrategy,
+    /// Caches narrowed [`OfficerPools`] so repeated calls with the same strategy,
+    /// roster, and constraints avoid re-loading officers from disk and re-filtering.
+    pool_cache: Mutex<LruCache<OfficerPoolCacheKey, Option<OfficerPools>>>,
+}
+
+impl Clone for CrewGenerator {
+    fn clone(&self) -> Self {
+        Self {
+            strategy: self.strategy.clone(),
+            pool_cache: Mutex::new(LruCache::new(
+                NonZeroUsize::new(POOL_CACHE_CAPACITY).expect("64 > 0"),
+            )),
+        }
+    }
+}
+
+impl std::fmt::Debug for CrewGenerator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CrewGenerator")
+            .field("strategy", &self.strategy)
+            .field("pool_cache", &"<LRU cache>")
+            .finish()
+    }
 }
 
 impl Default for CrewGenerator {
@@ -617,20 +679,76 @@ impl CrewGenerator {
     pub fn new() -> Self {
         Self {
             strategy: CandidateStrategy::default(),
+            pool_cache: Mutex::new(LruCache::new(
+                NonZeroUsize::new(POOL_CACHE_CAPACITY).expect("64 > 0"),
+            )),
         }
     }
 
     pub fn with_strategy(strategy: CandidateStrategy) -> Self {
-        Self { strategy }
+        Self {
+            strategy,
+            pool_cache: Mutex::new(LruCache::new(
+                NonZeroUsize::new(POOL_CACHE_CAPACITY).expect("64 > 0"),
+            )),
+        }
+    }
+
+    /// Retrieve narrowed pools from the cache, or build + cache them when this is the first call
+    /// with the current strategy/roster/constraint combination.
+    fn get_or_build_pools(
+        &self,
+        from_registry: bool,
+        registry: Option<&DataRegistry>,
+        profile_id: Option<&str>,
+    ) -> Option<OfficerPools> {
+        let cache_key = OfficerPoolCacheKey {
+            only_below_decks_with_ability: self.strategy.only_below_decks_with_ability,
+            below_decks_slots: self.strategy.below_decks_slots,
+            roster_profile_id: self
+                .strategy
+                .roster_profile_id
+                .clone()
+                .unwrap_or_default(),
+            constraints_fingerprint: constraints_fingerprint(self.strategy.constraints.as_ref()),
+            from_registry,
+        };
+
+        // Fast path: cache hit — clone unshuffled pools.
+        {
+            let mut cache = self.pool_cache.lock().unwrap();
+            if let Some(cached) = cache.get(&cache_key) {
+                return cached.clone();
+            }
+        }
+
+        // Slow path: build pools outside the lock (avoids holding lock across disk I/O).
+        let result = if from_registry {
+            build_officer_pools_from_registry(
+                registry?,
+                self.strategy.only_below_decks_with_ability,
+                profile_id,
+                self.strategy.below_decks_slots,
+                self.strategy.constraints.as_ref(),
+            )
+        } else {
+            build_officer_pools_with_constraints(
+                self.strategy.only_below_decks_with_ability,
+                self.strategy.below_decks_slots,
+                self.strategy.roster_profile_id.as_deref(),
+                self.strategy.constraints.as_ref(),
+            )
+        };
+
+        self.pool_cache
+            .lock()
+            .unwrap()
+            .put(cache_key, result.clone());
+        result
     }
 
     pub fn generate_candidates(&self, ship: &str, hostile: &str, seed: u64) -> Vec<CrewCandidate> {
-        let mut pools = match build_officer_pools_with_constraints(
-            self.strategy.only_below_decks_with_ability,
-            self.strategy.below_decks_slots,
-            self.strategy.roster_profile_id.as_deref(),
-            self.strategy.constraints.as_ref(),
-        ) {
+        let mut pools = match self.get_or_build_pools(false, None, None) {
             Some(p) => p,
             None => return Vec::new(),
         };
@@ -646,13 +764,7 @@ impl CrewGenerator {
         seed: u64,
         profile_id: Option<&str>,
     ) -> Vec<CrewCandidate> {
-        let mut pools = match build_officer_pools_from_registry(
-            registry,
-            self.strategy.only_below_decks_with_ability,
-            profile_id,
-            self.strategy.below_decks_slots,
-            self.strategy.constraints.as_ref(),
-        ) {
+        let mut pools = match self.get_or_build_pools(true, Some(registry), profile_id) {
             Some(p) => p,
             None => return Vec::new(),
         };
@@ -705,12 +817,7 @@ impl CrewGenerator {
     /// Returns the number of crew combinations without allocating candidates.
     /// Used for estimate when no cap is set. Uses same exhaustive/sampled branch as generate_candidates.
     pub fn count_candidates(&self, ship: &str, hostile: &str, seed: u64) -> usize {
-        let mut pools = match build_officer_pools_with_constraints(
-            self.strategy.only_below_decks_with_ability,
-            self.strategy.below_decks_slots,
-            self.strategy.roster_profile_id.as_deref(),
-            self.strategy.constraints.as_ref(),
-        ) {
+        let mut pools = match self.get_or_build_pools(false, None, None) {
             Some(p) => p,
             None => return 0,
         };
@@ -726,13 +833,7 @@ impl CrewGenerator {
         seed: u64,
         profile_id: Option<&str>,
     ) -> usize {
-        let mut pools = match build_officer_pools_from_registry(
-            registry,
-            self.strategy.only_below_decks_with_ability,
-            profile_id,
-            self.strategy.below_decks_slots,
-            self.strategy.constraints.as_ref(),
-        ) {
+        let mut pools = match self.get_or_build_pools(true, Some(registry), profile_id) {
             Some(p) => p,
             None => return 0,
         };
@@ -749,13 +850,7 @@ impl CrewGenerator {
         seed: u64,
         profile_id: Option<&str>,
     ) -> usize {
-        let mut pools = match build_officer_pools_from_registry(
-            registry,
-            self.strategy.only_below_decks_with_ability,
-            profile_id,
-            self.strategy.below_decks_slots,
-            self.strategy.constraints.as_ref(),
-        ) {
+        let mut pools = match self.get_or_build_pools(true, Some(registry), profile_id) {
             Some(p) => p,
             None => return 0,
         };
