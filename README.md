@@ -162,6 +162,8 @@ KOBAYASHI's core is a fast, deterministic combat simulator written in Rust. Each
 
 ### The Optimizer
 
+The intended direction for crew search is **seed + prune + scout + confirm + learn**: spend simulation budget on promising crews (heuristics, constraints, warm-start, tiered passes) and reuse prior runs where possible, rather than brute-forcing ever-larger spaces with uniform effort per candidate.
+
 Given a ship and a hostile, the optimizer searches the crew space. **Current implementation:** full exhaustive sweep — it runs the full candidate set with the requested sim count per crew and ranks results. For large search spaces, use `strategy: "genetic"` in the API to run the genetic optimizer instead. You can also select a **tiered approach** (scouting pass → confirmation on top candidates) via `strategy: "tiered"` (requires the optimizer's registry/candidate context).
 
 *Tiered strategy (implemented via two-pass scouting → confirmation):*

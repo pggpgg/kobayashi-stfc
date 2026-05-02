@@ -1,65 +1,65 @@
 {
-  "id": 349704968,
-  "loca_id": 85901,
-  "art_id": 1813,
-  "view_level": 51,
+  "id": 1266023165,
+  "loca_id": 90301,
+  "art_id": 111,
+  "view_level": 1,
   "research_tree": {
-    "id": 1056678826,
-    "loca_id": 1,
-    "type": 0
+    "id": 2118173562,
+    "loca_id": 17,
+    "type": 4
   },
   "buffs": [
     {
-      "id": 435872904,
+      "id": 132071020,
       "index": null,
       "value_is_percentage": true,
       "values": [
         {
-          "value": 0.25,
+          "value": 1,
           "chance": 1
         },
         {
-          "value": 0.75,
+          "value": 1.2,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 1.4,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 1.6,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 1.9,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 2.2,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 2.5,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 2.9,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 3.3,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 3.8,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 4.3,
           "chance": 1
         },
         {
-          "value": 0,
+          "value": 5,
           "chance": 1
         },
         {
@@ -411,8 +411,8 @@
           "chance": 1
         }
       ],
-      "art_id": 9999,
-      "loca_id": 85901,
+      "art_id": 999,
+      "loca_id": 90301,
       "show_percentage": true,
       "value_type": 0,
       "ranked_is_value_chance": 0
@@ -421,42 +421,190 @@
   "levels": [
     {
       "id": 1,
-      "strength": 207000,
-      "strength_increase": 207000,
-      "research_time_in_seconds": 30335040,
+      "strength": 38000,
+      "strength_increase": 38000,
+      "research_time_in_seconds": 0,
       "costs": [
         {
-          "resource_id": 2614028847,
-          "amount": 15931495440000
-        },
-        {
-          "resource_id": 3909701478,
-          "amount": 1000
+          "resource_id": 389151404,
+          "amount": 80
         }
       ],
       "hard_currency_cost": -1,
       "requirements": [
         {
           "requirement_type": "BuildingLevel",
-          "requirement_id": 25,
-          "requirement_level": 51
+          "requirement_id": 0,
+          "requirement_level": 71
         }
       ],
       "rewards": []
     },
     {
       "id": 2,
-      "strength": 276000,
-      "strength_increase": 276000,
-      "research_time_in_seconds": 30335040,
+      "strength": 42000,
+      "strength_increase": 42000,
+      "research_time_in_seconds": 0,
       "costs": [
         {
-          "resource_id": 2614028847,
-          "amount": 15931495440000
-        },
+          "resource_id": 389151404,
+          "amount": 36
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 3,
+      "strength": 47000,
+      "strength_increase": 47000,
+      "research_time_in_seconds": 0,
+      "costs": [
         {
-          "resource_id": 3909701478,
-          "amount": 1000
+          "resource_id": 389151404,
+          "amount": 42
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 4,
+      "strength": 52000,
+      "strength_increase": 52000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 48
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 5,
+      "strength": 57000,
+      "strength_increase": 57000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 55
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 6,
+      "strength": 62000,
+      "strength_increase": 62000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 64
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 7,
+      "strength": 68000,
+      "strength_increase": 68000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 74
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 0,
+          "requirement_level": 77
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 8,
+      "strength": 75000,
+      "strength_increase": 75000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 87
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 9,
+      "strength": 81000,
+      "strength_increase": 81000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 102
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 10,
+      "strength": 89000,
+      "strength_increase": 89000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 121
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 11,
+      "strength": 96000,
+      "strength_increase": 96000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 143
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": []
+    },
+    {
+      "id": 12,
+      "strength": 104000,
+      "strength_increase": 104000,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 389151404,
+          "amount": 170
         }
       ],
       "hard_currency_cost": -1,
@@ -464,7 +612,7 @@
       "rewards": []
     }
   ],
-  "row": 3,
-  "column": 45,
-  "generation": 0
+  "row": 1,
+  "column": 111,
+  "generation": 1
 }
