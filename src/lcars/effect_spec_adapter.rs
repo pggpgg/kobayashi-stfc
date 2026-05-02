@@ -333,6 +333,17 @@ fn effect_value_at_officer_tier(effect: &LcarsEffect, tier: Option<u8>) -> Optio
         .or_else(|| effect.scaling.as_ref().map(|s| s.value_at_rank(tier)))
 }
 
+/// Resolve numeric value for LCARS `stat_modify` scaling, including `scaling.officer_stat` when set.
+/// Matches [`effect_value_with_officer_stat`] / dynamic CombatEffectSpec compile — used for passive
+/// `static_buffs` and combat-begin accuracy accumulation in [`crate::lcars::resolver::resolve_crew_to_buff_set`].
+pub fn lcars_effect_resolved_value(
+    effect: &LcarsEffect,
+    tier: Option<u8>,
+    officer_stats: Option<&LcarsLevelStats>,
+) -> Option<f64> {
+    effect_value_with_officer_stat(effect, tier, officer_stats).0
+}
+
 /// Resolve effect value for officer-stat scaling. When `effect.scaling.officer_stat` is set and
 /// per-level stats are available, the rank coefficient is multiplied by the officer's stat divided
 /// by 100. When the officer-stat reference is set but stats are missing, the rank coefficient

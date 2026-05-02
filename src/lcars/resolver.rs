@@ -545,6 +545,9 @@ pub fn resolve_crew_to_buff_set(
                            class: AbilityClass,
                            contribution_batch: u32| {
         let officer_tier = options.tier_for(&officer.id);
+        let stats_row = officer
+            .resolve_level(options.level_for(&officer.id), officer_tier)
+            .and_then(|lvl| officer.stats_at_level(lvl));
         for effect in &ability.effects {
             // Determine the effective stat for passive permanent effects.
             // stat_modify reads from effect.stat; mapped tag effects use the tag→stat table.
@@ -562,12 +565,11 @@ pub fn resolve_crew_to_buff_set(
                 continue;
             }
             let stat = effective_stat.unwrap();
-            let value = effect.value.or_else(|| {
-                effect
-                    .scaling
-                    .as_ref()
-                    .map(|s| s.value_at_rank(officer_tier))
-            });
+            let value = crate::lcars::effect_spec_adapter::lcars_effect_resolved_value(
+                effect,
+                officer_tier,
+                stats_row,
+            );
             if let Some(v) = value {
                 if stat.eq_ignore_ascii_case("accuracy") {
                     // Folded into `accuracy` / `accuracy_cb_mult` in the combat-begin accuracy loop below.
@@ -607,12 +609,11 @@ pub fn resolve_crew_to_buff_set(
             if effect_trigger_timing(effect) != Some(TimingWindow::CombatBegin) {
                 continue;
             }
-            let Some(value) = effect.value.or_else(|| {
-                effect
-                    .scaling
-                    .as_ref()
-                    .map(|s| s.value_at_rank(officer_tier))
-            }) else {
+            let Some(value) = crate::lcars::effect_spec_adapter::lcars_effect_resolved_value(
+                effect,
+                officer_tier,
+                stats_row,
+            ) else {
                 continue;
             };
             let op = normalize_operator(effect.operator.as_deref());
@@ -1878,6 +1879,70 @@ mod tests {
         assert!(
             (v5 - v1).abs() > 1e-6,
             "per-officer tier should change resolved static_buffs: tier1={v1}, tier5={v5}"
+        );
+    }
+
+    #[test]
+    fn static_passive_applies_officer_stat_scaling_when_stats_present() {
+        use crate::data::combat_effect_spec::OfficerStat;
+        use crate::lcars::parser::LcarsLevelStats;
+
+        let scaling_effect = LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some("armor".to_string()),
+            target: None,
+            operator: Some("add".to_string()),
+            value: None,
+            trigger: Some("passive".to_string()),
+            duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+            scaling: Some(LcarsScaling {
+                base: None,
+                per_rank: None,
+                max_rank: Some(3),
+                base_chance: None,
+                values: Some(vec![10.0]),
+                chance_values: None,
+                officer_stat: Some(OfficerStat::Defense),
+            }),
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let officer = LcarsOfficer {
+            id: "stat_scale_officer".to_string(),
+            name: "StatScale".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "passive_armor".to_string(),
+                effects: vec![scaling_effect],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: vec![LcarsLevelStats {
+                level: 30,
+                attack: 0.0,
+                defense: 200.0,
+                health: 0.0,
+            }],
+            max_level_by_rank: vec![30],
+        };
+        let mut officers = HashMap::new();
+        officers.insert("stat_scale_officer".to_string(), officer);
+        let options = ResolveOptions {
+            tier: None,
+            officer_tiers: Some([("stat_scale_officer".to_string(), 1u8)].into_iter().collect()),
+            officer_levels: None,
+        };
+        let buff = resolve_crew_to_buff_set("stat_scale_officer", &[], &[], &officers, &options);
+        let armor = buff.static_buffs.get("armor").copied().unwrap_or(0.0);
+        assert!(
+            (armor - 20.0).abs() < 1e-9,
+            "expected 10% coeff × defense 200 / 100 = 20, got {armor}"
         );
     }
 
