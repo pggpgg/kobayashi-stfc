@@ -7,7 +7,8 @@ pub use execution::{
     OptimizeStatusResponse, ScenarioSummary,
 };
 pub use requests::{
-    chain_grind_params_from_request, validate_request, ChainGrindRequest, OptimizePayloadError,
+    chain_grind_params_from_request, parse_optimize_request_body, validate_request,
+    ChainGrindRequest, OptimizePayloadError,
     OptimizeRequest, ReplaySeedRequest, ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS,
     MAX_CANDIDATES, MAX_SIMS,
 };
@@ -1671,8 +1672,7 @@ pub fn optimize_payload(
     body: &str,
     profile_id: Option<&str>,
 ) -> Result<String, OptimizePayloadError> {
-    let request: OptimizeRequest =
-        serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
+    let request = parse_optimize_request_body(body)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
     let response = execution::run_optimize(registry, &request, profile_id)?;
@@ -1685,8 +1685,7 @@ pub fn optimize_start_payload(
     body: &str,
     profile_id: Option<&str>,
 ) -> Result<String, OptimizePayloadError> {
-    let request: OptimizeRequest =
-        serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
+    let request = parse_optimize_request_body(body)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
     let start_response = execution::start_optimize_job(registry, request, profile_id, cpu_permit)?;
@@ -1727,7 +1726,7 @@ pub fn optimize_estimate_payload(
         ship_tier,
         ship_level,
         bd_explicit,
-    ) = requests::parse_optimize_estimate_query(query);
+    ) = requests::parse_optimize_estimate_query(query)?;
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
         return Err(OptimizePayloadError::Validation(ValidationErrorResponse {

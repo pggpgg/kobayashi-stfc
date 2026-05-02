@@ -465,14 +465,6 @@ paths:
             without combat-only below-decks-slot abilities). Omitted or false = strict default.
           schema:
             type: string
-        - name: prioritize_below_decks_ability
-          deprecated: true
-          in: query
-          description: >
-            Deprecated. Prefer `allow_below_decks_without_combat_ability`. When only this legacy key
-            is present, `prioritize=false` maps to relaxed mode and `prioritize=true` to strict.
-          schema:
-            type: string
         - name: ship_tier
           in: query
           schema:
@@ -1450,12 +1442,6 @@ components:
             When true, relaxed below-decks behavior (wide BD officer pools; heuristic seeds do not strip
             economy-only below-decks-slot picks). Omitted or false = strict default (narrow pools;
             combat heuristic on heuristic seeds).
-        prioritize_below_decks_ability:
-          type: boolean
-          deprecated: true
-          description: >
-            Legacy. Prefer `allow_below_decks_without_combat_ability`. When the new field is absent,
-            `prioritize_below_decks_ability` is interpreted as its inverse for backward compatibility.
         heuristics_seeds:
           type: array
           items:

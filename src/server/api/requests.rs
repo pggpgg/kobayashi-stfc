@@ -126,10 +126,6 @@ pub struct OptimizeRequest {
     pub seed: Option<u64>,
     pub max_candidates: Option<u32>,
     pub strategy: Option<String>,
-    /// Deprecated: use `allow_below_decks_without_combat_ability`. When the new field is absent,
-    /// `Some(p)` is interpreted as `allow = !p` for backward compatibility.
-    #[serde(default)]
-    pub prioritize_below_decks_ability: Option<bool>,
     /// When `Some(true)`, relax below-decks strictness: skip combat-only heuristic filtering on
     /// heuristic seeds and use wide below-decks officer pools (`only_below_decks_with_ability = false`).
     /// Omitted or `false` = strict default (combat heuristic on seeds, narrow pools).
@@ -194,17 +190,12 @@ pub struct OptimizeRequest {
 }
 
 /// When `true`: relaxed search — no below-decks combat heuristic stripping on seeds, wide
-/// below-decks pools. Resolution: new field wins if `Some`; else legacy `prioritize_below_decks_ability`
-/// inverted if `Some`; else strict default (`false`).
+/// below-decks pools. `allow_below_decks_without_combat_ability == Some(true)` only; omitted or
+/// `false` = strict default.
 pub fn relax_below_decks_combat_strictness(request: &OptimizeRequest) -> bool {
-    match (
-        request.allow_below_decks_without_combat_ability,
-        request.prioritize_below_decks_ability,
-    ) {
-        (Some(a), _) => a,
-        (None, Some(p)) => !p,
-        (None, None) => false,
-    }
+    request
+        .allow_below_decks_without_combat_ability
+        .unwrap_or(false)
 }
 
 /// Inverse of [`relax_below_decks_combat_strictness`] — maps to `OptimizationScenario::only_below_decks_with_ability`.
@@ -263,6 +254,27 @@ impl fmt::Display for OptimizePayloadError {
 }
 
 impl std::error::Error for OptimizePayloadError {}
+
+const REMOVED_PRIORITIZE_BELOW_DECKS_MSG: &str =
+    "removed: use allow_below_decks_without_combat_ability (set true for relaxed below-decks search)";
+
+/// Deserialize an optimize JSON body and reject the removed `prioritize_below_decks_ability` field.
+pub fn parse_optimize_request_body(body: &str) -> Result<OptimizeRequest, OptimizePayloadError> {
+    let v: serde_json::Value = serde_json::from_str(body).map_err(OptimizePayloadError::Parse)?;
+    if let Some(obj) = v.as_object() {
+        if obj.contains_key("prioritize_below_decks_ability") {
+            return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
+                status: "error",
+                message: "Validation failed",
+                errors: vec![ValidationIssue {
+                    field: "prioritize_below_decks_ability",
+                    messages: vec![REMOVED_PRIORITIZE_BELOW_DECKS_MSG.to_string()],
+                }],
+            }));
+        }
+    }
+    serde_json::from_value(v).map_err(OptimizePayloadError::Parse)
+}
 
 pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), OptimizePayloadError> {
     let mut errors: Vec<ValidationIssue> = Vec::new();
@@ -736,27 +748,28 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 }
 
 /// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates,
-/// optional `allow_below_decks_without_combat_ability` / legacy `prioritize_below_decks_ability`,
-/// optional ship_tier, ship_level, below_decks_slots.
+/// optional `allow_below_decks_without_combat_ability`, optional ship_tier, ship_level, below_decks_slots.
 #[allow(clippy::type_complexity)]
 pub fn parse_optimize_estimate_query(
     query: &str,
-) -> (
-    String,
-    String,
-    u32,
-    Option<u32>,
-    bool,
-    Option<u32>,
-    Option<u32>,
-    Option<u32>,
-) {
+) -> Result<
+    (
+        String,
+        String,
+        u32,
+        Option<u32>,
+        bool,
+        Option<u32>,
+        Option<u32>,
+        Option<u32>,
+    ),
+    OptimizePayloadError,
+> {
     let mut ship = String::new();
     let mut hostile = String::new();
     let mut sims = DEFAULT_SIMS;
     let mut max_candidates: Option<u32> = None;
     let mut allow_below_decks_without_combat_ability: Option<bool> = None;
-    let mut prioritize_below_decks_ability: Option<bool> = None;
     let mut ship_tier: Option<u32> = None;
     let mut ship_level: Option<u32> = None;
     let mut below_decks_slots: Option<u32> = None;
@@ -774,8 +787,16 @@ pub fn parse_optimize_estimate_query(
                         Some(value.eq_ignore_ascii_case("true") || value == "1");
                 }
                 "prioritize_below_decks_ability" => {
-                    prioritize_below_decks_ability =
-                        Some(value.eq_ignore_ascii_case("true") || value == "1");
+                    return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
+                        status: "error",
+                        message: "Validation failed",
+                        errors: vec![ValidationIssue {
+                            field: "prioritize_below_decks_ability",
+                            messages: vec![format!(
+                                "{REMOVED_PRIORITIZE_BELOW_DECKS_MSG} (query: allow_below_decks_without_combat_ability=true)"
+                            )],
+                        }],
+                    }));
                 }
                 "ship_tier" => ship_tier = value.parse().ok(),
                 "ship_level" => ship_level = value.parse().ok(),
@@ -784,15 +805,9 @@ pub fn parse_optimize_estimate_query(
             }
         }
     }
-    let only_below_decks_with_ability = match (
-        allow_below_decks_without_combat_ability,
-        prioritize_below_decks_ability,
-    ) {
-        (Some(a), _) => !a,
-        (None, Some(p)) => p,
-        (None, None) => true,
-    };
-    (
+    let only_below_decks_with_ability =
+        !allow_below_decks_without_combat_ability.unwrap_or(false);
+    Ok((
         ship,
         hostile,
         sims,
@@ -801,7 +816,7 @@ pub fn parse_optimize_estimate_query(
         ship_tier,
         ship_level,
         below_decks_slots,
-    )
+    ))
 }
 
 #[cfg(test)]
@@ -813,7 +828,7 @@ mod below_decks_relax_tests {
     }
 
     #[test]
-    fn strict_when_both_fields_absent() {
+    fn strict_when_allow_field_absent() {
         let r = req_from_json(r#"{"ship":"s","hostile":"h"}"#);
         assert!(!relax_below_decks_combat_strictness(&r));
     }
@@ -827,22 +842,60 @@ mod below_decks_relax_tests {
     }
 
     #[test]
-    fn legacy_prioritize_false_implies_relax() {
-        let r = req_from_json(r#"{"ship":"s","hostile":"h","prioritize_below_decks_ability":false}"#);
-        assert!(relax_below_decks_combat_strictness(&r));
-    }
-
-    #[test]
-    fn legacy_prioritize_true_strict() {
-        let r = req_from_json(r#"{"ship":"s","hostile":"h","prioritize_below_decks_ability":true}"#);
-        assert!(!relax_below_decks_combat_strictness(&r));
-    }
-
-    #[test]
-    fn allow_false_wins_over_legacy_prioritize_false() {
+    fn strict_when_allow_false_explicit() {
         let r = req_from_json(
-            r#"{"ship":"s","hostile":"h","allow_below_decks_without_combat_ability":false,"prioritize_below_decks_ability":false}"#,
+            r#"{"ship":"s","hostile":"h","allow_below_decks_without_combat_ability":false}"#,
         );
         assert!(!relax_below_decks_combat_strictness(&r));
+    }
+}
+
+#[cfg(test)]
+mod parse_optimize_body_tests {
+    use super::{parse_optimize_estimate_query, parse_optimize_request_body, OptimizePayloadError};
+
+    #[test]
+    fn rejects_removed_prioritize_in_json_body() {
+        let err = parse_optimize_request_body(
+            r#"{"ship":"s","hostile":"h","prioritize_below_decks_ability":false}"#,
+        )
+        .unwrap_err();
+        match err {
+            OptimizePayloadError::Validation(v) => {
+                assert!(
+                    v.errors
+                        .iter()
+                        .any(|e| e.field == "prioritize_below_decks_ability")
+                );
+            }
+            other => panic!("expected validation, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rejects_removed_prioritize_in_estimate_query() {
+        let err = parse_optimize_estimate_query(
+            "ship=s&hostile=h&prioritize_below_decks_ability=false",
+        )
+        .unwrap_err();
+        match err {
+            OptimizePayloadError::Validation(v) => {
+                assert!(
+                    v.errors
+                        .iter()
+                        .any(|e| e.field == "prioritize_below_decks_ability")
+                );
+            }
+            other => panic!("expected validation, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn estimate_query_allow_true_maps_to_wide_pool() {
+        let (_, _, _, _, only_bd_ability, _, _, _) = parse_optimize_estimate_query(
+            "ship=s&hostile=h&allow_below_decks_without_combat_ability=true",
+        )
+        .expect("parse");
+        assert!(!only_bd_ability);
     }
 }

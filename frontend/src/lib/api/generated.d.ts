@@ -1003,11 +1003,6 @@ export interface paths {
                     max_candidates?: number;
                     /** @description When "true"/"1", relaxed below-decks search (wide BD pools; heuristic seeds keep officers without combat-only below-decks-slot abilities). Omitted or false = strict default. */
                     allow_below_decks_without_combat_ability?: string;
-                    /**
-                     * @deprecated
-                     * @description Deprecated. Prefer `allow_below_decks_without_combat_ability`. When only this legacy key is present, `prioritize=false` maps to relaxed mode and `prioritize=true` to strict.
-                     */
-                    prioritize_below_decks_ability?: string;
                     ship_tier?: number;
                     ship_level?: number;
                     below_decks_slots?: number;
@@ -1893,11 +1888,6 @@ export interface components {
             strategy?: string;
             /** @description When true, relaxed below-decks behavior (wide BD officer pools; heuristic seeds do not strip economy-only below-decks-slot picks). Omitted or false = strict default (narrow pools; combat heuristic on heuristic seeds). */
             allow_below_decks_without_combat_ability?: boolean;
-            /**
-             * @deprecated
-             * @description Legacy. Prefer `allow_below_decks_without_combat_ability`. When the new field is absent, `prioritize_below_decks_ability` is interpreted as its inverse for backward compatibility.
-             */
-            prioritize_below_decks_ability?: boolean;
             heuristics_seeds?: string[];
             heuristics_only?: boolean;
             fast_discovery?: boolean;
