@@ -30,6 +30,7 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 | Invading Entities, Assaults                     | Unsupported without encounter ids in data.                                                                                                                          |
 | Outpost Armadas, Outpost Retaliation Attackers  | `[HostileRecord::is_outpost](../src/data/hostile.rs)` exists; no LCARS condition wired yet—confirm in-game vs logs before adding `defender_is_outpost`-style gates. |
 
+
 ---
 
 ## Unified CombatEffectSpec (cross-source normalization)

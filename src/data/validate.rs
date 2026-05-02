@@ -315,7 +315,7 @@ fn validate_lcars_ability(
             }
         }
         if let Some(ref cond) = effect.condition {
-            if let Err(msg) = lcars::resolve_lcars_condition(cond) {
+            if let Err(msg) = lcars::lcars_condition_to_spec(cond) {
                 report.push(
                     ValidationSeverity::Error,
                     format!("{context}.effects[{i}]"),

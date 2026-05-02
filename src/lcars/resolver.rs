@@ -80,6 +80,10 @@ impl BuffSet {
 /// (spec IR) after [`lcars_effect_to_combat_effect_spec`].
 /// Returns [`Err`] with a short message when the YAML is unsupported or incomplete (unknown `type`,
 /// missing `ship_type` / `faction`, unknown slugs, empty `and`/`or`, or invalid child conditions).
+#[deprecated(
+    since = "0.1.0",
+    note = "use lcars_condition_to_spec + compile_condition (canonical CombatEffectSpec path)"
+)]
 pub fn resolve_lcars_condition(c: &LcarsCondition) -> Result<AbilityCondition, String> {
     let ty = c.condition_type.trim().to_lowercase().replace('-', "_");
     match ty.as_str() {
@@ -753,6 +757,7 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use crate::combat::abilities::CombatContext;

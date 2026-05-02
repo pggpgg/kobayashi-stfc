@@ -13,9 +13,11 @@ use kobayashi::lcars::effect_spec_adapter::{
     lcars_condition_to_spec, lcars_effect_to_combat_effect_spec,
 };
 use kobayashi::lcars::{
-    resolve_lcars_condition, resolve_officer_ability, LcarsAbility, LcarsCondition, LcarsEffect,
+    resolve_officer_ability, LcarsAbility, LcarsCondition, LcarsEffect,
     LcarsOfficer, ResolveOptions,
 };
+#[allow(deprecated)]
+use kobayashi::lcars::resolve_lcars_condition;
 
 fn empty_lcars_condition() -> LcarsCondition {
     LcarsCondition {
@@ -238,6 +240,7 @@ fn lcars_condition_matrix() -> Vec<LcarsCondition> {
 }
 
 #[test]
+#[allow(deprecated)]
 fn lcars_condition_compile_matches_resolve_lcars_condition() {
     for c in lcars_condition_matrix() {
         let compiled =
@@ -321,6 +324,7 @@ fn lcars_on_shield_break_target_disambiguates_timing() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn lcars_effect_with_condition_spec_matches_resolve() {
     let mut c = empty_lcars_condition();
     c.condition_type = "defender_burning".into();

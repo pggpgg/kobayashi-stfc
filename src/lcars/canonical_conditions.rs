@@ -316,14 +316,15 @@ pub fn canonical_conditions_to_lcars(
 mod tests {
     use super::*;
     use crate::combat::{AbilityCondition, EnemyType, ShipType};
-    use crate::lcars::resolve_lcars_condition;
+    use crate::combat::effect_spec_compile::compile_condition;
+    use crate::lcars::lcars_condition_to_spec;
 
     #[test]
     fn maps_enemy_explorer_to_defender_ship_type() {
         let c = map_canonical_condition_token("EnemyExplorer").expect("maps");
         assert_eq!(c.condition_type, "defender_ship_type_is");
         assert_eq!(c.ship_type.as_deref(), Some("explorer"));
-        resolve_lcars_condition(&c).expect("resolver accepts");
+        lcars_condition_to_spec(&c).expect("spec adapter accepts");
     }
 
     #[test]
@@ -331,7 +332,7 @@ mod tests {
         let c = map_canonical_condition_token("SelfInterceptor").expect("maps");
         assert_eq!(c.condition_type, "attacker_ship_type_is");
         assert_eq!(c.ship_type.as_deref(), Some("interceptor"));
-        resolve_lcars_condition(&c).unwrap();
+        lcars_condition_to_spec(&c).unwrap();
     }
 
     #[test]
@@ -355,7 +356,7 @@ mod tests {
         assert_eq!(kids[2].condition_type, "defender_ship_type_is");
         assert_eq!(kids[2].ship_type.as_deref(), Some("explorer"));
         assert_eq!(kids[3].condition_type, "attacker_officer_tal_not_on_bridge");
-        resolve_lcars_condition(&out).expect("resolver accepts combined and");
+        lcars_condition_to_spec(&out).expect("spec adapter accepts combined and");
     }
 
     #[test]
@@ -363,7 +364,7 @@ mod tests {
         let c = map_canonical_condition_token("EnemyArmada").expect("maps");
         assert_eq!(c.condition_type, "defender_ship_type_is");
         assert_eq!(c.ship_type.as_deref(), Some("armada"));
-        resolve_lcars_condition(&c).expect("resolver accepts");
+        lcars_condition_to_spec(&c).expect("spec adapter accepts");
     }
 
     #[test]
@@ -372,7 +373,7 @@ mod tests {
         let b = map_canonical_condition_token("TargetIsArmada").expect("maps");
         assert_eq!(a.condition_type, b.condition_type);
         assert_eq!(a.ship_type, b.ship_type);
-        resolve_lcars_condition(&b).expect("resolver accepts");
+        lcars_condition_to_spec(&b).expect("spec adapter accepts");
     }
 
     #[test]
@@ -380,7 +381,7 @@ mod tests {
         let c = map_canonical_condition_token("TargetNotSoloArmada").expect("maps");
         assert_eq!(c.condition_type, "engagement_includes");
         assert_eq!(c.enemy_type.as_deref(), Some("group_armadas"));
-        resolve_lcars_condition(&c).expect("resolver accepts");
+        lcars_condition_to_spec(&c).expect("spec adapter accepts");
     }
 
     #[test]
@@ -388,7 +389,7 @@ mod tests {
         let c = map_canonical_condition_token("EnemyGroupArmadas").expect("maps");
         assert_eq!(c.condition_type, "engagement_includes");
         assert_eq!(c.enemy_type.as_deref(), Some("group_armadas"));
-        resolve_lcars_condition(&c).expect("resolver accepts");
+        lcars_condition_to_spec(&c).expect("spec adapter accepts");
     }
 
     #[test]
@@ -399,7 +400,8 @@ mod tests {
         assert_eq!(inner.len(), 1);
         assert_eq!(inner[0].condition_type, "defender_ship_type_is");
         assert_eq!(inner[0].ship_type.as_deref(), Some("armada"));
-        let ac = resolve_lcars_condition(&c).expect("resolves");
+        let spec = lcars_condition_to_spec(&c).expect("spec adapter resolves");
+        let ac = compile_condition(&spec).expect("compile");
         assert_eq!(
             ac,
             AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
@@ -417,21 +419,22 @@ mod tests {
         assert_eq!(kids.len(), 2);
         assert_eq!(kids[0].condition_type, "defender_ship_type_is");
         assert_eq!(kids[1].condition_type, "attacker_ship_type_is");
-        resolve_lcars_condition(&out).unwrap();
+        lcars_condition_to_spec(&out).unwrap();
     }
 
     #[test]
     fn target_burning_maps() {
         let c = map_canonical_condition_token("TargetHasBurning").unwrap();
         assert_eq!(c.condition_type, "defender_burning");
-        resolve_lcars_condition(&c).unwrap();
+        lcars_condition_to_spec(&c).unwrap();
     }
 
     #[test]
     fn target_has_assimilated_maps_to_defender_assimilated() {
         let c = map_canonical_condition_token("TargetHasAssimilated").unwrap();
         assert_eq!(c.condition_type, "defender_assimilated");
-        let ac = resolve_lcars_condition(&c).unwrap();
+        let spec = lcars_condition_to_spec(&c).unwrap();
+        let ac = compile_condition(&spec).unwrap();
         assert_eq!(ac, AbilityCondition::DefenderAssimilated);
     }
 
@@ -439,14 +442,15 @@ mod tests {
     fn self_has_morale_not_swallowed_by_self_hull_prefix() {
         let c = map_canonical_condition_token("SelfHasMorale").unwrap();
         assert_eq!(c.condition_type, "morale_active");
-        resolve_lcars_condition(&c).unwrap();
+        lcars_condition_to_spec(&c).unwrap();
     }
 
     #[test]
     fn self_has_hull_breach_maps_to_attacker_hull_breach() {
         let c = map_canonical_condition_token("SelfHasHullBreach").unwrap();
         assert_eq!(c.condition_type, "attacker_hull_breach");
-        let ac = resolve_lcars_condition(&c).unwrap();
+        let spec = lcars_condition_to_spec(&c).unwrap();
+        let ac = compile_condition(&spec).unwrap();
         assert_eq!(ac, AbilityCondition::AttackerHullBreach);
     }
 
@@ -454,7 +458,8 @@ mod tests {
     fn self_has_burning_maps_to_attacker_burning() {
         let c = map_canonical_condition_token("SelfHasBurning").unwrap();
         assert_eq!(c.condition_type, "attacker_burning");
-        let ac = resolve_lcars_condition(&c).unwrap();
+        let spec = lcars_condition_to_spec(&c).unwrap();
+        let ac = compile_condition(&spec).unwrap();
         assert_eq!(ac, AbilityCondition::AttackerBurning);
     }
 
@@ -462,7 +467,8 @@ mod tests {
     fn maps_self_officer_tal_not_on_bridge() {
         let c = map_canonical_condition_token("SelfOfficerTalNotOnBridge").unwrap();
         assert_eq!(c.condition_type, "attacker_officer_tal_not_on_bridge");
-        let ac = resolve_lcars_condition(&c).unwrap();
+        let spec = lcars_condition_to_spec(&c).unwrap();
+        let ac = compile_condition(&spec).unwrap();
         assert_eq!(ac, AbilityCondition::AttackerOfficerTalNotOnBridge);
     }
 
@@ -471,7 +477,8 @@ mod tests {
         let c = map_canonical_condition_token("SelfHullVoyager").expect("maps");
         assert_eq!(c.condition_type, "attacker_ship_id_is");
         assert_eq!(c.ship_id.as_deref(), Some("uss_voyager"));
-        let ac = resolve_lcars_condition(&c).expect("resolver accepts");
+        let spec = lcars_condition_to_spec(&c).expect("spec adapter accepts");
+        let ac = compile_condition(&spec).expect("compile");
         assert_eq!(ac, AbilityCondition::AttackerShipIdIs("uss_voyager".into()));
     }
 
@@ -484,7 +491,8 @@ mod tests {
         assert_eq!(kids[0].condition_type, "attacker_ship_id_is");
         assert_eq!(kids[0].ship_id.as_deref(), Some("uss_franklin"));
         assert_eq!(kids[1].ship_id.as_deref(), Some("uss_franklin_a"));
-        let ac = resolve_lcars_condition(&c).expect("resolver accepts combined or");
+        let spec = lcars_condition_to_spec(&c).expect("spec adapter accepts combined or");
+        let ac = compile_condition(&spec).expect("compile");
         match ac {
             AbilityCondition::Or(parts) => {
                 assert_eq!(parts.len(), 2);
@@ -534,7 +542,8 @@ mod tests {
             ),
         ] {
             let lc = map_canonical_condition_token(tok).expect(tok);
-            let ac = resolve_lcars_condition(&lc).expect(tok);
+            let spec = lcars_condition_to_spec(&lc).expect(tok);
+            let ac = compile_condition(&spec).expect(tok);
             assert_eq!(ac, expected, "{tok}");
         }
         let raw = vec!["TargetNotASB".to_string(), "EnemyHostile".to_string()];
@@ -547,7 +556,8 @@ mod tests {
         let lc = map_canonical_condition_token("SelfAtSoloArmada").expect("maps");
         assert_eq!(lc.condition_type, "engagement_includes");
         assert_eq!(lc.enemy_type.as_deref(), Some("solo_armadas"));
-        let ac = resolve_lcars_condition(&lc).unwrap();
+        let spec = lcars_condition_to_spec(&lc).unwrap();
+        let ac = compile_condition(&spec).unwrap();
         assert_eq!(
             ac,
             AbilityCondition::EngagementIncludes(EnemyType::SoloArmadas)
@@ -559,7 +569,8 @@ mod tests {
         let lc = map_canonical_condition_token("TargetIsArmadaOrInvadingEntity").expect("maps");
         assert_eq!(lc.condition_type, "defender_ship_type_is");
         assert_eq!(lc.ship_type.as_deref(), Some("armada"));
-        let ac = resolve_lcars_condition(&lc).unwrap();
+        let spec = lcars_condition_to_spec(&lc).unwrap();
+        let ac = compile_condition(&spec).unwrap();
         assert_eq!(ac, AbilityCondition::DefenderShipTypeIs(ShipType::Armada));
     }
 
@@ -607,7 +618,8 @@ mod tests {
         assert_eq!(lc.condition_type, "or");
         let ch = lc.conditions.as_ref().expect("children");
         assert_eq!(ch.len(), 3);
-        let ac = resolve_lcars_condition(&lc).expect("resolve");
+        let spec = lcars_condition_to_spec(&lc).expect("spec adapter resolve");
+        let ac = compile_condition(&spec).expect("compile");
         assert_eq!(
             ac,
             AbilityCondition::Or(vec![
@@ -624,7 +636,8 @@ mod tests {
         assert_eq!(lc.condition_type, "not");
         let inner = lc.conditions.as_ref().expect("not child")[0].clone();
         assert_eq!(inner.condition_type, "or");
-        let ac = resolve_lcars_condition(&lc).expect("resolve");
+        let spec = lcars_condition_to_spec(&lc).expect("spec adapter resolve");
+        let ac = compile_condition(&spec).expect("compile");
         assert_eq!(
             ac,
             AbilityCondition::Not(Box::new(AbilityCondition::Or(vec![
