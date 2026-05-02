@@ -811,6 +811,12 @@ pub fn compile_research_attack_effect(
         )),
         AbilityModifierSpec::ApexShred => Ok(AbilityEffect::ApexShredBonus(v)),
         AbilityModifierSpec::ApexBarrier => Ok(AbilityEffect::ApexBarrierBonus(v)),
+        AbilityModifierSpec::HostileCritDamageReduction => {
+            Ok(AbilityEffect::HostileCritDamageReduction {
+                reduction: v.clamp(0.0, 0.95),
+                duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+            })
+        }
         _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
             modifier,
             operation,

@@ -170,7 +170,7 @@
       "effects": [
         {
           "id": "research_3407808029_dr_hb",
-          "modifier": "damage_reduction",
+          "modifier": "hostile_crit_damage_reduction",
           "operation": "add",
           "by_level": [0.5, 0.6, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0],
           "conditions": [{ "type": "defender_hull_breach" }],
