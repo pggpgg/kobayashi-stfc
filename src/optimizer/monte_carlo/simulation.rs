@@ -1,8 +1,8 @@
 //! Simulation orchestration: run_monte_carlo* and SimulationResult.
 
 use crate::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, build_combat_setup,
-    simulate_combat_batch, CombatEvent, OpponentFactionTag,
+    build_combat_setup, simulate_combat_batch,
+    simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, OpponentFactionTag,
     SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
@@ -444,7 +444,8 @@ fn run_candidate_monte_carlo(
             let delta_d2 = def_draw - def_hull_mean;
             def_hull_m2 += delta_d * delta_d2;
 
-            if result.attacker_won && !result.winner_by_round_limit && result.rounds_simulated == 1 {
+            if result.attacker_won && !result.winner_by_round_limit && result.rounds_simulated == 1
+            {
                 r1_kills += 1;
             }
         }
@@ -1092,13 +1093,20 @@ fn run_monte_carlo_inner(
     let run_one = |candidate: &CrewCandidate| {
         let result = match chain_grind.as_ref() {
             None => run_candidate_monte_carlo(
-                &shared, candidate, seed, iterations,
+                &shared,
+                candidate,
+                seed,
+                iterations,
                 early_scout,
                 Some(&*best_so_far),
                 progressive_abandon,
             ),
             Some(c) => run_candidate_chain_monte_carlo(
-                &shared, candidate, seed, iterations, c,
+                &shared,
+                candidate,
+                seed,
+                iterations,
+                c,
                 early_scout,
                 Some(&*best_so_far),
                 progressive_abandon,
@@ -1109,7 +1117,12 @@ fn run_monte_carlo_inner(
         if progressive_abandon.is_some() {
             let wins = (result.win_rate * result.trials_run as f64).round() as usize;
             let mut best = best_so_far.lock().unwrap();
-            best.update(wins, result.trials_run, result.win_rate, result.win_rate_ci_low);
+            best.update(
+                wins,
+                result.trials_run,
+                result.win_rate,
+                result.win_rate_ci_low,
+            );
         }
         result
     };

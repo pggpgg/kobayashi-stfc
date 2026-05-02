@@ -116,8 +116,17 @@ fn mixed_bridge_officer_plus_burning_gated_research_combines() {
     }];
 
     let gates = SupportBuffResearchGateState::default();
-    let research = research_derived_attack_phase_seats(&imported, &catalog, &gates, &std::collections::HashMap::new());
-    let from_spec = research_derived_attack_phase_seats_from_spec(&imported, &catalog, &std::collections::HashMap::new());
+    let research = research_derived_attack_phase_seats(
+        &imported,
+        &catalog,
+        &gates,
+        &std::collections::HashMap::new(),
+    );
+    let from_spec = research_derived_attack_phase_seats_from_spec(
+        &imported,
+        &catalog,
+        &std::collections::HashMap::new(),
+    );
     assert!(!research.is_empty());
     assert_eq!(
         sorted_combined_signatures(&lcars, &research),
@@ -188,8 +197,17 @@ fn mixed_bridge_officer_plus_two_research_rids_combines() {
     ];
 
     let gates = SupportBuffResearchGateState::default();
-    let research = research_derived_attack_phase_seats(&imported, &catalog, &gates, &std::collections::HashMap::new());
-    let from_spec = research_derived_attack_phase_seats_from_spec(&imported, &catalog, &std::collections::HashMap::new());
+    let research = research_derived_attack_phase_seats(
+        &imported,
+        &catalog,
+        &gates,
+        &std::collections::HashMap::new(),
+    );
+    let from_spec = research_derived_attack_phase_seats_from_spec(
+        &imported,
+        &catalog,
+        &std::collections::HashMap::new(),
+    );
     assert_eq!(research.len(), from_spec.len());
 
     assert_eq!(

@@ -648,69 +648,71 @@ fn gather_optimize_simulation_results(
     let mut learned_officer_scores = match profile_id {
         Some(pid) => {
             let scores = optimize_history::load_officer_scores(pid);
-            if scores.is_empty() { None } else { Some(scores) }
+            if scores.is_empty() {
+                None
+            } else {
+                Some(scores)
+            }
         }
         _ => None,
     };
 
     // Auto-tune exploration parameters from learning signals (Phase B of the local
     // learning loop).  Only fills in values the user did not specify.
-    let (auto_tuned_confirm_cap, auto_tuned_abandon_margin) = match (
-        profile_id,
-        cache_key_normalized.as_deref(),
-    ) {
-        (Some(pid), Some(key)) => {
-            let file = optimize_history::load_history_file(pid);
-            let signals = file
-                .entries
-                .get(key)
-                .map(|entry| {
-                    crate::optimizer::learning_signals::compute_learning_signals(entry)
-                })
-                .unwrap_or_default();
+    let (auto_tuned_confirm_cap, auto_tuned_abandon_margin) =
+        match (profile_id, cache_key_normalized.as_deref()) {
+            (Some(pid), Some(key)) => {
+                let file = optimize_history::load_history_file(pid);
+                let signals = file
+                    .entries
+                    .get(key)
+                    .map(|entry| {
+                        crate::optimizer::learning_signals::compute_learning_signals(entry)
+                    })
+                    .unwrap_or_default();
 
-            if !signals.has_data() {
-                (None, None)
-            } else {
-                // Auto-tune confirm budget cap from stagnation:
-                //   high stagnation (>0.8) → shrink confirm budget (0.75, exploit)
-                //   low stagnation (<0.3)  → grow confirm budget (1.5, explore more)
-                let cap = if signals.captain_bridge_stagnation > 0.8 {
-                    Some(0.75f64)
-                } else if signals.captain_bridge_stagnation < 0.3 {
-                    Some(1.5)
+                if !signals.has_data() {
+                    (None, None)
                 } else {
-                    Some(1.0)
-                };
+                    // Auto-tune confirm budget cap from stagnation:
+                    //   high stagnation (>0.8) → shrink confirm budget (0.75, exploit)
+                    //   low stagnation (<0.3)  → grow confirm budget (1.5, explore more)
+                    let cap = if signals.captain_bridge_stagnation > 0.8 {
+                        Some(0.75f64)
+                    } else if signals.captain_bridge_stagnation < 0.3 {
+                        Some(1.5)
+                    } else {
+                        Some(1.0)
+                    };
 
-                // Auto-tune PQ abandon margin from top_margin:
-                //   large margin (>0.15) → tight abandon (0.02, clear winner)
-                //   small margin (<0.05) → loose abandon (0.10, tight race)
-                let abandon = if signals.top_margin > 0.15 {
-                    Some(0.02f64)
-                } else if signals.top_margin < 0.05 {
-                    Some(0.10)
-                } else {
-                    None // keep default 0.05
-                };
+                    // Auto-tune PQ abandon margin from top_margin:
+                    //   large margin (>0.15) → tight abandon (0.02, clear winner)
+                    //   small margin (<0.05) → loose abandon (0.10, tight race)
+                    let abandon = if signals.top_margin > 0.15 {
+                        Some(0.02f64)
+                    } else if signals.top_margin < 0.05 {
+                        Some(0.10)
+                    } else {
+                        None // keep default 0.05
+                    };
 
-                // Auto-tune epsilon in officer scores from diversity:
-                //   low diversity (<0.3)  → higher epsilon (0.30, explore more)
-                //   high diversity (>0.7) → lower epsilon (0.10, exploit more)
-                if let Some(ref mut scores) = learned_officer_scores {
-                    if signals.officer_diversity < 0.3 {
-                        scores.set_epsilon(0.30);
-                    } else if signals.officer_diversity > 0.7 {
-                        scores.set_epsilon(0.10);
+                    // Auto-tune epsilon in officer scores from diversity:
+                    //   low diversity (<0.3)  → higher epsilon (0.30, explore more)
+                    //   high diversity (>0.7) → lower epsilon (0.10, exploit more)
+                    if let Some(ref mut scores) = learned_officer_scores {
+                        if signals.officer_diversity < 0.3 {
+                            scores.set_epsilon(0.30);
+                        } else if signals.officer_diversity > 0.7 {
+                            scores.set_epsilon(0.10);
+                        }
+                        // else keep default 0.20
                     }
-                    // else keep default 0.20
-                }
 
-                (cap, abandon)
+                    (cap, abandon)
+                }
             }
-        }
-        _ => (None, None),
-    };
+            _ => (None, None),
+        };
 
     let (strategy, strategy_auto) = resolve_effective_optimize_strategy(
         registry,
@@ -911,11 +913,7 @@ fn gather_optimize_simulation_results(
         if let Some(pid) = profile_id {
             if !outcome.ranked.is_empty() {
                 let mut scores = optimize_history::load_officer_scores(pid);
-                scores.update_from_results(
-                    &outcome.ranked,
-                    &request.hostile,
-                    &request.ship,
-                );
+                scores.update_from_results(&outcome.ranked, &request.hostile, &request.ship);
                 let _ = optimize_history::save_officer_scores(pid, &scores);
             }
         }
@@ -1036,11 +1034,12 @@ fn build_optimize_response(
                     Some(t.to_string())
                 }
             }) {
-                novelty_anchor_storage = optimize_history::novelty_anchor_rows_for_profile_cache_key(
-                    pid,
-                    &ck,
-                    &chain_grind,
-                );
+                novelty_anchor_storage =
+                    optimize_history::novelty_anchor_rows_for_profile_cache_key(
+                        pid,
+                        &ck,
+                        &chain_grind,
+                    );
             }
         }
     }

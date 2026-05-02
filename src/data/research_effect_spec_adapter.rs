@@ -17,8 +17,8 @@ use crate::data::combat_effect_spec_validate::validate_combat_effect_spec;
 use crate::data::import::ResearchEntry;
 use crate::data::profile::{normalize_profile_combat_stat, research_levels_by_rid_from_import};
 use crate::data::research::{
-    cumulative_conditional_research_bonuses, ResearchBonusConditionKey, ResearchCatalog,
-    ResearchCanonicalOverride,
+    cumulative_conditional_research_bonuses, ResearchBonusConditionKey, ResearchCanonicalOverride,
+    ResearchCatalog,
 };
 
 /// Map [`ResearchBonusConditionKey`] to spec condition nodes (same order as
@@ -71,7 +71,12 @@ fn compile_canonical_override_seats(
     idx: &mut u32,
 ) -> Vec<CrewSeatContext> {
     let mut out: Vec<CrewSeatContext> = Vec::new();
-    let clamped_level = player_level.min(override_entry.effects.first().map_or(0, |e| e.by_level.len() as u32));
+    let clamped_level = player_level.min(
+        override_entry
+            .effects
+            .first()
+            .map_or(0, |e| e.by_level.len() as u32),
+    );
     if clamped_level == 0 {
         return out;
     }
@@ -154,8 +159,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
 
     // ── Catalog fallback (auto-generated path, excluding RIDs with overrides) ──
     if !catalog.items.is_empty() {
-        let excluded: std::collections::HashSet<i64> =
-            canonical_handled_rids.into_iter().collect();
+        let excluded: std::collections::HashSet<i64> = canonical_handled_rids.into_iter().collect();
 
         let mut remaining_levels: HashMap<i64, u32> = HashMap::new();
         for (&rid, &level) in &levels_by_rid {
@@ -172,7 +176,8 @@ pub fn research_derived_attack_phase_seats_from_spec(
                 .collect();
 
             if !records.is_empty() {
-                let conditional = cumulative_conditional_research_bonuses(&records, &remaining_levels);
+                let conditional =
+                    cumulative_conditional_research_bonuses(&records, &remaining_levels);
                 for ((key, stat), value) in conditional {
                     if !value.is_finite() || value == 0.0 {
                         continue;

@@ -1723,7 +1723,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::abilities::{TimingWindow, ActiveAbilityEffect};
+    use crate::combat::abilities::{ActiveAbilityEffect, TimingWindow};
 
     const ASSIM: f64 = ASSIMILATED_EFFECTIVENESS_MULTIPLIER; // 0.75
 
@@ -1805,13 +1805,19 @@ mod tests {
     #[test]
     fn scale_hull_regen_prev_round_under_assimilate() {
         let scaled = scale_effect(AbilityEffect::HullRegenPrevRoundFraction(0.1), true);
-        assert_eq!(scaled, AbilityEffect::HullRegenPrevRoundFraction(0.1 * ASSIM));
+        assert_eq!(
+            scaled,
+            AbilityEffect::HullRegenPrevRoundFraction(0.1 * ASSIM)
+        );
     }
 
     #[test]
     fn scale_shield_regen_prev_round_under_assimilate() {
         let scaled = scale_effect(AbilityEffect::ShieldRegenPrevRoundFraction(0.05), true);
-        assert_eq!(scaled, AbilityEffect::ShieldRegenPrevRoundFraction(0.05 * ASSIM));
+        assert_eq!(
+            scaled,
+            AbilityEffect::ShieldRegenPrevRoundFraction(0.05 * ASSIM)
+        );
     }
 
     #[test]
@@ -1829,7 +1835,10 @@ mod tests {
     #[test]
     fn scale_isolytic_cascade_under_assimilate() {
         let scaled = scale_effect(AbilityEffect::IsolyticCascadeDamageBonus(0.1), true);
-        assert_eq!(scaled, AbilityEffect::IsolyticCascadeDamageBonus(0.1 * ASSIM));
+        assert_eq!(
+            scaled,
+            AbilityEffect::IsolyticCascadeDamageBonus(0.1 * ASSIM)
+        );
     }
 
     #[test]
@@ -1860,54 +1869,158 @@ mod tests {
 
     #[test]
     fn scale_assimilated_chance_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::Assimilated { chance: 0.5, duration_rounds: 3 }, true);
-        assert_eq!(scaled, AbilityEffect::Assimilated { chance: 0.5 * ASSIM, duration_rounds: 3 });
+        let scaled = scale_effect(
+            AbilityEffect::Assimilated {
+                chance: 0.5,
+                duration_rounds: 3,
+            },
+            true,
+        );
+        assert_eq!(
+            scaled,
+            AbilityEffect::Assimilated {
+                chance: 0.5 * ASSIM,
+                duration_rounds: 3
+            }
+        );
     }
 
     #[test]
     fn scale_hull_breach_chance_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::HullBreach { chance: 0.6, duration_rounds: 2, requires_critical: true }, true);
-        assert_eq!(scaled, AbilityEffect::HullBreach { chance: 0.6 * ASSIM, duration_rounds: 2, requires_critical: true });
+        let scaled = scale_effect(
+            AbilityEffect::HullBreach {
+                chance: 0.6,
+                duration_rounds: 2,
+                requires_critical: true,
+            },
+            true,
+        );
+        assert_eq!(
+            scaled,
+            AbilityEffect::HullBreach {
+                chance: 0.6 * ASSIM,
+                duration_rounds: 2,
+                requires_critical: true
+            }
+        );
     }
 
     #[test]
     fn scale_burning_chance_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::Burning { chance: 0.7, duration_rounds: 3 }, true);
-        assert_eq!(scaled, AbilityEffect::Burning { chance: 0.7 * ASSIM, duration_rounds: 3 });
+        let scaled = scale_effect(
+            AbilityEffect::Burning {
+                chance: 0.7,
+                duration_rounds: 3,
+            },
+            true,
+        );
+        assert_eq!(
+            scaled,
+            AbilityEffect::Burning {
+                chance: 0.7 * ASSIM,
+                duration_rounds: 3
+            }
+        );
     }
 
     #[test]
     fn scale_shots_bonus_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::ShotsBonus { chance: 1.0, bonus_pct: 0.2, duration_rounds: 5 }, true);
-        assert_eq!(scaled, AbilityEffect::ShotsBonus { chance: 1.0 * ASSIM, bonus_pct: 0.2 * ASSIM, duration_rounds: 5 });
+        let scaled = scale_effect(
+            AbilityEffect::ShotsBonus {
+                chance: 1.0,
+                bonus_pct: 0.2,
+                duration_rounds: 5,
+            },
+            true,
+        );
+        assert_eq!(
+            scaled,
+            AbilityEffect::ShotsBonus {
+                chance: 1.0 * ASSIM,
+                bonus_pct: 0.2 * ASSIM,
+                duration_rounds: 5
+            }
+        );
     }
 
     #[test]
     fn scale_proc_attack_multiplier_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::ProcAttackMultiplier { chance: 0.4, multiplier: 1.5 }, true);
-        assert_eq!(scaled, AbilityEffect::ProcAttackMultiplier { chance: 0.4 * ASSIM, multiplier: 1.5 });
+        let scaled = scale_effect(
+            AbilityEffect::ProcAttackMultiplier {
+                chance: 0.4,
+                multiplier: 1.5,
+            },
+            true,
+        );
+        assert_eq!(
+            scaled,
+            AbilityEffect::ProcAttackMultiplier {
+                chance: 0.4 * ASSIM,
+                multiplier: 1.5
+            }
+        );
     }
 
     #[test]
     fn scale_proc_pierce_bonus_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::ProcPierceBonus { chance: 0.3, bonus: 0.1 }, true);
-        assert_eq!(scaled, AbilityEffect::ProcPierceBonus { chance: 0.3 * ASSIM, bonus: 0.1 * ASSIM });
+        let scaled = scale_effect(
+            AbilityEffect::ProcPierceBonus {
+                chance: 0.3,
+                bonus: 0.1,
+            },
+            true,
+        );
+        assert_eq!(
+            scaled,
+            AbilityEffect::ProcPierceBonus {
+                chance: 0.3 * ASSIM,
+                bonus: 0.1 * ASSIM
+            }
+        );
     }
 
     // ── scale_effect: multiplicative variants (1 + (x-1) * ASSIM) ──
 
     #[test]
     fn scale_decaying_attack_multiplier_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::DecayingAttackMultiplier { initial: 1.5, decay_per_round: 0.05, floor: 1.0 }, true);
+        let scaled = scale_effect(
+            AbilityEffect::DecayingAttackMultiplier {
+                initial: 1.5,
+                decay_per_round: 0.05,
+                floor: 1.0,
+            },
+            true,
+        );
         // initial: 1.0 + (1.5 - 1.0) * 0.75 = 1.0 + 0.375 = 1.375
-        assert_eq!(scaled, AbilityEffect::DecayingAttackMultiplier { initial: 1.375, decay_per_round: 0.05, floor: 1.0 });
+        assert_eq!(
+            scaled,
+            AbilityEffect::DecayingAttackMultiplier {
+                initial: 1.375,
+                decay_per_round: 0.05,
+                floor: 1.0
+            }
+        );
     }
 
     #[test]
     fn scale_accumulating_attack_multiplier_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::AccumulatingAttackMultiplier { initial: 1.2, growth_per_round: 0.1, ceiling: 3.0 }, true);
+        let scaled = scale_effect(
+            AbilityEffect::AccumulatingAttackMultiplier {
+                initial: 1.2,
+                growth_per_round: 0.1,
+                ceiling: 3.0,
+            },
+            true,
+        );
         // initial: 1.0 + (1.2 - 1.0) * 0.75 = 1.0 + 0.15 = 1.15
-        assert_eq!(scaled, AbilityEffect::AccumulatingAttackMultiplier { initial: 1.15, growth_per_round: 0.1, ceiling: 3.0 });
+        assert_eq!(
+            scaled,
+            AbilityEffect::AccumulatingAttackMultiplier {
+                initial: 1.15,
+                growth_per_round: 0.1,
+                ceiling: 3.0
+            }
+        );
     }
 
     #[test]
@@ -1919,22 +2032,40 @@ mod tests {
 
     #[test]
     fn scale_galaxy_additive_weapon_damage_growth_under_assimilate() {
-        let scaled = scale_effect(AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { growth_per_round: 0.02, ceiling: 0.5 }, true);
-        assert_eq!(scaled, AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { growth_per_round: 0.02 * ASSIM, ceiling: 0.5 });
+        let scaled = scale_effect(
+            AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+                growth_per_round: 0.02,
+                ceiling: 0.5,
+            },
+            true,
+        );
+        assert_eq!(
+            scaled,
+            AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+                growth_per_round: 0.02 * ASSIM,
+                ceiling: 0.5
+            }
+        );
     }
 
     // ── scale_effect: NEVER-scaled exceptions ──
 
     #[test]
     fn scale_hostile_crit_damage_reduction_never_scaled() {
-        let original = AbilityEffect::HostileCritDamageReduction { reduction: 0.05, duration_rounds: 3 };
+        let original = AbilityEffect::HostileCritDamageReduction {
+            reduction: 0.05,
+            duration_rounds: 3,
+        };
         let scaled = scale_effect(original, true);
         assert_eq!(scaled, original); // identity
     }
 
     #[test]
     fn scale_cumulative_opponent_shield_mitigation_debuff_never_scaled() {
-        let original = AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round: 0.02, cap: 0.1 };
+        let original = AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
+            per_round: 0.02,
+            cap: 0.1,
+        };
         let scaled = scale_effect(original, true);
         assert_eq!(scaled, original); // identity
     }
@@ -1963,7 +2094,13 @@ mod tests {
     #[test]
     fn combat_begin_attack_multiplier_goes_to_pre_attack_modifier() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.2), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.2),
+            100.0,
+            1,
+            None,
+        );
         // pre_attack_multiplier = 1.0 + 0.2 = 1.2
         assert!((acc.pre_attack_multiplier() - 1.2).abs() < 1e-12);
     }
@@ -1971,21 +2108,39 @@ mod tests {
     #[test]
     fn combat_begin_pierce_bonus_goes_to_pre_attack_pierce_stack() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::PierceBonus(0.15), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::PierceBonus(0.15),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.pre_attack_pierce_bonus() - 0.15).abs() < 1e-12);
     }
 
     #[test]
     fn combat_begin_shield_regen_goes_to_shield_regen_stack() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::ShieldRegen(100.0), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::ShieldRegen(100.0),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.composed_shield_regen() - 100.0).abs() < 1e-12);
     }
 
     #[test]
     fn combat_begin_apex_shred_goes_to_apex_shred_stack() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::ApexShredBonus(0.2), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::ApexShredBonus(0.2),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.composed_apex_shred_bonus() - 0.2).abs() < 1e-12);
     }
 
@@ -1993,9 +2148,17 @@ mod tests {
     fn combat_begin_decaying_attack_multiplier_adds_to_pre_mod() {
         let mut acc = EffectAccumulator::default();
         // round 3: initial 1.3 - 3*0.05 = 1.15  → modifier = 1.15 - 1.0 = 0.15
-        acc.add_effect(TimingWindow::CombatBegin,
-            AbilityEffect::DecayingAttackMultiplier { initial: 1.3, decay_per_round: 0.05, floor: 1.0 },
-            100.0, 3, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::DecayingAttackMultiplier {
+                initial: 1.3,
+                decay_per_round: 0.05,
+                floor: 1.0,
+            },
+            100.0,
+            3,
+            None,
+        );
         assert!((acc.pre_attack_multiplier() - 1.15).abs() < 1e-12);
     }
 
@@ -2003,9 +2166,17 @@ mod tests {
     fn combat_begin_accumulating_attack_multiplier_adds_to_pre_mod() {
         let mut acc = EffectAccumulator::default();
         // round 5: initial 1.0 + 5*0.04 = 1.2 → modifier = 1.2 - 1.0 = 0.2
-        acc.add_effect(TimingWindow::CombatBegin,
-            AbilityEffect::AccumulatingAttackMultiplier { initial: 1.0, growth_per_round: 0.04, ceiling: 2.0 },
-            100.0, 5, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AccumulatingAttackMultiplier {
+                initial: 1.0,
+                growth_per_round: 0.04,
+                ceiling: 2.0,
+            },
+            100.0,
+            5,
+            None,
+        );
         assert!((acc.pre_attack_multiplier() - 1.2).abs() < 1e-12);
     }
 
@@ -2015,7 +2186,13 @@ mod tests {
     fn attack_phase_pierce_bonus_converts_to_attack_phase_damage_flat() {
         let mut acc = EffectAccumulator::default();
         // base_attack = 1000, pierce_bonus = 0.2 → flat = 0.2 * 1000 * 0.5 = 100.0
-        acc.add_effect(TimingWindow::AttackPhase, AbilityEffect::PierceBonus(0.2), 1000.0, 1, None);
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::PierceBonus(0.2),
+            1000.0,
+            1,
+            None,
+        );
         // compose_attack_phase_damage(base=0) = 0 * (1+mod) + flat = flat
         let dmg = acc.compose_attack_phase_damage(0.0);
         assert!((dmg - 100.0).abs() < 1e-12);
@@ -2024,7 +2201,13 @@ mod tests {
     #[test]
     fn attack_phase_pierce_bonus_zero_base_attack_yields_zero_flat() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::AttackPhase, AbilityEffect::PierceBonus(0.2), 0.0, 1, None);
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::PierceBonus(0.2),
+            0.0,
+            1,
+            None,
+        );
         let dmg = acc.compose_attack_phase_damage(0.0);
         assert!((dmg - 0.0).abs() < 1e-12);
     }
@@ -2034,14 +2217,26 @@ mod tests {
     #[test]
     fn defense_phase_attack_multiplier_goes_to_defense_mitigation_bonus() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::DefensePhase, AbilityEffect::AttackMultiplier(0.1), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::DefensePhase,
+            AbilityEffect::AttackMultiplier(0.1),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.defense_mitigation_bonus() - 0.1).abs() < 1e-12);
     }
 
     #[test]
     fn defense_phase_pierce_bonus_goes_to_defense_mitigation_bonus() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::DefensePhase, AbilityEffect::PierceBonus(0.05), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::DefensePhase,
+            AbilityEffect::PierceBonus(0.05),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.defense_mitigation_bonus() - 0.05).abs() < 1e-12);
     }
 
@@ -2050,20 +2245,44 @@ mod tests {
     #[test]
     fn combat_begin_crit_chance_bonus_adds_to_crit_chance_bonus() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::CritChanceBonus(0.05), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::CritChanceBonus(0.05),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.crit_chance_bonus() - 0.05).abs() < 1e-12);
         // adding another
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::CritChanceBonus(0.03), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::CritChanceBonus(0.03),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.crit_chance_bonus() - 0.08).abs() < 1e-12);
     }
 
     #[test]
     fn attack_phase_crit_damage_multiplier_goes_to_crit_damage_multiplier() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::AttackPhase, AbilityEffect::CritDamageMultiplier(1.2), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::CritDamageMultiplier(1.2),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.crit_damage_multiplier() - 1.2).abs() < 1e-12);
         // chaining
-        acc.add_effect(TimingWindow::AttackPhase, AbilityEffect::CritDamageMultiplier(1.1), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::CritDamageMultiplier(1.1),
+            100.0,
+            1,
+            None,
+        );
         assert!((acc.crit_damage_multiplier() - 1.32).abs() < 1e-12);
     }
 
@@ -2072,7 +2291,13 @@ mod tests {
     #[test]
     fn round_end_attack_multiplier_adds_to_round_end_mod() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::RoundEnd, AbilityEffect::AttackMultiplier(0.3), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::RoundEnd,
+            AbilityEffect::AttackMultiplier(0.3),
+            100.0,
+            1,
+            None,
+        );
         // compose_round_end_damage(100) = 100 * (1 + 0.3) + 0 = 130
         let dmg = acc.compose_round_end_damage(100.0);
         assert!((dmg - 130.0).abs() < 1e-12);
@@ -2081,7 +2306,13 @@ mod tests {
     #[test]
     fn round_end_pierce_bonus_goes_to_round_end_damage_stack() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::RoundEnd, AbilityEffect::PierceBonus(50.0), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::RoundEnd,
+            AbilityEffect::PierceBonus(50.0),
+            100.0,
+            1,
+            None,
+        );
         // 0 * (1+mod) + 50 = 50
         let dmg = acc.compose_round_end_damage(0.0);
         assert!((dmg - 50.0).abs() < 1e-12);
@@ -2092,8 +2323,20 @@ mod tests {
     #[test]
     fn clear_resets_all_fields() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.2), 100.0, 1, None);
-        acc.add_effect(TimingWindow::AttackPhase, AbilityEffect::CritChanceBonus(0.1), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.2),
+            100.0,
+            1,
+            None,
+        );
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::CritChanceBonus(0.1),
+            100.0,
+            1,
+            None,
+        );
         acc.clear();
         assert!((acc.pre_attack_multiplier() - 1.0).abs() < 1e-12);
         assert!((acc.crit_chance_bonus() - 0.0).abs() < 1e-12);
@@ -2103,12 +2346,36 @@ mod tests {
     #[test]
     fn merge_from_combines_stacks_and_fields() {
         let mut a = EffectAccumulator::default();
-        a.add_effect(TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1), 100.0, 1, None);
-        a.add_effect(TimingWindow::AttackPhase, AbilityEffect::CritChanceBonus(0.05), 100.0, 1, None);
+        a.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+            100.0,
+            1,
+            None,
+        );
+        a.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::CritChanceBonus(0.05),
+            100.0,
+            1,
+            None,
+        );
 
         let mut b = EffectAccumulator::default();
-        b.add_effect(TimingWindow::CombatBegin, AbilityEffect::PierceBonus(0.2), 100.0, 1, None);
-        b.add_effect(TimingWindow::AttackPhase, AbilityEffect::CritDamageMultiplier(1.1), 100.0, 1, None);
+        b.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::PierceBonus(0.2),
+            100.0,
+            1,
+            None,
+        );
+        b.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::CritDamageMultiplier(1.1),
+            100.0,
+            1,
+            None,
+        );
 
         a.merge_from(&b);
         // pre_attack_multiplier overwritten by b = 1.0
@@ -2124,11 +2391,29 @@ mod tests {
     #[test]
     fn merge_carry_additive_adds_instead_of_overwrites() {
         let mut base = EffectAccumulator::default();
-        base.add_effect(TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1), 100.0, 1, None);
+        base.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+            100.0,
+            1,
+            None,
+        );
 
         let mut carry = EffectAccumulator::default();
-        carry.add_effect(TimingWindow::AfterSubround, AbilityEffect::AttackMultiplier(0.05), 100.0, 1, None);
-        carry.add_effect(TimingWindow::AttackPhase, AbilityEffect::CritChanceBonus(0.03), 100.0, 1, None);
+        carry.add_effect(
+            TimingWindow::AfterSubround,
+            AbilityEffect::AttackMultiplier(0.05),
+            100.0,
+            1,
+            None,
+        );
+        carry.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::CritChanceBonus(0.03),
+            100.0,
+            1,
+            None,
+        );
 
         base.merge_carry_additive(&carry);
         // AttackMultiplier routed to attack_phase_mod by AfterSubround timing → trace_add_attack_phase_mod
@@ -2146,11 +2431,41 @@ mod tests {
     #[test]
     fn clear_regen_stacks_removes_regen_keys() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::ShieldRegen(100.0), 100.0, 1, None);
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::HullRegen(50.0), 100.0, 1, None);
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::ShieldRegenMaxFraction(0.1), 100.0, 1, None);
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::HullRegenMaxFraction(0.05), 100.0, 1, None);
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::ApexShredBonus(0.2), 100.0, 1, None); // not a regen key
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::ShieldRegen(100.0),
+            100.0,
+            1,
+            None,
+        );
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::HullRegen(50.0),
+            100.0,
+            1,
+            None,
+        );
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::ShieldRegenMaxFraction(0.1),
+            100.0,
+            1,
+            None,
+        );
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::HullRegenMaxFraction(0.05),
+            100.0,
+            1,
+            None,
+        );
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::ApexShredBonus(0.2),
+            100.0,
+            1,
+            None,
+        ); // not a regen key
 
         acc.clear_shield_hull_regen_stacks();
         assert!((acc.composed_shield_regen() - 0.0).abs() < 1e-12);
@@ -2196,9 +2511,16 @@ mod tests {
     fn cumulative_shield_mitigation_debuff_at_round_start() {
         let mut acc = EffectAccumulator::default();
         // round 5: per_round=0.02 * 5 = 0.1, cap=0.15 → debuff=0.1 applied as negative flat to ShieldMitigationBonus
-        acc.add_effect(TimingWindow::RoundStart,
-            AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round: 0.02, cap: 0.15 },
-            100.0, 5, None);
+        acc.add_effect(
+            TimingWindow::RoundStart,
+            AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
+                per_round: 0.02,
+                cap: 0.15,
+            },
+            100.0,
+            5,
+            None,
+        );
         // composed = base(0) * (1 + modifier(0)) + flat(-0.1) = -0.1
         assert!((acc.composed_shield_mitigation_bonus() + 0.1).abs() < 1e-12);
     }
@@ -2209,9 +2531,16 @@ mod tests {
     fn galaxy_additive_weapon_damage_growth_at_round_start() {
         let mut acc = EffectAccumulator::default();
         // round 4: growth = 4 * 0.02 = 0.08, ceiling 0.5 → g = 0.08
-        acc.add_effect(TimingWindow::RoundStart,
-            AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { growth_per_round: 0.02, ceiling: 0.5 },
-            100.0, 4, None);
+        acc.add_effect(
+            TimingWindow::RoundStart,
+            AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+                growth_per_round: 0.02,
+                ceiling: 0.5,
+            },
+            100.0,
+            4,
+            None,
+        );
         assert!((acc.galaxy_additive_weapon_frac() - 0.08).abs() < 1e-12);
     }
 
@@ -2223,7 +2552,13 @@ mod tests {
         acc.set_pre_attack_damage_base(1000.0);
         assert!((acc.composed_pre_attack_damage() - 1000.0).abs() < 1e-12);
         // apply a modifier on top
-        acc.add_effect(TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.2), 1000.0, 1, None);
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.2),
+            1000.0,
+            1,
+            None,
+        );
         // pre_attack_damage is in StatStacking, AttackMultiplier goes to pre_attack_modifier_sum
         // But set_pre_attack_damage_base adds to StatStacking, not to pre_attack_modifier_sum
         // So composed_pre_attack_damage should still be 1000 (stacking base)
@@ -2236,7 +2571,13 @@ mod tests {
     fn compose_attack_phase_damage_uses_correct_formula() {
         let mut acc = EffectAccumulator::default();
         // AttackPhase PierceBonus adds flat to AttackPhaseDamage stack
-        acc.add_effect(TimingWindow::AttackPhase, AbilityEffect::PierceBonus(0.2), 500.0, 1, None);
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::PierceBonus(0.2),
+            500.0,
+            1,
+            None,
+        );
         // flat = 0.2 * 500 * 0.5 = 50
         // compose_attack_phase_damage(1000) = 1000 * (1 + 0) + 50 = 1050
         let dmg = acc.compose_attack_phase_damage(1000.0);
@@ -2246,7 +2587,13 @@ mod tests {
     #[test]
     fn attack_phase_attack_multiplier_applies_to_damage_channel() {
         let mut acc = EffectAccumulator::default();
-        acc.add_effect(TimingWindow::AttackPhase, AbilityEffect::AttackMultiplier(0.3), 100.0, 1, None);
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::AttackMultiplier(0.3),
+            100.0,
+            1,
+            None,
+        );
         // compose_attack_phase_damage(1000) = 1000 * (1 + 0.3) + 0 = 1300
         let dmg = acc.compose_attack_phase_damage(1000.0);
         assert!((dmg - 1300.0).abs() < 1e-12);

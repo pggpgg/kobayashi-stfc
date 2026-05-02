@@ -745,9 +745,14 @@ mod tests {
         }"#;
         let rw: HostileRecord = serde_json::from_str(weak).unwrap();
         let rs: HostileRecord = serde_json::from_str(strong).unwrap();
-        let pw = rw.counter_pierce_damage_through_bonus(ShipType::Battleship, DefenderStats::default());
-        let ps = rs.counter_pierce_damage_through_bonus(ShipType::Battleship, DefenderStats::default());
-        assert!((pw - ps).abs() < 1e-12, "zero player defender → constant counter pierce");
+        let pw =
+            rw.counter_pierce_damage_through_bonus(ShipType::Battleship, DefenderStats::default());
+        let ps =
+            rs.counter_pierce_damage_through_bonus(ShipType::Battleship, DefenderStats::default());
+        assert!(
+            (pw - ps).abs() < 1e-12,
+            "zero player defender → constant counter pierce"
+        );
     }
 
     #[test]

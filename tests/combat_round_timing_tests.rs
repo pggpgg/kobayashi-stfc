@@ -151,7 +151,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
                 ..Default::default()
             },
         ],
-                hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "target".to_string(),
@@ -247,7 +247,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
                 ..Default::default()
             },
         ],
-                hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "t".to_string(),
@@ -316,7 +316,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".to_string(),
@@ -340,7 +340,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 1,

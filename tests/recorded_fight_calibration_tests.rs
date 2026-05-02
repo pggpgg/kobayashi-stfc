@@ -142,7 +142,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
             shots: Some(2),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 10,

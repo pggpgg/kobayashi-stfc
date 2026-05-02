@@ -120,10 +120,9 @@ pub(crate) fn prune_candidates_by_static_gates(
         .into_iter()
         .filter(|c| {
             let input = scenario_to_combat_input_from_shared(shared, c, seed);
-            let frac = crate::optimizer::matchup_priors::static_gate_fail_fraction(
-                shared,
-                &input.crew,
-            ) as f64;
+            let frac =
+                crate::optimizer::matchup_priors::static_gate_fail_fraction(shared, &input.crew)
+                    as f64;
             frac <= max_gated_fraction
         })
         .collect();

@@ -205,7 +205,12 @@ fn merge_research_conditional_crit_is_attack_phase_seat_not_profile_crit() {
     );
 
     let gates = SupportBuffResearchGateState::default();
-    let seats = research_derived_attack_phase_seats(&imported, &catalog, &gates, &std::collections::HashMap::new());
+    let seats = research_derived_attack_phase_seats(
+        &imported,
+        &catalog,
+        &gates,
+        &std::collections::HashMap::new(),
+    );
     assert_eq!(seats.len(), 1);
     assert_eq!(seats[0].seat, CrewSeat::Ship);
     assert_eq!(seats[0].ability.class, AbilityClass::ShipAbility);
@@ -256,7 +261,12 @@ fn merge_research_ns_burning_damage_is_burning_gated_attack_multiplier_not_flat_
     );
 
     let gates = SupportBuffResearchGateState::default();
-    let seats = research_derived_attack_phase_seats(&imported, &catalog, &gates, &std::collections::HashMap::new());
+    let seats = research_derived_attack_phase_seats(
+        &imported,
+        &catalog,
+        &gates,
+        &std::collections::HashMap::new(),
+    );
     assert_eq!(seats.len(), 1);
     assert_eq!(seats[0].ability.timing, TimingWindow::AttackPhase);
     match seats[0].ability.effect {

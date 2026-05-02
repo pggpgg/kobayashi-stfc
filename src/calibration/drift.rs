@@ -169,7 +169,9 @@ pub struct MetricBands {
     pub attacker_hull_remaining: Option<[f64; 2]>,
 }
 
-fn crew_for_drift(synthetic: &Option<DriftSyntheticCrew>) -> (CrewConfiguration, CrewConfiguration) {
+fn crew_for_drift(
+    synthetic: &Option<DriftSyntheticCrew>,
+) -> (CrewConfiguration, CrewConfiguration) {
     let Some(c) = synthetic else {
         return (CrewConfiguration::default(), CrewConfiguration::default());
     };

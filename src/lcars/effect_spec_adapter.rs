@@ -1132,10 +1132,19 @@ mod tests {
 
     #[test]
     fn combat_tag_to_stat_maps_expected_tags_and_returns_none_for_others() {
-        assert_eq!(combat_tag_to_stat("shieldmitigation:unmapped"), Some("shield_mitigation"));
-        assert_eq!(combat_tag_to_stat("shieldmitigation"), Some("shield_mitigation"));
+        assert_eq!(
+            combat_tag_to_stat("shieldmitigation:unmapped"),
+            Some("shield_mitigation")
+        );
+        assert_eq!(
+            combat_tag_to_stat("shieldmitigation"),
+            Some("shield_mitigation")
+        );
         assert_eq!(combat_tag_to_stat("shipdodge:unmapped"), Some("dodge"));
-        assert_eq!(combat_tag_to_stat("shieldpiercing:unmapped"), Some("pierce"));
+        assert_eq!(
+            combat_tag_to_stat("shieldpiercing:unmapped"),
+            Some("pierce")
+        );
         assert_eq!(combat_tag_to_stat("accuracy:unmapped"), Some("accuracy"));
         assert_eq!(combat_tag_to_stat("shields:unmapped"), Some("shield_hp"));
         // Economy / unmapped tags
@@ -1163,9 +1172,8 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        let spec =
-            lcars_effect_to_combat_effect_spec(&e, "test:tag:sm", "o", "ab", None, None)
-                .expect("should produce spec for shieldmitigation tag");
+        let spec = lcars_effect_to_combat_effect_spec(&e, "test:tag:sm", "o", "ab", None, None)
+            .expect("should produce spec for shieldmitigation tag");
         assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigation);
         assert_eq!(spec.trigger, AbilityTriggerSpec::RoundStart);
         let v = spec.value.as_ref().and_then(|v| v.scalar).unwrap();

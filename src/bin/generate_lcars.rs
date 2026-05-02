@@ -1069,7 +1069,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         }
         "Accuracy" => {
             let attrs = a.attributes.as_deref().unwrap_or("").trim();
-            if !a.conditions.is_empty() || !attrs.is_empty() || !op.eq_ignore_ascii_case("MultiplyAdd")
+            if !a.conditions.is_empty()
+                || !attrs.is_empty()
+                || !op.eq_ignore_ascii_case("MultiplyAdd")
             {
                 MappedEffect::Tag("accuracy:unmapped".into())
             } else {
@@ -1080,8 +1082,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("armor".into(), "add".into(), val)
         }
         "AllDefenses" => {
-            if op.eq_ignore_ascii_case("MultiplySub")
-                || op.eq_ignore_ascii_case("MultiplyBaseSub")
+            if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
                 MappedEffect::StatModify("shield_mitigation".into(), "add".into(), -val)
             } else {

@@ -779,12 +779,12 @@ fn pq_wilson_upper(wins: usize, trials: usize) -> f64 {
 pub(crate) fn run_priority_queue_scout_with_shared(
     shared: SharedScenarioData,
     candidates: &[CrewCandidate],
-    scout_cap: usize,        // full scout trial budget per surviving crew
+    scout_cap: usize, // full scout trial budget per surviving crew
     top_k: usize,
     seed: u64,
-    minimal_scout: usize,     // trials for the quick initial pass (e.g. 100)
-    selection_mult: usize,    // keep top K * selection_mult (e.g. 4)
-    abandon_margin: f64,      // gap below K‑th lower bound to abandon (e.g. 0.05)
+    minimal_scout: usize,  // trials for the quick initial pass (e.g. 100)
+    selection_mult: usize, // keep top K * selection_mult (e.g. 4)
+    abandon_margin: f64,   // gap below K‑th lower bound to abandon (e.g. 0.05)
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     let n = candidates.len();
@@ -795,25 +795,29 @@ pub(crate) fn run_priority_queue_scout_with_shared(
     let min_scout = minimal_scout.max(64).min(scout_cap.max(1));
 
     // ── Phase 1: minimal scout on all candidates ──────────────────────
-    let minimal_results =
-        run_monte_carlo_scout_phase_with_shared(
-            shared.clone(),
-            candidates,
-            min_scout,
-            seed,
-            true, // parallel
-            chain_grind.clone(),
-        );
+    let minimal_results = run_monte_carlo_scout_phase_with_shared(
+        shared.clone(),
+        candidates,
+        min_scout,
+        seed,
+        true, // parallel
+        chain_grind.clone(),
+    );
     debug_assert_eq!(minimal_results.len(), n);
 
     // Build priority scores: (index, wilson_upper)
     let mut scored: Vec<(usize, f64)> = minimal_results
         .iter()
         .enumerate()
-        .map(|(i, r)| (i, pq_wilson_upper(
-            (r.win_rate * r.trials_run as f64).round() as usize,
-            r.trials_run,
-        )))
+        .map(|(i, r)| {
+            (
+                i,
+                pq_wilson_upper(
+                    (r.win_rate * r.trials_run as f64).round() as usize,
+                    r.trials_run,
+                ),
+            )
+        })
         .collect();
 
     // Sort descending by Wilson upper bound

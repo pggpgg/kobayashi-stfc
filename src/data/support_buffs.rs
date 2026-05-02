@@ -455,7 +455,9 @@ pub fn aggregate_support_static_bonuses_split(
             continue;
         };
         match def.static_bonus_target_effective() {
-            SupportBuffStaticBonusTarget::Attacker => merge_def_static_bonuses_into(&mut attacker, def),
+            SupportBuffStaticBonusTarget::Attacker => {
+                merge_def_static_bonuses_into(&mut attacker, def)
+            }
             SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent => {
                 merge_def_static_bonuses_into(&mut defender_player, def);
             }
@@ -480,12 +482,10 @@ pub fn resolved_defender_routed_support_buff_ids(
     resolved_ids
         .iter()
         .filter(|id| {
-            catalog
-                .get(id.as_str())
-                .is_some_and(|d| {
-                    d.static_bonus_target_effective()
-                        == SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent
-                })
+            catalog.get(id.as_str()).is_some_and(|d| {
+                d.static_bonus_target_effective()
+                    == SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent
+            })
         })
         .cloned()
         .collect()
@@ -506,7 +506,8 @@ pub fn inactive_defender_static_support_buff_labels(
         let Some(def) = catalog.get(&id) else {
             continue;
         };
-        if def.static_bonus_target_effective() != SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent
+        if def.static_bonus_target_effective()
+            != SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent
         {
             continue;
         }
@@ -685,7 +686,8 @@ mod tests {
     #[test]
     fn aggregate_split_cerritos_stays_on_attacker() {
         let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
-        let (att, def) = aggregate_support_static_bonuses_split(&c, &["cerritos_support".to_string()]);
+        let (att, def) =
+            aggregate_support_static_bonuses_split(&c, &["cerritos_support".to_string()]);
         assert!(def.is_empty());
         assert!(att.contains_key("weapon_damage"));
     }

@@ -349,8 +349,12 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
             + recommendation["avg_hull_remaining"].as_f64().unwrap_or(0.0) * 0.2;
         let win_rate = recommendation["win_rate"].as_f64().unwrap_or(0.0);
         let avg_hull_remaining = recommendation["avg_hull_remaining"].as_f64().unwrap_or(0.0);
-        let wr_lo = recommendation["win_rate_ci_low"].as_f64().unwrap_or(win_rate);
-        let wr_hi = recommendation["win_rate_ci_high"].as_f64().unwrap_or(win_rate);
+        let wr_lo = recommendation["win_rate_ci_low"]
+            .as_f64()
+            .unwrap_or(win_rate);
+        let wr_hi = recommendation["win_rate_ci_high"]
+            .as_f64()
+            .unwrap_or(win_rate);
         // Interior rates are clearly combat-backed; 0% / 100% wins are common but Wilson CI span
         // still shows Monte Carlo ran (strict (0,1) misses all-wins / all-losses outcomes).
         if (0.0..1.0).contains(&win_rate)
@@ -1120,9 +1124,7 @@ async fn combat_effect_spec_debug_respects_env_gates() {
     let disabled = route_request("GET", path, "").await;
     assert_eq!(disabled.status_code, 404);
     assert!(
-        disabled
-            .body
-            .contains("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG"),
+        disabled.body.contains("KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG"),
         "{}",
         disabled.body
     );

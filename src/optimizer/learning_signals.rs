@@ -75,7 +75,10 @@ pub fn compute_learning_signals(entry: &OptimizeHistoryEntry) -> LearningSignals
 
 /// Wilson lower bound of rank-1 minus Wilson lower bound of rank-K.
 /// Large positive = clear separation. Near zero = tight race.
-fn compute_top_margin(crews: &[crate::data::optimize_history::OptimizeHistoryCrewRecord], k: usize) -> f64 {
+fn compute_top_margin(
+    crews: &[crate::data::optimize_history::OptimizeHistoryCrewRecord],
+    k: usize,
+) -> f64 {
     let limit = k.min(crews.len());
     let first_low = crews[0].win_rate_ci_low;
     let kth_low = crews[limit - 1].win_rate_ci_low;
@@ -153,7 +156,13 @@ mod tests {
     use super::*;
     use crate::data::optimize_history::OptimizeHistoryCrewRecord;
 
-    fn make_crew(captain: &str, bridge: &[&str], below: &[&str], wr: f64, wr_low: f64) -> OptimizeHistoryCrewRecord {
+    fn make_crew(
+        captain: &str,
+        bridge: &[&str],
+        below: &[&str],
+        wr: f64,
+        wr_low: f64,
+    ) -> OptimizeHistoryCrewRecord {
         OptimizeHistoryCrewRecord {
             captain: captain.to_string(),
             bridge: bridge.iter().map(|s| s.to_string()).collect(),

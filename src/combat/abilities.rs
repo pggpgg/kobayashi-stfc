@@ -557,7 +557,12 @@ mod tests {
         }
     }
 
-    fn make_ability(name: &str, class: AbilityClass, timing: TimingWindow, effect: AbilityEffect) -> Ability {
+    fn make_ability(
+        name: &str,
+        class: AbilityClass,
+        timing: TimingWindow,
+        effect: AbilityEffect,
+    ) -> Ability {
         Ability {
             name: name.to_string(),
             class,
@@ -582,35 +587,63 @@ mod tests {
 
     #[test]
     fn captain_activates_in_captain_seat() {
-        let ab = make_ability("test", AbilityClass::CaptainManeuver, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::CaptainManeuver,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let seat = make_seat(CrewSeat::Captain, ab, None);
         assert!(can_activate_in_seat(&seat));
     }
 
     #[test]
     fn bridge_ability_activates_in_bridge_seat() {
-        let ab = make_ability("test", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let seat = make_seat(CrewSeat::Bridge, ab, None);
         assert!(can_activate_in_seat(&seat));
     }
 
     #[test]
     fn below_deck_activates_in_below_deck_seat() {
-        let ab = make_ability("test", AbilityClass::BelowDeck, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::BelowDeck,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let seat = make_seat(CrewSeat::BelowDeck, ab, None);
         assert!(can_activate_in_seat(&seat));
     }
 
     #[test]
     fn captain_does_not_activate_in_bridge_seat() {
-        let ab = make_ability("test", AbilityClass::CaptainManeuver, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::CaptainManeuver,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let seat = make_seat(CrewSeat::Bridge, ab, None);
         assert!(!can_activate_in_seat(&seat));
     }
 
     #[test]
     fn boosted_non_boostable_is_filtered_out() {
-        let ab = Ability { boostable: false, ..make_ability("test", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1)) };
+        let ab = Ability {
+            boostable: false,
+            ..make_ability(
+                "test",
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::AttackMultiplier(0.1),
+            )
+        };
         let mut seat = make_seat(CrewSeat::Bridge, ab, None);
         seat.boosted = true;
         assert!(!can_activate_in_seat(&seat));
@@ -618,7 +651,12 @@ mod tests {
 
     #[test]
     fn boosted_boostable_is_allowed() {
-        let ab = make_ability("test", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let mut seat = make_seat(CrewSeat::Bridge, ab, None);
         seat.boosted = true;
         assert!(can_activate_in_seat(&seat));
@@ -626,7 +664,12 @@ mod tests {
 
     #[test]
     fn ship_ability_activates_in_ship_seat() {
-        let ab = make_ability("test", AbilityClass::ShipAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let seat = make_seat(CrewSeat::Ship, ab, None);
         assert!(can_activate_in_seat(&seat));
     }
@@ -635,8 +678,18 @@ mod tests {
 
     #[test]
     fn active_effects_filters_by_timing() {
-        let ab1 = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
-        let ab2 = make_ability("b", AbilityClass::BridgeAbility, TimingWindow::RoundStart, AbilityEffect::PierceBonus(0.05));
+        let ab1 = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
+        let ab2 = make_ability(
+            "b",
+            AbilityClass::BridgeAbility,
+            TimingWindow::RoundStart,
+            AbilityEffect::PierceBonus(0.05),
+        );
         let crew = CrewConfiguration {
             seats: vec![
                 make_seat(CrewSeat::Bridge, ab1, None),
@@ -650,7 +703,12 @@ mod tests {
 
     #[test]
     fn active_effects_returns_empty_when_no_match() {
-        let ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
             seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
         };
@@ -660,7 +718,12 @@ mod tests {
 
     #[test]
     fn active_effects_respects_seat_activation_rules() {
-        let ab_captain = make_ability("cap", AbilityClass::CaptainManeuver, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab_captain = make_ability(
+            "cap",
+            AbilityClass::CaptainManeuver,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
             seats: vec![make_seat(CrewSeat::Bridge, ab_captain, None)], // wrong seat
         };
@@ -672,9 +735,16 @@ mod tests {
 
     #[test]
     fn filter_no_condition_always_passes() {
-        let ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let filtered = filter_effects_by_condition(&effects, &ctx_default());
@@ -683,10 +753,17 @@ mod tests {
 
     #[test]
     fn filter_literal_true_passes() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::LiteralBool(true));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let filtered = filter_effects_by_condition(&effects, &ctx_default());
@@ -695,10 +772,17 @@ mod tests {
 
     #[test]
     fn filter_literal_false_filters_out() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::LiteralBool(false));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let filtered = filter_effects_by_condition(&effects, &ctx_default());
@@ -707,10 +791,17 @@ mod tests {
 
     #[test]
     fn filter_morale_active_gates_when_morale_off() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::RoundStart, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::RoundStart,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::MoraleActive);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::RoundStart,
         );
         let ctx = ctx_default(); // morale_active = false
@@ -720,10 +811,17 @@ mod tests {
 
     #[test]
     fn filter_morale_active_passes_when_morale_on() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::RoundStart, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::RoundStart,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::MoraleActive);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::RoundStart,
         );
         let mut ctx = ctx_default();
@@ -734,10 +832,17 @@ mod tests {
 
     #[test]
     fn filter_defender_burning_gates_correctly() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::DefenderBurning);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         // off
@@ -750,10 +855,17 @@ mod tests {
 
     #[test]
     fn filter_defender_hull_breach_gates_correctly() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::DefenderHullBreach);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -763,10 +875,17 @@ mod tests {
 
     #[test]
     fn filter_defender_assimilated_gates_correctly() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::DefenderAssimilated);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -776,10 +895,17 @@ mod tests {
 
     #[test]
     fn filter_attacker_burning_gates_correctly() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::AttackerBurning);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -789,10 +915,17 @@ mod tests {
 
     #[test]
     fn filter_attacker_hull_breach_gates_correctly() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::AttackerHullBreach);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -802,10 +935,17 @@ mod tests {
 
     #[test]
     fn filter_round_range_inside_passes() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::RoundRange { min: 1, max: 5 });
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -815,10 +955,17 @@ mod tests {
 
     #[test]
     fn filter_round_range_outside_filters_out() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::RoundRange { min: 1, max: 5 });
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -828,10 +975,19 @@ mod tests {
 
     #[test]
     fn filter_defender_faction_is_matches() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
-        ab.condition = Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
+        ab.condition = Some(AbilityCondition::DefenderFactionIs(
+            OpponentFactionTag::Klingon,
+        ));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -841,10 +997,19 @@ mod tests {
 
     #[test]
     fn filter_defender_faction_is_mismatch_filters_out() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
-        ab.condition = Some(AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
+        ab.condition = Some(AbilityCondition::DefenderFactionIs(
+            OpponentFactionTag::Klingon,
+        ));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         assert!(filter_effects_by_condition(&effects, &ctx_default()).is_empty());
@@ -852,10 +1017,17 @@ mod tests {
 
     #[test]
     fn filter_defender_ship_type_is_matches() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::DefenderShipTypeIs(ShipType::Explorer));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -865,27 +1037,44 @@ mod tests {
 
     #[test]
     fn filter_and_combines_conditions() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::And(vec![
             AbilityCondition::LiteralBool(true),
             AbilityCondition::LiteralBool(true),
         ]));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
-        assert_eq!(filter_effects_by_condition(&effects, &ctx_default()).len(), 1);
+        assert_eq!(
+            filter_effects_by_condition(&effects, &ctx_default()).len(),
+            1
+        );
     }
 
     #[test]
     fn filter_and_fails_when_one_is_false() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::And(vec![
             AbilityCondition::LiteralBool(true),
             AbilityCondition::LiteralBool(false),
         ]));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         assert!(filter_effects_by_condition(&effects, &ctx_default()).is_empty());
@@ -893,39 +1082,71 @@ mod tests {
 
     #[test]
     fn filter_or_passes_when_one_is_true() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::Or(vec![
             AbilityCondition::LiteralBool(false),
             AbilityCondition::LiteralBool(true),
         ]));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
-        assert_eq!(filter_effects_by_condition(&effects, &ctx_default()).len(), 1);
+        assert_eq!(
+            filter_effects_by_condition(&effects, &ctx_default()).len(),
+            1
+        );
     }
 
     #[test]
     fn filter_not_inverts_condition() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
-        ab.condition = Some(AbilityCondition::Not(Box::new(AbilityCondition::LiteralBool(false))));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
+        ab.condition = Some(AbilityCondition::Not(Box::new(
+            AbilityCondition::LiteralBool(false),
+        )));
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
-        assert_eq!(filter_effects_by_condition(&effects, &ctx_default()).len(), 1);
+        assert_eq!(
+            filter_effects_by_condition(&effects, &ctx_default()).len(),
+            1
+        );
     }
 
     #[test]
     fn filter_defender_is_npc_hostile_gates() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::DefenderIsNpcHostile);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         // default ctx has defender_is_npc_hostile = true
-        assert_eq!(filter_effects_by_condition(&effects, &ctx_default()).len(), 1);
+        assert_eq!(
+            filter_effects_by_condition(&effects, &ctx_default()).len(),
+            1
+        );
         let mut ctx = ctx_default();
         ctx.defender_is_npc_hostile = false;
         assert!(filter_effects_by_condition(&effects, &ctx).is_empty());
@@ -933,10 +1154,17 @@ mod tests {
 
     #[test]
     fn filter_defender_is_player_ship_gates() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::DefenderIsPlayerShip);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -946,14 +1174,24 @@ mod tests {
 
     #[test]
     fn filter_attacker_officer_tal_not_on_bridge_gates() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         ab.condition = Some(AbilityCondition::AttackerOfficerTalNotOnBridge);
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         // default: tal not on bridge → true
-        assert_eq!(filter_effects_by_condition(&effects, &ctx_default()).len(), 1);
+        assert_eq!(
+            filter_effects_by_condition(&effects, &ctx_default()).len(),
+            1
+        );
         let mut ctx = ctx_default();
         ctx.attacker_tal_assigned_captain_or_bridge = true;
         assert!(filter_effects_by_condition(&effects, &ctx).is_empty());
@@ -961,10 +1199,20 @@ mod tests {
 
     #[test]
     fn filter_stat_below_hull_pct_passes_when_below() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
-        ab.condition = Some(AbilityCondition::StatBelow { stat: "hull_hp".to_string(), threshold_pct: 0.5 });
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
+        ab.condition = Some(AbilityCondition::StatBelow {
+            stat: "hull_hp".to_string(),
+            threshold_pct: 0.5,
+        });
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
         let mut ctx = ctx_default();
@@ -974,24 +1222,48 @@ mod tests {
 
     #[test]
     fn filter_stat_below_hull_pct_fails_when_above() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
-        ab.condition = Some(AbilityCondition::StatBelow { stat: "hull_hp".to_string(), threshold_pct: 0.5 });
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
+        ab.condition = Some(AbilityCondition::StatBelow {
+            stat: "hull_hp".to_string(),
+            threshold_pct: 0.5,
+        });
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
-        assert!(filter_effects_by_condition(&effects, &ctx_default()).is_empty()); // 1.0 > 0.5
+        assert!(filter_effects_by_condition(&effects, &ctx_default()).is_empty());
+        // 1.0 > 0.5
     }
 
     #[test]
     fn filter_stat_above_shield_pct_passes_when_above() {
-        let mut ab = make_ability("a", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
-        ab.condition = Some(AbilityCondition::StatAbove { stat: "shield_hp".to_string(), threshold_pct: 0.7 });
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
+        ab.condition = Some(AbilityCondition::StatAbove {
+            stat: "shield_hp".to_string(),
+            threshold_pct: 0.7,
+        });
         let effects = active_effects_for_timing(
-            &CrewConfiguration { seats: vec![make_seat(CrewSeat::Bridge, ab, None)] },
+            &CrewConfiguration {
+                seats: vec![make_seat(CrewSeat::Bridge, ab, None)],
+            },
             TimingWindow::CombatBegin,
         );
-        assert_eq!(filter_effects_by_condition(&effects, &ctx_default()).len(), 1); // 1.0 > 0.7
+        assert_eq!(
+            filter_effects_by_condition(&effects, &ctx_default()).len(),
+            1
+        ); // 1.0 > 0.7
     }
 
     // ── apply_duplicate_officer_policy ──
@@ -1005,7 +1277,12 @@ mod tests {
 
     #[test]
     fn duplicate_policy_no_duplicates_preserves_all() {
-        let ab = make_ability("test", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
             seats: vec![
                 make_seat(CrewSeat::Bridge, ab.clone(), Some("officer_a")),
@@ -1018,7 +1295,12 @@ mod tests {
 
     #[test]
     fn duplicate_policy_removes_later_group_with_same_officer() {
-        let ab = make_ability("test", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
             seats: vec![
                 // First officer "dup" (group 1)
@@ -1030,14 +1312,23 @@ mod tests {
             ],
         };
         let result = apply_duplicate_officer_policy(&crew);
-        assert_eq!(result.seats.len(), 2, "third seat with duplicate 'dup' should be dropped");
+        assert_eq!(
+            result.seats.len(),
+            2,
+            "third seat with duplicate 'dup' should be dropped"
+        );
         assert_eq!(result.seats[0].officer_id.as_deref(), Some("dup"));
         assert_eq!(result.seats[1].officer_id.as_deref(), Some("other"));
     }
 
     #[test]
     fn duplicate_policy_none_officer_id_always_included() {
-        let ab = make_ability("test", AbilityClass::BridgeAbility, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
             seats: vec![
                 make_seat(CrewSeat::Bridge, ab.clone(), None),
@@ -1052,7 +1343,12 @@ mod tests {
 
     #[test]
     fn tal_on_captain_is_detected() {
-        let ab = make_ability("tal_ability", AbilityClass::CaptainManeuver, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "tal_ability",
+            AbilityClass::CaptainManeuver,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
             seats: vec![make_seat(CrewSeat::Captain, ab, Some(TAL_OFFICER_LCARS_ID))],
         };
@@ -1061,16 +1357,30 @@ mod tests {
 
     #[test]
     fn tal_on_below_deck_is_not_detected() {
-        let ab = make_ability("tal_ability", AbilityClass::BelowDeck, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "tal_ability",
+            AbilityClass::BelowDeck,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
-            seats: vec![make_seat(CrewSeat::BelowDeck, ab, Some(TAL_OFFICER_LCARS_ID))],
+            seats: vec![make_seat(
+                CrewSeat::BelowDeck,
+                ab,
+                Some(TAL_OFFICER_LCARS_ID),
+            )],
         };
         assert!(!attacker_crew_tal_assigned_captain_or_bridge(&crew));
     }
 
     #[test]
     fn no_tal_returns_false() {
-        let ab = make_ability("test", AbilityClass::CaptainManeuver, TimingWindow::CombatBegin, AbilityEffect::AttackMultiplier(0.1));
+        let ab = make_ability(
+            "test",
+            AbilityClass::CaptainManeuver,
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(0.1),
+        );
         let crew = CrewConfiguration {
             seats: vec![make_seat(CrewSeat::Captain, ab, Some("other_officer"))],
         };
@@ -1083,13 +1393,17 @@ mod tests {
     fn sum_mitigation_additive_sums_values() {
         let effects = vec![
             ActiveAbilityEffect {
-                ability_name: "a".into(), officer_id: None,
-                effect: AbilityEffect::MitigationAdditive(0.1), boosted: false,
+                ability_name: "a".into(),
+                officer_id: None,
+                effect: AbilityEffect::MitigationAdditive(0.1),
+                boosted: false,
                 condition: None,
             },
             ActiveAbilityEffect {
-                ability_name: "b".into(), officer_id: None,
-                effect: AbilityEffect::MitigationAdditive(0.05), boosted: false,
+                ability_name: "b".into(),
+                officer_id: None,
+                effect: AbilityEffect::MitigationAdditive(0.05),
+                boosted: false,
                 condition: None,
             },
         ];
@@ -1100,13 +1414,17 @@ mod tests {
     fn sum_mitigation_additive_ignores_non_mitigation_effects() {
         let effects = vec![
             ActiveAbilityEffect {
-                ability_name: "a".into(), officer_id: None,
-                effect: AbilityEffect::AttackMultiplier(0.1), boosted: false,
+                ability_name: "a".into(),
+                officer_id: None,
+                effect: AbilityEffect::AttackMultiplier(0.1),
+                boosted: false,
                 condition: None,
             },
             ActiveAbilityEffect {
-                ability_name: "b".into(), officer_id: None,
-                effect: AbilityEffect::MitigationAdditive(0.05), boosted: false,
+                ability_name: "b".into(),
+                officer_id: None,
+                effect: AbilityEffect::MitigationAdditive(0.05),
+                boosted: false,
                 condition: None,
             },
         ];
@@ -1118,14 +1436,28 @@ mod tests {
     #[test]
     fn hostile_crit_reduction_returns_max_reduction_and_duration() {
         let ab1 = {
-            let mut ab = make_ability("a", AbilityClass::ShipAbility, TimingWindow::CombatBegin,
-                AbilityEffect::HostileCritDamageReduction { reduction: 0.05, duration_rounds: 3 });
+            let mut ab = make_ability(
+                "a",
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: 0.05,
+                    duration_rounds: 3,
+                },
+            );
             ab.condition = None;
             ab
         };
         let ab2 = {
-            let mut ab = make_ability("b", AbilityClass::ShipAbility, TimingWindow::CombatBegin,
-                AbilityEffect::HostileCritDamageReduction { reduction: 0.08, duration_rounds: 5 });
+            let mut ab = make_ability(
+                "b",
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: 0.08,
+                    duration_rounds: 5,
+                },
+            );
             ab.condition = None;
             ab
         };
@@ -1142,8 +1474,15 @@ mod tests {
 
     #[test]
     fn hostile_crit_reduction_respects_condition_gating() {
-        let mut ab = make_ability("a", AbilityClass::ShipAbility, TimingWindow::CombatBegin,
-            AbilityEffect::HostileCritDamageReduction { reduction: 0.05, duration_rounds: 3 });
+        let mut ab = make_ability(
+            "a",
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileCritDamageReduction {
+                reduction: 0.05,
+                duration_rounds: 3,
+            },
+        );
         ab.condition = Some(AbilityCondition::LiteralBool(false));
         let crew = CrewConfiguration {
             seats: vec![make_seat(CrewSeat::Ship, ab, None)],

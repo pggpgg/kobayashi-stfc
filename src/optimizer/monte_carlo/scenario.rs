@@ -43,7 +43,10 @@ use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
     RESEARCH_IMPORTED, ROSTER_IMPORTED,
 };
-use crate::data::research::{load_research_catalog, load_research_canonical_overrides, DEFAULT_RESEARCH_CATALOG_PATH, DEFAULT_RESEARCH_CANONICAL_PATH};
+use crate::data::research::{
+    load_research_canonical_overrides, load_research_catalog, DEFAULT_RESEARCH_CANONICAL_PATH,
+    DEFAULT_RESEARCH_CATALOG_PATH,
+};
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use crate::data::support_buffs::{self, AppliedSupportBuffTrace, SupportBuffCatalog};
@@ -557,17 +560,15 @@ pub(crate) struct CombatSimulationInput {
     pub attacker_roster_officer_ids: Vec<String>,
 }
 
-fn apply_support_defender_static_if_pvp(
-    shared: &SharedScenarioData,
-    defender: &mut Combatant,
-) {
+fn apply_support_defender_static_if_pvp(shared: &SharedScenarioData, defender: &mut Combatant) {
     if shared.defender_opponent != DefenderOpponent::Player {
         return;
     }
     if shared.support_defender_static_buffs.is_empty() {
         return;
     }
-    *defender = apply_static_buffs_to_combatant(defender.clone(), &shared.support_defender_static_buffs);
+    *defender =
+        apply_static_buffs_to_combatant(defender.clone(), &shared.support_defender_static_buffs);
 }
 
 /// Build combat input from pre-resolved shared data and candidate. Resolves ship/hostile only once per run.
@@ -1355,7 +1356,12 @@ pub(crate) fn build_shared_scenario_data_standalone(
 
     let research_derived_seats = if let Some(ref cat) = shared_research_catalog {
         merge_research_bonuses_into_profile(&mut profile, &imported_research, cat);
-        research_derived_attack_phase_seats(&imported_research, cat, &support_research_gates, &canonical_overrides)
+        research_derived_attack_phase_seats(
+            &imported_research,
+            cat,
+            &support_research_gates,
+            &canonical_overrides,
+        )
     } else {
         Vec::new()
     };
@@ -1366,7 +1372,9 @@ pub(crate) fn build_shared_scenario_data_standalone(
         None
     };
     let (mut support_static_buffs, support_defender_static_buffs) = match support_cat.as_ref() {
-        Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
+        Some(c) => {
+            support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs)
+        }
         None => (HashMap::new(), HashMap::new()),
     };
     if let Some(ref cat) = shared_research_catalog {
@@ -1692,7 +1700,12 @@ pub(crate) fn build_shared_scenario_data_from_registry(
 
     let research_derived_seats = if let Some(catalog) = registry.research_catalog() {
         merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
-        research_derived_attack_phase_seats(&imported_research, catalog, &support_research_gates, &HashMap::new())
+        research_derived_attack_phase_seats(
+            &imported_research,
+            catalog,
+            &support_research_gates,
+            &HashMap::new(),
+        )
     } else {
         Vec::new()
     };
@@ -1704,7 +1717,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     };
     let (mut support_static_buffs, support_defender_static_buffs) =
         match registry.support_buffs_catalog() {
-            Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
+            Some(c) => {
+                support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs)
+            }
             None => (HashMap::new(), HashMap::new()),
         };
     if let Some(cat) = registry.research_catalog() {

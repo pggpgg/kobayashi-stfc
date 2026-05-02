@@ -8441,16 +8441,17 @@
       "abilities": [
         {
           "ability_id": "2079302126",
-          "attributes": "percentage=0.35",
+          "attributes": "percentage=0.35,max_level=51",
           "chance_by_rank": [
             1.0,
             1.0,
             1.0
           ],
           "conditions": [
-            "HullHealthBelowStartOfCombat"
+            "HullHealthBelowStartOfCombat",
+            "TargetMaxLevel"
           ],
-          "description": "As long as the ship's Hull Health is under 35% of its value at the beginning of combat, Leslie restores it by X  at the end of each round.",
+          "description": "As long as the ship's Hull Health is under 35% of its value at the beginning of combat, Leslie restores it by X at the end of each round. Works against Hostiles of level 51 and under.",
           "modifier": "HullHPRepair",
           "operation": "MultiplyAdd",
           "slot": "captain",

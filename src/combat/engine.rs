@@ -20,8 +20,8 @@ use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, filter_effects_by_condition,
     hostile_crit_damage_reduction_from_crew, sum_accuracy_bonus, sum_dodge_bonus,
-    sum_mitigation_additive, AbilityEffect,
-    ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
+    sum_mitigation_additive, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
+    TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -40,9 +40,7 @@ use crate::combat::events::round_f64;
 use crate::combat::evolutionary_assimilation::evolutionary_assimilation_instant_loss;
 use crate::combat::proc::{accumulate_proc_attack_effects, roll_weapon_intrinsic_proc};
 use crate::combat::rng::Rng;
-use crate::combat::simd_damage_kernel::{
-    avx2_supported, compute_damage_after_apex_batch,
-};
+use crate::combat::simd_damage_kernel::{avx2_supported, compute_damage_after_apex_batch};
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
 
 /// Immutable combat setup precomputed once per crew, reused across multiple trials with different seeds.
@@ -117,8 +115,7 @@ pub fn build_combat_setup(
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
-    let combat_begin_effects =
-        active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
+    let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_ctx = CombatContext {
         round_index: 0,
         defender_hull_pct: 1.0,
@@ -256,8 +253,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     let mut rng = Rng::new(seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
-    let use_experimental_simd_damage_after_apex =
-        avx2_supported() && !trace.is_enabled();
+    let use_experimental_simd_damage_after_apex = avx2_supported() && !trace.is_enabled();
     let mut total_hull_damage = 0.0;
     let mut total_shield_damage = 0.0;
     let mut defender_shield_remaining = defender.shield_health.max(0.0);
@@ -315,8 +311,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         || setup.evo_assim_instant_loss
     {
         let total_attacker_hull_damage = max_att_hull;
-        let attacker_hull_remaining =
-            (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
         return SimulationResult {
             total_damage: 0.0,
             attacker_won: false,
@@ -661,8 +656,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 filter_effects_by_condition(defender_round_start_effects, &combat_ctx);
             let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
             for effect in &defender_rstart_filtered {
-                let effective_effect =
-                    scale_effect(effect.effect, defender_rstart_assimilated);
+                let effective_effect = scale_effect(effect.effect, defender_rstart_assimilated);
                 if let AbilityEffect::ShotsBonus {
                     chance,
                     bonus_pct,
@@ -673,8 +667,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     let triggered = shots_roll < chance.clamp(0.0, 1.0);
                     if triggered {
                         let duration = duration_rounds.max(1);
-                        defender_shots_bonus_entries
-                            .push((bonus_pct, round_index + duration));
+                        defender_shots_bonus_entries.push((bonus_pct, round_index + duration));
                     }
                     trace.record_if(|| CombatEvent {
                         event_type: "defender_shots_bonus_trigger".to_string(),
@@ -689,14 +682,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             ("roll".to_string(), Value::from(round_f64(shots_roll))),
                             ("triggered".to_string(), Value::Bool(triggered)),
                             ("chance".to_string(), Value::from(round_f64(chance))),
-                            (
-                                "bonus_pct".to_string(),
-                                Value::from(round_f64(bonus_pct)),
-                            ),
-                            (
-                                "duration_rounds".to_string(),
-                                Value::from(duration_rounds),
-                            ),
+                            ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                            ("duration_rounds".to_string(), Value::from(duration_rounds)),
                         ]),
                     });
                 }
@@ -822,12 +809,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         // Prune expired shots bonuses and compute B_shots(r) for this round.
         shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
         let b_shots: f64 = shots_bonus_entries.iter().map(|(b, _)| b).sum();
-        defender_shots_bonus_entries
-            .retain(|(_, expires)| *expires >= round_index);
-        let def_b_shots: f64 = defender_shots_bonus_entries
-            .iter()
-            .map(|(b, _)| b)
-            .sum();
+        defender_shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
+        let def_b_shots: f64 = defender_shots_bonus_entries.iter().map(|(b, _)| b).sum();
 
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
         let round_end_filtered = filter_effects_by_condition(round_end_effects, &combat_ctx);
@@ -2610,24 +2593,20 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         let ce_hull_regen_frac = combat_end_acc.composed_hull_regen_max_fraction();
         let ce_shield_heal =
             ce_shield_regen + ce_shield_regen_frac * attacker.shield_health.max(0.0);
-        let ce_hull_heal =
-            ce_hull_regen + ce_hull_regen_frac * attacker.hull_health.max(0.0);
+        let ce_hull_heal = ce_hull_regen + ce_hull_regen_frac * attacker.hull_health.max(0.0);
         attacker_shield_remaining =
             (attacker_shield_remaining + ce_shield_heal).min(attacker.shield_health.max(0.0));
-        total_attacker_hull_damage =
-            (total_attacker_hull_damage - ce_hull_heal).max(0.0);
+        total_attacker_hull_damage = (total_attacker_hull_damage - ce_hull_heal).max(0.0);
 
         // Apply CombatEnd damage from attacker crew effects to the defender.
-        let ce_defender_damage =
-            combat_end_acc.compose_round_end_damage(0.0);
+        let ce_defender_damage = combat_end_acc.compose_round_end_damage(0.0);
         if ce_defender_damage > 0.0 {
             let (dmg_to_shield, dmg_to_hull) = apply_shield_hull_split(
                 ce_defender_damage,
                 defender.shield_mitigation,
                 defender_shield_remaining,
             );
-            defender_shield_remaining =
-                (defender_shield_remaining - dmg_to_shield).max(0.0);
+            defender_shield_remaining = (defender_shield_remaining - dmg_to_shield).max(0.0);
             total_shield_damage += dmg_to_shield;
             total_hull_damage += dmg_to_hull;
         }
@@ -2686,7 +2665,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         events: trace.events(),
         conqueror_borg_beam_suppression,
     }
-    }
+}
 
 /// Batch-process M combat trials from a single precomputed setup with different seeds.
 /// Returns M results in the order of the provided seeds.

@@ -96,7 +96,7 @@ fn defender_counter_respects_weapon_base_shots() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let mut hostile_three = hostile_one.clone();
     hostile_three.id = "h3".into();
@@ -152,7 +152,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
             shots: Some(3),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let hostile = Combatant {
         id: "hostile".into(),
@@ -414,7 +414,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let attacker_crew = CrewConfiguration { seats: vec![] };
     let defender_crew = CrewConfiguration {
@@ -508,7 +508,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "def".to_string(),
@@ -532,7 +532,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let attacker_crew = CrewConfiguration { seats: vec![] };
     let defender_crew_sb = CrewConfiguration {
@@ -633,7 +633,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
                 ..Default::default()
             },
         ],
-                hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "npc".to_string(),
@@ -657,7 +657,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let cfg = SimulationConfig {
         rounds: 1,
@@ -1367,7 +1367,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1466,7 +1466,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1729,7 +1729,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1842,7 +1842,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -1948,7 +1948,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2055,7 +2055,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2163,7 +2163,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2298,7 +2298,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2420,7 +2420,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2444,7 +2444,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let config = SimulationConfig {
         rounds: 3,
@@ -2514,7 +2514,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -2538,7 +2538,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -5616,7 +5616,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
                 ..Default::default()
             },
         ],
-                hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5707,7 +5707,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
                 ..Default::default()
             },
         ],
-                hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -5789,7 +5789,7 @@ fn shots_bonus_increases_damage() {
             shots: None,
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -6204,7 +6204,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "defender".to_string(),
@@ -6503,7 +6503,7 @@ fn defender_round_start_hull_regen_heals_defender() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".into(),
@@ -6614,7 +6614,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let defender = Combatant {
         id: "hostile".into(),
@@ -6638,7 +6638,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let hugh_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6728,7 +6728,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let attacker = Combatant {
         id: "player".to_string(),
@@ -6752,7 +6752,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let iso_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6832,7 +6832,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let attacker = Combatant {
         id: "player".to_string(),
@@ -6856,7 +6856,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
             shots: Some(1),
             ..Default::default()
         }],
-            hostile_mitigation_params: None,
+        hostile_mitigation_params: None,
     };
     let heal_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {

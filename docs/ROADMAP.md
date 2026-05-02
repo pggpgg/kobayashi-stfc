@@ -2,18 +2,6 @@
 
 Planned features and priorities for Kobayashi.
 
-## Recently shipped
-
-- Optimize **matchup priors** from `optimize_history.json` are filtered with the same roster/seat legality gate as warm-start and heuristic seeds (`enforce_candidate_legality_with_registry` in `src/server/api/execution.rs`). Shared roster-import fallback warnings live in `roster_import_fallback_warning_message` (`src/data/import.rs`).
-- **Officer stat compounding:** `officer_attack` / `officer_defense` / `officer_health` merge as distinct profile buckets (syndicate Officer_Stats columns; Command Center / Academy / DTI HQ / War Room / Mess Hall / Facade building buffs via `targets[]` in `data/buildings/buff_id_to_semantics.json`). `[apply_profile_to_attacker](../src/data/profile.rs)` compounds them with ship-level `weapon_damage` / `hull_hp` / `shield_mitigation` instead of folding officer stats into those keys.
-- Strict building validation report: `validate_buildings_dataset` now emits one `Warning` per distinct opaque `buff_*` stat and per unmapped `conditions` token, and `cargo run --bin validate_data -- --strict` (or `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`) upgrades those rows to errors so CI / strict reports fail until coverage is extended. The shared scan helper backs both `report_building_mapping_gaps` and `validate_data`.
-- Roster guardrails in roster mode now block duplicate/off-roster/wrong-seat crews across preflight and backend validation, with fallback warnings for missing/invalid roster imports.
-- `fast_discovery` is wired through optimize (heuristics expansion merged into the warm-start path), with workspace Strategy UI and OpenAPI support.
-- CombatEffectSpec adapter cutover shipped for dynamic officer effect compilation (`resolve_effect` / `resolve_officer_ability`).
-- Buildings summary endpoint and UI ship today via `GET /api/profile/buildings-summary` and the Profile view.
-- Research-side `apex_shred` / `apex_barrier` normalization is wired through profile merge and attacker application.
-- **Novelty-aware optimize ranking:** `POST /api/optimize` supports maximal marginal relevance (MMR) on officer-set Jaccard similarity (`novelty_lambda`, optional `novelty_diverse_top` / `novelty_pool`). The MMR relevance term matches `[rank_results](../src/optimizer/ranking.rs)` strength ordering (non-chain blend + chain lexicographic proxy). Optional `novelty_history_anchors` treats persisted top crews from `profiles/{id}/optimize_history.json` (matching `optimize_cache_key` and chain fingerprint via `[novelty_anchor_rows_for_profile_cache_key](../src/data/optimize_history.rs)`) as redundancy-only anchors—the UI exposes this when λ is set and an active profile is selected.
-
 ## Codex Speed Demon
 
 Speeding up crew discovery is primarily a search-efficiency problem, not a raw simulator-throughput problem. The simulator is already fast; the roadmap here is about spending Monte Carlo budget on the most promising crews first and learning from prior runs.
@@ -29,8 +17,6 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 
 ## Combat buffs support
 
-- **Data:** `[data/support_buffs.json](../data/support_buffs.json)` defines selectable ids (aligned with `[frontend/src/lib/supportBuffs.ts](../frontend/src/lib/supportBuffs.ts)` and constants in `[src/data/profile.rs](../src/data/profile.rs)`). Each entry may include `research_levels` (`rid` + `level`) merged in-memory via the same path as synced research, and optional `static_bonuses` (engine keys consumed by `apply_static_buffs_to_combatant` / mitigation). `exclusive_group` + `priority` resolve overlapping picks (e.g. Titan-A fort vs max).
-- **API:** Optional `support_buffs: string[]` on simulate, optimize, compare crews, and replay-seed; capped length with unknown-id warnings in JSON responses.
 - **Defender-side buffs & debuffs:** **Partial** — Catalog field `static_bonus_target: defender_if_player_opponent` (`[data/support_buffs.json](../data/support_buffs.json)`) routes **direct** `static_bonuses` onto the defender `[Combatant](src/combat/types.rs)` when the API uses `defender_opponent: player` (see `[aggregate_support_static_bonuses_split](../src/data/support_buffs.rs)`, `[SharedScenarioData::support_defender_static_buffs](../src/optimizer/monte_carlo/scenario.rs)`). Titan-A Fortify / Max Fortify, Defiant Reinforce, and placeholder `mantis_sting` use this path; Cerritos remains attacker-routed. **Still open:** support-gated **research** augmentation from `augment_static_buffs_with_support_gated_research` stays on the attacker merge; hostile-applied modifiers and full Mantis combat stats remain TBD.
 
 ---
@@ -142,3 +128,4 @@ Research sync + catalog merge are in place for ship-combat stats; remaining road
 - **Other combat stats** — Any future stat keys must be added to `normalize_profile_combat_stat` and wired in `apply_profile_to_attacker` / `apply_static_buffs_to_combatant` (or the mitigation path) before research mappings affect simulation.
 - **Conditional bonuses** — Armada-, class-, PvP-, or faction-scoped lines may be mapped as **global** ship bonuses when descriptions look generic; tightening requires engine/scenario context or buff-level overrides in `data/research/buff_id_to_stat.json`.
 - **Catalog refresh** — After upstream drops, re-run `fetch_stfcspace_research.mjs` then `import_stfcspace_research.mjs`; use `--dump-unmapped` to extend `data/research/buff_id_to_stat.json` / `loca_id_to_stat.json` for buff ids that still do not resolve.
+

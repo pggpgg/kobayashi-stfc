@@ -61285,9 +61285,9 @@ officers:
         - 0.05
         chance_values: null
       condition:
-        type: stat_below
-        stat: attacker_hull_hp
-        threshold_pct: 0.35
+        type: and
+        stat: null
+        threshold_pct: null
         min: null
         max: null
         faction: null
@@ -61299,7 +61299,37 @@ officers:
         ship_id: null
         enemy_type: null
         battle_types: null
-        conditions: null
+        conditions:
+        - type: defender_level_at_most
+          stat: null
+          threshold_pct: null
+          min: null
+          max: 51
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: null
+          enemy_type: null
+          battle_types: null
+          conditions: null
+        - type: stat_below
+          stat: attacker_hull_hp
+          threshold_pct: 0.35
+          min: null
+          max: null
+          faction: null
+          group: null
+          min_members: null
+          tag: null
+          ship_type: null
+          faction_id: null
+          ship_id: null
+          enemy_type: null
+          battle_types: null
+          conditions: null
       chance: null
       multiplier: null
       tag: null

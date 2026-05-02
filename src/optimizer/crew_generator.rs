@@ -711,11 +711,7 @@ impl CrewGenerator {
         let cache_key = OfficerPoolCacheKey {
             only_below_decks_with_ability: self.strategy.only_below_decks_with_ability,
             below_decks_slots: self.strategy.below_decks_slots,
-            roster_profile_id: self
-                .strategy
-                .roster_profile_id
-                .clone()
-                .unwrap_or_default(),
+            roster_profile_id: self.strategy.roster_profile_id.clone().unwrap_or_default(),
             constraints_fingerprint: constraints_fingerprint(self.strategy.constraints.as_ref()),
             from_registry,
         };
@@ -1211,12 +1207,7 @@ fn sampled_candidates(
                     (0..below_decks.len())
                         .step_by(stride)
                         .filter(|&i| {
-                            !name_conflicts_bridge_captain(
-                                below_decks[i].as_str(),
-                                captain,
-                                b1,
-                                b2,
-                            )
+                            !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
                         })
                         .collect()
                 };

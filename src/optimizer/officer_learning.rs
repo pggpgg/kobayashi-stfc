@@ -118,7 +118,12 @@ impl OfficerPerformanceScores {
 
     /// Compute relative weights for a list of officer names (uniform across factions/ship types
     /// when no specific context is available). Each weight is `score / sum(scores)`.
-    fn officer_weights(&self, names: &[String], hostile_faction: &str, ship_type: &str) -> Vec<f64> {
+    fn officer_weights(
+        &self,
+        names: &[String],
+        hostile_faction: &str,
+        ship_type: &str,
+    ) -> Vec<f64> {
         let raw: Vec<f64> = names
             .iter()
             .map(|n| self.get_score(n, hostile_faction, ship_type))
@@ -431,7 +436,7 @@ mod tests {
     #[test]
     fn epsilon_greedy_favors_high_scoring_officers() {
         let mut scores = OfficerPerformanceScores::with_params(0.01, 0.0, 1.0); // epsilon=0, always weighted
-        // Give "Officer9" a very high score
+                                                                                // Give "Officer9" a very high score
         let key = OfficerScoreKey {
             officer_name: "Officer9".into(),
             hostile_faction: "swarm".into(),
@@ -460,8 +465,7 @@ mod tests {
         let mut count_3 = 0;
         let trials = 500;
         for _ in 0..trials {
-            let selected =
-                weighted_sample_without_replacement(&weights, 2, &mut rng);
+            let selected = weighted_sample_without_replacement(&weights, 2, &mut rng);
             if selected.contains(&3) {
                 count_3 += 1;
             }

@@ -1510,7 +1510,10 @@ pub fn research_derived_attack_phase_seats(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
     gates: &SupportBuffResearchGateState,
-    canonical_overrides: &std::collections::HashMap<i64, crate::data::research::ResearchCanonicalOverride>,
+    canonical_overrides: &std::collections::HashMap<
+        i64,
+        crate::data::research::ResearchCanonicalOverride,
+    >,
 ) -> Vec<CrewSeatContext> {
     let filtered = research_entries_for_support_buff_gated_attack_phase(imported_research, gates);
     crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
@@ -3164,7 +3167,12 @@ mod tests {
             level: 1,
         }];
         let gates = SupportBuffResearchGateState::default();
-        let via_public = research_derived_attack_phase_seats(&imported, &catalog, &gates, &std::collections::HashMap::new());
+        let via_public = research_derived_attack_phase_seats(
+            &imported,
+            &catalog,
+            &gates,
+            &std::collections::HashMap::new(),
+        );
         let via_spec =
             crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
                 &imported,
