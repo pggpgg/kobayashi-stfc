@@ -6,11 +6,6 @@ Planned features and priorities for Kobayashi.
 
 Speeding up crew discovery is primarily a search-efficiency problem, not a raw simulator-throughput problem. The simulator is already fast; the roadmap here is about spending Monte Carlo budget on the most promising crews first and learning from prior runs.
 
-### Next optimizer upgrades
-
-- **Automatic local learning loop** — *(Partial: per-profile `optimize_history.json` stores tiered and exhaustive two-phase results for `optimize_cache_key` and re-injects matching crews on the next run — see `src/data/optimize_history.rs` and `src/server/api/execution.rs`.)* Still open: use history to tune exploration limits automatically and broader “learn” feedback loops.
-- **First-class fast-discovery mode (follow-up)** — Add optional genetic refinement after tiered confirm and tune how discovery/exploitation handoff is configured.
-
 ### Operating principle
 
 The intended direction is: **seed + prune + scout + confirm + learn**, rather than trying to brute-force ever-larger search spaces with uniform simulation effort.
@@ -128,4 +123,3 @@ Research sync + catalog merge are in place for ship-combat stats; remaining road
 - **Other combat stats** — Any future stat keys must be added to `normalize_profile_combat_stat` and wired in `apply_profile_to_attacker` / `apply_static_buffs_to_combatant` (or the mitigation path) before research mappings affect simulation.
 - **Conditional bonuses** — Armada-, class-, PvP-, or faction-scoped lines may be mapped as **global** ship bonuses when descriptions look generic; tightening requires engine/scenario context or buff-level overrides in `data/research/buff_id_to_stat.json`.
 - **Catalog refresh** — After upstream drops, re-run `fetch_stfcspace_research.mjs` then `import_stfcspace_research.mjs`; use `--dump-unmapped` to extend `data/research/buff_id_to_stat.json` / `loca_id_to_stat.json` for buff ids that still do not resolve.
-
