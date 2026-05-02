@@ -19,11 +19,11 @@ use crate::data::import::{load_imported_roster, roster_import_fallback_warning_m
 use crate::data::officer::normalize_officer_lookup_key;
 use crate::data::optimize_history;
 use crate::data::support_buffs;
+use crate::lcars::LcarsOfficer;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
 };
-use crate::lcars::LcarsOfficer;
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_with_shared, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
@@ -38,9 +38,10 @@ use crate::optimizer::{
 use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
 use super::requests::{
-    build_crew_search_constraints, chain_grind_params_from_request, only_below_decks_with_ability_resolved,
-    parse_below_decks_strategy, parse_strategy, relax_below_decks_combat_strictness,
-    ChainGrindRequest, OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
+    build_crew_search_constraints, chain_grind_params_from_request,
+    only_below_decks_with_ability_resolved, parse_below_decks_strategy, parse_strategy,
+    relax_below_decks_combat_strictness, ChainGrindRequest, OptimizePayloadError, OptimizeRequest,
+    DEFAULT_SIMS,
 };
 
 /// When `strategy` is omitted, use tiered scout→confirm if the capped candidate count is at least this.
@@ -378,11 +379,8 @@ pub fn load_heuristics_candidates(
         .iter()
         .flat_map(|name| {
             let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
-            let mut parsed = filter_heuristic_seed_crews(
-                parsed,
-                registry.officer_index(),
-                !relax_below_decks,
-            );
+            let mut parsed =
+                filter_heuristic_seed_crews(parsed, registry.officer_index(), !relax_below_decks);
             if relax_below_decks {
                 sort_heuristic_parsed_crews_below_decks_by_officer_power(
                     &mut parsed,

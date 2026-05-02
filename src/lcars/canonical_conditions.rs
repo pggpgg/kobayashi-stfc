@@ -315,8 +315,8 @@ pub fn canonical_conditions_to_lcars(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::{AbilityCondition, EnemyType, ShipType};
     use crate::combat::effect_spec_compile::compile_condition;
+    use crate::combat::{AbilityCondition, EnemyType, ShipType};
     use crate::lcars::lcars_condition_to_spec;
 
     #[test]

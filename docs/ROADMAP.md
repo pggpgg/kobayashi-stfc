@@ -4,11 +4,7 @@ Planned features and priorities for Kobayashi.
 
 ## Codex Speed Demon
 
-Speeding up crew discovery is primarily a search-efficiency problem, not a raw simulator-throughput problem. The simulator is already fast; the roadmap here is about spending Monte Carlo budget on the most promising crews first and learning from prior runs.
-
-### Operating principle
-
-The intended direction is: **seed + prune + scout + confirm + learn**, rather than trying to brute-force ever-larger search spaces with uniform simulation effort.
+Speeding up crew discovery is primarily a search-efficiency problem, not a raw simulator-throughput problem. The simulator is already fast; the roadmap here is about spending Monte Carlo budget on the most promising crews first and learning from prior runs. For the product framing of that pipeline (seed → prune → scout → confirm → learn), see [README.md](../README.md#the-optimizer).
 
 - **Optimize / heuristics defaults:** Strict below-decks heuristic seeds (combat-relevant below-decks-slot modifiers only) and narrow below-decks officer pools are the default. The SPA opt-out is **Allow below-decks officers without combat abilities (prioritize highest power)** → API `allow_below_decks_without_combat_ability`. The removed field `prioritize_below_decks_ability` is rejected with a validation error (use `allow_below_decks_without_combat_ability` instead).
 
@@ -37,7 +33,7 @@ The intended direction is: **seed + prune + scout + confirm + learn**, rather th
 
 ## Unified CombatEffectSpec (cross-source normalization)
 
-Current state: officer effects are LCARS-native, while research uses stat rows plus targeted Rust routing for conditional attack-phase behavior. This split increases drift risk and special-case maintenance.
+Current state: officers are **authored** in LCARS; dynamic (non-static) effects already adapt to `**CombatEffectSpec`** and compile into engine types (`lcars_effect_to_combat_effect_spec` → `compile_officer_combat_spec` in `src/lcars/resolver.rs`). Static passive-permanent `stat_modify` / mapped combat tags still use the static-buff merge path. Research remains **catalog stat rows** (`research_catalog.json`): unconditional combat keys merge into `profile.bonuses`, while conditional `crit_chance` / `crit_damage` / `weapon_damage` rows become attack-phase seats via `**research_derived_attack_phase_seats_from_spec`** — i.e. the same IR + compiler, not a separate ad-hoc Rust routing layer (`src/data/research_effect_spec_adapter.rs`). Other keys (e.g. morale-gated isolytic, isolytic cascade) still use scenario/profile wiring documented in `src/data/profile.rs`. Residual divergence between LCARS YAML, row-shaped research ingest, and paths that bypass the spec keeps some drift and maintenance surface until more surfaces normalize through one story.
 
 ### Decision direction
 
@@ -81,7 +77,6 @@ data.stfc.space hostile detail JSON (`hostiles/{id}.json`, same shape as normali
 
 ## Sync (STFC Community Mod)
 
-- **Persisted today:** officer, research, buildings, ships, **forbidden tech (`type: "ft"` / `type: "tech"`)**, buffs, and **battlelogs** (last 50 objects) — see [SYNC.md](SYNC.md). Research is written to `profiles/{id}/research.imported.json` and merged into the player profile when a research catalog is present. FT is written to `profiles/{id}/forbidden_tech.imported.json` and merged into the player profile (bonuses from `data/forbidden_chaos_tech.json`).
 - **Battlelogs:** Mod `**battlelogs`** batches are persisted to `profiles/{id}/battlelogs.imported.json` (rolling **last 50** objects; see [SYNC.md](SYNC.md)). **Next:** wire stored logs into calibration, recorded-fight fixtures, replay, or analysis tooling (consumption path and schema interpretation still TBD).
 - **Non-priority / deferred:** the mod also sends payload types that are accepted (200) but not stored. This is intentionally **not** a combat-accuracy priority right now, so it is tracked only as a “maybe later” note: traits, slots, resources, missions, inventory, jobs, and any additional raw tech-tree payloads if the mod exposes shapes beyond research project levels (already covered by `research` sync). **Note:** stfc-mod’s JSON `type: "tech"` is forbidden/chaos tech (same as `ft`) and is already persisted to `forbidden_tech.imported.json`.
 
@@ -91,12 +86,11 @@ See [SYNC.md](SYNC.md) for the current sync protocol and payload reference.
 
 ## Buildings (ship combat)
 
-Buildings are **fully modeled for ship combat** per the “buildings full modeling” plan: catalog, level/ops data, buff normalization, sync path, ops context, profile merge, and tooling are in place. Optional and backlog items remain on the roadmap.
+Buildings are **fully modeled for ship combat** per the “buildings full modeling” plan: catalog, level/ops data, buff normalization, sync path, ops context, profile merge, and tooling are in place. Optional and backlog items remain on the roadmap. Work we explicitly exclude from the roadmap lives in [NOT_ROADMAP.md](NOT_ROADMAP.md).
 
 ### Optional / backlog (roadmap items)
 
 - **Building id ↔ bid in index** — Add bid (or a small mapping file) to the building index for clarity and fallback resolution.
-- **Conditions for station defense** — When station/starbase defense is in scope: populate `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) from import or mapping; support `BuildingMode::StationDefense` in the optimizer.
 
 ---
 

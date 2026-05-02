@@ -8,9 +8,8 @@ pub use execution::{
 };
 pub use requests::{
     chain_grind_params_from_request, parse_optimize_request_body, validate_request,
-    ChainGrindRequest, OptimizePayloadError,
-    OptimizeRequest, ReplaySeedRequest, ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS,
-    MAX_CANDIDATES, MAX_SIMS,
+    ChainGrindRequest, OptimizePayloadError, OptimizeRequest, ReplaySeedRequest,
+    ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
 };
 
 use crate::data::building_summary::building_combat_summary_for_profile;

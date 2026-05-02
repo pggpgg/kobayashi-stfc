@@ -805,8 +805,7 @@ pub fn parse_optimize_estimate_query(
             }
         }
     }
-    let only_below_decks_with_ability =
-        !allow_below_decks_without_combat_ability.unwrap_or(false);
+    let only_below_decks_with_ability = !allow_below_decks_without_combat_ability.unwrap_or(false);
     Ok((
         ship,
         hostile,
@@ -862,11 +861,10 @@ mod parse_optimize_body_tests {
         .unwrap_err();
         match err {
             OptimizePayloadError::Validation(v) => {
-                assert!(
-                    v.errors
-                        .iter()
-                        .any(|e| e.field == "prioritize_below_decks_ability")
-                );
+                assert!(v
+                    .errors
+                    .iter()
+                    .any(|e| e.field == "prioritize_below_decks_ability"));
             }
             other => panic!("expected validation, got {other:?}"),
         }
@@ -874,17 +872,15 @@ mod parse_optimize_body_tests {
 
     #[test]
     fn rejects_removed_prioritize_in_estimate_query() {
-        let err = parse_optimize_estimate_query(
-            "ship=s&hostile=h&prioritize_below_decks_ability=false",
-        )
-        .unwrap_err();
+        let err =
+            parse_optimize_estimate_query("ship=s&hostile=h&prioritize_below_decks_ability=false")
+                .unwrap_err();
         match err {
             OptimizePayloadError::Validation(v) => {
-                assert!(
-                    v.errors
-                        .iter()
-                        .any(|e| e.field == "prioritize_below_decks_ability")
-                );
+                assert!(v
+                    .errors
+                    .iter()
+                    .any(|e| e.field == "prioritize_below_decks_ability"));
             }
             other => panic!("expected validation, got {other:?}"),
         }

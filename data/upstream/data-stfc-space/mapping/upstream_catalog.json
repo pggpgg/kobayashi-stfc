@@ -154,6 +154,14 @@
       "domain_mapping": "mapping/officers.json"
     },
     {
+      "path": "summary-pvp_bands.json",
+      "root": "array",
+      "entry_count_order": "~80",
+      "primary_id": "level",
+      "description": "PvP level bands from data.stfc.space: each row maps player level to hostile-level lower/upper bracket (reference cache for UI/balance).",
+      "key_fields": ["level", "lower", "upper"]
+    },
+    {
       "path": "summary-research.json",
       "root": "array",
       "entry_count_order": "~2300",

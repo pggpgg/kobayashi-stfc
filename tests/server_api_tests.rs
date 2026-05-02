@@ -34,6 +34,30 @@ async fn route_request(method: &str, path: &str, body: &str) -> TestResponse {
     route_request_ex(method, path, body, None, &[]).await
 }
 
+/// Optimize scenarios need enough roster breadth for legal crews; bundled `demo` profile only lists
+/// two officers, so use the no-roster synthetic id (full canonical catalog) like replay-seed tests.
+async fn route_request_optimize(body: &str) -> TestResponse {
+    route_request_ex(
+        "POST",
+        "/api/optimize",
+        body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await
+}
+
+async fn route_request_optimize_start(body: &str) -> TestResponse {
+    route_request_ex(
+        "POST",
+        "/api/optimize/start",
+        body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await
+}
+
 async fn route_request_ex(
     method: &str,
     path: &str,
@@ -290,7 +314,7 @@ async fn simulate_rejects_body_over_cpu_json_limit_with_413() {
 async fn optimize_endpoint_returns_ranked_recommendations() {
     let body =
         r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
-    let response = route_request("POST", "/api/optimize", body).await;
+    let response = route_request_optimize(body).await;
 
     assert_eq!(response.status_code, 200);
 
@@ -403,15 +427,11 @@ async fn optimize_auto_strategy_respects_constraints_on_effective_candidate_coun
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_changes_with_seed() {
-    let response_a = route_request(
-        "POST",
-        "/api/optimize",
+    let response_a = route_request_optimize(
         r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":32}"#,
     )
     .await;
-    let response_b = route_request(
-        "POST",
-        "/api/optimize",
+    let response_b = route_request_optimize(
         r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":8,"max_candidates":32}"#,
     )
     .await;
@@ -654,7 +674,7 @@ async fn optimize_endpoint_requires_novelty_lambda_when_novelty_history_anchors_
 #[tokio::test]
 async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
-    let response = route_request("POST", "/api/optimize", body).await;
+    let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 200, "body: {}", response.body);
 
     let payload: serde_json::Value =
@@ -740,7 +760,7 @@ async fn optimize_rejects_fast_discovery_without_heuristic_seeds() {
 #[tokio::test]
 async fn optimize_fast_discovery_echoes_in_scenario_and_notes() {
     let body = r#"{"ship":"saladin","hostile":"2918121098","sims":400,"seed":3,"max_candidates":48,"strategy":"tiered","heuristics_seeds":["heuristics-seed"],"fast_discovery":true}"#;
-    let response = route_request("POST", "/api/optimize", body).await;
+    let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 200, "{}", response.body);
     let payload: serde_json::Value =
         serde_json::from_str(&response.body).expect("response should be valid json");
@@ -771,7 +791,7 @@ async fn optimize_fast_discovery_echoes_in_scenario_and_notes() {
 async fn async_optimize_start_poll_completes_with_recommendations() {
     let body =
         r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":42,"max_candidates":16}"#;
-    let start = route_request("POST", "/api/optimize/start", body).await;
+    let start = route_request_optimize_start(body).await;
     assert_eq!(start.status_code, 200, "body: {}", start.body);
     let payload: serde_json::Value =
         serde_json::from_str(&start.body).expect("start response json");
@@ -814,7 +834,7 @@ async fn async_optimize_cancel_unknown_job_returns_404() {
 async fn async_optimize_cancel_after_done_is_idempotent_ok() {
     let body =
         r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":1,"max_candidates":8}"#;
-    let start = route_request("POST", "/api/optimize/start", body).await;
+    let start = route_request_optimize_start(body).await;
     assert_eq!(start.status_code, 200);
     let payload: serde_json::Value = serde_json::from_str(&start.body).expect("start json");
     let job_id = payload["job_id"].as_str().expect("job_id");

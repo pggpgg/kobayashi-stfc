@@ -1940,7 +1940,11 @@ mod tests {
         officers.insert("stat_scale_officer".to_string(), officer);
         let options = ResolveOptions {
             tier: None,
-            officer_tiers: Some([("stat_scale_officer".to_string(), 1u8)].into_iter().collect()),
+            officer_tiers: Some(
+                [("stat_scale_officer".to_string(), 1u8)]
+                    .into_iter()
+                    .collect(),
+            ),
             officer_levels: None,
         };
         let buff = resolve_crew_to_buff_set("stat_scale_officer", &[], &[], &officers, &options);

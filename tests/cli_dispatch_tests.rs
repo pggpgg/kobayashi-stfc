@@ -23,17 +23,27 @@ fn unique_temp_txt_path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("kobayashi-{name}-{stamp}.txt"))
 }
 
-/// CLI may emit tracing JSON lines before the final JSON payload; compare only that payload.
+/// CLI may emit tracing JSON lines before or after the final JSON payload; compare only that payload.
+/// Tracing lines are single-line JSON objects with `timestamp` + `level`. The real payload may span
+/// multiple lines (pretty-printed array or object), so try suffix parses starting at each `{`/`[` line.
 fn extract_cli_json_payload(stdout: &str) -> Option<String> {
-    for line in stdout.lines().rev().map(str::trim) {
-        if line.is_empty() {
+    fn is_tracing_json(val: &serde_json::Value) -> bool {
+        val.as_object()
+            .map(|o| o.contains_key("timestamp") && o.contains_key("level"))
+            .unwrap_or(false)
+    }
+    let lines: Vec<&str> = stdout.lines().collect();
+    for start in (0..lines.len()).rev() {
+        let first = lines[start].trim();
+        if !first.starts_with('[') && !first.starts_with('{') {
             continue;
         }
-        if !line.starts_with('[') && !line.starts_with('{') {
-            continue;
-        }
-        if serde_json::from_str::<serde_json::Value>(line).is_ok() {
-            return Some(line.to_string());
+        let candidate = lines[start..].join("\n");
+        let trimmed = candidate.trim();
+        if let Ok(v) = serde_json::from_str::<serde_json::Value>(trimmed) {
+            if !is_tracing_json(&v) {
+                return Some(trimmed.to_string());
+            }
         }
     }
     let trimmed = stdout.trim();

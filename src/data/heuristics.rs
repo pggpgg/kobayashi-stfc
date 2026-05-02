@@ -217,7 +217,12 @@ pub fn has_combat_below_decks_slot_ability(officer: &Officer) -> bool {
         if !a.slot.eq_ignore_ascii_case("below_decks") {
             return false;
         }
-        match a.modifier.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        match a
+            .modifier
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
             None => true,
             Some(m) => !canonical_modifier_is_heuristic_non_combat(m),
         }

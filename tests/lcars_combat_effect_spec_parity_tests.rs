@@ -12,12 +12,12 @@ use kobayashi::combat::TimingWindow;
 use kobayashi::lcars::effect_spec_adapter::{
     lcars_condition_to_spec, lcars_effect_to_combat_effect_spec,
 };
-use kobayashi::lcars::{
-    resolve_officer_ability, LcarsAbility, LcarsCondition, LcarsEffect,
-    LcarsOfficer, ResolveOptions,
-};
 #[allow(deprecated)]
 use kobayashi::lcars::resolve_lcars_condition;
+use kobayashi::lcars::{
+    resolve_officer_ability, LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer,
+    ResolveOptions,
+};
 
 fn empty_lcars_condition() -> LcarsCondition {
     LcarsCondition {
