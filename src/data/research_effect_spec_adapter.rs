@@ -6,7 +6,10 @@
 
 use std::collections::HashMap;
 
-use crate::combat::effect_spec_compile::compile_research_attack_phase_spec_to_seat;
+use crate::combat::abilities::{Ability, AbilityClass, CrewSeat, NO_EXPLICIT_CONTRIBUTION_BATCH};
+use crate::combat::effect_spec_compile::{
+    compile_officer_combat_spec, compile_research_attack_phase_spec_to_seat,
+};
 use crate::combat::CrewSeatContext;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
@@ -56,10 +59,25 @@ pub fn research_bonus_key_to_condition_specs(
 fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
     match norm {
         "weapon_damage" => Some(AbilityModifierSpec::WeaponDamage),
+        "hull_hp" => Some(AbilityModifierSpec::HullHp),
+        "shield_hp" => Some(AbilityModifierSpec::ShieldHp),
         "crit_chance" => Some(AbilityModifierSpec::CritChance),
         "crit_damage" => Some(AbilityModifierSpec::CritDamage),
-        "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
+        "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
+        "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
+        "armor" => Some(AbilityModifierSpec::Armor),
+        "dodge" => Some(AbilityModifierSpec::Dodge),
+        "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
+        "accuracy" => Some(AbilityModifierSpec::Accuracy),
+        "isolytic_damage" | "isolytic_damage_morale" => {
+            Some(AbilityModifierSpec::IsolyticDamage)
+        }
+        "isolytic_defense" => Some(AbilityModifierSpec::IsolyticDefense),
+        "isolytic_cascade_damage" | "isolytic_cascade" => {
+            Some(AbilityModifierSpec::IsolyticCascadeDamage)
+        }
         "apex_shred" => Some(AbilityModifierSpec::ApexShred),
+        "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
         _ => None,
     }
 }
@@ -185,27 +203,40 @@ pub fn research_derived_attack_phase_seats_from_spec(
                     let Some(norm) = normalize_profile_combat_stat(&stat) else {
                         continue;
                     };
-                    if norm != "crit_chance"
-                        && norm != "crit_damage"
-                        && norm != "weapon_damage"
-                        && norm != "apex_barrier"
-                        && norm != "apex_shred"
-                    {
-                        continue;
-                    }
-                    let Some(condition_specs) = research_bonus_key_to_condition_specs(&key) else {
-                        continue;
-                    };
                     let Some(modifier) = norm_to_modifier(norm) else {
                         continue;
                     };
+
+                    // isolytic_cascade_damage always uses attack-phase timing (cascade stacks
+                    // applied during the isolytic damage leg). isolytic_damage_morale uses
+                    // round-start timing with a morale gate.
+                    let is_cascade = norm == "isolytic_cascade_damage";
+                    let is_morale_gated = norm == "isolytic_damage_morale";
+
+                    let condition_specs = if is_morale_gated {
+                        Some(vec![AbilityConditionSpec::MoraleActive])
+                    } else {
+                        research_bonus_key_to_condition_specs(&key)
+                    };
+                    let has_conditions = condition_specs.is_some();
+
+                    let trigger = if is_cascade {
+                        AbilityTriggerSpec::AttackPhase
+                    } else if is_morale_gated {
+                        AbilityTriggerSpec::RoundStart
+                    } else if has_conditions {
+                        AbilityTriggerSpec::AttackPhase
+                    } else {
+                        AbilityTriggerSpec::CombatBegin
+                    };
+
                     let name_idx = idx.saturating_add(1);
                     let spec = CombatEffectSpec {
                         id: format!("research_{norm}_{name_idx}"),
                         source: EffectSource::ResearchCatalog,
                         source_ref: None,
                         text: None,
-                        trigger: AbilityTriggerSpec::AttackPhase,
+                        trigger,
                         target: AbilityTargetSpec::AttackerSelf,
                         modifier,
                         operation: AbilityOperationSpec::Add,
@@ -217,7 +248,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         }),
                         chance: None,
                         duration: None,
-                        conditions: condition_specs,
+                        conditions: condition_specs.unwrap_or_default(),
                         attributes: serde_json::Map::new(),
                         stacking: None,
                         category: Some(EffectCategory::Combat),
@@ -226,11 +257,37 @@ pub fn research_derived_attack_phase_seats_from_spec(
                     if validate_combat_effect_spec(&spec).is_err() {
                         continue;
                     }
-                    let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) else {
-                        continue;
-                    };
-                    idx = name_idx;
-                    out.push(ctx);
+
+                    let use_attack_phase_path =
+                        is_cascade || (!is_morale_gated && has_conditions);
+                    if use_attack_phase_path {
+                        let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) else {
+                            continue;
+                        };
+                        idx = name_idx;
+                        out.push(ctx);
+                    } else {
+                        let Ok((timing, effect, condition)) =
+                            compile_officer_combat_spec(&spec)
+                        else {
+                            continue;
+                        };
+                        idx = name_idx;
+                        out.push(CrewSeatContext {
+                            seat: CrewSeat::Ship,
+                            ability: Ability {
+                                name: spec.id.clone(),
+                                class: AbilityClass::ShipAbility,
+                                timing,
+                                boostable: false,
+                                effect,
+                                condition,
+                            },
+                            boosted: false,
+                            officer_id: None,
+                            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                        });
+                    }
                 }
             }
         }

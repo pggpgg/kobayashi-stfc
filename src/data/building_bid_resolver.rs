@@ -1,7 +1,8 @@
 //! Resolve game building id (`bid`) to KOBAYASHI building `id` using
 //! `translations-starbase_modules.json` plus [`BuildingIndex`](crate::data::building::BuildingIndex):
-//! optional explicit [`BuildingIndexEntry::bid`](crate::data::building::BuildingIndexEntry::bid),
-//! ids shaped `building_{n}`, and `{n}_*` [`BuildingIndexEntry::file`](crate::data::building::BuildingIndexEntry::file) stems.
+//! explicit [`BuildingIndexEntry::bid`](crate::data::building::BuildingIndexEntry::bid) when present,
+//! plus [`infer_building_bid`](crate::data::building::infer_building_bid) from `building_*` ids and
+//! `{n}_*` [`BuildingIndexEntry::file`](crate::data::building::BuildingIndexEntry::file) stems.
 
 use std::collections::HashMap;
 use std::fs;
@@ -9,7 +10,7 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-use crate::data::building::{BuildingIndex, BuildingIndexEntry};
+use crate::data::building::{infer_building_bid, BuildingIndex, BuildingIndexEntry};
 
 const STARBASE_MODULE_NAME_KEY: &str = "starbase_module_name";
 
@@ -78,8 +79,7 @@ pub fn build_bid_to_building_id_from_json(
         }
     }
 
-    // Supplement from index: explicit `bid`, id `building_{n}`, and/or `{bid}_*` file stem
-    // (stfc.space exports use numeric-prefixed file stems even when `id` is a stable slug).
+    // Supplement from index: explicit `bid` and/or inferred from id/file (stable even if translations lag).
     for entry in &building_index.buildings {
         for bid in index_entry_candidate_bids(entry) {
             out.entry(bid).or_insert_with(|| entry.id.clone());
@@ -95,37 +95,12 @@ fn index_entry_candidate_bids(entry: &BuildingIndexEntry) -> Vec<i64> {
     if let Some(b) = entry.bid {
         v.push(b);
     }
-    if let Some(b) = parse_building_id_as_bid(&entry.id) {
-        if !v.contains(&b) {
-            v.push(b);
-        }
-    }
-    if let Some(b) = parse_bid_from_file_stem(entry.file.as_deref()) {
+    if let Some(b) = infer_building_bid(&entry.id, entry.file.as_deref()) {
         if !v.contains(&b) {
             v.push(b);
         }
     }
     v
-}
-
-/// If `file` stem is `{digits}_…` (e.g. `50_parsteel_generator_d`), returns those digits as `bid`.
-fn parse_bid_from_file_stem(file: Option<&str>) -> Option<i64> {
-    let f = file?.trim();
-    let (head, tail) = f.split_once('_')?;
-    if head.is_empty() || !head.chars().all(|c| c.is_ascii_digit()) {
-        return None;
-    }
-    if tail.is_empty() {
-        return None;
-    }
-    head.parse().ok()
-}
-
-/// If id is "building_<number>", returns Some(bid); otherwise None.
-fn parse_building_id_as_bid(id: &str) -> Option<i64> {
-    let prefix = "building_";
-    id.starts_with(prefix)
-        .then(|| id[prefix.len()..].parse::<i64>().ok())?
 }
 
 fn normalize_name(s: &str) -> String {

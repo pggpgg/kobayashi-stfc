@@ -1816,7 +1816,7 @@ mod tests {
                 id: "test_weapon_building".to_string(),
                 building_name: "Test".to_string(),
                 file: None,
-                bid: None,
+                bid: Some(1),
             }],
         };
         let data_dir = std::env::temp_dir().join("kobayashi_profile_building_test");
@@ -1860,7 +1860,7 @@ mod tests {
                 id: "test_weapon_building".to_string(),
                 building_name: "Test".to_string(),
                 file: None,
-                bid: None,
+                bid: Some(1),
             }],
         };
         let data_dir = std::env::temp_dir().join("kobayashi_profile_building_test_stats");
@@ -2397,7 +2397,7 @@ mod tests {
                 id: "test_officer_stat_building".to_string(),
                 building_name: "Test".to_string(),
                 file: None,
-                bid: None,
+                bid: Some(1),
             }],
         };
         let data_dir = std::env::temp_dir().join("kobayashi_profile_officer_stat_building_test");

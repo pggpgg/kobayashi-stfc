@@ -6,7 +6,7 @@ use std::path::Path;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::data::building::DEFAULT_BUILDINGS_INDEX_PATH;
+use crate::data::building::{infer_building_bid, DEFAULT_BUILDINGS_INDEX_PATH};
 use crate::data::forbidden_chaos::{forbidden_chaos_sync_readiness_issues, load_forbidden_chaos};
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::mapping_gap_report::{
@@ -1553,6 +1553,7 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
     };
 
     let mut seen_ids = HashSet::new();
+    let mut seen_bids = HashSet::new();
 
     for (idx, entry) in buildings.iter().enumerate() {
         let ctx = format!("buildings.index.buildings[{idx}]");
@@ -1602,11 +1603,42 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
             );
         }
 
-        let file_stem = obj
+        let file_opt = obj
             .get("file")
             .and_then(Value::as_str)
-            .filter(|s| !s.is_empty())
-            .unwrap_or(id.as_str());
+            .filter(|s| !s.is_empty());
+
+        match obj.get("bid").and_then(|v| v.as_i64()) {
+            Some(bid) => {
+                if !seen_bids.insert(bid) {
+                    report.push(
+                        ValidationSeverity::Error,
+                        format!("{ctx}.bid"),
+                        format!("duplicate bid {bid}"),
+                    );
+                }
+                if let Some(inf) = infer_building_bid(&id, file_opt) {
+                    if inf != bid {
+                        report.push(
+                            ValidationSeverity::Error,
+                            format!("{ctx}.bid"),
+                            format!(
+                                "bid {bid} disagrees with inferred {inf} from id/file (fix typo or id/file fields)"
+                            ),
+                        );
+                    }
+                }
+            }
+            None => {
+                report.push(
+                    ValidationSeverity::Error,
+                    format!("{ctx}.bid"),
+                    "missing or invalid 'bid' (integer upstream starbase module id required)",
+                );
+            }
+        }
+
+        let file_stem = file_opt.unwrap_or(id.as_str());
         let record_path = base.join(format!("{file_stem}.json"));
         if !record_path.is_file() {
             report.push(

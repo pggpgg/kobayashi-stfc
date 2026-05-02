@@ -286,6 +286,55 @@ pub fn ship_abilities_to_crew_seat_contexts(abilities: &[ShipAbility]) -> Vec<Cr
         .collect()
 }
 
+/// One ship hull ability → one seat context via the canonical [`CombatEffectSpec`] IR.
+/// Mirrors [`ship_ability_to_crew_seat_context`] but routes through
+/// [`crate::data::ship_ability_effect_spec_adapter::ship_ability_to_combat_effect_spec`]
+/// → [`crate::combat::effect_spec_compile::compile_officer_combat_spec`].
+pub fn ship_ability_to_crew_seat_context_via_spec(
+    ability: &ShipAbility,
+) -> Option<CrewSeatContext> {
+    if let Some(ref slug) = ability.condition_opponent_faction {
+        OpponentFactionTag::from_data_slug(slug)?;
+    }
+    if let Some(ref slug) = ability.condition_opponent_ship_class {
+        ShipType::from_data_slug(slug)?;
+    }
+    if let Some(ref tags) = ability.condition_opponent_hostile_tags {
+        for t in tags {
+            hostile_tag_mask_for_slug(t)?;
+        }
+    }
+    let spec = crate::data::ship_ability_effect_spec_adapter::ship_ability_to_combat_effect_spec(
+        ability,
+    )?;
+    let (timing, effect, condition) =
+        crate::combat::effect_spec_compile::compile_officer_combat_spec(&spec).ok()?;
+    Some(CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: ability.id.clone(),
+            class: AbilityClass::ShipAbility,
+            timing,
+            boostable: false,
+            effect,
+            condition,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    })
+}
+
+/// All supported abilities on a ship via the spec path.
+pub fn ship_abilities_to_crew_seat_contexts_via_spec(
+    abilities: &[ShipAbility],
+) -> Vec<CrewSeatContext> {
+    abilities
+        .iter()
+        .filter_map(ship_ability_to_crew_seat_context_via_spec)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -624,5 +673,36 @@ mod tests {
             .is_none(),
             "must be combat_begin only"
         );
+    }
+
+    /// Parity: spec-path function produces the same seat (by effect/timing/condition) as the
+    /// direct catalog path for all effect types in the coverage fixture.
+    #[test]
+    fn spec_path_matches_direct_catalog_for_coverage_fixture() {
+        let json = include_str!("../../tests/fixtures/ship_abilities/catalog_effect_coverage.json");
+        let abilities: Vec<ShipAbility> = serde_json::from_str(json).expect("fixture JSON");
+        for ability in &abilities {
+            let direct = ship_ability_to_crew_seat_context(ability);
+            let via_spec = ship_ability_to_crew_seat_context_via_spec(ability);
+            assert_eq!(
+                direct.is_some(),
+                via_spec.is_some(),
+                "presence mismatch for ability id={} effect_type={}",
+                ability.id,
+                ability.effect_type
+            );
+            if let (Some(d), Some(s)) = (direct.as_ref(), via_spec.as_ref()) {
+                assert_eq!(
+                    d.ability.timing, s.ability.timing,
+                    "timing mismatch for id={} effect_type={}",
+                    ability.id, ability.effect_type
+                );
+                assert_eq!(
+                    d.ability.class, s.ability.class,
+                    "class mismatch for id={} effect_type={}",
+                    ability.id, ability.effect_type
+                );
+            }
+        }
     }
 }

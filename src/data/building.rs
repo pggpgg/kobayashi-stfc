@@ -3,7 +3,7 @@
 //! Each bonus uses engine/LCARS stat keys and additive vs multiplicative
 //! semantics consistent with syndicate combat bonuses.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -124,9 +124,63 @@ pub struct BuildingIndexEntry {
     /// Optional filename stem (without .json) when using bid_name scheme, e.g. "0_ops_center".
     #[serde(default)]
     pub file: Option<String>,
-    /// Upstream starbase module id (`bid`) when known — used with sync import and [`crate::data::building_bid_resolver`].
+    /// Upstream starbase module id (`bid`). Required in committed `data/buildings/index.json`
+    /// (validated by [`validate_building_index_bids`] / [`crate::data::validate::validate_buildings_dataset`]).
+    /// Optional on synthetic rows (tests, legacy tooling); resolver still infers candidates from `id`/`file`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bid: Option<i64>,
+}
+
+/// Infer upstream starbase module id (`bid`) from Kobayashi `id` and optional `file` stem
+/// (`{bid}_slug` scheme used by stfc.space exports).
+pub fn infer_building_bid(id: &str, file: Option<&str>) -> Option<i64> {
+    parse_bid_from_file_stem(file).or_else(|| parse_building_id_as_bid(id))
+}
+
+/// If `file` stem is `{digits}_…` (e.g. `50_parsteel_generator_d`), returns those digits as `bid`.
+fn parse_bid_from_file_stem(file: Option<&str>) -> Option<i64> {
+    let f = file?.trim();
+    let (head, tail) = f.split_once('_')?;
+    if head.is_empty() || !head.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    if tail.is_empty() {
+        return None;
+    }
+    head.parse().ok()
+}
+
+/// If id is `building_<number>`, returns `Some(bid)`; otherwise `None`.
+fn parse_building_id_as_bid(id: &str) -> Option<i64> {
+    let prefix = "building_";
+    id.starts_with(prefix)
+        .then(|| id[prefix.len()..].parse::<i64>().ok())?
+}
+
+/// Ensures every entry has an explicit `bid`, bids are unique, and when `id`/`file` imply a bid it
+/// matches the explicit value (catches typos and drift vs filename conventions).
+pub fn validate_building_index_bids(index: &BuildingIndex) -> Result<(), String> {
+    let mut seen = HashSet::new();
+    for e in &index.buildings {
+        let Some(explicit) = e.bid else {
+            return Err(format!(
+                "building index entry '{}' ({}) is missing `bid`",
+                e.id, e.building_name
+            ));
+        };
+        if let Some(inferred) = infer_building_bid(&e.id, e.file.as_deref()) {
+            if inferred != explicit {
+                return Err(format!(
+                    "building '{}': bid {} disagrees with inferred {} from id/file",
+                    e.id, explicit, inferred
+                ));
+            }
+        }
+        if !seen.insert(explicit) {
+            return Err(format!("duplicate bid {} in building index", explicit));
+        }
+    }
+    Ok(())
 }
 
 pub const DEFAULT_BUILDINGS_INDEX_PATH: &str = "data/buildings/index.json";
@@ -358,6 +412,8 @@ pub fn cumulative_building_bonuses_with_context(
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use super::*;
 
     fn test_record() -> BuildingRecord {
@@ -637,5 +693,47 @@ mod tests {
             },
         );
         assert!(!out_unknown.contains_key("hull_hp"));
+    }
+
+    #[test]
+    fn committed_building_index_has_valid_bids() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(DEFAULT_BUILDINGS_INDEX_PATH);
+        let raw = fs::read_to_string(path).expect("read data/buildings/index.json");
+        let index: BuildingIndex = serde_json::from_str(&raw).expect("parse building index");
+        validate_building_index_bids(&index).expect("validate_building_index_bids");
+    }
+
+    #[test]
+    fn infer_building_bid_from_file_stem_and_building_id() {
+        assert_eq!(infer_building_bid("ops_center", Some("0_operations")), Some(0));
+        assert_eq!(
+            infer_building_bid("building_1028", Some("1028_tachyon_detector")),
+            Some(1028)
+        );
+        assert_eq!(infer_building_bid("shipyard", Some("15_shipyard")), Some(15));
+        assert_eq!(infer_building_bid("custom_slug", None), None);
+    }
+
+    #[test]
+    fn validate_building_index_bids_rejects_duplicate_bid() {
+        let index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![
+                BuildingIndexEntry {
+                    id: "a".into(),
+                    building_name: "A".into(),
+                    file: Some("1_x".into()),
+                    bid: Some(1),
+                },
+                BuildingIndexEntry {
+                    id: "b".into(),
+                    building_name: "B".into(),
+                    file: Some("1_y".into()),
+                    bid: Some(1),
+                },
+            ],
+        };
+        assert!(validate_building_index_bids(&index).is_err());
     }
 }

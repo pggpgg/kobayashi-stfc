@@ -12,8 +12,6 @@ use kobayashi::combat::TimingWindow;
 use kobayashi::lcars::effect_spec_adapter::{
     lcars_condition_to_spec, lcars_effect_to_combat_effect_spec,
 };
-#[allow(deprecated)]
-use kobayashi::lcars::resolve_lcars_condition;
 use kobayashi::lcars::{
     resolve_officer_ability, LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer,
     ResolveOptions,
@@ -239,14 +237,13 @@ fn lcars_condition_matrix() -> Vec<LcarsCondition> {
     ]
 }
 
+/// Verify that every condition in the matrix compiles through the canonical spec path
+/// (`lcars_condition_to_spec` → `compile_condition`) without error.
 #[test]
-#[allow(deprecated)]
-fn lcars_condition_compile_matches_resolve_lcars_condition() {
+fn lcars_condition_compile_matrix_all_compile() {
     for c in lcars_condition_matrix() {
-        let compiled =
-            compile_condition(&lcars_condition_to_spec(&c).expect("to spec")).expect("compile");
-        let resolved = resolve_lcars_condition(&c).expect("resolve");
-        assert_eq!(compiled, resolved, "condition_type={}", c.condition_type);
+        let spec = lcars_condition_to_spec(&c).expect("to spec");
+        let _ = compile_condition(&spec).expect("compile");
     }
 }
 
@@ -323,9 +320,10 @@ fn lcars_on_shield_break_target_disambiguates_timing() {
     }
 }
 
+/// Verify that an LCARS effect with a `defender_burning` condition compiles through the
+/// canonical spec path and produces a matching seat via `resolve_officer_ability`.
 #[test]
-#[allow(deprecated)]
-fn lcars_effect_with_condition_spec_matches_resolve() {
+fn lcars_effect_with_condition_spec_path_compiles() {
     let mut c = empty_lcars_condition();
     c.condition_type = "defender_burning".into();
     let e = stat_modify_effect(
@@ -340,8 +338,11 @@ fn lcars_effect_with_condition_spec_matches_resolve() {
         .expect("spec");
     assert_eq!(spec.conditions.len(), 1);
     let cc = compile_condition(&spec.conditions[0]).expect("cc");
-    let rc = resolve_lcars_condition(&c).expect("rc");
-    assert_eq!(cc, rc);
+    // Compiled condition should be DefenderBurning.
+    assert!(matches!(
+        cc,
+        kobayashi::combat::abilities::AbilityCondition::DefenderBurning
+    ));
     let ability = LcarsAbility {
         name: "strike".into(),
         effects: vec![e],
@@ -359,7 +360,6 @@ fn lcars_effect_with_condition_spec_matches_resolve() {
     let (_, _, cond_from_officer_compile) =
         compile_officer_combat_spec(&spec).expect("officer spec compile");
     assert_eq!(ctx[0].ability.condition, cond_from_officer_compile);
-    assert_eq!(cond_from_officer_compile, Some(rc));
 }
 
 #[test]

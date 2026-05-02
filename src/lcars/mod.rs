@@ -20,8 +20,6 @@ pub use parser::{
     load_lcars_dir, load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect,
     LcarsFile, LcarsLevelStats, LcarsOfficer, LcarsScaling,
 };
-#[allow(deprecated)]
-pub use resolver::resolve_lcars_condition;
 pub use resolver::{
     index_lcars_officers_by_id, lcars_effect_coverage, resolve_crew_to_buff_set,
     resolve_officer_ability, BuffSet, LcarsEffectCoverage, MechanicCoverageTier, ResolveOptions,
