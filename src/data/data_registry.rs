@@ -13,7 +13,9 @@ use crate::data::hostile::{
 };
 use crate::data::hostile_loca::load_hostile_loca_display_names;
 use crate::data::loader::{resolve_hostile_with_index, resolve_ship_with_tier_level};
-use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::officer::{
+    load_canonical_officers, normalize_officer_lookup_key, Officer, DEFAULT_CANONICAL_OFFICERS_PATH,
+};
 use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
@@ -24,15 +26,6 @@ use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
 };
 use crate::lcars::{load_lcars_dir, LcarsOfficer};
-
-/// Normalize officer name for lookup: alphanumeric lowercase only (matches monte_carlo lookup).
-fn normalize_officer_lookup_key(value: &str) -> String {
-    value
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
-}
 
 /// Cached officer list and name-index for fast lookup. Built at startup.
 #[derive(Debug, Clone)]

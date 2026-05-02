@@ -6,14 +6,21 @@
 //! Lines starting with `#` are comments; blank lines are ignored.
 //! Officer names are resolved case-insensitively against the canonical database
 //! and `name_aliases.json`. Unknown names are skipped with a warning.
+//!
+//! **Bridge filtering:** after name resolution, bridge officers are dropped unless they either share a
+//! non-empty synergy group (`group` on canonical officers) with the captain, or have at least one
+//! canonical bridge ability (`OfficerAbility.slot == "officer"`). This mirrors “synergy or bridge
+//! combat ability” so heuristic seeds do not keep dead bridge picks.
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-use tracing::warn;
+use tracing::{debug, warn};
 
-use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::officer::{
+    load_canonical_officers, normalize_officer_lookup_key, Officer, DEFAULT_CANONICAL_OFFICERS_PATH,
+};
 
 pub const DEFAULT_HEURISTICS_DIR: &str = "data/heuristics";
 const BRIDGE_SLOTS: usize = 2;
@@ -114,6 +121,94 @@ pub fn expand_crews(
     crews
         .into_iter()
         .flat_map(|crew| expand_crew(crew, below_decks_slots, strategy))
+        .collect()
+}
+
+/// True if the officer has a bridge officer-slot ability in canonical data (`slot: officer`).
+pub fn has_bridge_officer_slot_ability(officer: &Officer) -> bool {
+    officer
+        .abilities
+        .iter()
+        .any(|a| a.slot.eq_ignore_ascii_case("officer"))
+}
+
+fn non_empty_synergy_group(officer: &Officer) -> Option<&str> {
+    officer
+        .group
+        .as_deref()
+        .map(str::trim)
+        .filter(|g| !g.is_empty())
+}
+
+/// Same non-empty [`Officer::group`] as the captain (STFC officer-group synergy metadata).
+pub fn bridge_shares_synergy_group_with_captain(captain: &Officer, bridge: &Officer) -> bool {
+    match (
+        non_empty_synergy_group(captain),
+        non_empty_synergy_group(bridge),
+    ) {
+        (Some(a), Some(b)) => a == b,
+        _ => false,
+    }
+}
+
+/// Keep a heuristic bridge pick if it synergizes with the captain or contributes a bridge-slot ability.
+pub fn keep_bridge_officer_for_heuristic_seed(captain: &Officer, bridge: &Officer) -> bool {
+    bridge_shares_synergy_group_with_captain(captain, bridge)
+        || has_bridge_officer_slot_ability(bridge)
+}
+
+/// Apply [`keep_bridge_officer_for_heuristic_seed`] to each parsed crew's bridge list.
+pub fn filter_heuristic_crews_bridge_rules(
+    crews: Vec<ParsedHeuristicsCrew>,
+    officer_index: &HashMap<String, Officer>,
+) -> Vec<ParsedHeuristicsCrew> {
+    crews
+        .into_iter()
+        .filter_map(|mut crew| {
+            let cap_key = normalize_officer_lookup_key(&crew.captain);
+            let Some(captain_off) = officer_index.get(&cap_key) else {
+                warn!(
+                    label = %crew.label,
+                    captain = %crew.captain,
+                    "heuristics: captain not in officer index; skipping bridge filter for this crew"
+                );
+                return Some(crew);
+            };
+
+            let before = crew.bridge.len();
+            crew.bridge.retain(|bridge_name| {
+                let key = normalize_officer_lookup_key(bridge_name);
+                let Some(b_off) = officer_index.get(&key) else {
+                    warn!(
+                        label = %crew.label,
+                        bridge_name = %bridge_name,
+                        "heuristics: bridge officer not in officer index; dropping"
+                    );
+                    return false;
+                };
+                let keep = keep_bridge_officer_for_heuristic_seed(captain_off, b_off);
+                if !keep {
+                    debug!(
+                        label = %crew.label,
+                        captain = %crew.captain,
+                        bridge = %bridge_name,
+                        "heuristics: dropping bridge officer (no shared synergy group and no bridge-slot ability)"
+                    );
+                }
+                keep
+            });
+
+            if crew.bridge.len() != before {
+                debug!(
+                    label = %crew.label,
+                    captain = %crew.captain,
+                    before,
+                    after = crew.bridge.len(),
+                    "heuristics: filtered bridge officers"
+                );
+            }
+            Some(crew)
+        })
         .collect()
 }
 
@@ -296,7 +391,77 @@ fn load_name_aliases() -> HashMap<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{combinations, BelowDecksStrategy, ParsedHeuristicsCrew};
+    use std::collections::HashMap;
+
+    use crate::data::officer::{Officer, OfficerAbility};
+
+    use super::{
+        combinations, filter_heuristic_crews_bridge_rules, BelowDecksStrategy, ParsedHeuristicsCrew,
+    };
+
+    fn officer_named(name: &str, group: Option<&str>, ability_slots: &[&str]) -> Officer {
+        Officer {
+            id: format!("id-{name}"),
+            name: name.to_string(),
+            slot: None,
+            group: group.map(String::from),
+            abilities: ability_slots
+                .iter()
+                .map(|s| OfficerAbility {
+                    slot: (*s).to_string(),
+                    trigger: None,
+                    modifier: None,
+                    attributes: None,
+                    description: None,
+                    chance_by_rank: vec![],
+                    value_by_rank: vec![],
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn keep_bridge_synergy_same_group_without_officer_ability() {
+        let cap = officer_named("Kirk", Some("TOS"), &["captain"]);
+        let br = officer_named("Spock", Some("TOS"), &["captain"]);
+        assert!(super::keep_bridge_officer_for_heuristic_seed(&cap, &br));
+    }
+
+    #[test]
+    fn keep_bridge_officer_slot_ability_different_group() {
+        let cap = officer_named("Kirk", Some("TOS"), &["captain"]);
+        let br = officer_named("Worf", Some("TNG"), &["officer"]);
+        assert!(super::keep_bridge_officer_for_heuristic_seed(&cap, &br));
+    }
+
+    #[test]
+    fn drop_bridge_no_synergy_no_officer_ability() {
+        let cap = officer_named("Kirk", Some("TOS"), &["captain"]);
+        let br = officer_named("Worf", Some("TNG"), &["captain"]);
+        assert!(!super::keep_bridge_officer_for_heuristic_seed(&cap, &br));
+    }
+
+    #[test]
+    fn filter_heuristic_crews_drops_unqualified_bridge() {
+        let crew = ParsedHeuristicsCrew {
+            label: "t".into(),
+            captain: "Kirk".into(),
+            bridge: vec!["Worf".into()],
+            below_decks_candidates: vec![],
+        };
+        let mut idx = HashMap::new();
+        idx.insert(
+            super::normalize_officer_lookup_key("Kirk"),
+            officer_named("Kirk", Some("TOS"), &["captain"]),
+        );
+        idx.insert(
+            super::normalize_officer_lookup_key("Worf"),
+            officer_named("Worf", Some("TNG"), &["captain"]),
+        );
+        let out = filter_heuristic_crews_bridge_rules(vec![crew], &idx);
+        assert_eq!(out.len(), 1);
+        assert!(out[0].bridge.is_empty());
+    }
 
     #[test]
     fn combinations_c3_2() {

@@ -391,6 +391,7 @@ mod tests {
                 id: "harry-kim-a79fdf".to_string(),
                 name: "Harry Kim".to_string(),
                 slot: Some("science".to_string()),
+                group: None,
                 abilities: vec![OfficerAbility {
                     slot: "officer".to_string(),
                     trigger: Some("RoundStart".to_string()),
@@ -424,6 +425,7 @@ mod tests {
                 id: "dezoc".to_string(),
                 name: "Dezoc".to_string(),
                 slot: Some("science".to_string()),
+                group: None,
                 abilities: vec![OfficerAbility {
                     slot: "officer".to_string(),
                     trigger: Some("RoundStart".to_string()),
@@ -463,6 +465,7 @@ mod tests {
                 id: "lorca".to_string(),
                 name: "Lorca".to_string(),
                 slot: Some("officer".to_string()),
+                group: None,
                 abilities: vec![OfficerAbility {
                     slot: "officer".to_string(),
                     trigger: Some("RoundStart".to_string()),
@@ -498,6 +501,7 @@ mod tests {
                 id: "gorkon".to_string(),
                 name: "Gorkon".to_string(),
                 slot: Some("officer".to_string()),
+                group: None,
                 abilities: vec![OfficerAbility {
                     slot: "officer".to_string(),
                     trigger: Some("CriticalShotFired".to_string()),
@@ -533,6 +537,7 @@ mod tests {
                 id: "belanna".to_string(),
                 name: "B'Elanna Torres".to_string(),
                 slot: Some("below_decks".to_string()),
+                group: None,
                 abilities: vec![OfficerAbility {
                     slot: "officer".to_string(),
                     trigger: Some("RoundStart".to_string()),
@@ -572,6 +577,7 @@ mod tests {
                 id: "nero".to_string(),
                 name: "Nero".to_string(),
                 slot: Some("captain".to_string()),
+                group: None,
                 abilities: vec![OfficerAbility {
                     slot: "officer".to_string(),
                     trigger: Some("EnemyTakesHit".to_string()),
@@ -611,6 +617,7 @@ mod tests {
                 id: "harry-kim-a79fdf".to_string(),
                 name: "Harry Kim".to_string(),
                 slot: Some("science".to_string()),
+                group: None,
                 abilities: vec![OfficerAbility {
                     slot: "officer".to_string(),
                     trigger: Some("RoundStart".to_string()),

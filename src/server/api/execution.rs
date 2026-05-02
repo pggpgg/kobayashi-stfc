@@ -12,7 +12,8 @@ use tracing::{info, info_span, warn};
 use crate::data::budget_telemetry::{maybe_append_row, BudgetTelemetryRow};
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
-    expand_crews, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
+    expand_crews, filter_heuristic_crews_bridge_rules, load_seed_file, BelowDecksStrategy,
+    DEFAULT_HEURISTICS_DIR,
 };
 use crate::data::import::roster_import_fallback_warning_message;
 use crate::data::optimize_history;
@@ -317,6 +318,7 @@ pub fn load_heuristics_candidates(
         .iter()
         .flat_map(|name| {
             let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
+            let parsed = filter_heuristic_crews_bridge_rules(parsed, registry.officer_index());
             let candidates = expand_crews(parsed, below_decks_slots, bd_strategy);
             candidates.into_iter().map(|c| CrewCandidate {
                 captain: c.captain,

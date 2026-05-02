@@ -11,6 +11,10 @@ pub struct Officer {
     pub name: String,
     #[serde(default)]
     pub slot: Option<String>,
+    /// Display synergy group from canonical data (e.g. shared crew set). Used for heuristics filtering
+    /// and search pruning; not passed through to combat unless modeled elsewhere.
+    #[serde(default)]
+    pub group: Option<String>,
     #[serde(default)]
     pub abilities: Vec<OfficerAbility>,
 }
@@ -189,6 +193,15 @@ impl OfficerAbility {
             .unwrap_or(0);
         self.value_by_rank.get(index).copied().unwrap_or(first)
     }
+}
+
+/// Normalized officer name key (alphanumeric only, lowercase) — matches `DataRegistry::officer_index` keys.
+pub fn normalize_officer_lookup_key(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
 }
 
 fn normalize_for_lookup(input: &str) -> String {
