@@ -1,17 +1,1930 @@
 {
   "officers": [
     {
+      "canonical_name": "718.0",
+      "canonical_officer_id": "718-0-2509d7",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Ahvix",
+      "canonical_officer_id": "ahvix-f90184",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Airiam",
+      "canonical_officer_id": "airiam-9265fc",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Alok Sahar",
+      "canonical_officer_id": "alok-sahar-4d1370",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Alonzo Freeman",
+      "canonical_officer_id": "alonzo-freeman-ef0f9b",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Andy Billups",
+      "canonical_officer_id": "andy-billups-c27ba7",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Annorax",
+      "canonical_officer_id": "annorax-830d35",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Arix",
+      "canonical_officer_id": "arix-b3d602",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Arkady",
+      "canonical_officer_id": "arkady-94c81b",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Arrock",
+      "canonical_officer_id": "arrock-0791b2",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Azetbur",
+      "canonical_officer_id": "azetbur-7eff22",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "B'Elanna Torres",
+      "canonical_officer_id": "b-elanna-torres-75cf02",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "B'Etor",
+      "canonical_officer_id": "b-etor-8fc426",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Ba'el",
+      "canonical_officer_id": "ba-el-91d122",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Badgey",
+      "canonical_officer_id": "badgey-13df33",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Barot",
+      "canonical_officer_id": "barot-2d7be0",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Beckett Mariner",
+      "canonical_officer_id": "beckett-mariner-d93865",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Benjamin Sisko",
+      "canonical_officer_id": "benjamin-sisko-5c51f2",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Beverly Crusher",
+      "canonical_officer_id": "beverly-crusher-74b2d7",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Black Ops M'Benga",
+      "canonical_officer_id": "black-ops-m-benga-e23e3a",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Bones",
+      "canonical_officer_id": "bones-ddc8a9",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Borg Queen",
+      "canonical_officer_id": "borg-queen-c8e67d",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Brad Boimler",
+      "canonical_officer_id": "brad-boimler-ee5262",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Byr Ch'Kelrer",
+      "canonical_officer_id": "byr-ch-kelrer-090eff",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Cadet Kirk",
+      "canonical_officer_id": "cadet-kirk-a80563",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Cadet McCoy",
+      "canonical_officer_id": "cadet-mccoy-13d460",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Cadet Scotty",
+      "canonical_officer_id": "cadet-scotty-b342ae",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Cadet Sulu",
+      "canonical_officer_id": "cadet-sulu-784421",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Cadet Uhura",
+      "canonical_officer_id": "cadet-uhura-3ef15c",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Cap. Tilly",
+      "canonical_officer_id": "cap-tilly-070cc9",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Carol",
+      "canonical_officer_id": "carol-755a05",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Carol Freeman",
+      "canonical_officer_id": "carol-freeman-a46be4",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Cath",
+      "canonical_officer_id": "cath-f0e149",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Chakotay",
+      "canonical_officer_id": "chakotay-a1f5df",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Chang",
+      "canonical_officer_id": "chang-ecc238",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Changeling Kira",
+      "canonical_officer_id": "changeling-kira-666ebe",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Charvanek",
+      "canonical_officer_id": "charvanek-0f1b5c",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Chen",
+      "canonical_officer_id": "chen-cdb1ca",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Culber",
+      "canonical_officer_id": "culber-b3e4a0",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "D'Jaoki",
+      "canonical_officer_id": "d-jaoki-baa18f",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "D'Vana Tendi",
+      "canonical_officer_id": "d-vana-tendi-9fabf0",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Dajash Tolra",
+      "canonical_officer_id": "dajash-tolra-1e809f",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Damar",
+      "canonical_officer_id": "damar-796eb0",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Dane",
+      "canonical_officer_id": "dane-4f7fc1",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Darwin",
+      "canonical_officer_id": "darwin-b8dc0a",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Data",
+      "canonical_officer_id": "data-d20ef8",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Deanna Troi",
+      "canonical_officer_id": "deanna-troi-57341d",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Decius",
+      "canonical_officer_id": "decius-8fce68",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Demarco",
+      "canonical_officer_id": "demarco-7f2d86",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Dezoc",
+      "canonical_officer_id": "dezoc-381416",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Dixon Hill",
+      "canonical_officer_id": "dixon-hill-b7ea10",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Doctor T'Ana",
+      "canonical_officer_id": "doctor-t-ana-b98f82",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Domitia",
+      "canonical_officer_id": "domitia-2e4a05",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Dupont",
+      "canonical_officer_id": "dupont-5deb80",
+      "level": 10,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Eight Of Eleven",
+      "canonical_officer_id": "eight-of-eleven-cb5f3c",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Eleven Of Eleven",
+      "canonical_officer_id": "eleven-of-eleven-ac168c",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Emp. Georgiou",
+      "canonical_officer_id": "emp-georgiou-1564b5",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Ent-E Data",
+      "canonical_officer_id": "ent-e-data-871245",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Ent-E Picard",
+      "canonical_officer_id": "ent-e-picard-556227",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Ent-E Riker",
+      "canonical_officer_id": "ent-e-riker-516b8d",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Ent-E Troi",
+      "canonical_officer_id": "ent-e-troi-46cdc3",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Eurydice",
+      "canonical_officer_id": "eurydice-18b643",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Ezri Dax",
+      "canonical_officer_id": "ezri-dax-bb0892",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "FCM Data",
+      "canonical_officer_id": "fcm-data-3b9e4d",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Fess",
+      "canonical_officer_id": "fess-7afd43",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Five Of Eleven",
+      "canonical_officer_id": "five-of-eleven-d9aa11",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Four Of Eleven",
+      "canonical_officer_id": "four-of-eleven-15084c",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "French Marshal Q",
+      "canonical_officer_id": "french-marshal-q-1f0a28",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Gaila",
+      "canonical_officer_id": "gaila-3d387a",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Garak",
+      "canonical_officer_id": "garak-771862",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Geordi La Forge",
+      "canonical_officer_id": "geordi-la-forge-914cec",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Georgiou",
+      "canonical_officer_id": "georgiou-d2bdef",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Ghalenar",
+      "canonical_officer_id": "ghalenar-69ddad",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Ghrush",
+      "canonical_officer_id": "ghrush-6e635b",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Gonzales",
+      "canonical_officer_id": "gonzales-de640c",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Goon",
+      "canonical_officer_id": "goon-891942",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Gorkon",
+      "canonical_officer_id": "gorkon-b8d2e7",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Gossa",
+      "canonical_officer_id": "gossa-dafefb",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Gowron",
+      "canonical_officer_id": "gowron-27ac30",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Gul Dukat",
+      "canonical_officer_id": "gul-dukat-70e9d7",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Hadley",
+      "canonical_officer_id": "hadley-ae14a1",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Harrison",
+      "canonical_officer_id": "harrison-56cc6c",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Harry Kim",
+      "canonical_officer_id": "harry-kim-a79fdf",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Harry Mudd",
+      "canonical_officer_id": "harry-mudd-374d5f",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Helvia",
+      "canonical_officer_id": "helvia-70a338",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Hendorff",
+      "canonical_officer_id": "hendorff-549c65",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Honorguard Worf",
+      "canonical_officer_id": "honorguard-worf-8ac58c",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Hoshi Sato",
+      "canonical_officer_id": "hoshi-sato-3bc529",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Hugh",
+      "canonical_officer_id": "hugh-9fc348",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Icheb",
+      "canonical_officer_id": "icheb-fb3bd7",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Ikat’Ika",
+      "canonical_officer_id": "ikatika-4fa1ba",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Infiltrator Tuvok",
+      "canonical_officer_id": "infiltrator-tuvok-5d3048",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Instr. Spock",
+      "canonical_officer_id": "instr-spock-bba5d7",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Jack Ransom",
+      "canonical_officer_id": "jack-ransom-dfdb38",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Jadzia Dax",
+      "canonical_officer_id": "jadzia-dax-736698",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Javaid",
+      "canonical_officer_id": "javaid-fdff59",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Jaylah",
+      "canonical_officer_id": "jaylah-857412",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Jean-Luc Picard",
+      "canonical_officer_id": "jean-luc-picard-e0515c",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Joachim",
+      "canonical_officer_id": "joachim-03587e",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Joaquin",
+      "canonical_officer_id": "joaquin-697b4c",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Jonathan Archer",
+      "canonical_officer_id": "jonathan-archer-4e9cd0",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Julian Bashir",
+      "canonical_officer_id": "julian-bashir-0551fa",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "K'Bisch",
+      "canonical_officer_id": "k-bisch-b6c84c",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Kang",
+      "canonical_officer_id": "kang-55e67a",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Kathryn Janeway",
+      "canonical_officer_id": "kathryn-janeway-bd4a19",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Kati",
+      "canonical_officer_id": "kati-01ab4d",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Keenser",
+      "canonical_officer_id": "keenser-3a5ad4",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Kerla",
+      "canonical_officer_id": "kerla-6cdf45",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Khan",
+      "canonical_officer_id": "khan-3f1d1e",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Kira Nerys",
+      "canonical_officer_id": "kira-nerys-a5253a",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
       "canonical_name": "Kirk",
       "canonical_officer_id": "kirk-1323b6",
-      "level": 45,
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Klaa",
+      "canonical_officer_id": "klaa-acbd92",
+      "level": 20,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Komal",
+      "canonical_officer_id": "komal-357fb2",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Koth",
+      "canonical_officer_id": "koth-c70d1c",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Kras",
+      "canonical_officer_id": "kras-a47042",
+      "level": 15,
+      "rank": 3,
       "tier": 3
+    },
+    {
+      "canonical_name": "Krell",
+      "canonical_officer_id": "krell-ef559b",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Kumak",
+      "canonical_officer_id": "kumak-c5b0db",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Kuron",
+      "canonical_officer_id": "kuron-15cda2",
+      "level": 15,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "L'Nar",
+      "canonical_officer_id": "l-nar-ae14f4",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Laliari",
+      "canonical_officer_id": "laliari-87e81a",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Leslie",
+      "canonical_officer_id": "leslie-975ce0",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Lieutenant Picard",
+      "canonical_officer_id": "lieutenant-picard-6303e7",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Linkasa",
+      "canonical_officer_id": "linkasa-01a1b3",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Livis",
+      "canonical_officer_id": "livis-43235e",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Lorca",
+      "canonical_officer_id": "lorca-d32ec8",
+      "level": 17,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Lursa",
+      "canonical_officer_id": "lursa-57a544",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "M'Benga",
+      "canonical_officer_id": "m-benga-53446d",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "M'Ral",
+      "canonical_officer_id": "m-ral-986e7a",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Mäkinen",
+      "canonical_officer_id": "makinen-a124a0",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Mara",
+      "canonical_officer_id": "mara-bd3ca6",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Mara Dalen",
+      "canonical_officer_id": "mara-dalen-6827",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Marcus",
+      "canonical_officer_id": "marcus-073931",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Mariachi Q",
+      "canonical_officer_id": "mariachi-q-c8cf6e",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Marla",
+      "canonical_officer_id": "marla-9732c7",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Martok",
+      "canonical_officer_id": "martok-89ef39",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Masriad Vael",
+      "canonical_officer_id": "masriad-vael-50cf64",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Mavery",
+      "canonical_officer_id": "mavery-60052a",
+      "level": 15,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Michael Burnham",
+      "canonical_officer_id": "michael-burnham-6c711c",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Miles O'Brien",
+      "canonical_officer_id": "miles-o-brien-f0c92f",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Mirek",
+      "canonical_officer_id": "mirek-953093",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Mirror Data",
+      "canonical_officer_id": "mirror-data-e13d66",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Mirror Ezri",
+      "canonical_officer_id": "mirror-ezri-2f6326",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Mirror Kira",
+      "canonical_officer_id": "mirror-kira-bc42ce",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Mirror Picard",
+      "canonical_officer_id": "mirror-picard-7c1a17",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Mirror Troi",
+      "canonical_officer_id": "mirror-troi-d237df",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Mirror Uhura",
+      "canonical_officer_id": "mirror-uhura-0a7168",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Miss Q",
+      "canonical_officer_id": "miss-q-cc911e",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Mitchell",
+      "canonical_officer_id": "mitchell-0217f7",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Moreau",
+      "canonical_officer_id": "moreau-23ddb4",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Mudd",
+      "canonical_officer_id": "mudd-32546a",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Naga Delvos",
+      "canonical_officer_id": "naga-delvos-aa4e10",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Navi",
+      "canonical_officer_id": "navi-0b328a",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Neelix",
+      "canonical_officer_id": "neelix-c8a380",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Nero",
+      "canonical_officer_id": "nero-1aeca9",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Nesmith",
+      "canonical_officer_id": "nesmith-8d3e34",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Next Gen Crusher",
+      "canonical_officer_id": "next-gen-crusher-0de02d",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Next Gen Data",
+      "canonical_officer_id": "next-gen-data-5e7215",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Next Gen La Forge",
+      "canonical_officer_id": "next-gen-la-forge-ee6d76",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Next Gen Riker",
+      "canonical_officer_id": "next-gen-riker-44ccee",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Next Gen Troi",
+      "canonical_officer_id": "next-gen-troi-ccf26b",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Nine Of Eleven",
+      "canonical_officer_id": "nine-of-eleven-8c475b",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Nog",
+      "canonical_officer_id": "nog-0c9672",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Odo",
+      "canonical_officer_id": "odo-04a97d",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "One Of Eleven",
+      "canonical_officer_id": "one-of-eleven-ee0ee9",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Origins Burnham",
+      "canonical_officer_id": "origins-burnham-e854d6",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Origins Saru",
+      "canonical_officer_id": "origins-saru-753b24",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Origins Stamets",
+      "canonical_officer_id": "origins-stamets-b0decf",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Otto",
+      "canonical_officer_id": "otto-cb0fb6",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Pan",
+      "canonical_officer_id": "pan-13e04e",
+      "level": 15,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Paul Stamets",
+      "canonical_officer_id": "paul-stamets-4aa6ab",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Phlox",
+      "canonical_officer_id": "phlox-72c07b",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "PIC Admiral Picard",
+      "canonical_officer_id": "pic-admiral-picard-5f2936",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "PIC Beverly Crusher",
+      "canonical_officer_id": "pic-beverly-crusher-26f56a",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "PIC Hugh",
+      "canonical_officer_id": "pic-hugh-75d78e",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "PIC Riker",
+      "canonical_officer_id": "pic-riker-61815c",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "PIC Worf",
+      "canonical_officer_id": "pic-worf-0f1290",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Pike",
+      "canonical_officer_id": "pike-1e7d0d",
+      "level": 15,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Pon",
+      "canonical_officer_id": "pon-a2ddd4",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Qa'Ug",
+      "canonical_officer_id": "qa-ug-a165bf",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Quark",
+      "canonical_officer_id": "quark-2fd57b",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Quasi",
+      "canonical_officer_id": "quasi-bf8173",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Rachel Garrett",
+      "canonical_officer_id": "rachel-garrett-4f15c8",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Reginald Barclay",
+      "canonical_officer_id": "reginald-barclay-111169",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Rima",
+      "canonical_officer_id": "rima-26c9f4",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Ro Mudd",
+      "canonical_officer_id": "ro-mudd-21a89a",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Rom",
+      "canonical_officer_id": "rom-621ae3",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Romi",
+      "canonical_officer_id": "romi-270f19",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Rukor",
+      "canonical_officer_id": "rukor-9d7beb",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "S31 Georgiou",
+      "canonical_officer_id": "s31-georgiou-91b91d",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Sam Rutherford",
+      "canonical_officer_id": "sam-rutherford-927c93",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Saru",
+      "canonical_officer_id": "saru-68cf4f",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Scotty",
+      "canonical_officer_id": "scotty-a83cb5",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Sela",
+      "canonical_officer_id": "sela-bd6e1b",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Sesha",
+      "canonical_officer_id": "sesha-631428",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Seska",
+      "canonical_officer_id": "seska-848b5b",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Seven Of Eleven",
+      "canonical_officer_id": "seven-of-eleven-e45727",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Seven Of Nine",
+      "canonical_officer_id": "seven-of-nine-d18a5e",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Severus",
+      "canonical_officer_id": "severus-93daaf",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Shaxs",
+      "canonical_officer_id": "shaxs-11a808",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Shev",
+      "canonical_officer_id": "shev-1799cb",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Shran",
+      "canonical_officer_id": "shran-f9ae44",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Six Of Eleven",
+      "canonical_officer_id": "six-of-eleven-20cbe8",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "SNW D'Chok",
+      "canonical_officer_id": "snw-d-chok-34f7ba",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "SNW Hemmer",
+      "canonical_officer_id": "snw-hemmer-330aae",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "SNW James Kirk",
+      "canonical_officer_id": "snw-james-kirk-6f6300",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "SNW La'an",
+      "canonical_officer_id": "snw-la-an-abc92f",
+      "level": 10,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Snw M’Benga",
+      "canonical_officer_id": "snw-mbenga-fe38e5",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "SNW Nurse Chapel",
+      "canonical_officer_id": "snw-nurse-chapel-d80ed9",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "SNW Ortegas",
+      "canonical_officer_id": "snw-ortegas-7c79fe",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "SNW Pelia",
+      "canonical_officer_id": "snw-pelia-9d33f1",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "SNW Pike",
+      "canonical_officer_id": "snw-pike-c94ac4",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "SNW Sam Kirk",
+      "canonical_officer_id": "snw-sam-kirk-0a77f9",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Snw Scotty",
+      "canonical_officer_id": "snw-scotty-1dd4c3",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "SNW Spock",
+      "canonical_officer_id": "snw-spock-40de97",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "SNW Uhura",
+      "canonical_officer_id": "snw-uhura-ff7333",
+      "level": 15,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "SNW Una",
+      "canonical_officer_id": "snw-una-2b6e15",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Soran",
+      "canonical_officer_id": "soran-24a024",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
     },
     {
       "canonical_name": "Spock",
       "canonical_officer_id": "spock-c04738",
-      "level": 20,
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Starfleet Q",
+      "canonical_officer_id": "starfleet-q-3c61cb",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Stonn",
+      "canonical_officer_id": "stonn-95a1f6",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Strike Team La'an",
+      "canonical_officer_id": "strike-team-la-an-84e2a9",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Strike Team Ortegas",
+      "canonical_officer_id": "strike-team-ortegas-d9df30",
+      "level": 10,
+      "rank": 2,
       "tier": 2
+    },
+    {
+      "canonical_name": "Strike Team Una",
+      "canonical_officer_id": "strike-team-una-5ec6f6",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Suder",
+      "canonical_officer_id": "suder-d348a9",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Sulu",
+      "canonical_officer_id": "sulu-fe562d",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "T'Laan",
+      "canonical_officer_id": "t-laan-c4627b",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "T'Pol",
+      "canonical_officer_id": "t-pol-3164c1",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "T'Pring",
+      "canonical_officer_id": "t-pring-9bade6",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Tal",
+      "canonical_officer_id": "tal-c3e4eb",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Tasha Yar",
+      "canonical_officer_id": "tasha-yar-b9300c",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Ten Of Eleven",
+      "canonical_officer_id": "ten-of-eleven-51fe63",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "The Doctor",
+      "canonical_officer_id": "the-doctor-327fc3",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "The Hierarch",
+      "canonical_officer_id": "the-hierarch-e1f430",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Three Of Eleven",
+      "canonical_officer_id": "three-of-eleven-d5568f",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Tilly",
+      "canonical_officer_id": "tilly-6bd08f",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Tiza",
+      "canonical_officer_id": "tiza-9d38f9",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "TMP Hikaru Sulu",
+      "canonical_officer_id": "tmp-hikaru-sulu-c73326",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "TMP Nyota Uhura",
+      "canonical_officer_id": "tmp-nyota-uhura-802f0c",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Toli",
+      "canonical_officer_id": "toli-2d704a",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Tom Paris",
+      "canonical_officer_id": "tom-paris-3640cc",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Tomalak",
+      "canonical_officer_id": "tomalak-0ff09c",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "TOS Chekov",
+      "canonical_officer_id": "tos-chekov-0f158d",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "TOS Kirk",
+      "canonical_officer_id": "tos-kirk-bc6d1b",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "TOS McCoy",
+      "canonical_officer_id": "tos-mccoy-fff2e0",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "TOS Scotty",
+      "canonical_officer_id": "tos-scotty-c747f6",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "TOS Spock",
+      "canonical_officer_id": "tos-spock-86f176",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "TOS Sulu",
+      "canonical_officer_id": "tos-sulu-0d02c3",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "TOS Uhura",
+      "canonical_officer_id": "tos-uhura-44419b",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Trip Tucker",
+      "canonical_officer_id": "trip-tucker-75d4f9",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Tuvok",
+      "canonical_officer_id": "tuvok-5ceab0",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Two Of Eleven",
+      "canonical_officer_id": "two-of-eleven-c4f4d6",
+      "level": 20,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Tyler",
+      "canonical_officer_id": "tyler-1dcc4d",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Uhura",
+      "canonical_officer_id": "uhura-ea117c",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Vartoq",
+      "canonical_officer_id": "vartoq-9109e7",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Vel",
+      "canonical_officer_id": "vel-f335b3",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Vella",
+      "canonical_officer_id": "vella-7ab77e",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Vemet",
+      "canonical_officer_id": "vemet-00a218",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Vil Gul Dukat",
+      "canonical_officer_id": "vil-gul-dukat-c46cb8",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Vil Winn Adami",
+      "canonical_officer_id": "vil-winn-adami-6c42f3",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Vixis",
+      "canonical_officer_id": "vixis-9eec06",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Wesley Crusher",
+      "canonical_officer_id": "wesley-crusher-834fce",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Weyoun",
+      "canonical_officer_id": "weyoun-e042c4",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "William T. Riker",
+      "canonical_officer_id": "william-t-riker-ddebb5",
+      "level": 15,
+      "rank": 3,
+      "tier": 3
+    },
+    {
+      "canonical_name": "Wok Carol",
+      "canonical_officer_id": "wok-carol-52a350",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Wok Mccoy",
+      "canonical_officer_id": "wok-mccoy-f09b41",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "WOK Saavik",
+      "canonical_officer_id": "wok-saavik-65f1bb",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Wok Scotty",
+      "canonical_officer_id": "wok-scotty-57ed85",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "Worf",
+      "canonical_officer_id": "worf-c55d58",
+      "level": 10,
+      "rank": 2,
+      "tier": 2
+    },
+    {
+      "canonical_name": "Woteln",
+      "canonical_officer_id": "woteln-c67650",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Yan'Agh",
+      "canonical_officer_id": "yan-agh-dd8637",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Yuki",
+      "canonical_officer_id": "yuki-1ab97a",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Zahra",
+      "canonical_officer_id": "zahra-e3f002",
+      "level": 30,
+      "rank": 5,
+      "tier": 5
+    },
+    {
+      "canonical_name": "Zefram Cochrane",
+      "canonical_officer_id": "zefram-cochrane-f8a1c2",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Zeph",
+      "canonical_officer_id": "zeph-21ee5c",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
+      "canonical_name": "Zhou",
+      "canonical_officer_id": "zhou-5d4d4b",
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     }
   ],
-  "source_path": "/var/folders/yq/63jwqr7x51d13cj4dcnh3dp00000gn/T/kobayashi-roster-1777743889199644000.txt"
+  "source_path": "stfc-mod sync"
 }
