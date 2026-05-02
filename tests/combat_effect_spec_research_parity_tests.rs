@@ -31,8 +31,8 @@ fn assert_public_matches_adapter_with_gates(
     gates: &SupportBuffResearchGateState,
     expected_adapter_import: &[ResearchEntry],
 ) {
-    let public = research_derived_attack_phase_seats(imported, catalog, gates);
-    let via_spec = research_derived_attack_phase_seats_from_spec(expected_adapter_import, catalog);
+    let public = research_derived_attack_phase_seats(imported, catalog, gates, &std::collections::HashMap::new());
+    let via_spec = research_derived_attack_phase_seats_from_spec(expected_adapter_import, catalog, &std::collections::HashMap::new());
     assert_eq!(public.len(), via_spec.len(), "seat count mismatch");
     let mut a: Vec<String> = public.iter().map(seat_signature).collect();
     let mut b: Vec<String> = via_spec.iter().map(seat_signature).collect();

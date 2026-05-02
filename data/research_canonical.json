@@ -1,0 +1,184 @@
+{
+  "source": "manual human-curated overrides",
+  "last_updated": "2026-05-01",
+  "overrides": [
+    {
+      "rid": 2580836593,
+      "name": "NS Burning Isolytic Damage",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_2580836593_iso_burning",
+          "modifier": "isolytic_damage",
+          "operation": "add",
+          "by_level": [0.05, 0.06, 0.07, 0.09, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2],
+          "conditions": [{ "type": "defender_burning" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 2580836593, "buff_id": 1855248137, "loca_id": 70100 }
+        }
+      ]
+    },
+    {
+      "rid": 2047743532,
+      "name": "NS Burning HB Isolytic Damage",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_2047743532_iso_burning_hb",
+          "modifier": "isolytic_damage",
+          "operation": "add",
+          "by_level": [0.005, 0.0075, 0.0115, 0.016, 0.0205, 0.026, 0.0315, 0.0375, 0.0435, 0.05],
+          "conditions": [
+            {
+              "type": "and",
+              "all": [
+                { "type": "defender_burning" },
+                { "type": "defender_hull_breach" }
+              ]
+            }
+          ],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 2047743532, "buff_id": 679782642, "loca_id": 70103 }
+        }
+      ]
+    },
+    {
+      "rid": 365419690,
+      "name": "NS Burning Damage",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_365419690_wd_burning",
+          "modifier": "weapon_damage",
+          "operation": "add",
+          "by_level": [0.01, 0.0145, 0.0215, 0.029, 0.038, 0.0475, 0.057, 0.0675, 0.0785, 0.09],
+          "conditions": [{ "type": "defender_burning" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 365419690, "buff_id": 1898558353, "loca_id": 70106 }
+        }
+      ]
+    },
+    {
+      "rid": 851540444,
+      "name": "NS Morale Shield Mitigation",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_851540444_sm_morale",
+          "modifier": "shield_mitigation",
+          "operation": "add",
+          "by_level": [1.0],
+          "conditions": [{ "type": "morale_active" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 851540444, "buff_id": 3573127943, "loca_id": 80007 }
+        }
+      ]
+    },
+    {
+      "rid": 4133019450,
+      "name": "NS Morale Isolytic Damage",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_4133019450_iso_morale",
+          "modifier": "isolytic_damage",
+          "operation": "add",
+          "by_level": [0.05, 0.06, 0.07, 0.09, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2],
+          "conditions": [{ "type": "morale_active" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 4133019450, "buff_id": 2585023800, "loca_id": 70101 }
+        }
+      ]
+    },
+    {
+      "rid": 535909811,
+      "name": "NS HB Damage",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_535909811_wd_hb",
+          "modifier": "weapon_damage",
+          "operation": "add",
+          "by_level": [0.005, 0.0075, 0.0115, 0.016, 0.0205, 0.026, 0.0315, 0.0375, 0.0435, 0.05],
+          "conditions": [{ "type": "defender_hull_breach" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 535909811, "buff_id": 1142346453, "loca_id": 70104 }
+        }
+      ]
+    },
+    {
+      "rid": 1233598019,
+      "name": "NS HB Isolytic Cascade",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_1233598019_ic_hb",
+          "modifier": "isolytic_cascade_damage",
+          "operation": "add",
+          "by_level": [0.005, 0.0075, 0.0115, 0.016, 0.0205, 0.026, 0.0315, 0.0375, 0.0435, 0.05],
+          "conditions": [{ "type": "defender_hull_breach" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 1233598019, "buff_id": 4033066544, "loca_id": 70105 }
+        }
+      ]
+    },
+    {
+      "rid": 1995496344,
+      "name": "NS HB Isolytic Damage",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_1995496344_iso_hb",
+          "modifier": "isolytic_damage",
+          "operation": "add",
+          "by_level": [0.05, 0.06, 0.07, 0.085, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2],
+          "conditions": [{ "type": "defender_hull_breach" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 1995496344, "buff_id": 638902322, "loca_id": 70102 }
+        }
+      ]
+    },
+    {
+      "rid": 3288570685,
+      "name": "NS Crit Damage",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_3288570685_cd",
+          "modifier": "crit_damage",
+          "operation": "add",
+          "by_level": [0.01, 0.015, 0.025, 0.03, 0.04, 0.05, 0.065, 0.075, 0.085, 0.1],
+          "conditions": [],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 3288570685, "buff_id": 2286920377, "loca_id": 70107 }
+        }
+      ]
+    },
+    {
+      "rid": 3407808029,
+      "name": "NS HB Crit Damage Reduction",
+      "source_note": "data.stfc.space + manual override",
+      "effects": [
+        {
+          "id": "research_3407808029_dr_hb",
+          "modifier": "damage_reduction",
+          "operation": "add",
+          "by_level": [0.5, 0.6, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0],
+          "conditions": [{ "type": "defender_hull_breach" }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 3407808029, "buff_id": 981948123, "loca_id": 70108 }
+        }
+      ]
+    }
+  ]
+}

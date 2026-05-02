@@ -19,6 +19,11 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
+use crate::data::combat_effect_spec::{
+    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, EffectCategory,
+    EffectConfidence, SourceRef,
+};
+
 /// One research project (game rid). Bonuses are cumulative over levels.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResearchRecord {
@@ -113,6 +118,7 @@ pub struct ResearchCatalog {
 }
 
 pub const DEFAULT_RESEARCH_CATALOG_PATH: &str = "data/research_catalog.json";
+pub const DEFAULT_RESEARCH_CANONICAL_PATH: &str = "data/research_canonical.json";
 
 pub fn load_research_catalog(path: &str) -> Option<ResearchCatalog> {
     let data = fs::read_to_string(path).ok()?;
@@ -128,6 +134,71 @@ pub fn load_research_catalog_from_path(path: &Path) -> Option<ResearchCatalog> {
     };
     load_research_catalog(p.to_str()?)
 }
+
+// ── Research canonical overrides ────────────────────────────────────────────────────
+
+/// Top-level container for the canonical research override file.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResearchCanonicalFile {
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub last_updated: Option<String>,
+    #[serde(default)]
+    pub overrides: Vec<ResearchCanonicalOverride>,
+}
+
+/// Per-RID canonical override. When present, replaces the auto-generated catalog entry.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResearchCanonicalOverride {
+    pub rid: i64,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub source_note: Option<String>,
+    #[serde(default)]
+    pub effects: Vec<ResearchCanonicalEffectEntry>,
+}
+
+/// One combat effect within a canonical research override. `by_level` maps
+/// research level (1-indexed) to engine-scale additive scalar. The adapter sums
+/// `by_level[0..player_level]` and compiles to a [`crate::data::combat_effect_spec::CombatEffectSpec`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResearchCanonicalEffectEntry {
+    pub id: String,
+    pub modifier: AbilityModifierSpec,
+    pub operation: AbilityOperationSpec,
+    #[serde(default)]
+    pub by_level: Vec<f64>,
+    #[serde(default)]
+    pub conditions: Vec<AbilityConditionSpec>,
+    #[serde(default)]
+    pub category: Option<EffectCategory>,
+    #[serde(default)]
+    pub confidence: Option<EffectConfidence>,
+    #[serde(default)]
+    pub source_ref: Option<SourceRef>,
+}
+
+/// Load canonical research overrides from a JSON file. Returns an empty map when
+/// the file is missing or unparseable (canonical overrides are optional).
+pub fn load_research_canonical_overrides(path: &str) -> HashMap<i64, ResearchCanonicalOverride> {
+    let data = match fs::read_to_string(path) {
+        Ok(s) => s,
+        Err(_) => return HashMap::new(),
+    };
+    let file: ResearchCanonicalFile = match serde_json::from_str(&data) {
+        Ok(f) => f,
+        Err(_) => return HashMap::new(),
+    };
+    let mut map = HashMap::with_capacity(file.overrides.len());
+    for ov in file.overrides {
+        map.insert(ov.rid, ov);
+    }
+    map
+}
+
+// ── Research bonus helpers ───────────────────────────────────────────────────────────
 
 fn accumulate_bonus(out: &mut HashMap<String, f64>, stat: &str, operator: &str, value: f64) {
     let key = stat.to_string();

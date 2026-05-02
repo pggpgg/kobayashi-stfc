@@ -43,7 +43,7 @@ use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
     RESEARCH_IMPORTED, ROSTER_IMPORTED,
 };
-use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
+use crate::data::research::{load_research_catalog, load_research_canonical_overrides, DEFAULT_RESEARCH_CATALOG_PATH, DEFAULT_RESEARCH_CANONICAL_PATH};
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use crate::data::support_buffs::{self, AppliedSupportBuffTrace, SupportBuffCatalog};
@@ -1347,6 +1347,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         SupportBuffResearchGateState::from_resolved_support_buff_ids(&resolved_support_buffs);
 
     let shared_research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
+    let canonical_overrides = load_research_canonical_overrides(DEFAULT_RESEARCH_CANONICAL_PATH);
     let research_path = profile_path(&pid, RESEARCH_IMPORTED)
         .to_string_lossy()
         .into_owned();
@@ -1354,7 +1355,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
 
     let research_derived_seats = if let Some(ref cat) = shared_research_catalog {
         merge_research_bonuses_into_profile(&mut profile, &imported_research, cat);
-        research_derived_attack_phase_seats(&imported_research, cat, &support_research_gates)
+        research_derived_attack_phase_seats(&imported_research, cat, &support_research_gates, &canonical_overrides)
     } else {
         Vec::new()
     };
@@ -1691,7 +1692,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
 
     let research_derived_seats = if let Some(catalog) = registry.research_catalog() {
         merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
-        research_derived_attack_phase_seats(&imported_research, catalog, &support_research_gates)
+        research_derived_attack_phase_seats(&imported_research, catalog, &support_research_gates, &HashMap::new())
     } else {
         Vec::new()
     };
