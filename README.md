@@ -128,6 +128,8 @@ KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladi
 
 **Research catalog (`data/research_catalog.json`):** GitHub Actions sets `CI=true`, so `cargo test` **must** find a non-empty catalog (the `scenario_research_integration` test fails with a short remediation message if it is missing). The committed file in the repo satisfies this. To regenerate after updating upstream research JSON under `data/upstream/data-stfc-space/research/`, run `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` (see [data/README.md](data/README.md) § Research). To match CI behavior locally, run with `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1`.
 
+**Catalog refresh (after upstream drops):** re-run `fetch_stfcspace_research.mjs` then `import_stfcspace_research.mjs`; use `--dump-unmapped` to extend `data/research/buff_id_to_stat.json` / `loca_id_to_stat.json` for buff ids that still do not resolve.
+
 The project-maintained officer catalog (full officer list + tier progression) is updated manually by maintainers when the game adds officers. Separately, player-specific owned-roster data is intended to be importable for personalization (including imports sourced from Spocks.club exports). You can also sync your roster **quasi real-time** from the game using the [STFC Community Mod](https://github.com/netniV/stfc-mod); see [docs/SYNC.md](docs/SYNC.md) for setup.
 
 For canonical officer data provenance, `officers.canonical.json` uses neutral metadata labels: each officer `source.workbook` value is set to `manual_curation` rather than storing a specific workbook filename.

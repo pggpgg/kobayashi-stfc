@@ -20,6 +20,12 @@ fn contexts_from_officer_combat_effect_spec(
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
     for (idx, effect) in ability.effects.iter().enumerate() {
+        // Replicate the resolver's is_static_effect gate: passive-permanent stat_modify / mapped
+        // tag effects are routed through the static-buff path in resolve_crew_to_buff_set, not
+        // through resolve_officer_ability (and therefore not through this spec compile).
+        if is_static_effect(effect) {
+            continue;
+        }
         let tier = options.tier_for(&officer.id);
         let stable_id = format!("lcars:{}:{}:{idx}", officer.id, ability.name);
         let level = officer.resolve_level(options.level_for(&officer.id), tier);
@@ -53,6 +59,28 @@ fn contexts_from_officer_combat_effect_spec(
         });
     }
     contexts
+}
+
+/// True if this effect is passive and permanent (same logic as
+/// `kobayashi::lcars::resolver::is_static_effect`).
+fn is_static_effect(effect: &kobayashi::lcars::LcarsEffect) -> bool {
+    let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
+    let permanent = effect
+        .duration
+        .as_ref()
+        .map(|d| d.is_permanent())
+        .unwrap_or(false);
+    if !passive || !permanent {
+        return false;
+    }
+    if effect.effect_type == "stat_modify" {
+        return true;
+    }
+    if effect.effect_type == "tag" {
+        let tag_str = effect.tag.as_deref().unwrap_or("");
+        return kobayashi::lcars::combat_tag_to_stat(tag_str).is_some();
+    }
+    false
 }
 
 #[test]

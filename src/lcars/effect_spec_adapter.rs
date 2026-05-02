@@ -435,9 +435,12 @@ fn op_to_spec(op: &str) -> AbilityOperationSpec {
 }
 
 /// Convert one LCARS officer effect to a [`CombatEffectSpec`] when the row maps cleanly.
-/// Returns [`None`] for static-only `stat_modify`, `tag`, `extra_attack`, `accuracy` non-CB timings,
+/// Returns [`None`] for `extra_attack`, `accuracy` at CombatBegin,
 /// unknown triggers, or a present `condition` that [`lcars_condition_to_spec`] cannot encode
 /// (aligned with [`crate::lcars::resolver::resolve_effect`]).
+///
+/// Passive-permanent `stat_modify` / mapped-tag effects now emit `CombatBegin`-timed specs
+/// routed through the canonical IR in [`crate::lcars::resolver::resolve_crew_to_buff_set`].
 ///
 /// `officer_stats` is the per-level stat row used to resolve officer-stat scaling (see
 /// [`LcarsScaling::officer_stat`]). Pass `None` when stats are unknown — the rank coefficient
@@ -475,26 +478,8 @@ pub fn lcars_effect_to_combat_effect_spec(
         effect.stat.as_deref().unwrap_or("").trim()
     };
 
-    // Passive + permanent stat_modify and mapped tag effects are static buffs handled by the
-    // resolver; skip dynamic spec generation. State effects (hull_breach, morale, etc.) with
-    // passive trigger should still produce a CombatBegin spec.
-    {
-        let is_state_effect = matches!(
-            effect.effect_type.as_str(),
-            "hull_breach" | "morale" | "burning" | "assimilated"
-        );
-        if !is_state_effect {
-            let passive = effect.trigger.as_deref().map(str::trim) == Some("passive");
-            let permanent = effect
-                .duration
-                .as_ref()
-                .map(|d| d.is_permanent())
-                .unwrap_or(false);
-            if passive && permanent {
-                return None;
-            }
-        }
-    }
+    // Passive + permanent stat_modify and mapped tag effects now emit CombatBegin-timed specs
+    // (routed through the canonical CombatEffectSpec IR in resolve_crew_to_buff_set).
 
     let timing = effect_trigger_timing(effect)?;
 
@@ -837,7 +822,7 @@ mod tests {
     }
 
     #[test]
-    fn passive_permanent_skipped() {
+    fn passive_permanent_emits_combat_begin_spec() {
         let e = LcarsEffect {
             effect_type: "stat_modify".into(),
             stat: Some("weapon_damage".into()),
@@ -856,7 +841,13 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None).is_none());
+        let spec = lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None)
+            .expect("passive+permanent should now emit a CombatBegin spec");
+        assert_eq!(spec.trigger, AbilityTriggerSpec::CombatBegin);
+        assert_eq!(spec.modifier, AbilityModifierSpec::WeaponDamage);
+        assert_eq!(spec.operation, AbilityOperationSpec::Add);
+        let v = spec.value.as_ref().and_then(|v| v.scalar).unwrap();
+        assert!((v - 0.1).abs() < 1e-12);
     }
 
     /// [`lcars_effect_to_combat_effect_spec`] scalar + modifier must stay aligned with
@@ -1213,7 +1204,7 @@ mod tests {
     }
 
     #[test]
-    fn mapped_tag_passive_permanent_returns_none() {
+    fn mapped_tag_passive_permanent_emits_combat_begin_spec() {
         let e = LcarsEffect {
             effect_type: "tag".into(),
             stat: None,
@@ -1230,6 +1221,11 @@ mod tests {
             accumulate: None,
             decay: None,
         };
-        assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None).is_none());
+        let spec = lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None)
+            .expect("passive+permanent mapped tag should now emit a CombatBegin spec");
+        assert_eq!(spec.trigger, AbilityTriggerSpec::CombatBegin);
+        assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigation);
+        let v = spec.value.as_ref().and_then(|v| v.scalar).unwrap();
+        assert!((v - 0.2).abs() < 1e-12);
     }
 }

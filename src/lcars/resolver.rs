@@ -7,6 +7,7 @@ use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
     CrewSeatContext, OpponentFactionTag, ShipType, TimingWindow,
 };
+use crate::data::combat_effect_spec::AbilityOperationSpec;
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsCondition, LcarsEffect, LcarsOfficer};
 use serde::Serialize;
@@ -552,7 +553,7 @@ pub fn resolve_crew_to_buff_set(
         let stats_row = officer
             .resolve_level(options.level_for(&officer.id), officer_tier)
             .and_then(|lvl| officer.stats_at_level(lvl));
-        for effect in &ability.effects {
+        for (effect_idx, effect) in ability.effects.iter().enumerate() {
             // Determine the effective stat for passive permanent effects.
             // stat_modify reads from effect.stat; mapped tag effects use the tag→stat table.
             let effective_stat = if effect.effect_type == "stat_modify" {
@@ -569,27 +570,44 @@ pub fn resolve_crew_to_buff_set(
                 continue;
             }
             let stat = effective_stat.unwrap();
-            let value = crate::lcars::effect_spec_adapter::lcars_effect_resolved_value(
+            if stat.eq_ignore_ascii_case("accuracy") {
+                // Folded into `accuracy` / `accuracy_cb_mult` in the combat-begin accuracy loop below.
+                continue;
+            }
+
+            // Route passive-permanent stat_modify/mapped-tag through the canonical CombatEffectSpec IR.
+            let stable_id = format!(
+                "lcars:{}:{}:static:{effect_idx}",
+                officer.id, ability.name
+            );
+            let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
                 effect,
+                &stable_id,
+                &officer.id,
+                &ability.name,
                 officer_tier,
                 stats_row,
             );
-            if let Some(v) = value {
-                if stat.eq_ignore_ascii_case("accuracy") {
-                    // Folded into `accuracy` / `accuracy_cb_mult` in the combat-begin accuracy loop below.
-                    continue;
-                }
-                if effect.operator.as_deref() == Some("multiply") {
-                    static_buffs
-                        .entry(stat.to_string())
-                        .and_modify(|x| *x *= v)
-                        .or_insert(v);
-                } else {
-                    static_buffs
-                        .entry(stat.to_string())
-                        .and_modify(|x| *x += v)
-                        .or_insert(v);
-                }
+            let Some(spec) = spec else {
+                continue;
+            };
+            let Some(ref value_spec) = spec.value else {
+                continue;
+            };
+            let Some(v) = value_spec.scalar else {
+                continue;
+            };
+
+            if spec.operation == AbilityOperationSpec::Multiply {
+                static_buffs
+                    .entry(stat.to_string())
+                    .and_modify(|x| *x *= v)
+                    .or_insert(v);
+            } else {
+                static_buffs
+                    .entry(stat.to_string())
+                    .and_modify(|x| *x += v)
+                    .or_insert(v);
             }
         }
         // Combat-begin `stat_modify` / mapped-tag accuracy: stacks into pre-mitigation attacker
