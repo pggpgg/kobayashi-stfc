@@ -2,95 +2,95 @@
   "buildings": [
     {
       "bid": 0,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 1,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 2,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 3,
-      "level": 55
-    },
-    {
-      "bid": 4,
-      "level": 58
-    },
-    {
-      "bid": 5,
-      "level": 58
-    },
-    {
-      "bid": 6,
-      "level": 58
-    },
-    {
-      "bid": 7,
       "level": 56
     },
     {
+      "bid": 4,
+      "level": 60
+    },
+    {
+      "bid": 5,
+      "level": 60
+    },
+    {
+      "bid": 6,
+      "level": 60
+    },
+    {
+      "bid": 7,
+      "level": 57
+    },
+    {
       "bid": 8,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 9,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 10,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 11,
-      "level": 54
+      "level": 55
     },
     {
       "bid": 12,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 13,
-      "level": 47
+      "level": 50
     },
     {
       "bid": 14,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 15,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 16,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 17,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 18,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 19,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 20,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 21,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 22,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 23,
@@ -98,83 +98,83 @@
     },
     {
       "bid": 24,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 25,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 26,
-      "level": 56
+      "level": 60
     },
     {
       "bid": 27,
-      "level": 45
+      "level": 48
     },
     {
       "bid": 28,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 29,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 31,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 33,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 34,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 35,
-      "level": 57
+      "level": 60
     },
     {
       "bid": 36,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 37,
-      "level": 56
+      "level": 60
     },
     {
       "bid": 38,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 39,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 40,
-      "level": 41
+      "level": 42
     },
     {
       "bid": 41,
-      "level": 57
+      "level": 60
     },
     {
       "bid": 43,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 44,
-      "level": 54
+      "level": 60
     },
     {
       "bid": 45,
-      "level": 54
+      "level": 60
     },
     {
       "bid": 50,
-      "level": 53
+      "level": 54
     },
     {
       "bid": 51,
@@ -182,27 +182,27 @@
     },
     {
       "bid": 52,
-      "level": 16
+      "level": 19
     },
     {
       "bid": 55,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 56,
-      "level": 52
+      "level": 53
     },
     {
       "bid": 57,
-      "level": 15
+      "level": 19
     },
     {
       "bid": 58,
-      "level": 15
+      "level": 18
     },
     {
       "bid": 61,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 62,
@@ -210,39 +210,39 @@
     },
     {
       "bid": 63,
-      "level": 17
+      "level": 18
     },
     {
       "bid": 64,
-      "level": 15
+      "level": 18
     },
     {
       "bid": 67,
-      "level": 58
+      "level": 60
     },
     {
       "bid": 69,
-      "level": 15
+      "level": 20
     },
     {
       "bid": 70,
-      "level": 23
+      "level": 26
     },
     {
       "bid": 71,
-      "level": 41
+      "level": 46
     },
     {
       "bid": 72,
-      "level": 64
+      "level": 74
     },
     {
       "bid": 73,
-      "level": 50
+      "level": 57
     },
     {
       "bid": 75,
-      "level": 40
+      "level": 60
     },
     {
       "bid": 76,
@@ -250,47 +250,47 @@
     },
     {
       "bid": 77,
-      "level": 51
+      "level": 54
     },
     {
       "bid": 78,
-      "level": 23
+      "level": 28
     },
     {
       "bid": 79,
-      "level": 40
+      "level": 49
     },
     {
       "bid": 80,
-      "level": 35
+      "level": 45
     },
     {
       "bid": 81,
-      "level": 40
+      "level": 52
     },
     {
       "bid": 82,
-      "level": 4
+      "level": 39
     },
     {
       "bid": 83,
-      "level": 9
+      "level": 30
     },
     {
       "bid": 84,
-      "level": 36
+      "level": 56
     },
     {
       "bid": 85,
-      "level": 12
+      "level": 21
     },
     {
       "bid": 86,
-      "level": 23
+      "level": 30
     },
     {
       "bid": 88,
-      "level": 8
+      "level": 28
     },
     {
       "bid": 1000,
@@ -298,7 +298,7 @@
     },
     {
       "bid": 1001,
-      "level": 22
+      "level": 23
     },
     {
       "bid": 1002,
@@ -338,19 +338,19 @@
     },
     {
       "bid": 1011,
-      "level": 24
+      "level": 25
     },
     {
       "bid": 1012,
-      "level": 24
+      "level": 25
     },
     {
       "bid": 1013,
-      "level": 24
+      "level": 25
     },
     {
       "bid": 1014,
-      "level": 24
+      "level": 25
     },
     {
       "bid": 1015,
@@ -362,15 +362,15 @@
     },
     {
       "bid": 1017,
-      "level": 24
+      "level": 25
     },
     {
       "bid": 1018,
-      "level": 24
+      "level": 25
     },
     {
       "bid": 1019,
-      "level": 22
+      "level": 23
     },
     {
       "bid": 1020,

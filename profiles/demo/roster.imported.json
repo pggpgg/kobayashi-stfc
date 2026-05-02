@@ -73,9 +73,9 @@
     {
       "canonical_name": "Azetbur",
       "canonical_officer_id": "azetbur-7eff22",
-      "level": 20,
-      "rank": 4,
-      "tier": 4
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "B'Elanna Torres",
@@ -101,9 +101,9 @@
     {
       "canonical_name": "Badgey",
       "canonical_officer_id": "badgey-13df33",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Barot",
@@ -115,9 +115,9 @@
     {
       "canonical_name": "Beckett Mariner",
       "canonical_officer_id": "beckett-mariner-d93865",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Benjamin Sisko",
@@ -150,9 +150,9 @@
     {
       "canonical_name": "Borg Queen",
       "canonical_officer_id": "borg-queen-c8e67d",
-      "level": 1,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Brad Boimler",
@@ -213,9 +213,9 @@
     {
       "canonical_name": "Carol",
       "canonical_officer_id": "carol-755a05",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Carol Freeman",
@@ -248,16 +248,16 @@
     {
       "canonical_name": "Changeling Kira",
       "canonical_officer_id": "changeling-kira-666ebe",
-      "level": 20,
+      "level": 30,
       "rank": 5,
       "tier": 5
     },
     {
       "canonical_name": "Charvanek",
       "canonical_officer_id": "charvanek-0f1b5c",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Chen",
@@ -276,7 +276,7 @@
     {
       "canonical_name": "D'Jaoki",
       "canonical_officer_id": "d-jaoki-baa18f",
-      "level": 26,
+      "level": 30,
       "rank": 5,
       "tier": 5
     },
@@ -297,9 +297,9 @@
     {
       "canonical_name": "Damar",
       "canonical_officer_id": "damar-796eb0",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Dane",
@@ -311,9 +311,9 @@
     {
       "canonical_name": "Darwin",
       "canonical_officer_id": "darwin-b8dc0a",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Data",
@@ -360,9 +360,9 @@
     {
       "canonical_name": "Doctor T'Ana",
       "canonical_officer_id": "doctor-t-ana-b98f82",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Domitia",
@@ -388,23 +388,23 @@
     {
       "canonical_name": "Eleven Of Eleven",
       "canonical_officer_id": "eleven-of-eleven-ac168c",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Emp. Georgiou",
       "canonical_officer_id": "emp-georgiou-1564b5",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Ent-E Data",
       "canonical_officer_id": "ent-e-data-871245",
-      "level": 20,
-      "rank": 4,
-      "tier": 4
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Ent-E Picard",
@@ -430,9 +430,23 @@
     {
       "canonical_name": "Eurydice",
       "canonical_officer_id": "eurydice-18b643",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Ezri Dax",
+      "canonical_officer_id": "ezri-dax-bb0892",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
+      "canonical_name": "FCM Data",
+      "canonical_officer_id": "fcm-data-3b9e4d",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "Fess",
@@ -444,9 +458,9 @@
     {
       "canonical_name": "Five Of Eleven",
       "canonical_officer_id": "five-of-eleven-d9aa11",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Four Of Eleven",
@@ -472,9 +486,9 @@
     {
       "canonical_name": "Garak",
       "canonical_officer_id": "garak-771862",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Geordi La Forge",
@@ -486,16 +500,16 @@
     {
       "canonical_name": "Georgiou",
       "canonical_officer_id": "georgiou-d2bdef",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Ghalenar",
       "canonical_officer_id": "ghalenar-69ddad",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Ghrush",
@@ -514,9 +528,9 @@
     {
       "canonical_name": "Goon",
       "canonical_officer_id": "goon-891942",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Gorkon",
@@ -528,7 +542,7 @@
     {
       "canonical_name": "Gossa",
       "canonical_officer_id": "gossa-dafefb",
-      "level": 3,
+      "level": 5,
       "rank": 1,
       "tier": 1
     },
@@ -542,16 +556,16 @@
     {
       "canonical_name": "Gul Dukat",
       "canonical_officer_id": "gul-dukat-70e9d7",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Hadley",
       "canonical_officer_id": "hadley-ae14a1",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Harrison",
@@ -563,14 +577,14 @@
     {
       "canonical_name": "Harry Kim",
       "canonical_officer_id": "harry-kim-a79fdf",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Harry Mudd",
       "canonical_officer_id": "harry-mudd-374d5f",
-      "level": 10,
+      "level": 15,
       "rank": 3,
       "tier": 3
     },
@@ -591,23 +605,23 @@
     {
       "canonical_name": "Honorguard Worf",
       "canonical_officer_id": "honorguard-worf-8ac58c",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Hoshi Sato",
       "canonical_officer_id": "hoshi-sato-3bc529",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Hugh",
       "canonical_officer_id": "hugh-9fc348",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Icheb",
@@ -640,9 +654,9 @@
     {
       "canonical_name": "Jack Ransom",
       "canonical_officer_id": "jack-ransom-dfdb38",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Jadzia Dax",
@@ -682,7 +696,7 @@
     {
       "canonical_name": "Joaquin",
       "canonical_officer_id": "joaquin-697b4c",
-      "level": 20,
+      "level": 30,
       "rank": 5,
       "tier": 5
     },
@@ -696,9 +710,9 @@
     {
       "canonical_name": "Julian Bashir",
       "canonical_officer_id": "julian-bashir-0551fa",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "K'Bisch",
@@ -752,14 +766,14 @@
     {
       "canonical_name": "Kira Nerys",
       "canonical_officer_id": "kira-nerys-a5253a",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "Kirk",
       "canonical_officer_id": "kirk-1323b6",
-      "level": 21,
+      "level": 30,
       "rank": 5,
       "tier": 5
     },
@@ -801,9 +815,9 @@
     {
       "canonical_name": "Kumak",
       "canonical_officer_id": "kumak-c5b0db",
-      "level": 20,
-      "rank": 4,
-      "tier": 4
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Kuron",
@@ -829,9 +843,9 @@
     {
       "canonical_name": "Leslie",
       "canonical_officer_id": "leslie-975ce0",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Lieutenant Picard",
@@ -857,7 +871,7 @@
     {
       "canonical_name": "Lorca",
       "canonical_officer_id": "lorca-d32ec8",
-      "level": 15,
+      "level": 17,
       "rank": 4,
       "tier": 4
     },
@@ -892,9 +906,16 @@
     {
       "canonical_name": "Mara",
       "canonical_officer_id": "mara-bd3ca6",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
+    },
+    {
+      "canonical_name": "Mara Dalen",
+      "canonical_officer_id": "mara-dalen-6827",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "Marcus",
@@ -913,9 +934,9 @@
     {
       "canonical_name": "Marla",
       "canonical_officer_id": "marla-9732c7",
-      "level": 20,
-      "rank": 4,
-      "tier": 4
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Martok",
@@ -934,7 +955,7 @@
     {
       "canonical_name": "Mavery",
       "canonical_officer_id": "mavery-60052a",
-      "level": 11,
+      "level": 15,
       "rank": 5,
       "tier": 5
     },
@@ -948,16 +969,16 @@
     {
       "canonical_name": "Miles O'Brien",
       "canonical_officer_id": "miles-o-brien-f0c92f",
-      "level": 20,
+      "level": 30,
       "rank": 5,
       "tier": 5
     },
     {
       "canonical_name": "Mirek",
       "canonical_officer_id": "mirek-953093",
-      "level": 20,
-      "rank": 4,
-      "tier": 4
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Mirror Data",
@@ -1032,9 +1053,9 @@
     {
       "canonical_name": "Naga Delvos",
       "canonical_officer_id": "naga-delvos-aa4e10",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Navi",
@@ -1123,9 +1144,9 @@
     {
       "canonical_name": "One Of Eleven",
       "canonical_officer_id": "one-of-eleven-ee0ee9",
-      "level": 20,
-      "rank": 4,
-      "tier": 4
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Origins Burnham",
@@ -1165,9 +1186,9 @@
     {
       "canonical_name": "Paul Stamets",
       "canonical_officer_id": "paul-stamets-4aa6ab",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Phlox",
@@ -1193,23 +1214,23 @@
     {
       "canonical_name": "PIC Hugh",
       "canonical_officer_id": "pic-hugh-75d78e",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "PIC Riker",
       "canonical_officer_id": "pic-riker-61815c",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "PIC Worf",
       "canonical_officer_id": "pic-worf-0f1290",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "Pike",
@@ -1221,9 +1242,9 @@
     {
       "canonical_name": "Pon",
       "canonical_officer_id": "pon-a2ddd4",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Qa'Ug",
@@ -1249,9 +1270,9 @@
     {
       "canonical_name": "Rachel Garrett",
       "canonical_officer_id": "rachel-garrett-4f15c8",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "Reginald Barclay",
@@ -1263,9 +1284,9 @@
     {
       "canonical_name": "Rima",
       "canonical_officer_id": "rima-26c9f4",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Ro Mudd",
@@ -1277,9 +1298,9 @@
     {
       "canonical_name": "Rom",
       "canonical_officer_id": "rom-621ae3",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "Romi",
@@ -1305,14 +1326,14 @@
     {
       "canonical_name": "Sam Rutherford",
       "canonical_officer_id": "sam-rutherford-927c93",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "Saru",
       "canonical_officer_id": "saru-68cf4f",
-      "level": 15,
+      "level": 20,
       "rank": 4,
       "tier": 4
     },
@@ -1340,9 +1361,9 @@
     {
       "canonical_name": "Seska",
       "canonical_officer_id": "seska-848b5b",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "Seven Of Eleven",
@@ -1382,9 +1403,9 @@
     {
       "canonical_name": "Shran",
       "canonical_officer_id": "shran-f9ae44",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Six Of Eleven",
@@ -1394,18 +1415,25 @@
       "tier": 3
     },
     {
+      "canonical_name": "SNW D'Chok",
+      "canonical_officer_id": "snw-d-chok-34f7ba",
+      "level": 0,
+      "rank": 0,
+      "tier": 0
+    },
+    {
       "canonical_name": "SNW Hemmer",
       "canonical_officer_id": "snw-hemmer-330aae",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "SNW James Kirk",
       "canonical_officer_id": "snw-james-kirk-6f6300",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "SNW La'an",
@@ -1431,7 +1459,7 @@
     {
       "canonical_name": "SNW Ortegas",
       "canonical_officer_id": "snw-ortegas-7c79fe",
-      "level": 20,
+      "level": 30,
       "rank": 5,
       "tier": 5
     },
@@ -1452,9 +1480,9 @@
     {
       "canonical_name": "SNW Sam Kirk",
       "canonical_officer_id": "snw-sam-kirk-0a77f9",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Snw Scotty",
@@ -1515,9 +1543,9 @@
     {
       "canonical_name": "Strike Team La'an",
       "canonical_officer_id": "strike-team-la-an-84e2a9",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "Strike Team Ortegas",
@@ -1529,16 +1557,16 @@
     {
       "canonical_name": "Strike Team Una",
       "canonical_officer_id": "strike-team-una-5ec6f6",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Suder",
       "canonical_officer_id": "suder-d348a9",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "Sulu",
@@ -1557,9 +1585,9 @@
     {
       "canonical_name": "T'Pol",
       "canonical_officer_id": "t-pol-3164c1",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "T'Pring",
@@ -1606,9 +1634,9 @@
     {
       "canonical_name": "Three Of Eleven",
       "canonical_officer_id": "three-of-eleven-d5568f",
-      "level": 5,
-      "rank": 1,
-      "tier": 1
+      "level": 10,
+      "rank": 2,
+      "tier": 2
     },
     {
       "canonical_name": "Tilly",
@@ -1620,7 +1648,7 @@
     {
       "canonical_name": "Tiza",
       "canonical_officer_id": "tiza-9d38f9",
-      "level": 10,
+      "level": 15,
       "rank": 3,
       "tier": 3
     },
@@ -1648,9 +1676,9 @@
     {
       "canonical_name": "Tom Paris",
       "canonical_officer_id": "tom-paris-3640cc",
-      "level": 15,
-      "rank": 3,
-      "tier": 3
+      "level": 20,
+      "rank": 4,
+      "tier": 4
     },
     {
       "canonical_name": "Tomalak",
@@ -1662,9 +1690,9 @@
     {
       "canonical_name": "TOS Chekov",
       "canonical_officer_id": "tos-chekov-0f158d",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "TOS Kirk",
@@ -1683,9 +1711,9 @@
     {
       "canonical_name": "TOS Scotty",
       "canonical_officer_id": "tos-scotty-c747f6",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "TOS Spock",
@@ -1711,14 +1739,14 @@
     {
       "canonical_name": "Trip Tucker",
       "canonical_officer_id": "trip-tucker-75d4f9",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "Tuvok",
       "canonical_officer_id": "tuvok-5ceab0",
-      "level": 10,
+      "level": 15,
       "rank": 3,
       "tier": 3
     },
@@ -1726,8 +1754,8 @@
       "canonical_name": "Two Of Eleven",
       "canonical_officer_id": "two-of-eleven-c4f4d6",
       "level": 20,
-      "rank": 4,
-      "tier": 4
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Tyler",
@@ -1795,16 +1823,16 @@
     {
       "canonical_name": "Wesley Crusher",
       "canonical_officer_id": "wesley-crusher-834fce",
-      "level": 10,
-      "rank": 2,
-      "tier": 2
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "Weyoun",
       "canonical_officer_id": "weyoun-e042c4",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 15,
+      "rank": 3,
+      "tier": 3
     },
     {
       "canonical_name": "William T. Riker",
@@ -1823,9 +1851,9 @@
     {
       "canonical_name": "Wok Mccoy",
       "canonical_officer_id": "wok-mccoy-f09b41",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "WOK Saavik",
@@ -1865,9 +1893,9 @@
     {
       "canonical_name": "Yuki",
       "canonical_officer_id": "yuki-1ab97a",
-      "level": 20,
-      "rank": 4,
-      "tier": 4
+      "level": 30,
+      "rank": 5,
+      "tier": 5
     },
     {
       "canonical_name": "Zahra",
@@ -1877,11 +1905,18 @@
       "tier": 5
     },
     {
+      "canonical_name": "Zefram Cochrane",
+      "canonical_officer_id": "zefram-cochrane-f8a1c2",
+      "level": 5,
+      "rank": 1,
+      "tier": 1
+    },
+    {
       "canonical_name": "Zeph",
       "canonical_officer_id": "zeph-21ee5c",
-      "level": 0,
-      "rank": 0,
-      "tier": 0
+      "level": 5,
+      "rank": 1,
+      "tier": 1
     },
     {
       "canonical_name": "Zhou",

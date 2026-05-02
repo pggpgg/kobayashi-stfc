@@ -1167,8 +1167,9 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
 }
 
 /// Merges combat stat bonuses from player's synced buildings into `profile.bonuses`.
-/// Resolves bid → building id via `bid_to_id`, loads building records, computes cumulative
-/// bonuses, and adds only combat keys (weapon_damage, hull_hp, officer_attack, …). armor_pierce and
+/// Resolves bid → building id via `bid_to_id`, loads building records, takes **tier-snapshot**
+/// bonuses at each synced module level (see [`crate::data::building::cumulative_building_bonuses_with_context`]),
+/// and adds only combat keys (weapon_damage, hull_hp, officer_attack, …). armor_pierce and
 /// shield_pierce are folded into pierce.
 pub fn merge_building_bonuses_into_profile(
     profile: &mut PlayerProfile,

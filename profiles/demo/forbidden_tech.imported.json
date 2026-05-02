@@ -2,21 +2,21 @@
   "forbidden_tech": [
     {
       "fid": 115391048,
-      "level": 0,
-      "shard_count": 136,
-      "tier": 0
+      "level": 5,
+      "shard_count": 150,
+      "tier": 1
     },
     {
       "fid": 258464522,
       "level": 0,
-      "shard_count": 60,
+      "shard_count": 175,
       "tier": 0
     },
     {
       "fid": 473132032,
-      "level": 30,
+      "level": 48,
       "shard_count": 150,
-      "tier": 6
+      "tier": 10
     },
     {
       "fid": 482782456,
@@ -27,7 +27,7 @@
     {
       "fid": 704754072,
       "level": 0,
-      "shard_count": 13,
+      "shard_count": 118,
       "tier": 0
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "fid": 747823611,
-      "level": 42,
+      "level": 45,
       "shard_count": 150,
       "tier": 9
     },
@@ -50,15 +50,15 @@
     },
     {
       "fid": 1003489828,
-      "level": 1,
+      "level": 5,
       "shard_count": 200,
       "tier": 1
     },
     {
       "fid": 1024185972,
-      "level": 0,
-      "shard_count": 8,
-      "tier": 0
+      "level": 1,
+      "shard_count": 50,
+      "tier": 1
     },
     {
       "fid": 1151304323,
@@ -68,20 +68,20 @@
     },
     {
       "fid": 1212779022,
-      "level": 0,
-      "shard_count": 11,
-      "tier": 0
+      "level": 16,
+      "shard_count": 150,
+      "tier": 4
     },
     {
       "fid": 1240927405,
       "level": 0,
-      "shard_count": 42,
+      "shard_count": 150,
       "tier": 0
     },
     {
       "fid": 1296092881,
       "level": 0,
-      "shard_count": 5,
+      "shard_count": 45,
       "tier": 0
     },
     {
@@ -92,20 +92,20 @@
     },
     {
       "fid": 1364700249,
-      "level": 45,
+      "level": 48,
       "shard_count": 150,
       "tier": 10
     },
     {
       "fid": 1451787875,
-      "level": 30,
+      "level": 35,
       "shard_count": 150,
-      "tier": 6
+      "tier": 7
     },
     {
       "fid": 1490549096,
       "level": 0,
-      "shard_count": 25,
+      "shard_count": 65,
       "tier": 0
     },
     {
@@ -117,20 +117,26 @@
     {
       "fid": 1930376004,
       "level": 0,
-      "shard_count": 110,
+      "shard_count": 140,
       "tier": 0
     },
     {
       "fid": 1941930528,
-      "level": 16,
+      "level": 20,
       "shard_count": 50,
       "tier": 4
     },
     {
       "fid": 2399101438,
       "level": 0,
-      "shard_count": 7,
+      "shard_count": 54,
       "tier": 0
+    },
+    {
+      "fid": 2439729135,
+      "level": 25,
+      "shard_count": 200,
+      "tier": 5
     },
     {
       "fid": 2788591552,
@@ -140,6 +146,12 @@
     },
     {
       "fid": 2923149282,
+      "level": 5,
+      "shard_count": 200,
+      "tier": 1
+    },
+    {
+      "fid": 3042210440,
       "level": 5,
       "shard_count": 200,
       "tier": 1
@@ -157,6 +169,24 @@
       "tier": 4
     },
     {
+      "fid": 3440676742,
+      "level": 0,
+      "shard_count": 45,
+      "tier": 0
+    },
+    {
+      "fid": 3510037081,
+      "level": 0,
+      "shard_count": 5,
+      "tier": 0
+    },
+    {
+      "fid": 3620586365,
+      "level": 25,
+      "shard_count": 150,
+      "tier": 5
+    },
+    {
       "fid": 3814128430,
       "level": 10,
       "shard_count": 150,
@@ -164,14 +194,14 @@
     },
     {
       "fid": 3838074426,
-      "level": 0,
-      "shard_count": 98,
-      "tier": 0
+      "level": 30,
+      "shard_count": 200,
+      "tier": 6
     },
     {
       "fid": 4187367166,
       "level": 0,
-      "shard_count": 30,
+      "shard_count": 60,
       "tier": 0
     }
   ],

@@ -265,27 +265,29 @@ pub fn max_level(record: &BuildingRecord) -> u32 {
     record.levels.iter().map(|l| l.level).max().unwrap_or(0)
 }
 
-/// Returns cumulative bonuses from a single building up to and including the
-/// specified level. Levels outside the record are ignored.
-pub fn cumulative_building_level_bonuses(
+/// Combat bonuses from one building at `synced_level`, using catalog rows as **tier snapshots**.
+///
+/// Imported STFC building JSON lists each module tier’s **current totals** (replacing lower tiers),
+/// not per-tier deltas. We therefore take bonuses only from the **highest** catalog tier that is
+/// both ≤ `synced_level` (capped to the catalog’s max tier) and allowed by `ops_min`/`ops_max`
+/// when ops context is set—not the sum of every lower tier row.
+fn effective_building_bonuses_at_synced_level_with_context(
     record: &BuildingRecord,
-    level: u32,
-) -> HashMap<String, f64> {
-    cumulative_building_level_bonuses_with_context(record, level, &BuildingBonusContext::default())
-}
-
-pub fn cumulative_building_level_bonuses_with_context(
-    record: &BuildingRecord,
-    level: u32,
+    synced_level: u32,
     context: &BuildingBonusContext,
 ) -> HashMap<String, f64> {
-    let mut out: HashMap<String, f64> = HashMap::new();
-
-    for lvl in record
+    let capped = synced_level.min(max_level(record));
+    let eligible: Vec<&BuildingLevel> = record
         .levels
         .iter()
-        .filter(|l| l.level <= level && level_matches_context(l, context))
-    {
+        .filter(|l| l.level <= capped && level_matches_context(l, context))
+        .collect();
+    let Some(best_level) = eligible.iter().map(|l| l.level).max() else {
+        return HashMap::new();
+    };
+
+    let mut out: HashMap<String, f64> = HashMap::new();
+    for lvl in eligible.iter().filter(|l| l.level == best_level) {
         for bonus in &lvl.bonuses {
             if !bonus_matches_context(bonus, context) {
                 continue;
@@ -298,12 +300,28 @@ pub fn cumulative_building_level_bonuses_with_context(
             accumulate_bonus(&mut out, &bonus.stat, op, bonus.value);
         }
     }
-
     out
 }
 
-/// Returns cumulative bonuses from multiple buildings, given a mapping from
-/// building id → level. Missing buildings or levels are ignored.
+/// Returns effective combat bonuses from a single building at the synced module tier.
+/// See [`effective_building_bonuses_at_synced_level_with_context`].
+pub fn cumulative_building_level_bonuses(
+    record: &BuildingRecord,
+    level: u32,
+) -> HashMap<String, f64> {
+    cumulative_building_level_bonuses_with_context(record, level, &BuildingBonusContext::default())
+}
+
+pub fn cumulative_building_level_bonuses_with_context(
+    record: &BuildingRecord,
+    level: u32,
+    context: &BuildingBonusContext,
+) -> HashMap<String, f64> {
+    effective_building_bonuses_at_synced_level_with_context(record, level, context)
+}
+
+/// Returns effective combat bonuses from multiple buildings (tier snapshots per building).
+/// Missing buildings or levels are ignored.
 pub fn cumulative_building_bonuses(
     records: &[BuildingRecord],
     levels_by_id: &HashMap<String, u32>,
@@ -328,22 +346,10 @@ pub fn cumulative_building_bonuses_with_context(
         let Some(rec) = index.get(id.as_str()) else {
             continue;
         };
-        for lvl in rec
-            .levels
-            .iter()
-            .filter(|l| l.level <= *level && level_matches_context(l, context))
-        {
-            for bonus in &lvl.bonuses {
-                if !bonus_matches_context(bonus, context) {
-                    continue;
-                }
-                let op = if bonus.operator.is_empty() {
-                    "add"
-                } else {
-                    bonus.operator.as_str()
-                };
-                accumulate_bonus(&mut out, &bonus.stat, op, bonus.value);
-            }
+        let tier_bonuses =
+            effective_building_bonuses_at_synced_level_with_context(rec, *level, context);
+        for (stat, value) in tier_bonuses {
+            accumulate_bonus(&mut out, &stat, "add", value);
         }
     }
 
@@ -377,19 +383,42 @@ mod tests {
                     level: 2,
                     ops_min: Some(20),
                     ops_max: Some(30),
-                    bonuses: vec![BonusEntry {
-                        stat: "shield_hp".to_string(),
-                        value: 0.10,
-                        operator: "add".to_string(),
-                        conditions: vec![],
-                        notes: None,
-                    }],
+                    bonuses: vec![
+                        BonusEntry {
+                            stat: "weapon_damage".to_string(),
+                            value: 0.05,
+                            operator: "add".to_string(),
+                            conditions: vec![],
+                            notes: None,
+                        },
+                        BonusEntry {
+                            stat: "shield_hp".to_string(),
+                            value: 0.10,
+                            operator: "add".to_string(),
+                            conditions: vec![],
+                            notes: None,
+                        },
+                    ],
                 },
                 BuildingLevel {
                     level: 3,
-                    ops_min: None,
+                    ops_min: Some(25),
                     ops_max: None,
                     bonuses: vec![
+                        BonusEntry {
+                            stat: "weapon_damage".to_string(),
+                            value: 0.05,
+                            operator: "add".to_string(),
+                            conditions: vec![],
+                            notes: None,
+                        },
+                        BonusEntry {
+                            stat: "shield_hp".to_string(),
+                            value: 0.10,
+                            operator: "add".to_string(),
+                            conditions: vec![],
+                            notes: None,
+                        },
                         BonusEntry {
                             stat: "crit_chance".to_string(),
                             value: 0.02,
