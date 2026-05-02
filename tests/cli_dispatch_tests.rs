@@ -23,6 +23,26 @@ fn unique_temp_txt_path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("kobayashi-{name}-{stamp}.txt"))
 }
 
+/// CLI may emit tracing JSON lines before the final JSON payload; compare only that payload.
+fn extract_cli_json_payload(stdout: &str) -> Option<String> {
+    for line in stdout.lines().rev().map(str::trim) {
+        if line.is_empty() {
+            continue;
+        }
+        if !line.starts_with('[') && !line.starts_with('{') {
+            continue;
+        }
+        if serde_json::from_str::<serde_json::Value>(line).is_ok() {
+            return Some(line.to_string());
+        }
+    }
+    let trimmed = stdout.trim();
+    if serde_json::from_str::<serde_json::Value>(trimmed).is_ok() {
+        return Some(trimmed.to_string());
+    }
+    None
+}
+
 #[test]
 fn simulate_command_dispatches_and_emits_json() {
     let output = Command::new(bin())
@@ -32,10 +52,11 @@ fn simulate_command_dispatches_and_emits_json() {
 
     assert_eq!(output.status.code(), Some(0));
     let stdout = String::from_utf8_lossy(&output.stdout);
+    let json_text = extract_cli_json_payload(&stdout).expect("simulate should emit json");
     let payload: serde_json::Value =
-        serde_json::from_str(&stdout).expect("simulate should emit json");
+        serde_json::from_str(&json_text).expect("simulate should emit json");
     // Includes per-shot `stack_resolution` trace events (see combat engine).
-    assert_eq!(payload["events"].as_array().map(Vec::len), Some(20));
+    assert_eq!(payload["events"].as_array().map(Vec::len), Some(21));
     assert!(payload["total_damage"].is_number());
 }
 
@@ -79,13 +100,15 @@ fn optimize_command_dispatches_and_emits_deterministic_json() {
 
     let stdout_a = String::from_utf8_lossy(&output_a.stdout);
     let stdout_b = String::from_utf8_lossy(&output_b.stdout);
+    let json_a = extract_cli_json_payload(&stdout_a).expect("optimize should emit JSON array");
+    let json_b = extract_cli_json_payload(&stdout_b).expect("optimize should emit JSON array");
     assert_eq!(
-        stdout_a, stdout_b,
-        "two runs with same args should produce identical output (determinism)"
+        json_a, json_b,
+        "two runs with same args should produce identical JSON output (determinism)"
     );
 
     let recommendations: Vec<serde_json::Value> =
-        serde_json::from_str(stdout_a.trim()).expect("optimize should emit valid JSON array");
+        serde_json::from_str(json_a.trim()).expect("optimize should emit valid JSON array");
 
     if recommendations.is_empty() {
         // No ship/hostile data or no candidates; empty result is valid

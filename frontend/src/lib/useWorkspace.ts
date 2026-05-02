@@ -139,8 +139,10 @@ export function useWorkspace() {
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
-  const [prioritizeBelowDecksAbility, setPrioritizeBelowDecksAbility] =
-    useState(true);
+  const [
+    allowBelowDecksWithoutCombatAbility,
+    setAllowBelowDecksWithoutCombatAbility,
+  ] = useState(false);
 
   // Optimizer strategy
   const [optimizerStrategy, setOptimizerStrategy] =
@@ -213,7 +215,7 @@ export function useWorkspace() {
       chainGrindEnabled: chainGrindEnabled,
       chainKillsTarget: chainKillsTarget,
       chainSecondary: chainSecondary,
-      prioritizeBelowDecksAbility,
+      allowBelowDecksWithoutCombatAbility,
       belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
       fastDiscovery,
       enableLearnedPairPrior,
@@ -317,8 +319,8 @@ export function useWorkspace() {
         hostile,
         sims: simsPerCrew,
         max_candidates: maxCandidates ?? undefined,
-        prioritize_below_decks_ability:
-          prioritizeBelowDecksAbility || undefined,
+        allow_below_decks_without_combat_ability:
+          allowBelowDecksWithoutCombatAbility || undefined,
         ship_tier: shipTier > 0 ? shipTier : undefined,
         ship_level: shipLevel > 0 ? shipLevel : undefined,
       },
@@ -338,7 +340,7 @@ export function useWorkspace() {
     scenarioId,
     simsPerCrew,
     maxCandidates,
-    prioritizeBelowDecksAbility,
+    allowBelowDecksWithoutCombatAbility,
     shipTier,
     shipLevel,
     activeProfileId,
@@ -791,7 +793,7 @@ export function useWorkspace() {
           simsPerCrew,
           maxCandidates,
           optimizerStrategy,
-          prioritizeBelowDecksAbility,
+          allowBelowDecksWithoutCombatAbility,
           selectedSeeds,
           heuristicsOnly,
           belowDecksStrategy,
@@ -971,8 +973,8 @@ export function useWorkspace() {
     setSimsPerCrew,
     maxCandidates,
     setMaxCandidates,
-    prioritizeBelowDecksAbility,
-    setPrioritizeBelowDecksAbility,
+    allowBelowDecksWithoutCombatAbility,
+    setAllowBelowDecksWithoutCombatAbility,
     selectedSupportBuffs,
     setSelectedSupportBuffs: setValidatedSelectedSupportBuffs,
     // Heuristics

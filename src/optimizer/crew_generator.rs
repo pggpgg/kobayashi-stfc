@@ -24,7 +24,7 @@ pub const NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS: &str =
     "__kobayashi_test_profile_without_roster_dir__";
 
 /// Path to `roster.imported.json` for the given API profile id (or default profile when `None`).
-fn roster_import_json_path_for_profile(profile_id: Option<&str>) -> String {
+pub fn roster_import_json_path_for_profile(profile_id: Option<&str>) -> String {
     let pid = profile_id
         .filter(|s| !s.is_empty())
         .map(String::from)

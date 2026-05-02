@@ -23,8 +23,8 @@ interface OptimizePanelProps {
   optimizeThroughput?: number | null;
   maxCandidates: number | null;
   onMaxCandidatesChange: (value: number | null) => void;
-  prioritizeBelowDecksAbility: boolean;
-  onPrioritizeBelowDecksAbilityChange: (value: boolean) => void;
+  allowBelowDecksWithoutCombatAbility: boolean;
+  onAllowBelowDecksWithoutCombatAbilityChange: (value: boolean) => void;
   availableSeeds: string[];
   selectedSeeds: string[];
   onSelectedSeedsChange: (seeds: string[]) => void;
@@ -159,8 +159,8 @@ export default function OptimizePanel({
   optimizeThroughput = null,
   maxCandidates,
   onMaxCandidatesChange,
-  prioritizeBelowDecksAbility,
-  onPrioritizeBelowDecksAbilityChange,
+  allowBelowDecksWithoutCombatAbility,
+  onAllowBelowDecksWithoutCombatAbilityChange,
   availableSeeds,
   selectedSeeds,
   onSelectedSeedsChange,
@@ -838,13 +838,17 @@ export default function OptimizePanel({
       <label style={checkboxLabelStyle}>
         <input
           type="checkbox"
-          checked={prioritizeBelowDecksAbility}
+          checked={allowBelowDecksWithoutCombatAbility}
           onChange={(e) =>
-            onPrioritizeBelowDecksAbilityChange(e.target.checked)
+            onAllowBelowDecksWithoutCombatAbilityChange(e.target.checked)
           }
           style={{ margin: 0 }}
         />
-        <span>Only below-decks officers with ability</span>
+        <span>
+          Allow below-decks officers without combat abilities (prioritize highest
+          power)
+        </span>
+        <HelpHint text="Strict (unchecked) is the default: heuristic seeds drop economy-only below-decks picks and the optimizer only considers officers with a canonical below-decks-slot ability. When checked, pools widen and seeds keep those picks; relaxed runs sort heuristic below-decks names by LCARS Attack+Defense+Health at your roster tier/level when available, so high-stat officers can still boost abilities that scale off officer stats." />
       </label>
 
       <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)" }}>

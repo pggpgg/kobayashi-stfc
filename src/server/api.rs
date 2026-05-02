@@ -1723,7 +1723,7 @@ pub fn optimize_estimate_payload(
         hostile,
         sims,
         max_candidates,
-        prioritize_below_decks_ability,
+        only_below_decks_with_ability,
         ship_tier,
         ship_level,
         bd_explicit,
@@ -1745,7 +1745,7 @@ pub fn optimize_estimate_payload(
         Some(cap) if cap <= MAX_CANDIDATES => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
                 max_candidates: Some(cap as usize),
-                only_below_decks_with_ability: prioritize_below_decks_ability,
+                only_below_decks_with_ability,
                 below_decks_slots,
                 ..CandidateStrategy::default()
             });
@@ -1765,7 +1765,7 @@ pub fn optimize_estimate_payload(
         }
         None => {
             let generator = CrewGenerator::with_strategy(CandidateStrategy {
-                only_below_decks_with_ability: prioritize_below_decks_ability,
+                only_below_decks_with_ability,
                 below_decks_slots,
                 ..CandidateStrategy::default()
             });

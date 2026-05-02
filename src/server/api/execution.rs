@@ -13,15 +13,17 @@ use crate::data::budget_telemetry::{maybe_append_row, BudgetTelemetryRow};
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     expand_crews, filter_heuristic_seed_crews, load_seed_file, BelowDecksStrategy,
-    DEFAULT_HEURISTICS_DIR,
+    ParsedHeuristicsCrew, DEFAULT_HEURISTICS_DIR,
 };
-use crate::data::import::roster_import_fallback_warning_message;
+use crate::data::import::{load_imported_roster, roster_import_fallback_warning_message};
+use crate::data::officer::normalize_officer_lookup_key;
 use crate::data::optimize_history;
 use crate::data::support_buffs;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
 };
+use crate::lcars::LcarsOfficer;
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_with_shared, scenario::build_shared_scenario_data_from_registry,
     SimulationResult,
@@ -36,8 +38,9 @@ use crate::optimizer::{
 use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
 use super::requests::{
-    build_crew_search_constraints, chain_grind_params_from_request, parse_below_decks_strategy,
-    parse_strategy, ChainGrindRequest, OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
+    build_crew_search_constraints, chain_grind_params_from_request, only_below_decks_with_ability_resolved,
+    parse_below_decks_strategy, parse_strategy, relax_below_decks_combat_strictness,
+    ChainGrindRequest, OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
 };
 
 /// When `strategy` is omitted, use tiered scout→confirm if the capped candidate count is at least this.
@@ -121,7 +124,7 @@ fn resolve_effective_optimize_strategy(
     }
     let strat = CandidateStrategy {
         max_candidates: request.max_candidates.map(|n| n as usize),
-        only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
+        only_below_decks_with_ability: only_below_decks_with_ability_resolved(request),
         below_decks_slots,
         constraints: crew_constraints.cloned(),
         roster_profile_id: profile_id.filter(|s| !s.is_empty()).map(String::from),
@@ -306,19 +309,88 @@ pub struct OptimizeResponse {
     pub warnings: Vec<String>,
 }
 
+/// When relaxed below-decks mode is on, sort each seed line's `below_decks_candidates` by descending
+/// LCARS Attack+Defense+Health at the roster tier/level when LCARS + roster data exist; otherwise no-op.
+fn sort_heuristic_parsed_crews_below_decks_by_officer_power(
+    crews: &mut [ParsedHeuristicsCrew],
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    officer_index: &HashMap<String, crate::data::officer::Officer>,
+) {
+    let Some(lcars_slice) = registry.lcars_officers() else {
+        return;
+    };
+    let mut lcars_by_id: HashMap<&str, &LcarsOfficer> = HashMap::with_capacity(lcars_slice.len());
+    for o in lcars_slice {
+        lcars_by_id.entry(o.id.as_str()).or_insert(o);
+    }
+    let roster_path =
+        crate::optimizer::crew_generator::roster_import_json_path_for_profile(profile_id);
+    let roster_entries = load_imported_roster(&roster_path);
+
+    for crew in crews.iter_mut() {
+        if crew.below_decks_candidates.len() <= 1 {
+            continue;
+        }
+        crew.below_decks_candidates.sort_by(|a, b| {
+            let sum = |name: &str| -> f64 {
+                let key = normalize_officer_lookup_key(name);
+                let Some(off) = officer_index.get(&key) else {
+                    return 0.0;
+                };
+                let Some(lo) = lcars_by_id.get(off.id.as_str()) else {
+                    return 0.0;
+                };
+                let (rank, level) = roster_entries
+                    .as_ref()
+                    .and_then(|entries| {
+                        entries
+                            .iter()
+                            .find(|e| e.canonical_officer_id == off.id)
+                            .map(|e| (e.rank, e.level.map(|x| x as u32)))
+                    })
+                    .unwrap_or((None, None));
+                let lvl = lo.resolve_level(level, rank).unwrap_or(1);
+                lo.stats_at_level(lvl)
+                    .map(|s| s.attack + s.defense + s.health)
+                    .unwrap_or(0.0)
+            };
+            let pa = sum(a);
+            let pb = sum(b);
+            pb.partial_cmp(&pa)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.cmp(b))
+        });
+    }
+}
+
 /// Load heuristics seeds and expand them into CrewCandidates.
 pub fn load_heuristics_candidates(
     registry: &DataRegistry,
     seed_names: &[String],
     bd_strategy: BelowDecksStrategy,
     below_decks_slots: usize,
+    relax_below_decks: bool,
+    profile_id: Option<&str>,
 ) -> Vec<CrewCandidate> {
     let canonical_names: Vec<String> = registry.officers().iter().map(|o| o.name.clone()).collect();
     seed_names
         .iter()
         .flat_map(|name| {
             let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
-            let parsed = filter_heuristic_seed_crews(parsed, registry.officer_index());
+            let mut parsed = filter_heuristic_seed_crews(
+                parsed,
+                registry.officer_index(),
+                !relax_below_decks,
+            );
+            if relax_below_decks {
+                sort_heuristic_parsed_crews_below_decks_by_officer_power(
+                    &mut parsed,
+                    registry,
+                    profile_id,
+                    registry.officer_index(),
+                );
+            }
             let candidates = expand_crews(parsed, below_decks_slots, bd_strategy);
             candidates.into_iter().map(|c| CrewCandidate {
                 captain: c.captain,
@@ -586,8 +658,16 @@ fn gather_optimize_simulation_results(
         _ => Vec::new(),
     };
 
+    let relax_bd = relax_below_decks_combat_strictness(request);
     let mut h_candidates = if heuristics_seeds_nonempty {
-        load_heuristics_candidates(registry, heuristics_seeds, bd_strategy, below_decks_slots)
+        load_heuristics_candidates(
+            registry,
+            heuristics_seeds,
+            bd_strategy,
+            below_decks_slots,
+            relax_bd,
+            profile_id,
+        )
     } else {
         Vec::new()
     };
@@ -799,7 +879,7 @@ fn gather_optimize_simulation_results(
             seed,
             max_candidates: request.max_candidates.map(|n| n as usize),
             strategy,
-            only_below_decks_with_ability: request.prioritize_below_decks_ability.unwrap_or(false),
+            only_below_decks_with_ability: only_below_decks_with_ability_resolved(request),
             seed_population: if is_seeded_genetic {
                 h_candidates.clone()
             } else {

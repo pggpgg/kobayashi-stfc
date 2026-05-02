@@ -208,9 +208,11 @@ export default function Workspace() {
           optimizeThroughput={ws.optimizeThroughput}
           maxCandidates={ws.maxCandidates}
           onMaxCandidatesChange={ws.setMaxCandidates}
-          prioritizeBelowDecksAbility={ws.prioritizeBelowDecksAbility}
-          onPrioritizeBelowDecksAbilityChange={
-            ws.setPrioritizeBelowDecksAbility
+          allowBelowDecksWithoutCombatAbility={
+            ws.allowBelowDecksWithoutCombatAbility
+          }
+          onAllowBelowDecksWithoutCombatAbilityChange={
+            ws.setAllowBelowDecksWithoutCombatAbility
           }
           availableSeeds={ws.availableSeeds}
           selectedSeeds={ws.selectedSeeds}

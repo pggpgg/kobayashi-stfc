@@ -19,8 +19,8 @@ const baseProps = {
   optimizeTotalCrews: null as number | null,
   maxCandidates: null as number | null,
   onMaxCandidatesChange: vi.fn(),
-  prioritizeBelowDecksAbility: false,
-  onPrioritizeBelowDecksAbilityChange: vi.fn(),
+  allowBelowDecksWithoutCombatAbility: false,
+  onAllowBelowDecksWithoutCombatAbilityChange: vi.fn(),
   availableSeeds: [] as string[],
   selectedSeeds: [] as string[],
   onSelectedSeedsChange: vi.fn(),
@@ -166,13 +166,16 @@ describe("OptimizePanel", () => {
     expect(fn).toHaveBeenCalledWith(null);
   });
 
-  it("toggles prioritize below-decks checkbox", () => {
+  it("toggles allow below-decks without combat ability checkbox", () => {
     const fn = vi.fn();
     render(
-      <OptimizePanel {...baseProps} onPrioritizeBelowDecksAbilityChange={fn} />,
+      <OptimizePanel
+        {...baseProps}
+        onAllowBelowDecksWithoutCombatAbilityChange={fn}
+      />,
     );
     const checkbox = screen.getByRole("checkbox", {
-      name: /Only below-decks officers with ability/,
+      name: /Allow below-decks officers without combat abilities/,
     });
     fireEvent.click(checkbox);
     expect(fn).toHaveBeenCalledWith(true);

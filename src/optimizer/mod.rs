@@ -1514,7 +1514,7 @@ pub fn optimize_crew(
         seed: 0,
         max_candidates: Some(128),
         strategy: OptimizerStrategy::Exhaustive,
-        only_below_decks_with_ability: false,
+        only_below_decks_with_ability: true,
         seed_population: Vec::new(),
         profile_id,
         tiered_scout_sims: None,

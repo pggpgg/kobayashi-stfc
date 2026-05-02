@@ -12,11 +12,12 @@
 //! canonical bridge ability (`OfficerAbility.slot == "officer"`). This mirrors “synergy or bridge
 //! combat ability” so heuristic seeds do not keep dead bridge picks.
 //!
-//! **Below-decks filtering:** below-decks candidates are dropped unless they have at least one
-//! below-decks-slot ability (`OfficerAbility.slot == "below_decks"`) whose canonical `modifier` is
-//! not classified as economy / non-combat for seeds (aligned with `generate_lcars` `:non_combat`
-//! modifier arms plus common loot and exploration modifiers). Missing `modifier` is treated as
-//! ambiguous and kept.
+//! **Below-decks filtering (strict):** when `apply_below_decks_combat_heuristic_filter` is true (server
+//! default), below-decks candidates are dropped unless they have at least one below-decks-slot ability
+//! (`OfficerAbility.slot == "below_decks"`) whose canonical `modifier` is not classified as economy /
+//! non-combat for seeds (aligned with `generate_lcars` `:non_combat` modifier arms plus common loot
+//! and exploration modifiers). Missing `modifier` is treated as ambiguous and kept. Pass `false` when
+//! the user allows non-combat below-decks picks (`allow_below_decks_without_combat_ability`).
 
 use std::collections::HashMap;
 use std::fs;
@@ -223,11 +224,12 @@ pub fn has_combat_below_decks_slot_ability(officer: &Officer) -> bool {
     })
 }
 
-/// Apply bridge rules ([`keep_bridge_officer_for_heuristic_seed`]) and below-decks combat rules
-/// ([`has_combat_below_decks_slot_ability`]) to parsed heuristic crews.
+/// Apply bridge rules ([`keep_bridge_officer_for_heuristic_seed`]) and, when `apply_below_decks_combat_heuristic_filter`,
+/// below-decks combat rules ([`has_combat_below_decks_slot_ability`]) to parsed heuristic crews.
 pub fn filter_heuristic_seed_crews(
     crews: Vec<ParsedHeuristicsCrew>,
     officer_index: &HashMap<String, Officer>,
+    apply_below_decks_combat_heuristic_filter: bool,
 ) -> Vec<ParsedHeuristicsCrew> {
     crews
         .into_iter()
@@ -275,36 +277,38 @@ pub fn filter_heuristic_seed_crews(
                 );
             }
 
-            let bd_before = crew.below_decks_candidates.len();
-            crew.below_decks_candidates.retain(|bd_name| {
-                let key = normalize_officer_lookup_key(bd_name);
-                let Some(bd_off) = officer_index.get(&key) else {
-                    warn!(
-                        label = %crew.label,
-                        bd_name = %bd_name,
-                        "heuristics: below-decks officer not in officer index; dropping"
-                    );
-                    return false;
-                };
-                let keep = has_combat_below_decks_slot_ability(bd_off);
-                if !keep {
+            if apply_below_decks_combat_heuristic_filter {
+                let bd_before = crew.below_decks_candidates.len();
+                crew.below_decks_candidates.retain(|bd_name| {
+                    let key = normalize_officer_lookup_key(bd_name);
+                    let Some(bd_off) = officer_index.get(&key) else {
+                        warn!(
+                            label = %crew.label,
+                            bd_name = %bd_name,
+                            "heuristics: below-decks officer not in officer index; dropping"
+                        );
+                        return false;
+                    };
+                    let keep = has_combat_below_decks_slot_ability(bd_off);
+                    if !keep {
+                        debug!(
+                            label = %crew.label,
+                            below_decks = %bd_name,
+                            "heuristics: dropping below-decks officer (no combat-relevant below-decks-slot ability)"
+                        );
+                    }
+                    keep
+                });
+
+                if crew.below_decks_candidates.len() != bd_before {
                     debug!(
                         label = %crew.label,
-                        below_decks = %bd_name,
-                        "heuristics: dropping below-decks officer (no combat-relevant below-decks-slot ability)"
+                        captain = %crew.captain,
+                        before = bd_before,
+                        after = crew.below_decks_candidates.len(),
+                        "heuristics: filtered below-decks candidates"
                     );
                 }
-                keep
-            });
-
-            if crew.below_decks_candidates.len() != bd_before {
-                debug!(
-                    label = %crew.label,
-                    captain = %crew.captain,
-                    before = bd_before,
-                    after = crew.below_decks_candidates.len(),
-                    "heuristics: filtered below-decks candidates"
-                );
             }
 
             Some(crew)
@@ -558,7 +562,7 @@ mod tests {
             super::normalize_officer_lookup_key("Worf"),
             officer_named("Worf", Some("TNG"), &["captain"]),
         );
-        let out = filter_heuristic_seed_crews(vec![crew], &idx);
+        let out = filter_heuristic_seed_crews(vec![crew], &idx, true);
         assert_eq!(out.len(), 1);
         assert!(out[0].bridge.is_empty());
     }
@@ -615,9 +619,38 @@ mod tests {
             value_by_rank: vec![],
         });
         idx.insert(super::normalize_officer_lookup_key("LootOnly"), loot_only);
-        let out = filter_heuristic_seed_crews(vec![crew], &idx);
+        let out = filter_heuristic_seed_crews(vec![crew], &idx, true);
         assert_eq!(out.len(), 1);
         assert!(out[0].below_decks_candidates.is_empty());
+    }
+
+    #[test]
+    fn filter_heuristic_seed_crews_relaxed_keeps_economy_only_below_decks() {
+        let crew = ParsedHeuristicsCrew {
+            label: "bd".into(),
+            captain: "Kirk".into(),
+            bridge: vec![],
+            below_decks_candidates: vec!["LootOnly".into()],
+        };
+        let mut idx = HashMap::new();
+        idx.insert(
+            super::normalize_officer_lookup_key("Kirk"),
+            officer_named("Kirk", Some("TOS"), &["captain"]),
+        );
+        let mut loot_only = officer_named("LootOnly", None, &[]);
+        loot_only.abilities.push(OfficerAbility {
+            slot: "below_decks".into(),
+            trigger: None,
+            modifier: Some("MiningRate".into()),
+            attributes: None,
+            description: None,
+            chance_by_rank: vec![],
+            value_by_rank: vec![],
+        });
+        idx.insert(super::normalize_officer_lookup_key("LootOnly"), loot_only);
+        let out = filter_heuristic_seed_crews(vec![crew], &idx, false);
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].below_decks_candidates, vec!["LootOnly".to_string()]);
     }
 
     #[test]

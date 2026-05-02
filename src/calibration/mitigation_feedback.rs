@@ -68,6 +68,14 @@ fn predicted_damage_through_for_fixture(spec: &DriftFixtureFile) -> f64 {
     .damage_through_factor
 }
 
+/// Fixtures that expect **no** simulated combat rounds (e.g. instant-loss invariants) never emit
+/// attack-phase `pierce_calc` trace rows; skip them for damage-through drift checks.
+fn fixture_expects_zero_combat_rounds(spec: &DriftFixtureFile) -> bool {
+    spec.bands
+        .rounds_simulated
+        .is_some_and(|[lo, hi]| lo <= 0.0 && hi <= 0.0)
+}
+
 pub fn run_mitigation_damage_through_feedback(
     dir: &Path,
     tolerance: f64,
@@ -78,6 +86,9 @@ pub fn run_mitigation_damage_through_feedback(
 
     for path in &paths {
         let spec = load_drift_fixture(path)?;
+        if fixture_expects_zero_combat_rounds(&spec) {
+            continue;
+        }
         let predicted = predicted_damage_through_for_fixture(&spec);
         let (observed, samples) = observed_damage_through_from_trace(&spec)?;
         let abs_drift = (observed - predicted).abs();

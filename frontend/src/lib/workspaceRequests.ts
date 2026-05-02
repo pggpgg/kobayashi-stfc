@@ -190,7 +190,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
   simsPerCrew: number;
   maxCandidates: number | null;
   optimizerStrategy: OptimizerStrategyType;
-  prioritizeBelowDecksAbility: boolean;
+  allowBelowDecksWithoutCombatAbility: boolean;
   selectedSeeds: string[];
   heuristicsOnly: boolean;
   belowDecksStrategy: "ordered" | "exploration";
@@ -239,8 +239,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
     sims: args.simsPerCrew,
     max_candidates: args.maxCandidates ?? undefined,
     strategy: args.optimizerStrategy,
-    prioritize_below_decks_ability:
-      args.prioritizeBelowDecksAbility || undefined,
+    allow_below_decks_without_combat_ability:
+      args.allowBelowDecksWithoutCombatAbility || undefined,
     heuristics_seeds:
       args.selectedSeeds.length > 0 ? args.selectedSeeds : undefined,
     heuristics_only: args.heuristicsOnly || undefined,

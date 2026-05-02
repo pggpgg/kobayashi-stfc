@@ -588,7 +588,7 @@ export async function getOptimizeEstimate(
     hostile: string;
     sims?: number;
     max_candidates?: number | null;
-    prioritize_below_decks_ability?: boolean;
+    allow_below_decks_without_combat_ability?: boolean;
     ship_tier?: number | null;
     ship_level?: number | null;
     below_decks_slots?: number | null;
@@ -604,8 +604,8 @@ export async function getOptimizeEstimate(
   if (params.max_candidates != null && params.max_candidates > 0) {
     search.set("max_candidates", String(params.max_candidates));
   }
-  if (params.prioritize_below_decks_ability === true) {
-    search.set("prioritize_below_decks_ability", "true");
+  if (params.allow_below_decks_without_combat_ability === true) {
+    search.set("allow_below_decks_without_combat_ability", "true");
   }
   if (params.ship_tier != null && params.ship_tier > 0) {
     search.set("ship_tier", String(params.ship_tier));
@@ -726,7 +726,7 @@ export async function optimizeStart(
     seed?: number;
     max_candidates?: number | null;
     strategy?: OptimizerStrategyType;
-    prioritize_below_decks_ability?: boolean;
+    allow_below_decks_without_combat_ability?: boolean;
     heuristics_seeds?: string[];
     heuristics_only?: boolean;
     below_decks_strategy?: "ordered" | "exploration";
@@ -760,8 +760,8 @@ export async function optimizeStart(
   if (params.strategy && params.strategy !== "exhaustive") {
     body.strategy = params.strategy;
   }
-  if (params.prioritize_below_decks_ability === true) {
-    body.prioritize_below_decks_ability = true;
+  if (params.allow_below_decks_without_combat_ability === true) {
+    body.allow_below_decks_without_combat_ability = true;
   }
   if (params.heuristics_seeds && params.heuristics_seeds.length > 0) {
     body.heuristics_seeds = params.heuristics_seeds;

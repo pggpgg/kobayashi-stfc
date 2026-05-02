@@ -10,6 +10,8 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 The intended direction is: **seed + prune + scout + confirm + learn**, rather than trying to brute-force ever-larger search spaces with uniform simulation effort.
 
+- **Optimize / heuristics defaults:** Strict below-decks heuristic seeds (combat-relevant below-decks-slot modifiers only) and narrow below-decks officer pools are the default. The SPA opt-out is **Allow below-decks officers without combat abilities (prioritize highest power)** → API `allow_below_decks_without_combat_ability`. Legacy `prioritize_below_decks_ability` is still accepted (inverted when the new field is absent).
+
 ## Combat buffs support
 
 - **Defender-side buffs & debuffs:** **Partial** — Catalog field `static_bonus_target: defender_if_player_opponent` (`[data/support_buffs.json](../data/support_buffs.json)`) routes **direct** `static_bonuses` onto the defender `[Combatant](src/combat/types.rs)` when the API uses `defender_opponent: player` (see `[aggregate_support_static_bonuses_split](../src/data/support_buffs.rs)`, `[SharedScenarioData::support_defender_static_buffs](../src/optimizer/monte_carlo/scenario.rs)`). Titan-A Fortify / Max Fortify, Defiant Reinforce, and placeholder `mantis_sting` use this path; Cerritos remains attacker-routed. **Still open:** support-gated **research** augmentation from `augment_static_buffs_with_support_gated_research` stays on the attacker merge; hostile-applied modifiers and full Mantis combat stats remain TBD.
