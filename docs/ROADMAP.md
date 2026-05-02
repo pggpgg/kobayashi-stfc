@@ -53,9 +53,16 @@ Current state: officer effects are LCARS-native, while research uses stat rows p
 - No changes to combat **timing windows**, **round structure**, or **core damage formulas** solely for the spec migration.
 - No removal of the LCARS resolver until **LCARS ↔ spec parity** is proven for representative fixtures.
 
+### Cutover status (completed)
+
+- `**resolve_lcars_condition` deduplicated** onto the canonical `lcars_condition_to_spec` + `compile_condition` path. The legacy function is deprecated; remaining call sites (parity tests, resolver unit tests) are `#[allow(deprecated)]` regression coverage.
+- **Effect-type coverage audited** — all six types in `officers.lcars.yaml` (`assimilated`, `burning`, `hull_breach`, `morale`, `stat_modify`, `tag`) are covered by the adapter.
+- **Full parity confirmed** — 10/10 parity tests pass across all three spec parity suites.
+
 ### Open roadmap / backlog
 
-- **Cutover completion:** Continue CombatEffectSpec migration for remaining LCARS surface area (e.g. deduplicating `[resolve_lcars_condition](../src/lcars/resolver.rs)` vs adapter-only call sites, plus additional `effect_type` coverage) where parity and performance allow.
+- **Future effect types:** Extend the IR/compiler when new `effect_type` values appear in `captain_ability` data (the allow-list test in `tests/lcars_captain_spec_parity_tests.rs` gates this).
+- **Remove `resolve_lcars_condition`** after parity confidence and full caller migration.
 
 ---
 
@@ -119,4 +126,3 @@ Research sync + catalog merge are in place for ship-combat stats; remaining road
 - **Other combat stats** — Any future stat keys must be added to `normalize_profile_combat_stat` and wired in `apply_profile_to_attacker` / `apply_static_buffs_to_combatant` (or the mitigation path) before research mappings affect simulation.
 - **Conditional bonuses** — Armada-, class-, PvP-, or faction-scoped lines may be mapped as **global** ship bonuses when descriptions look generic; tightening requires engine/scenario context or buff-level overrides in `data/research/buff_id_to_stat.json`.
 - **Catalog refresh** — After upstream drops, re-run `fetch_stfcspace_research.mjs` then `import_stfcspace_research.mjs`; use `--dump-unmapped` to extend `data/research/buff_id_to_stat.json` / `loca_id_to_stat.json` for buff ids that still do not resolve.
-

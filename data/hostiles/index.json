@@ -3,6 +3,14 @@
   "source_note": "data.stfc.space hostile detail (cached under data/upstream/data-stfc-space/hostiles)",
   "hostiles": [
     {
+      "id": "kobayashi_theoretical_damage_sponge",
+      "hostile_name": "Kobayashi Theoretical Damage Sponge",
+      "level": 50,
+      "ship_class": "survey",
+      "rarity": 1,
+      "upstream_ship_type": 1
+    },
+    {
       "id": "206921",
       "hostile_name": "Hostile 206921",
       "level": 26,
