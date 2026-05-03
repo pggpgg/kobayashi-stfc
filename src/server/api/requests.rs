@@ -127,10 +127,18 @@ pub struct OptimizeRequest {
     pub max_candidates: Option<u32>,
     pub strategy: Option<String>,
     /// When `Some(true)`, relax below-decks strictness: skip combat-only heuristic filtering on
-    /// heuristic seeds and use wide below-decks officer pools (`only_below_decks_with_ability = false`).
+    /// heuristic seeds and use wide below-decks officer pools.
+    /// Legacy field — when `below_decks_pool_mode` is also set, that takes precedence.
     /// Omitted or `false` = strict default (combat heuristic on seeds, narrow pools).
     #[serde(default)]
     pub allow_below_decks_without_combat_ability: Option<bool>,
+    /// Below-decks pool tier: `"strict"` (combat modifier only — default), `"scored"` (all
+    /// below-decks-ability officers ranked by combat relevance with officer power as tiebreaker),
+    /// or `"relaxed"` (all officers, ranked by power). Takes precedence over
+    /// [`Self::allow_below_decks_without_combat_ability`] when set. Unknown values fall back to
+    /// the legacy field, then to strict.
+    #[serde(default)]
+    pub below_decks_pool_mode: Option<String>,
     pub heuristics_seeds: Option<Vec<String>>,
     pub heuristics_only: Option<bool>,
     pub below_decks_strategy: Option<String>,
@@ -189,18 +197,35 @@ pub struct OptimizeRequest {
     pub optimize_cache_key: Option<String>,
 }
 
-/// When `true`: relaxed search — no below-decks combat heuristic stripping on seeds, wide
-/// below-decks pools. `allow_below_decks_without_combat_ability == Some(true)` only; omitted or
-/// `false` = strict default.
-pub fn relax_below_decks_combat_strictness(request: &OptimizeRequest) -> bool {
-    request
+/// Resolve the effective [`BelowDecksPoolMode`] for a request. New `below_decks_pool_mode` field
+/// (when set to a recognized value) takes precedence; otherwise falls back to the legacy
+/// `allow_below_decks_without_combat_ability` boolean (`true` → Relaxed, else Strict).
+pub fn below_decks_pool_mode_resolved(
+    request: &OptimizeRequest,
+) -> crate::data::heuristics::BelowDecksPoolMode {
+    if let Some(raw) = request.below_decks_pool_mode.as_deref() {
+        if let Some(mode) = crate::data::heuristics::BelowDecksPoolMode::parse_api_str(raw) {
+            return mode;
+        }
+    }
+    if request
         .allow_below_decks_without_combat_ability
         .unwrap_or(false)
+    {
+        crate::data::heuristics::BelowDecksPoolMode::Relaxed
+    } else {
+        crate::data::heuristics::BelowDecksPoolMode::Strict
+    }
 }
 
-/// Inverse of [`relax_below_decks_combat_strictness`] — maps to `OptimizationScenario::only_below_decks_with_ability`.
-pub fn only_below_decks_with_ability_resolved(request: &OptimizeRequest) -> bool {
-    !relax_below_decks_combat_strictness(request)
+/// When `true`: relaxed search — no below-decks combat heuristic stripping on seeds, wide
+/// below-decks pools. Honors both new `below_decks_pool_mode` and legacy
+/// `allow_below_decks_without_combat_ability` for back-compat.
+pub fn relax_below_decks_combat_strictness(request: &OptimizeRequest) -> bool {
+    matches!(
+        below_decks_pool_mode_resolved(request),
+        crate::data::heuristics::BelowDecksPoolMode::Relaxed
+    )
 }
 
 /// JSON body for `OptimizeRequest.constraints`.
@@ -748,7 +773,8 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 }
 
 /// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates,
-/// optional `allow_below_decks_without_combat_ability`, optional ship_tier, ship_level, below_decks_slots.
+/// optional `below_decks_pool_mode` (new) or legacy `allow_below_decks_without_combat_ability`,
+/// optional ship_tier, ship_level, below_decks_slots.
 #[allow(clippy::type_complexity)]
 pub fn parse_optimize_estimate_query(
     query: &str,
@@ -758,7 +784,7 @@ pub fn parse_optimize_estimate_query(
         String,
         u32,
         Option<u32>,
-        bool,
+        crate::data::heuristics::BelowDecksPoolMode,
         Option<u32>,
         Option<u32>,
         Option<u32>,
@@ -770,6 +796,7 @@ pub fn parse_optimize_estimate_query(
     let mut sims = DEFAULT_SIMS;
     let mut max_candidates: Option<u32> = None;
     let mut allow_below_decks_without_combat_ability: Option<bool> = None;
+    let mut below_decks_pool_mode: Option<String> = None;
     let mut ship_tier: Option<u32> = None;
     let mut ship_level: Option<u32> = None;
     let mut below_decks_slots: Option<u32> = None;
@@ -785,6 +812,9 @@ pub fn parse_optimize_estimate_query(
                 "allow_below_decks_without_combat_ability" => {
                     allow_below_decks_without_combat_ability =
                         Some(value.eq_ignore_ascii_case("true") || value == "1");
+                }
+                "below_decks_pool_mode" => {
+                    below_decks_pool_mode = Some(value.to_string());
                 }
                 "prioritize_below_decks_ability" => {
                     return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -805,13 +835,49 @@ pub fn parse_optimize_estimate_query(
             }
         }
     }
-    let only_below_decks_with_ability = !allow_below_decks_without_combat_ability.unwrap_or(false);
+    // Reuse the resolver so query and JSON paths share the same precedence rules.
+    let stub = OptimizeRequest {
+        ship: ship.clone(),
+        hostile: hostile.clone(),
+        ship_tier,
+        ship_level,
+        sims: Some(sims),
+        seed: None,
+        max_candidates,
+        strategy: None,
+        allow_below_decks_without_combat_ability,
+        below_decks_pool_mode,
+        heuristics_seeds: None,
+        heuristics_only: None,
+        below_decks_strategy: None,
+        analytical_prefilter_keep: None,
+        enable_learned_pair_prior: None,
+        tiered_scout_sims: None,
+        tiered_top_k: None,
+        tiered_scout_uniform: None,
+        tiered_confirm_budget_cap_mult: None,
+        exhaustive_scout_sims: None,
+        exhaustive_scout_top_keep: None,
+        warm_start_crews: None,
+        below_decks_slots,
+        constraints: None,
+        support_buffs: None,
+        chain: None,
+        defender_opponent: Default::default(),
+        fast_discovery: None,
+        novelty_lambda: None,
+        novelty_diverse_top: None,
+        novelty_pool: None,
+        novelty_history_anchors: None,
+        optimize_cache_key: None,
+    };
+    let mode = below_decks_pool_mode_resolved(&stub);
     Ok((
         ship,
         hostile,
         sims,
         max_candidates,
-        only_below_decks_with_ability,
+        mode,
         ship_tier,
         ship_level,
         below_decks_slots,
@@ -846,6 +912,34 @@ mod below_decks_relax_tests {
             r#"{"ship":"s","hostile":"h","allow_below_decks_without_combat_ability":false}"#,
         );
         assert!(!relax_below_decks_combat_strictness(&r));
+    }
+
+    #[test]
+    fn pool_mode_scored_resolves() {
+        use crate::data::heuristics::BelowDecksPoolMode;
+        use super::below_decks_pool_mode_resolved;
+        let r = req_from_json(r#"{"ship":"s","hostile":"h","below_decks_pool_mode":"scored"}"#);
+        assert_eq!(below_decks_pool_mode_resolved(&r), BelowDecksPoolMode::Scored);
+    }
+
+    #[test]
+    fn pool_mode_takes_precedence_over_legacy_allow_field() {
+        use crate::data::heuristics::BelowDecksPoolMode;
+        use super::below_decks_pool_mode_resolved;
+        let r = req_from_json(
+            r#"{"ship":"s","hostile":"h","allow_below_decks_without_combat_ability":true,"below_decks_pool_mode":"strict"}"#,
+        );
+        assert_eq!(below_decks_pool_mode_resolved(&r), BelowDecksPoolMode::Strict);
+    }
+
+    #[test]
+    fn pool_mode_unknown_value_falls_back_to_legacy_allow_field() {
+        use crate::data::heuristics::BelowDecksPoolMode;
+        use super::below_decks_pool_mode_resolved;
+        let r = req_from_json(
+            r#"{"ship":"s","hostile":"h","allow_below_decks_without_combat_ability":true,"below_decks_pool_mode":"unknown"}"#,
+        );
+        assert_eq!(below_decks_pool_mode_resolved(&r), BelowDecksPoolMode::Relaxed);
     }
 }
 
@@ -887,11 +981,41 @@ mod parse_optimize_body_tests {
     }
 
     #[test]
-    fn estimate_query_allow_true_maps_to_wide_pool() {
-        let (_, _, _, _, only_bd_ability, _, _, _) = parse_optimize_estimate_query(
+    fn estimate_query_allow_true_maps_to_relaxed_mode() {
+        use crate::data::heuristics::BelowDecksPoolMode;
+        let (_, _, _, _, mode, _, _, _) = parse_optimize_estimate_query(
             "ship=s&hostile=h&allow_below_decks_without_combat_ability=true",
         )
         .expect("parse");
-        assert!(!only_bd_ability);
+        assert_eq!(mode, BelowDecksPoolMode::Relaxed);
+    }
+
+    #[test]
+    fn estimate_query_pool_mode_overrides_legacy_field() {
+        use crate::data::heuristics::BelowDecksPoolMode;
+        let (_, _, _, _, mode, _, _, _) = parse_optimize_estimate_query(
+            "ship=s&hostile=h&allow_below_decks_without_combat_ability=true&below_decks_pool_mode=scored",
+        )
+        .expect("parse");
+        assert_eq!(mode, BelowDecksPoolMode::Scored);
+    }
+
+    #[test]
+    fn estimate_query_pool_mode_strict_explicit() {
+        use crate::data::heuristics::BelowDecksPoolMode;
+        let (_, _, _, _, mode, _, _, _) =
+            parse_optimize_estimate_query("ship=s&hostile=h&below_decks_pool_mode=strict")
+                .expect("parse");
+        assert_eq!(mode, BelowDecksPoolMode::Strict);
+    }
+
+    #[test]
+    fn estimate_query_pool_mode_unknown_falls_back_to_legacy() {
+        use crate::data::heuristics::BelowDecksPoolMode;
+        let (_, _, _, _, mode, _, _, _) = parse_optimize_estimate_query(
+            "ship=s&hostile=h&allow_below_decks_without_combat_ability=true&below_decks_pool_mode=garbage",
+        )
+        .expect("parse");
+        assert_eq!(mode, BelowDecksPoolMode::Relaxed);
     }
 }

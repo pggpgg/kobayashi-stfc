@@ -22,6 +22,7 @@ use crate::data::data_registry::DataRegistry;
 use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
+use crate::data::heuristics::BelowDecksPoolMode;
 use crate::optimizer::crew_generator::{
     build_officer_pools_from_registry, CandidateStrategy, CrewCandidate, CrewGenerator,
     BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
@@ -118,9 +119,13 @@ pub fn enforce_candidate_legality_with_registry(
     candidates: Vec<CrewCandidate>,
 ) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
     let mut summary = CandidateLegalitySummary::default();
-    let Some(pools) =
-        build_officer_pools_from_registry(registry, false, profile_id, below_decks_slots, None)
-    else {
+    let Some(pools) = build_officer_pools_from_registry(
+        registry,
+        BelowDecksPoolMode::Relaxed,
+        profile_id,
+        below_decks_slots,
+        None,
+    ) else {
         summary.dropped_wrong_shape = candidates.len();
         return (Vec::new(), summary);
     };
@@ -342,8 +347,8 @@ pub struct OptimizationScenario<'a> {
     pub max_candidates: Option<usize>,
     /// Which optimizer to use. When Genetic, max_candidates is ignored and GA config is used.
     pub strategy: OptimizerStrategy,
-    /// When true, below-decks pool only includes officers that have a below-decks ability.
-    pub only_below_decks_with_ability: bool,
+    /// Below-decks pool sizing strategy. See [`BelowDecksPoolMode`].
+    pub below_decks_pool_mode: BelowDecksPoolMode,
     /// When non-empty, seeds the genetic algorithm's initial population with these crews.
     /// Only used when strategy is Genetic; ignored for Exhaustive.
     pub seed_population: Vec<CrewCandidate>,
@@ -424,7 +429,7 @@ impl Default for OptimizationScenario<'_> {
             seed: 0,
             max_candidates: Some(128),
             strategy: OptimizerStrategy::Exhaustive,
-            only_below_decks_with_ability: false,
+            below_decks_pool_mode: BelowDecksPoolMode::default(),
             seed_population: Vec::new(),
             profile_id: None,
             tiered_scout_sims: None,
@@ -554,7 +559,7 @@ fn prepend_warm_start_dedupe(
 fn candidate_strategy_from_scenario(scenario: &OptimizationScenario<'_>) -> CandidateStrategy {
     CandidateStrategy {
         max_candidates: scenario.max_candidates,
-        only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+        below_decks_pool_mode: scenario.below_decks_pool_mode,
         below_decks_slots: scenario.below_decks_slots,
         constraints: scenario.constraints.clone(),
         roster_profile_id: scenario.profile_id.map(String::from),
@@ -895,7 +900,7 @@ where
 
     let config = if filtered_seeds.is_empty() {
         GeneticConfig {
-            only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+            below_decks_pool_mode: scenario.below_decks_pool_mode,
             below_decks_slots: scenario.below_decks_slots,
             constraints: scenario.constraints.clone(),
             support_buffs: scenario.support_buffs.clone(),
@@ -906,7 +911,7 @@ where
         }
     } else {
         let mut cfg = GeneticConfig::seeded(filtered_seeds);
-        cfg.only_below_decks_with_ability = scenario.only_below_decks_with_ability;
+        cfg.below_decks_pool_mode = scenario.below_decks_pool_mode;
         cfg.below_decks_slots = scenario.below_decks_slots;
         cfg.constraints = scenario.constraints.clone();
         cfg.support_buffs = scenario.support_buffs.clone();
@@ -948,7 +953,7 @@ where
                 seed: scenario.seed,
                 max_candidates: scenario.max_candidates,
                 strategy: OptimizerStrategy::Exhaustive,
-                only_below_decks_with_ability: scenario.only_below_decks_with_ability,
+                below_decks_pool_mode: scenario.below_decks_pool_mode,
                 seed_population: scenario.seed_population.clone(),
                 profile_id: scenario.profile_id,
                 tiered_scout_sims: scenario.tiered_scout_sims,
@@ -1514,7 +1519,7 @@ pub fn optimize_crew(
         seed: 0,
         max_candidates: Some(128),
         strategy: OptimizerStrategy::Exhaustive,
-        only_below_decks_with_ability: true,
+        below_decks_pool_mode: BelowDecksPoolMode::Strict,
         seed_population: Vec::new(),
         profile_id,
         tiered_scout_sims: None,
@@ -1548,7 +1553,8 @@ mod tests {
     use super::{
         analytical_prefilter_keep_auto, count_effective_optimize_candidates,
         enforce_candidate_legality_with_registry, optimize_scenario_with_progress_with_registry,
-        AnalyticalPrefilterWorkload, CandidateStrategy, OptimizationScenario, OptimizerStrategy,
+        AnalyticalPrefilterWorkload, BelowDecksPoolMode, CandidateStrategy, OptimizationScenario,
+        OptimizerStrategy,
     };
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
@@ -1728,7 +1734,7 @@ mod tests {
             seed: 42,
             max_candidates: None,
             strategy: OptimizerStrategy::Genetic,
-            only_below_decks_with_ability: false,
+            below_decks_pool_mode: BelowDecksPoolMode::default(),
             seed_population: Vec::new(),
             profile_id: None,
             tiered_scout_sims: None,
@@ -1879,7 +1885,7 @@ mod tests {
             seed: 11,
             max_candidates: Some(80),
             strategy: OptimizerStrategy::Exhaustive,
-            only_below_decks_with_ability: false,
+            below_decks_pool_mode: BelowDecksPoolMode::default(),
             seed_population: Vec::new(),
             profile_id: None,
             tiered_scout_sims: None,
@@ -1949,7 +1955,7 @@ mod tests {
             seed: 11,
             max_candidates: Some(80),
             strategy: OptimizerStrategy::Exhaustive,
-            only_below_decks_with_ability: false,
+            below_decks_pool_mode: BelowDecksPoolMode::default(),
             seed_population: Vec::new(),
             profile_id: Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             tiered_scout_sims: None,
@@ -2013,7 +2019,7 @@ mod tests {
             seed: 19,
             max_candidates: Some(48),
             strategy: OptimizerStrategy::Tiered,
-            only_below_decks_with_ability: false,
+            below_decks_pool_mode: BelowDecksPoolMode::default(),
             seed_population: Vec::new(),
             profile_id: Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             tiered_scout_sims: Some(320),

@@ -208,12 +208,8 @@ export default function Workspace() {
           optimizeThroughput={ws.optimizeThroughput}
           maxCandidates={ws.maxCandidates}
           onMaxCandidatesChange={ws.setMaxCandidates}
-          allowBelowDecksWithoutCombatAbility={
-            ws.allowBelowDecksWithoutCombatAbility
-          }
-          onAllowBelowDecksWithoutCombatAbilityChange={
-            ws.setAllowBelowDecksWithoutCombatAbility
-          }
+          belowDecksPoolMode={ws.belowDecksPoolMode}
+          onBelowDecksPoolModeChange={ws.setBelowDecksPoolMode}
           availableSeeds={ws.availableSeeds}
           selectedSeeds={ws.selectedSeeds}
           onSelectedSeedsChange={ws.setSelectedSeeds}

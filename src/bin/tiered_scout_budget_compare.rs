@@ -76,7 +76,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         seed: row.seed,
         max_candidates: Some(row.max_candidates),
         strategy: OptimizerStrategy::Tiered,
-        only_below_decks_with_ability: false,
+        below_decks_pool_mode: kobayashi::data::heuristics::BelowDecksPoolMode::default(),
         seed_population: Vec::new(),
         profile_id: Some(DEMO_PROFILE_ID),
         tiered_scout_sims: Some(row.tiered_scout_sims),

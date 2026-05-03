@@ -190,7 +190,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   simsPerCrew: number;
   maxCandidates: number | null;
   optimizerStrategy: OptimizerStrategyType;
-  allowBelowDecksWithoutCombatAbility: boolean;
+  /** Below-decks pool tier — `strict` (default), `scored`, or `relaxed`. */
+  belowDecksPoolMode: import("./optimizeWarmStart").BelowDecksPoolMode;
   selectedSeeds: string[];
   heuristicsOnly: boolean;
   belowDecksStrategy: "ordered" | "exploration";
@@ -239,8 +240,10 @@ export function buildWorkspaceOptimizeStartBody(args: {
     sims: args.simsPerCrew,
     max_candidates: args.maxCandidates ?? undefined,
     strategy: args.optimizerStrategy,
-    allow_below_decks_without_combat_ability:
-      args.allowBelowDecksWithoutCombatAbility || undefined,
+    below_decks_pool_mode:
+      args.belowDecksPoolMode !== "strict"
+        ? args.belowDecksPoolMode
+        : undefined,
     heuristics_seeds:
       args.selectedSeeds.length > 0 ? args.selectedSeeds : undefined,
     heuristics_only: args.heuristicsOnly || undefined,

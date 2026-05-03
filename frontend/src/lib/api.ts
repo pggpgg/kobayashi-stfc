@@ -588,6 +588,8 @@ export async function getOptimizeEstimate(
     hostile: string;
     sims?: number;
     max_candidates?: number | null;
+    below_decks_pool_mode?: import("./optimizeWarmStart").BelowDecksPoolMode;
+    /** @deprecated use below_decks_pool_mode */
     allow_below_decks_without_combat_ability?: boolean;
     ship_tier?: number | null;
     ship_level?: number | null;
@@ -604,7 +606,12 @@ export async function getOptimizeEstimate(
   if (params.max_candidates != null && params.max_candidates > 0) {
     search.set("max_candidates", String(params.max_candidates));
   }
-  if (params.allow_below_decks_without_combat_ability === true) {
+  if (
+    params.below_decks_pool_mode &&
+    params.below_decks_pool_mode !== "strict"
+  ) {
+    search.set("below_decks_pool_mode", params.below_decks_pool_mode);
+  } else if (params.allow_below_decks_without_combat_ability === true) {
     search.set("allow_below_decks_without_combat_ability", "true");
   }
   if (params.ship_tier != null && params.ship_tier > 0) {
@@ -726,6 +733,8 @@ export async function optimizeStart(
     seed?: number;
     max_candidates?: number | null;
     strategy?: OptimizerStrategyType;
+    below_decks_pool_mode?: import("./optimizeWarmStart").BelowDecksPoolMode;
+    /** @deprecated use below_decks_pool_mode */
     allow_below_decks_without_combat_ability?: boolean;
     heuristics_seeds?: string[];
     heuristics_only?: boolean;
@@ -760,7 +769,12 @@ export async function optimizeStart(
   if (params.strategy && params.strategy !== "exhaustive") {
     body.strategy = params.strategy;
   }
-  if (params.allow_below_decks_without_combat_ability === true) {
+  if (
+    params.below_decks_pool_mode &&
+    params.below_decks_pool_mode !== "strict"
+  ) {
+    body.below_decks_pool_mode = params.below_decks_pool_mode;
+  } else if (params.allow_below_decks_without_combat_ability === true) {
     body.allow_below_decks_without_combat_ability = true;
   }
   if (params.heuristics_seeds && params.heuristics_seeds.length > 0) {

@@ -7,11 +7,15 @@ use std::sync::Mutex;
 use lru::LruCache;
 
 use crate::data::data_registry::DataRegistry;
+use crate::data::heuristics::{
+    below_decks_combat_relevance_rank, BelowDecksCombatRelevanceRank, BelowDecksPoolMode,
+};
 use crate::data::import::load_imported_roster_ids_unlocked_only;
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
+use crate::lcars::LcarsOfficer;
 use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };
@@ -106,6 +110,86 @@ fn has_below_decks_ability(officer: &Officer) -> bool {
         .any(|a| a.slot.eq_ignore_ascii_case("below_decks"))
 }
 
+/// True iff `officer` should be included in the below-decks pool under `mode`.
+/// - `Strict`: ability slot present **and** at least one combat (non-economy) modifier.
+/// - `Scored`: any below-decks-slot ability (including unannotated and economy-only).
+/// - `Relaxed`: any officer that can occupy a below-decks seat (no ability filter).
+fn keep_below_decks_for_mode(officer: &Officer, mode: BelowDecksPoolMode) -> bool {
+    match mode {
+        BelowDecksPoolMode::Strict => {
+            matches!(
+                below_decks_combat_relevance_rank(officer),
+                BelowDecksCombatRelevanceRank::Combat
+            )
+        }
+        BelowDecksPoolMode::Scored => has_below_decks_ability(officer),
+        BelowDecksPoolMode::Relaxed => true,
+    }
+}
+
+/// Officer power proxy: sum of LCARS Attack+Defense+Health at the officer's max-known level.
+/// Used as a tiebreaker when ranking below-decks officers; defaults to 0.0 when LCARS data is absent
+/// (in tests or for officers without per-level stats yet).
+fn officer_lcars_power_for_default_level(
+    lcars_by_id: &HashMap<&str, &LcarsOfficer>,
+    officer: &Officer,
+) -> f64 {
+    let Some(lo) = lcars_by_id.get(officer.id.as_str()) else {
+        return 0.0;
+    };
+    let level: u32 = lo.resolve_level(None, None).unwrap_or(1);
+    lo.stats_at_level(level)
+        .map(|s| s.attack + s.defense + s.health)
+        .unwrap_or(0.0)
+}
+
+/// Sort `below_decks` names by (combat-rank ascending, power descending, name ascending) so the
+/// first slice of the vector is the most combat-relevant subset. Names not present in `officers`
+/// are sorted last with rank=255, power=0 (stable lexicographic by name).
+fn sort_below_decks_by_rank_and_power(
+    below_decks: &mut [String],
+    officers: &[Officer],
+    lcars_by_id: &HashMap<&str, &LcarsOfficer>,
+    mode: BelowDecksPoolMode,
+) {
+    if matches!(mode, BelowDecksPoolMode::Strict) || below_decks.len() <= 1 {
+        return;
+    }
+    let officer_by_norm: HashMap<String, &Officer> = officers
+        .iter()
+        .map(|o| (pool_display_name_norm(&o.name), o))
+        .collect();
+    let key = |name: &str| -> (u8, std::cmp::Reverse<i64>) {
+        let Some(off) = officer_by_norm.get(&pool_display_name_norm(name)) else {
+            return (u8::MAX, std::cmp::Reverse(0));
+        };
+        let rank = match mode {
+            BelowDecksPoolMode::Scored => below_decks_combat_relevance_rank(off) as u8,
+            // Relaxed: rank only by power; stub all officers under the same bucket.
+            BelowDecksPoolMode::Relaxed | BelowDecksPoolMode::Strict => 0,
+        };
+        let power = officer_lcars_power_for_default_level(lcars_by_id, off);
+        // Map power into integer for stable Ord; 1e-3 resolution keeps officers distinguishable.
+        let power_int = (power * 1000.0).round() as i64;
+        (rank, std::cmp::Reverse(power_int))
+    };
+    below_decks.sort_by(|a, b| key(a).cmp(&key(b)).then_with(|| a.cmp(b)));
+}
+
+fn lcars_by_id_from_registry(registry: Option<&DataRegistry>) -> HashMap<&str, &LcarsOfficer> {
+    let mut map: HashMap<&str, &LcarsOfficer> = HashMap::new();
+    let Some(registry) = registry else {
+        return map;
+    };
+    let Some(slice) = registry.lcars_officers() else {
+        return map;
+    };
+    for o in slice {
+        map.entry(o.id.as_str()).or_insert(o);
+    }
+    map
+}
+
 /// Builds officer pools from registry (no officer reload). Still loads roster for filter.
 ///
 /// When `roster.imported.json` exists and parses, **unlocked** roster ids always restrict the
@@ -113,7 +197,7 @@ fn has_below_decks_ability(officer: &Officer) -> bool {
 /// expand to the full canonical catalog.
 pub fn build_officer_pools_from_registry(
     registry: &DataRegistry,
-    only_below_decks_with_ability: bool,
+    below_decks_pool_mode: BelowDecksPoolMode,
     profile_id: Option<&str>,
     below_decks_slots: usize,
     constraints: Option<&CrewSearchConstraints>,
@@ -147,19 +231,20 @@ pub fn build_officer_pools_from_registry(
         .collect();
     let mut below_decks: Vec<String> = officers
         .iter()
-        .filter(|officer| can_fill_position(officer, Position::BelowDecks))
+        .filter(|officer| {
+            can_fill_position(officer, Position::BelowDecks)
+                && keep_below_decks_for_mode(officer, below_decks_pool_mode)
+        })
         .map(|o| o.name.clone())
         .collect();
 
-    if only_below_decks_with_ability {
-        below_decks = officers
-            .iter()
-            .filter(|officer| {
-                can_fill_position(officer, Position::BelowDecks) && has_below_decks_ability(officer)
-            })
-            .map(|o| o.name.clone())
-            .collect();
-    }
+    let lcars_by_id = lcars_by_id_from_registry(Some(registry));
+    sort_below_decks_by_rank_and_power(
+        &mut below_decks,
+        &officers,
+        &lcars_by_id,
+        below_decks_pool_mode,
+    );
 
     if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < below_decks_slots {
         return None;
@@ -476,20 +561,19 @@ pub fn narrow_officer_pools_for_constraints(
 }
 
 /// Builds captain, bridge, and below-decks pools from loaded officers and roster filter.
-/// When `only_below_decks_with_ability` is true, the below-decks pool is restricted to officers
-/// that have a below-decks ability.
+/// `below_decks_pool_mode` controls below-decks pool sizing: see [`BelowDecksPoolMode`].
 ///
 /// Roster: when `roster.imported.json` exists and parses, unlocked ids always apply (even if the
 /// set is smaller than a full crew). There is no fallback that assigns officers to seats they
 /// cannot legally fill.
 /// Returns `None` if there are not enough officers to form any valid crew.
 pub fn build_officer_pools(
-    only_below_decks_with_ability: bool,
+    below_decks_pool_mode: BelowDecksPoolMode,
     below_decks_slots: usize,
     roster_profile_id: Option<&str>,
 ) -> Option<OfficerPools> {
     build_officer_pools_with_constraints(
-        only_below_decks_with_ability,
+        below_decks_pool_mode,
         below_decks_slots,
         roster_profile_id,
         None,
@@ -498,8 +582,11 @@ pub fn build_officer_pools(
 
 /// Like [`build_officer_pools`], but applies [`narrow_officer_pools_for_constraints`] when
 /// `constraints` is non-empty (same registry-free officer load path).
+///
+/// The below-decks pool is sorted by `(combat_rank, -officer_power)` for `Scored`/`Relaxed` modes
+/// so the most combat-relevant officers appear first; `Strict` keeps the canonical iteration order.
 pub fn build_officer_pools_with_constraints(
-    only_below_decks_with_ability: bool,
+    below_decks_pool_mode: BelowDecksPoolMode,
     below_decks_slots: usize,
     roster_profile_id: Option<&str>,
     constraints: Option<&CrewSearchConstraints>,
@@ -536,19 +623,22 @@ pub fn build_officer_pools_with_constraints(
         .collect();
     let mut below_decks: Vec<String> = officers
         .iter()
-        .filter(|officer| can_fill_position(officer, Position::BelowDecks))
+        .filter(|officer| {
+            can_fill_position(officer, Position::BelowDecks)
+                && keep_below_decks_for_mode(officer, below_decks_pool_mode)
+        })
         .map(|o| o.name.clone())
         .collect();
 
-    if only_below_decks_with_ability {
-        below_decks = officers
-            .iter()
-            .filter(|officer| {
-                can_fill_position(officer, Position::BelowDecks) && has_below_decks_ability(officer)
-            })
-            .map(|o| o.name.clone())
-            .collect();
-    }
+    // Registry-free path: no LCARS source available here, so power-sort uses zeros (stable name order)
+    // for unannotated officers but still sorts Scored mode by combat-rank tier.
+    let lcars_by_id: HashMap<&str, &LcarsOfficer> = HashMap::new();
+    sort_below_decks_by_rank_and_power(
+        &mut below_decks,
+        &officers,
+        &lcars_by_id,
+        below_decks_pool_mode,
+    );
 
     if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < below_decks_slots {
         return None;
@@ -582,8 +672,8 @@ pub struct CandidateStrategy {
     pub large_pool_captain_limit: usize,
     pub large_pool_bridge_limit: usize,
     pub use_seeded_shuffle: bool,
-    /// When true, below-decks pool only includes officers that have a below-decks ability.
-    pub only_below_decks_with_ability: bool,
+    /// Below-decks pool sizing strategy. See [`BelowDecksPoolMode`].
+    pub below_decks_pool_mode: BelowDecksPoolMode,
     /// Number of below-decks slots per generated crew (2–5).
     pub below_decks_slots: usize,
     /// When set, officer pools are narrowed before enumeration (exclude, seat eligibility).
@@ -605,7 +695,7 @@ impl Default for CandidateStrategy {
             large_pool_captain_limit: 10,
             large_pool_bridge_limit: 12,
             use_seeded_shuffle: true,
-            only_below_decks_with_ability: false,
+            below_decks_pool_mode: BelowDecksPoolMode::default(),
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             roster_profile_id: None,
@@ -618,7 +708,8 @@ impl Default for CandidateStrategy {
 /// so repeated calls with the same strategy, roster, and constraints skip rebuild.
 #[derive(Hash, Eq, PartialEq, Clone, Debug)]
 struct OfficerPoolCacheKey {
-    only_below_decks_with_ability: bool,
+    /// Encoded `BelowDecksPoolMode::as_api_str` so the key remains hashable.
+    below_decks_pool_mode: &'static str,
     below_decks_slots: usize,
     roster_profile_id: String,
     constraints_fingerprint: u64,
@@ -709,7 +800,7 @@ impl CrewGenerator {
         profile_id: Option<&str>,
     ) -> Option<OfficerPools> {
         let cache_key = OfficerPoolCacheKey {
-            only_below_decks_with_ability: self.strategy.only_below_decks_with_ability,
+            below_decks_pool_mode: self.strategy.below_decks_pool_mode.as_api_str(),
             below_decks_slots: self.strategy.below_decks_slots,
             roster_profile_id: self.strategy.roster_profile_id.clone().unwrap_or_default(),
             constraints_fingerprint: constraints_fingerprint(self.strategy.constraints.as_ref()),
@@ -728,14 +819,14 @@ impl CrewGenerator {
         let result = if from_registry {
             build_officer_pools_from_registry(
                 registry?,
-                self.strategy.only_below_decks_with_ability,
+                self.strategy.below_decks_pool_mode,
                 profile_id,
                 self.strategy.below_decks_slots,
                 self.strategy.constraints.as_ref(),
             )
         } else {
             build_officer_pools_with_constraints(
-                self.strategy.only_below_decks_with_ability,
+                self.strategy.below_decks_pool_mode,
                 self.strategy.below_decks_slots,
                 self.strategy.roster_profile_id.as_deref(),
                 self.strategy.constraints.as_ref(),
@@ -1346,8 +1437,8 @@ fn mix_seed(seed: u64, ship: &str, hostile: &str) -> u64 {
 mod tests {
     use super::{
         build_officer_pools_from_registry, narrow_officer_pools_for_constraints,
-        resolve_below_decks_slots, CandidateStrategy, CrewGenerator, CrewSlotUnlock,
-        MAX_BELOW_DECKS_SLOTS,
+        resolve_below_decks_slots, BelowDecksPoolMode, CandidateStrategy, CrewGenerator,
+        CrewSlotUnlock, MAX_BELOW_DECKS_SLOTS,
     };
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
@@ -1357,7 +1448,7 @@ mod tests {
         let registry = DataRegistry::load().expect("registry");
         let pools = build_officer_pools_from_registry(
             &registry,
-            false,
+            BelowDecksPoolMode::Relaxed,
             Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
@@ -1377,7 +1468,7 @@ mod tests {
         let registry = DataRegistry::load().expect("registry");
         let pools = build_officer_pools_from_registry(
             &registry,
-            false,
+            BelowDecksPoolMode::Relaxed,
             Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
