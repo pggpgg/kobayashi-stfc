@@ -213,20 +213,91 @@ fn canonical_modifier_is_heuristic_non_combat(modifier: &str) -> bool {
 
 /// True if the officer has at least one below-decks-slot ability that is not economy-only for seeds.
 pub fn has_combat_below_decks_slot_ability(officer: &Officer) -> bool {
-    officer.abilities.iter().any(|a| {
+    matches!(
+        below_decks_combat_relevance_rank(officer),
+        BelowDecksCombatRelevanceRank::Combat | BelowDecksCombatRelevanceRank::Ambiguous
+    )
+}
+
+/// Combat-relevance ranking for the "scored" below-decks pool tier (lower = more combat-relevant).
+/// `Combat` and `Ambiguous` together correspond to [`has_combat_below_decks_slot_ability`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum BelowDecksCombatRelevanceRank {
+    /// Officer has at least one below-decks ability with a known combat modifier.
+    Combat = 0,
+    /// Officer has at least one below-decks ability whose modifier is missing/empty (unannotated).
+    Ambiguous = 1,
+    /// Officer has below-decks ability slot(s) but every modifier is in the known economy/non-combat list.
+    EconomyOnly = 2,
+    /// Officer has no below-decks-slot ability at all.
+    None = 3,
+}
+
+/// Classify an officer's below-decks combat relevance, used by the "scored" pool tier
+/// (`BelowDecksPoolMode::Scored`). Returns the strongest rank across all of the officer's
+/// below-decks abilities (Combat > Ambiguous > EconomyOnly > None).
+pub fn below_decks_combat_relevance_rank(officer: &Officer) -> BelowDecksCombatRelevanceRank {
+    let mut best = BelowDecksCombatRelevanceRank::None;
+    for a in &officer.abilities {
         if !a.slot.eq_ignore_ascii_case("below_decks") {
-            return false;
+            continue;
         }
-        match a
+        let rank = match a
             .modifier
             .as_deref()
             .map(str::trim)
             .filter(|s| !s.is_empty())
         {
-            None => true,
-            Some(m) => !canonical_modifier_is_heuristic_non_combat(m),
+            None => BelowDecksCombatRelevanceRank::Ambiguous,
+            Some(m) if canonical_modifier_is_heuristic_non_combat(m) => {
+                BelowDecksCombatRelevanceRank::EconomyOnly
+            }
+            Some(_) => BelowDecksCombatRelevanceRank::Combat,
+        };
+        if rank < best {
+            best = rank;
         }
-    })
+        if best == BelowDecksCombatRelevanceRank::Combat {
+            break;
+        }
+    }
+    best
+}
+
+/// Below-decks officer pool sizing for the optimizer. See roadmap "Tiered below-decks filtering".
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum BelowDecksPoolMode {
+    /// Combat modifier only — narrow pool of officers whose below-decks ability has a known combat modifier.
+    /// Default; excludes both economy-only and unannotated abilities.
+    #[default]
+    Strict,
+    /// All officers with a below-decks-slot ability, ranked by combat relevance
+    /// (combat → ambiguous/missing → economy-only) with officer power as a tiebreaker.
+    Scored,
+    /// All eligible below-decks officers, ranked by officer power. Mirrors the legacy
+    /// `allow_below_decks_without_combat_ability` behavior.
+    Relaxed,
+}
+
+impl BelowDecksPoolMode {
+    pub fn as_api_str(self) -> &'static str {
+        match self {
+            Self::Strict => "strict",
+            Self::Scored => "scored",
+            Self::Relaxed => "relaxed",
+        }
+    }
+
+    /// Parse a case-insensitive API string. Returns `None` for unrecognized values
+    /// so callers can fall back to legacy fields or defaults.
+    pub fn parse_api_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "strict" => Some(Self::Strict),
+            "scored" => Some(Self::Scored),
+            "relaxed" => Some(Self::Relaxed),
+            _ => None,
+        }
+    }
 }
 
 /// Apply bridge rules ([`keep_bridge_officer_for_heuristic_seed`]) and, when `apply_below_decks_combat_heuristic_filter`,
@@ -627,6 +698,93 @@ mod tests {
         let out = filter_heuristic_seed_crews(vec![crew], &idx, true);
         assert_eq!(out.len(), 1);
         assert!(out[0].below_decks_candidates.is_empty());
+    }
+
+    #[test]
+    fn below_decks_combat_relevance_rank_classifies_by_modifier() {
+        use super::{below_decks_combat_relevance_rank, BelowDecksCombatRelevanceRank};
+
+        let none = officer_named("None", None, &[]);
+        assert_eq!(
+            below_decks_combat_relevance_rank(&none),
+            BelowDecksCombatRelevanceRank::None
+        );
+
+        let mut combat = officer_named("Combat", None, &[]);
+        combat.abilities.push(OfficerAbility {
+            slot: "below_decks".into(),
+            trigger: None,
+            modifier: Some("AllDamage".into()),
+            attributes: None,
+            description: None,
+            chance_by_rank: vec![],
+            value_by_rank: vec![],
+        });
+        assert_eq!(
+            below_decks_combat_relevance_rank(&combat),
+            BelowDecksCombatRelevanceRank::Combat
+        );
+
+        let mut ambiguous = officer_named("Ambig", None, &[]);
+        ambiguous.abilities.push(OfficerAbility {
+            slot: "below_decks".into(),
+            trigger: None,
+            modifier: None,
+            attributes: None,
+            description: None,
+            chance_by_rank: vec![],
+            value_by_rank: vec![],
+        });
+        assert_eq!(
+            below_decks_combat_relevance_rank(&ambiguous),
+            BelowDecksCombatRelevanceRank::Ambiguous
+        );
+
+        let mut economy = officer_named("Econ", None, &[]);
+        economy.abilities.push(OfficerAbility {
+            slot: "below_decks".into(),
+            trigger: None,
+            modifier: Some("MiningRate".into()),
+            attributes: None,
+            description: None,
+            chance_by_rank: vec![],
+            value_by_rank: vec![],
+        });
+        assert_eq!(
+            below_decks_combat_relevance_rank(&economy),
+            BelowDecksCombatRelevanceRank::EconomyOnly
+        );
+
+        // Officer with both economy and combat below-decks abilities ranks as Combat (best wins).
+        let mut mixed = economy.clone();
+        mixed.abilities.push(OfficerAbility {
+            slot: "below_decks".into(),
+            trigger: None,
+            modifier: Some("AllDamage".into()),
+            attributes: None,
+            description: None,
+            chance_by_rank: vec![],
+            value_by_rank: vec![],
+        });
+        assert_eq!(
+            below_decks_combat_relevance_rank(&mixed),
+            BelowDecksCombatRelevanceRank::Combat
+        );
+    }
+
+    #[test]
+    fn below_decks_pool_mode_api_str_roundtrip() {
+        use super::BelowDecksPoolMode;
+        for m in [
+            BelowDecksPoolMode::Strict,
+            BelowDecksPoolMode::Scored,
+            BelowDecksPoolMode::Relaxed,
+        ] {
+            assert_eq!(BelowDecksPoolMode::parse_api_str(m.as_api_str()), Some(m));
+        }
+        assert_eq!(BelowDecksPoolMode::parse_api_str("STRICT"), Some(BelowDecksPoolMode::Strict));
+        assert_eq!(BelowDecksPoolMode::parse_api_str("nope"), None);
+        assert_eq!(BelowDecksPoolMode::default(), BelowDecksPoolMode::Strict);
     }
 
     #[test]

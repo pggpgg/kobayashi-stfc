@@ -5,7 +5,9 @@
 
 import type { CrewRecommendation, WarmStartCrewBody } from "./api";
 
-const SCHEMA = 4;
+const SCHEMA = 5;
+
+export type BelowDecksPoolMode = "strict" | "scored" | "relaxed";
 const PREFIX = "kobayashi_opt_warm_v";
 
 export type WarmStartCrewPayload = WarmStartCrewBody;
@@ -30,7 +32,8 @@ export function buildOptimizeWarmStartKey(args: {
   chainGrindEnabled?: boolean;
   chainKillsTarget?: number;
   chainSecondary?: string;
-  allowBelowDecksWithoutCombatAbility?: boolean;
+  /** Below-decks pool tier — supersedes the legacy boolean. */
+  belowDecksPoolMode?: BelowDecksPoolMode;
   /** Resolved below-decks slot count used for candidate generation. */
   belowDecksSlots?: number;
   /** Fast discovery merges heuristic seeds into warm-start; affects which persisted wins apply. */
@@ -52,7 +55,7 @@ export function buildOptimizeWarmStartKey(args: {
     args.chainGrindEnabled === true
       ? `1:${args.chainKillsTarget ?? ""}:${(args.chainSecondary ?? "").trim()}`
       : "0";
-  const abd = args.allowBelowDecksWithoutCombatAbility === true ? "1" : "0";
+  const bdMode: BelowDecksPoolMode = args.belowDecksPoolMode ?? "strict";
   const bdSlots =
     args.belowDecksSlots != null && args.belowDecksSlots >= 0
       ? String(args.belowDecksSlots)
@@ -71,7 +74,7 @@ export function buildOptimizeWarmStartKey(args: {
     defender,
     buffs,
     chain,
-    abd,
+    bdMode,
     bdSlots,
     fd,
     lpp,

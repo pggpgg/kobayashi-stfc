@@ -38,10 +38,9 @@ use crate::optimizer::{
 use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
 use super::requests::{
-    build_crew_search_constraints, chain_grind_params_from_request,
-    only_below_decks_with_ability_resolved, parse_below_decks_strategy, parse_strategy,
-    relax_below_decks_combat_strictness, ChainGrindRequest, OptimizePayloadError, OptimizeRequest,
-    DEFAULT_SIMS,
+    below_decks_pool_mode_resolved, build_crew_search_constraints, chain_grind_params_from_request,
+    parse_below_decks_strategy, parse_strategy, relax_below_decks_combat_strictness,
+    ChainGrindRequest, OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
 };
 
 /// When `strategy` is omitted, use tiered scout→confirm if the capped candidate count is at least this.
@@ -125,7 +124,7 @@ fn resolve_effective_optimize_strategy(
     }
     let strat = CandidateStrategy {
         max_candidates: request.max_candidates.map(|n| n as usize),
-        only_below_decks_with_ability: only_below_decks_with_ability_resolved(request),
+        below_decks_pool_mode: below_decks_pool_mode_resolved(request),
         below_decks_slots,
         constraints: crew_constraints.cloned(),
         roster_profile_id: profile_id.filter(|s| !s.is_empty()).map(String::from),
@@ -877,7 +876,7 @@ fn gather_optimize_simulation_results(
             seed,
             max_candidates: request.max_candidates.map(|n| n as usize),
             strategy,
-            only_below_decks_with_ability: only_below_decks_with_ability_resolved(request),
+            below_decks_pool_mode: below_decks_pool_mode_resolved(request),
             seed_population: if is_seeded_genetic {
                 h_candidates.clone()
             } else {

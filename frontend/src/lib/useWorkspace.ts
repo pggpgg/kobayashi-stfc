@@ -139,10 +139,8 @@ export function useWorkspace() {
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
-  const [
-    allowBelowDecksWithoutCombatAbility,
-    setAllowBelowDecksWithoutCombatAbility,
-  ] = useState(false);
+  const [belowDecksPoolMode, setBelowDecksPoolMode] =
+    useState<import("./optimizeWarmStart").BelowDecksPoolMode>("strict");
 
   // Optimizer strategy
   const [optimizerStrategy, setOptimizerStrategy] =
@@ -215,7 +213,7 @@ export function useWorkspace() {
       chainGrindEnabled: chainGrindEnabled,
       chainKillsTarget: chainKillsTarget,
       chainSecondary: chainSecondary,
-      allowBelowDecksWithoutCombatAbility,
+      belowDecksPoolMode,
       belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
       fastDiscovery,
       enableLearnedPairPrior,
@@ -319,8 +317,8 @@ export function useWorkspace() {
         hostile,
         sims: simsPerCrew,
         max_candidates: maxCandidates ?? undefined,
-        allow_below_decks_without_combat_ability:
-          allowBelowDecksWithoutCombatAbility || undefined,
+        below_decks_pool_mode:
+          belowDecksPoolMode !== "strict" ? belowDecksPoolMode : undefined,
         ship_tier: shipTier > 0 ? shipTier : undefined,
         ship_level: shipLevel > 0 ? shipLevel : undefined,
       },
@@ -340,7 +338,7 @@ export function useWorkspace() {
     scenarioId,
     simsPerCrew,
     maxCandidates,
-    allowBelowDecksWithoutCombatAbility,
+    belowDecksPoolMode,
     shipTier,
     shipLevel,
     activeProfileId,
@@ -793,7 +791,7 @@ export function useWorkspace() {
           simsPerCrew,
           maxCandidates,
           optimizerStrategy,
-          allowBelowDecksWithoutCombatAbility,
+          belowDecksPoolMode,
           selectedSeeds,
           heuristicsOnly,
           belowDecksStrategy,
@@ -973,8 +971,8 @@ export function useWorkspace() {
     setSimsPerCrew,
     maxCandidates,
     setMaxCandidates,
-    allowBelowDecksWithoutCombatAbility,
-    setAllowBelowDecksWithoutCombatAbility,
+    belowDecksPoolMode,
+    setBelowDecksPoolMode,
     selectedSupportBuffs,
     setSelectedSupportBuffs: setValidatedSelectedSupportBuffs,
     // Heuristics

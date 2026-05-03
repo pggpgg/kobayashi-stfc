@@ -47,8 +47,8 @@ pub struct GeneticConfig {
     pub elitism_count: usize,
     /// Stop early if best fitness has not improved for this many generations.
     pub stagnation_limit: Option<usize>,
-    /// When true, below-decks pool only includes officers that have a below-decks ability.
-    pub only_below_decks_with_ability: bool,
+    /// Below-decks pool sizing strategy. See [`crate::data::heuristics::BelowDecksPoolMode`].
+    pub below_decks_pool_mode: crate::data::heuristics::BelowDecksPoolMode,
 
     /// Below-decks slot count for random init, crossover, repair, and mutate.
     pub below_decks_slots: usize,
@@ -103,7 +103,7 @@ impl Default for GeneticConfig {
             tournament_size: 3,
             elitism_count: 2,
             stagnation_limit: Some(10),
-            only_below_decks_with_ability: false,
+            below_decks_pool_mode: crate::data::heuristics::BelowDecksPoolMode::default(),
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             seed_population: Vec::new(),
             adaptive_mutation: true,
@@ -527,7 +527,7 @@ pub fn run_genetic_optimizer(
 ) -> (Vec<CrewCandidate>, bool) {
     let bd_slots = config.below_decks_slots;
     let pools = match build_officer_pools(
-        config.only_below_decks_with_ability,
+        config.below_decks_pool_mode,
         bd_slots,
         config.roster_profile_id.as_deref(),
     ) {

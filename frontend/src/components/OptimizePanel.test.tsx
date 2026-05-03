@@ -19,8 +19,9 @@ const baseProps = {
   optimizeTotalCrews: null as number | null,
   maxCandidates: null as number | null,
   onMaxCandidatesChange: vi.fn(),
-  allowBelowDecksWithoutCombatAbility: false,
-  onAllowBelowDecksWithoutCombatAbilityChange: vi.fn(),
+  belowDecksPoolMode:
+    "strict" as import("../lib/optimizeWarmStart").BelowDecksPoolMode,
+  onBelowDecksPoolModeChange: vi.fn(),
   availableSeeds: [] as string[],
   selectedSeeds: [] as string[],
   onSelectedSeedsChange: vi.fn(),
@@ -166,19 +167,14 @@ describe("OptimizePanel", () => {
     expect(fn).toHaveBeenCalledWith(null);
   });
 
-  it("toggles allow below-decks without combat ability checkbox", () => {
+  it("changes the below-decks pool mode select", () => {
     const fn = vi.fn();
-    render(
-      <OptimizePanel
-        {...baseProps}
-        onAllowBelowDecksWithoutCombatAbilityChange={fn}
-      />,
-    );
-    const checkbox = screen.getByRole("checkbox", {
-      name: /Allow below-decks officers without combat abilities/,
+    render(<OptimizePanel {...baseProps} onBelowDecksPoolModeChange={fn} />);
+    const select = screen.getByRole("combobox", {
+      name: /Below-decks officer pool/,
     });
-    fireEvent.click(checkbox);
-    expect(fn).toHaveBeenCalledWith(true);
+    fireEvent.change(select, { target: { value: "scored" } });
+    expect(fn).toHaveBeenCalledWith("scored");
   });
 
   it("shows live status during optimization", () => {
@@ -207,8 +203,12 @@ describe("OptimizePanel", () => {
 
   it("toggles learned pair prior checkbox", () => {
     const fn = vi.fn();
-    render(<OptimizePanel {...baseProps} onEnableLearnedPairPriorChange={fn} />);
-    fireEvent.click(screen.getByRole("checkbox", { name: /Learned pair prior/i }));
+    render(
+      <OptimizePanel {...baseProps} onEnableLearnedPairPriorChange={fn} />,
+    );
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Learned pair prior/i }),
+    );
     expect(fn).toHaveBeenCalledWith(false);
   });
 

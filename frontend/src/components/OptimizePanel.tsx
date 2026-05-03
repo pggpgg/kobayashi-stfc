@@ -23,8 +23,10 @@ interface OptimizePanelProps {
   optimizeThroughput?: number | null;
   maxCandidates: number | null;
   onMaxCandidatesChange: (value: number | null) => void;
-  allowBelowDecksWithoutCombatAbility: boolean;
-  onAllowBelowDecksWithoutCombatAbilityChange: (value: boolean) => void;
+  belowDecksPoolMode: import("../lib/optimizeWarmStart").BelowDecksPoolMode;
+  onBelowDecksPoolModeChange: (
+    value: import("../lib/optimizeWarmStart").BelowDecksPoolMode,
+  ) => void;
   availableSeeds: string[];
   selectedSeeds: string[];
   onSelectedSeedsChange: (seeds: string[]) => void;
@@ -159,8 +161,8 @@ export default function OptimizePanel({
   optimizeThroughput = null,
   maxCandidates,
   onMaxCandidatesChange,
-  allowBelowDecksWithoutCombatAbility,
-  onAllowBelowDecksWithoutCombatAbilityChange,
+  belowDecksPoolMode,
+  onBelowDecksPoolModeChange,
   availableSeeds,
   selectedSeeds,
   onSelectedSeedsChange,
@@ -700,7 +702,13 @@ export default function OptimizePanel({
             }}
           />
         </label>
-        <label style={{ ...checkboxLabelStyle, marginTop: 10, opacity: noveltyLambdaText.trim() ? 1 : 0.45 }}>
+        <label
+          style={{
+            ...checkboxLabelStyle,
+            marginTop: 10,
+            opacity: noveltyLambdaText.trim() ? 1 : 0.45,
+          }}
+        >
           <input
             type="checkbox"
             checked={noveltyHistoryAnchors}
@@ -709,7 +717,8 @@ export default function OptimizePanel({
             aria-label="Use optimize history crews as novelty anchors"
           />
           <span>
-            Treat persisted optimize_history top crews as redundancy anchors (active profile + warm-start cache key; same chain mode).
+            Treat persisted optimize_history top crews as redundancy anchors
+            (active profile + warm-start cache key; same chain mode).
           </span>
         </label>
         <p
@@ -835,20 +844,23 @@ export default function OptimizePanel({
         />
       </label>
 
-      <label style={checkboxLabelStyle}>
-        <input
-          type="checkbox"
-          checked={allowBelowDecksWithoutCombatAbility}
+      <label style={{ fontSize: "0.85rem" }}>
+        Below-decks officer pool
+        <HelpHint text="Strict (default): only officers with a canonical combat-modifier below-decks ability — narrow pool, fastest runs. Scored: include all below-decks-ability officers, ranked by combat relevance (combat → ambiguous → economy-only) with LCARS Attack+Defense+Health as tiebreaker — gives officers with unannotated abilities a chance without flooding the pool. Relaxed: any officer can fill a below-decks slot, ranked by power — widest pool, useful when the combat-only pool is thin or for exploration." />
+        <select
+          value={belowDecksPoolMode}
           onChange={(e) =>
-            onAllowBelowDecksWithoutCombatAbilityChange(e.target.checked)
+            onBelowDecksPoolModeChange(
+              e.target
+                .value as import("../lib/optimizeWarmStart").BelowDecksPoolMode,
+            )
           }
-          style={{ margin: 0 }}
-        />
-        <span>
-          Allow below-decks officers without combat abilities (prioritize highest
-          power)
-        </span>
-        <HelpHint text="Strict (unchecked) is the default: heuristic seeds drop economy-only below-decks picks and the optimizer only considers officers with a canonical below-decks-slot ability. When checked, pools widen and seeds keep those picks; relaxed runs sort heuristic below-decks names by LCARS Attack+Defense+Health at your roster tier/level when available, so high-stat officers can still boost abilities that scale off officer stats." />
+          style={selectStyle}
+        >
+          <option value="strict">Strict — combat modifier only</option>
+          <option value="scored">Scored — rank by combat relevance</option>
+          <option value="relaxed">Relaxed — any officer, by power</option>
+        </select>
       </label>
 
       <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)" }}>
