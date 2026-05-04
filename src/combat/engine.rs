@@ -98,6 +98,7 @@ impl PreCombatSetup {
 
 /// Build a [`PreCombatSetup`] from the same inputs as [`simulate_combat_with_defender_faction_and_defender_crew`].
 /// This precomputes all effects filtering and immutable context — useful for batch trials.
+#[allow(clippy::too_many_arguments)]
 pub fn build_combat_setup(
     attacker: &Combatant,
     defender: &Combatant,

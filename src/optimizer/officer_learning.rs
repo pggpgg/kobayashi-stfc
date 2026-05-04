@@ -261,8 +261,7 @@ pub fn build_from_history_entry(
     let ranked: Vec<RankedCrewResult> = entry
         .crews
         .iter()
-        .enumerate()
-        .map(|(_rank, crew)| RankedCrewResult {
+        .map(|crew| RankedCrewResult {
             captain: crew.captain.clone(),
             bridge: crew.bridge.clone(),
             below_decks: crew.below_decks.clone(),
@@ -406,7 +405,7 @@ mod tests {
             score: crate::optimizer::ranking::RankingScore { value: 0.82 },
             chain: None,
         };
-        scores.update_from_results(&[result.clone()], "romulan", "defiant");
+        scores.update_from_results(std::slice::from_ref(&result), "romulan", "defiant");
         let after_first = scores.get_score("Kirk", "romulan", "defiant");
         assert!((after_first - 1.0).abs() < 1e-9);
 

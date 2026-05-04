@@ -916,30 +916,39 @@ mod below_decks_relax_tests {
 
     #[test]
     fn pool_mode_scored_resolves() {
-        use crate::data::heuristics::BelowDecksPoolMode;
         use super::below_decks_pool_mode_resolved;
+        use crate::data::heuristics::BelowDecksPoolMode;
         let r = req_from_json(r#"{"ship":"s","hostile":"h","below_decks_pool_mode":"scored"}"#);
-        assert_eq!(below_decks_pool_mode_resolved(&r), BelowDecksPoolMode::Scored);
+        assert_eq!(
+            below_decks_pool_mode_resolved(&r),
+            BelowDecksPoolMode::Scored
+        );
     }
 
     #[test]
     fn pool_mode_takes_precedence_over_legacy_allow_field() {
-        use crate::data::heuristics::BelowDecksPoolMode;
         use super::below_decks_pool_mode_resolved;
+        use crate::data::heuristics::BelowDecksPoolMode;
         let r = req_from_json(
             r#"{"ship":"s","hostile":"h","allow_below_decks_without_combat_ability":true,"below_decks_pool_mode":"strict"}"#,
         );
-        assert_eq!(below_decks_pool_mode_resolved(&r), BelowDecksPoolMode::Strict);
+        assert_eq!(
+            below_decks_pool_mode_resolved(&r),
+            BelowDecksPoolMode::Strict
+        );
     }
 
     #[test]
     fn pool_mode_unknown_value_falls_back_to_legacy_allow_field() {
-        use crate::data::heuristics::BelowDecksPoolMode;
         use super::below_decks_pool_mode_resolved;
+        use crate::data::heuristics::BelowDecksPoolMode;
         let r = req_from_json(
             r#"{"ship":"s","hostile":"h","allow_below_decks_without_combat_ability":true,"below_decks_pool_mode":"unknown"}"#,
         );
-        assert_eq!(below_decks_pool_mode_resolved(&r), BelowDecksPoolMode::Relaxed);
+        assert_eq!(
+            below_decks_pool_mode_resolved(&r),
+            BelowDecksPoolMode::Relaxed
+        );
     }
 }
 

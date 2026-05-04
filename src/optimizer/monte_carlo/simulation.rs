@@ -166,6 +166,7 @@ impl BestSoFar {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_candidate_chain_monte_carlo(
     shared: &SharedScenarioData,
     candidate: &CrewCandidate,

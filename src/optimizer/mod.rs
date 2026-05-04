@@ -19,10 +19,10 @@ use std::collections::{HashMap, HashSet};
 use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
+use crate::data::heuristics::BelowDecksPoolMode;
 use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
-use crate::data::heuristics::BelowDecksPoolMode;
 use crate::optimizer::crew_generator::{
     build_officer_pools_from_registry, CandidateStrategy, CrewCandidate, CrewGenerator,
     BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
@@ -167,20 +167,19 @@ pub fn enforce_candidate_legality_with_registry(
             .map(|name| normalize_officer_name(name))
             .collect();
 
-        if captain_key.is_empty()
-            || bridge_keys.iter().any(|k| k.is_empty())
-            || below_keys.iter().any(|k| k.is_empty())
-        {
+        if captain_key.is_empty() {
             summary.dropped_wrong_shape += 1;
             continue;
         }
 
+        // Empty string = unset slot (partial crew); only check duplicates among filled slots.
         let mut seen = HashSet::new();
+        seen.insert(captain_key.clone());
         let mut unique = true;
-        for key in std::iter::once(&captain_key)
-            .chain(bridge_keys.iter())
-            .chain(below_keys.iter())
-        {
+        for key in bridge_keys.iter().chain(below_keys.iter()) {
+            if key.is_empty() {
+                continue;
+            }
             if !seen.insert(key.clone()) {
                 unique = false;
                 break;
@@ -191,10 +190,17 @@ pub fn enforce_candidate_legality_with_registry(
             continue;
         }
 
+        // Empty slots are valid (no officer assigned); only validate filled slots.
         let seat_legal = captain_pool.contains(&captain_key)
             && bridge_pool.contains(&captain_key)
-            && bridge_keys.iter().all(|k| bridge_pool.contains(k))
-            && below_keys.iter().all(|k| below_pool.contains(k));
+            && bridge_keys
+                .iter()
+                .filter(|k| !k.is_empty())
+                .all(|k| bridge_pool.contains(k))
+            && below_keys
+                .iter()
+                .filter(|k| !k.is_empty())
+                .all(|k| below_pool.contains(k));
         if !seat_legal {
             summary.dropped_seat_incompatible += 1;
             continue;

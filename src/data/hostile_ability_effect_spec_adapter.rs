@@ -111,8 +111,8 @@ mod tests {
             value_override: None,
             duration_rounds: None,
         };
-        let spec = hostile_ability_to_combat_effect_spec("123", &entry, 100.0, 0.15)
-            .expect("should map");
+        let spec =
+            hostile_ability_to_combat_effect_spec("123", &entry, 100.0, 0.15).expect("should map");
         assert_eq!(spec.modifier, AbilityModifierSpec::ProcAttackMultiplier);
         assert_eq!(spec.trigger, AbilityTriggerSpec::RoundStart);
         let v = spec.value.as_ref().and_then(|v| v.scalar).unwrap();

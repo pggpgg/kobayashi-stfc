@@ -1199,6 +1199,7 @@ fn exhaustive_count(
     count
 }
 
+#[allow(clippy::too_many_arguments)]
 fn sampled_candidates(
     captains: &[String],
     bridge: &[String],
@@ -1257,8 +1258,7 @@ fn sampled_candidates(
                     // Weighted sampling: select non-conflicting below-decks officers
                     let available: Vec<String> = below_decks
                         .iter()
-                        .enumerate()
-                        .filter_map(|(_i, name)| {
+                        .filter_map(|name| {
                             if !name_conflicts_bridge_captain(name.as_str(), captain, b1, b2) {
                                 Some(name.clone())
                             } else {
