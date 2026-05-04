@@ -1,4 +1,4 @@
-<div align="center">
+
 
 # ⚔ KOBAYASHI
 
@@ -6,18 +6,18 @@
 
 A high-performance Monte Carlo combat simulator and crew optimizer for [Star Trek Fleet Command](https://www.startrekfleetcommand.com/).
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
+[License: MIT](LICENSE)
+[Rust](https://www.rust-lang.org/)
 
 *Because the only way to win the Kobayashi Maru is to change the conditions of the test.*
 
-</div>
+
 
 ---
 
 ## Web UI Overview
 
-![KOBAYASHI Workspace](docs/web-ui-screenshot.png)
+KOBAYASHI Workspace
 
 The web interface has four pages: **Workspace** (ship, scenario, crew builder, Run Sim, Run Optimize), **Results Library** (saved optimization results), **Roster & Profile** (roster import, profile management), and **Data & Mechanics** (data exploration). The screenshot above shows the Workspace tab with a crew selected. Toggle Roster vs Sandbox mode to limit officers to your owned roster or use the full catalog. Run simulations or optimizations, save presets, and view results — all from your browser at `http://localhost:3000`.
 
@@ -72,14 +72,15 @@ cargo build --release
 ```
 
 Notes:
+
 - Run `serve` from the repository root so the server can find `frontend/dist` and `data/`.
 - For the complete pre-push workflow (CI parity, pre-commit, Playwright, Python tests), use [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Prebuilt releases (GitHub)
 
-Tagged versions ([`.github/workflows/release.yml`](.github/workflows/release.yml)) publish **GitHub Release** assets: Linux x86_64 (`.tar.gz`), macOS Apple Silicon arm64 (`.tar.gz`), Windows x86_64 (`.zip`), plus a **`SHA256SUMS`** file for verification. Each archive contains the `kobayashi` binary, `frontend/dist/`, and a short `README.txt` (from [`packaging/RELEASE-BUNDLE-README.txt`](packaging/RELEASE-BUNDLE-README.txt)).
+Tagged versions (`[.github/workflows/release.yml](.github/workflows/release.yml)`) publish **GitHub Release** assets: Linux x86_64 (`.tar.gz`), macOS Apple Silicon arm64 (`.tar.gz`), Windows x86_64 (`.zip`), plus a `**SHA256SUMS`** file for verification. Each archive contains the `kobayashi` binary, `frontend/dist/`, and a short `README.txt` (from `[packaging/RELEASE-BUNDLE-README.txt](packaging/RELEASE-BUNDLE-README.txt)`).
 
-Unpack the archive **into a repository checkout at the same tag** so `./data/` and `./profiles/` already exist next to the binary and UI. Verify digests as described in [`docs/DEPLOYMENT_SECURITY.md`](docs/DEPLOYMENT_SECURITY.md).
+Unpack the archive **into a repository checkout at the same tag** so `./data/` and `./profiles/` already exist next to the binary and UI. Verify digests as described in `[docs/DEPLOYMENT_SECURITY.md](docs/DEPLOYMENT_SECURITY.md)`.
 
 Maintainers: push an annotated or GPG-signed version tag to trigger the workflow, for example `git tag -s v0.1.0 -m "Release v0.1.0"` then `git push origin v0.1.0`.
 
@@ -122,7 +123,7 @@ KOBAYASHI_OFFICER_SOURCE=lcars ./target/release/kobayashi optimize --ship saladi
 
 ### Data maintenance policy
 
-**Discoverable tasks:** run `cargo xtask --help` from the repo root for ship/hostile/research refresh, `validate_data`, `generate_lcars`, `data:refresh`, and `npm run verify` wrappers (implementation: [`xtask/`](xtask/)).
+**Discoverable tasks:** run `cargo xtask --help` from the repo root for ship/hostile/research refresh, `validate_data`, `generate_lcars`, `data:refresh`, and `npm run verify` wrappers (implementation: `[xtask/](xtask/)`).
 
 **Refreshing combat/game data:** use the orchestrated importer chain — `cargo xtask data-refresh` or `npm run data:refresh` (optional flags `--stfcspace`, `--stfccommunity`, `--all`). See [scripts/README.md](scripts/README.md) for order and prerequisites.
 
@@ -170,21 +171,25 @@ Given a ship and a hostile, the optimizer searches the crew space. **Current imp
 
 *Tiered strategy (implemented via two-pass scouting → confirmation):*
 
-| Phase | Sims per crew | What it does |
-|---|---|---|
-| **Scouting** | 100–500 | Tests all synergy combos + a sample of others. Keeps top 5%. |
-| **Confirmation** | 5,000–50,000 | Full statistical analysis on surviving crews. Final ranking. |
-| **Deep Dive (planned)** | 100,000+ | Optional. Per-round damage distributions, sensitivity analysis. |
+
+| Phase                   | Sims per crew | What it does                                                    |
+| ----------------------- | ------------- | --------------------------------------------------------------- |
+| **Scouting**            | 100–500       | Tests all synergy combos + a sample of others. Keeps top 5%.    |
+| **Confirmation**        | 5,000–50,000  | Full statistical analysis on surviving crews. Final ranking.    |
+| **Deep Dive (planned)** | 100,000+      | Optional. Per-round damage distributions, sensitivity analysis. |
+
 
 Synergy-tagged crews are tested first, so even if you cancel early, you likely have the best results already.
 
 **Scaling estimate** (280 officers, 3 crew slots, 16-core machine):
 
-| Scenario | Time |
-|---|---|
-| Full exhaustive sweep (current) | ~3 minutes |
-| Phase 1 scouting only (tiered strategy) | ~8 seconds |
-| Phase 1 + Phase 2 (tiered strategy) | ~16 seconds |
+
+| Scenario                                | Time        |
+| --------------------------------------- | ----------- |
+| Full exhaustive sweep (current)         | ~3 minutes  |
+| Phase 1 scouting only (tiered strategy) | ~8 seconds  |
+| Phase 1 + Phase 2 (tiered strategy)     | ~16 seconds |
+
 
 ### LCARS — The Officer Description Language
 
@@ -251,7 +256,7 @@ player_profile:
 
 ## Project Structure
 
-Project documentation (design, roadmap, sync, performance, combat plans) lives in the [`docs/`](docs/) directory.
+Project documentation (design, roadmap, sync, performance, combat plans) lives in the `[docs/](docs/)` directory.
 
 ```
 kobayashi/
@@ -281,7 +286,7 @@ The server uses **Tokio + Axum 0.7**: an async multi-threaded runtime with an Ax
 
 **Ops:** `GET /api/health` returns JSON with `build` (crate version, optional `git_sha_short` when built from git), `server` (`started_at_utc`, effective `max_concurrent_cpu_jobs`, whether `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS` was set, `cpu_job_permits_available` / `cpu_job_permits_total`, optional bounded-queue settings `cpu_job_queue_wait_ms` and `cpu_job_queue_wait_ms_from_env` for `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`), and `data` (officer count, ship/hostile index `data_version` strings when present, load flags). When `KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS` is a positive value at server start and all CPU slots are busy, those routes return **503** with `code: cpu_busy` and a `Retry-After` header instead of waiting forever (restart to apply changes). Raising `KOBAYASHI_MAX_CONCURRENT_CPU_JOBS` above 1 increases parallel CPU work; tune `KOBAYASHI_RAYON_THREADS` so the process does not oversubscribe cores.
 
-The UI is served from the same origin as the API by default. For custom deployments (e.g. API behind a reverse proxy), set **`VITE_API_BASE`** at build time so API requests use that base URL: `VITE_API_BASE=/api npm run build` in `frontend/`.
+The UI is served from the same origin as the API by default. For custom deployments (e.g. API behind a reverse proxy), set `**VITE_API_BASE`** at build time so API requests use that base URL: `VITE_API_BASE=/api npm run build` in `frontend/`.
 
 **Security:** `X-Profile-Id` / `?profile=` select a profile but are not authentication. For LAN/internet exposure, read [docs/DEPLOYMENT_SECURITY.md](docs/DEPLOYMENT_SECURITY.md) (optional `KOBAYASHI_API_KEY`, loopback trust, sync tokens).
 
@@ -304,7 +309,7 @@ To add or update officers:
 3. Run `kobayashi validate data/officers` to validate LCARS files (or `kobayashi validate data/officers/officers.canonical.json` for canonical JSON)
 4. Submit a PR
 
-To regenerate **`data/officers/officers.lcars.yaml`** from `officers.canonical.json` (maintainer-curated catalog; see repo data policy), optionally sync ids and below-decks slots from cached stfc.space officer JSON, then generate:
+To regenerate `**data/officers/officers.lcars.yaml`** from `officers.canonical.json` (maintainer-curated catalog; see repo data policy), optionally sync ids and below-decks slots from cached stfc.space officer JSON, then generate:
 
 ```bash
 python3 scripts/normalize_officer_id_strings.py   # optional; needs data/upstream/.../officers/*.json
@@ -313,7 +318,7 @@ kobayashi generate-lcars [path/to/officers.canonical.json] [--output data/office
   [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
 ```
 
-`generate_lcars` writes a **single** `officers.lcars.yaml` under `--output`. By default it loads `summary-officer.json` and `translations-officer_buffs.json` (when present) and fills **`captain_ability` / `bridge_ability` / `below_decks_ability` `name:`** from `officer_ability_name` rows (`loca_id` ↔ `ability_id`). Use `--no-ability-names` for legacy placeholder names like `{Officer} (Captain)`.
+`generate_lcars` writes a **single** `officers.lcars.yaml` under `--output`. By default it loads `summary-officer.json` and `translations-officer_buffs.json` (when present) and fills `**captain_ability` / `bridge_ability` / `below_decks_ability` `name:`** from `officer_ability_name` rows (`loca_id` ↔ `ability_id`). Use `--no-ability-names` for legacy placeholder names like `{Officer} (Captain)`.
 
 See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) and [docs/OFFICER_TRANSLATIONS_MAPPING.md](docs/OFFICER_TRANSLATIONS_MAPPING.md) for the modifier mapping and translation join model.
 
@@ -329,22 +334,22 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 
 ## Roadmap
 
-- [x] Combat engine with deterministic PRNG
-- [x] LCARS schema and parser
-- [x] Monte Carlo simulation runner
-- [x] CLI interface
-- [x] LCARS ability resolver (YAML → BuffSet)
-- [x] Tiered optimization (scouting → confirmation)
-- [x] Crew generator (exhaustive + filtered)
-- [x] Parallel batch execution
-- [x] Web UI on localhost (MVP)
-- [x] User-owned roster import workflow (CLI + Web UI, Spocks.club export)
-- [ ] Synergy learning from simulation results (planned)
-- [x] Genetic algorithm optimizer (implemented)
-- [x] Chain grinding simulation (N sequential fights: hull carry-over, full shields each link; optimizer + API + UI)
-- [ ] Armada mode (multi-ship combat) (planned)
-- [ ] Sensitivity analysis ("what if I promote this officer?") (planned)
-- [x] Full 280+ officer LCARS database
+- Combat engine with deterministic PRNG
+- LCARS schema and parser
+- Monte Carlo simulation runner
+- CLI interface
+- LCARS ability resolver (YAML → BuffSet)
+- Tiered optimization (scouting → confirmation)
+- Crew generator (exhaustive + filtered)
+- Parallel batch execution
+- Web UI on localhost (MVP)
+- User-owned roster import workflow (CLI + Web UI, Spocks.club export)
+- Synergy learning from simulation results (planned)
+- Genetic algorithm optimizer (implemented)
+- Chain grinding simulation (N sequential fights: hull carry-over, full shields each link; optimizer + API + UI)
+- Armada mode (multi-ship combat) (planned)
+- Sensitivity analysis ("what if I promote this officer?") (planned)
+- Full 280+ officer LCARS database
 
 ---
 
@@ -362,8 +367,7 @@ If the optimizer's ranking doesn't match your in-game experience, open an issue 
 
 ---
 
-<div align="center">
+
 
 *⚔ Live long and optimize.*
 
-</div>

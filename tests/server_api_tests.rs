@@ -1165,3 +1165,42 @@ async fn combat_effect_spec_debug_respects_env_gates() {
     assert!(v["abilities"].as_array().is_some_and(|a| !a.is_empty()));
     assert!(v["combat_effect_spec_enabled"].is_boolean());
 }
+
+#[serial_test::serial]
+#[tokio::test]
+async fn simulate_partial_crew_captain_only_is_allowed() {
+    // Partial crew (captain only, null bridge slots) should succeed — legality check must allow
+    // empty/unset officer slots. This is the exact scenario exercised by the E2E workspace test.
+    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":50,"seed":1,"ship_tier":1,"ship_level":50,"crew":{"captain":"annorax-830d35","bridge":[null,null],"below_deck":[]}}"#;
+    let response = route_request_ex(
+        "POST",
+        "/api/simulate",
+        body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
+    assert_eq!(
+        response.status_code, 200,
+        "partial crew should succeed: {}",
+        response.body
+    );
+    let payload: serde_json::Value = serde_json::from_str(&response.body).expect("json");
+    assert_eq!(payload["status"], "ok");
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn simulate_partial_crew_with_demo_profile() {
+    // Same as above but using the demo profile (default when no x-profile-id header is sent)
+    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":50,"seed":1,"ship_tier":1,"ship_level":50,"crew":{"captain":"annorax-830d35","bridge":[null,null],"below_deck":[]}}"#;
+    // No profile header → server picks default = demo
+    let response = route_request("POST", "/api/simulate", body).await;
+    assert_eq!(
+        response.status_code, 200,
+        "demo profile partial crew should succeed: {}",
+        response.body
+    );
+    let payload: serde_json::Value = serde_json::from_str(&response.body).expect("json");
+    assert_eq!(payload["status"], "ok");
+}

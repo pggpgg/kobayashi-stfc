@@ -309,7 +309,7 @@ pub fn filter_heuristic_seed_crews(
 ) -> Vec<ParsedHeuristicsCrew> {
     crews
         .into_iter()
-        .filter_map(|mut crew| {
+        .map(|mut crew| {
             let cap_key = normalize_officer_lookup_key(&crew.captain);
             let Some(captain_off) = officer_index.get(&cap_key) else {
                 warn!(
@@ -317,7 +317,7 @@ pub fn filter_heuristic_seed_crews(
                     captain = %crew.captain,
                     "heuristics: captain not in officer index; skipping bridge/below-decks filter for this crew"
                 );
-                return Some(crew);
+                return crew;
             };
 
             let bridge_before = crew.bridge.len();
@@ -387,7 +387,7 @@ pub fn filter_heuristic_seed_crews(
                 }
             }
 
-            Some(crew)
+            crew
         })
         .collect()
 }
@@ -782,7 +782,10 @@ mod tests {
         ] {
             assert_eq!(BelowDecksPoolMode::parse_api_str(m.as_api_str()), Some(m));
         }
-        assert_eq!(BelowDecksPoolMode::parse_api_str("STRICT"), Some(BelowDecksPoolMode::Strict));
+        assert_eq!(
+            BelowDecksPoolMode::parse_api_str("STRICT"),
+            Some(BelowDecksPoolMode::Strict)
+        );
         assert_eq!(BelowDecksPoolMode::parse_api_str("nope"), None);
         assert_eq!(BelowDecksPoolMode::default(), BelowDecksPoolMode::Strict);
     }

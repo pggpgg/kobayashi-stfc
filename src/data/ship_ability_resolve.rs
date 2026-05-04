@@ -304,9 +304,8 @@ pub fn ship_ability_to_crew_seat_context_via_spec(
             hostile_tag_mask_for_slug(t)?;
         }
     }
-    let spec = crate::data::ship_ability_effect_spec_adapter::ship_ability_to_combat_effect_spec(
-        ability,
-    )?;
+    let spec =
+        crate::data::ship_ability_effect_spec_adapter::ship_ability_to_combat_effect_spec(ability)?;
     let (timing, effect, condition) =
         crate::combat::effect_spec_compile::compile_officer_combat_spec(&spec).ok()?;
     Some(CrewSeatContext {

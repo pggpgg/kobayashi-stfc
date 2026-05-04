@@ -238,12 +238,13 @@ pub fn hostile_abilities_to_defender_crew_via_spec(
                 parsed.value,
             )
         });
-        let spec = crate::data::hostile_ability_effect_spec_adapter::hostile_ability_to_combat_effect_spec(
-            &parsed.id,
-            entry,
-            parsed.chance,
-            normalized_value,
-        );
+        let spec =
+            crate::data::hostile_ability_effect_spec_adapter::hostile_ability_to_combat_effect_spec(
+                &parsed.id,
+                entry,
+                parsed.chance,
+                normalized_value,
+            );
         let Some(spec) = spec else {
             continue;
         };

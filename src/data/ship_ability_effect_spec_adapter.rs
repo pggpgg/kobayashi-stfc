@@ -5,8 +5,8 @@
 
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource,
-    ValueSpec,
+    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, EffectCategory, EffectConfidence,
+    EffectSource, ValueSpec,
 };
 use crate::data::ship::ShipAbility;
 

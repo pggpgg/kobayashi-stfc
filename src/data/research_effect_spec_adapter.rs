@@ -69,9 +69,7 @@ fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
         "accuracy" => Some(AbilityModifierSpec::Accuracy),
-        "isolytic_damage" | "isolytic_damage_morale" => {
-            Some(AbilityModifierSpec::IsolyticDamage)
-        }
+        "isolytic_damage" | "isolytic_damage_morale" => Some(AbilityModifierSpec::IsolyticDamage),
         "isolytic_defense" => Some(AbilityModifierSpec::IsolyticDefense),
         "isolytic_cascade_damage" | "isolytic_cascade" => {
             Some(AbilityModifierSpec::IsolyticCascadeDamage)
@@ -258,8 +256,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         continue;
                     }
 
-                    let use_attack_phase_path =
-                        is_cascade || (!is_morale_gated && has_conditions);
+                    let use_attack_phase_path = is_cascade || (!is_morale_gated && has_conditions);
                     if use_attack_phase_path {
                         let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) else {
                             continue;
@@ -267,8 +264,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         idx = name_idx;
                         out.push(ctx);
                     } else {
-                        let Ok((timing, effect, condition)) =
-                            compile_officer_combat_spec(&spec)
+                        let Ok((timing, effect, condition)) = compile_officer_combat_spec(&spec)
                         else {
                             continue;
                         };

@@ -84,12 +84,6 @@ Current state: officers are **authored** in LCARS; dynamic (non-static) effects 
 - No changes to combat **timing windows**, **round structure**, or **core damage formulas** solely for the spec migration.
 - No removal of the LCARS resolver until **LCARS ↔ spec parity** is proven for representative fixtures.
 
-### Cutover status (completed)
-
-- `**resolve_lcars_condition` deduplicated** onto the canonical `lcars_condition_to_spec` + `compile_condition` path. The legacy function is deprecated; remaining call sites (parity tests, resolver unit tests) are `#[allow(deprecated)]` regression coverage.
-- **Effect-type coverage audited** — all six types in `officers.lcars.yaml` (`assimilated`, `burning`, `hull_breach`, `morale`, `stat_modify`, `tag`) are covered by the adapter.
-- **Full parity confirmed** — 10/10 parity tests pass across all three spec parity suites.
-
 ### Open roadmap / backlog
 
 - **Future effect types:** Extend the IR/compiler when new `effect_type` values appear in `captain_ability` data (the allow-list test in `tests/lcars_captain_spec_parity_tests.rs` gates this).
@@ -127,4 +121,3 @@ Forbidden tech ship-combat support is in place; the open roadmap here is mainten
 - **Level/tier:** `ForbiddenTechEntry` includes `level` and `tier`. The merge can optionally scale catalog bonuses by `tier`/`level` when `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` is set (linear scaling within a tier; conservative behavior when catalog tier disagrees with synced tier). `build_shared_scenario_data_standalone` and the registry path both use the same merge helper and env flag. The exact in-game scaling is still uncertain, so scaling remains opt-in until confirmed.
 - **Combat timing:** DESIGN documents the intentional approximation: forbidden/chaos bonuses are applied at **profile merge**, not as a separate per-sub-round phase. A per-sub-round FT phase would require new evidence and engine work. See [DESIGN.md](DESIGN.md) §3.6 Notes.
 - **Chaos data fidelity:** Bulk chaos rows are generated with heuristics (PvP-only / armada / proc lines approximated or skipped). Review `data/import/forbidden_chaos_tech.csv` when balancing matters; re-run `node scripts/build_chaos_tech_csv_rows.mjs` after adjusting the script.
-

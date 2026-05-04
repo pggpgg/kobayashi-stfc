@@ -23,6 +23,24 @@ fn unique_temp_txt_path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("kobayashi-{name}-{stamp}.txt"))
 }
 
+/// Disposable profile id so `kobayashi import` integration tests never overwrite a real
+/// `profiles/<user>/roster.imported.json` (see `import_command_imports_*`).
+fn unique_cli_import_test_profile_id() -> String {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("clock should be after unix epoch")
+        .as_nanos();
+    format!("__kobayashi_cli_import_{stamp}")
+}
+
+struct RemoveProfileDirGuard(PathBuf);
+
+impl Drop for RemoveProfileDirGuard {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
 /// CLI may emit tracing JSON lines before or after the final JSON payload; compare only that payload.
 /// Tracing lines are single-line JSON objects with `timestamp` + `level`. The real payload may span
 /// multiple lines (pretty-printed array or object), so try suffix parses starting at each `{`/`[` line.
@@ -133,14 +151,20 @@ fn optimize_command_dispatches_and_emits_deterministic_json() {
         assert!(first["win_rate"].as_f64().unwrap_or(0.0) > 0.0);
     }
 
-    let first_hull = first["avg_hull_remaining"].as_f64().unwrap_or(0.0);
-    let saw_hull_delta = recommendations.iter().any(|recommendation| {
-        recommendation["avg_hull_remaining"]
-            .as_f64()
-            .map(|value| (value - first_hull).abs() > 1e-9)
-            .unwrap_or(false)
+    // If all crews win with maximum hull remaining, the scenario is one-sided (attacker dominates),
+    // and hull-delta differentiation is impossible — skip that check in this degenerate case.
+    let all_max_outcome = recommendations.iter().all(|r| {
+        r["win_rate"].as_f64().unwrap_or(0.0) >= 1.0
+            && r["avg_hull_remaining"].as_f64().unwrap_or(0.0) >= 1.0 - 1e-9
     });
-    if !all_zero_win_rate {
+    if !all_zero_win_rate && !all_max_outcome {
+        let first_hull = first["avg_hull_remaining"].as_f64().unwrap_or(0.0);
+        let saw_hull_delta = recommendations.iter().any(|recommendation| {
+            recommendation["avg_hull_remaining"]
+                .as_f64()
+                .map(|value| (value - first_hull).abs() > 1e-9)
+                .unwrap_or(false)
+        });
         assert!(
             saw_hull_delta,
             "recommendations should reflect combat metric differences"
@@ -169,8 +193,19 @@ fn import_command_imports_json_file() {
     )
     .expect("fixture should be written");
 
+    let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let profile_id = unique_cli_import_test_profile_id();
+    let profile_dir = crate_root.join("profiles").join(&profile_id);
+    let _guard = RemoveProfileDirGuard(profile_dir.clone());
+
     let output = Command::new(bin())
-        .args(["import", path.to_string_lossy().as_ref()])
+        .current_dir(&crate_root)
+        .args([
+            "import",
+            path.to_string_lossy().as_ref(),
+            "--profile",
+            profile_id.as_str(),
+        ])
         .output()
         .expect("import should run");
 
@@ -190,9 +225,18 @@ fn import_command_imports_txt_roster() {
         .expect("roster fixture should be written");
 
     let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let profile_id = unique_cli_import_test_profile_id();
+    let profile_dir = crate_root.join("profiles").join(&profile_id);
+    let _guard = RemoveProfileDirGuard(profile_dir.clone());
+
     let output = Command::new(bin())
         .current_dir(&crate_root)
-        .args(["import", path.to_string_lossy().as_ref()])
+        .args([
+            "import",
+            path.to_string_lossy().as_ref(),
+            "--profile",
+            profile_id.as_str(),
+        ])
         .output()
         .expect("import should run");
 

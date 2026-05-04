@@ -705,12 +705,18 @@ mod tests {
 
     #[test]
     fn infer_building_bid_from_file_stem_and_building_id() {
-        assert_eq!(infer_building_bid("ops_center", Some("0_operations")), Some(0));
+        assert_eq!(
+            infer_building_bid("ops_center", Some("0_operations")),
+            Some(0)
+        );
         assert_eq!(
             infer_building_bid("building_1028", Some("1028_tachyon_detector")),
             Some(1028)
         );
-        assert_eq!(infer_building_bid("shipyard", Some("15_shipyard")), Some(15));
+        assert_eq!(
+            infer_building_bid("shipyard", Some("15_shipyard")),
+            Some(15)
+        );
         assert_eq!(infer_building_bid("custom_slug", None), None);
     }
 

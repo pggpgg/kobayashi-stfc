@@ -73,9 +73,8 @@ impl BuffSet {
     }
 }
 
-/// LCARS condition resolution is now handled entirely through the canonical [`CombatEffectSpec`] path:
-/// [`crate::lcars::effect_spec_adapter::lcars_condition_to_spec`] →
-/// [`crate::combat::effect_spec_compile::compile_condition`].
+// LCARS condition resolution is now handled entirely through the canonical CombatEffectSpec path:
+// lcars_condition_to_spec → compile_condition.
 
 fn normalize_trigger(trigger: &str) -> String {
     trigger.trim().to_ascii_lowercase().replace('-', "_")
@@ -384,10 +383,7 @@ pub fn resolve_crew_to_buff_set(
             }
 
             // Route passive-permanent stat_modify/mapped-tag through the canonical CombatEffectSpec IR.
-            let stable_id = format!(
-                "lcars:{}:{}:static:{effect_idx}",
-                officer.id, ability.name
-            );
+            let stable_id = format!("lcars:{}:{}:static:{effect_idx}", officer.id, ability.name);
             let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
                 effect,
                 &stable_id,
@@ -586,13 +582,9 @@ pub fn index_lcars_officers_by_id(officers: Vec<LcarsOfficer>) -> HashMap<String
 #[allow(deprecated)]
 mod tests {
     use super::*;
-    use crate::combat::abilities::CombatContext;
-    use crate::combat::{
-        AbilityClass, AbilityCondition, AbilityEffect, OpponentFactionTag, ShipType, TimingWindow,
-    };
+    use crate::combat::{AbilityClass, AbilityEffect, TimingWindow};
     use crate::lcars::parser::{
-        load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect, LcarsOfficer,
-        LcarsScaling,
+        load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
     };
     use std::path::Path;
 
@@ -607,50 +599,6 @@ mod tests {
             duration: None,
             scaling: None,
             condition: None,
-            chance: None,
-            multiplier: None,
-            tag: None,
-            accumulate: None,
-            decay: None,
-        }
-    }
-
-    fn lcars_condition(ty: &str) -> LcarsCondition {
-        LcarsCondition {
-            condition_type: ty.to_string(),
-            stat: None,
-            threshold_pct: None,
-            min: None,
-            max: None,
-            faction: None,
-            group: None,
-            min_members: None,
-            tag: None,
-            ship_type: None,
-            faction_id: None,
-            ship_id: None,
-            enemy_type: None,
-            battle_types: None,
-            conditions: None,
-        }
-    }
-
-    fn lcars_effect_stat_modify_with_condition(
-        stat: &str,
-        value: f64,
-        trigger: &str,
-        condition: LcarsCondition,
-    ) -> LcarsEffect {
-        LcarsEffect {
-            effect_type: "stat_modify".to_string(),
-            stat: Some(stat.to_string()),
-            target: None,
-            operator: Some("add".to_string()),
-            value: Some(value),
-            trigger: Some(trigger.to_string()),
-            duration: None,
-            scaling: None,
-            condition: Some(condition),
             chance: None,
             multiplier: None,
             tag: None,

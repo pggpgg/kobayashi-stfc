@@ -4,6 +4,8 @@
 
 Only the bundled **`demo/`** tree (sample `profile.json`, roster, etc.) is meant for the public repo. **Do not** publish your real **`index.json`**, other profile directories (e.g. named accounts), or backups containing real sync tokens or player-chosen names.
 
+The checked-in **`demo/roster.imported.json`** is intentionally a large sample (hundreds of officers) so fresh clones can exercise roster-aware flows (“Owned only”, optimizer pools). Do not overwrite it with tiny import fixtures from local CLI runs or tests; CI guards minimum size. To refresh your personal roster, import into your own profile directory (or restore this file from git history when updating the shared demo deliberately).
+
 ## Private data
 
 - **`index.json`** — Lists profile ids, display names, and **per-profile sync tokens** (`stfc-sync-token` for the STFC Community Mod). Treat tokens like secrets: **do not commit** `profiles/index.json` to a public repository.

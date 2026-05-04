@@ -466,7 +466,7 @@ where
         let min_scout = pq_minimal_scout
             .map(|m| m.max(64).min(scout_cap))
             .unwrap_or(100);
-        let sel_mult = pq_selection_mult.unwrap_or(4).max(2).min(16);
+        let sel_mult = pq_selection_mult.unwrap_or(4).clamp(2, 16);
         let abandon = pq_abandon_margin.unwrap_or(0.05).clamp(0.0, 0.5);
 
         info!(
@@ -776,6 +776,7 @@ fn pq_wilson_upper(wins: usize, trials: usize) -> f64 {
 /// 3. Drop candidates whose upper < (K‑th lower – margin).
 /// 4. Keep the top `K * selection_mult` survivors for the full‑budget scout.
 /// 5. Run full scout only on the survivors, then confirm top‑K as usual.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn run_priority_queue_scout_with_shared(
     shared: SharedScenarioData,
     candidates: &[CrewCandidate],
