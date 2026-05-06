@@ -76,6 +76,8 @@ fn calibration_scenario_outcome_within_tolerance() {
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 
@@ -156,6 +158,8 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     assert!(
@@ -217,6 +221,8 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &crew);
 
@@ -319,6 +325,8 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
     };
     let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let with_regen = simulate_combat(&attacker, &defender, &config, &with_kill_regen);

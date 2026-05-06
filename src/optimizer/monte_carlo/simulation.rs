@@ -359,6 +359,8 @@ fn run_candidate_monte_carlo(
         engagement_enemy_types: input.engagement_enemy_types.clone(),
         defender_level: input.defender_level,
         attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
+        incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
+        incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
     };
 
     // Precompute values that don't change per trial
@@ -952,6 +954,8 @@ pub fn replay_optimize_iteration_with_registry(
         engagement_enemy_types: input.engagement_enemy_types.clone(),
         defender_level: input.defender_level,
         attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
+        incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
+        incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(

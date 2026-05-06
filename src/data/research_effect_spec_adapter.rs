@@ -87,19 +87,32 @@ fn compile_canonical_override_seats(
     idx: &mut u32,
 ) -> Vec<CrewSeatContext> {
     let mut out: Vec<CrewSeatContext> = Vec::new();
-    let clamped_level = player_level.min(
-        override_entry
-            .effects
-            .first()
-            .map_or(0, |e| e.by_level.len() as u32),
-    );
+    let max_by_level_len = override_entry
+        .effects
+        .iter()
+        .map(|e| e.by_level.len())
+        .max()
+        .unwrap_or(0) as u32;
+    let clamped_level = player_level.min(max_by_level_len);
     if clamped_level == 0 {
         return out;
     }
 
     for effect in &override_entry.effects {
-        // Sum by_level[0..clamped_level] for the cumulative scalar.
-        let cumulative: f64 = effect.by_level.iter().take(clamped_level as usize).sum();
+        if effect.incoming_shield_mitigation_rounds.is_some() {
+            // Handled in scenario → SimulationConfig (incoming damage / counter-fire only).
+            continue;
+        }
+        // Default: sum by_level[0..clamped_level]. Snapshot: single tier total at by_level[level-1].
+        let cumulative: f64 = if effect.snapshot_by_level {
+            effect
+                .by_level
+                .get(clamped_level.saturating_sub(1) as usize)
+                .copied()
+                .unwrap_or(0.0)
+        } else {
+            effect.by_level.iter().take(clamped_level as usize).sum()
+        };
         if !cumulative.is_finite() || cumulative == 0.0 {
             continue;
         }
@@ -140,6 +153,58 @@ fn compile_canonical_override_seats(
     out
 }
 
+/// KSG-style incoming shield mitigation: canonical effects marked with
+/// [`ResearchCanonicalEffectEntry::incoming_shield_mitigation_rounds`]. Returns additive fraction
+/// (same units as [`crate::combat::Combatant::shield_mitigation`]) and the maximum round count
+/// across matching effects.
+pub fn incoming_shield_mitigation_for_combat(
+    imported_research: &[ResearchEntry],
+    canonical_overrides: &HashMap<i64, ResearchCanonicalOverride>,
+) -> (f64, u32) {
+    let levels_by_rid = research_levels_by_rid_from_import(imported_research);
+    let mut bonus = 0.0_f64;
+    let mut rounds_out = 0_u32;
+    for (&rid, &player_level) in &levels_by_rid {
+        if player_level == 0 {
+            continue;
+        }
+        let Some(ov) = canonical_overrides.get(&rid) else {
+            continue;
+        };
+        for effect in &ov.effects {
+            let Some(rounds) = effect.incoming_shield_mitigation_rounds else {
+                continue;
+            };
+            if effect.modifier != AbilityModifierSpec::ShieldMitigation {
+                continue;
+            }
+            let max_len = effect.by_level.len() as u32;
+            if max_len == 0 {
+                continue;
+            }
+            let clamped_level = player_level.min(max_len);
+            let scalar = if effect.snapshot_by_level {
+                effect
+                    .by_level
+                    .get(clamped_level.saturating_sub(1) as usize)
+                    .copied()
+                    .unwrap_or(0.0)
+            } else {
+                effect
+                    .by_level
+                    .iter()
+                    .take(clamped_level as usize)
+                    .sum()
+            };
+            if scalar.is_finite() && scalar != 0.0 {
+                bonus += scalar;
+                rounds_out = rounds_out.max(rounds);
+            }
+        }
+    }
+    (bonus, rounds_out)
+}
+
 /// Build research-derived attack-phase seats. **Canonical overrides take priority**: for each
 /// researched RID with a canonical entry, effects are compiled directly from the override.
 /// Remaining RIDs fall back to the auto-generated catalog + conditional bonus aggregation.
@@ -166,10 +231,8 @@ pub fn research_derived_attack_phase_seats_from_spec(
     for (&rid, &player_level) in &levels_by_rid {
         if let Some(ov) = canonical_overrides.get(&rid) {
             let seats = compile_canonical_override_seats(ov, player_level, &mut idx);
-            if !seats.is_empty() {
-                canonical_handled_rids.push(rid);
-                out.extend(seats);
-            }
+            canonical_handled_rids.push(rid);
+            out.extend(seats);
         }
     }
 
@@ -290,4 +353,42 @@ pub fn research_derived_attack_phase_seats_from_spec(
     }
 
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::combat_effect_spec::{AbilityModifierSpec, AbilityOperationSpec};
+    use crate::data::import::ResearchEntry;
+    use crate::data::research::{ResearchCanonicalEffectEntry, ResearchCanonicalOverride};
+
+    #[test]
+    fn incoming_ksg_sm_is_snapshot_total_and_round_count() {
+        let rid = 2392190200_i64;
+        let mut overrides = HashMap::new();
+        overrides.insert(
+            rid,
+            ResearchCanonicalOverride {
+                rid,
+                name: None,
+                source_note: None,
+                effects: vec![ResearchCanonicalEffectEntry {
+                    id: "test_ksg".into(),
+                    modifier: AbilityModifierSpec::ShieldMitigation,
+                    operation: AbilityOperationSpec::Add,
+                    by_level: vec![0.005, 0.01, 0.015, 0.02, 0.025],
+                    conditions: vec![],
+                    category: None,
+                    confidence: None,
+                    source_ref: None,
+                    snapshot_by_level: true,
+                    incoming_shield_mitigation_rounds: Some(2),
+                }],
+            },
+        );
+        let imported = vec![ResearchEntry { rid, level: 5 }];
+        let (bonus, rounds) = incoming_shield_mitigation_for_combat(&imported, &overrides);
+        assert!((bonus - 0.025).abs() < 1e-9, "expected 2.5% tier snapshot, got {bonus}");
+        assert_eq!(rounds, 2);
+    }
 }

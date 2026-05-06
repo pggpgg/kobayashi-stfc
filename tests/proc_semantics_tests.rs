@@ -66,6 +66,8 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
+            incoming_shield_mitigation_bonus: 0.0,
+            incoming_shield_mitigation_bonus_rounds: 0,
         },
         &crew,
     );

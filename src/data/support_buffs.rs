@@ -412,7 +412,7 @@ pub fn apply_support_buff_research_to_profile(
     }
     if !synthetic.is_empty() {
         // Support-buff virtual `rid`s are not Titan-A Fortify–gated; Fortify only affects synced tree rids.
-        merge_research_bonuses_into_profile(profile, &synthetic, rc);
+        merge_research_bonuses_into_profile(profile, &synthetic, rc, None);
     }
 }
 

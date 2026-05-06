@@ -451,6 +451,8 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             engagement_enemy_types,
             defender_level: None,
+            incoming_shield_mitigation_bonus: 0.0,
+            incoming_shield_mitigation_bonus_rounds: 0,
         }
     }
 

@@ -285,6 +285,15 @@ pub struct SimulationConfig {
     /// apply this mechanic.
     #[serde(default)]
     pub attacker_roster_officer_ids: Vec<String>,
+    /// Additive shield mitigation fraction for damage **to the player ship** on hostile counter-fire
+    /// (incoming), for combat rounds `1..=incoming_shield_mitigation_bonus_rounds` inclusive.
+    /// Does not affect outbound shots or catalog/profile flat `shield_mitigation` alone.
+    #[serde(default)]
+    pub incoming_shield_mitigation_bonus: f64,
+    /// When zero, [`Self::incoming_shield_mitigation_bonus`] is ignored. Otherwise rounds are 1-based
+    /// (round 1 = first combat round).
+    #[serde(default)]
+    pub incoming_shield_mitigation_bonus_rounds: u32,
 }
 
 impl Default for SimulationConfig {
@@ -301,6 +310,8 @@ impl Default for SimulationConfig {
             engagement_enemy_types: EnemyTypes::default(),
             defender_level: None,
             attacker_roster_officer_ids: Vec::new(),
+            incoming_shield_mitigation_bonus: 0.0,
+            incoming_shield_mitigation_bonus_rounds: 0,
         }
     }
 }

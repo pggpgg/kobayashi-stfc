@@ -1,6 +1,6 @@
 //! Scenario and candidate → combat input: SharedScenarioData, scenario_to_combat_input, build_crew_and_buffs.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, mitigation, mitigation_for_hostile,
@@ -47,6 +47,7 @@ use crate::data::research::{
     load_research_canonical_overrides, load_research_catalog, DEFAULT_RESEARCH_CANONICAL_PATH,
     DEFAULT_RESEARCH_CATALOG_PATH,
 };
+use crate::data::research_effect_spec_adapter::incoming_shield_mitigation_for_combat;
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use crate::data::support_buffs::{self, AppliedSupportBuffTrace, SupportBuffCatalog};
@@ -508,6 +509,9 @@ pub(crate) struct SharedScenarioData {
     pub engagement_enemy_types: EnemyTypes,
     /// Optional hostile level for canonical `TargetMaxLevel`.
     pub defender_level: Option<u32>,
+    /// Incoming (counter-fire) shield mitigation from canonical research (e.g. KSG early-round SM).
+    pub incoming_shield_mitigation_bonus: f64,
+    pub incoming_shield_mitigation_bonus_rounds: u32,
 }
 
 impl SharedScenarioData {
@@ -558,6 +562,8 @@ pub(crate) struct CombatSimulationInput {
     pub defender_level: Option<u32>,
     /// Copied into [`crate::combat::SimulationConfig::attacker_roster_officer_ids`] (Evolutionary Assimilation).
     pub attacker_roster_officer_ids: Vec<String>,
+    pub incoming_shield_mitigation_bonus: f64,
+    pub incoming_shield_mitigation_bonus_rounds: u32,
 }
 
 fn apply_support_defender_static_if_pvp(shared: &SharedScenarioData, defender: &mut Combatant) {
@@ -744,6 +750,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             engagement_enemy_types: shared.engagement_enemy_types.clone(),
             defender_level: shared.defender_level,
             attacker_roster_officer_ids,
+            incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
+            incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
         };
     }
 
@@ -863,6 +871,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         engagement_enemy_types: shared.engagement_enemy_types.clone(),
         defender_level: shared.defender_level,
         attacker_roster_officer_ids,
+        incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
+        incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
     }
 }
 
@@ -1118,6 +1128,8 @@ pub(crate) fn scenario_to_combat_input(
             engagement_enemy_types,
             defender_level: Some(hostile_rec.level),
             attacker_roster_officer_ids,
+            incoming_shield_mitigation_bonus: 0.0,
+            incoming_shield_mitigation_bonus_rounds: 0,
         };
     }
 
@@ -1193,6 +1205,8 @@ pub(crate) fn scenario_to_combat_input(
         engagement_enemy_types: EnemyTypes::default(),
         defender_level: None,
         attacker_roster_officer_ids,
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
     }
 }
 
@@ -1353,9 +1367,17 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .to_string_lossy()
         .into_owned();
     let imported_research = import::load_imported_research(&research_path).unwrap_or_default();
+    let exclude_canonical_rids: HashSet<i64> = canonical_overrides.keys().copied().collect();
+    let (incoming_shield_mitigation_bonus, incoming_shield_mitigation_bonus_rounds) =
+        incoming_shield_mitigation_for_combat(&imported_research, &canonical_overrides);
 
     let research_derived_seats = if let Some(ref cat) = shared_research_catalog {
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, cat);
+        merge_research_bonuses_into_profile(
+            &mut profile,
+            &imported_research,
+            cat,
+            Some(&exclude_canonical_rids),
+        );
         research_derived_attack_phase_seats(
             &imported_research,
             cat,
@@ -1553,6 +1575,8 @@ pub(crate) fn build_shared_scenario_data_standalone(
         defender_opponent,
         engagement_enemy_types,
         defender_level,
+        incoming_shield_mitigation_bonus,
+        incoming_shield_mitigation_bonus_rounds,
     }
 }
 
@@ -1697,14 +1721,23 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .to_string_lossy()
         .into_owned();
     let imported_research = import::load_imported_research(&research_path).unwrap_or_default();
+    let canonical_overrides = load_research_canonical_overrides(DEFAULT_RESEARCH_CANONICAL_PATH);
+    let exclude_canonical_rids: HashSet<i64> = canonical_overrides.keys().copied().collect();
+    let (incoming_shield_mitigation_bonus, incoming_shield_mitigation_bonus_rounds) =
+        incoming_shield_mitigation_for_combat(&imported_research, &canonical_overrides);
 
     let research_derived_seats = if let Some(catalog) = registry.research_catalog() {
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, catalog);
+        merge_research_bonuses_into_profile(
+            &mut profile,
+            &imported_research,
+            catalog,
+            Some(&exclude_canonical_rids),
+        );
         research_derived_attack_phase_seats(
             &imported_research,
             catalog,
             &support_research_gates,
-            &HashMap::new(),
+            &canonical_overrides,
         )
     } else {
         Vec::new()
@@ -1891,6 +1924,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         defender_opponent,
         engagement_enemy_types,
         defender_level,
+        incoming_shield_mitigation_bonus,
+        incoming_shield_mitigation_bonus_rounds,
     }
 }
 
@@ -2119,7 +2154,7 @@ mod tests {
             level: 1,
         }];
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
 
         let ship_rec = ShipRecord {
             id: "t".into(),
@@ -2452,6 +2487,8 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             engagement_enemy_types: EnemyTypes::default(),
             defender_level: None,
+            incoming_shield_mitigation_bonus: 0.0,
+            incoming_shield_mitigation_bonus_rounds: 0,
         };
 
         let candidate = CrewCandidate {

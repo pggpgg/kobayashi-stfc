@@ -27,7 +27,7 @@ fn merge_research_applies_fixture_catalog_weapon_damage() {
         level: 1,
     }];
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
 
     let w = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
     assert!(
@@ -48,7 +48,7 @@ fn merge_research_accuracy_from_fixture_catalog() {
         level: 1,
     }];
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
 
     let a = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
     assert!(
@@ -94,7 +94,7 @@ fn merge_research_stacks_accuracy_across_two_rids_additively() {
         },
     ];
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
 
     let a = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
     assert!(
@@ -115,7 +115,7 @@ fn merge_research_skips_unknown_rid_in_fixture_catalog() {
         level: 5,
     }];
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
     assert!(profile.bonuses.is_empty());
 }
 
@@ -160,7 +160,7 @@ fn merge_research_duplicate_rid_uses_max_level() {
         ResearchEntry { rid: 1, level: 1 },
     ];
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
 
     let w = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
     assert!(
@@ -198,7 +198,7 @@ fn merge_research_conditional_crit_is_attack_phase_seat_not_profile_crit() {
         level: 1,
     }];
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
     assert!(
         !profile.bonuses.contains_key("crit_chance"),
         "conditional crit must not merge into profile.bonuses"
@@ -254,7 +254,7 @@ fn merge_research_ns_burning_damage_is_burning_gated_attack_multiplier_not_flat_
         level: 1,
     }];
     let mut profile = PlayerProfile::default();
-    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
     assert!(
         !profile.bonuses.contains_key("weapon_damage"),
         "burning-gated weapon_damage must not merge into profile.bonuses"

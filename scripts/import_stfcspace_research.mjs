@@ -83,6 +83,7 @@ const ALLOWED_COMBAT_STATS = new Set([
   "pierce",
   "shield_mitigation",
   "armor",
+  "shield_deflection",
   "dodge",
   "damage_reduction",
   "accuracy",

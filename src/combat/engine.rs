@@ -43,6 +43,24 @@ use crate::combat::rng::Rng;
 use crate::combat::simd_damage_kernel::{avx2_supported, compute_damage_after_apex_batch};
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
 
+#[inline]
+fn effective_incoming_shield_mitigation(
+    base_sm: f64,
+    config: &SimulationConfig,
+    round_index: u32,
+) -> f64 {
+    let extra = if config.incoming_shield_mitigation_bonus_rounds > 0
+        && round_index > 0
+        && round_index <= config.incoming_shield_mitigation_bonus_rounds
+        && config.incoming_shield_mitigation_bonus.is_finite()
+    {
+        config.incoming_shield_mitigation_bonus
+    } else {
+        0.0
+    };
+    (base_sm + extra).clamp(0.0, 1.0)
+}
+
 /// Immutable combat setup precomputed once per crew, reused across multiple trials with different seeds.
 /// Avoids repeated `active_effects_for_timing` calls and crew resolution in Monte Carlo batch workloads.
 pub struct PreCombatSetup {
@@ -1690,7 +1708,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             .max(0.0),
                     );
                     if use_experimental_simd_damage_after_apex {
-                        let att_mit_for_batch = attacker.shield_mitigation.clamp(0.0, 1.0);
+                        let att_mit_for_batch = effective_incoming_shield_mitigation(
+                            attacker.shield_mitigation,
+                            config,
+                            round_index,
+                        );
                         counter_simd_damage_batch.push(counter_after_attack_phase);
                         counter_simd_isolytic_batch.push(counter_iso_taken);
                         counter_simd_shield_mit_batch.push(att_mit_for_batch);
@@ -1966,7 +1988,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     let counter_after_apex =
                         (counter_after_attack_phase + counter_iso_taken) * counter_apex_factor;
                     let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
-                        attacker.shield_mitigation.clamp(0.0, 1.0)
+                        effective_incoming_shield_mitigation(
+                            attacker.shield_mitigation,
+                            config,
+                            round_index,
+                        )
                     } else {
                         0.0
                     };

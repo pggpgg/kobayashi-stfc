@@ -278,11 +278,11 @@
   "864495595": {
     "operator": "add",
     "conditions": [],
-    "notes": "Armory: all mitigation stats for all ships; modeled as parallel armor+dodge+shield_mitigation bonuses.",
+    "notes": "Armory: in-game Mitigation Stats Bonus = armor, shield deflection, dodge (parallel rows; not shield_mitigation fraction).",
     "targets": [
       { "stat": "armor" },
-      { "stat": "dodge" },
-      { "stat": "shield_mitigation" }
+      { "stat": "shield_deflection" },
+      { "stat": "dodge" }
     ]
   }
 }

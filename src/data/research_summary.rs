@@ -1,13 +1,15 @@
 //! Read-only summary of synced research levels and effective ship-combat bonuses (profile + research catalog).
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
 
 use crate::data::import;
 use crate::data::profile::combat_research_bonuses_from_import;
 use crate::data::profile_index::{profile_path, RESEARCH_IMPORTED};
-use crate::data::research::ResearchCatalog;
+use crate::data::research::{
+    load_research_canonical_overrides, ResearchCatalog, DEFAULT_RESEARCH_CANONICAL_PATH,
+};
 
 /// One row from `research.imported.json` with catalog resolution and per-row combat slice.
 #[derive(Debug, Clone, Serialize)]
@@ -75,6 +77,8 @@ fn research_combat_summary_from_imported(
     let catalog_nonempty = catalog.filter(|c| !c.items.is_empty());
     let catalog_by_rid: Option<HashMap<i64, &crate::data::research::ResearchRecord>> =
         catalog_nonempty.map(by_rid);
+    let canonical_overrides = load_research_canonical_overrides(DEFAULT_RESEARCH_CANONICAL_PATH);
+    let exclude_catalog_rids: HashSet<i64> = canonical_overrides.keys().copied().collect();
 
     let mut rows: Vec<ResearchSummaryRow> = imported
         .iter()
@@ -89,7 +93,11 @@ fn research_combat_summary_from_imported(
                         let combat_bonuses_from_row = if present && lvl_u32 > 0 {
                             let one = [e.clone()];
                             match catalog_nonempty {
-                                Some(cat) => combat_research_bonuses_from_import(&one, cat),
+                                Some(cat) => combat_research_bonuses_from_import(
+                                    &one,
+                                    cat,
+                                    Some(&exclude_catalog_rids),
+                                ),
                                 None => HashMap::new(),
                             }
                         } else {
@@ -124,7 +132,9 @@ fn research_combat_summary_from_imported(
 
     // Fortify-gated Titan `rid`s are never in this aggregate (they fold into Fortify static in scenario).
     let combat_bonuses_from_research = catalog_nonempty
-        .map(|cat| combat_research_bonuses_from_import(imported, cat))
+        .map(|cat| {
+            combat_research_bonuses_from_import(imported, cat, Some(&exclude_catalog_rids))
+        })
         .unwrap_or_default();
 
     let error = catalog_nonempty.is_none().then(|| {
@@ -200,7 +210,7 @@ mod tests {
             },
         ];
         let mut scratch = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut scratch, &imported, &cat);
+        merge_research_bonuses_into_profile(&mut scratch, &imported, &cat, None);
         assert_eq!(scratch.bonuses.get("weapon_damage").copied(), Some(0.03));
 
         let catalog_by_rid = by_rid(&cat);
@@ -293,7 +303,7 @@ mod tests {
 
         let summary = research_combat_summary_from_imported("higgsbozo", &imported, Some(&cat));
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported, &cat);
+        merge_research_bonuses_into_profile(&mut profile, &imported, &cat, None);
 
         assert_eq!(summary.profile_id, "higgsbozo");
         assert_eq!(summary.synced_research_count, imported.len());

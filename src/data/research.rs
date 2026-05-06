@@ -162,7 +162,9 @@ pub struct ResearchCanonicalOverride {
 
 /// One combat effect within a canonical research override. `by_level` maps
 /// research level (1-indexed) to engine-scale additive scalar. The adapter sums
-/// `by_level[0..player_level]` and compiles to a [`crate::data::combat_effect_spec::CombatEffectSpec`].
+/// `by_level[0..player_level]` and compiles to a [`crate::data::combat_effect_spec::CombatEffectSpec`],
+/// unless [`Self::snapshot_by_level`] is true: then `by_level[player_level - 1]` is the **total**
+/// bonus at that tier (common for STFC “cumulative display” nodes — do not sum prior tiers).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResearchCanonicalEffectEntry {
     pub id: String,
@@ -178,6 +180,14 @@ pub struct ResearchCanonicalEffectEntry {
     pub confidence: Option<EffectConfidence>,
     #[serde(default)]
     pub source_ref: Option<SourceRef>,
+    /// When true, use `by_level[level - 1]` only (tier snapshot). When false (default), sum
+    /// `by_level[0..level]` (legacy cumulative merge).
+    #[serde(default)]
+    pub snapshot_by_level: bool,
+    /// When set, this effect is **not** compiled to attack-phase seats: it is handled elsewhere
+    /// (e.g. extra attacker shield mitigation for incoming damage for the first N rounds).
+    #[serde(default)]
+    pub incoming_shield_mitigation_rounds: Option<u32>,
 }
 
 /// Load canonical research overrides from a JSON file. Returns an empty map when

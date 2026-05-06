@@ -94,6 +94,8 @@ pub(crate) fn run_chain_trial(
             engagement_enemy_types: input.engagement_enemy_types.clone(),
             defender_level: input.defender_level,
             attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
+            incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
+            incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         };
 
         let result = simulate_combat_with_defender_faction_and_defender_crew(

@@ -179,6 +179,25 @@
           "source_ref": { "rid": 3407808029, "buff_id": 981948123, "loca_id": 70108 }
         }
       ]
+    },
+    {
+      "rid": 2392190200,
+      "name": "KSG Shield Mitigation",
+      "source_note": "data.stfc.space + manual — tier total is not cumulative sum of prior tiers; early incoming rounds only",
+      "effects": [
+        {
+          "id": "research_2392190200_sm_incoming_rounds",
+          "modifier": "shield_mitigation",
+          "operation": "add",
+          "by_level": [0.005, 0.01, 0.015, 0.02, 0.025],
+          "snapshot_by_level": true,
+          "incoming_shield_mitigation_rounds": 2,
+          "conditions": [],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 2392190200, "buff_id": 1478241687, "loca_id": 35006 }
+        }
+      ]
     }
   ]
 }

@@ -15,6 +15,9 @@ const COMBAT_KEYS: &[&str] = &[
     "crit_damage",
     "pierce",
     "shield_mitigation",
+    "armor",
+    "shield_deflection",
+    "dodge",
 ];
 
 /// Load a building record by id (uses index file field when present for bid_name naming).

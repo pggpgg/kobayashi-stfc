@@ -1119,7 +1119,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 ///
 /// | Key | Flat merge into `profile.bonuses` | Applied via |
 /// |-----|-----------------------------------|---------------|
-/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` (alias `isolytic_cascade`), `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] for most keys; `isolytic_cascade_damage` is merged into `profile.bonuses` but applied in Monte Carlo scenario build as an attack-phase `IsolyticCascadeDamageBonus` seat (with LCARS static buff keys of the same name), not as a [`Combatant`] field |
+/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `shield_deflection`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` (alias `isolytic_cascade`), `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] for most keys; `armor` / `shield_deflection` / `dodge` add into [`Combatant::mitigation`]; `isolytic_cascade_damage` is merged into `profile.bonuses` but applied in Monte Carlo scenario build as an attack-phase `IsolyticCascadeDamageBonus` seat (with LCARS static buff keys of the same name), not as a [`Combatant`] field |
 /// | `officer_attack`, `officer_health` | yes | Multiplicative with `weapon_damage` / `hull_hp`: attack × `(1+weapon_damage)×(1+officer_attack)`, hull × `(1+hull_hp)×(1+officer_health)` |
 /// | `officer_defense` | yes | Additive with `shield_mitigation` into [`Combatant::shield_mitigation`] (same cap `[0,1]`) |
 /// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
@@ -1157,6 +1157,8 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         "pierce" | "armor_pierce" | "shield_pierce" => Some("pierce"),
         "shield_mitigation" => Some("shield_mitigation"),
         "armor" => Some("armor"),
+        // Raw shield deflection (defender leg; same units as ship `DefenderStats::shield_deflection`).
+        "shield_deflection" => Some("shield_deflection"),
         "dodge" => Some("dodge"),
         "damage_reduction" => Some("damage_reduction"),
         // Used with ship `AttackerStats.accuracy` for dodge leg of mitigation (see scenario.rs).
@@ -1443,18 +1445,22 @@ pub fn combat_research_bonuses_for_rid_subset(
         .filter(|e| rids.contains(&e.rid))
         .cloned()
         .collect();
-    combat_research_bonuses_from_entries_slice(&only, catalog)
+    combat_research_bonuses_from_entries_slice(&only, catalog, None)
 }
 
 fn combat_research_bonuses_from_entries_slice(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
 ) -> HashMap<String, f64> {
     if imported_research.is_empty() || catalog.items.is_empty() {
         return HashMap::new();
     }
 
-    let levels_by_rid = research_levels_by_rid_from_import(imported_research);
+    let mut levels_by_rid = research_levels_by_rid_from_import(imported_research);
+    if let Some(exc) = exclude_catalog_rids {
+        levels_by_rid.retain(|rid, _| !exc.contains(rid));
+    }
     if levels_by_rid.is_empty() {
         return HashMap::new();
     }
@@ -1531,9 +1537,10 @@ pub fn research_derived_attack_phase_seats(
 pub fn combat_research_bonuses_from_import(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
 ) -> HashMap<String, f64> {
     let filtered = research_entries_excluding_support_buff_gated(imported_research);
-    combat_research_bonuses_from_entries_slice(filtered.as_ref(), catalog)
+    combat_research_bonuses_from_entries_slice(filtered.as_ref(), catalog, exclude_catalog_rids)
 }
 
 /// Merges combat stat bonuses from player's synced research into `profile.bonuses`.
@@ -1542,12 +1549,16 @@ pub fn combat_research_bonuses_from_import(
 /// Duplicate `rid` rows use the **maximum** synced level for that `rid`.
 ///
 /// Never merges support-buff–gated `rid`s (see [`crate::data::support_buffs::augment_static_buffs_with_support_gated_research`]).
+///
+/// `exclude_catalog_rids`: optional set of `rid`s whose catalog merge is skipped (canonical overrides).
 pub fn merge_research_bonuses_into_profile(
     profile: &mut PlayerProfile,
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
 ) {
-    let bonuses = combat_research_bonuses_from_import(imported_research, catalog);
+    let bonuses =
+        combat_research_bonuses_from_import(imported_research, catalog, exclude_catalog_rids);
     for (key, value) in bonuses {
         let current = profile.bonuses.get(&key).copied().unwrap_or(0.0);
         profile.bonuses.insert(key, current + value);
@@ -1619,6 +1630,7 @@ pub fn apply_static_buffs_to_combatant(
     let armor_add = static_buffs.get("armor").copied().unwrap_or(0.0);
     let damage_reduction_add = static_buffs.get("damage_reduction").copied().unwrap_or(0.0);
     let dodge_add = static_buffs.get("dodge").copied().unwrap_or(0.0);
+    let shield_deflection_add = static_buffs.get("shield_deflection").copied().unwrap_or(0.0);
 
     Combatant {
         attack: combatant.attack * weapon_mult,
@@ -1632,7 +1644,11 @@ pub fn apply_static_buffs_to_combatant(
         apex_shred: (combatant.apex_shred + apex_shred_add).max(0.0),
         apex_barrier: (combatant.apex_barrier + apex_barrier_add).max(0.0),
         shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add).clamp(0.0, 1.0),
-        mitigation: (combatant.mitigation + armor_add + damage_reduction_add + dodge_add)
+        mitigation: (combatant.mitigation
+            + armor_add
+            + damage_reduction_add
+            + shield_deflection_add
+            + dodge_add)
             .clamp(0.0, 1.0),
         ..combatant
     }
@@ -1703,6 +1719,7 @@ pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -
     let shield_mit_add = get_bonus(profile, "shield_mitigation");
     let officer_def_add = get_bonus(profile, "officer_defense");
     let mitigation_add = get_bonus(profile, "armor")
+        + get_bonus(profile, "shield_deflection")
         + get_bonus(profile, "dodge")
         + get_bonus(profile, "damage_reduction");
 
@@ -1937,7 +1954,7 @@ mod tests {
                 }],
             }],
         };
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, None);
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.05));
         assert!(!profile.bonuses.contains_key("buff_unknown"));
     }
@@ -1977,7 +1994,7 @@ mod tests {
                 }],
             }],
         };
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, None);
         assert_eq!(profile.bonuses.get("apex_shred"), Some(&0.25));
         assert_eq!(profile.bonuses.get("apex_barrier"), Some(&500.0));
     }
@@ -2012,7 +2029,7 @@ mod tests {
             }],
         };
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, None);
         assert_eq!(profile.bonuses.get("isolytic_damage_morale"), Some(&0.05));
         assert!(!profile.bonuses.contains_key("isolytic_damage"));
     }
@@ -2044,7 +2061,7 @@ mod tests {
             }],
         };
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, None);
 
         let attacker = Combatant {
             id: "test".to_string(),
@@ -2124,7 +2141,7 @@ mod tests {
                 levels: vec![],
             }],
         };
-        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, None);
         assert!(profile.bonuses.is_empty());
     }
 
@@ -2155,7 +2172,7 @@ mod tests {
         };
         let imported = vec![ResearchEntry { rid, level: 1 }];
         let mut profile = PlayerProfile::default();
-        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog);
+        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
         assert!(
             !profile.bonuses.contains_key("weapon_damage"),
             "gated rid must never merge into profile.bonuses"
