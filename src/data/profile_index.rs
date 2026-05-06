@@ -122,7 +122,14 @@ pub fn effective_profile_id(index: &ProfileIndex) -> String {
         .profiles
         .iter()
         .find_map(|p| (!p.id.is_empty()).then(|| p.id.clone()))
-        .unwrap_or_else(|| DEFAULT_PROFILE_ID.to_string())
+        .unwrap_or_else(|| {
+            let demo_json = profile_data_dir(DEMO_PROFILE_ID).join(PROFILE_JSON);
+            if demo_json.is_file() {
+                DEMO_PROFILE_ID.to_string()
+            } else {
+                DEFAULT_PROFILE_ID.to_string()
+            }
+        })
 }
 
 /// Look up profile by sync token. Returns Some(profile_id) if found.
@@ -476,10 +483,15 @@ mod tests {
     }
 
     #[test]
-    fn effective_profile_falls_back_to_legacy_default_when_index_empty() {
+    fn effective_profile_falls_back_to_demo_when_index_empty_and_demo_on_disk() {
+        let demo_json = profile_data_dir(DEMO_PROFILE_ID).join(PROFILE_JSON);
+        assert!(
+            demo_json.is_file(),
+            "repo ships profiles/demo/profile.json; missing demo breaks empty-index fallback"
+        );
         assert_eq!(
             effective_profile_id(&ProfileIndex::default()),
-            DEFAULT_PROFILE_ID
+            DEMO_PROFILE_ID
         );
     }
 }
