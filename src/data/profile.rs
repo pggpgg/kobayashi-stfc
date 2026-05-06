@@ -34,13 +34,19 @@ use crate::combat::{
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
-use crate::data::research::{cumulative_research_bonuses, ResearchCatalog};
+use crate::data::research::{
+    cumulative_research_bonuses, cumulative_research_owner_faction_bonuses, ResearchCatalog,
+};
 use crate::data::ship::ShipRecord;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlayerProfile {
     #[serde(default)]
     pub bonuses: HashMap<String, f64>,
+    /// Research catalog bonuses gated on **player ship** owner `faction` slug (e.g. `federation`).
+    /// Outer key: lowercase trimmed slug; inner: combat stat → cumulative value (same merge as `bonuses`).
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub research_owner_faction_bonuses: HashMap<String, HashMap<String, f64>>,
     /// Selected alliance / ship support buff ids persisted with the profile UI state.
     /// Combat request handling still resolves ids against the support buff catalog per scenario.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -151,14 +157,57 @@ pub fn validate_player_profile_payload(
         profile.chaos_tech_override.as_deref(),
     );
 
+    let mut canonical_owner: HashMap<String, HashMap<String, f64>> = HashMap::new();
+    for (fac_raw, inner) in &profile.research_owner_faction_bonuses {
+        let fac = fac_raw.trim();
+        if fac.is_empty() {
+            issues.push("research_owner_faction_bonuses contains an empty faction key".to_string());
+            continue;
+        }
+        if fac != fac_raw {
+            issues.push(format!(
+                "research_owner_faction_bonuses faction key `{fac_raw}` must not contain surrounding whitespace"
+            ));
+        }
+        let fac_key = fac.to_ascii_lowercase();
+        let dest = canonical_owner.entry(fac_key).or_default();
+        for (raw_stat, value) in inner {
+            let st = raw_stat.trim();
+            if st.is_empty() {
+                issues.push(format!(
+                    "research_owner_faction_bonuses[{fac}] contains an empty stat key"
+                ));
+                continue;
+            }
+            if !value.is_finite() {
+                issues.push(format!(
+                    "research_owner_faction_bonuses[{fac}][{st}] value must be finite"
+                ));
+                continue;
+            }
+            let Some(canonical_stat) = normalize_profile_combat_stat(st) else {
+                issues.push(format!(
+                    "research_owner_faction_bonuses[{fac}][{st}] is not a supported combat stat"
+                ));
+                continue;
+            };
+            dest.entry(canonical_stat.to_string())
+                .and_modify(|e| *e += *value)
+                .or_insert(*value);
+        }
+    }
+
     if !issues.is_empty() {
         return Err(issues);
     }
 
     Ok(PlayerProfile {
         bonuses: canonical_bonuses,
+        research_owner_faction_bonuses: canonical_owner,
         support_buffs,
-        ..profile
+        ops_level: profile.ops_level,
+        forbidden_tech_override: profile.forbidden_tech_override,
+        chaos_tech_override: profile.chaos_tech_override,
     })
 }
 
@@ -1486,6 +1535,47 @@ fn combat_research_bonuses_from_entries_slice(
     out
 }
 
+fn combat_research_owner_faction_bonuses_from_entries_slice(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+) -> HashMap<String, HashMap<String, f64>> {
+    if imported_research.is_empty() || catalog.items.is_empty() {
+        return HashMap::new();
+    }
+
+    let mut levels_by_rid = research_levels_by_rid_from_import(imported_research);
+    if let Some(exc) = exclude_catalog_rids {
+        levels_by_rid.retain(|rid, _| !exc.contains(rid));
+    }
+    if levels_by_rid.is_empty() {
+        return HashMap::new();
+    }
+
+    let records: Vec<&crate::data::research::ResearchRecord> = catalog
+        .items
+        .iter()
+        .filter(|r| levels_by_rid.contains_key(&r.rid))
+        .collect();
+    if records.is_empty() {
+        return HashMap::new();
+    }
+
+    let nested = cumulative_research_owner_faction_bonuses(&records, &levels_by_rid);
+    let mut out: HashMap<String, HashMap<String, f64>> = HashMap::new();
+    for (faction, inner) in nested {
+        let dest = out.entry(faction).or_default();
+        for (stat, value) in inner {
+            let Some(key) = normalize_profile_combat_stat(&stat) else {
+                continue;
+            };
+            let current = dest.get(key).copied().unwrap_or(0.0);
+            dest.insert(key.to_string(), current + value);
+        }
+    }
+    out
+}
+
 /// Per-`rid` research level from sync import: duplicate rows use **max** level for that `rid`.
 pub(crate) fn research_levels_by_rid_from_import(
     imported_research: &[ResearchEntry],
@@ -1543,6 +1633,20 @@ pub fn combat_research_bonuses_from_import(
     combat_research_bonuses_from_entries_slice(filtered.as_ref(), catalog, exclude_catalog_rids)
 }
 
+/// Owner-faction-gated research bonuses (same import filter as [`combat_research_bonuses_from_import`]).
+pub fn combat_research_owner_faction_bonuses_from_import(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+) -> HashMap<String, HashMap<String, f64>> {
+    let filtered = research_entries_excluding_support_buff_gated(imported_research);
+    combat_research_owner_faction_bonuses_from_entries_slice(
+        filtered.as_ref(),
+        catalog,
+        exclude_catalog_rids,
+    )
+}
+
 /// Merges combat stat bonuses from player's synced research into `profile.bonuses`.
 /// For each imported research entry (rid, level), looks up the catalog by rid and sums
 /// cumulative bonuses for levels 1..=level. Only combat stats are applied (same keys as buildings).
@@ -1562,6 +1666,21 @@ pub fn merge_research_bonuses_into_profile(
     for (key, value) in bonuses {
         let current = profile.bonuses.get(&key).copied().unwrap_or(0.0);
         profile.bonuses.insert(key, current + value);
+    }
+    let owner = combat_research_owner_faction_bonuses_from_import(
+        imported_research,
+        catalog,
+        exclude_catalog_rids,
+    );
+    for (faction, inner) in owner {
+        let dest = profile
+            .research_owner_faction_bonuses
+            .entry(faction)
+            .or_default();
+        for (stat, value) in inner {
+            let current = dest.get(&stat).copied().unwrap_or(0.0);
+            dest.insert(stat, current + value);
+        }
     }
 }
 
@@ -1595,6 +1714,28 @@ pub fn load_profile(path: &str) -> PlayerProfile {
 
 fn get_bonus(profile: &PlayerProfile, key: &str) -> f64 {
     profile.bonuses.get(key).copied().unwrap_or(0.0)
+}
+
+fn owner_faction_lookup_key(owner_faction_slug: Option<&str>) -> Option<String> {
+    owner_faction_slug
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_ascii_lowercase())
+}
+
+/// Flat `profile.bonuses[key]` plus [`PlayerProfile::research_owner_faction_bonuses`] for the resolved ship `faction` slug.
+pub fn get_bonus_with_owner_faction_research(
+    profile: &PlayerProfile,
+    key: &str,
+    owner_faction_slug: Option<&str>,
+) -> f64 {
+    let mut v = get_bonus(profile, key);
+    if let Some(fk) = owner_faction_lookup_key(owner_faction_slug) {
+        if let Some(inner) = profile.research_owner_faction_bonuses.get(&fk) {
+            v += inner.get(key).copied().unwrap_or(0.0);
+        }
+    }
+    v
 }
 
 /// Apply LCARS/officer static buffs to a Combatant (e.g. from [BuffSet::static_buffs]).
@@ -1700,28 +1841,34 @@ pub fn estimate_officer_stats_with_profile_bonuses(
 /// isolytic_damage / isolytic_defense, apex_shred / apex_barrier (additive; counter-attack uses player apex_barrier).
 /// `isolytic_damage_morale` stays in `profile.bonuses` for the scenario morale seat (not added to flat `isolytic_damage` here).
 /// `isolytic_cascade_damage` stays in `profile.bonuses` for the scenario attack-phase cascade seat.
-pub fn apply_profile_to_attacker(attacker: Combatant, profile: &PlayerProfile) -> Combatant {
-    if profile.bonuses.is_empty() {
+///
+/// `owner_faction_slug`: lowercase-trimmed [`ShipRecord::faction`] when known (e.g. `"federation"`); merges
+/// [`PlayerProfile::research_owner_faction_bonuses`] for matching keys into the same stats as `profile.bonuses`.
+pub fn apply_profile_to_attacker(
+    attacker: Combatant,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+) -> Combatant {
+    if profile.bonuses.is_empty() && profile.research_owner_faction_bonuses.is_empty() {
         return attacker;
     }
-    let weapon = 1.0 + get_bonus(profile, "weapon_damage");
-    let officer_attack_mult = 1.0 + get_bonus(profile, "officer_attack");
-    let hull_hp = 1.0 + get_bonus(profile, "hull_hp");
-    let officer_health_mult = 1.0 + get_bonus(profile, "officer_health");
-    let shield_hp = 1.0 + get_bonus(profile, "shield_hp");
-    let isolytic_damage_add = get_bonus(profile, "isolytic_damage");
-    let isolytic_defense_add = get_bonus(profile, "isolytic_defense");
-    let apex_shred_add = get_bonus(profile, "apex_shred");
-    let apex_barrier_add = get_bonus(profile, "apex_barrier");
-    let crit_chance_add = get_bonus(profile, "crit_chance");
-    let crit_damage_mult = 1.0 + get_bonus(profile, "crit_damage");
-    let pierce_add = get_bonus(profile, "pierce");
-    let shield_mit_add = get_bonus(profile, "shield_mitigation");
-    let officer_def_add = get_bonus(profile, "officer_defense");
-    let mitigation_add = get_bonus(profile, "armor")
-        + get_bonus(profile, "shield_deflection")
-        + get_bonus(profile, "dodge")
-        + get_bonus(profile, "damage_reduction");
+    let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
+    let weapon = 1.0 + gb("weapon_damage");
+    let officer_attack_mult = 1.0 + gb("officer_attack");
+    let hull_hp = 1.0 + gb("hull_hp");
+    let officer_health_mult = 1.0 + gb("officer_health");
+    let shield_hp = 1.0 + gb("shield_hp");
+    let isolytic_damage_add = gb("isolytic_damage");
+    let isolytic_defense_add = gb("isolytic_defense");
+    let apex_shred_add = gb("apex_shred");
+    let apex_barrier_add = gb("apex_barrier");
+    let crit_chance_add = gb("crit_chance");
+    let crit_damage_mult = 1.0 + gb("crit_damage");
+    let pierce_add = gb("pierce");
+    let shield_mit_add = gb("shield_mitigation");
+    let officer_def_add = gb("officer_defense");
+    let mitigation_add =
+        gb("armor") + gb("shield_deflection") + gb("dodge") + gb("damage_reduction");
 
     Combatant {
         attack: attacker.attack * weapon * officer_attack_mult,
@@ -2083,7 +2230,7 @@ mod tests {
             isolytic_defense: 0.0,
             hostile_mitigation_params: None,
         };
-        let out = apply_profile_to_attacker(attacker, &profile);
+        let out = apply_profile_to_attacker(attacker, &profile, None);
         assert!((out.apex_shred - 0.15).abs() < 1e-9, "expected 0.03 + 0.12");
     }
 
@@ -2113,7 +2260,7 @@ mod tests {
         profile
             .bonuses
             .insert("isolytic_damage_morale".to_string(), 0.5);
-        let out = apply_profile_to_attacker(attacker, &profile);
+        let out = apply_profile_to_attacker(attacker, &profile, None);
         assert!(
             (out.isolytic_damage - 2.0).abs() < 1e-9,
             "morale-gated isolytic must not add to flat Combatant.isolytic_damage"
@@ -2185,6 +2332,91 @@ mod tests {
         assert_eq!(gated.get("weapon_damage"), Some(&0.07));
         let static_style = profile_combat_bonuses_to_static_style(&gated);
         assert_eq!(static_style.get("weapon_damage"), Some(&1.07));
+    }
+
+    #[test]
+    fn merge_research_owner_faction_does_not_flatten_into_bonuses() {
+        use crate::data::research::{
+            ResearchBonusConditionKey, ResearchBonusEntry, ResearchCatalog, ResearchLevel,
+            ResearchRecord,
+        };
+        let rid = 9002_i64;
+        let catalog = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid,
+                name: Some("Fed gate".into()),
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "shield_deflection".into(),
+                        value: 0.06,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            attacker_faction: Some("federation".into()),
+                            ..Default::default()
+                        },
+                    }],
+                }],
+            }],
+        };
+        let imported = vec![ResearchEntry { rid, level: 1 }];
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
+        assert!(
+            !profile.bonuses.contains_key("shield_deflection"),
+            "owner-faction-gated research must not merge into profile.bonuses"
+        );
+        assert_eq!(
+            profile
+                .research_owner_faction_bonuses
+                .get("federation")
+                .and_then(|m| m.get("shield_deflection"))
+                .copied(),
+            Some(0.06)
+        );
+    }
+
+    #[test]
+    fn apply_profile_owner_faction_shield_deflection_only_when_ship_faction_matches() {
+        let attacker = Combatant {
+            id: "test".to_string(),
+            attack: 100.0,
+            mitigation: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.8,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            weapons: vec![],
+            hostile_mitigation_params: None,
+        };
+        let mut profile = PlayerProfile::default();
+        profile
+            .research_owner_faction_bonuses
+            .entry("federation".to_string())
+            .or_default()
+            .insert("shield_deflection".to_string(), 0.05);
+
+        let out_fed = apply_profile_to_attacker(attacker.clone(), &profile, Some("federation"));
+        assert!((out_fed.mitigation - 0.05).abs() < 1e-9);
+        let out_klg = apply_profile_to_attacker(attacker.clone(), &profile, Some("klingon"));
+        assert!((out_klg.mitigation).abs() < 1e-9);
+        let out_ci = apply_profile_to_attacker(attacker.clone(), &profile, Some("Federation"));
+        assert!((out_ci.mitigation - 0.05).abs() < 1e-9);
+        let out_none = apply_profile_to_attacker(attacker, &profile, None);
+        assert!((out_none.mitigation).abs() < 1e-9);
     }
 
     fn combatant_with(
@@ -2261,7 +2493,7 @@ mod tests {
         let mut profile = PlayerProfile::default();
         profile.bonuses.insert("apex_shred".to_string(), 0.15);
         profile.bonuses.insert("apex_barrier".to_string(), 200.0);
-        let out = apply_profile_to_attacker(attacker, &profile);
+        let out = apply_profile_to_attacker(attacker, &profile, None);
         assert!((out.apex_shred - 0.25).abs() < 1e-9);
         assert!((out.apex_barrier - 300.0).abs() < 1e-9);
     }
@@ -2293,7 +2525,7 @@ mod tests {
         profile.bonuses.insert("dodge".to_string(), 0.03);
         profile.bonuses.insert("damage_reduction".to_string(), 0.02);
 
-        let out = apply_profile_to_attacker(attacker, &profile);
+        let out = apply_profile_to_attacker(attacker, &profile, None);
         assert!((out.mitigation - 0.19).abs() < 1e-9);
     }
 
@@ -2394,7 +2626,7 @@ mod tests {
             weapons: vec![],
             hostile_mitigation_params: None,
         };
-        let out = apply_profile_to_attacker(attacker, &profile);
+        let out = apply_profile_to_attacker(attacker, &profile, None);
         // 100 × 1.1 × 1.1; 1000 × 1.2 × 1.2; 0.2 + 0.05 + 0.05
         assert!((out.attack - 121.0).abs() < 1e-9);
         assert!((out.hull_health - 1440.0).abs() < 1e-9);

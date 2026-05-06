@@ -173,6 +173,7 @@ pub fn building_combat_summary_for_profile(profile_id: &str) -> BuildingCombatSu
         support_buffs: Vec::new(),
         forbidden_tech_override: None,
         chaos_tech_override: None,
+        ..Default::default()
     };
     merge_building_bonuses_into_profile(
         &mut scratch,

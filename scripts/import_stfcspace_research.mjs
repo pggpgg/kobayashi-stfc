@@ -4,6 +4,7 @@
  * - Loads per-node detail **only** from data/upstream/data-stfc-space/research/{id}.json (no HTTP for details).
  * - Maps buff ids to engine stats: RESEARCH_BUFF_MAPPING, data/research/buff_id_to_stat.json,
  *   data/buildings/buff_id_to_stat.json, data/research/loca_id_to_stat.json, then description heuristics.
+ *   JSON values may be a string, one object `{ stat, operator?, … }`, or an **array** of those (one buff → multiple profile stats).
  * - Writes data/research_catalog.json (KOBAYASHI schema: rid, name, levels[].bonuses).
  *
  * Usage:
@@ -20,6 +21,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import url from "node:url";
+
+import {
+  inferCombatStatFromDescription,
+  inferCombatStatFromProjectName,
+} from "./lib/research_stat_inference.mjs";
 
 const REPO_ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 const OUT_PATH = path.join(REPO_ROOT, "data", "research_catalog.json");
@@ -178,190 +184,6 @@ async function loadResearchDescriptionsByLocaId() {
   return map;
 }
 
-/**
- * When a combat description mentions a ship class constraint (e.g. "Explorers battling Interceptors"),
- * extract the defender ship class slug (explorer, interceptor, battleship, survey).
- */
-function inferShipClassConditional(text, stat) {
-  const t = text.toLowerCase();
-  const defenderClass = (() => {
-    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?interceptors?\b/.test(t)) return "interceptor";
-    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?explorers?\b/.test(t)) return "explorer";
-    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?battleships?\b/.test(t)) return "battleship";
-    if (/\b(?:battling|against|vs\.?|versus)\s+(?:all\s+)?surve(?:y|yor)s?\b/.test(t)) return "survey";
-    return null;
-  })();
-  // Attacker-class constraint (e.g. "on Explorers battling X") — not modeled as conditional
-  // since the seat is applied to the attacker; we only gate by defender ship class.
-  if (defenderClass) {
-    if (/\bmorale\b/i.test(t)) {
-      return {
-        stat,
-        operator: "add",
-        defender_ship_class: defenderClass,
-        requires_morale: true,
-      };
-    }
-    return { stat, operator: "add", defender_ship_class: defenderClass };
-  }
-  return stat;
-}
-
-/**
- * Infer engine stat from English description text. Conservative: non-ship / economy lines return null.
- * Faction- or mode-specific wording may still map here; catalog is applied as global profile bonuses.
- */
-function inferCombatStatFromDescription(text) {
-  if (!text || typeof text !== "string") return null;
-  const t = text.toLowerCase();
-  if (
-    /construction speed|build speed|repair speed|research speed|mining\b|cargo |cargo\.|cost efficiency|unlock|blueprint|dilithium protection|parsteel|tritanium|for components|foundry|lab building|module upgrade|resource generation|away team|away teams|warp speed|tiering up|protected cargo|rewards for defeating|not_convert|get more from hostiles in these systems/.test(
-      t
-    )
-  ) {
-    return null;
-  }
-  // Mode keywords (station / defense platform) are NOT in the general exclusion above because
-  // in-game text often negates them: e.g. "(not applicable to Armadas, Assaults, or station defense)".
-  // Each combat stat pattern below handles mode exclusions individually.
-  if (/\bisolytic\b/.test(t)) {
-    if (/\b(defense|defence|resist|mitigation against isolytic)\b/.test(t)) return "isolytic_defense";
-    if (
-      /\bmorale\b/.test(t) &&
-      /\b(damage|attack|potency|offense)\b/.test(t)
-    ) {
-      return "isolytic_damage_morale";
-    }
-    if (/\b(damage|attack|potency|offense)\b/.test(t)) return "isolytic_damage";
-    return null;
-  }
-  // Apex barrier / shred: also handle morale-gated varieties and in-game color-tag markup.
-  if (/\bapex barrier\b/i.test(t)) {
-    if (/\bmorale\b/i.test(t)) {
-      return { stat: "apex_barrier", requires_morale: true };
-    }
-    return "apex_barrier";
-  }
-  if (/\bapex shred\b/i.test(t)) {
-    if (/\bmorale\b/i.test(t)) {
-      return { stat: "apex_shred", requires_morale: true };
-    }
-    return "apex_shred";
-  }
-  if (
-    /damage reduction|reduces? (the )?damage taken|reduces base damage taken|incoming damage|less damage from/.test(
-      t
-    )
-  ) {
-    if (!/defense platform|defensive platform|station defense/i.test(t)) return "damage_reduction";
-  }
-  if (
-    /\baccuracy\b/.test(t) &&
-    /\b(increases|increase|increased|improved|bonus|enhanced)\b/.test(t) &&
-    !/\bofficer\b/.test(t)
-  ) {
-    return "accuracy";
-  }
-  if (/critical damage|crit damage|severity of critical|critical hit damage/.test(t)) {
-    if (/battling|vs\.? |versus/.test(t)) {
-      return inferShipClassConditional(t, "crit_damage");
-    }
-    return "crit_damage";
-  }
-  if (/critical hit chance|critical chance|crit chance|chance to (land|score|deal) (a )?critical/.test(t)) {
-    if (/battling|vs\.? |versus/.test(t)) {
-      return inferShipClassConditional(t, "crit_chance");
-    }
-    return "crit_chance";
-  }
-  if (
-    /shield piercing|armor piercing|shield penetration|shield pen\b| pierce |piercing against|pierces the|base piercing stats|shield pierce.*armor pierce/.test(
-      t
-    )
-  ) {
-    return "pierce";
-  }
-  if (/shield mitigation/.test(t)) return "shield_mitigation";
-  if (/\bdodge\b|shield deflection/.test(t)) return "dodge";
-  if (/\barmor\b/.test(t) && !/piercing|pierce/.test(t)) {
-    if (/ship|hull|all ships|your ships|franklin|vessel/.test(t)) return "armor";
-  }
-  // Relax ship-context requirement for hull/shield HP: the general economy exclusions
-  // (construction, mining, cargo, etc.) already filter non-combat descriptions.  Defense
-  // platform / station wording is also excluded in the general guard above.
-  if (/hull health|hull hit points|hull points|hull strength|max hull/.test(t)) {
-    if (!/defense platform|defensive platform|station/.test(t)) return "hull_hp";
-  }
-  if (/shield health|shield hit points|shield capacity|shield strength|max shield/.test(t)) {
-    if (!/defense platform|defensive platform|station/.test(t)) return "shield_hp";
-  }
-  // NS Burning Damage (loca 70106): bonus weapon damage only while the target has Burning.
-  if (
-    /weapon damage|base damage dealt|damage dealt to hostiles|damage dealt to hostile|offensive damage|increases base damage|increases base weapon|bonus to base weapon damage/.test(
-      t
-    ) &&
-    /opponent has burning|while your opponent has burning|target has burning|while the target has burning/.test(
-      t
-    ) &&
-    !/defense platform|station|away team/.test(t)
-  ) {
-    return { stat: "weapon_damage", requires_defender_burning: true };
-  }
-  if (
-    /weapon damage|base damage dealt|damage dealt to hostiles|damage dealt to hostile|offensive damage|increases base damage|bonus to base weapon damage/.test(
-      t
-    )
-  ) {
-    if (!/defense platform|station|away team/.test(t)) {
-      if (/battling|vs\.? |versus/.test(t)) {
-        return inferShipClassConditional(t, "weapon_damage");
-      }
-      return "weapon_damage";
-    }
-  }
-  return null;
-}
-
-/**
- * When translations have no research_project_description for this loca_id, use the display name.
- * Conservative: avoids economy/building names; may mis-guess rare ship-specific nodes.
- */
-function inferCombatStatFromProjectName(name) {
-  if (!name || typeof name !== "string") return null;
-  const t = name.toLowerCase();
-  if (
-    /construction|mining|cargo\b|repair speed|research speed|warp speed|cost efficiency|unlock|dilithium|parsteel|tritanium|survey|protected cargo|tiering|blueprint|building|module|resource|components\b/.test(
-      t
-    )
-  ) {
-    return null;
-  }
-  if (/\bisolytic\b/.test(t)) {
-    if (/\b(defense|defence|resist)\b/.test(t)) return "isolytic_defense";
-    if (/\bmorale\b/.test(t)) return "isolytic_damage_morale";
-    return "isolytic_damage";
-  }
-  if (/damage reduction|critical damage reduction|resilience vs/.test(t)) return "damage_reduction";
-  if (/critical damage|crit damage/.test(t)) return "crit_damage";
-  if (/critical chance|crit chance/.test(t)) return "crit_chance";
-  if (/\bdirect hit\b/.test(t)) return "weapon_damage";
-  if (/\btargeting array\b/.test(t)) return "accuracy";
-  if (/shield piercing|armor piercing|penetration/.test(t)) return "pierce";
-  if (/shield mitigation/.test(t)) return "shield_mitigation";
-  if (/\bdodge\b|deflection/.test(t)) return "dodge";
-  if (/\barmor\b/.test(t) && !/piercing|pierce/.test(t)) return "armor";
-  if (/hull density|hull health|hull strength|max hull/.test(t)) return "hull_hp";
-  if (/shield health|shield capacity|shield hardening|shield strength/.test(t)) return "shield_hp";
-  if (
-    /weapon|damage|tactics|assault|offense|firepower|battleship|interceptor|explorer|starship|mayflower|franklin|phindra|turas|talla/.test(
-      t
-    )
-  ) {
-    if (!/defense platform|station defense/.test(t)) return "weapon_damage";
-  }
-  return null;
-}
-
 /** Per-rid detail: local file only (populate via scripts/fetch_stfcspace_research.mjs or an external bulk fetch). */
 async function loadResearchDetailLocal(rid) {
   const cachePath = path.join(UPSTREAM_RESEARCH_DIR, `${rid}.json`);
@@ -376,7 +198,7 @@ async function loadResearchDetailLocal(rid) {
 function statEntryFromJsonValue(v, defaultOp) {
   if (v == null) return null;
   if (typeof v === "string") return { stat: v, operator: defaultOp ?? "add" };
-  if (typeof v === "object" && typeof v.stat === "string") {
+  if (typeof v === "object" && !Array.isArray(v) && typeof v.stat === "string") {
     const out = { stat: v.stat, operator: v.operator ?? defaultOp ?? "add" };
     if (v.requires_defender_burning) out.requires_defender_burning = true;
     if (v.requires_morale) out.requires_morale = true;
@@ -384,9 +206,25 @@ function statEntryFromJsonValue(v, defaultOp) {
     if (typeof v.defender_ship_class === "string")
       out.defender_ship_class = v.defender_ship_class;
     if (typeof v.defender_faction === "string") out.defender_faction = v.defender_faction;
+    if (typeof v.attacker_faction === "string") out.attacker_faction = v.attacker_faction;
     return out;
   }
   return null;
+}
+
+/** One buff id may map to several engine stats (e.g. armor + shield_deflection + dodge). */
+function statEntriesFromJsonValue(v, defaultOp) {
+  if (v == null) return [];
+  if (Array.isArray(v)) {
+    const out = [];
+    for (const item of v) {
+      const e = statEntryFromJsonValue(item, defaultOp);
+      if (e) out.push(e);
+    }
+    return out;
+  }
+  const single = statEntryFromJsonValue(v, defaultOp);
+  return single ? [single] : [];
 }
 
 /** Normalize inferCombatStatFromDescription / inferCombatStatFromProjectName return values. */
@@ -409,29 +247,32 @@ function coerceStatMapping(inferred) {
     ...(typeof inferred.defender_faction === "string"
       ? { defender_faction: inferred.defender_faction }
       : {}),
+    ...(typeof inferred.attacker_faction === "string"
+      ? { attacker_faction: inferred.attacker_faction }
+      : {}),
   };
 }
 
-function resolveBuffStat(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId) {
-  if (!buff || typeof buff.id !== "number") return null;
+function resolveBuffStatMappings(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId) {
+  if (!buff || typeof buff.id !== "number") return [];
   const buffId = buff.id;
   const key = String(buffId);
 
   const inline = RESEARCH_BUFF_MAPPING[buffId];
   if (inline) {
-    const e = statEntryFromJsonValue(inline, "add");
-    if (e) return e;
+    const entries = statEntriesFromJsonValue(inline, "add");
+    if (entries.length > 0) return entries;
   }
 
-  const researchExplicit = statEntryFromJsonValue(researchBuffById[key], "add");
-  if (researchExplicit) return researchExplicit;
+  const researchExplicit = statEntriesFromJsonValue(researchBuffById[key], "add");
+  if (researchExplicit.length > 0) return researchExplicit;
 
-  const fromBuildings = statEntryFromJsonValue(commonBuffNormalization[key], "add");
-  if (fromBuildings) return fromBuildings;
+  const fromBuildings = statEntriesFromJsonValue(commonBuffNormalization[key], "add");
+  if (fromBuildings.length > 0) return fromBuildings;
 
   if (typeof buff.loca_id === "number") {
-    const fromLoca = statEntryFromJsonValue(locaIdToStat[String(buff.loca_id)], "add");
-    if (fromLoca) return fromLoca;
+    const fromLoca = statEntriesFromJsonValue(locaIdToStat[String(buff.loca_id)], "add");
+    if (fromLoca.length > 0) return fromLoca;
   }
 
   if (descriptionByLocaId && descriptionByLocaId.size > 0) {
@@ -439,13 +280,13 @@ function resolveBuffStat(buff, descriptionByLocaId, projectLocaId, projectNamesB
       const t = descriptionByLocaId.get(buff.loca_id);
       const inferred = inferCombatStatFromDescription(t);
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return coerced;
+      if (coerced) return [coerced];
     }
     if (typeof projectLocaId === "number") {
       const t = descriptionByLocaId.get(projectLocaId);
       const inferred = inferCombatStatFromDescription(t);
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return coerced;
+      if (coerced) return [coerced];
     }
   }
 
@@ -453,16 +294,16 @@ function resolveBuffStat(buff, descriptionByLocaId, projectLocaId, projectNamesB
     if (typeof buff.loca_id === "number") {
       const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(buff.loca_id));
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return coerced;
+      if (coerced) return [coerced];
     }
     if (typeof projectLocaId === "number") {
       const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(projectLocaId));
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return coerced;
+      if (coerced) return [coerced];
     }
   }
 
-  return null;
+  return [];
 }
 
 function addUnmapped(unmappedByBuffId, rid, buff) {
@@ -494,6 +335,7 @@ function addUnmapped(unmappedByBuffId, rid, buff) {
  */
 const NON_PCT_DECIMAL_STATS = new Set([
   "armor",
+  "shield_deflection",
   "weapon_damage",
   "isolytic_damage",
   "isolytic_damage_morale",
@@ -550,8 +392,8 @@ function buildLevelsFromDetail(detail, opts) {
 
   if (unmappedByBuffId) {
     for (const buff of detail.buffs) {
-      const mapping = resolveBuffStat(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId);
-      if (!mapping) {
+      const mappings = resolveBuffStatMappings(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId);
+      if (mappings.length === 0) {
         addUnmapped(unmappedByBuffId, rid, buff);
       }
     }
@@ -572,34 +414,35 @@ function buildLevelsFromDetail(detail, opts) {
   for (let level = 1; level <= maxLevel; level += 1) {
     const bonuses = [];
     for (const buff of detail.buffs) {
-      const mapping = resolveBuffStat(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId);
-      if (!mapping) {
-        continue;
+      const mappings = resolveBuffStatMappings(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId);
+      for (const mapping of mappings) {
+        if (!ALLOWED_COMBAT_STATS.has(mapping.stat)) {
+          continue;
+        }
+        const values = Array.isArray(buff.values) ? buff.values : [];
+        const idx = level - 1;
+        if (idx < 0 || idx >= values.length) continue;
+        const raw = values[idx];
+        if (!raw || typeof raw.value !== "number") continue;
+        const value = normalizeBonusValue(buff, mapping, raw.value);
+        if (value == null || value === 0 || !Number.isFinite(value)) continue;
+        const bonus = {
+          stat: mapping.stat,
+          value,
+          operator: mapping.operator ?? "add",
+        };
+        if (mapping.requires_defender_burning) bonus.requires_defender_burning = true;
+        if (mapping.requires_morale) bonus.requires_morale = true;
+        if (mapping.requires_defender_hull_breach)
+          bonus.requires_defender_hull_breach = true;
+        if (typeof mapping.defender_ship_class === "string")
+          bonus.defender_ship_class = mapping.defender_ship_class;
+        if (typeof mapping.defender_faction === "string")
+          bonus.defender_faction = mapping.defender_faction;
+        if (typeof mapping.attacker_faction === "string")
+          bonus.attacker_faction = mapping.attacker_faction;
+        bonuses.push(bonus);
       }
-      if (!ALLOWED_COMBAT_STATS.has(mapping.stat)) {
-        continue;
-      }
-      const values = Array.isArray(buff.values) ? buff.values : [];
-      const idx = level - 1;
-      if (idx < 0 || idx >= values.length) continue;
-      const raw = values[idx];
-      if (!raw || typeof raw.value !== "number") continue;
-      const value = normalizeBonusValue(buff, mapping, raw.value);
-      if (value == null || value === 0 || !Number.isFinite(value)) continue;
-      const bonus = {
-        stat: mapping.stat,
-        value,
-        operator: mapping.operator ?? "add",
-      };
-      if (mapping.requires_defender_burning) bonus.requires_defender_burning = true;
-      if (mapping.requires_morale) bonus.requires_morale = true;
-      if (mapping.requires_defender_hull_breach)
-        bonus.requires_defender_hull_breach = true;
-      if (typeof mapping.defender_ship_class === "string")
-        bonus.defender_ship_class = mapping.defender_ship_class;
-      if (typeof mapping.defender_faction === "string")
-        bonus.defender_faction = mapping.defender_faction;
-      bonuses.push(bonus);
     }
     if (bonuses.length > 0) {
       levels.push({ level, bonuses });

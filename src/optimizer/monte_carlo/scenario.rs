@@ -683,6 +683,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 hostile_mitigation_params: None,
             },
             &shared.profile,
+            ship_rec.faction.as_deref(),
         );
         if shared.ship == USS_VOYAGER_SHIP_ID {
             if let Some(h) = shared.borg_alcove_hull_hp_bonus {
@@ -782,6 +783,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             hostile_mitigation_params: None,
         },
         &shared.profile,
+        None,
     );
     if shared.ship == USS_VOYAGER_SHIP_ID {
         if let Some(h) = shared.borg_alcove_hull_hp_bonus {
@@ -1079,6 +1081,7 @@ pub(crate) fn scenario_to_combat_input(
                 hostile_mitigation_params: None,
             },
             profile,
+            ship_rec.faction.as_deref(),
         );
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -1160,6 +1163,7 @@ pub(crate) fn scenario_to_combat_input(
             hostile_mitigation_params: None,
         },
         profile,
+        None,
     );
     if !static_buffs.is_empty() {
         attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);

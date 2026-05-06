@@ -310,6 +310,8 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         .to_string();
     let player_profile = load_profile(&profile_path_str);
 
+    let owner_faction_owned = resolve_ship(&parsed.attacker_id).and_then(|s| s.faction);
+
     let attacker = apply_profile_to_attacker(
         Combatant {
             id: parsed.attacker_id,
@@ -332,6 +334,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
             hostile_mitigation_params: None,
         },
         &player_profile,
+        owner_faction_owned.as_deref(),
     );
     let defender = Combatant {
         id: parsed.defender_id,

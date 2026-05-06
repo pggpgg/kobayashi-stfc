@@ -288,5 +288,51 @@
       { "stat": "shield_deflection" },
       { "stat": "dodge" }
     ]
+  },
+  "711050273": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Prime Defenses (research): Mitigation Stats = armor, shield deflection, dodge (+100% at max tier per in-game text); not engine shield_mitigation (shield damage split).",
+    "targets": [
+      { "stat": "armor" },
+      { "stat": "shield_deflection" },
+      { "stat": "dodge" }
+    ]
+  },
+  "1024053940": {
+    "stat": "shield_deflection",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Modulated Federation (research): shield_deflection gated on player ship `faction` slug `federation` (merged into profile `research_owner_faction_bonuses`, applied in `apply_profile_to_attacker` when the resolved hull matches)."
+  },
+  "1255158479": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Shield Efficiency (research): Mitigation Stats triplet; upstream values >100% as shield_mitigation were invalid (e.g. tier value 2.0).",
+    "targets": [
+      { "stat": "armor" },
+      { "stat": "shield_deflection" },
+      { "stat": "dodge" }
+    ]
+  },
+  "1742688098": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Explorer Barriers (research): class mitigation line = armor, shield deflection, dodge; not engine shield_mitigation.",
+    "targets": [
+      { "stat": "armor" },
+      { "stat": "shield_deflection" },
+      { "stat": "dodge" }
+    ]
+  },
+  "4251825190": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Station Defenses (research): Mitigation Stats style bonus; not engine shield_mitigation.",
+    "targets": [
+      { "stat": "armor" },
+      { "stat": "shield_deflection" },
+      { "stat": "dodge" }
+    ]
   }
 }

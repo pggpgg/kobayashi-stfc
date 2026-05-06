@@ -228,7 +228,7 @@ fn catalog_apex_research_round_trips_through_profile_combatant() {
         isolytic_defense: 0.0,
         hostile_mitigation_params: None,
     };
-    let out = apply_profile_to_attacker(attacker, &profile);
+    let out = apply_profile_to_attacker(attacker, &profile, None);
     assert!(
         (out.apex_shred - (0.01 + apex_val)).abs() < 1e-6,
         "expected combatant apex_shred base 0.01 + research {}",

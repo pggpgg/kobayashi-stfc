@@ -16,6 +16,9 @@ cargo clippy --all-targets -- -D warnings
 echo "=== cargo test ==="
 cargo test
 
+echo "=== root scripts (node:test import helpers) ==="
+npm run test:scripts
+
 echo "=== cargo build --release ==="
 cargo build --release
 

@@ -45,14 +45,20 @@ pub struct ResearchLevel {
     pub bonuses: Vec<ResearchBonusEntry>,
 }
 
-/// When any optional field is set, this bonus is **conditional** (not merged into `profile.bonuses`).
-/// Slugs match [`crate::combat::ShipType`] / [`crate::combat::OpponentFactionTag::from_data_slug`].
+/// Optional **defender** / engagement gates (`defender_*`, morale, burning, hull breach) and
+/// optional **`attacker_faction`** (player ship owner faction slug from [`crate::data::ship::ShipRecord::faction`]).
+/// Defender-gated `crit_*` / `weapon_damage` rows are attack-phase seats, not flat `profile.bonuses`.
+/// `attacker_faction` rows merge into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`]
+/// and apply in [`crate::data::profile::apply_profile_to_attacker`] when the resolved ship matches.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub struct ResearchBonusConditionKey {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub defender_ship_class: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub defender_faction: Option<String>,
+    /// Player hull owner faction slug (`federation`, `klingon`, …); matches ship extended `faction` field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attacker_faction: Option<String>,
     #[serde(default)]
     pub requires_morale: bool,
     #[serde(default)]
@@ -86,9 +92,20 @@ impl Default for ResearchBonusEntry {
 pub fn research_bonus_is_conditional(bonus: &ResearchBonusEntry) -> bool {
     bonus.condition.defender_ship_class.is_some()
         || bonus.condition.defender_faction.is_some()
+        || bonus.condition.attacker_faction.is_some()
         || bonus.condition.requires_morale
         || bonus.condition.requires_defender_burning
         || bonus.condition.requires_defender_hull_breach
+}
+
+/// True when this bonus is gated on the **player ship's** owner faction (merged separately from flat `profile.bonuses`).
+pub fn research_bonus_is_owner_faction_gated(bonus: &ResearchBonusEntry) -> bool {
+    bonus
+        .condition
+        .attacker_faction
+        .as_ref()
+        .map(|s| !s.trim().is_empty())
+        .unwrap_or(false)
 }
 
 fn is_crit_seat_research_stat(stat: &str) -> bool {
@@ -254,12 +271,61 @@ pub fn cumulative_research_level_bonuses(
             if research_bonus_skipped_from_flat_profile_merge(bonus) {
                 continue;
             }
+            if research_bonus_is_owner_faction_gated(bonus) {
+                continue;
+            }
             let op = if bonus.operator.is_empty() {
                 "add"
             } else {
                 bonus.operator.as_str()
             };
             accumulate_bonus(&mut out, &bonus.stat, op, bonus.value);
+        }
+    }
+    out
+}
+
+/// Cumulative owner-faction-gated bonuses for one research project (same level walk as [`cumulative_research_level_bonuses`]).
+pub fn cumulative_research_level_owner_faction_bonuses(
+    record: &ResearchRecord,
+    level: u32,
+) -> HashMap<String, HashMap<String, f64>> {
+    if level == 0 {
+        return HashMap::new();
+    }
+    let cap = level.min(max_level(record));
+    let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = record
+        .levels
+        .iter()
+        .enumerate()
+        .filter(|(_, l)| l.level <= cap)
+        .map(|(i, l)| (l.level, i, l))
+        .collect();
+    level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+
+    let mut out: HashMap<String, HashMap<String, f64>> = HashMap::new();
+    for (_, _, lvl) in level_refs {
+        for bonus in &lvl.bonuses {
+            if research_bonus_skipped_from_flat_profile_merge(bonus) {
+                continue;
+            }
+            if !research_bonus_is_owner_faction_gated(bonus) {
+                continue;
+            }
+            let Some(raw_f) = bonus.condition.attacker_faction.as_ref() else {
+                continue;
+            };
+            let faction_key = raw_f.trim().to_ascii_lowercase();
+            if faction_key.is_empty() {
+                continue;
+            }
+            let op = if bonus.operator.is_empty() {
+                "add"
+            } else {
+                bonus.operator.as_str()
+            };
+            let inner = out.entry(faction_key).or_default();
+            accumulate_bonus(inner, &bonus.stat, op, bonus.value);
         }
     }
     out
@@ -342,6 +408,35 @@ pub fn cumulative_conditional_research_bonuses(
                 .unwrap_or(0.0);
             out.insert((key, stat), cur + value);
         }
+    }
+    out
+}
+
+fn merge_owner_faction_nested_maps(
+    into: &mut HashMap<String, HashMap<String, f64>>,
+    partial: HashMap<String, HashMap<String, f64>>,
+) {
+    for (faction, inner) in partial {
+        let dest = into.entry(faction).or_default();
+        for (stat, value) in inner {
+            accumulate_bonus(dest, &stat, "add", value);
+        }
+    }
+}
+
+/// Returns cumulative **owner-faction-gated** bonuses from multiple research projects.
+pub fn cumulative_research_owner_faction_bonuses(
+    records: &[&ResearchRecord],
+    levels_by_rid: &HashMap<i64, u32>,
+) -> HashMap<String, HashMap<String, f64>> {
+    let by_rid: HashMap<i64, &ResearchRecord> = records.iter().map(|r| (r.rid, *r)).collect();
+    let mut out: HashMap<String, HashMap<String, f64>> = HashMap::new();
+    for (&rid, &level) in levels_by_rid {
+        let Some(rec) = by_rid.get(&rid) else {
+            continue;
+        };
+        let partial = cumulative_research_level_owner_faction_bonuses(rec, level);
+        merge_owner_faction_nested_maps(&mut out, partial);
     }
     out
 }

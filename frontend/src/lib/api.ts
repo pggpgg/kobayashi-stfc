@@ -1118,6 +1118,8 @@ export interface ResearchSummaryRow {
   research_name?: string | null;
   catalog_record_present: boolean;
   combat_bonuses_from_row?: Record<string, number>;
+  /** Owner-hull faction → stat → value for this synced row (e.g. Modulated Federation). */
+  combat_owner_faction_bonuses_from_row?: Record<string, Record<string, number>>;
 }
 
 /** Synced research → effective ship-combat bonuses from research only (same rules as simulate/optimize). */
@@ -1127,6 +1129,8 @@ export interface ResearchCombatSummary {
   synced_research_count: number;
   unmapped_rids: number[];
   combat_bonuses_from_research?: Record<string, number>;
+  /** Cumulative owner-faction-gated research (faction slug → stat → value). */
+  combat_owner_faction_bonuses_from_research?: Record<string, Record<string, number>>;
   research: ResearchSummaryRow[];
 }
 

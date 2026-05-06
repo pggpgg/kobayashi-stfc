@@ -67,6 +67,7 @@ try {
   }
 
   run("cargo test");
+  run("npm run test:scripts");
   run("cargo build --release");
   run("cargo clippy --all-targets -- -D warnings");
 

@@ -66,7 +66,7 @@ fn command_center_level_80_officer_attack_multiplies_when_weapon_damage_absent()
         hostile_mitigation_params: None,
     };
 
-    let out = apply_profile_to_attacker(attacker, &profile);
+    let out = apply_profile_to_attacker(attacker, &profile, None);
     let expected = 1000.0 * (1.0 + wd) * (1.0 + oa);
     assert!(
         (out.attack - expected).abs() < 1e-3,

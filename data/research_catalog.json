@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-05-02",
+  "last_updated": "2026-05-06",
   "items": [
     {
       "rid": 2999437,
@@ -4748,7 +4748,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -4758,7 +4758,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -4768,7 +4768,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -4778,7 +4778,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.2,
               "operator": "add"
             }
@@ -4788,7 +4788,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -4798,7 +4798,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.018000000000000002,
               "operator": "add"
             }
@@ -4808,7 +4808,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.021,
               "operator": "add"
             }
@@ -4818,7 +4818,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.024,
               "operator": "add"
             }
@@ -4828,7 +4828,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.027999999999999997,
               "operator": "add"
             }
@@ -4838,7 +4838,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.032,
               "operator": "add"
             }
@@ -8990,7 +8990,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.2,
               "operator": "add"
             }
@@ -9000,7 +9000,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.25,
               "operator": "add"
             }
@@ -9010,7 +9010,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -9020,7 +9020,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -9030,7 +9030,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -9040,7 +9040,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.65,
               "operator": "add"
             }
@@ -9050,7 +9050,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -9060,7 +9060,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -9070,7 +9070,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.25,
               "operator": "add"
             }
@@ -9080,7 +9080,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -10296,7 +10296,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.27,
               "operator": "add"
             }
@@ -10306,7 +10306,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.45,
               "operator": "add"
             }
@@ -10316,7 +10316,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.65,
               "operator": "add"
             }
@@ -10326,7 +10326,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -10336,7 +10336,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.15,
               "operator": "add"
             }
@@ -10346,7 +10346,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.4,
               "operator": "add"
             }
@@ -10356,7 +10356,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.017,
               "operator": "add"
             }
@@ -10366,7 +10366,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -10376,7 +10376,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0235,
               "operator": "add"
             }
@@ -10386,7 +10386,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.027000000000000003,
               "operator": "add"
             }
@@ -13692,7 +13692,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -13702,7 +13702,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -13712,7 +13712,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -13722,7 +13722,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -13732,7 +13732,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.75,
               "operator": "add"
             }
@@ -13742,7 +13742,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -13752,7 +13752,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.05,
               "operator": "add"
             }
@@ -13762,7 +13762,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.2,
               "operator": "add"
             }
@@ -13772,7 +13772,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.35,
               "operator": "add"
             }
@@ -13782,7 +13782,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -13792,7 +13792,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0165,
               "operator": "add"
             }
@@ -13802,7 +13802,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.018000000000000002,
               "operator": "add"
             }
@@ -13812,7 +13812,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -13822,7 +13822,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.022000000000000002,
               "operator": "add"
             }
@@ -13832,7 +13832,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.025,
               "operator": "add"
             }
@@ -14092,7 +14092,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.24,
               "operator": "add"
             }
@@ -14102,7 +14102,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.38,
               "operator": "add"
             }
@@ -14112,7 +14112,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.52,
               "operator": "add"
             }
@@ -14122,7 +14122,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.66,
               "operator": "add"
             }
@@ -14132,7 +14132,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -14142,7 +14142,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.02,
               "operator": "add"
             }
@@ -14152,7 +14152,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.26,
               "operator": "add"
             }
@@ -14162,7 +14162,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0152,
               "operator": "add"
             }
@@ -14172,7 +14172,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.018000000000000002,
               "operator": "add"
             }
@@ -14182,7 +14182,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.022000000000000002,
               "operator": "add"
             }
@@ -16442,7 +16442,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.1,
               "operator": "add"
             }
@@ -16452,7 +16452,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.2,
               "operator": "add"
             }
@@ -16462,7 +16462,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -16472,7 +16472,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -16482,7 +16482,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -16492,7 +16492,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -16502,7 +16502,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.7,
               "operator": "add"
             }
@@ -16512,7 +16512,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -16522,7 +16522,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -16532,7 +16532,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -20756,7 +20756,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -20766,7 +20766,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -20776,7 +20776,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -20786,7 +20786,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -20796,7 +20796,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.75,
               "operator": "add"
             }
@@ -20806,7 +20806,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -20816,7 +20816,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.05,
               "operator": "add"
             }
@@ -20826,7 +20826,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.2,
               "operator": "add"
             }
@@ -20836,7 +20836,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.35,
               "operator": "add"
             }
@@ -20846,7 +20846,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -20856,7 +20856,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0165,
               "operator": "add"
             }
@@ -20866,7 +20866,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.018000000000000002,
               "operator": "add"
             }
@@ -20876,7 +20876,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -20886,7 +20886,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.022000000000000002,
               "operator": "add"
             }
@@ -20896,7 +20896,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.025,
               "operator": "add"
             }
@@ -21494,7 +21494,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.2,
               "operator": "add"
             }
@@ -21504,7 +21504,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.25,
               "operator": "add"
             }
@@ -21514,7 +21514,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -21524,7 +21524,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -21534,7 +21534,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -21544,7 +21544,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.65,
               "operator": "add"
             }
@@ -21554,7 +21554,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -21564,7 +21564,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -21574,7 +21574,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.25,
               "operator": "add"
             }
@@ -21584,7 +21584,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -23426,7 +23426,17 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 1,
               "operator": "add"
             }
@@ -30528,7 +30538,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.2,
               "operator": "add"
             }
@@ -30538,7 +30548,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.25,
               "operator": "add"
             }
@@ -30548,7 +30558,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -30558,7 +30568,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -30568,7 +30578,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -30578,7 +30588,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.65,
               "operator": "add"
             }
@@ -30588,7 +30598,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -30598,7 +30608,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -30608,7 +30618,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.25,
               "operator": "add"
             }
@@ -30618,7 +30628,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -36860,7 +36870,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -36870,7 +36880,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -36880,7 +36890,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -36890,7 +36900,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -36900,7 +36910,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.75,
               "operator": "add"
             }
@@ -36910,7 +36920,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -36920,7 +36930,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.05,
               "operator": "add"
             }
@@ -36930,7 +36940,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.2,
               "operator": "add"
             }
@@ -36940,7 +36950,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.35,
               "operator": "add"
             }
@@ -36950,7 +36960,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -36960,7 +36970,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0165,
               "operator": "add"
             }
@@ -36970,7 +36980,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.018000000000000002,
               "operator": "add"
             }
@@ -36980,7 +36990,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -36990,7 +37000,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.022000000000000002,
               "operator": "add"
             }
@@ -37000,7 +37010,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.025,
               "operator": "add"
             }
@@ -38564,7 +38574,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -38574,7 +38584,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -38584,7 +38594,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -38594,7 +38604,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.25,
               "operator": "add"
             }
@@ -38604,7 +38614,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -38614,7 +38624,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.018000000000000002,
               "operator": "add"
             }
@@ -38624,7 +38634,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.022000000000000002,
               "operator": "add"
             }
@@ -38634,7 +38644,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.027000000000000003,
               "operator": "add"
             }
@@ -38644,7 +38654,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.033,
               "operator": "add"
             }
@@ -38654,7 +38664,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.04,
               "operator": "add"
             }
@@ -41098,7 +41108,17 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.1,
               "operator": "add"
             }
@@ -41108,7 +41128,17 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.2,
               "operator": "add"
             }
@@ -41118,7 +41148,17 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.3,
               "operator": "add"
             }
@@ -41128,7 +41168,17 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.4,
               "operator": "add"
             }
@@ -41138,7 +41188,17 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.5,
               "operator": "add"
             }
@@ -41148,7 +41208,17 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.6,
               "operator": "add"
             }
@@ -41158,7 +41228,17 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.7,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.7,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.7,
               "operator": "add"
             }
@@ -41168,7 +41248,17 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.8,
               "operator": "add"
             }
@@ -41294,7 +41384,17 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.1,
               "operator": "add"
             }
@@ -41304,7 +41404,17 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.15,
               "operator": "add"
             }
@@ -41314,7 +41424,17 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.2,
               "operator": "add"
             }
@@ -41324,7 +41444,17 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.3,
               "operator": "add"
             }
@@ -41334,7 +41464,17 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.4,
               "operator": "add"
             }
@@ -41344,7 +41484,17 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.5,
               "operator": "add"
             }
@@ -41354,7 +41504,17 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.65,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.65,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.65,
               "operator": "add"
             }
@@ -41364,7 +41524,17 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 1,
               "operator": "add"
             }
@@ -46348,7 +46518,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.25,
               "operator": "add"
             }
@@ -46358,7 +46528,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.35,
               "operator": "add"
             }
@@ -46368,7 +46538,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -46378,7 +46548,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.7,
               "operator": "add"
             }
@@ -46388,7 +46558,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -46398,7 +46568,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.45,
               "operator": "add"
             }
@@ -46408,7 +46578,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -46418,7 +46588,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0275,
               "operator": "add"
             }
@@ -46428,7 +46598,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0375,
               "operator": "add"
             }
@@ -46438,7 +46608,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.05,
               "operator": "add"
             }
@@ -47722,7 +47892,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.15,
               "operator": "add"
             }
@@ -47732,7 +47902,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.22,
               "operator": "add"
             }
@@ -47742,7 +47912,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -47752,7 +47922,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.37,
               "operator": "add"
             }
@@ -47762,7 +47932,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.45,
               "operator": "add"
             }
@@ -47772,7 +47942,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.55,
               "operator": "add"
             }
@@ -47782,7 +47952,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.65,
               "operator": "add"
             }
@@ -47792,7 +47962,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.75,
               "operator": "add"
             }
@@ -47802,7 +47972,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.85,
               "operator": "add"
             }
@@ -47812,7 +47982,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -47822,7 +47992,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.15,
               "operator": "add"
             }
@@ -47832,7 +48002,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.3,
               "operator": "add"
             }
@@ -47842,7 +48012,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -47852,7 +48022,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.017,
               "operator": "add"
             }
@@ -47862,7 +48032,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -50866,7 +51036,17 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.25,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.25,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.25,
               "operator": "add"
             }
@@ -50876,7 +51056,17 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.5,
               "operator": "add"
             }
@@ -50886,7 +51076,17 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.8,
               "operator": "add"
             }
@@ -50896,7 +51096,17 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 1.3,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 1.3,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 1.3,
               "operator": "add"
             }
@@ -50906,7 +51116,17 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "armor",
+              "value": 0.02,
+              "operator": "add"
+            },
+            {
+              "stat": "shield_deflection",
+              "value": 0.02,
+              "operator": "add"
+            },
+            {
+              "stat": "dodge",
               "value": 0.02,
               "operator": "add"
             }
@@ -54814,9 +55034,10 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.1,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54824,9 +55045,10 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.14,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54834,9 +55056,10 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.18,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54844,9 +55067,10 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.22,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54854,9 +55078,10 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.28,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54864,9 +55089,10 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.35,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54874,9 +55100,10 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.42,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54884,9 +55111,10 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.5,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54894,9 +55122,10 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.6,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -54904,9 +55133,10 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "shield_mitigation",
+              "stat": "shield_deflection",
               "value": 0.7,
-              "operator": "add"
+              "operator": "add",
+              "attacker_faction": "federation"
             }
           ]
         }
@@ -64150,7 +64380,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -64160,7 +64390,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -64170,7 +64400,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -64180,7 +64410,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -64190,7 +64420,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.75,
               "operator": "add"
             }
@@ -64200,7 +64430,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -64210,7 +64440,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.05,
               "operator": "add"
             }
@@ -64220,7 +64450,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.25,
               "operator": "add"
             }
@@ -64230,7 +64460,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -64240,7 +64470,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -74242,7 +74472,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -74252,7 +74482,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.55,
               "operator": "add"
             }
@@ -74262,7 +74492,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -74272,7 +74502,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.7,
               "operator": "add"
             }
@@ -74282,7 +74512,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -74292,7 +74522,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -74302,7 +74532,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.1,
               "operator": "add"
             }
@@ -74312,7 +74542,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.3,
               "operator": "add"
             }
@@ -74322,7 +74552,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0165,
               "operator": "add"
             }
@@ -74332,7 +74562,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -74342,7 +74572,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0235,
               "operator": "add"
             }
@@ -74352,7 +74582,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0285,
               "operator": "add"
             }
@@ -74362,7 +74592,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0345,
               "operator": "add"
             }
@@ -74372,7 +74602,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0415,
               "operator": "add"
             }
@@ -74382,7 +74612,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.05,
               "operator": "add"
             }
@@ -84468,7 +84698,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -84478,7 +84708,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -84488,7 +84718,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -84498,7 +84728,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.2,
               "operator": "add"
             }
@@ -84508,7 +84738,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.4,
               "operator": "add"
             }
@@ -84518,7 +84748,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.017,
               "operator": "add"
             }
@@ -84528,7 +84758,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -84538,7 +84768,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.024,
               "operator": "add"
             }
@@ -84548,7 +84778,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.027999999999999997,
               "operator": "add"
             }
@@ -84558,7 +84788,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.035,
               "operator": "add"
             }
@@ -84968,7 +85198,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -84978,7 +85208,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.4,
               "operator": "add"
             }
@@ -84988,7 +85218,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.5,
               "operator": "add"
             }
@@ -84998,7 +85228,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.6,
               "operator": "add"
             }
@@ -85008,7 +85238,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.75,
               "operator": "add"
             }
@@ -85018,7 +85248,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -85028,7 +85258,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.05,
               "operator": "add"
             }
@@ -85038,7 +85268,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.2,
               "operator": "add"
             }
@@ -85048,7 +85278,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.35,
               "operator": "add"
             }
@@ -85058,7 +85288,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -85068,7 +85298,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0165,
               "operator": "add"
             }
@@ -85078,7 +85308,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.018000000000000002,
               "operator": "add"
             }
@@ -85088,7 +85318,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -85098,7 +85328,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.022000000000000002,
               "operator": "add"
             }
@@ -85108,7 +85338,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.025,
               "operator": "add"
             }
@@ -91242,7 +91472,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.21,
               "operator": "add"
             }
@@ -91252,7 +91482,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.24,
               "operator": "add"
             }
@@ -91262,7 +91492,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.27,
               "operator": "add"
             }
@@ -91272,7 +91502,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.33,
               "operator": "add"
             }
@@ -91282,7 +91512,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.39,
               "operator": "add"
             }
@@ -91292,7 +91522,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.45,
               "operator": "add"
             }
@@ -91302,7 +91532,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.53,
               "operator": "add"
             }
@@ -91312,7 +91542,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.61,
               "operator": "add"
             }
@@ -91322,7 +91552,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.69,
               "operator": "add"
             }
@@ -91332,7 +91562,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.8,
               "operator": "add"
             }
@@ -95717,7 +95947,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.3,
               "operator": "add"
             }
@@ -95727,7 +95957,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.36,
               "operator": "add"
             }
@@ -95737,7 +95967,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.42,
               "operator": "add"
             }
@@ -95747,7 +95977,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.48,
               "operator": "add"
             }
@@ -95757,7 +95987,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.57,
               "operator": "add"
             }
@@ -95767,7 +95997,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.66,
               "operator": "add"
             }
@@ -95777,7 +96007,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.75,
               "operator": "add"
             }
@@ -95787,7 +96017,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.9,
               "operator": "add"
             }
@@ -95797,7 +96027,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1,
               "operator": "add"
             }
@@ -95807,7 +96037,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.2,
               "operator": "add"
             }
@@ -95817,7 +96047,7 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 1.5,
               "operator": "add"
             }
@@ -95827,7 +96057,7 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.02,
               "operator": "add"
             }
@@ -95837,7 +96067,7 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.0245,
               "operator": "add"
             }
@@ -95847,7 +96077,7 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.028999999999999998,
               "operator": "add"
             }
@@ -95857,7 +96087,7 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "dodge",
+              "stat": "shield_deflection",
               "value": 0.035,
               "operator": "add"
             }

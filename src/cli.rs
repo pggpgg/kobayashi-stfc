@@ -235,6 +235,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             hostile_mitigation_params: None,
         },
         &player_profile,
+        None,
     );
     let defender = Combatant {
         id: "hostile".to_string(),

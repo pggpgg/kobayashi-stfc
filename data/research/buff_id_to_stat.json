@@ -1,6 +1,14 @@
 {
   "3957763486": "accuracy",
   "3089064337": "accuracy",
+  "711050273": ["armor", "shield_deflection", "dodge"],
+  "1024053940": {
+    "stat": "shield_deflection",
+    "attacker_faction": "federation"
+  },
+  "1255158479": ["armor", "shield_deflection", "dodge"],
+  "1742688098": ["armor", "shield_deflection", "dodge"],
+  "4251825190": ["armor", "shield_deflection", "dodge"],
   "1898558353": {
     "stat": "weapon_damage",
     "requires_defender_burning": true

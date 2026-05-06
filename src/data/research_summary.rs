@@ -5,7 +5,9 @@ use std::collections::{HashMap, HashSet};
 use serde::Serialize;
 
 use crate::data::import;
-use crate::data::profile::combat_research_bonuses_from_import;
+use crate::data::profile::{
+    combat_research_bonuses_from_import, combat_research_owner_faction_bonuses_from_import,
+};
 use crate::data::profile_index::{profile_path, RESEARCH_IMPORTED};
 use crate::data::research::{
     load_research_canonical_overrides, ResearchCatalog, DEFAULT_RESEARCH_CANONICAL_PATH,
@@ -23,10 +25,17 @@ pub struct ResearchSummaryRow {
     /// Combat-relevant bonuses from this research only at the synced level (same rules as merge).
     #[serde(default, skip_serializing_if = "combat_bonuses_empty")]
     pub combat_bonuses_from_row: HashMap<String, f64>,
+    /// Owner-hull-faction-gated research for this row only (`faction_slug` → stat → value).
+    #[serde(default, skip_serializing_if = "owner_faction_nested_empty")]
+    pub combat_owner_faction_bonuses_from_row: HashMap<String, HashMap<String, f64>>,
 }
 
 fn combat_bonuses_empty(m: &HashMap<String, f64>) -> bool {
     m.is_empty()
+}
+
+fn owner_faction_nested_empty(m: &HashMap<String, HashMap<String, f64>>) -> bool {
+    m.is_empty() || m.values().all(|inner| inner.is_empty())
 }
 
 /// Effective research-derived combat bonuses for the active profile (same merge as scenario / optimize).
@@ -41,6 +50,10 @@ pub struct ResearchCombatSummary {
     /// Aggregated combat stat bonuses from all synced research (engine keys).
     #[serde(default, skip_serializing_if = "combat_bonuses_empty")]
     pub combat_bonuses_from_research: HashMap<String, f64>,
+    /// Cumulative owner-faction-gated research (`faction_slug` → stat → value); same merge as
+    /// [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`].
+    #[serde(default, skip_serializing_if = "owner_faction_nested_empty")]
+    pub combat_owner_faction_bonuses_from_research: HashMap<String, HashMap<String, f64>>,
     pub research: Vec<ResearchSummaryRow>,
 }
 
@@ -83,35 +96,53 @@ fn research_combat_summary_from_imported(
     let mut rows: Vec<ResearchSummaryRow> = imported
         .iter()
         .map(|e| {
-            let (catalog_record_present, research_name, combat_bonuses_from_row) =
-                match catalog_by_rid.as_ref() {
-                    None => (false, None, HashMap::new()),
-                    Some(map) => {
-                        let present = map.contains_key(&e.rid);
-                        let name = map.get(&e.rid).and_then(|r| r.name.clone());
-                        let lvl_u32 = effective_level_u32(e.level);
-                        let combat_bonuses_from_row = if present && lvl_u32 > 0 {
+            let (
+                catalog_record_present,
+                research_name,
+                combat_bonuses_from_row,
+                combat_owner_faction_bonuses_from_row,
+            ) = match catalog_by_rid.as_ref() {
+                None => (false, None, HashMap::new(), HashMap::new()),
+                Some(map) => {
+                    let present = map.contains_key(&e.rid);
+                    let name = map.get(&e.rid).and_then(|r| r.name.clone());
+                    let lvl_u32 = effective_level_u32(e.level);
+                    let (combat_bonuses_from_row, combat_owner_faction_bonuses_from_row) =
+                        if present && lvl_u32 > 0 {
                             let one = [e.clone()];
                             match catalog_nonempty {
-                                Some(cat) => combat_research_bonuses_from_import(
-                                    &one,
-                                    cat,
-                                    Some(&exclude_catalog_rids),
+                                Some(cat) => (
+                                    combat_research_bonuses_from_import(
+                                        &one,
+                                        cat,
+                                        Some(&exclude_catalog_rids),
+                                    ),
+                                    combat_research_owner_faction_bonuses_from_import(
+                                        &one,
+                                        cat,
+                                        Some(&exclude_catalog_rids),
+                                    ),
                                 ),
-                                None => HashMap::new(),
+                                None => (HashMap::new(), HashMap::new()),
                             }
                         } else {
-                            HashMap::new()
+                            (HashMap::new(), HashMap::new())
                         };
-                        (present, name, combat_bonuses_from_row)
-                    }
-                };
+                    (
+                        present,
+                        name,
+                        combat_bonuses_from_row,
+                        combat_owner_faction_bonuses_from_row,
+                    )
+                }
+            };
             ResearchSummaryRow {
                 rid: e.rid,
                 level: e.level,
                 research_name,
                 catalog_record_present,
                 combat_bonuses_from_row,
+                combat_owner_faction_bonuses_from_row,
             }
         })
         .collect();
@@ -137,6 +168,16 @@ fn research_combat_summary_from_imported(
         })
         .unwrap_or_default();
 
+    let combat_owner_faction_bonuses_from_research = catalog_nonempty
+        .map(|cat| {
+            combat_research_owner_faction_bonuses_from_import(
+                imported,
+                cat,
+                Some(&exclude_catalog_rids),
+            )
+        })
+        .unwrap_or_default();
+
     let error = catalog_nonempty.is_none().then(|| {
         "missing or empty research catalog (data/research_catalog.json); combat bonuses from research are not applied. Synced rid/level pairs remain stored in research.imported.json.".to_string()
     });
@@ -147,6 +188,7 @@ fn research_combat_summary_from_imported(
         synced_research_count: imported.len(),
         unmapped_rids,
         combat_bonuses_from_research,
+        combat_owner_faction_bonuses_from_research,
         research: rows,
     }
 }
@@ -159,7 +201,9 @@ mod tests {
         merge_research_bonuses_into_profile, PlayerProfile,
         TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS,
     };
-    use crate::data::research::{ResearchBonusEntry, ResearchLevel, ResearchRecord};
+    use crate::data::research::{
+        ResearchBonusConditionKey, ResearchBonusEntry, ResearchLevel, ResearchRecord,
+    };
 
     fn tiny_catalog() -> ResearchCatalog {
         ResearchCatalog {
@@ -310,6 +354,10 @@ mod tests {
         assert_eq!(summary.unmapped_rids, vec![99999]);
         assert_eq!(summary.combat_bonuses_from_research, profile.bonuses);
         assert_eq!(
+            summary.combat_owner_faction_bonuses_from_research,
+            profile.research_owner_faction_bonuses
+        );
+        assert_eq!(
             summary.combat_bonuses_from_research.get("weapon_damage"),
             Some(&0.05)
         );
@@ -326,6 +374,54 @@ mod tests {
                 .combat_bonuses_from_row
                 .is_empty(),
             "support-buff-gated research must not appear in default profile research summaries"
+        );
+    }
+
+    #[test]
+    fn summary_owner_faction_row_matches_merge() {
+        let cat = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid: 9001,
+                name: Some("Fed-only lab".into()),
+                data_version: None,
+                source_note: None,
+                levels: vec![ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "shield_deflection".into(),
+                        value: 0.04,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            attacker_faction: Some("federation".into()),
+                            ..Default::default()
+                        },
+                    }],
+                }],
+            }],
+        };
+        let imported = vec![ResearchEntry { rid: 9001, level: 1 }];
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &imported, &cat, None);
+        let s = research_combat_summary_from_imported("p", &imported, Some(&cat));
+        assert!(!profile.bonuses.contains_key("shield_deflection"));
+        assert_eq!(
+            profile
+                .research_owner_faction_bonuses
+                .get("federation")
+                .and_then(|m| m.get("shield_deflection"))
+                .copied(),
+            Some(0.04)
+        );
+        assert_eq!(
+            s.combat_owner_faction_bonuses_from_research,
+            profile.research_owner_faction_bonuses
+        );
+        let row = s.research.iter().find(|r| r.rid == 9001).unwrap();
+        assert_eq!(
+            row.combat_owner_faction_bonuses_from_row,
+            profile.research_owner_faction_bonuses
         );
     }
 }

@@ -18,8 +18,8 @@ fn write_building_gap_fixture(dir: &Path) {
     std::fs::write(
         dir.join("index.json"),
         r#"{"data_version":"test","buildings":[
-            {"id":"alpha","building_name":"Alpha","file":"alpha"},
-            {"id":"beta","building_name":"Beta","file":"beta"}
+            {"id":"alpha","building_name":"Alpha","file":"alpha","bid":900001},
+            {"id":"beta","building_name":"Beta","file":"beta","bid":900002}
         ]}"#,
     )
     .unwrap();
