@@ -6,8 +6,8 @@ Place CSV files here and run the corresponding importer.
 
 Import which officers you own so the optimizer only suggests crew you have.
 
-- **Folder:** Put roster **sources** next to the profile they belong to, e.g. **`profiles/default/my_roster.txt`** (or any profile id). A sample CSV lives in **`profiles/demo/my_roster.txt`**.
-- **Command:** `kobayashi import profiles/default/my_roster.txt` — or, with the same profile selected as for `--profile`, a **bare filename** resolves under that profile directory: `kobayashi import my_roster.txt` → `profiles/<effective_profile>/my_roster.txt`.
+- **Folder:** Put roster **sources** next to the profile they belong to, e.g. **`profiles/demo/my_roster.txt`** (bundled sample) or **`profiles/<profile_id>/my_roster.txt`** for your own profile.
+- **Command:** `kobayashi import profiles/demo/my_roster.txt` — or, with the same profile selected as for `--profile`, a **bare filename** resolves under that profile directory: `kobayashi import my_roster.txt` → `profiles/<effective_profile>/my_roster.txt`.
 - **Format:** One line per officer, comma-separated: `name,tier,level`. Optional first line header `name,tier,level` is ignored.
   - **Name** is required. Apostrophes in names (e.g. D'Vana) are fine. If a name contains a comma, put it in double quotes (e.g. `"Kirk, James",3,45`).
   - **Tier** and **level** are optional. You can write tier as `T3`, `Tier 2`, or `2`; level as `lvl 20`, `LVL20`, or `20`.

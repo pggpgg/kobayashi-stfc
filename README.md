@@ -275,7 +275,7 @@ kobayashi/
 │   ├── buildings/           # Building index + per-building JSON
 │   ├── registry.json        # Top-level data registry (and related JSON under data/)
 │   └── heuristics/          # Optional optimizer seed lists (.txt)
-├── profiles/                # Per-player sync + imports (see profiles/README.md); roster CSV sources can live next to each profile (e.g. profiles/default/my_roster.txt)
+├── profiles/                # Per-player sync + imports (see profiles/README.md); roster CSV sources can live next to each profile (e.g. profiles/demo/my_roster.txt)
 ├── frontend/                # Web UI (React); build with npm, served from frontend/dist
 └── tests/                   # Combat validation, LCARS parsing, optimizer regression
 ```

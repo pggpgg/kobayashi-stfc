@@ -22,9 +22,9 @@ The checked-in **`demo/roster.imported.json`** is intentionally a large sample (
 
 ## Roster CSV / Spocks sources (optional)
 
-Put files such as `my_roster.txt` or `spocks-export.json` **inside the profile directory** they belong to (e.g. `profiles/default/my_roster.txt`). Then:
+Put files such as `my_roster.txt` or `spocks-export.json` **inside the profile directory** they belong to (e.g. `profiles/demo/my_roster.txt`). Then:
 
-- `kobayashi import my_roster.txt --profile default` (bare name resolves under that profile folder), or
+- `kobayashi import my_roster.txt --profile demo` (bare name resolves under that profile folder), or
 - pass a full path.
 
 The importer writes **`roster.imported.json` in the same profile directory** (shared with Community Mod sync).
