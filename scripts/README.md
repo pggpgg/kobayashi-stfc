@@ -68,6 +68,10 @@ python3 scripts/fetch_stfcspace_page_upstream.py
 
 **Unknown mappings report:** `cargo run --bin report_unknown_mappings` lists canonical `conditions` tokens that do not map to LCARS yet and hostile `upstream_ship_type` values from `data/hostiles/index.json` (see [docs/CANONICAL_CONDITIONS.md](../docs/CANONICAL_CONDITIONS.md) § Regenerate unknown-mappings report).
 
+**Owner-faction triage (human review):** `npm run triage:research:faction` (or `node scripts/triage_research_owner_faction.mjs`) joins `research/*.json`, `translations-research.json` (`research_project_name` / `research_project_description`), and `data/buildings/buff_id_to_semantics.json`, then buckets lines into likely player-hull vs vs-opponent wording. Use `--json` for machine-readable output; `--skip-economy` drops obvious component/repair/tritanium lines so combat candidates surface faster.
+
+**Bulk faction gates on mappings** (experimental; heuristic — review diffs): `npm run gen:research:faction-patch` (same as `node scripts/gen_research_faction_buff_patch.mjs`) merges `attacker_faction` / `defender_faction` into `data/research/buff_id_to_stat.json` for lines emitted by triage (`--skip-economy`). Stats are resolved with the same resolver as `import_stfcspace_research.mjs`. Use `--dry-run` to inspect the patch JSON; `--force-all` regenerates mappings that already declare `attacker_faction`. After substantive mapping edits run `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` so `research_catalog.json` picks them up.
+
 **Orchestrator** (same flags; **`--entities` required** — comma-separated subset):
 
 ```bash

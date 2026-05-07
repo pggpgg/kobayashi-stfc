@@ -368,6 +368,7 @@ mod tests {
             defender_ship_class: Some("battleship".into()),
             defender_faction: Some("klingon".into()),
             attacker_faction: None,
+            attacker_factions: Vec::new(),
             requires_morale: true,
             requires_defender_burning: true,
             requires_defender_hull_breach: false,

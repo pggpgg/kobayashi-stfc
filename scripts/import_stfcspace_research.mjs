@@ -22,10 +22,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import url from "node:url";
 
-import {
-  inferCombatStatFromDescription,
-  inferCombatStatFromProjectName,
-} from "./lib/research_stat_inference.mjs";
+import { resolveBuffStatMappings } from "./lib/research_buff_resolve.mjs";
 
 const REPO_ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 const OUT_PATH = path.join(REPO_ROOT, "data", "research_catalog.json");
@@ -127,6 +124,17 @@ let commonBuffNormalization = {};
 let researchBuffById = {};
 let locaIdToStat = {};
 
+function makeBuffResolveCtx(descriptionByLocaId, projectNamesByLocaId) {
+  return {
+    researchBuffMapping: RESEARCH_BUFF_MAPPING,
+    researchBuffById,
+    commonBuffNormalization,
+    locaIdToStat,
+    descriptionByLocaId,
+    projectNamesByLocaId,
+  };
+}
+
 async function loadSummary() {
   if (FROM_UPSTREAM) {
     const raw = await fs.readFile(UPSTREAM_SUMMARY_PATH, "utf8");
@@ -193,117 +201,6 @@ async function loadResearchDetailLocal(rid) {
   } catch (_) {
     return null;
   }
-}
-
-function statEntryFromJsonValue(v, defaultOp) {
-  if (v == null) return null;
-  if (typeof v === "string") return { stat: v, operator: defaultOp ?? "add" };
-  if (typeof v === "object" && !Array.isArray(v) && typeof v.stat === "string") {
-    const out = { stat: v.stat, operator: v.operator ?? defaultOp ?? "add" };
-    if (v.requires_defender_burning) out.requires_defender_burning = true;
-    if (v.requires_morale) out.requires_morale = true;
-    if (v.requires_defender_hull_breach) out.requires_defender_hull_breach = true;
-    if (typeof v.defender_ship_class === "string")
-      out.defender_ship_class = v.defender_ship_class;
-    if (typeof v.defender_faction === "string") out.defender_faction = v.defender_faction;
-    if (typeof v.attacker_faction === "string") out.attacker_faction = v.attacker_faction;
-    return out;
-  }
-  return null;
-}
-
-/** One buff id may map to several engine stats (e.g. armor + shield_deflection + dodge). */
-function statEntriesFromJsonValue(v, defaultOp) {
-  if (v == null) return [];
-  if (Array.isArray(v)) {
-    const out = [];
-    for (const item of v) {
-      const e = statEntryFromJsonValue(item, defaultOp);
-      if (e) out.push(e);
-    }
-    return out;
-  }
-  const single = statEntryFromJsonValue(v, defaultOp);
-  return single ? [single] : [];
-}
-
-/** Normalize inferCombatStatFromDescription / inferCombatStatFromProjectName return values. */
-function coerceStatMapping(inferred) {
-  if (inferred == null) return null;
-  if (typeof inferred === "string") return { stat: inferred, operator: "add" };
-  return {
-    stat: inferred.stat,
-    operator: inferred.operator ?? "add",
-    ...(inferred.requires_defender_burning
-      ? { requires_defender_burning: true }
-      : {}),
-    ...(inferred.requires_morale ? { requires_morale: true } : {}),
-    ...(inferred.requires_defender_hull_breach
-      ? { requires_defender_hull_breach: true }
-      : {}),
-    ...(typeof inferred.defender_ship_class === "string"
-      ? { defender_ship_class: inferred.defender_ship_class }
-      : {}),
-    ...(typeof inferred.defender_faction === "string"
-      ? { defender_faction: inferred.defender_faction }
-      : {}),
-    ...(typeof inferred.attacker_faction === "string"
-      ? { attacker_faction: inferred.attacker_faction }
-      : {}),
-  };
-}
-
-function resolveBuffStatMappings(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId) {
-  if (!buff || typeof buff.id !== "number") return [];
-  const buffId = buff.id;
-  const key = String(buffId);
-
-  const inline = RESEARCH_BUFF_MAPPING[buffId];
-  if (inline) {
-    const entries = statEntriesFromJsonValue(inline, "add");
-    if (entries.length > 0) return entries;
-  }
-
-  const researchExplicit = statEntriesFromJsonValue(researchBuffById[key], "add");
-  if (researchExplicit.length > 0) return researchExplicit;
-
-  const fromBuildings = statEntriesFromJsonValue(commonBuffNormalization[key], "add");
-  if (fromBuildings.length > 0) return fromBuildings;
-
-  if (typeof buff.loca_id === "number") {
-    const fromLoca = statEntriesFromJsonValue(locaIdToStat[String(buff.loca_id)], "add");
-    if (fromLoca.length > 0) return fromLoca;
-  }
-
-  if (descriptionByLocaId && descriptionByLocaId.size > 0) {
-    if (typeof buff.loca_id === "number") {
-      const t = descriptionByLocaId.get(buff.loca_id);
-      const inferred = inferCombatStatFromDescription(t);
-      const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
-    }
-    if (typeof projectLocaId === "number") {
-      const t = descriptionByLocaId.get(projectLocaId);
-      const inferred = inferCombatStatFromDescription(t);
-      const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
-    }
-  }
-
-  if (projectNamesByLocaId && projectNamesByLocaId.size > 0) {
-    if (typeof buff.loca_id === "number") {
-      const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(buff.loca_id));
-      const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
-    }
-    if (typeof projectLocaId === "number") {
-      const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(projectLocaId));
-      const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
-    }
-  }
-
-  return [];
 }
 
 function addUnmapped(unmappedByBuffId, rid, buff) {
@@ -389,10 +286,11 @@ function buildLevelsFromDetail(detail, opts) {
   if (!detail || !Array.isArray(detail.buffs)) return [];
 
   const { rid, unmappedByBuffId, descriptionByLocaId, projectLocaId, projectNamesByLocaId } = opts;
+  const buffResolveCtx = makeBuffResolveCtx(descriptionByLocaId, projectNamesByLocaId);
 
   if (unmappedByBuffId) {
     for (const buff of detail.buffs) {
-      const mappings = resolveBuffStatMappings(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId);
+      const mappings = resolveBuffStatMappings(buffResolveCtx, buff, projectLocaId);
       if (mappings.length === 0) {
         addUnmapped(unmappedByBuffId, rid, buff);
       }
@@ -414,7 +312,7 @@ function buildLevelsFromDetail(detail, opts) {
   for (let level = 1; level <= maxLevel; level += 1) {
     const bonuses = [];
     for (const buff of detail.buffs) {
-      const mappings = resolveBuffStatMappings(buff, descriptionByLocaId, projectLocaId, projectNamesByLocaId);
+      const mappings = resolveBuffStatMappings(buffResolveCtx, buff, projectLocaId);
       for (const mapping of mappings) {
         if (!ALLOWED_COMBAT_STATS.has(mapping.stat)) {
           continue;
@@ -441,6 +339,8 @@ function buildLevelsFromDetail(detail, opts) {
           bonus.defender_faction = mapping.defender_faction;
         if (typeof mapping.attacker_faction === "string")
           bonus.attacker_faction = mapping.attacker_faction;
+        if (Array.isArray(mapping.attacker_factions) && mapping.attacker_factions.length)
+          bonus.attacker_factions = mapping.attacker_factions.map(String).filter(Boolean);
         bonuses.push(bonus);
       }
     }

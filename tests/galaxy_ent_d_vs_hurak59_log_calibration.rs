@@ -106,12 +106,9 @@ fn hurak59_log_fixture_and_sim_calibration() {
         DefenderOpponent::Hostile,
     );
     std::env::remove_var("KOBAYASHI_WEAPON_DAMAGE_ADDITIVE_POOL");
-    assert_eq!(
-        replay_on.rounds_simulated, replay_off.rounds_simulated,
-        "same seed/crew should produce same round count"
-    );
-    // `demo` profile merges `research.imported.json` etc.; merged `weapon_damage` is often > 0.
-    // Pooled model should not increase total damage vs layered `(1+p)×(1+sum)`.
+    // `demo` profile merges `research.imported.json` (large catalog) → non-zero flat `weapon_damage`.
+    // Layered vs experimental additive-pool scaling (`engine.rs` effective_attack branches) is not
+    // required to preserve fight length; only that pooling does not inflate total_damage vs layered.
     assert!(
         replay_on.total_damage <= replay_off.total_damage * 1.000_000_1,
         "additive pool should not inflate total_damage (on={} off={})",

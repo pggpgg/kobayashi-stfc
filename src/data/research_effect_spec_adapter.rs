@@ -66,6 +66,8 @@ fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
         "armor" => Some(AbilityModifierSpec::Armor),
+        // Shares the mitigation additive channel used by flat profile `armor`/`shield_deflection`.
+        "shield_deflection" => Some(AbilityModifierSpec::Armor),
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
         "accuracy" => Some(AbilityModifierSpec::Accuracy),
@@ -321,11 +323,30 @@ pub fn research_derived_attack_phase_seats_from_spec(
 
                     let use_attack_phase_path = is_cascade || (!is_morale_gated && has_conditions);
                     if use_attack_phase_path {
-                        let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) else {
-                            continue;
-                        };
-                        idx = name_idx;
-                        out.push(ctx);
+                        if let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) {
+                            idx = name_idx;
+                            out.push(ctx);
+                        } else if let Ok((timing, effect, condition)) =
+                            compile_officer_combat_spec(&spec)
+                        {
+                            // Mitigation (`armor`/`dodge`/…) + `shield_deflection` (mapped to Armor) compile
+                            // via LCARS/officer rules; WD/crit narrow path may reject other modifiers.
+                            idx = name_idx;
+                            out.push(CrewSeatContext {
+                                seat: CrewSeat::Ship,
+                                ability: Ability {
+                                    name: spec.id.clone(),
+                                    class: AbilityClass::ShipAbility,
+                                    timing,
+                                    boostable: false,
+                                    effect,
+                                    condition,
+                                },
+                                boosted: false,
+                                officer_id: None,
+                                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+                            });
+                        }
                     } else {
                         let Ok((timing, effect, condition)) = compile_officer_combat_spec(&spec)
                         else {

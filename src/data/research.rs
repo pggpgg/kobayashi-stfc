@@ -59,6 +59,10 @@ pub struct ResearchBonusConditionKey {
     /// Player hull owner faction slug (`federation`, `klingon`, …); matches ship extended `faction` field.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attacker_faction: Option<String>,
+    /// When non-empty, this row applies to **each** listed owner faction hull (Fed/Klg/Rom “all majors” wording).
+    /// Merged into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`] under each key.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub attacker_factions: Vec<String>,
     #[serde(default)]
     pub requires_morale: bool,
     #[serde(default)]
@@ -93,6 +97,7 @@ pub fn research_bonus_is_conditional(bonus: &ResearchBonusEntry) -> bool {
     bonus.condition.defender_ship_class.is_some()
         || bonus.condition.defender_faction.is_some()
         || bonus.condition.attacker_faction.is_some()
+        || !bonus.condition.attacker_factions.is_empty()
         || bonus.condition.requires_morale
         || bonus.condition.requires_defender_burning
         || bonus.condition.requires_defender_hull_breach
@@ -100,12 +105,20 @@ pub fn research_bonus_is_conditional(bonus: &ResearchBonusEntry) -> bool {
 
 /// True when this bonus is gated on the **player ship's** owner faction (merged separately from flat `profile.bonuses`).
 pub fn research_bonus_is_owner_faction_gated(bonus: &ResearchBonusEntry) -> bool {
-    bonus
+    if bonus
         .condition
         .attacker_faction
         .as_ref()
         .map(|s| !s.trim().is_empty())
         .unwrap_or(false)
+    {
+        return true;
+    }
+    bonus
+        .condition
+        .attacker_factions
+        .iter()
+        .any(|s| !s.trim().is_empty())
 }
 
 fn is_crit_seat_research_stat(stat: &str) -> bool {
@@ -118,10 +131,51 @@ fn is_conditional_attack_seat_research_stat(stat: &str) -> bool {
     is_crit_seat_research_stat(stat) || stat == "weapon_damage"
 }
 
-/// Conditional **crit** and conditional **weapon_damage** rows are modeled as attack-phase seats; they
-/// must not also merge into `profile.bonuses`. Other conditional stats still use the flat profile layer.
+/// Conditional rows that compile to timed/conditional seats (`research_derived_attack_phase_seats_from_spec`)
+/// must not duplicate-merge into unconditional `profile.bonuses`.
 pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry) -> bool {
-    research_bonus_is_conditional(bonus) && is_conditional_attack_seat_research_stat(&bonus.stat)
+    if !research_bonus_is_conditional(bonus) {
+        return false;
+    }
+    if bonus.condition.defender_faction.is_some()
+        && research_defender_conditional_stat_skips_flat_profile(&bonus.stat)
+    {
+        return true;
+    }
+    if is_conditional_attack_seat_research_stat(&bonus.stat) {
+        return research_bonus_is_owner_faction_gated(bonus)
+            || defender_context_for_research_attack_seat(&bonus.condition);
+    }
+    false
+}
+
+fn defender_context_for_research_attack_seat(key: &ResearchBonusConditionKey) -> bool {
+    key.defender_faction.is_some()
+        || key.defender_ship_class.is_some()
+        || key.requires_defender_burning
+        || key.requires_defender_hull_breach
+        || key.requires_morale
+}
+
+/// Stats that omit flat profile merge when `defender_faction` is set (compiled as conditional seats).
+/// Stats keyed on **`defender_faction`** where we omit flat [`PlayerProfile::bonuses`] merge and rely on
+/// [`research_derived_attack_phase_seats_from_spec`] (narrow research compile path + LCARS/officer fallback).
+/// **Excludes** `hull_hp` / `shield_hp` (HullHp multiplier compile requires multiply-shaped ops — research CSV uses Add).
+fn research_defender_conditional_stat_skips_flat_profile(stat: &str) -> bool {
+    matches!(
+        stat,
+        "armor"
+            | "shield_deflection"
+            | "dodge"
+            | "pierce"
+            | "shield_mitigation"
+            | "accuracy"
+            | "isolytic_damage"
+            | "isolytic_damage_morale"
+            | "isolytic_defense"
+            | "apex_shred"
+            | "apex_barrier"
+    )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -307,25 +361,41 @@ pub fn cumulative_research_level_owner_faction_bonuses(
     for (_, _, lvl) in level_refs {
         for bonus in &lvl.bonuses {
             if research_bonus_skipped_from_flat_profile_merge(bonus) {
-                continue;
+                if !research_bonus_is_owner_faction_gated(bonus) {
+                    continue;
+                }
+                if bonus.condition.defender_faction.is_some()
+                    && is_conditional_attack_seat_research_stat(&bonus.stat)
+                {
+                    continue;
+                }
             }
             if !research_bonus_is_owner_faction_gated(bonus) {
                 continue;
             }
-            let Some(raw_f) = bonus.condition.attacker_faction.as_ref() else {
-                continue;
-            };
-            let faction_key = raw_f.trim().to_ascii_lowercase();
-            if faction_key.is_empty() {
-                continue;
+            let mut faction_keys: Vec<String> = Vec::new();
+            if !bonus.condition.attacker_factions.is_empty() {
+                for raw in &bonus.condition.attacker_factions {
+                    let fk = raw.trim().to_ascii_lowercase();
+                    if !fk.is_empty() {
+                        faction_keys.push(fk);
+                    }
+                }
+            } else if let Some(raw_f) = bonus.condition.attacker_faction.as_ref() {
+                let fk = raw_f.trim().to_ascii_lowercase();
+                if !fk.is_empty() {
+                    faction_keys.push(fk);
+                }
             }
             let op = if bonus.operator.is_empty() {
                 "add"
             } else {
                 bonus.operator.as_str()
             };
-            let inner = out.entry(faction_key).or_default();
-            accumulate_bonus(inner, &bonus.stat, op, bonus.value);
+            for faction_key in faction_keys {
+                let inner = out.entry(faction_key).or_default();
+                accumulate_bonus(inner, &bonus.stat, op, bonus.value);
+            }
         }
     }
     out
@@ -375,7 +445,10 @@ pub fn cumulative_research_level_conditional_bonuses(
             if !research_bonus_is_conditional(bonus) {
                 continue;
             }
-            if !is_conditional_attack_seat_research_stat(&bonus.stat) {
+            if !(is_conditional_attack_seat_research_stat(&bonus.stat)
+                || (bonus.condition.defender_faction.is_some()
+                    && research_defender_conditional_stat_skips_flat_profile(&bonus.stat)))
+            {
                 continue;
             }
             let op = if bonus.operator.is_empty() {

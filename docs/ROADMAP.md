@@ -86,6 +86,7 @@ Current state: officers are **authored** in LCARS; dynamic (non-static) effects 
 
 ### Open roadmap / backlog
 
+- **`AbilityModifierSpec::Armor` vs `shield_deflection` (housekeeping):** The compiler maps LCARS `armor` and catalog **`shield_deflection`** (including research seat compile via `research_effect_spec_adapter.rs`) onto `AbilityModifierSpec::Armor`, which actually lowers to **`AbilityEffect::MitigationAdditive`** — a generic additive mitigation fraction for certain seat/counter-fire paths. Flat profile merge still uses **separate** bonus keys but adds both into `Combatant::mitigation`. **Work:** rename or split the modifier spec so labels match STFC semantics (armor ≠ shield deflection); e.g. rename `Armor` → `MitigationAdditive` at the spec layer, or add `ShieldDeflection` that compiles identically; update `effect_spec_compile.rs`, LCARS/research/hostile adapters, and tests; align docs so maintainers are not misled.
 - **Future effect types:** Extend the IR/compiler when new `effect_type` values appear in `captain_ability` data (the allow-list test in `tests/lcars_captain_spec_parity_tests.rs` gates this).
 - **Remove `resolve_lcars_condition`** after parity confidence and full caller migration.
 

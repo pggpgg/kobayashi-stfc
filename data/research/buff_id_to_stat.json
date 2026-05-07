@@ -1,16 +1,412 @@
 {
-  "3957763486": "accuracy",
-  "3089064337": "accuracy",
-  "711050273": ["armor", "shield_deflection", "dodge"],
+  "70895365": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "79942158": {
+    "stat": "isolytic_defense",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "200031576": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "241500334": {
+    "stat": "apex_barrier",
+    "operator": "add",
+    "attacker_factions": [
+      "federation",
+      "klingon",
+      "romulan"
+    ]
+  },
+  "328893202": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "369533179": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "422274263": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "434307735": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "494742696": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "518203233": {
+    "stat": "isolytic_defense",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "541802144": {
+    "stat": "pierce",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "613511856": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "615717157": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "687745254": {
+    "stat": "pierce",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "711050273": [
+    "armor",
+    "shield_deflection",
+    "dodge"
+  ],
+  "749152584": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "759886851": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "844216335": {
+    "stat": "dodge",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "852769063": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_factions": [
+      "federation",
+      "klingon",
+      "romulan"
+    ]
+  },
+  "867871825": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "929907248": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "982655355": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
   "1024053940": {
     "stat": "shield_deflection",
     "attacker_faction": "federation"
   },
-  "1255158479": ["armor", "shield_deflection", "dodge"],
-  "1742688098": ["armor", "shield_deflection", "dodge"],
-  "4251825190": ["armor", "shield_deflection", "dodge"],
+  "1061048946": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "1113689856": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "1255158479": [
+    "armor",
+    "shield_deflection",
+    "dodge"
+  ],
+  "1264377465": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "1419846647": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "1505085012": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "attacker_factions": [
+      "federation",
+      "klingon",
+      "romulan"
+    ]
+  },
+  "1536447388": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "1547952547": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "1559657171": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "1603230133": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "1742688098": [
+    "armor",
+    "shield_deflection",
+    "dodge"
+  ],
+  "1850738611": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
   "1898558353": {
     "stat": "weapon_damage",
     "requires_defender_burning": true
-  }
+  },
+  "1960298662": {
+    "stat": "pierce",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "2045836712": {
+    "stat": "shield_deflection",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "2085746527": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "2095300149": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "2100178971": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "2125436240": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "2224069030": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "2264604803": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "2288548339": {
+    "stat": "apex_barrier",
+    "operator": "add",
+    "attacker_factions": [
+      "federation",
+      "klingon",
+      "romulan"
+    ]
+  },
+  "2311258645": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "2485163858": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "2610190811": {
+    "stat": "pierce",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "2621674186": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "2782114383": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "2788053878": {
+    "stat": "pierce",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "2816703227": {
+    "stat": "shield_deflection",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "2852465399": {
+    "stat": "isolytic_defense",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "2903206017": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "2982312380": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "3011884829": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "attacker_factions": [
+      "federation",
+      "klingon",
+      "romulan"
+    ]
+  },
+  "3079202085": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "3089064337": "accuracy",
+  "3135573218": {
+    "stat": "isolytic_defense",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "3163704244": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "3270009347": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "3367987135": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "3378637523": {
+    "stat": "shield_deflection",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "3425620414": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "3468480474": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "3477743350": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "3524208914": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "defender_faction": "klingon"
+  },
+  "3792382293": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "3851926967": {
+    "stat": "armor",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "3911070176": {
+    "stat": "pierce",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "3932363979": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "3957763486": "accuracy",
+  "4009387266": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "4058743636": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "4084583093": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "attacker_faction": "klingon"
+  },
+  "4155256588": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "defender_faction": "romulan"
+  },
+  "4155434080": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "attacker_faction": "federation"
+  },
+  "4158261073": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "defender_faction": "federation"
+  },
+  "4206468573": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "attacker_faction": "romulan"
+  },
+  "4251825190": [
+    "armor",
+    "shield_deflection",
+    "dodge"
+  ]
 }
