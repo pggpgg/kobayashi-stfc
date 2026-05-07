@@ -45,6 +45,10 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 - **Defender-side buffs & debuffs:** **Partial** — Catalog field `static_bonus_target: defender_if_player_opponent` (`[data/support_buffs.json](../data/support_buffs.json)`) routes **direct** `static_bonuses` onto the defender `[Combatant](src/combat/types.rs)` when the API uses `defender_opponent: player` (see `[aggregate_support_static_bonuses_split](../src/data/support_buffs.rs)`, `[SharedScenarioData::support_defender_static_buffs](../src/optimizer/monte_carlo/scenario.rs)`). Titan-A Fortify / Max Fortify, Defiant Reinforce, and placeholder `mantis_sting` use this path; Cerritos remains attacker-routed. **Still open:** support-gated **research** augmentation from `augment_static_buffs_with_support_gated_research` stays on the attacker merge; hostile-applied modifiers and full Mantis combat stats remain TBD.
 
+## Research faction gating (`attacker_faction` / `defender_faction`) — polishing
+
+- **Polishing backlog:** Research bonuses now distinguish **player hull** gates (`attacker_faction` / `attacker_factions` → `research_owner_faction_bonuses`) vs **opponent** gates (`defender_faction` → conditional / seat path). Improvements still needed: hand-review ambiguous catalog strings (dual “your faction vs theirs” wording); tighten or replace heuristic `buff_id_to_stat.json` patches where `gen_research_faction_buff_patch.mjs` is wrong; extend engine **`ResearchBonusConditionKey`** when a single modifier must require **both** owner and defender faction; fix lossy merges for gated **`hull_hp` / `shield_hp`** (add vs multiply story); broaden tests, `research_combat_summary` / UI, and docs so gated lines are observable and assumptions are labeled.
+
 ---
 
 ## Officers (canonical, id registry, LCARS)
