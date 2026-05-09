@@ -269,7 +269,7 @@ async fn profile_put_accepts_and_canonicalizes_valid_payload() {
     let response = route_request(
         "PUT",
         &format!("/api/profile?profile={profile_id}"),
-        r#"{"bonuses":{"weapon_damage":0.1,"armor_pierce":5.0},"support_buffs":["cerritos_support","defiant_reinforce","cerritos_support"],"ops_level":40,"forbidden_tech_override":[123],"chaos_tech_override":[456]}"#,
+        r#"{"bonuses":{"weapon_damage":0.1,"armor_pierce":5.0},"support_buffs":["cerritos_support","defiant_reinforce","cerritos_support"],"ops_level":40,"equipped_forbidden_fid":115391048,"equipped_chaos_fid":2766262625}"#,
     )
     .await;
     assert_eq!(response.status_code, 200, "{}", response.body);

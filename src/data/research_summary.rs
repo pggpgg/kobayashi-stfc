@@ -163,9 +163,7 @@ fn research_combat_summary_from_imported(
 
     // Fortify-gated Titan `rid`s are never in this aggregate (they fold into Fortify static in scenario).
     let combat_bonuses_from_research = catalog_nonempty
-        .map(|cat| {
-            combat_research_bonuses_from_import(imported, cat, Some(&exclude_catalog_rids))
-        })
+        .map(|cat| combat_research_bonuses_from_import(imported, cat, Some(&exclude_catalog_rids)))
         .unwrap_or_default();
 
     let combat_owner_faction_bonuses_from_research = catalog_nonempty
@@ -401,7 +399,10 @@ mod tests {
                 }],
             }],
         };
-        let imported = vec![ResearchEntry { rid: 9001, level: 1 }];
+        let imported = vec![ResearchEntry {
+            rid: 9001,
+            level: 1,
+        }];
         let mut profile = PlayerProfile::default();
         merge_research_bonuses_into_profile(&mut profile, &imported, &cat, None);
         let s = research_combat_summary_from_imported("p", &imported, Some(&cat));

@@ -1796,7 +1796,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: vec![
-            EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS[0].to_string(),
+            EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS[0].to_string()
         ],
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,

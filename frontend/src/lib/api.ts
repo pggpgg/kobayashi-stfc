@@ -1022,12 +1022,41 @@ export async function fetchForbiddenTech(): Promise<
   return data.items ?? [];
 }
 
+/** Rows from `profiles/.../forbidden_tech.imported.json` (mod sync inventory). */
+export interface ForbiddenTechImportedEntry {
+  fid: number;
+  tier: number;
+  level: number;
+  shard_count: number;
+}
+
+export interface ForbiddenTechImportedResponse {
+  profile_id: string;
+  forbidden_tech: ForbiddenTechImportedEntry[];
+}
+
+export async function fetchForbiddenTechImported(
+  profileId?: string | null,
+): Promise<ForbiddenTechImportedResponse> {
+  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : "";
+  const res = await fetch(
+    `${API_BASE}/api/profile/forbidden-tech-imported${q}`,
+    { headers: { ...profileHeaders(profileId) } },
+  );
+  await checkOk(res);
+  return res.json();
+}
+
 export interface PlayerProfile {
   bonuses: Record<string, number>;
-  /** When undefined/null: use synced forbidden_tech.imported.json. When []: no FT. When number[]: use these fids. */
+  /** @deprecated Legacy field; ignored for combat — use equipped_* slots. */
   forbidden_tech_override?: number[] | null;
-  /** When undefined/null: use synced chaos tech from forbidden_tech.imported.json. When []: none. When number[]: use these fids. */
+  /** @deprecated Legacy field; ignored for combat — use equipped_* slots. */
   chaos_tech_override?: number[] | null;
+  /** STFC forbidden-tech slot (one fid or empty). Omitted/null = no forbidden tech bonuses. */
+  equipped_forbidden_fid?: number | null;
+  /** STFC chaos-tech slot (one fid or empty). Omitted/null = no chaos tech bonuses. */
+  equipped_chaos_fid?: number | null;
 }
 
 /** Community mod persist timestamp (RFC3339) from `profiles/{id}/last_mod_sync.json`; null if never synced via mod. */
@@ -1119,7 +1148,10 @@ export interface ResearchSummaryRow {
   catalog_record_present: boolean;
   combat_bonuses_from_row?: Record<string, number>;
   /** Owner-hull faction → stat → value for this synced row (e.g. Modulated Federation). */
-  combat_owner_faction_bonuses_from_row?: Record<string, Record<string, number>>;
+  combat_owner_faction_bonuses_from_row?: Record<
+    string,
+    Record<string, number>
+  >;
 }
 
 /** Synced research → effective ship-combat bonuses from research only (same rules as simulate/optimize). */
@@ -1130,7 +1162,10 @@ export interface ResearchCombatSummary {
   unmapped_rids: number[];
   combat_bonuses_from_research?: Record<string, number>;
   /** Cumulative owner-faction-gated research (faction slug → stat → value). */
-  combat_owner_faction_bonuses_from_research?: Record<string, Record<string, number>>;
+  combat_owner_faction_bonuses_from_research?: Record<
+    string,
+    Record<string, number>
+  >;
   research: ResearchSummaryRow[];
 }
 

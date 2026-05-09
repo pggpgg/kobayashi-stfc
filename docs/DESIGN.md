@@ -415,7 +415,7 @@ Per round, the engine processes effects in this order:
 
 Notes:
 
-- **Forbidden tech and chaos tech (implementation):** bonuses are merged into `profile.bonuses` at scenario build time (same static stack as research/buildings for combat math), not re-applied as a separate sub-round phase. The numbered list above still reflects toolbox/client ordering for officer/ship abilities and weapons; treat FT/chaos there as *conceptual* unless we add a dedicated engine phase with evidence.
+- **Forbidden tech and chaos tech (implementation):** bonuses are merged into `profile.bonuses` at scenario build time (same static stack as research/buildings for combat math), not re-applied as a separate sub-round phase. In-game uses one **forbidden-tech** ship slot and one **chaos-tech** ship slot; Kobayashi mirrors that with `equipped_forbidden_fid` and `equipped_chaos_fid` on the profile JSON (each optional). **Only equipped fids** contribute; the mod-synced `forbidden_tech.imported.json` is **inventory** (tier/level for optional env scaling), not an automatic merge of every owned tech. Legacy list fields `forbidden_tech_override` / `chaos_tech_override` are ignored for combat. The numbered list above still reflects toolbox/client ordering for officer/ship abilities and weapons; treat FT/chaos there as *conceptual* unless we add a dedicated engine phase with evidence.
 - UI logs can collapse duplicate ability/forbidden-tech lines even when multiple ships apply the same source.
 - Ordering details for per-ship buff application are currently treated as implementation targets inferred from raw logs and should remain test-backed as fixtures expand.
 
@@ -595,7 +595,7 @@ The engine applies these as a pre-combat modifier layer. This gets ~90% accuracy
 
 ### 5.4 Advanced Mode (research, buildings, forbidden tech)
 
-Research is implemented via a **research catalog** and merge into the profile. Synced research levels (`profiles/{id}/research.imported.json`, by `rid` and `level`) are looked up in `data/research_catalog.json`. For each research project, bonuses for levels 1..=level are summed (cumulative); only combat stats (weapon_damage, hull_hp, shield_hp, isolytic_damage, isolytic_defense, apex_shred, apex_barrier, etc.) are merged into `profile.bonuses`. Merge order: forbidden tech → buildings → research. Apex research bonuses stack additively onto the player combatant with ship base apex values when building the scenario attacker. See `data/README.md` for catalog schema and import pipeline.
+Research is implemented via a **research catalog** and merge into the profile. Synced research levels (`profiles/{id}/research.imported.json`, by `rid` and `level`) are looked up in `data/research_catalog.json`. For each research project, bonuses for levels 1..=level are summed (cumulative); only combat stats (weapon_damage, hull_hp, shield_hp, isolytic_damage, isolytic_defense, apex_shred, apex_barrier, etc.) are merged into `profile.bonuses`. Merge order: forbidden tech → buildings → research. **Forbidden/chaos tech** uses at most two equipped catalog fids (`equipped_forbidden_fid`, `equipped_chaos_fid`); see §5 notes above. Apex research bonuses stack additively onto the player combatant with ship base apex values when building the scenario attacker. See `data/README.md` for catalog schema and import pipeline.
 
 Itemized sources (conceptual; research/building/forbidden-tech are implemented as above):
 

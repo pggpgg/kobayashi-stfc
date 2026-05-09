@@ -1,7 +1,9 @@
 //! Player profile: effective_bonuses applied as pre-combat modifier layer (DESIGN §5).
 //! Keys match engine/LCARS stats: weapon_damage, hull_hp, shield_hp, crit_chance, crit_damage, pierce,
 //! accuracy (scales ship AttackerStats for dodge mitigation), apex_shred, apex_barrier, isolytic_*, etc.
-//! Bonuses from synced forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
+//! Bonuses from equipped forbidden/chaos tech (by fid) are merged in when [merge_forbidden_tech_bonuses_into_profile] is used.
+//! Each ship has at most one forbidden slot and one chaos slot; see `equipped_forbidden_fid` / `equipped_chaos_fid`.
+//! Synced `forbidden_tech.imported.json` supplies tier/level for optional scaling; combat uses only equipped fids.
 //! **Borg Alcove** ([`BORG_ALCOVE_FORBIDDEN_TECH_FID`]) is an exception: Voyager/NPC-gated combat stats use
 //! [`forbidden_tech_derived_attack_phase_seats`] and [`borg_alcove_hull_hp_bonus_fraction`] instead of flat `bonuses`.
 //! **Borg Operating Table** ([`BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID`]): Conqueror Borg–gated combat stats use
@@ -32,7 +34,7 @@ use crate::combat::{
     CrewSeatContext, ShipType, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
-use crate::data::forbidden_chaos::ForbiddenChaosList;
+use crate::data::forbidden_chaos::{ForbiddenChaosList, ForbiddenChaosRecord};
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
 use crate::data::research::{
     cumulative_research_bonuses, cumulative_research_owner_faction_bonuses, ResearchCatalog,
@@ -55,14 +57,30 @@ pub struct PlayerProfile {
     /// instead of inferring from synced buildings (ops_center level). Lets you simulate without sync.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ops_level: Option<u32>,
-    /// When set and non-empty, these fids are used instead of synced forbidden_tech.imported.json
-    /// to merge forbidden-tech bonuses. Enables UI to choose "Custom" tech set per profile.
+    /// Legacy list overrides (ignored for combat resolution; use equipped slots). Kept for
+    /// backward-compatible JSON round-trips.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub forbidden_tech_override: Option<Vec<i64>>,
-    /// When set and non-empty, these fids are used instead of synced chaos tech from
-    /// forbidden_tech.imported.json. Enables UI to choose "Custom" chaos tech set per profile.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub chaos_tech_override: Option<Vec<i64>>,
+    /// STFC: one forbidden-tech slot on the ship. Omitted or unset = empty (no forbidden tech bonuses).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub equipped_forbidden_fid: Option<i64>,
+    /// STFC: one chaos-tech slot. Omitted or unset = empty (no chaos tech bonuses).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub equipped_chaos_fid: Option<i64>,
+}
+
+/// Catalog row classifies as forbidden lane (includes legacy empty `tech_type`).
+#[inline]
+pub fn forbidden_chaos_record_is_forbidden_lane(r: &ForbiddenChaosRecord) -> bool {
+    r.tech_type.is_empty() || r.tech_type.eq_ignore_ascii_case("forbidden")
+}
+
+/// Catalog row classifies as chaos lane.
+#[inline]
+pub fn forbidden_chaos_record_is_chaos_lane(r: &ForbiddenChaosRecord) -> bool {
+    r.tech_type.eq_ignore_ascii_case("chaos")
 }
 
 pub const DEFAULT_PROFILE_PATH: &str = "data/profile.json";
@@ -110,8 +128,10 @@ fn validate_and_canonicalize_support_buff_ids(
 /// Profile bonus keys are the combat stat names consumed by [`apply_profile_to_attacker`] and related
 /// scenario helpers. Aliases such as `armor_pierce` and `shield_pierce` are folded into `pierce` so
 /// accepted payloads cannot be silently ignored later.
+/// When `forbidden_catalog` is `Some`, equipped fids are checked against the catalog `tech_type` lane.
 pub fn validate_player_profile_payload(
     profile: PlayerProfile,
+    forbidden_catalog: Option<&ForbiddenChaosList>,
 ) -> Result<PlayerProfile, Vec<String>> {
     let mut issues = Vec::new();
     let mut canonical_bonuses: HashMap<String, f64> = HashMap::new();
@@ -156,6 +176,67 @@ pub fn validate_player_profile_payload(
         "chaos_tech_override",
         profile.chaos_tech_override.as_deref(),
     );
+
+    if let Some(fid) = profile.equipped_forbidden_fid {
+        if fid <= 0 {
+            issues.push("equipped_forbidden_fid must be positive when set".to_string());
+        }
+    }
+    if let Some(fid) = profile.equipped_chaos_fid {
+        if fid <= 0 {
+            issues.push("equipped_chaos_fid must be positive when set".to_string());
+        }
+    }
+    if let (Some(a), Some(b)) = (profile.equipped_forbidden_fid, profile.equipped_chaos_fid) {
+        if a > 0 && b > 0 && a == b {
+            issues.push(
+                "equipped_forbidden_fid and equipped_chaos_fid must not be the same fid"
+                    .to_string(),
+            );
+        }
+    }
+
+    if let Some(cat) = forbidden_catalog {
+        let by_fid: HashMap<i64, &ForbiddenChaosRecord> = cat
+            .items
+            .iter()
+            .filter_map(|r| r.fid.map(|id| (id, r)))
+            .collect();
+        if let Some(fid) = profile.equipped_forbidden_fid {
+            if fid > 0 {
+                match by_fid.get(&fid) {
+                    None => issues.push(format!(
+                        "equipped_forbidden_fid {fid} is not present in the forbidden/chaos catalog"
+                    )),
+                    Some(rec) => {
+                        if !forbidden_chaos_record_is_forbidden_lane(rec) {
+                            issues.push(format!(
+                                "equipped_forbidden_fid {fid} is not a forbidden-tech catalog row (tech_type={})",
+                                rec.tech_type
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(fid) = profile.equipped_chaos_fid {
+            if fid > 0 {
+                match by_fid.get(&fid) {
+                    None => issues.push(format!(
+                        "equipped_chaos_fid {fid} is not present in the forbidden/chaos catalog"
+                    )),
+                    Some(rec) => {
+                        if !forbidden_chaos_record_is_chaos_lane(rec) {
+                            issues.push(format!(
+                                "equipped_chaos_fid {fid} is not a chaos-tech catalog row (tech_type={})",
+                                rec.tech_type
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     let mut canonical_owner: HashMap<String, HashMap<String, f64>> = HashMap::new();
     for (fac_raw, inner) in &profile.research_owner_faction_bonuses {
@@ -208,6 +289,8 @@ pub fn validate_player_profile_payload(
         ops_level: profile.ops_level,
         forbidden_tech_override: profile.forbidden_tech_override,
         chaos_tech_override: profile.chaos_tech_override,
+        equipped_forbidden_fid: profile.equipped_forbidden_fid,
+        equipped_chaos_fid: profile.equipped_chaos_fid,
     })
 }
 
@@ -243,58 +326,38 @@ pub fn merge_forbidden_tech_bonuses_into_profile(
     merge_tech_fids_into_profile(profile, &fids, catalog);
 }
 
-/// Resolves effective tech fids from profile overrides or imported entries, split by tech_type.
-/// Forbidden: use forbidden_tech_override if set, else imported entries matching tech_type "forbidden".
-/// Chaos: use chaos_tech_override if set, else imported entries matching tech_type "chaos".
-/// Items with empty tech_type are treated as forbidden for backward compatibility.
+/// Resolves equipped forbidden/chaos tech fids for combat (merge + derived seats).
+/// Only `profile.equipped_forbidden_fid` / `equipped_chaos_fid` apply; legacy `*_override` and the full
+/// sync list are ignored for combat. `imported_ft` is retained for call-site compatibility (tier/level).
 pub fn resolve_effective_tech_fids(
     profile: &PlayerProfile,
-    imported_ft: &[ForbiddenTechEntry],
+    _imported_ft: &[ForbiddenTechEntry],
     catalog: &ForbiddenChaosList,
 ) -> Vec<i64> {
-    let by_fid: HashMap<i64, &crate::data::forbidden_chaos::ForbiddenChaosRecord> = catalog
+    let by_fid: HashMap<i64, &ForbiddenChaosRecord> = catalog
         .items
         .iter()
         .filter_map(|r| r.fid.map(|id| (id, r)))
         .collect();
 
-    let is_forbidden = |r: &&crate::data::forbidden_chaos::ForbiddenChaosRecord| {
-        r.tech_type.is_empty() || r.tech_type.eq_ignore_ascii_case("forbidden")
-    };
-    let is_chaos = |r: &&crate::data::forbidden_chaos::ForbiddenChaosRecord| {
-        r.tech_type.eq_ignore_ascii_case("chaos")
-    };
+    let mut out: Vec<i64> = Vec::new();
 
-    let forbidden_fids: Vec<i64> = if profile
-        .forbidden_tech_override
-        .as_ref()
-        .is_some_and(|v| !v.is_empty())
-    {
-        profile.forbidden_tech_override.as_ref().unwrap().clone()
-    } else {
-        imported_ft
-            .iter()
-            .filter(|e| by_fid.get(&e.fid).is_some_and(is_forbidden))
-            .map(|e| e.fid)
-            .collect()
-    };
+    if let Some(fid) = profile.equipped_forbidden_fid {
+        if let Some(rec) = by_fid.get(&fid) {
+            if forbidden_chaos_record_is_forbidden_lane(rec) {
+                out.push(fid);
+            }
+        }
+    }
 
-    let chaos_fids: Vec<i64> = if profile
-        .chaos_tech_override
-        .as_ref()
-        .is_some_and(|v| !v.is_empty())
-    {
-        profile.chaos_tech_override.as_ref().unwrap().clone()
-    } else {
-        imported_ft
-            .iter()
-            .filter(|e| by_fid.get(&e.fid).is_some_and(is_chaos))
-            .map(|e| e.fid)
-            .collect()
-    };
+    if let Some(fid) = profile.equipped_chaos_fid {
+        if let Some(rec) = by_fid.get(&fid) {
+            if forbidden_chaos_record_is_chaos_lane(rec) {
+                out.push(fid);
+            }
+        }
+    }
 
-    let mut out = forbidden_fids;
-    out.extend(chaos_fids);
     out
 }
 
@@ -1771,7 +1834,10 @@ pub fn apply_static_buffs_to_combatant(
     let armor_add = static_buffs.get("armor").copied().unwrap_or(0.0);
     let damage_reduction_add = static_buffs.get("damage_reduction").copied().unwrap_or(0.0);
     let dodge_add = static_buffs.get("dodge").copied().unwrap_or(0.0);
-    let shield_deflection_add = static_buffs.get("shield_deflection").copied().unwrap_or(0.0);
+    let shield_deflection_add = static_buffs
+        .get("shield_deflection")
+        .copied()
+        .unwrap_or(0.0);
 
     Combatant {
         attack: combatant.attack * weapon_mult,
@@ -3210,7 +3276,7 @@ mod tests {
     }
 
     #[test]
-    fn resolve_effective_tech_fids_merges_forbidden_then_chaos_from_sync() {
+    fn resolve_effective_tech_fids_empty_equip_means_no_fids() {
         let catalog = tiny_catalog(vec![
             ForbiddenChaosRecord {
                 fid: Some(10),
@@ -3243,11 +3309,46 @@ mod tests {
         ];
         let profile = PlayerProfile::default();
         let fids = resolve_effective_tech_fids(&profile, &imported, &catalog);
-        assert_eq!(fids, vec![10, 20]);
+        assert!(fids.is_empty());
     }
 
     #[test]
-    fn resolve_effective_tech_fids_skips_imported_fids_missing_from_catalog() {
+    fn resolve_effective_tech_fids_respects_equipped_slots() {
+        let catalog = tiny_catalog(vec![
+            ForbiddenChaosRecord {
+                fid: Some(10),
+                name: "F".into(),
+                tech_type: "forbidden".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+            ForbiddenChaosRecord {
+                fid: Some(20),
+                name: "C".into(),
+                tech_type: "chaos".into(),
+                tier: None,
+                bonuses: vec![],
+            },
+        ]);
+        let imported = vec![ForbiddenTechEntry {
+            fid: 10,
+            tier: 1,
+            level: 1,
+            shard_count: 0,
+        }];
+        let profile = PlayerProfile {
+            equipped_forbidden_fid: Some(10),
+            equipped_chaos_fid: Some(20),
+            ..Default::default()
+        };
+        assert_eq!(
+            resolve_effective_tech_fids(&profile, &imported, &catalog),
+            vec![10, 20]
+        );
+    }
+
+    #[test]
+    fn resolve_effective_tech_fids_skips_unknown_fids() {
         let catalog = tiny_catalog(vec![ForbiddenChaosRecord {
             fid: Some(1),
             name: "Only".into(),
@@ -3255,29 +3356,24 @@ mod tests {
             tier: None,
             bonuses: vec![],
         }]);
-        let imported = vec![
-            ForbiddenTechEntry {
-                fid: 1,
-                tier: 1,
-                level: 1,
-                shard_count: 0,
-            },
-            ForbiddenTechEntry {
-                fid: 999,
-                tier: 1,
-                level: 1,
-                shard_count: 0,
-            },
-        ];
-        let profile = PlayerProfile::default();
+        let imported = vec![ForbiddenTechEntry {
+            fid: 1,
+            tier: 1,
+            level: 1,
+            shard_count: 0,
+        }];
+        let profile = PlayerProfile {
+            equipped_forbidden_fid: Some(999),
+            ..Default::default()
+        };
         assert_eq!(
             resolve_effective_tech_fids(&profile, &imported, &catalog),
-            vec![1]
+            Vec::<i64>::new()
         );
     }
 
     #[test]
-    fn resolve_effective_tech_fids_empty_tech_type_is_forbidden() {
+    fn resolve_effective_tech_fids_empty_tech_type_is_forbidden_lane() {
         let catalog = tiny_catalog(vec![ForbiddenChaosRecord {
             fid: Some(3),
             name: "Legacy".into(),
@@ -3291,7 +3387,10 @@ mod tests {
             level: 1,
             shard_count: 0,
         }];
-        let profile = PlayerProfile::default();
+        let profile = PlayerProfile {
+            equipped_forbidden_fid: Some(3),
+            ..Default::default()
+        };
         assert_eq!(
             resolve_effective_tech_fids(&profile, &imported, &catalog),
             vec![3]
@@ -3299,7 +3398,7 @@ mod tests {
     }
 
     #[test]
-    fn resolve_effective_tech_fids_forbidden_override_replaces_sync_forbidden_only() {
+    fn resolve_effective_tech_fids_ignores_legacy_overrides() {
         let catalog = tiny_catalog(vec![
             ForbiddenChaosRecord {
                 fid: Some(1),
@@ -3332,16 +3431,17 @@ mod tests {
         ];
         let profile = PlayerProfile {
             forbidden_tech_override: Some(vec![100]),
+            chaos_tech_override: Some(vec![200]),
             ..Default::default()
         };
         assert_eq!(
             resolve_effective_tech_fids(&profile, &imported, &catalog),
-            vec![100, 2]
+            Vec::<i64>::new()
         );
     }
 
     #[test]
-    fn resolve_effective_tech_fids_chaos_override_replaces_sync_chaos_only() {
+    fn validate_player_profile_rejects_wrong_lane_fids() {
         let catalog = tiny_catalog(vec![
             ForbiddenChaosRecord {
                 fid: Some(1),
@@ -3358,28 +3458,11 @@ mod tests {
                 bonuses: vec![],
             },
         ]);
-        let imported = vec![
-            ForbiddenTechEntry {
-                fid: 1,
-                tier: 1,
-                level: 1,
-                shard_count: 0,
-            },
-            ForbiddenTechEntry {
-                fid: 2,
-                tier: 1,
-                level: 1,
-                shard_count: 0,
-            },
-        ];
-        let profile = PlayerProfile {
-            chaos_tech_override: Some(vec![200]),
+        let bad = PlayerProfile {
+            equipped_forbidden_fid: Some(2),
             ..Default::default()
         };
-        assert_eq!(
-            resolve_effective_tech_fids(&profile, &imported, &catalog),
-            vec![1, 200]
-        );
+        assert!(validate_player_profile_payload(bad, Some(&catalog)).is_err());
     }
 
     #[test]

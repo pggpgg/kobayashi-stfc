@@ -18,14 +18,14 @@ use crate::data::heuristics::{list_heuristics_seeds, DEFAULT_HEURISTICS_DIR};
 use crate::data::hostile_loca::resolve_hostile_display_name;
 use crate::data::import::load_imported_ships;
 use crate::data::import::{
-    import_roster_csv_to, import_spocks_export_to, load_imported_roster_ids_unlocked_only,
-    roster_import_fallback_warning_message,
+    import_roster_csv_to, import_spocks_export_to, load_imported_forbidden_tech,
+    load_imported_roster_ids_unlocked_only, roster_import_fallback_warning_message,
 };
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::profile::{validate_player_profile_payload, PlayerProfile};
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
-    PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
+    FORBIDDEN_TECH_IMPORTED, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research_summary::research_combat_summary_for_profile;
 use crate::data::support_buffs;
@@ -1010,14 +1010,16 @@ pub fn profile_get_payload(profile_id: Option<&str>) -> Result<String, serde_jso
 pub fn profile_put_payload(
     body: &str,
     profile_id: Option<&str>,
+    registry: &DataRegistry,
 ) -> Result<String, serde_json::Error> {
     let profile: PlayerProfile = serde_json::from_str(body)?;
-    let profile = validate_player_profile_payload(profile).map_err(|issues| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            issues.join("; "),
-        ))
-    })?;
+    let profile = validate_player_profile_payload(profile, registry.forbidden_chaos_catalog())
+        .map_err(|issues| {
+            serde_json::Error::io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                issues.join("; "),
+            ))
+        })?;
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, PROFILE_JSON);
     if let Some(parent) = path.parent() {
@@ -1026,6 +1028,19 @@ pub fn profile_put_payload(
     let body = serde_json::to_string_pretty(&profile)?;
     fs::write(&path, body).map_err(serde_json::Error::io)?;
     serde_json::to_string_pretty(&serde_json::json!({ "status": "ok" }))
+}
+
+/// GET /api/profile/forbidden-tech-imported — stfc-mod `forbidden_tech.imported.json` rows for equip UI.
+pub fn profile_forbidden_tech_imported_payload(
+    profile_id: Option<&str>,
+) -> Result<String, serde_json::Error> {
+    let id = resolve_profile_id(profile_id);
+    let path = profile_path(&id, FORBIDDEN_TECH_IMPORTED);
+    let entries = load_imported_forbidden_tech(&path.to_string_lossy()).unwrap_or_default();
+    serde_json::to_string_pretty(&serde_json::json!({
+        "profile_id": id,
+        "forbidden_tech": entries,
+    }))
 }
 
 /// GET /api/profile/buildings-summary — synced module levels and building-derived combat bonuses.

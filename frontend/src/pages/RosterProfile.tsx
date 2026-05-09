@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useProfile } from "../contexts/ProfileContext";
 import type {
   BuildingCombatSummary,
   ForbiddenTechCatalogItem,
+  ForbiddenTechImportedResponse,
   ImportReport,
   PlayerProfile,
   ResearchCombatSummary,
@@ -10,6 +11,7 @@ import type {
 import {
   fetchBuildingCombatSummary,
   fetchForbiddenTech,
+  fetchForbiddenTechImported,
   fetchModSyncStatus,
   fetchProfile,
   fetchResearchCombatSummary,
@@ -49,6 +51,8 @@ export default function RosterProfile() {
     undefined,
   );
   const [modSyncError, setModSyncError] = useState<string | null>(null);
+  const [forbiddenImported, setForbiddenImported] =
+    useState<ForbiddenTechImportedResponse | null>(null);
 
   useEffect(() => {
     let c = false;
@@ -73,6 +77,20 @@ export default function RosterProfile() {
       c = true;
     };
   }, []);
+
+  useEffect(() => {
+    let c = false;
+    fetchForbiddenTechImported(activeProfileId)
+      .then((r) => {
+        if (!c) setForbiddenImported(r);
+      })
+      .catch(() => {
+        if (!c) setForbiddenImported(null);
+      });
+    return () => {
+      c = true;
+    };
+  }, [activeProfileId]);
 
   useEffect(() => {
     let c = false;
@@ -149,7 +167,19 @@ export default function RosterProfile() {
   const handleSaveProfile = async () => {
     setProfileError(null);
     try {
-      await updateProfile(profile, activeProfileId);
+      await updateProfile(
+        {
+          ...profile,
+          forbidden_tech_override: null,
+          chaos_tech_override: null,
+        },
+        activeProfileId,
+      );
+      setProfile((p) => ({
+        ...p,
+        forbidden_tech_override: null,
+        chaos_tech_override: null,
+      }));
       setProfileDirty(false);
     } catch (e) {
       setProfileError(formatApiError(e));
@@ -164,79 +194,29 @@ export default function RosterProfile() {
     setProfileDirty(true);
   };
 
-  type TechMode = "synced" | "none" | "custom";
-  const forbiddenTechMode: TechMode =
-    profile.forbidden_tech_override === undefined ||
-    profile.forbidden_tech_override === null
-      ? "synced"
-      : profile.forbidden_tech_override.length === 0
-        ? "none"
-        : "custom";
-  const setForbiddenTechMode = (mode: TechMode) => {
-    setProfile((p) => ({
-      ...p,
-      forbidden_tech_override:
-        mode === "synced"
-          ? undefined
-          : mode === "none"
-            ? []
-            : (p.forbidden_tech_override ?? []),
-    }));
-    setProfileDirty(true);
-  };
-  const setForbiddenTechOverride = (fids: number[]) => {
-    setProfile((p) => ({ ...p, forbidden_tech_override: fids }));
-    setProfileDirty(true);
-  };
-  const toggleForbiddenTechFid = (fid: number) => {
-    const current = profile.forbidden_tech_override ?? [];
-    if (current.includes(fid)) {
-      setForbiddenTechOverride(current.filter((id) => id !== fid));
-    } else {
-      setForbiddenTechOverride([...current, fid]);
+  const catalogByFid = useMemo(() => {
+    const m = new Map<number, ForbiddenTechCatalogItem>();
+    for (const it of forbiddenTechCatalog) {
+      if (it.fid != null) m.set(Number(it.fid), it);
     }
+    return m;
+  }, [forbiddenTechCatalog]);
+
+  const isForbiddenLane = (fid: number) => {
+    const c = catalogByFid.get(fid);
+    if (!c) return false;
+    const t = (c.tech_type ?? "").trim().toLowerCase();
+    return t === "" || t === "forbidden";
   };
 
-  const chaosTechMode: TechMode =
-    profile.chaos_tech_override === undefined ||
-    profile.chaos_tech_override === null
-      ? "synced"
-      : profile.chaos_tech_override.length === 0
-        ? "none"
-        : "custom";
-  const setChaosTechMode = (mode: TechMode) => {
-    setProfile((p) => ({
-      ...p,
-      chaos_tech_override:
-        mode === "synced"
-          ? undefined
-          : mode === "none"
-            ? []
-            : (p.chaos_tech_override ?? []),
-    }));
-    setProfileDirty(true);
-  };
-  const setChaosTechOverride = (fids: number[]) => {
-    setProfile((p) => ({ ...p, chaos_tech_override: fids }));
-    setProfileDirty(true);
-  };
-  const toggleChaosTechFid = (fid: number) => {
-    const current = profile.chaos_tech_override ?? [];
-    if (current.includes(fid)) {
-      setChaosTechOverride(current.filter((id) => id !== fid));
-    } else {
-      setChaosTechOverride([...current, fid]);
-    }
-  };
+  const isChaosLane = (fid: number) =>
+    catalogByFid.get(fid)?.tech_type?.trim().toLowerCase() === "chaos";
 
-  const forbiddenTechItems = forbiddenTechCatalog.filter(
-    (i): i is ForbiddenTechCatalogItem & { fid: string } =>
-      i.fid != null && (i.tech_type === "forbidden" || !i.tech_type),
-  );
-  const chaosTechItems = forbiddenTechCatalog.filter(
-    (i): i is ForbiddenTechCatalogItem & { fid: string } =>
-      i.fid != null && i.tech_type?.toLowerCase() === "chaos",
-  );
+  const forbiddenEquipOptions =
+    forbiddenImported?.forbidden_tech.filter((e) => isForbiddenLane(e.fid)) ??
+    [];
+  const chaosEquipOptions =
+    forbiddenImported?.forbidden_tech.filter((e) => isChaosLane(e.fid)) ?? [];
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
 
@@ -828,7 +808,7 @@ token = "${activeProfile.sync_token}"`}
               fontWeight: 600,
             }}
           >
-            Forbidden tech
+            Forbidden tech slot
           </h3>
           <p
             style={{
@@ -837,23 +817,36 @@ token = "${activeProfile.sync_token}"`}
               color: "var(--text-muted)",
             }}
           >
-            Choose which forbidden tech bonuses apply for simulate and optimize.
+            Equip one item in your ship&apos;s forbidden-tech slot (STFC).
+            Options are restricted to rows in your mod-synced{" "}
+            <code>forbidden_tech.imported.json</code> that match the catalog
+            forbidden lane. Leave empty for no forbidden tech combat bonuses.
           </p>
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: 8,
-              maxWidth: 400,
+              maxWidth: 420,
             }}
           >
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 120 }}>Source</span>
+              <span style={{ width: 140 }}>Equipped</span>
               <select
-                value={forbiddenTechMode}
-                onChange={(e) =>
-                  setForbiddenTechMode(e.target.value as TechMode)
+                value={
+                  profile.equipped_forbidden_fid != null
+                    ? String(profile.equipped_forbidden_fid)
+                    : ""
                 }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setProfile((p) => ({
+                    ...p,
+                    equipped_forbidden_fid:
+                      v === "" ? null : Number.parseInt(v, 10),
+                  }));
+                  setProfileDirty(true);
+                }}
                 style={{
                   padding: "0.4rem 0.6rem",
                   background: "var(--bg)",
@@ -863,66 +856,26 @@ token = "${activeProfile.sync_token}"`}
                   flex: 1,
                 }}
               >
-                <option value="synced">Use synced</option>
-                <option value="none">None</option>
-                <option value="custom">Custom</option>
+                <option value="">(empty)</option>
+                {forbiddenEquipOptions.map((e) => (
+                  <option key={e.fid} value={e.fid}>
+                    {(catalogByFid.get(e.fid)?.name ?? `fid ${e.fid}`) +
+                      ` — T${e.tier} L${e.level}`}
+                  </option>
+                ))}
               </select>
             </label>
-            {forbiddenTechMode === "custom" && (
-              <div style={{ marginTop: 4 }}>
-                <span
-                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
-                >
-                  Select tech to apply (items with game ID only):
-                </span>
-                <div
-                  style={{
-                    marginTop: 6,
-                    maxHeight: 200,
-                    overflowY: "auto",
-                    padding: 8,
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 6,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                  }}
-                >
-                  {forbiddenTechItems.map((item) => (
-                    <label
-                      key={item.fid ?? item.name}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={(
-                          profile.forbidden_tech_override ?? []
-                        ).includes(item.fid)}
-                        onChange={() => toggleForbiddenTechFid(item.fid)}
-                      />
-                      {item.name}
-                    </label>
-                  ))}
-                  {forbiddenTechItems.length === 0 && (
-                    <span
-                      style={{
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      No forbidden tech items with game ID. Add fid in
-                      data/import/forbidden_chaos_tech.csv and re-run import.
-                    </span>
-                  )}
-                </div>
-              </div>
+            {forbiddenEquipOptions.length === 0 && (
+              <span
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text-muted)",
+                }}
+              >
+                No forbidden-tech rows in sync inventory with a catalog match.
+                Push forbidden tech via the Community Mod or check{" "}
+                <code>forbidden_tech.imported.json</code>.
+              </span>
             )}
           </div>
 
@@ -933,7 +886,7 @@ token = "${activeProfile.sync_token}"`}
               fontWeight: 600,
             }}
           >
-            Chaos tech
+            Chaos tech slot
           </h3>
           <p
             style={{
@@ -942,21 +895,35 @@ token = "${activeProfile.sync_token}"`}
               color: "var(--text-muted)",
             }}
           >
-            Choose which chaos tech bonuses apply for simulate and optimize.
+            Equip one chaos-tech item (separate in-game slot). Options are
+            restricted to synced inventory rows that match catalog chaos
+            entries.
           </p>
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: 8,
-              maxWidth: 400,
+              maxWidth: 420,
             }}
           >
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 120 }}>Source</span>
+              <span style={{ width: 140 }}>Equipped</span>
               <select
-                value={chaosTechMode}
-                onChange={(e) => setChaosTechMode(e.target.value as TechMode)}
+                value={
+                  profile.equipped_chaos_fid != null
+                    ? String(profile.equipped_chaos_fid)
+                    : ""
+                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setProfile((p) => ({
+                    ...p,
+                    equipped_chaos_fid:
+                      v === "" ? null : Number.parseInt(v, 10),
+                  }));
+                  setProfileDirty(true);
+                }}
                 style={{
                   padding: "0.4rem 0.6rem",
                   background: "var(--bg)",
@@ -966,66 +933,24 @@ token = "${activeProfile.sync_token}"`}
                   flex: 1,
                 }}
               >
-                <option value="synced">Use synced</option>
-                <option value="none">None</option>
-                <option value="custom">Custom</option>
+                <option value="">(empty)</option>
+                {chaosEquipOptions.map((e) => (
+                  <option key={e.fid} value={e.fid}>
+                    {(catalogByFid.get(e.fid)?.name ?? `fid ${e.fid}`) +
+                      ` — T${e.tier} L${e.level}`}
+                  </option>
+                ))}
               </select>
             </label>
-            {chaosTechMode === "custom" && (
-              <div style={{ marginTop: 4 }}>
-                <span
-                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
-                >
-                  Select tech to apply (items with game ID only):
-                </span>
-                <div
-                  style={{
-                    marginTop: 6,
-                    maxHeight: 200,
-                    overflowY: "auto",
-                    padding: 8,
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 6,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                  }}
-                >
-                  {chaosTechItems.map((item) => (
-                    <label
-                      key={item.fid ?? item.name}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={(profile.chaos_tech_override ?? []).includes(
-                          item.fid,
-                        )}
-                        onChange={() => toggleChaosTechFid(item.fid)}
-                      />
-                      {item.name}
-                    </label>
-                  ))}
-                  {chaosTechItems.length === 0 && (
-                    <span
-                      style={{
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      No chaos tech items with game ID. Add fid in
-                      data/import/forbidden_chaos_tech.csv and re-run import.
-                    </span>
-                  )}
-                </div>
-              </div>
+            {chaosEquipOptions.length === 0 && (
+              <span
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text-muted)",
+                }}
+              >
+                No chaos-tech rows in sync inventory with a catalog match.
+              </span>
             )}
           </div>
           <button

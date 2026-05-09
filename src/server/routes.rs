@@ -199,6 +199,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
             "/api/profile/research-summary",
             get(handle_profile_research_summary),
         )
+        .route(
+            "/api/profile/forbidden-tech-imported",
+            get(handle_profile_forbidden_tech_imported),
+        )
         .route("/api/profiles", get(handle_profiles_list))
         .route("/api/profiles/export", get(handle_profiles_export))
         .route("/api/profiles/:id", delete(handle_profiles_delete))
@@ -582,14 +586,26 @@ async fn handle_profile_get(
 }
 
 async fn handle_profile_put(
+    State(state): State<AppState>,
     headers: HeaderMap,
     Query(params): Query<HashMap<String, String>>,
     body: String,
 ) -> impl IntoResponse {
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::profile_put_payload(&body, profile_id.as_deref()) {
+    match api::profile_put_payload(&body, profile_id.as_deref(), state.registry.as_ref()) {
         Ok(response) => ok_json(response).into_response(),
         Err(e) => error_json(StatusCode::BAD_REQUEST, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_profile_forbidden_tech_imported(
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::profile_forbidden_tech_imported_payload(profile_id.as_deref()) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
 }
 

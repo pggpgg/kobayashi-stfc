@@ -192,11 +192,7 @@ pub fn incoming_shield_mitigation_for_combat(
                     .copied()
                     .unwrap_or(0.0)
             } else {
-                effect
-                    .by_level
-                    .iter()
-                    .take(clamped_level as usize)
-                    .sum()
+                effect.by_level.iter().take(clamped_level as usize).sum()
             };
             if scalar.is_finite() && scalar != 0.0 {
                 bonus += scalar;
@@ -409,7 +405,10 @@ mod tests {
         );
         let imported = vec![ResearchEntry { rid, level: 5 }];
         let (bonus, rounds) = incoming_shield_mitigation_for_combat(&imported, &overrides);
-        assert!((bonus - 0.025).abs() < 1e-9, "expected 2.5% tier snapshot, got {bonus}");
+        assert!(
+            (bonus - 0.025).abs() < 1e-9,
+            "expected 2.5% tier snapshot, got {bonus}"
+        );
         assert_eq!(rounds, 2);
     }
 }
