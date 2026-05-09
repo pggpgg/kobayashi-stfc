@@ -8,7 +8,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 ### Below-decks pool heuristics
 
-- **Officer power-aware below-decks default:** When below-decks slots are plentiful and the combat-relevant pool is thin, the scorer should surface high-power officers whose below-decks ability modifier is unknown or ambiguous rather than dropping them. Many officers have a below-decks slot but no modifier annotation yet — these should rank above known-economy officers but below known-combat when pools need padding. The `heuristics.rs` `has_combat_below_decks_slot_ability` currently treats missing `modifier` as "ambiguous and kept" — formalize this as a scored tier rather than a binary gate.
 - **Per-matchup below-decks pool sizing:** Today the pool narrows globally. A hostile with high mitigation may reward different below-decks stat priorities (e.g., pierce officers) than a glass-cannon hostile (e.g., hull HP officers). Compute stat profiles of top historical crews for a match-up and use them to weight below-decks officer scores for future runs, so the pool narrows intelligently rather than uniformly.
 
 ### Bridge & captain synergy heuristics

@@ -267,8 +267,9 @@ pub fn below_decks_combat_relevance_rank(officer: &Officer) -> BelowDecksCombatR
 /// Below-decks officer pool sizing for the optimizer. See roadmap "Tiered below-decks filtering".
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BelowDecksPoolMode {
-    /// Combat modifier only — narrow pool of officers whose below-decks ability has a known combat modifier.
-    /// Default; excludes both economy-only and unannotated abilities.
+    /// All officers with a below-decks-slot ability (same membership as [`BelowDecksPoolMode::Scored`]),
+    /// ordered with **known combat** modifiers first, then ambiguous/economy-only, each tier sorted by
+    /// descending LCARS attack+defense+health. Default API mode.
     #[default]
     Strict,
     /// All officers with a below-decks-slot ability, ranked by combat relevance

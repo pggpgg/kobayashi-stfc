@@ -1,6 +1,7 @@
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
+use std::path::Path;
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
 
@@ -15,7 +16,7 @@ use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
-use crate::lcars::LcarsOfficer;
+use crate::lcars::{load_lcars_dir, LcarsOfficer};
 use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };
@@ -48,6 +49,9 @@ pub const BELOW_DECKS_SLOTS: usize = DEFAULT_BELOW_DECKS_SLOTS;
 pub const MIN_BELOW_DECKS_SLOTS: usize = 0;
 /// STFC currently exposes up to seven below-decks slots on player ships.
 pub const MAX_BELOW_DECKS_SLOTS: usize = 7;
+
+/// LCARS directory used when building pools without a [`DataRegistry`] (CLI / genetic path).
+pub const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
 
 /// Tier-aware default when ship JSON has no `crew_slots` schedule (legacy heuristic).
 pub fn default_below_decks_slots_for_tier(ship_tier: Option<u32>) -> usize {
@@ -111,18 +115,15 @@ fn has_below_decks_ability(officer: &Officer) -> bool {
 }
 
 /// True iff `officer` should be included in the below-decks pool under `mode`.
-/// - `Strict`: ability slot present **and** at least one combat (non-economy) modifier.
+/// - `Strict`: same membership as `Scored` (any below-decks-slot ability); ordering prefers known
+///   combat modifiers, then officer power — see [`sort_below_decks_by_rank_and_power`].
 /// - `Scored`: any below-decks-slot ability (including unannotated and economy-only).
 /// - `Relaxed`: any officer that can occupy a below-decks seat (no ability filter).
 fn keep_below_decks_for_mode(officer: &Officer, mode: BelowDecksPoolMode) -> bool {
     match mode {
-        BelowDecksPoolMode::Strict => {
-            matches!(
-                below_decks_combat_relevance_rank(officer),
-                BelowDecksCombatRelevanceRank::Combat
-            )
+        BelowDecksPoolMode::Strict | BelowDecksPoolMode::Scored => {
+            has_below_decks_ability(officer)
         }
-        BelowDecksPoolMode::Scored => has_below_decks_ability(officer),
         BelowDecksPoolMode::Relaxed => true,
     }
 }
@@ -143,16 +144,21 @@ fn officer_lcars_power_for_default_level(
         .unwrap_or(0.0)
 }
 
-/// Sort `below_decks` names by (combat-rank ascending, power descending, name ascending) so the
-/// first slice of the vector is the most combat-relevant subset. Names not present in `officers`
-/// are sorted last with rank=255, power=0 (stable lexicographic by name).
+/// Sort below-decks pool names for optimizer enumeration priority.
+///
+/// - **`Strict`:** tier 0 = known combat below-decks modifier, tier 1 = ambiguous or economy-only;
+///   within each tier, descending LCARS attack+defense+health then name.
+/// - **`Scored`:** ascending combat relevance rank (combat → ambiguous → economy-only), then power, then name.
+/// - **`Relaxed`:** power descending, then name.
+///
+/// Names missing from `officers` sort last (`tier=u8::MAX`, power 0).
 fn sort_below_decks_by_rank_and_power(
     below_decks: &mut [String],
     officers: &[Officer],
     lcars_by_id: &HashMap<&str, &LcarsOfficer>,
     mode: BelowDecksPoolMode,
 ) {
-    if matches!(mode, BelowDecksPoolMode::Strict) || below_decks.len() <= 1 {
+    if below_decks.len() <= 1 {
         return;
     }
     let officer_by_norm: HashMap<String, &Officer> = officers
@@ -163,15 +169,22 @@ fn sort_below_decks_by_rank_and_power(
         let Some(off) = officer_by_norm.get(&pool_display_name_norm(name)) else {
             return (u8::MAX, std::cmp::Reverse(0));
         };
-        let rank = match mode {
+        let primary_rank = match mode {
+            BelowDecksPoolMode::Strict => {
+                if below_decks_combat_relevance_rank(off) == BelowDecksCombatRelevanceRank::Combat {
+                    0
+                } else {
+                    1
+                }
+            }
             BelowDecksPoolMode::Scored => below_decks_combat_relevance_rank(off) as u8,
-            // Relaxed: rank only by power; stub all officers under the same bucket.
-            BelowDecksPoolMode::Relaxed | BelowDecksPoolMode::Strict => 0,
+            // Relaxed: single bucket before power tiebreak.
+            BelowDecksPoolMode::Relaxed => 0,
         };
         let power = officer_lcars_power_for_default_level(lcars_by_id, off);
         // Map power into integer for stable Ord; 1e-3 resolution keeps officers distinguishable.
         let power_int = (power * 1000.0).round() as i64;
-        (rank, std::cmp::Reverse(power_int))
+        (primary_rank, std::cmp::Reverse(power_int))
     };
     below_decks.sort_by(|a, b| key(a).cmp(&key(b)).then_with(|| a.cmp(b)));
 }
@@ -583,8 +596,9 @@ pub fn build_officer_pools(
 /// Like [`build_officer_pools`], but applies [`narrow_officer_pools_for_constraints`] when
 /// `constraints` is non-empty (same registry-free officer load path).
 ///
-/// The below-decks pool is sorted by `(combat_rank, -officer_power)` for `Scored`/`Relaxed` modes
-/// so the most combat-relevant officers appear first; `Strict` keeps the canonical iteration order.
+/// Below-decks ordering follows [`sort_below_decks_by_rank_and_power`]. LCARS is loaded from
+/// [`DEFAULT_LCARS_OFFICERS_DIR_STANDALONE`] so power tiebreaks match the registry optimize path;
+/// if loading fails or an officer has no LCARS row, power sorts as 0.
 pub fn build_officer_pools_with_constraints(
     below_decks_pool_mode: BelowDecksPoolMode,
     below_decks_slots: usize,
@@ -630,9 +644,12 @@ pub fn build_officer_pools_with_constraints(
         .map(|o| o.name.clone())
         .collect();
 
-    // Registry-free path: no LCARS source available here, so power-sort uses zeros (stable name order)
-    // for unannotated officers but still sorts Scored mode by combat-rank tier.
-    let lcars_by_id: HashMap<&str, &LcarsOfficer> = HashMap::new();
+    let lcars_loaded = load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE))
+        .unwrap_or_default();
+    let mut lcars_by_id: HashMap<&str, &LcarsOfficer> = HashMap::new();
+    for lo in &lcars_loaded {
+        lcars_by_id.entry(lo.id.as_str()).or_insert(lo);
+    }
     sort_below_decks_by_rank_and_power(
         &mut below_decks,
         &officers,
@@ -1437,11 +1454,47 @@ fn mix_seed(seed: u64, ship: &str, hostile: &str) -> u64 {
 mod tests {
     use super::{
         build_officer_pools_from_registry, narrow_officer_pools_for_constraints,
-        resolve_below_decks_slots, BelowDecksPoolMode, CandidateStrategy, CrewGenerator,
-        CrewSlotUnlock, MAX_BELOW_DECKS_SLOTS,
+        pool_display_name_norm, resolve_below_decks_slots, BelowDecksPoolMode, CandidateStrategy,
+        CrewGenerator, CrewSlotUnlock, MAX_BELOW_DECKS_SLOTS,
     };
     use crate::data::data_registry::DataRegistry;
+    use crate::data::heuristics::{below_decks_combat_relevance_rank, BelowDecksCombatRelevanceRank};
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
+
+    #[test]
+    fn strict_below_decks_orders_combat_before_other_ranks() {
+        let registry = DataRegistry::load().expect("registry");
+        let pools = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Strict,
+            Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            3,
+            None,
+        )
+        .expect("pools");
+
+        let by_norm: std::collections::HashMap<String, &crate::data::officer::Officer> = registry
+            .officers()
+            .iter()
+            .map(|o| (pool_display_name_norm(&o.name), o))
+            .collect();
+
+        let mut seen_non_combat_tier = false;
+        for name in &pools.below_decks {
+            let off = by_norm
+                .get(&pool_display_name_norm(name))
+                .expect("below-decks pool name resolves");
+            let rank = below_decks_combat_relevance_rank(off);
+            if rank == BelowDecksCombatRelevanceRank::Combat {
+                assert!(
+                    !seen_non_combat_tier,
+                    "strict pool: combat-ranked officer must appear before ambiguous/economy-only"
+                );
+            } else {
+                seen_non_combat_tier = true;
+            }
+        }
+    }
 
     #[test]
     fn narrow_pools_returns_none_for_unknown_captain_must_be() {
