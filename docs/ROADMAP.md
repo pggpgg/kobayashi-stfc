@@ -13,7 +13,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 ### Scout budget heuristics
 
 - **Heuristic-driven asymmetric scout allocation:** Crews from heuristics seeds, warm-start, and optimize-history reference crews should receive a higher initial scout trial allocation than randomly-generated crews. The priority-queue scout (`tiered_scout_priority_queue`) already supports per-crew trial variance; extend it with a "prior bonus" field so promising crews get head-start trials. This avoids wasting budget on hopeless generated crews before seed crews are fairly evaluated.
-- **Budget hints from learning signals:** `learning_signals.rs` computes `top_margin`, `officer_diversity`, and `captain_bridge_stagnation`. When `top_margin` is small (tight race), automatically increase scout trials on the next run to resolve the ambiguity. When `captain_bridge_stagnation` is high (same captain+bridge dominating), temporarily boost the below-decks exploration rate (epsilon) to discover alternative compositions. Wire these signals into `OptimizerBudgetHints` auto-generation so the profile tunes itself over repeated runs.
 
 ### Analytical prefilter improvements
 
