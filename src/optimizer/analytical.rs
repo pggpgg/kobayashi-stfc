@@ -133,7 +133,7 @@ pub(crate) fn prune_candidates_by_static_gates(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::{Combatant, CrewConfiguration, EnemyTypes};
+    use crate::combat::{Combatant, CrewConfiguration, EnemyTypes, OpponentFactionTag};
 
     fn minimal_input(attacker_attack: f64) -> CombatSimulationInput {
         CombatSimulationInput {
@@ -189,6 +189,7 @@ mod tests {
             attacker_roster_officer_ids: Vec::new(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
         }
     }
 

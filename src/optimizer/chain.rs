@@ -91,6 +91,7 @@ pub(crate) fn run_chain_trial(
                 .and_then(|h| h.faction.as_ref().map(|f| f.id))
                 .unwrap_or(0),
             defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
+            attacker_owner_faction: input.attacker_owner_faction,
             engagement_enemy_types: input.engagement_enemy_types.clone(),
             defender_level: input.defender_level,
             attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),

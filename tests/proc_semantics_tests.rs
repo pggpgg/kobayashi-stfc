@@ -1,7 +1,8 @@
 //! Integration checks for weapon intrinsic proc **per hit** (see `src/combat/proc.rs`).
 
 use kobayashi::combat::{
-    simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode, WeaponStats,
+    simulate_combat, Combatant, CrewConfiguration, OpponentFactionTag, SimulationConfig, TraceMode,
+    WeaponStats,
 };
 
 #[test]
@@ -63,6 +64,7 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),

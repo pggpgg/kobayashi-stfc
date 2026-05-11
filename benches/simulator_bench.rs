@@ -7,7 +7,7 @@
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion, Throughput};
 use kobayashi::combat::{
     simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
+    CrewSeatContext, OpponentFactionTag, SimulationConfig, TimingWindow, TraceMode,
 };
 
 fn default_attacker() -> Combatant {
@@ -98,6 +98,7 @@ fn bench_simulator(c: &mut Criterion) {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
@@ -126,6 +127,7 @@ fn bench_simulator(c: &mut Criterion) {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
@@ -154,6 +156,7 @@ fn bench_simulator(c: &mut Criterion) {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
@@ -185,6 +188,7 @@ fn bench_simulator(c: &mut Criterion) {
                 profile_weapon_damage_fraction: 0.0,
                 defender_hull_faction_id: 0,
                 defender_hostile_tag_mask: 0,
+                attacker_owner_faction: OpponentFactionTag::Unknown,
                 engagement_enemy_types: Default::default(),
                 defender_level: None,
                 attacker_roster_officer_ids: Default::default(),

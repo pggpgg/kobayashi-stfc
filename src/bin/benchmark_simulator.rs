@@ -11,7 +11,8 @@ use std::io::Write;
 use std::time::Instant;
 
 use kobayashi::combat::{
-    simulate_combat, Combatant, CrewConfiguration, EnemyTypes, SimulationConfig, TraceMode,
+    simulate_combat, Combatant, CrewConfiguration, EnemyTypes, OpponentFactionTag, SimulationConfig,
+    TraceMode,
 };
 
 fn main() {
@@ -67,6 +68,7 @@ fn main() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: EnemyTypes::default(),
         defender_level: None,
         attacker_roster_officer_ids: Vec::new(),

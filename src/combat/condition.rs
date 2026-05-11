@@ -66,6 +66,7 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::AttackerHullBreach => ctx.attacker_hull_breach_active,
         AbilityCondition::DefenderAssimilated => ctx.defender_assimilated_active,
         AbilityCondition::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
+        AbilityCondition::AttackerOwnerFactionIs(expected) => ctx.attacker_owner_faction == *expected,
         AbilityCondition::DefenderHullFactionIdIs(expected) => {
             ctx.defender_hull_faction_id == *expected
         }
@@ -165,7 +166,36 @@ pub fn ability_condition_from_research_bonus_key(
         let st = ShipType::from_data_slug(slug)?;
         parts.push(AbilityCondition::DefenderShipTypeIs(st));
     }
+    push_research_attacker_owner_faction_conditions(&mut parts, key);
     combine_optional_and(parts)
+}
+
+fn push_research_attacker_owner_faction_conditions(
+    parts: &mut Vec<AbilityCondition>,
+    key: &ResearchBonusConditionKey,
+) {
+    let mut tags: Vec<OpponentFactionTag> = Vec::new();
+    if !key.attacker_factions.is_empty() {
+        for raw in &key.attacker_factions {
+            if let Some(t) = OpponentFactionTag::from_data_slug(raw) {
+                tags.push(t);
+            }
+        }
+    } else if let Some(ref raw) = key.attacker_faction {
+        if let Some(t) = OpponentFactionTag::from_data_slug(raw) {
+            tags.push(t);
+        }
+    }
+    match tags.len() {
+        0 => {}
+        1 => parts.push(AbilityCondition::AttackerOwnerFactionIs(tags[0])),
+        _ => parts.push(AbilityCondition::Or(
+            tags
+                .into_iter()
+                .map(AbilityCondition::AttackerOwnerFactionIs)
+                .collect(),
+        )),
+    }
 }
 
 #[cfg(test)]
@@ -188,6 +218,7 @@ mod tests {
             attacker_hull_breach_active: false,
             defender_assimilated_active: false,
             defender_faction: OpponentFactionTag::Unknown,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,

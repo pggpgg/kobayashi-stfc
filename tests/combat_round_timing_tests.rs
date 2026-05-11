@@ -6,7 +6,7 @@ use kobayashi::combat::{
 };
 use kobayashi::combat::{
     simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
+    CrewSeatContext, OpponentFactionTag, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 
@@ -67,6 +67,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
@@ -184,6 +185,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
@@ -282,6 +284,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
@@ -357,6 +360,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),

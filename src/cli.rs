@@ -4,7 +4,8 @@ use std::fmt::Write as _;
 use crate::combat::{
     default_percent_sensitivity_rows, format_sensitivity_tsv,
     simulate_combat_with_defender_faction, Combatant, CrewConfiguration, EnemyTypes,
-    HostileMitigationBaseline, SimulationConfig, TraceMode, MITIGATION_CEILING, MITIGATION_FLOOR,
+    HostileMitigationBaseline, OpponentFactionTag, SimulationConfig, TraceMode, MITIGATION_CEILING,
+    MITIGATION_FLOOR,
 };
 use crate::data::import::{import_roster_csv_to, import_spocks_export_to};
 use crate::data::loader::{
@@ -270,6 +271,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id,
             defender_hostile_tag_mask,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: EnemyTypes::default(),
             defender_level: None,
             attacker_roster_officer_ids: Vec::new(),

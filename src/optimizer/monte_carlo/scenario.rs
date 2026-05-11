@@ -6,8 +6,8 @@ use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, mitigation, mitigation_for_hostile,
     pierce_damage_through_bonus, Ability, AbilityClass, AbilityCondition, AbilityEffect,
     AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
-    EnemyTypes, HostileMitigationParams, ShipType, TimingWindow, MITIGATION_CEILING,
-    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    EnemyTypes, HostileMitigationParams, OpponentFactionTag, ShipType, TimingWindow,
+    MITIGATION_CEILING, MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingMode,
@@ -31,7 +31,7 @@ use crate::data::profile::{
     borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
     forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
     merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    merge_tech_fids_into_profile_with_level_tier,
+    merge_tech_fids_into_profile_with_level_tier, research_levels_by_rid_from_import,
     quantum_slipstream_forbidden_tech_round_start_seats, research_derived_attack_phase_seats,
     resolve_effective_tech_fids, ship_class_gated_torpedo_family_derived_seats,
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
@@ -44,7 +44,8 @@ use crate::data::profile_index::{
     RESEARCH_IMPORTED, ROSTER_IMPORTED,
 };
 use crate::data::research::{
-    load_research_canonical_overrides, load_research_catalog, DEFAULT_RESEARCH_CANONICAL_PATH,
+    cumulative_dual_gate_hull_shield_research_fractions, load_research_canonical_overrides,
+    load_research_catalog, ResearchRecord, DEFAULT_RESEARCH_CANONICAL_PATH,
     DEFAULT_RESEARCH_CATALOG_PATH,
 };
 use crate::data::research_effect_spec_adapter::incoming_shield_mitigation_for_combat;
@@ -505,6 +506,12 @@ pub(crate) struct SharedScenarioData {
     pub class_gated_torpedo_family_hostile_shield_mitigation_sum: Option<f64>,
     /// Canonical `EnemyHostile` / `EnemyPlayer` condition context for the defending side.
     pub defender_opponent: DefenderOpponent,
+    /// Resolved player hull owner faction for research / analytical gates (`ShipRecord::faction`).
+    pub attacker_owner_faction: OpponentFactionTag,
+    /// Extra `hull_hp` fraction from research gated on **both** owner faction and `defender_faction` (scenario-only).
+    pub dual_gate_research_hull_hp: f64,
+    /// Extra `shield_hp` fraction from dual-gated research (same semantics as [`Self::dual_gate_research_hull_hp`]).
+    pub dual_gate_research_shield_hp: f64,
     /// STFC engagement tags for [`crate::combat::SimulationConfig::engagement_enemy_types`] (armada solo/group, …).
     pub engagement_enemy_types: EnemyTypes,
     /// Optional hostile level for canonical `TargetMaxLevel`.
@@ -512,6 +519,50 @@ pub(crate) struct SharedScenarioData {
     /// Incoming (counter-fire) shield mitigation from canonical research (e.g. KSG early-round SM).
     pub incoming_shield_mitigation_bonus: f64,
     pub incoming_shield_mitigation_bonus_rounds: u32,
+}
+
+fn attacker_owner_faction_from_ship(ship_rec: Option<&ShipRecord>) -> OpponentFactionTag {
+    ship_rec
+        .and_then(|s| s.faction.as_deref())
+        .and_then(OpponentFactionTag::from_data_slug)
+        .unwrap_or(OpponentFactionTag::Unknown)
+}
+
+fn dual_gate_hull_shield_for_scenario(
+    catalog: Option<&crate::data::research::ResearchCatalog>,
+    imported_research: &[import::ResearchEntry],
+    exclude_canonical_rids: &HashSet<i64>,
+    ship_rec: Option<&ShipRecord>,
+    hostile_rec: Option<&HostileRecord>,
+) -> (f64, f64) {
+    let Some(cat) = catalog else {
+        return (0.0, 0.0);
+    };
+    let mut levels = research_levels_by_rid_from_import(imported_research);
+    levels.retain(|rid, _| !exclude_canonical_rids.contains(rid));
+    let records: Vec<&ResearchRecord> = cat
+        .items
+        .iter()
+        .filter(|r| levels.contains_key(&r.rid))
+        .collect();
+    let defender_tag = hostile_rec
+        .map(|h| h.opponent_faction_tag())
+        .unwrap_or(OpponentFactionTag::Unknown);
+    cumulative_dual_gate_hull_shield_research_fractions(
+        &records,
+        &levels,
+        ship_rec.and_then(|s| s.faction.as_deref()),
+        defender_tag,
+    )
+}
+
+fn apply_dual_gate_hull_shield_research(attacker: &mut Combatant, shared: &SharedScenarioData) {
+    if shared.dual_gate_research_hull_hp != 0.0 {
+        attacker.hull_health *= 1.0 + shared.dual_gate_research_hull_hp;
+    }
+    if shared.dual_gate_research_shield_hp != 0.0 {
+        attacker.shield_health *= 1.0 + shared.dual_gate_research_shield_hp;
+    }
 }
 
 impl SharedScenarioData {
@@ -564,6 +615,8 @@ pub(crate) struct CombatSimulationInput {
     pub attacker_roster_officer_ids: Vec<String>,
     pub incoming_shield_mitigation_bonus: f64,
     pub incoming_shield_mitigation_bonus_rounds: u32,
+    /// Copied into [`crate::combat::SimulationConfig::attacker_owner_faction`].
+    pub attacker_owner_faction: OpponentFactionTag,
 }
 
 fn apply_support_defender_static_if_pvp(shared: &SharedScenarioData, defender: &mut Combatant) {
@@ -697,6 +750,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 attacker.hull_health *= 1.0 + h;
             }
         }
+        apply_dual_gate_hull_shield_research(&mut attacker, shared);
         apply_profile_player_apex_barrier_tal_gate(
             &mut attacker,
             &shared.profile,
@@ -753,6 +807,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             attacker_roster_officer_ids,
             incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
             incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
+            attacker_owner_faction: shared.attacker_owner_faction,
         };
     }
 
@@ -797,6 +852,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             attacker.hull_health *= 1.0 + h;
         }
     }
+    apply_dual_gate_hull_shield_research(&mut attacker, shared);
     apply_profile_player_apex_barrier_tal_gate(
         &mut attacker,
         &shared.profile,
@@ -875,6 +931,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         attacker_roster_officer_ids,
         incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
+        attacker_owner_faction: shared.attacker_owner_faction,
     }
 }
 
@@ -1133,6 +1190,7 @@ pub(crate) fn scenario_to_combat_input(
             attacker_roster_officer_ids,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            attacker_owner_faction: attacker_owner_faction_from_ship(Some(&ship_rec)),
         };
     }
 
@@ -1211,6 +1269,7 @@ pub(crate) fn scenario_to_combat_input(
         attacker_roster_officer_ids,
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        attacker_owner_faction: attacker_owner_faction_from_ship(resolve_ship(ship).as_ref()),
     }
 }
 
@@ -1551,6 +1610,16 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .unwrap_or_default();
     let defender_level = hostile_rec.as_ref().map(|h| h.level);
 
+    let attacker_owner_faction = attacker_owner_faction_from_ship(ship_rec.as_ref());
+    let (dual_gate_research_hull_hp, dual_gate_research_shield_hp) =
+        dual_gate_hull_shield_for_scenario(
+            shared_research_catalog.as_ref(),
+            &imported_research,
+            &exclude_canonical_rids,
+            ship_rec.as_ref(),
+            hostile_rec.as_ref(),
+        );
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -1577,6 +1646,9 @@ pub(crate) fn build_shared_scenario_data_standalone(
         class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
         class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
+        attacker_owner_faction,
+        dual_gate_research_hull_hp,
+        dual_gate_research_shield_hp,
         engagement_enemy_types,
         defender_level,
         incoming_shield_mitigation_bonus,
@@ -1900,6 +1972,16 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .unwrap_or_default();
     let defender_level = hostile_rec.as_ref().map(|h| h.level);
 
+    let attacker_owner_faction = attacker_owner_faction_from_ship(ship_rec.as_ref());
+    let (dual_gate_research_hull_hp, dual_gate_research_shield_hp) =
+        dual_gate_hull_shield_for_scenario(
+            registry.research_catalog(),
+            &imported_research,
+            &exclude_canonical_rids,
+            ship_rec.as_ref(),
+            hostile_rec.as_ref(),
+        );
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -1926,6 +2008,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
         class_gated_torpedo_family_hostile_shield_mitigation_sum: class_gated_tp_shield_mit,
         defender_opponent,
+        attacker_owner_faction,
+        dual_gate_research_hull_hp,
+        dual_gate_research_shield_hp,
         engagement_enemy_types,
         defender_level,
         incoming_shield_mitigation_bonus,
@@ -2489,6 +2574,9 @@ mod tests {
             class_gated_torpedo_family_hull_hp_bonus: None,
             class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
+            dual_gate_research_hull_hp: 0.0,
+            dual_gate_research_shield_hp: 0.0,
             engagement_enemy_types: EnemyTypes::default(),
             defender_level: None,
             incoming_shield_mitigation_bonus: 0.0,

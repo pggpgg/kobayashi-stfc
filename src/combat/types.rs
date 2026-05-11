@@ -272,6 +272,9 @@ pub struct SimulationConfig {
     /// Bitmask from [`crate::data::hostile::HostileRecord::hostile_tag_mask`] / [`crate::combat::hostile_tags`]; `0` when unset or non-hostile defender.
     #[serde(default)]
     pub defender_hostile_tag_mask: u32,
+    /// Player hull owner faction for [`crate::combat::abilities::AbilityCondition::AttackerOwnerFactionIs`] and dual-gated research seats.
+    #[serde(default)]
+    pub attacker_owner_faction: OpponentFactionTag,
     /// STFC engagement category tags (solo vs group armada, wave defense, etc.) for officer [`crate::combat::abilities::AbilityCondition::EngagementIncludes`].
     /// Default is only [`EnemyType::RedMovingSpace`]; set from [`crate::data::hostile::HostileRecord::engagement_enemy_types`] when curated.
     #[serde(default)]
@@ -307,6 +310,7 @@ impl Default for SimulationConfig {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: EnemyTypes::default(),
             defender_level: None,
             attacker_roster_officer_ids: Vec::new(),

@@ -8,8 +8,8 @@ use std::path::Path;
 
 use kobayashi::combat::{
     export_to_combat_input, parse_fight_export, simulate_combat, Ability, AbilityClass,
-    AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, ShipType,
-    SimulationConfig, TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag,
+    ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -73,6 +73,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
@@ -155,6 +156,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
@@ -218,6 +220,7 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
@@ -322,6 +325,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),

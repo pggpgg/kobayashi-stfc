@@ -5,8 +5,8 @@
 
 use kobayashi::combat::{
     simulate_combat, Ability, AbilityClass, AbilityEffect, CombatEvent, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag, SimulationConfig,
+    TimingWindow, TraceMode, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use serde_json::Value;
 
@@ -95,6 +95,7 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
@@ -172,6 +173,7 @@ fn burning_round_end_trigger_precedes_end_of_round_effects_in_event_order() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
@@ -260,6 +262,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
@@ -358,6 +361,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),
@@ -439,6 +443,7 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         profile_weapon_damage_fraction: 0.0,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
         defender_level: None,
         attacker_roster_officer_ids: Default::default(),
@@ -538,6 +543,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
             profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: Default::default(),

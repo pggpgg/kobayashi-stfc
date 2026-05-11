@@ -62,6 +62,7 @@ fn ctx_with(hull_pct: f64, defender_level: Option<u32>) -> CombatContext {
         defender_is_player_ship: false,
         attacker_tal_assigned_captain_or_bridge: false,
         defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: EnemyTypes::default(),
         combat_battle_type_id: None,
         defender_level,

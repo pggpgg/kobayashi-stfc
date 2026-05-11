@@ -19,6 +19,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
+use crate::combat::types::OpponentFactionTag;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, EffectCategory,
     EffectConfidence, SourceRef,
@@ -136,6 +137,9 @@ fn is_conditional_attack_seat_research_stat(stat: &str) -> bool {
 pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry) -> bool {
     if !research_bonus_is_conditional(bonus) {
         return false;
+    }
+    if skip_owner_faction_merge_for_defender_gated_hull_shield(bonus) {
+        return true;
     }
     if bonus.condition.defender_faction.is_some()
         && research_defender_conditional_stat_skips_flat_profile(&bonus.stat)
@@ -281,18 +285,140 @@ pub fn load_research_canonical_overrides(path: &str) -> HashMap<i64, ResearchCan
 
 // ── Research bonus helpers ───────────────────────────────────────────────────────────
 
-fn accumulate_bonus(out: &mut HashMap<String, f64>, stat: &str, operator: &str, value: f64) {
-    let key = stat.to_string();
-    let current = out.get(&key).copied().unwrap_or(0.0);
+pub(crate) fn accumulate_research_scalar(current: f64, operator: &str, value: f64) -> f64 {
     let is_multiply = operator.eq_ignore_ascii_case("multiply")
         || operator.eq_ignore_ascii_case("mul")
         || operator.eq_ignore_ascii_case("mult");
-    let new_value = if is_multiply {
+    if is_multiply {
         (1.0 + current) * (1.0 + value) - 1.0
     } else {
         current + value
-    };
+    }
+}
+
+fn accumulate_bonus(out: &mut HashMap<String, f64>, stat: &str, operator: &str, value: f64) {
+    let key = stat.to_string();
+    let current = out.get(&key).copied().unwrap_or(0.0);
+    let new_value = accumulate_research_scalar(current, operator, value);
     out.insert(key, new_value);
+}
+
+/// Owner-hull rows also keyed on opponent faction must not merge into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`]
+/// (that map applies vs every hostile). Scenario build applies **faction-only** dual gates via
+/// [`cumulative_dual_gate_hull_shield_research_fractions`].
+pub(crate) fn skip_owner_faction_merge_for_defender_gated_hull_shield(bonus: &ResearchBonusEntry) -> bool {
+    research_bonus_is_owner_faction_gated(bonus)
+        && bonus
+            .condition
+            .defender_faction
+            .as_ref()
+            .is_some_and(|s| !s.trim().is_empty())
+        && matches!(bonus.stat.as_str(), "hull_hp" | "shield_hp")
+}
+
+/// Dual gate applies at scenario build only when the defender gate is **faction-only** (rows that also need morale / hull class /
+/// burning still need attack-phase seats — not merged here; see roadmap).
+fn dual_gate_hull_shield_scenario_apply_condition(key: &ResearchBonusConditionKey) -> bool {
+    key.defender_faction
+        .as_ref()
+        .is_some_and(|s| !s.trim().is_empty())
+        && !key.requires_morale
+        && !key.requires_defender_burning
+        && !key.requires_defender_hull_breach
+        && key.defender_ship_class.is_none()
+}
+
+fn owner_faction_keys_match_bonus(bonus: &ResearchBonusEntry, owner_lc: &str) -> bool {
+    if !bonus.condition.attacker_factions.is_empty() {
+        return bonus.condition.attacker_factions.iter().any(|raw| {
+            raw.trim()
+                .to_ascii_lowercase()
+                .eq_ignore_ascii_case(owner_lc)
+        });
+    }
+    bonus
+        .condition
+        .attacker_faction
+        .as_ref()
+        .is_some_and(|raw| raw.trim().to_ascii_lowercase() == owner_lc)
+}
+
+/// Cumulative fractional `hull_hp` / `shield_hp` from research rows gated on **both** player hull faction and **defender_faction**
+/// (only rows passing [`dual_gate_hull_shield_scenario_apply_condition`]). Same level walk and `add`/`multiply` semantics as catalog merge.
+pub fn cumulative_dual_gate_hull_shield_research_fractions(
+    records: &[&ResearchRecord],
+    levels_by_rid: &HashMap<i64, u32>,
+    owner_faction_slug: Option<&str>,
+    defender_faction: OpponentFactionTag,
+) -> (f64, f64) {
+    let Some(owner_lc) = owner_faction_slug.map(str::trim).filter(|s| !s.is_empty()).map(|s| {
+        s.to_ascii_lowercase()
+    }) else {
+        return (0.0, 0.0);
+    };
+
+    let by_rid: HashMap<i64, &ResearchRecord> = records.iter().copied().map(|r| (r.rid, r)).collect();
+    let mut hull_frac = 0.0_f64;
+    let mut shield_frac = 0.0_f64;
+
+    for (&rid, &level) in levels_by_rid {
+        let Some(rec) = by_rid.get(&rid) else {
+            continue;
+        };
+        if level == 0 {
+            continue;
+        }
+        let cap = level.min(max_level(rec));
+        let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = rec
+            .levels
+            .iter()
+            .enumerate()
+            .filter(|(_, l)| l.level <= cap)
+            .map(|(i, l)| (l.level, i, l))
+            .collect();
+        level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+
+        for (_, _, lvl) in level_refs {
+            for bonus in &lvl.bonuses {
+                if !skip_owner_faction_merge_for_defender_gated_hull_shield(bonus) {
+                    continue;
+                }
+                if !dual_gate_hull_shield_scenario_apply_condition(&bonus.condition) {
+                    continue;
+                }
+                if !owner_faction_keys_match_bonus(bonus, owner_lc.as_str()) {
+                    continue;
+                }
+                let Some(ref def_slug) = bonus.condition.defender_faction else {
+                    continue;
+                };
+                let matches_def = match OpponentFactionTag::from_data_slug(def_slug) {
+                    Some(t) => t == defender_faction,
+                    None => false,
+                };
+                if !matches_def {
+                    continue;
+                }
+
+                let op = if bonus.operator.is_empty() {
+                    "add"
+                } else {
+                    bonus.operator.as_str()
+                };
+                match bonus.stat.as_str() {
+                    "hull_hp" => {
+                        hull_frac = accumulate_research_scalar(hull_frac, op, bonus.value);
+                    }
+                    "shield_hp" => {
+                        shield_frac = accumulate_research_scalar(shield_frac, op, bonus.value);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    (hull_frac, shield_frac)
 }
 
 /// Maximum level defined in this research record.
@@ -371,6 +497,9 @@ pub fn cumulative_research_level_owner_faction_bonuses(
                 }
             }
             if !research_bonus_is_owner_faction_gated(bonus) {
+                continue;
+            }
+            if skip_owner_faction_merge_for_defender_gated_hull_shield(bonus) {
                 continue;
             }
             let mut faction_keys: Vec<String> = Vec::new();

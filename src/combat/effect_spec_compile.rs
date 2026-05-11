@@ -137,6 +137,11 @@ pub fn compile_condition(
                 .ok_or_else(|| EffectSpecCompileError::UnknownFactionSlug(faction.clone()))?;
             Ok(AbilityCondition::DefenderFactionIs(tag))
         }
+        AbilityConditionSpec::AttackerOwnerFactionIs { faction } => {
+            let tag = OpponentFactionTag::from_data_slug(faction)
+                .ok_or_else(|| EffectSpecCompileError::UnknownFactionSlug(faction.clone()))?;
+            Ok(AbilityCondition::AttackerOwnerFactionIs(tag))
+        }
         AbilityConditionSpec::DefenderHullFactionIdIs { faction_id } => {
             Ok(AbilityCondition::DefenderHullFactionIdIs(*faction_id))
         }

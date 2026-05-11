@@ -49,6 +49,29 @@ pub fn research_bonus_key_to_condition_specs(
             ship_type: slug.clone(),
         });
     }
+    if !key.attacker_factions.is_empty() {
+        let mut owner_specs: Vec<AbilityConditionSpec> = Vec::new();
+        for raw in &key.attacker_factions {
+            let s = raw.trim();
+            if !s.is_empty() {
+                owner_specs.push(AbilityConditionSpec::AttackerOwnerFactionIs {
+                    faction: s.to_string(),
+                });
+            }
+        }
+        match owner_specs.len() {
+            0 => {}
+            1 => parts.push(owner_specs.pop().expect("len checked")),
+            _ => parts.push(AbilityConditionSpec::Or { any: owner_specs }),
+        }
+    } else if let Some(ref raw) = key.attacker_faction {
+        let s = raw.trim();
+        if !s.is_empty() {
+            parts.push(AbilityConditionSpec::AttackerOwnerFactionIs {
+                faction: s.to_string(),
+            });
+        }
+    }
     if parts.is_empty() {
         None
     } else {

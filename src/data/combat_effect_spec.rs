@@ -265,6 +265,10 @@ pub enum AbilityConditionSpec {
     DefenderFactionIs {
         faction: String,
     },
+    /// Player hull owner faction gate (research `attacker_faction` / `attacker_factions`).
+    AttackerOwnerFactionIs {
+        faction: String,
+    },
     DefenderHullFactionIdIs {
         faction_id: i64,
     },

@@ -82,6 +82,15 @@ fn eval_static_gate(
                 StaticGate::Fail
             }
         }
+        AbilityCondition::AttackerOwnerFactionIs(expected) => {
+            if shared.attacker_owner_faction == OpponentFactionTag::Unknown {
+                StaticGate::Unknown
+            } else if *expected == shared.attacker_owner_faction {
+                StaticGate::Pass
+            } else {
+                StaticGate::Fail
+            }
+        }
         AbilityCondition::DefenderIsNpcHostile => match shared.defender_opponent {
             DefenderOpponent::Hostile => StaticGate::Pass,
             DefenderOpponent::Player => StaticGate::Fail,
@@ -449,6 +458,9 @@ mod tests {
             class_gated_torpedo_family_hull_hp_bonus: None,
             class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
             defender_opponent: DefenderOpponent::Hostile,
+            attacker_owner_faction: crate::combat::OpponentFactionTag::Unknown,
+            dual_gate_research_hull_hp: 0.0,
+            dual_gate_research_shield_hp: 0.0,
             engagement_enemy_types,
             defender_level: None,
             incoming_shield_mitigation_bonus: 0.0,

@@ -340,6 +340,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         profile_weapon_damage_fraction: spec.simulation.profile_weapon_damage_fraction,
         defender_hull_faction_id: 0,
         defender_hostile_tag_mask: spec.simulation.defender_hostile_tag_mask,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: crate::combat::EnemyTypes::default(),
         defender_level: None,
         attacker_roster_officer_ids: Vec::new(),
