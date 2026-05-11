@@ -215,8 +215,8 @@ export default function SupportBuffSelect({
           their matching catalog research when selected. Fortify, Max Fortify,
           Defiant Reinforce, and Mantis sting direct combat statics apply to the
           defender only when the scenario uses a player-shaped defender
-          (defender_opponent: player, e.g. PvP); vs NPC hostiles the server skips
-          those static slices and may warn.
+          (defender_opponent: player, e.g. PvP); vs NPC hostiles the server
+          skips those static slices and may warn.
         </div>
         {validation.issues.length > 0 ? (
           <div

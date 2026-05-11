@@ -257,7 +257,8 @@ pub fn bridge_synergy_prefilter_score(
         };
         sum += u32::from(bridge_synergy_strength(captain, b).tier_u8());
     }
-    let denom = (BRIDGE_SLOTS as u32) * u32::from(BridgeSynergyStrength::SynergyAndBridgeAbility.tier_u8());
+    let denom =
+        (BRIDGE_SLOTS as u32) * u32::from(BridgeSynergyStrength::SynergyAndBridgeAbility.tier_u8());
     if denom == 0 {
         0.0
     } else {
@@ -737,22 +738,16 @@ mod tests {
             super::normalize_officer_lookup_key("Worf"),
             officer_named("Worf", Some("TNG"), &["officer"]),
         );
-        let s = super::bridge_synergy_prefilter_score(
-            "Kirk",
-            &["Spock".into(), "Worf".into()],
-            &idx,
-        );
+        let s =
+            super::bridge_synergy_prefilter_score("Kirk", &["Spock".into(), "Worf".into()], &idx);
         // (3 + 1) / 6
         assert!((s - 4.0 / 6.0).abs() < 1e-6, "s={s}");
         idx.insert(
             super::normalize_officer_lookup_key("Uhura"),
             officer_named("Uhura", Some("TOS"), &["officer"]),
         );
-        let s_max = super::bridge_synergy_prefilter_score(
-            "Kirk",
-            &["Spock".into(), "Uhura".into()],
-            &idx,
-        );
+        let s_max =
+            super::bridge_synergy_prefilter_score("Kirk", &["Spock".into(), "Uhura".into()], &idx);
         assert!((s_max - 1.0).abs() < 1e-6, "s_max={s_max}");
     }
 

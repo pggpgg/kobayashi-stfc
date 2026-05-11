@@ -66,7 +66,9 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::AttackerHullBreach => ctx.attacker_hull_breach_active,
         AbilityCondition::DefenderAssimilated => ctx.defender_assimilated_active,
         AbilityCondition::DefenderFactionIs(expected) => ctx.defender_faction == *expected,
-        AbilityCondition::AttackerOwnerFactionIs(expected) => ctx.attacker_owner_faction == *expected,
+        AbilityCondition::AttackerOwnerFactionIs(expected) => {
+            ctx.attacker_owner_faction == *expected
+        }
         AbilityCondition::DefenderHullFactionIdIs(expected) => {
             ctx.defender_hull_faction_id == *expected
         }
@@ -190,8 +192,7 @@ fn push_research_attacker_owner_faction_conditions(
         0 => {}
         1 => parts.push(AbilityCondition::AttackerOwnerFactionIs(tags[0])),
         _ => parts.push(AbilityCondition::Or(
-            tags
-                .into_iter()
+            tags.into_iter()
                 .map(AbilityCondition::AttackerOwnerFactionIs)
                 .collect(),
         )),

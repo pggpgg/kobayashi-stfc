@@ -857,7 +857,9 @@ export default function OptimizePanel({
           }
           style={selectStyle}
         >
-          <option value="strict">Strict — combat BD first, then by power</option>
+          <option value="strict">
+            Strict — combat BD first, then by power
+          </option>
           <option value="scored">Scored — rank by combat relevance</option>
           <option value="relaxed">Relaxed — any officer, by power</option>
         </select>

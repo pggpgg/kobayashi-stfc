@@ -306,7 +306,9 @@ fn accumulate_bonus(out: &mut HashMap<String, f64>, stat: &str, operator: &str, 
 /// Owner-hull rows also keyed on opponent faction must not merge into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`]
 /// (that map applies vs every hostile). Scenario build applies **faction-only** dual gates via
 /// [`cumulative_dual_gate_hull_shield_research_fractions`].
-pub(crate) fn skip_owner_faction_merge_for_defender_gated_hull_shield(bonus: &ResearchBonusEntry) -> bool {
+pub(crate) fn skip_owner_faction_merge_for_defender_gated_hull_shield(
+    bonus: &ResearchBonusEntry,
+) -> bool {
     research_bonus_is_owner_faction_gated(bonus)
         && bonus
             .condition
@@ -351,13 +353,16 @@ pub fn cumulative_dual_gate_hull_shield_research_fractions(
     owner_faction_slug: Option<&str>,
     defender_faction: OpponentFactionTag,
 ) -> (f64, f64) {
-    let Some(owner_lc) = owner_faction_slug.map(str::trim).filter(|s| !s.is_empty()).map(|s| {
-        s.to_ascii_lowercase()
-    }) else {
+    let Some(owner_lc) = owner_faction_slug
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_ascii_lowercase())
+    else {
         return (0.0, 0.0);
     };
 
-    let by_rid: HashMap<i64, &ResearchRecord> = records.iter().copied().map(|r| (r.rid, r)).collect();
+    let by_rid: HashMap<i64, &ResearchRecord> =
+        records.iter().copied().map(|r| (r.rid, r)).collect();
     let mut hull_frac = 0.0_f64;
     let mut shield_frac = 0.0_f64;
 

@@ -94,13 +94,17 @@ export function isDefiantReinforceBuff(
   return id === DEFIANT_REINFORCE_BUFF_ID;
 }
 
-export function isMantisStingBuff(id: string): id is typeof MANTIS_STING_BUFF_ID {
+export function isMantisStingBuff(
+  id: string,
+): id is typeof MANTIS_STING_BUFF_ID {
   return id === MANTIS_STING_BUFF_ID;
 }
 
 /** True when the catalog routes this buff's direct static bonuses to the defender in PvP-shaped runs. */
 export function isDefenderRoutedWhenPlayerSupportBuff(id: string): boolean {
-  return (SUPPORT_BUFF_DEFENDER_ROUTED_WHEN_PLAYER_IDS as readonly string[]).includes(id);
+  return (
+    SUPPORT_BUFF_DEFENDER_ROUTED_WHEN_PLAYER_IDS as readonly string[]
+  ).includes(id);
 }
 
 export const SUPPORT_BUFF_OPTION_IDS = [

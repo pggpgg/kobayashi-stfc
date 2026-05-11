@@ -9,7 +9,8 @@ use std::path::Path;
 use kobayashi::combat::{
     export_to_combat_input, parse_fight_export, simulate_combat, Ability, AbilityClass,
     AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag,
-    ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {

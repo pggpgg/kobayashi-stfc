@@ -11,8 +11,8 @@ use std::io::Write;
 use std::time::Instant;
 
 use kobayashi::combat::{
-    simulate_combat, Combatant, CrewConfiguration, EnemyTypes, OpponentFactionTag, SimulationConfig,
-    TraceMode,
+    simulate_combat, Combatant, CrewConfiguration, EnemyTypes, OpponentFactionTag,
+    SimulationConfig, TraceMode,
 };
 
 fn main() {

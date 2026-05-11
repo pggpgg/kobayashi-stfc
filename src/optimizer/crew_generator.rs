@@ -1,8 +1,8 @@
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
-use std::path::Path;
 use std::num::NonZeroUsize;
+use std::path::Path;
 use std::sync::Mutex;
 
 use lru::LruCache;
@@ -121,9 +121,7 @@ fn has_below_decks_ability(officer: &Officer) -> bool {
 /// - `Relaxed`: any officer that can occupy a below-decks seat (no ability filter).
 fn keep_below_decks_for_mode(officer: &Officer, mode: BelowDecksPoolMode) -> bool {
     match mode {
-        BelowDecksPoolMode::Strict | BelowDecksPoolMode::Scored => {
-            has_below_decks_ability(officer)
-        }
+        BelowDecksPoolMode::Strict | BelowDecksPoolMode::Scored => has_below_decks_ability(officer),
         BelowDecksPoolMode::Relaxed => true,
     }
 }
@@ -644,8 +642,8 @@ pub fn build_officer_pools_with_constraints(
         .map(|o| o.name.clone())
         .collect();
 
-    let lcars_loaded = load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE))
-        .unwrap_or_default();
+    let lcars_loaded =
+        load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)).unwrap_or_default();
     let mut lcars_by_id: HashMap<&str, &LcarsOfficer> = HashMap::new();
     for lo in &lcars_loaded {
         lcars_by_id.entry(lo.id.as_str()).or_insert(lo);
@@ -1458,7 +1456,9 @@ mod tests {
         CrewGenerator, CrewSlotUnlock, MAX_BELOW_DECKS_SLOTS,
     };
     use crate::data::data_registry::DataRegistry;
-    use crate::data::heuristics::{below_decks_combat_relevance_rank, BelowDecksCombatRelevanceRank};
+    use crate::data::heuristics::{
+        below_decks_combat_relevance_rank, BelowDecksCombatRelevanceRank,
+    };
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
 
     #[test]
