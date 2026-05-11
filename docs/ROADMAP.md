@@ -12,7 +12,7 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 ### Bridge & captain synergy heuristics
 
-- **Synergy-strength scoring for bridge pairs:** The current bridge filter keeps officers that share a synergy group with the captain OR have a bridge-slot ability. Extend this to a score: same-group + bridge-ability (highest), same-group only, bridge-ability only, neither (dropped). Use this score as a prior in the analytical prefilter so the optimizer front-loads crews with stronger bridge synergy before spending Monte Carlo budget.
+- **Synergy-strength scoring for bridge pairs:** **Done** — four-tier canonical strength ([`BridgeSynergyStrength`](src/data/heuristics.rs)), heuristic seeds still drop `Neither` then sort bridge by tier; analytical prefilter adds [`W_BRIDGE_SYNERGY`](src/optimizer/matchup_priors.rs) × normalized sum over bridge slots.
 - **Captain+bridge pair co-occurrence learning:** `officer_learning.rs` already tracks per-officer scores. Extend to `(captain, bridge_officer)` pair scores so the optimizer learns which captain+bridge duos consistently perform well together for a match-up, not just individual officers. Feed these pair scores into the analytical prefilter prior and the below-decks generator's epsilon-greedy sampling.
 
 ### Scout budget heuristics

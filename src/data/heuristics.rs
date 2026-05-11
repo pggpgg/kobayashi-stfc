@@ -7,10 +7,12 @@
 //! Officer names are resolved case-insensitively against the canonical database
 //! and `name_aliases.json`. Unknown names are skipped with a warning.
 //!
-//! **Bridge filtering:** after name resolution, bridge officers are dropped unless they either share a
-//! non-empty synergy group (`group` on canonical officers) with the captain, or have at least one
-//! canonical bridge ability (`OfficerAbility.slot == "officer"`). This mirrors “synergy or bridge
-//! combat ability” so heuristic seeds do not keep dead bridge picks.
+//! **Bridge filtering:** after name resolution, bridge officers are dropped unless they would score
+//! above [`BridgeSynergyStrength::Neither`] for that captain — same group as the captain and/or a
+//! canonical bridge ability (`OfficerAbility.slot == "officer"`). Strength is four-tier (both →
+//! synergy-only → officer-slot-only → neither) for [`bridge_synergy_strength`] and the optimizer
+//! analytical prefilter prior ([`bridge_synergy_prefilter_score`]). Surviving bridge names are sorted
+//! by strength (desc) then lexicographically for deterministic expansion order.
 //!
 //! **Below-decks filtering (strict):** when `apply_below_decks_combat_heuristic_filter` is true (server
 //! default), below-decks candidates are dropped unless they have at least one below-decks-slot ability
@@ -179,6 +181,39 @@ pub fn has_bridge_officer_slot_ability(officer: &Officer) -> bool {
         .any(|a| a.slot.eq_ignore_ascii_case("officer"))
 }
 
+/// Captain–bridge synergy tier for seeds and analytical priors (roadmap: bridge-pair strength).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(u8)]
+pub enum BridgeSynergyStrength {
+    /// No shared synergy group and no `officer`-slot ability on the bridge pick.
+    Neither = 0,
+    /// Bridge officer-slot ability only (different synergy group or empty groups).
+    BridgeOfficerSlotOnly = 1,
+    /// Shared non-empty [`Officer::group`] with the captain only (no `officer`-slot ability).
+    SynergyOnly = 2,
+    /// Shared synergy group **and** at least one `officer`-slot ability.
+    SynergyAndBridgeAbility = 3,
+}
+
+impl BridgeSynergyStrength {
+    #[inline]
+    pub const fn tier_u8(self) -> u8 {
+        self as u8
+    }
+}
+
+/// Classify `bridge` relative to `captain` for filtering and ranking.
+pub fn bridge_synergy_strength(captain: &Officer, bridge: &Officer) -> BridgeSynergyStrength {
+    let syn = bridge_shares_synergy_group_with_captain(captain, bridge);
+    let ab = has_bridge_officer_slot_ability(bridge);
+    match (syn, ab) {
+        (true, true) => BridgeSynergyStrength::SynergyAndBridgeAbility,
+        (true, false) => BridgeSynergyStrength::SynergyOnly,
+        (false, true) => BridgeSynergyStrength::BridgeOfficerSlotOnly,
+        (false, false) => BridgeSynergyStrength::Neither,
+    }
+}
+
 fn non_empty_synergy_group(officer: &Officer) -> Option<&str> {
     officer
         .group
@@ -200,8 +235,34 @@ pub fn bridge_shares_synergy_group_with_captain(captain: &Officer, bridge: &Offi
 
 /// Keep a heuristic bridge pick if it synergizes with the captain or contributes a bridge-slot ability.
 pub fn keep_bridge_officer_for_heuristic_seed(captain: &Officer, bridge: &Officer) -> bool {
-    bridge_shares_synergy_group_with_captain(captain, bridge)
-        || has_bridge_officer_slot_ability(bridge)
+    bridge_synergy_strength(captain, bridge) > BridgeSynergyStrength::Neither
+}
+
+/// Normalized \([0,1]\) sum of [`bridge_synergy_strength`] over the first [`BRIDGE_SLOTS`] bridge names.
+/// Missing officers contribute `0`. Used as an analytical prefilter prior ([`crate::optimizer::matchup_priors`]).
+pub fn bridge_synergy_prefilter_score(
+    captain_name: &str,
+    bridge_names: &[String],
+    officer_index: &HashMap<String, Officer>,
+) -> f32 {
+    let cap_key = normalize_officer_lookup_key(captain_name);
+    let Some(captain) = officer_index.get(&cap_key) else {
+        return 0.0;
+    };
+    let mut sum: u32 = 0;
+    for bname in bridge_names.iter().take(BRIDGE_SLOTS) {
+        let bk = normalize_officer_lookup_key(bname);
+        let Some(b) = officer_index.get(&bk) else {
+            continue;
+        };
+        sum += u32::from(bridge_synergy_strength(captain, b).tier_u8());
+    }
+    let denom = (BRIDGE_SLOTS as u32) * u32::from(BridgeSynergyStrength::SynergyAndBridgeAbility.tier_u8());
+    if denom == 0 {
+        0.0
+    } else {
+        (sum as f32 / denom as f32).clamp(0.0, 1.0)
+    }
 }
 
 #[inline]
@@ -353,6 +414,20 @@ pub fn filter_heuristic_seed_crews(
                     "heuristics: filtered bridge officers"
                 );
             }
+
+            crew.bridge.sort_by(|a, b| {
+                let ka = normalize_officer_lookup_key(a);
+                let kb = normalize_officer_lookup_key(b);
+                let sa = officer_index
+                    .get(&ka)
+                    .map(|bo| bridge_synergy_strength(captain_off, bo))
+                    .unwrap_or(BridgeSynergyStrength::Neither);
+                let sb = officer_index
+                    .get(&kb)
+                    .map(|bo| bridge_synergy_strength(captain_off, bo))
+                    .unwrap_or(BridgeSynergyStrength::Neither);
+                sb.cmp(&sa).then_with(|| a.cmp(b))
+            });
 
             if apply_below_decks_combat_heuristic_filter {
                 let bd_before = crew.below_decks_candidates.len();
@@ -620,6 +695,90 @@ mod tests {
         let cap = officer_named("Kirk", Some("TOS"), &["captain"]);
         let br = officer_named("Worf", Some("TNG"), &["captain"]);
         assert!(!super::keep_bridge_officer_for_heuristic_seed(&cap, &br));
+    }
+
+    #[test]
+    fn bridge_synergy_strength_tiers() {
+        let kirk = officer_named("Kirk", Some("TOS"), &["captain"]);
+        let spock_same_group_officer = officer_named("Spock", Some("TOS"), &["officer"]);
+        assert_eq!(
+            super::bridge_synergy_strength(&kirk, &spock_same_group_officer),
+            super::BridgeSynergyStrength::SynergyAndBridgeAbility
+        );
+        let mccoy_same_group_no_officer = officer_named("McCoy", Some("TOS"), &["captain"]);
+        assert_eq!(
+            super::bridge_synergy_strength(&kirk, &mccoy_same_group_no_officer),
+            super::BridgeSynergyStrength::SynergyOnly
+        );
+        let worf_officer_other_group = officer_named("Worf", Some("TNG"), &["officer"]);
+        assert_eq!(
+            super::bridge_synergy_strength(&kirk, &worf_officer_other_group),
+            super::BridgeSynergyStrength::BridgeOfficerSlotOnly
+        );
+        let worf_other = officer_named("Worf", Some("TNG"), &["captain"]);
+        assert_eq!(
+            super::bridge_synergy_strength(&kirk, &worf_other),
+            super::BridgeSynergyStrength::Neither
+        );
+    }
+
+    #[test]
+    fn bridge_synergy_prefilter_score_normalized() {
+        let mut idx = HashMap::new();
+        idx.insert(
+            super::normalize_officer_lookup_key("Kirk"),
+            officer_named("Kirk", Some("TOS"), &["captain"]),
+        );
+        idx.insert(
+            super::normalize_officer_lookup_key("Spock"),
+            officer_named("Spock", Some("TOS"), &["officer"]),
+        );
+        idx.insert(
+            super::normalize_officer_lookup_key("Worf"),
+            officer_named("Worf", Some("TNG"), &["officer"]),
+        );
+        let s = super::bridge_synergy_prefilter_score(
+            "Kirk",
+            &["Spock".into(), "Worf".into()],
+            &idx,
+        );
+        // (3 + 1) / 6
+        assert!((s - 4.0 / 6.0).abs() < 1e-6, "s={s}");
+        idx.insert(
+            super::normalize_officer_lookup_key("Uhura"),
+            officer_named("Uhura", Some("TOS"), &["officer"]),
+        );
+        let s_max = super::bridge_synergy_prefilter_score(
+            "Kirk",
+            &["Spock".into(), "Uhura".into()],
+            &idx,
+        );
+        assert!((s_max - 1.0).abs() < 1e-6, "s_max={s_max}");
+    }
+
+    #[test]
+    fn filter_heuristic_seed_crews_sorts_bridge_by_synergy_strength_desc() {
+        let crew = ParsedHeuristicsCrew {
+            label: "sort".into(),
+            captain: "Kirk".into(),
+            bridge: vec!["Worf".into(), "Spock".into()],
+            below_decks_candidates: vec![],
+        };
+        let mut idx = HashMap::new();
+        idx.insert(
+            super::normalize_officer_lookup_key("Kirk"),
+            officer_named("Kirk", Some("TOS"), &["captain"]),
+        );
+        idx.insert(
+            super::normalize_officer_lookup_key("Worf"),
+            officer_named("Worf", Some("TNG"), &["officer"]),
+        );
+        idx.insert(
+            super::normalize_officer_lookup_key("Spock"),
+            officer_named("Spock", Some("TOS"), &["officer"]),
+        );
+        let out = filter_heuristic_seed_crews(vec![crew], &idx, false);
+        assert_eq!(out[0].bridge, vec!["Spock".to_string(), "Worf".to_string()]);
     }
 
     #[test]

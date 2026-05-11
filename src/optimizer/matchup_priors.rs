@@ -3,7 +3,8 @@
 //! Closed-form [`crate::optimizer::analytical::expected_damage`] ignores conditional abilities; we add a
 //! small **prior** so crews with gates that match this fight (hull class, faction, PvE/PvP, Tal) and
 //! crews overlapping UI warm-start or persisted optimize-history reference crews sort ahead when
-//! truncating before Monte Carlo. Catalog-backed synergy bumps are deferred (see `src/data/synergy.rs`).
+//! truncating before Monte Carlo. Captain–bridge canonical synergy tiers ([`crate::data::heuristics`])
+//! add a small bump; catalog-backed catalog synergy is still deferred (see `src/data/synergy.rs`).
 
 use std::collections::{HashMap, HashSet};
 
@@ -11,6 +12,7 @@ use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, AbilityCondition, CrewConfiguration, EnemyType,
     OpponentFactionTag,
 };
+use crate::data::heuristics::bridge_synergy_prefilter_score;
 use crate::data::upstream_hostile_ship_type::upstream_hostile_ship_type_profile;
 use crate::optimizer::analytical::expected_damage;
 use crate::optimizer::constraints::normalize_officer_name;
@@ -395,6 +397,8 @@ const W_ENCOUNTER: f64 = 6.0;
 const W_WARM_JACCARD: f64 = 18.0;
 const W_WARM_CAP_BRIDGE: f64 = 14.0;
 const W_LEARNED_PAIR_PRIOR: f64 = 12.0;
+/// [`bridge_synergy_prefilter_score`] is in `[0,1]` (sum of per-bridge tiers / max).
+const W_BRIDGE_SYNERGY: f64 = 10.0;
 
 /// Scalar for sorting candidates before analytical truncation (higher explores first).
 pub(crate) fn analytical_prefilter_rank_score(
@@ -414,11 +418,17 @@ pub(crate) fn analytical_prefilter_rank_score(
     } else {
         0.0
     };
+    let bridge_syn = f64::from(bridge_synergy_prefilter_score(
+        &candidate.captain,
+        &candidate.bridge,
+        &shared.officer_index,
+    ));
     base + W_GATE * gate
         + W_ENCOUNTER * enc
         + W_WARM_JACCARD * warm
         + W_WARM_CAP_BRIDGE * cap_br
         + W_LEARNED_PAIR_PRIOR * pair
+        + W_BRIDGE_SYNERGY * bridge_syn
 }
 
 #[cfg(test)]
