@@ -17,7 +17,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 ### Warm-start enrichment
 
 - **Blurred warm-start for adjacent match-ups:** When a player has optimize history for hostile A (e.g., a specific Romulan hostile), extend warm-start to "blur" those crews into the candidate pool for hostile B (another Romulan hostile with similar stats and the same faction tag). The blur replaces one below-decks officer with the next-best-scored alternative, generating a few neighboring candidates. This transfers learning across similar hostile profiles without requiring explicit runs against every hostile.
-- **Warm-start freshness weighting:** Stale warm-start crews (from history older than N days) should receive reduced weight in the analytical prefilter prior compared to fresh entries. This prevents meta shifts from being locked in by old history, while still giving veteran crews a small edge over completely random candidates.
 
 ## Combat buffs support
 
