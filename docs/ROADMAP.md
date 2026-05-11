@@ -10,10 +10,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 - **Per-matchup below-decks pool sizing:** Today the pool narrows globally. A hostile with high mitigation may reward different below-decks stat priorities (e.g., pierce officers) than a glass-cannon hostile (e.g., hull HP officers). Compute stat profiles of top historical crews for a match-up and use them to weight below-decks officer scores for future runs, so the pool narrows intelligently rather than uniformly.
 
-### Scout budget heuristics
-
-- **Heuristic-driven asymmetric scout allocation:** Crews from heuristics seeds, warm-start, and optimize-history reference crews should receive a higher initial scout trial allocation than randomly-generated crews. The priority-queue scout (`tiered_scout_priority_queue`) already supports per-crew trial variance; extend it with a "prior bonus" field so promising crews get head-start trials. This avoids wasting budget on hopeless generated crews before seed crews are fairly evaluated.
-
 ### Analytical prefilter improvements
 
 - **Static gate pruning as a default (conservative):** `prune_static_gate_max_fraction` (drop crews where ≥95% of conditional abilities fail to match) is opt-in today. Make it a conservative default (e.g., `0.95`) for all non-genetic paths, since a crew whose abilities are 95% gated on a mismatched faction/ship-type is almost certainly worse than alternatives. The SPA can expose a toggle to disable this pruning for edge cases.
