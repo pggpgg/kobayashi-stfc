@@ -14,10 +14,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 - **Analytical damage floor per hostile tier:** The `prune_analytical_hull_fraction` (drop crews whose expected damage < X% of defender hull) uses a user-supplied fraction. Compute a sensible default per hostile tier: tougher hostiles can tolerate a smaller fraction (0.01), glass-cannon hostiles need a larger fraction (0.10) since the fight is short and every damage point matters. Derive from the hostile's hull-to-attack ratio in the shared scenario data.
 
-### Warm-start enrichment
-
-- **Blurred warm-start for adjacent match-ups:** When a player has optimize history for hostile A (e.g., a specific Romulan hostile), extend warm-start to "blur" those crews into the candidate pool for hostile B (another Romulan hostile with similar stats and the same faction tag). The blur replaces one below-decks officer with the next-best-scored alternative, generating a few neighboring candidates. This transfers learning across similar hostile profiles without requiring explicit runs against every hostile.
-
 ## Combat buffs support
 
 - **Defender-side buffs & debuffs:** **Partial** — Catalog field `static_bonus_target: defender_if_player_opponent` (`[data/support_buffs.json](../data/support_buffs.json)`) routes **direct** `static_bonuses` onto the defender `[Combatant](src/combat/types.rs)` when the API uses `defender_opponent: player` (see `[aggregate_support_static_bonuses_split](../src/data/support_buffs.rs)`, `[SharedScenarioData::support_defender_static_buffs](../src/optimizer/monte_carlo/scenario.rs)`). Titan-A Fortify / Max Fortify, Defiant Reinforce, and placeholder `mantis_sting` use this path; Cerritos remains attacker-routed. **Still open:** support-gated **research** augmentation from `augment_static_buffs_with_support_gated_research` stays on the attacker merge; hostile-applied modifiers and full Mantis combat stats remain TBD.
