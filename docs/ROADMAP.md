@@ -10,11 +10,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 - **Per-matchup below-decks pool sizing:** Today the pool narrows globally. A hostile with high mitigation may reward different below-decks stat priorities (e.g., pierce officers) than a glass-cannon hostile (e.g., hull HP officers). Compute stat profiles of top historical crews for a match-up and use them to weight below-decks officer scores for future runs, so the pool narrows intelligently rather than uniformly.
 
-### Bridge & captain synergy heuristics
-
-- **Synergy-strength scoring for bridge pairs:** **Done** — four-tier canonical strength ([`BridgeSynergyStrength`](src/data/heuristics.rs)), heuristic seeds still drop `Neither` then sort bridge by tier; analytical prefilter adds [`W_BRIDGE_SYNERGY`](src/optimizer/matchup_priors.rs) × normalized sum over bridge slots.
-- **Captain+bridge pair co-occurrence learning:** `officer_learning.rs` already tracks per-officer scores. Extend to `(captain, bridge_officer)` pair scores so the optimizer learns which captain+bridge duos consistently perform well together for a match-up, not just individual officers. Feed these pair scores into the analytical prefilter prior and the below-decks generator's epsilon-greedy sampling.
-
 ### Scout budget heuristics
 
 - **Heuristic-driven asymmetric scout allocation:** Crews from heuristics seeds, warm-start, and optimize-history reference crews should receive a higher initial scout trial allocation than randomly-generated crews. The priority-queue scout (`tiered_scout_priority_queue`) already supports per-crew trial variance; extend it with a "prior bonus" field so promising crews get head-start trials. This avoids wasting budget on hopeless generated crews before seed crews are fairly evaluated.
@@ -25,7 +20,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 - **Static gate pruning as a default (conservative):** `prune_static_gate_max_fraction` (drop crews where ≥95% of conditional abilities fail to match) is opt-in today. Make it a conservative default (e.g., `0.95`) for all non-genetic paths, since a crew whose abilities are 95% gated on a mismatched faction/ship-type is almost certainly worse than alternatives. The SPA can expose a toggle to disable this pruning for edge cases.
 - **Analytical damage floor per hostile tier:** The `prune_analytical_hull_fraction` (drop crews whose expected damage < X% of defender hull) uses a user-supplied fraction. Compute a sensible default per hostile tier: tougher hostiles can tolerate a smaller fraction (0.01), glass-cannon hostiles need a larger fraction (0.10) since the fight is short and every damage point matters. Derive from the hostile's hull-to-attack ratio in the shared scenario data.
-- **Analytical prefilter keep auto-tuning from history:** When `optimize_history` shows that previous runs found strong crews outside the analytical top-N, automatically increase the `analytical_prefilter_keep_auto` cap for the next run. Conversely, when the analytical top-N perfectly captured the eventual Monte Carlo top-K, the cap can tighten. This closes the loop between the cheap analytical sort and the expensive Monte Carlo pass.
 
 ### Warm-start enrichment
 
