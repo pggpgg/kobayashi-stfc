@@ -56,7 +56,9 @@ use crate::data::support_buffs::{self, AppliedSupportBuffTrace, SupportBuffCatal
 use crate::lcars::{
     index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
 };
-use crate::optimizer::crew_generator::CrewCandidate;
+use crate::optimizer::crew_generator::{
+    CrewCandidate, BRIDGE_SLOTS, MAX_BELOW_DECKS_SLOTS, MIN_BELOW_DECKS_SLOTS,
+};
 use std::path::Path;
 
 use super::crew_resolution::{
@@ -520,6 +522,10 @@ pub(crate) struct SharedScenarioData {
     /// Incoming (counter-fire) shield mitigation from canonical research (e.g. KSG early-round SM).
     pub incoming_shield_mitigation_bonus: f64,
     pub incoming_shield_mitigation_bonus_rounds: u32,
+    /// Optional defender-side officer seats (LCARS); merged after hostile ship abilities in combat input.
+    pub player_defender_officer_seats: Vec<CrewSeatContext>,
+    /// Static buff map from optional defender officer LCARS; merged onto defender [`Combatant`] at scenario build.
+    pub player_defender_static_buffs: HashMap<String, f64>,
 }
 
 fn attacker_owner_faction_from_ship(ship_rec: Option<&ShipRecord>) -> OpponentFactionTag {
@@ -669,11 +675,14 @@ pub(crate) fn scenario_to_combat_input_from_shared(
 
     let hostile_ability_catalog =
         load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
-    let defender_crew = shared
+    let mut defender_crew = shared
         .hostile_rec
         .as_ref()
         .map(|h| hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog.as_ref()))
         .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() });
+    defender_crew
+        .seats
+        .extend_from_slice(&shared.player_defender_officer_seats);
 
     if let (Some(ref ship_rec), Some(ref cached_defender), Some(rounds), Some(defender_hull)) = (
         &shared.ship_rec,
@@ -703,6 +712,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         let mut defender = cached_defender.clone();
         defender.mitigation = defender_mitigation;
         apply_support_defender_static_if_pvp(shared, &mut defender);
+        if !shared.player_defender_static_buffs.is_empty() {
+            let mut dstatic = shared.player_defender_static_buffs.clone();
+            let _ = take_isolytic_cascade_static_bonus(&mut dstatic);
+            defender = apply_static_buffs_to_combatant(defender, &dstatic);
+        }
 
         let mut attacker = apply_profile_to_attacker(
             Combatant {
@@ -917,6 +931,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         hostile_mitigation_params: None,
     };
     apply_support_defender_static_if_pvp(shared, &mut defender);
+    if !shared.player_defender_static_buffs.is_empty() {
+        let mut dstatic = shared.player_defender_static_buffs.clone();
+        let _ = take_isolytic_cascade_static_bonus(&mut dstatic);
+        defender = apply_static_buffs_to_combatant(defender, &dstatic);
+    }
     CombatSimulationInput {
         attacker,
         defender,
@@ -1069,6 +1088,99 @@ fn build_crew_and_buffs(
             1.0,
         )
     }
+}
+
+/// Optional LCARS-resolved **defender** officer crew (captain + bridge + below decks).
+/// When present with a non-empty captain, seats are merged after hostile ship abilities and
+/// static buff keys are folded into the defender [`Combatant`] (excluding isolytic cascade static;
+/// see [`take_isolytic_cascade_static_bonus`] at combat input build time).
+#[derive(Debug, Clone, Default)]
+pub struct PlayerDefenderOfficerCrewOverride {
+    pub captain: Option<String>,
+    pub bridge: Option<Vec<Option<String>>>,
+    pub below_deck: Option<Vec<Option<String>>>,
+    pub below_decks_slots: usize,
+}
+
+fn pad_strings_first_repeat(mut v: Vec<String>, len: usize) -> Vec<String> {
+    let first = v.first().cloned().unwrap_or_default();
+    while v.len() < len {
+        v.push(first.clone());
+    }
+    v.truncate(len);
+    v
+}
+
+fn officer_display_for_index(officers_by_name: &HashMap<String, Officer>, id: &str) -> String {
+    let key = normalize_lookup_key(id.trim());
+    officers_by_name
+        .get(&key)
+        .map(|o| o.name.clone())
+        .unwrap_or_else(|| id.to_string())
+}
+
+fn resolve_player_defender_officer_bundle(
+    o: Option<&PlayerDefenderOfficerCrewOverride>,
+    officers_by_name: &HashMap<String, Officer>,
+    lcars_data: Option<&LcarsOfficerData>,
+    resolve_options: &ResolveOptions,
+) -> (Vec<CrewSeatContext>, HashMap<String, f64>) {
+    let Some(o) = o else {
+        return (Vec::new(), HashMap::new());
+    };
+    let Some(cap) = o
+        .captain
+        .as_ref()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+    else {
+        return (Vec::new(), HashMap::new());
+    };
+    let bridge_src: Vec<String> = o
+        .bridge
+        .as_ref()
+        .map(|v| {
+            v.iter()
+                .take(BRIDGE_SLOTS)
+                .map(|slot| {
+                    slot.as_ref()
+                        .map(|id| officer_display_for_index(officers_by_name, id))
+                        .unwrap_or_default()
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let bridge = pad_strings_first_repeat(bridge_src, BRIDGE_SLOTS);
+    let bd_cap = o
+        .below_decks_slots
+        .clamp(MIN_BELOW_DECKS_SLOTS, MAX_BELOW_DECKS_SLOTS);
+    let below_src: Vec<String> = o
+        .below_deck
+        .as_ref()
+        .map(|v| {
+            v.iter()
+                .take(bd_cap)
+                .map(|slot| {
+                    slot.as_ref()
+                        .map(|id| officer_display_for_index(officers_by_name, id))
+                        .unwrap_or_default()
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let below_decks = pad_strings_first_repeat(below_src, bd_cap);
+    let candidate = CrewCandidate {
+        captain: cap.to_string(),
+        bridge,
+        below_decks,
+    };
+    let (seats, static_buffs, _proc_c, _proc_m) = build_crew_and_buffs(
+        &candidate,
+        officers_by_name,
+        lcars_data,
+        resolve_options,
+    );
+    (seats, static_buffs)
 }
 
 #[allow(dead_code)] // used by unit tests (computed_mitigation_is_deterministic_for_same_inputs)
@@ -1345,6 +1457,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
     hostile: &str,
     support_buffs_request: Option<&[String]>,
     defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
 ) -> SharedScenarioData {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
@@ -1621,6 +1734,14 @@ pub(crate) fn build_shared_scenario_data_standalone(
             hostile_rec.as_ref(),
         );
 
+    let (player_defender_officer_seats, player_defender_static_buffs) =
+        resolve_player_defender_officer_bundle(
+            player_defender_officer_crew.as_ref(),
+            &officer_index,
+            lcars_data.as_ref(),
+            &resolve_options,
+        );
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -1654,6 +1775,8 @@ pub(crate) fn build_shared_scenario_data_standalone(
         defender_level,
         incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds,
+        player_defender_officer_seats,
+        player_defender_static_buffs,
     }
 }
 
@@ -1668,6 +1791,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     profile_id: Option<&str>,
     support_buffs_request: Option<&[String]>,
     defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
 ) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
 
@@ -1983,6 +2107,14 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             hostile_rec.as_ref(),
         );
 
+    let (player_defender_officer_seats, player_defender_static_buffs) =
+        resolve_player_defender_officer_bundle(
+            player_defender_officer_crew.as_ref(),
+            &officer_index,
+            lcars_data.as_ref(),
+            &resolve_options,
+        );
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -2016,6 +2148,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         defender_level,
         incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds,
+        player_defender_officer_seats,
+        player_defender_static_buffs,
     }
 }
 
@@ -2304,6 +2438,7 @@ mod tests {
             None,
             None,
             DefenderOpponent::Hostile,
+            None,
         );
 
         let ship = shared.ship_rec.as_ref().expect("ship record");
@@ -2582,6 +2717,8 @@ mod tests {
             defender_level: None,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            player_defender_officer_seats: vec![],
+            player_defender_static_buffs: HashMap::new(),
         };
 
         let candidate = CrewCandidate {
@@ -2744,6 +2881,7 @@ mod tests {
             Some(&entry.id),
             None,
             DefenderOpponent::Hostile,
+            None,
         );
 
         // Catalog rid 2232304457: weapon_damage +0.05 at L1, +0.07 at L2 → cumulative 0.12

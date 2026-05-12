@@ -7146,3 +7146,119 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
         1e-6,
     );
 }
+
+/// Defender `DefensePhase` effects filtered for inbound fire merge into outbound damage resolution
+/// (prototype path): cumulative damage to the defender should drop vs an empty defender crew.
+#[test]
+fn defender_inbound_defense_phase_reduces_incoming_damage() {
+    let attacker = Combatant {
+        id: "att".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 5000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 300.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+        hostile_mitigation_params: None,
+    };
+    let defender = Combatant {
+        id: "def".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 2000.0,
+        shield_mitigation: 0.5,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+        hostile_mitigation_params: None,
+    };
+    let attacker_crew = CrewConfiguration::default();
+    let inbound_def_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                name: "inbound_shield_mit_test".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::DefensePhase,
+                boostable: false,
+                effect: AbilityEffect::ShieldMitigationBonus(0.35),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+
+    let config = SimulationConfig {
+        rounds: 2,
+        seed: 42,
+        trace_mode: TraceMode::Off,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
+        engagement_enemy_types: Default::default(),
+        defender_level: None,
+        attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
+    };
+
+    let baseline = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration::default(),
+    );
+    let with_inbound = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config,
+        &attacker_crew,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &inbound_def_crew,
+    );
+
+    assert!(
+        with_inbound.defender_hull_remaining > baseline.defender_hull_remaining + 1e-6,
+        "inbound DefensePhase shield mitigation bonus should steer more damage to shields while they hold, preserving hull; baseline_hull={} with_hull={}",
+        baseline.defender_hull_remaining,
+        with_inbound.defender_hull_remaining
+    );
+}

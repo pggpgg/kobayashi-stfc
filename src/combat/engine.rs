@@ -95,6 +95,9 @@ pub struct PreCombatSetup {
     pub defender_defense_phase_effects: Vec<ActiveAbilityEffect>,
     pub defender_shield_break_effects: Vec<ActiveAbilityEffect>,
     pub defender_round_end_effects: Vec<ActiveAbilityEffect>,
+    /// Defender-owned [`TimingWindow::ReceiveDamage`] effects evaluated when the defender takes
+    /// hull damage from outbound (attacker) weapon fire.
+    pub defender_receive_damage_effects: Vec<ActiveAbilityEffect>,
     // Combat begin state (initial round 0, all precomputable)
     pub combat_begin_ctx: CombatContext,
     pub combat_begin_filtered: Vec<ActiveAbilityEffect>,
@@ -214,6 +217,8 @@ pub fn build_combat_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::ShieldBreak);
     let defender_round_end_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::RoundEnd);
+    let defender_receive_damage_effects =
+        active_effects_for_timing(&defender_crew, TimingWindow::ReceiveDamage);
 
     PreCombatSetup {
         attacker: attacker.clone(),
@@ -254,6 +259,7 @@ pub fn build_combat_setup(
         defender_defense_phase_effects,
         defender_shield_break_effects,
         defender_round_end_effects,
+        defender_receive_damage_effects,
     }
 }
 
@@ -273,7 +279,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     let mut rng = Rng::new(seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
-    let use_experimental_simd_damage_after_apex = avx2_supported() && !trace.is_enabled();
+    let use_experimental_simd_damage_after_apex_base = avx2_supported() && !trace.is_enabled();
     let mut total_hull_damage = 0.0;
     let mut total_shield_damage = 0.0;
     let mut defender_shield_remaining = defender.shield_health.max(0.0);
@@ -318,6 +324,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let defender_defense_phase_effects = &setup.defender_defense_phase_effects;
     let defender_shield_break_effects = &setup.defender_shield_break_effects;
     let defender_round_end_effects = &setup.defender_round_end_effects;
+    let defender_receive_damage_effects = &setup.defender_receive_damage_effects;
 
     // Per-trial conqueror borg beam hyperthermic check (depends on seed)
     if setup.quantum_beam_instant_loss
@@ -865,6 +872,20 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             defense_phase_assimilated,
         );
 
+        let defender_inbound_defense_filtered =
+            filter_effects_by_condition(defender_defense_phase_effects, &combat_ctx);
+        record_ability_activations(
+            &mut trace,
+            round_index,
+            "defense_inbound",
+            defender,
+            &defender_inbound_defense_filtered,
+            defender_assimilated_rounds_remaining > 0,
+        );
+        let use_simd_outbound_weapon_path = use_experimental_simd_damage_after_apex_base
+            && defender_inbound_defense_filtered.is_empty()
+            && defender_receive_damage_effects.is_empty();
+
         let weapon_round_base = phase_effects_round.clone();
         let mut phase_effects = EffectAccumulator::default();
         let mut after_subround_carry = EffectAccumulator::default();
@@ -909,25 +930,25 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             let effective_shots = effective_shots_for_weapon(base_shots, b_shots);
             let shield_before_weapon = defender_shield_remaining;
             let mut simd_damage_batch: Vec<f64> =
-                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                if use_simd_outbound_weapon_path && effective_shots > 0 {
                     Vec::with_capacity(4)
                 } else {
                     Vec::new()
                 };
             let mut simd_isolytic_batch: Vec<f64> =
-                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                if use_simd_outbound_weapon_path && effective_shots > 0 {
                     Vec::with_capacity(4)
                 } else {
                     Vec::new()
                 };
             let mut simd_shield_mitigation_batch: Vec<f64> =
-                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                if use_simd_outbound_weapon_path && effective_shots > 0 {
                     Vec::with_capacity(4)
                 } else {
                     Vec::new()
                 };
             let mut simd_damage_after_apex_batch: Vec<f64> =
-                if use_experimental_simd_damage_after_apex && effective_shots > 0 {
+                if use_simd_outbound_weapon_path && effective_shots > 0 {
                     Vec::with_capacity(4)
                 } else {
                     Vec::new()
@@ -1015,11 +1036,25 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         ]),
                     });
 
+                    let defender_inbound_assimilated =
+                        defender_assimilated_rounds_remaining > 0;
+                    let mut inbound_defender_effects = EffectAccumulator::default();
+                    inbound_defender_effects.set_trace_contributions(false);
+                    inbound_defender_effects.add_effects(
+                        TimingWindow::DefensePhase,
+                        &defender_inbound_defense_filtered,
+                        weapon_base,
+                        defender_inbound_assimilated,
+                        round_index,
+                    );
+                    let combined_defense_mitigation_bonus = phase_effects.defense_mitigation_bonus()
+                        + inbound_defender_effects.defense_mitigation_bonus();
+
                     // Damage-through factor: fraction of attack that gets through (can exceed 1.0 with pierce).
                     let damage_through_factor = compute_damage_through_factor(
                         mitigation_multiplier,
                         effective_pierce,
-                        phase_effects.defense_mitigation_bonus(),
+                        combined_defense_mitigation_bonus,
                     );
                     trace.record_if(|| CombatEvent {
                         event_type: "pierce_calc".to_string(),
@@ -1199,6 +1234,20 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         );
                     }
 
+                    for effect in &defender_inbound_defense_filtered {
+                        roll_burning_triggers(
+                            std::slice::from_ref(effect),
+                            defender_inbound_assimilated,
+                            &mut rng,
+                            &mut trace,
+                            round_index,
+                            "defense_inbound",
+                            &defender.id,
+                            None,
+                            &mut defender_burning_rounds,
+                        );
+                    }
+
                     let w_proc_chance = attacker.weapon_proc_chance(weapon_index);
                     let (did_proc, proc_roll) = roll_weapon_intrinsic_proc(w_proc_chance, &mut rng);
                     let proc_multiplier = if did_proc {
@@ -1260,7 +1309,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         + phase_effects.composed_isolytic_damage_bonus())
                     .max(0.0);
                     let effective_isolytic_defense = (defender.isolytic_defense
-                        + phase_effects.composed_isolytic_defense_bonus())
+                        + phase_effects.composed_isolytic_defense_bonus()
+                        + inbound_defender_effects.composed_isolytic_defense_bonus())
                     .max(0.0);
                     let effective_isolytic_cascade = phase_effects
                         .composed_isolytic_cascade_damage_bonus()
@@ -1278,7 +1328,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
                     // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
                     let effective_shield_mitigation = (defender.shield_mitigation
-                        + phase_effects.composed_shield_mitigation_bonus())
+                        + phase_effects.composed_shield_mitigation_bonus()
+                        + inbound_defender_effects.composed_shield_mitigation_bonus())
                     .clamp(0.0, 1.0);
                     let shield_mitigation = if defender_shield_remaining > 0.0 {
                         effective_shield_mitigation
@@ -1286,8 +1337,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         0.0
                     };
 
-                    if use_experimental_simd_damage_after_apex {
-                        simd_damage_batch.push(damage);
+                    if use_simd_outbound_weapon_path {
                         simd_isolytic_batch.push(isolytic_taken);
                         simd_shield_mitigation_batch.push(effective_shield_mitigation);
 
@@ -1335,6 +1385,33 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         (defender_shield_remaining - actual_shield_damage).max(0.0);
                     total_hull_damage += hull_damage_this_round;
                     total_shield_damage += actual_shield_damage;
+
+                    if hull_damage_this_round > 0.0 {
+                        let def_rd_assim = defender_assimilated_rounds_remaining > 0;
+                        let mut ctx_def_rd = combat_ctx.clone();
+                        ctx_def_rd.defender_hull_pct =
+                            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+                        ctx_def_rd.defender_shield_pct = if defender.shield_health > 0.0 {
+                            defender_shield_remaining / defender.shield_health
+                        } else {
+                            1.0
+                        };
+                        let def_rd_filtered = filter_effects_by_condition(
+                            defender_receive_damage_effects,
+                            &ctx_def_rd,
+                        );
+                        roll_burning_triggers(
+                            &def_rd_filtered,
+                            def_rd_assim,
+                            &mut rng,
+                            &mut trace,
+                            round_index,
+                            "receive_damage",
+                            &defender.id,
+                            None,
+                            &mut defender_burning_rounds,
+                        );
+                    }
 
                     trace.record_if(|| CombatEvent {
                         event_type: "damage_application".to_string(),
@@ -1555,31 +1632,31 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 );
 
                 let mut counter_simd_damage_batch: Vec<f64> =
-                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                    if use_experimental_simd_damage_after_apex_base && def_effective_shots > 0 {
                         Vec::with_capacity(4)
                     } else {
                         Vec::new()
                     };
                 let mut counter_simd_isolytic_batch: Vec<f64> =
-                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                    if use_experimental_simd_damage_after_apex_base && def_effective_shots > 0 {
                         Vec::with_capacity(4)
                     } else {
                         Vec::new()
                     };
                 let mut counter_simd_shield_mit_batch: Vec<f64> =
-                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                    if use_experimental_simd_damage_after_apex_base && def_effective_shots > 0 {
                         Vec::with_capacity(4)
                     } else {
                         Vec::new()
                     };
                 let mut counter_simd_crit_batch: Vec<bool> =
-                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                    if use_experimental_simd_damage_after_apex_base && def_effective_shots > 0 {
                         Vec::with_capacity(4)
                     } else {
                         Vec::new()
                     };
                 let mut counter_simd_after_apex_batch: Vec<f64> =
-                    if use_experimental_simd_damage_after_apex && def_effective_shots > 0 {
+                    if use_experimental_simd_damage_after_apex_base && def_effective_shots > 0 {
                         Vec::with_capacity(4)
                     } else {
                         Vec::new()
@@ -1711,7 +1788,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             .composed_isolytic_cascade_damage_bonus()
                             .max(0.0),
                     );
-                    if use_experimental_simd_damage_after_apex {
+                    if use_experimental_simd_damage_after_apex_base {
                         let att_mit_for_batch = effective_incoming_shield_mitigation(
                             attacker.shield_mitigation,
                             config,

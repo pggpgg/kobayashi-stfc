@@ -40,8 +40,15 @@ use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 use super::requests::{
     below_decks_pool_mode_resolved, build_crew_search_constraints, chain_grind_params_from_request,
     parse_below_decks_strategy, parse_strategy, relax_below_decks_combat_strictness,
-    ChainGrindRequest, OptimizePayloadError, OptimizeRequest, DEFAULT_SIMS,
+    ChainGrindRequest, OptimizePayloadError, OptimizeRequest, ValidationErrorResponse,
+    ValidationIssue, DEFAULT_SIMS,
 };
+
+#[derive(Debug)]
+enum OptimizeGatherError {
+    Cancelled,
+    Validation(ValidationErrorResponse),
+}
 
 /// When `strategy` is omitted, use tiered scout→confirm if the capped candidate count is at least this.
 /// Tuned so medium/large roster searches default to two-phase MC instead of full sims on every crew.
@@ -600,7 +607,7 @@ fn gather_optimize_simulation_results(
     request: &OptimizeRequest,
     profile_id: Option<&str>,
     sink: &mut OptimizeProgressSink,
-) -> Result<(Vec<SimulationResult>, OptimizeGatherMeta), ()> {
+) -> Result<(Vec<SimulationResult>, OptimizeGatherMeta), OptimizeGatherError> {
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     let seed = request.seed.unwrap_or(0);
     let chain_grind = request
@@ -804,6 +811,42 @@ fn gather_optimize_simulation_results(
         &scenario_warm_start,
     );
 
+    let player_defender_officer_crew =
+        match super::resolve_player_defender_officer_crew_for_optimize(
+            registry,
+            profile_id,
+            below_decks_slots,
+            request.defender_crew.as_ref(),
+        ) {
+            Ok(v) => v,
+            Err(msg) => {
+                return Err(OptimizeGatherError::Validation(
+                    ValidationErrorResponse {
+                        status: "error",
+                        message: "Validation failed",
+                        errors: vec![ValidationIssue {
+                            field: "defender_crew",
+                            messages: vec![msg],
+                        }],
+                    },
+                ));
+            }
+        };
+
+    if matches!(strategy, OptimizerStrategy::Genetic) && player_defender_officer_crew.is_some() {
+        return Err(OptimizeGatherError::Validation(ValidationErrorResponse {
+            status: "error",
+            message: "Validation failed",
+            errors: vec![ValidationIssue {
+                field: "defender_crew",
+                messages: vec![
+                    "defender_crew is not supported with strategy genetic (use tiered or exhaustive)"
+                        .to_string(),
+                ],
+            }],
+        }));
+    }
+
     let is_seeded_genetic = strategy == OptimizerStrategy::Genetic && !h_candidates.is_empty();
     info!(
         effective_strategy = optimizer_strategy_to_api_label(strategy),
@@ -829,6 +872,7 @@ fn gather_optimize_simulation_results(
         profile_id,
         request.support_buffs.as_deref(),
         request.defender_opponent,
+        player_defender_officer_crew.clone(),
     );
     let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
 
@@ -843,7 +887,7 @@ fn gather_optimize_simulation_results(
             for (start, end) in ranges {
                 if sink.job_cancelled() {
                     warn!("optimize_cancelled");
-                    return Err(());
+                    return Err(OptimizeGatherError::Cancelled);
                 }
                 let batch = &h_candidates[start..end];
                 let batch_results = run_monte_carlo_with_shared(
@@ -909,6 +953,7 @@ fn gather_optimize_simulation_results(
             support_buffs: request.support_buffs.clone().unwrap_or_default(),
             chain_grind: chain_grind.clone(),
             defender_opponent: request.defender_opponent,
+            player_defender_officer_crew: player_defender_officer_crew.clone(),
             warm_start: scenario_warm_start,
             prior_reference_crews,
             optimize_cache_key: cache_key_normalized.clone(),
@@ -930,7 +975,7 @@ fn gather_optimize_simulation_results(
         );
         if sink.job_cancelled() {
             warn!("optimize_cancelled");
-            return Err(());
+            return Err(OptimizeGatherError::Cancelled);
         }
         optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
         tiered_scout_budget_for_response = outcome.tiered_scout_budget;
@@ -1333,9 +1378,18 @@ pub fn run_optimize(
     let _span_guard = span.enter();
     let start = Instant::now();
     let mut sink = OptimizeProgressSink::None;
-    let (all_results, meta) =
-        gather_optimize_simulation_results(registry, request, profile_id, &mut sink)
-            .expect("sync optimize does not cancel");
+    let (all_results, meta) = match gather_optimize_simulation_results(
+        registry,
+        request,
+        profile_id,
+        &mut sink,
+    ) {
+        Ok(x) => x,
+        Err(OptimizeGatherError::Cancelled) => {
+            panic!("sync optimize does not cancel");
+        }
+        Err(OptimizeGatherError::Validation(e)) => return Err(OptimizePayloadError::Validation(e)),
+    };
     let duration_ms = start.elapsed().as_millis() as u64;
     let response = build_optimize_response(request, all_results, duration_ms, &meta, profile_id);
     info!(
@@ -1596,12 +1650,22 @@ pub fn start_optimize_job(
                     state.result = Some(response);
                 }
             }
-            Err(()) => {
+            Err(OptimizeGatherError::Cancelled) => {
                 warn!(job_id = %job_id_thread, "optimize_job_cancelled");
                 let mut map = lock_jobs();
                 if let Some(state) = map.get_mut(&job_id_thread) {
                     state.status = OptimizeJobStatus::Error;
                     state.error = Some("Cancelled".to_string());
+                }
+            }
+            Err(OptimizeGatherError::Validation(resp)) => {
+                warn!(job_id = %job_id_thread, ?resp, "optimize_job_validation_failed");
+                let err_json = serde_json::to_string(&resp)
+                    .unwrap_or_else(|_| "validation failed".to_string());
+                let mut map = lock_jobs();
+                if let Some(state) = map.get_mut(&job_id_thread) {
+                    state.status = OptimizeJobStatus::Error;
+                    state.error = Some(err_json);
                 }
             }
         }

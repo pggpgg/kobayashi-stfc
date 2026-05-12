@@ -475,6 +475,8 @@ mod tests {
             defender_level: None,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            player_defender_officer_seats: vec![],
+            player_defender_static_buffs: Default::default(),
         }
     }
 

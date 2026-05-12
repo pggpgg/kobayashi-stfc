@@ -234,6 +234,7 @@ pub fn compare_crews_monte_carlo_with_registry(
         profile_id,
         support_buffs,
         defender_opponent,
+        None,
     );
     let placeholder = shared.using_placeholder_combatants;
     let crews: Vec<CompareCrewDistribution> = candidates

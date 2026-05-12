@@ -114,6 +114,14 @@ pub struct WarmStartCrewDto {
     pub below_decks: Vec<String>,
 }
 
+/// Optional LCARS crew for the defending side (same shape as simulate `defender_crew`).
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
+pub struct DefenderOfficerCrewDto {
+    pub captain: Option<String>,
+    pub bridge: Option<Vec<Option<String>>>,
+    pub below_deck: Option<Vec<Option<String>>>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct OptimizeRequest {
     pub ship: String,
@@ -178,6 +186,10 @@ pub struct OptimizeRequest {
     pub chain: Option<ChainGrindRequest>,
     #[serde(default)]
     pub defender_opponent: DefenderOpponent,
+    /// Optional LCARS crew for the **defending** side (merged with hostile ship abilities).
+    /// Requires non-empty `captain`. Not supported when `strategy` is `genetic`.
+    #[serde(default)]
+    pub defender_crew: Option<DefenderOfficerCrewDto>,
     /// When true with non-empty `heuristics_seeds`, expanded heuristic crews are merged into the
     /// optimizer warm-start list so they flow through analytical prefilter and tiered (or exhaustive)
     /// Monte Carlo instead of a separate full-sim pass on every seed crew first.
@@ -864,6 +876,7 @@ pub fn parse_optimize_estimate_query(
         support_buffs: None,
         chain: None,
         defender_opponent: Default::default(),
+        defender_crew: None,
         fast_discovery: None,
         novelty_lambda: None,
         novelty_diverse_top: None,

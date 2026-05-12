@@ -13,7 +13,7 @@ Officers are described using **LCARS** (Language for Combat Ability Resolution &
 1. [Project Overview](#1-project-overview)
 2. [Architecture](#2-architecture)
 3. [LCARS Language Specification](#3-lcars-language-specification)
-4. [Combat Engine](#4-combat-engine)
+4. [Combat Engine](#4-combat-engine) (includes [4.6 Effect ownership & defender crews](#46-effect-ownership-combatcontext-and-defender-side-crews))
 5. [Player Profile & Bonus Layer](#5-player-profile--bonus-layer)
 6. [Optimizer Strategies](#6-optimizer-strategies)
 7. [Synergy System](#7-synergy-system)
@@ -561,6 +561,16 @@ The Monte Carlo layer aggregates many `SimulationResult` values into win rate, h
 | Phase 1 scouting only (tiered strategy)                     | ~8 seconds     |
 | Phase 1 + Phase 2 (tiered strategy)                         | ~16 seconds    |
 
+### 4.6 Effect ownership, `CombatContext`, and defender-side crews
+
+The combat loop always instantiates two [`Combatant`](src/combat/types.rs) values in fixed roles: **attacker** (first) and **defender** (second). [`CombatContext`](src/combat/abilities.rs) fields such as `defender_hull_pct`, `defender_faction`, and `defender_ship_type` describe **that geometry** (who is being shot in the primary outbound arc), not “the ship whose YAML file defined this effect.”
+
+LCARS trigger mapping ([`effect_trigger_timing`](src/lcars/resolver.rs)) attaches labels such as **self** vs **enemy** to [`TimingWindow`](src/combat/abilities.rs) values (for example [`SelfShieldBreak`](src/combat/abilities.rs) vs [`ShieldBreak`](src/combat/abilities.rs)). In PvE today, “self” is consistently the **player attacker**; when a second officer-driven crew is attached to the defender (PvP-shaped defender or scripted tests), the engine must treat **effect owner** explicitly:
+
+- **Effect owner**: the combatant whose [`CrewConfiguration`](src/combat/abilities.rs) produced the [`ActiveAbilityEffect`](src/combat/abilities.rs) row (attacker crew vs merged defender crew: hostile ship abilities + optional player-defender officers).
+- **CombatContext**: still the global fight snapshot for condition gating (hull/shield fractions, factions, tags, assimilated flags for each side).
+
+Future work when expanding defender officers: decide per mechanic whether “self” in LCARS is interpreted in the **author’s** hull frame (the defender’s ship when evaluating defender-owned rows) while keeping `CombatContext` as the single shared condition struct, vs introducing a parallel context or resolver pass. The prototype **inbound** path ([`simulate_combat_from_setup`](src/combat/engine.rs)) applies defender-owned [`TimingWindow::DefensePhase`](src/combat/abilities.rs) stacks when resolving **outbound** hits against the defender using the same round `CombatContext` as the attacker (correct for global gates like `defender_hull_pct`).
 
 ---
 

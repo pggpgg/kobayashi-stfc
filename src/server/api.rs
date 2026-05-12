@@ -34,7 +34,9 @@ use crate::optimizer::crew_generator::{
     BRIDGE_SLOTS,
 };
 use crate::optimizer::enforce_candidate_legality_with_registry;
-use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
+use crate::optimizer::monte_carlo::scenario::{
+    DefenderOpponent, PlayerDefenderOfficerCrewOverride,
+};
 use crate::optimizer::monte_carlo::{
     compare_crews_monte_carlo_with_registry, replay_optimize_iteration_with_registry,
     run_monte_carlo_with_registry, SimulationResult,
@@ -365,6 +367,10 @@ pub struct SimulateRequest {
     pub chain: Option<requests::ChainGrindRequest>,
     #[serde(default)]
     pub defender_opponent: DefenderOpponent,
+    /// Optional LCARS crew for the **defending** side (merged with hostile ship abilities in PvE).
+    /// Same shape as `crew`; requires non-empty `captain` to take effect.
+    #[serde(default)]
+    pub defender_crew: Option<SimulateCrew>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -509,6 +515,115 @@ fn pad_to_len(mut v: Vec<String>, len: usize) -> Vec<String> {
     v
 }
 
+/// Resolve optional API defender crew into LCARS merge input for Monte Carlo / shared scenario.
+/// Returns `Ok(None)` when unset or effectively empty; errors use human-readable messages.
+pub(crate) fn resolve_player_defender_officer_crew_for_simulate(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    defender: Option<&SimulateCrew>,
+) -> Result<Option<PlayerDefenderOfficerCrewOverride>, String> {
+    let Some(d) = defender else {
+        return Ok(None);
+    };
+    resolve_player_defender_officer_crew_from_officer_fields(
+        registry,
+        profile_id,
+        below_decks_slots,
+        d.captain.as_ref(),
+        d.bridge.as_ref(),
+        d.below_deck.as_ref(),
+    )
+}
+
+pub(crate) fn resolve_player_defender_officer_crew_for_optimize(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    defender: Option<&requests::DefenderOfficerCrewDto>,
+) -> Result<Option<PlayerDefenderOfficerCrewOverride>, String> {
+    let Some(d) = defender else {
+        return Ok(None);
+    };
+    resolve_player_defender_officer_crew_from_officer_fields(
+        registry,
+        profile_id,
+        below_decks_slots,
+        d.captain.as_ref(),
+        d.bridge.as_ref(),
+        d.below_deck.as_ref(),
+    )
+}
+
+fn resolve_player_defender_officer_crew_from_officer_fields(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    captain: Option<&String>,
+    bridge: Option<&Vec<Option<String>>>,
+    below_deck: Option<&Vec<Option<String>>>,
+) -> Result<Option<PlayerDefenderOfficerCrewOverride>, String> {
+    let has_other = bridge
+        .map(|b| {
+            b.iter().any(|s| {
+                s.as_ref()
+                    .map(|x| !x.trim().is_empty())
+                    .unwrap_or(false)
+            })
+        })
+        .unwrap_or(false)
+        || below_deck
+            .map(|v| {
+                v.iter().any(|s| {
+                    s.as_ref()
+                        .map(|x| !x.trim().is_empty())
+                        .unwrap_or(false)
+                })
+            })
+            .unwrap_or(false);
+
+    let cap_trimmed = match captain.map(|s| s.trim()).filter(|s| !s.is_empty()) {
+        Some(s) => s,
+        None => {
+            if has_other {
+                return Err(
+                    "defender_crew.captain is required when bridge or below_deck entries are set"
+                        .into(),
+                );
+            }
+            return Ok(None);
+        }
+    };
+
+    let officers: Vec<(String, String)> = registry
+        .officers()
+        .iter()
+        .map(|o| (o.id.clone(), o.name.clone()))
+        .collect();
+    let d_candidate = crew_candidate_from_officer_fields(
+        Some(cap_trimmed),
+        bridge.map(|v| v.as_slice()),
+        below_deck.map(|v| v.as_slice()),
+        &officers,
+        below_decks_slots,
+    )?;
+    let (candidates_d, _) = enforce_candidate_legality_with_registry(
+        registry,
+        profile_id,
+        below_decks_slots,
+        vec![d_candidate],
+    );
+    if candidates_d.is_empty() {
+        return Err("defender_crew is not roster/seat legal for this scenario".into());
+    }
+    Ok(Some(PlayerDefenderOfficerCrewOverride {
+        captain: captain.cloned(),
+        bridge: bridge.cloned(),
+        below_deck: below_deck.cloned(),
+        below_decks_slots,
+    }))
+}
+
 fn binomial_95_ci(wins: u32, n: u32) -> [f64; 2] {
     if n == 0 {
         return [0.0, 0.0];
@@ -586,6 +701,13 @@ pub fn simulate_payload(
             "crew is not roster/seat legal for this scenario".to_string(),
         ));
     }
+    let player_defender_officer_crew = resolve_player_defender_officer_crew_for_simulate(
+        registry,
+        profile_id,
+        below_decks_slots,
+        req.defender_crew.as_ref(),
+    )
+    .map_err(SimulateError::Validation)?;
     let (results, using_placeholder_combatants) = run_monte_carlo_with_registry(
         registry,
         &req.ship,
@@ -599,6 +721,7 @@ pub fn simulate_payload(
         req.support_buffs.as_deref(),
         chain_grind,
         req.defender_opponent,
+        player_defender_officer_crew,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {

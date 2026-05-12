@@ -1259,6 +1259,12 @@ components:
           $ref: "#/components/schemas/ChainGrindRequestDto"
         defender_opponent:
           type: string
+        defender_crew:
+          $ref: "#/components/schemas/SimulateCrew"
+          description: >
+            Optional LCARS crew for the defending combatant (merged with hostile ship abilities in PvE).
+            Same shape as `crew`. Non-empty `captain` required when any bridge or below_deck slot is set;
+            omitted or empty = defender officers from hostile data only.
 
     SimulateStats:
       type: object
@@ -1517,6 +1523,11 @@ components:
           $ref: "#/components/schemas/ChainGrindRequestDto"
         defender_opponent:
           type: string
+        defender_crew:
+          $ref: "#/components/schemas/SimulateCrew"
+          description: >
+            Optional LCARS crew for the defending combatant (merged with hostile ship abilities).
+            Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation).
         novelty_lambda:
           type: number
         novelty_diverse_top:

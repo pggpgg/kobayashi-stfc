@@ -25,7 +25,8 @@ use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::chain::ChainSimulationSummary;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, DefenderOpponent, SharedScenarioData,
+    build_shared_scenario_data_from_registry, DefenderOpponent, PlayerDefenderOfficerCrewOverride,
+    SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_scout_phase_with_shared,
@@ -407,6 +408,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     // When set, matching crews skip scout and/or confirm Monte Carlo using stored aggregates.
     preconfirmed: Option<&HashMap<u64, SimulationResult>>,
     scout_adaptive: bool,
@@ -454,6 +456,7 @@ where
         profile_id,
         support_buffs,
         defender_opponent,
+        player_defender_officer_crew,
     );
 
     let scout_cap = scout_sims.max(1);

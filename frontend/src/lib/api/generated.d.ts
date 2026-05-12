@@ -1815,6 +1815,8 @@ export interface components {
             support_buffs?: string[];
             chain?: components["schemas"]["ChainGrindRequestDto"];
             defender_opponent?: string;
+            /** @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities in PvE). Same shape as `crew`. Non-empty `captain` required when any bridge or below_deck slot is set; omitted or empty = defender officers from hostile data only. */
+            defender_crew?: components["schemas"]["SimulateCrew"];
         };
         SimulateStats: {
             win_rate: number;
@@ -1915,6 +1917,8 @@ export interface components {
             support_buffs?: string[];
             chain?: components["schemas"]["ChainGrindRequestDto"];
             defender_opponent?: string;
+            /** @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities). Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation). */
+            defender_crew?: components["schemas"]["SimulateCrew"];
             novelty_lambda?: number;
             novelty_diverse_top?: number;
             novelty_pool?: number;

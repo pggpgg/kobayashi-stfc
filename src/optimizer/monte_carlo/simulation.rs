@@ -20,7 +20,8 @@ use std::sync::{Arc, Mutex};
 use super::crew_resolution::seeded_variance;
 use super::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
+    scenario_to_combat_input_from_shared, DefenderOpponent, PlayerDefenderOfficerCrewOverride,
+    SharedScenarioData,
 };
 
 #[derive(Debug, Clone)]
@@ -799,6 +800,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -809,6 +811,7 @@ pub fn run_monte_carlo_parallel_with_registry(
         profile_id,
         support_buffs,
         defender_opponent,
+        player_defender_officer_crew,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -833,6 +836,7 @@ pub fn run_monte_carlo_with_registry(
     support_buffs: Option<&[String]>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -843,6 +847,7 @@ pub fn run_monte_carlo_with_registry(
         profile_id,
         support_buffs,
         defender_opponent,
+        player_defender_officer_crew,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -925,6 +930,7 @@ pub fn replay_optimize_iteration_with_registry(
         profile_id,
         support_buffs,
         defender_opponent,
+        None,
     );
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
     let external_buffs = external_buffs_trace_payload(&shared);
@@ -1021,7 +1027,7 @@ fn run_monte_carlo_with_parallelism(
     defender_opponent: DefenderOpponent,
 ) -> Vec<SimulationResult> {
     let shared =
-        build_shared_scenario_data_standalone(ship, hostile, support_buffs, defender_opponent);
+        build_shared_scenario_data_standalone(ship, hostile, support_buffs, defender_opponent, None);
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel, chain_grind)
 }
 

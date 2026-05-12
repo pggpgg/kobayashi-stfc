@@ -32,7 +32,8 @@ use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::matchup_priors::analytical_prefilter_rank_score;
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    scenario_to_combat_input_from_shared, DefenderOpponent, SharedScenarioData,
+    scenario_to_combat_input_from_shared, DefenderOpponent, PlayerDefenderOfficerCrewOverride,
+    SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_with_shared, SimulationResult,
@@ -408,6 +409,8 @@ pub struct OptimizationScenario<'a> {
     pub chain_grind: Option<ChainGrindParams>,
     /// Defender is NPC hostile vs player ship for canonical opponent-category conditions.
     pub defender_opponent: DefenderOpponent,
+    /// Optional LCARS defender crew (API `defender_crew`) merged into shared scenario for registry tiered/exhaustive paths.
+    pub player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     /// Optional crews prepended before generated candidates (deduped by stable hash); e.g. warm-start from UI.
     pub warm_start: Vec<CrewCandidate>,
     /// Crews used only for matchup priors in analytical ranking (not prepended to the candidate list).
@@ -456,6 +459,7 @@ impl Default for OptimizationScenario<'_> {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            player_defender_officer_crew: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -701,6 +705,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.profile_id,
         scenario_support_slice(scenario),
         scenario.defender_opponent,
+        scenario.player_defender_officer_crew.clone(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -746,6 +751,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario_support_slice(scenario),
         scenario.chain_grind.clone(),
         scenario.defender_opponent,
+        scenario.player_defender_officer_crew.clone(),
         pre_ref,
         !scenario.tiered_scout_uniform,
         scenario.tiered_confirm_budget_cap_mult,
@@ -797,6 +803,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.profile_id,
         scenario_support_slice(scenario),
         scenario.defender_opponent,
+        scenario.player_defender_officer_crew.clone(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -864,6 +871,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
         scenario.hostile,
         scenario_support_slice(scenario),
         scenario.defender_opponent,
+        scenario.player_defender_officer_crew.clone(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -980,6 +988,7 @@ where
                 support_buffs: scenario.support_buffs.clone(),
                 chain_grind: scenario.chain_grind.clone(),
                 defender_opponent: scenario.defender_opponent,
+                player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
                 warm_start: scenario.warm_start.clone(),
                 prior_reference_crews: scenario.prior_reference_crews.clone(),
                 optimize_cache_key: scenario.optimize_cache_key.clone(),
@@ -1000,6 +1009,7 @@ where
                 scenario.hostile,
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
+                scenario.player_defender_officer_crew.clone(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, _) = analytical_prefilter_unless_chain(
@@ -1132,6 +1142,7 @@ where
                 scenario.profile_id,
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
+                scenario.player_defender_officer_crew.clone(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
@@ -1239,6 +1250,7 @@ where
                 scenario_support_slice(scenario),
                 scenario.chain_grind.clone(),
                 scenario.defender_opponent,
+                scenario.player_defender_officer_crew.clone(),
                 pre_ref,
                 scout_adaptive,
                 scenario.tiered_confirm_budget_cap_mult,
@@ -1279,6 +1291,7 @@ where
                 scenario.profile_id,
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
+                scenario.player_defender_officer_crew.clone(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
@@ -1546,6 +1559,7 @@ pub fn optimize_crew(
         support_buffs: Vec::new(),
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
+        player_defender_officer_crew: None,
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
@@ -1585,6 +1599,7 @@ mod tests {
             None,
             None,
             DefenderOpponent::Hostile,
+            None,
         );
         let seed = 11u64;
         let cand = CrewCandidate {
@@ -1684,6 +1699,7 @@ mod tests {
             None,
             None,
             DefenderOpponent::Hostile,
+            None,
         );
         let seed = 11u64;
         let history_shape = CrewCandidate {
@@ -1761,6 +1777,7 @@ mod tests {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            player_defender_officer_crew: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -1912,6 +1929,7 @@ mod tests {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            player_defender_officer_crew: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -1982,6 +2000,7 @@ mod tests {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            player_defender_officer_crew: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2046,6 +2065,7 @@ mod tests {
             support_buffs: Vec::new(),
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
+            player_defender_officer_crew: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2095,6 +2115,7 @@ mod tests {
             None,
             None,
             DefenderOpponent::Hostile,
+            None,
         );
         let shared_high = build_shared_scenario_data_from_registry(
             &registry,
@@ -2105,6 +2126,7 @@ mod tests {
             None,
             None,
             DefenderOpponent::Hostile,
+            None,
         );
         assert!(
             !shared_low.using_placeholder_combatants && !shared_high.using_placeholder_combatants,
