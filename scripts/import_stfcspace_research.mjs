@@ -66,8 +66,7 @@ const BASE_URL = "https://data.stfc.space";
  * Stats merged into PlayerProfile via normalize_profile_combat_stat (see `normalize_profile_combat_stat` in
  * src/data/profile.rs). Must match that function's engine keys (aliases like armor_pierce fold in Rust only).
  *
- * `isolytic_damage_morale` is rarely inferred; when description text ties isolytic offense to Morale,
- * inferCombatStatFromDescription maps it so the scenario can apply a morale-gated seat instead of flat isolytic_damage.
+ * Morale-gated isolytic uses `isolytic_damage` + `requires_morale` on catalog rows (compiled to round-start seats).
  */
 const ALLOWED_COMBAT_STATS = new Set([
   "weapon_damage",
@@ -79,7 +78,6 @@ const ALLOWED_COMBAT_STATS = new Set([
   "isolytic_damage",
   "isolytic_cascade",
   "isolytic_cascade_damage",
-  "isolytic_damage_morale",
   "isolytic_defense",
   "crit_chance",
   "crit_damage",
@@ -235,7 +233,6 @@ const NON_PCT_DECIMAL_STATS = new Set([
   "shield_deflection",
   "weapon_damage",
   "isolytic_damage",
-  "isolytic_damage_morale",
   "isolytic_defense",
   "hull_hp",
   "shield_hp",

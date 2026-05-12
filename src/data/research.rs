@@ -21,8 +21,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::combat::types::OpponentFactionTag;
 use crate::data::combat_effect_spec::{
-    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, EffectCategory,
-    EffectConfidence, SourceRef,
+    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTriggerSpec,
+    EffectCategory, EffectConfidence, SourceRef,
 };
 
 /// One research project (game rid). Bonuses are cumulative over levels.
@@ -47,10 +47,17 @@ pub struct ResearchLevel {
 }
 
 /// Optional **defender** / engagement gates (`defender_*`, morale, burning, hull breach) and
-/// optional **`attacker_faction`** (player ship owner faction slug from [`crate::data::ship::ShipRecord::faction`]).
+/// optional **player hull owner** gates (`attacker_faction` / `attacker_factions` from [`crate::data::ship::ShipRecord::faction`]).
 /// Defender-gated `crit_*` / `weapon_damage` rows are attack-phase seats, not flat `profile.bonuses`.
-/// `attacker_faction` rows merge into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`]
-/// and apply in [`crate::data::profile::apply_profile_to_attacker`] when the resolved ship matches.
+/// Owner-only rows merge into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`]
+/// and apply in [`crate::data::profile::apply_profile_to_attacker`] when the resolved ship matches
+/// (unless a row is also defender-gated and routed elsewhere; see [`skip_owner_faction_merge_for_defender_gated_hull_shield`]).
+///
+/// **Conjunctive semantics:** every set field on one bonus row is an **AND** at evaluation time (same as
+/// [`crate::combat::condition::ability_condition_from_research_bonus_key`]). For example, both
+/// `defender_faction` and `attacker_faction` require matching opponent tag **and** matching attacker
+/// owner faction. [`cumulative_conditional_research_bonuses`] keys rows by the full struct so dual gates
+/// do not collapse with single-gate rows.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub struct ResearchBonusConditionKey {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -150,6 +157,11 @@ pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry
         return research_bonus_is_owner_faction_gated(bonus)
             || defender_context_for_research_attack_seat(&bonus.condition);
     }
+    // Conditional `isolytic_damage` (e.g. `requires_morale`, faction gates) compiles to seats — never flat-merge into
+    // `Combatant.isolytic_damage` (same rule as other gated isolytic rows).
+    if bonus.stat == "isolytic_damage" && research_bonus_is_conditional(bonus) {
+        return true;
+    }
     false
 }
 
@@ -175,7 +187,6 @@ fn research_defender_conditional_stat_skips_flat_profile(stat: &str) -> bool {
             | "shield_mitigation"
             | "accuracy"
             | "isolytic_damage"
-            | "isolytic_damage_morale"
             | "isolytic_defense"
             | "apex_shred"
             | "apex_barrier"
@@ -240,6 +251,7 @@ pub struct ResearchCanonicalOverride {
 /// `by_level[0..player_level]` and compiles to a [`crate::data::combat_effect_spec::CombatEffectSpec`],
 /// unless [`Self::snapshot_by_level`] is true: then `by_level[player_level - 1]` is the **total**
 /// bonus at that tier (common for STFC “cumulative display” nodes — do not sum prior tiers).
+/// Optional [`Self::trigger`]: when omitted, defaults to [`AbilityTriggerSpec::AttackPhase`] in the adapter.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResearchCanonicalEffectEntry {
     pub id: String,
@@ -249,6 +261,9 @@ pub struct ResearchCanonicalEffectEntry {
     pub by_level: Vec<f64>,
     #[serde(default)]
     pub conditions: Vec<AbilityConditionSpec>,
+    /// When set, overrides default [`AbilityTriggerSpec::AttackPhase`] in canonical compile.
+    #[serde(default)]
+    pub trigger: Option<AbilityTriggerSpec>,
     #[serde(default)]
     pub category: Option<EffectCategory>,
     #[serde(default)]
@@ -580,6 +595,7 @@ pub fn cumulative_research_level_conditional_bonuses(
                 continue;
             }
             if !(is_conditional_attack_seat_research_stat(&bonus.stat)
+                || bonus.stat == "isolytic_damage"
                 || (bonus.condition.defender_faction.is_some()
                     && research_defender_conditional_stat_skips_flat_profile(&bonus.stat)))
             {

@@ -4,7 +4,7 @@
   "items": [
     {
       "rid": 2999437,
-      "name": "4★ Direct Hit",
+      "name": "4\u2605 Direct Hit",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -860,7 +860,7 @@
     },
     {
       "rid": 36997703,
-      "name": "4★ Shield Penetration",
+      "name": "4\u2605 Shield Penetration",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -1440,7 +1440,7 @@
     },
     {
       "rid": 51827304,
-      "name": "4★ Interceptor Armor Piercing",
+      "name": "4\u2605 Interceptor Armor Piercing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -1860,7 +1860,7 @@
     },
     {
       "rid": 64261333,
-      "name": "5★ Interceptor Armaments",
+      "name": "5\u2605 Interceptor Armaments",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -2902,7 +2902,7 @@
     },
     {
       "rid": 122161790,
-      "name": "▷ Enhanced PvE Apex Barrier",
+      "name": "\u25b7 Enhanced PvE Apex Barrier",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -4314,7 +4314,7 @@
     },
     {
       "rid": 183214652,
-      "name": "4★  Battleship Swift Repair",
+      "name": "4\u2605  Battleship Swift Repair",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -4800,7 +4800,7 @@
     },
     {
       "rid": 208174446,
-      "name": "4★ Shield Efficiency",
+      "name": "4\u2605 Shield Efficiency",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -5552,9 +5552,10 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.2,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         }
@@ -6629,7 +6630,7 @@
     },
     {
       "rid": 281104967,
-      "name": "4★ Evasive Interceptors",
+      "name": "4\u2605 Evasive Interceptors",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -6845,7 +6846,7 @@
     },
     {
       "rid": 292902554,
-      "name": "Sarek’s Vulcan Necklace",
+      "name": "Sarek\u2019s Vulcan Necklace",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -6985,7 +6986,7 @@
     },
     {
       "rid": 296967896,
-      "name": "5★ Fortified Battleship",
+      "name": "5\u2605 Fortified Battleship",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -7529,7 +7530,7 @@
     },
     {
       "rid": 307028516,
-      "name": "▶ V'ger Challenge Sweep",
+      "name": "\u25b6 V'ger Challenge Sweep",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -9501,7 +9502,7 @@
     },
     {
       "rid": 394680012,
-      "name": "4★  Battleship Defense Formation",
+      "name": "4\u2605  Battleship Defense Formation",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -9825,7 +9826,7 @@
     },
     {
       "rid": 407841760,
-      "name": "4★ Tactical Interceptors",
+      "name": "4\u2605 Tactical Interceptors",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -10315,7 +10316,7 @@
     },
     {
       "rid": 423936063,
-      "name": "V'ger ▷ Enhanced Isolytic Defense",
+      "name": "V'ger \u25b7 Enhanced Isolytic Defense",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -10857,7 +10858,7 @@
     },
     {
       "rid": 429886769,
-      "name": "4★  Interceptor Station Piercing",
+      "name": "4\u2605  Interceptor Station Piercing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -10965,7 +10966,7 @@
     },
     {
       "rid": 430986807,
-      "name": "4★ Hull Density",
+      "name": "4\u2605 Hull Density",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -11249,7 +11250,7 @@
     },
     {
       "rid": 440319103,
-      "name": "You Can’t Outrun It",
+      "name": "You Can\u2019t Outrun It",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -11824,7 +11825,7 @@
     },
     {
       "rid": 473697723,
-      "name": "▷ Enhanced PvP Apex Shred",
+      "name": "\u25b7 Enhanced PvP Apex Shred",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -12500,7 +12501,7 @@
     },
     {
       "rid": 525147135,
-      "name": "7⇵ Isolytic Battleships",
+      "name": "7\u21f5 Isolytic Battleships",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -13047,7 +13048,7 @@
     },
     {
       "rid": 534869146,
-      "name": "4★ Covariant Shields",
+      "name": "4\u2605 Covariant Shields",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -14180,7 +14181,7 @@
     },
     {
       "rid": 596446780,
-      "name": "Prime Ω Critical Damage Floor",
+      "name": "Prime \u03a9 Critical Damage Floor",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -14374,7 +14375,7 @@
     },
     {
       "rid": 597519142,
-      "name": "4★ Explorer Barriers",
+      "name": "4\u2605 Explorer Barriers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -15908,7 +15909,7 @@
     },
     {
       "rid": 662995847,
-      "name": "4★ Tactical Explorers",
+      "name": "4\u2605 Tactical Explorers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -16302,7 +16303,7 @@
     },
     {
       "rid": 667236022,
-      "name": "5★ Explorer Vulnerability",
+      "name": "5\u2605 Explorer Vulnerability",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -16950,7 +16951,7 @@
     },
     {
       "rid": 700850569,
-      "name": "5★ Hull Reinforcement",
+      "name": "5\u2605 Hull Reinforcement",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -17648,7 +17649,7 @@
     },
     {
       "rid": 724877576,
-      "name": "4★ Kinetic Shockwave",
+      "name": "4\u2605 Kinetic Shockwave",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -17756,7 +17757,7 @@
     },
     {
       "rid": 729258689,
-      "name": "5★ Battleship Vulnerability",
+      "name": "5\u2605 Battleship Vulnerability",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -18322,7 +18323,7 @@
     },
     {
       "rid": 741824761,
-      "name": "5★ Interceptor Susceptibility",
+      "name": "5\u2605 Interceptor Susceptibility",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -18912,7 +18913,7 @@
     },
     {
       "rid": 761917312,
-      "name": "6⇵ Battleship Casing",
+      "name": "6\u21f5 Battleship Casing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -19394,7 +19395,7 @@
     },
     {
       "rid": 775449937,
-      "name": "6⇵ Isolytic Firepower",
+      "name": "6\u21f5 Isolytic Firepower",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -20638,7 +20639,7 @@
     },
     {
       "rid": 842896354,
-      "name": "4★ Battleship Regeneration",
+      "name": "4\u2605 Battleship Regeneration",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -21354,7 +21355,7 @@
     },
     {
       "rid": 872286238,
-      "name": "6⇵ Interceptor Absorbers",
+      "name": "6\u21f5 Interceptor Absorbers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -22680,7 +22681,7 @@
     },
     {
       "rid": 960126986,
-      "name": "4★ Pillager Critical",
+      "name": "4\u2605 Pillager Critical",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -23980,7 +23981,7 @@
     },
     {
       "rid": 1056620645,
-      "name": "5★ Klingon Armada Defects",
+      "name": "5\u2605 Klingon Armada Defects",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -24493,7 +24494,7 @@
     },
     {
       "rid": 1070934652,
-      "name": "5★ Federation Armada Defects",
+      "name": "5\u2605 Federation Armada Defects",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -25870,7 +25871,7 @@
     },
     {
       "rid": 1127499697,
-      "name": "Ω Kinetic Weaponry",
+      "name": "\u03a9 Kinetic Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -26631,7 +26632,7 @@
     },
     {
       "rid": 1149881621,
-      "name": "4★ Explorer Targeting Array",
+      "name": "4\u2605 Explorer Targeting Array",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -27763,7 +27764,7 @@
     },
     {
       "rid": 1181200605,
-      "name": "O’Brien’s Dartboard",
+      "name": "O\u2019Brien\u2019s Dartboard",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -32869,7 +32870,7 @@
     },
     {
       "rid": 1408717854,
-      "name": "7⇵ Isolytic Interceptors",
+      "name": "7\u21f5 Isolytic Interceptors",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -34908,7 +34909,7 @@
     },
     {
       "rid": 1501177648,
-      "name": "5★ Battleship Susceptibility",
+      "name": "5\u2605 Battleship Susceptibility",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -35074,7 +35075,7 @@
     },
     {
       "rid": 1509538495,
-      "name": "4★  Explorer Repair Cost",
+      "name": "4\u2605  Explorer Repair Cost",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -35486,7 +35487,7 @@
     },
     {
       "rid": 1526077950,
-      "name": "6⇵ Offensive Explorers",
+      "name": "6\u21f5 Offensive Explorers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -35968,7 +35969,7 @@
     },
     {
       "rid": 1545912165,
-      "name": "4★  Battleship Station Piercing",
+      "name": "4\u2605  Battleship Station Piercing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -36076,7 +36077,7 @@
     },
     {
       "rid": 1550920182,
-      "name": "5★ Armada Vulnerability",
+      "name": "5\u2605 Armada Vulnerability",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -36242,7 +36243,7 @@
     },
     {
       "rid": 1562354019,
-      "name": "4★  Interceptor Defensive Shields",
+      "name": "4\u2605  Interceptor Defensive Shields",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -37939,7 +37940,7 @@
     },
     {
       "rid": 1655243807,
-      "name": "5★ Shield Reinforcement",
+      "name": "5\u2605 Shield Reinforcement",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -38047,7 +38048,7 @@
     },
     {
       "rid": 1659469734,
-      "name": "4★  Explorer Pure Gas",
+      "name": "4\u2605  Explorer Pure Gas",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -39491,7 +39492,7 @@
     },
     {
       "rid": 1702433564,
-      "name": "6⇵ Explorer Casing",
+      "name": "6\u21f5 Explorer Casing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -40669,7 +40670,7 @@
     },
     {
       "rid": 1738747951,
-      "name": "6⇵ Battleship Absorbers",
+      "name": "6\u21f5 Battleship Absorbers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -40903,7 +40904,7 @@
     },
     {
       "rid": 1745409916,
-      "name": "4★  Explorer Swift Repair",
+      "name": "4\u2605  Explorer Swift Repair",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -41509,7 +41510,7 @@
     },
     {
       "rid": 1772672688,
-      "name": "5★ Interceptor Vulnerability",
+      "name": "5\u2605 Interceptor Vulnerability",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -42119,7 +42120,7 @@
     },
     {
       "rid": 1810091068,
-      "name": "▶ V'ger Assault Challenge Sweep",
+      "name": "\u25b6 V'ger Assault Challenge Sweep",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -42814,7 +42815,7 @@
     },
     {
       "rid": 1849439652,
-      "name": "5★ Interceptor Evasive Maneuvers",
+      "name": "5\u2605 Interceptor Evasive Maneuvers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -44788,7 +44789,7 @@
     },
     {
       "rid": 1943045577,
-      "name": "Ω NSEA Protector Apex Barrier",
+      "name": "\u03a9 NSEA Protector Apex Barrier",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -45054,7 +45055,7 @@
     },
     {
       "rid": 1949701911,
-      "name": "5★ Station Vulnerability",
+      "name": "5\u2605 Station Vulnerability",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -46095,7 +46096,7 @@
     },
     {
       "rid": 1989841870,
-      "name": "5★ Armada Critical Chance",
+      "name": "5\u2605 Armada Critical Chance",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -46261,7 +46262,7 @@
     },
     {
       "rid": 1993868910,
-      "name": "6⇵ Isolytic Defense",
+      "name": "6\u21f5 Isolytic Defense",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -47175,7 +47176,7 @@
     },
     {
       "rid": 2008862727,
-      "name": "6⇵ Trapping Tactics",
+      "name": "6\u21f5 Trapping Tactics",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -47283,7 +47284,7 @@
     },
     {
       "rid": 2010368294,
-      "name": "4★ Shield Modulation",
+      "name": "4\u2605 Shield Modulation",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -47873,7 +47874,7 @@
     },
     {
       "rid": 2044035301,
-      "name": "V'ger ▷ Enhanced Isolytic Damage",
+      "name": "V'ger \u25b7 Enhanced Isolytic Damage",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -48423,7 +48424,7 @@
     },
     {
       "rid": 2076895205,
-      "name": "4★  Interceptor Swift Repair",
+      "name": "4\u2605  Interceptor Swift Repair",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -51223,7 +51224,7 @@
     },
     {
       "rid": 2193816350,
-      "name": "6⇵ Predictive Algorthyms",
+      "name": "6\u21f5 Predictive Algorthyms",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -51605,7 +51606,7 @@
     },
     {
       "rid": 2205418379,
-      "name": "▷ Enhanced PvP Apex Barrier",
+      "name": "\u25b7 Enhanced PvP Apex Barrier",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -51821,7 +51822,7 @@
     },
     {
       "rid": 2215147317,
-      "name": "4★  Explorer Defensive Shields",
+      "name": "4\u2605  Explorer Defensive Shields",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -52263,7 +52264,7 @@
     },
     {
       "rid": 2231363572,
-      "name": "4★ Interceptor Weaponry",
+      "name": "4\u2605 Interceptor Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -52429,7 +52430,7 @@
     },
     {
       "rid": 2237159583,
-      "name": "Emperor Georgiou’s Sword",
+      "name": "Emperor Georgiou\u2019s Sword",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -52557,7 +52558,7 @@
     },
     {
       "rid": 2241443802,
-      "name": "6⇵ Offensive Interceptors",
+      "name": "6\u21f5 Offensive Interceptors",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -53113,7 +53114,7 @@
     },
     {
       "rid": 2265702734,
-      "name": "5★ Battleship Protection",
+      "name": "5\u2605 Battleship Protection",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -53879,7 +53880,7 @@
     },
     {
       "rid": 2294080570,
-      "name": "4★ Energy Blast",
+      "name": "4\u2605 Energy Blast",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -54589,7 +54590,7 @@
     },
     {
       "rid": 2325782258,
-      "name": "4★ Interceptor Regeneration",
+      "name": "4\u2605 Interceptor Regeneration",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -55341,7 +55342,7 @@
     },
     {
       "rid": 2361452925,
-      "name": "4★  Battleship Repair Cost",
+      "name": "4\u2605  Battleship Repair Cost",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -55957,7 +55958,7 @@
     },
     {
       "rid": 2396410066,
-      "name": "4★ Targeting Array",
+      "name": "4\u2605 Targeting Array",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -56223,7 +56224,7 @@
     },
     {
       "rid": 2404854155,
-      "name": "6⇵ Kiting Tactics",
+      "name": "6\u21f5 Kiting Tactics",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -56773,7 +56774,7 @@
     },
     {
       "rid": 2443213467,
-      "name": "4★ Explorer Pillager",
+      "name": "4\u2605 Explorer Pillager",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -57275,7 +57276,7 @@
     },
     {
       "rid": 2459777993,
-      "name": "4★ Battleship Penetration",
+      "name": "4\u2605 Battleship Penetration",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -57667,7 +57668,7 @@
     },
     {
       "rid": 2477584075,
-      "name": "6⇵ Interceptor Casing",
+      "name": "6\u21f5 Interceptor Casing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -58797,7 +58798,7 @@
     },
     {
       "rid": 2521282635,
-      "name": "4★  Battleship Defensive Shields",
+      "name": "4\u2605  Battleship Defensive Shields",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -59013,7 +59014,7 @@
     },
     {
       "rid": 2524096458,
-      "name": "7⇵ Isolytic Explorers",
+      "name": "7\u21f5 Isolytic Explorers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -61083,7 +61084,7 @@
     },
     {
       "rid": 2587994517,
-      "name": "Ω Advanced Warfare",
+      "name": "\u03a9 Advanced Warfare",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -61309,7 +61310,7 @@
     },
     {
       "rid": 2601710565,
-      "name": "Ω Critical Damage Floor",
+      "name": "\u03a9 Critical Damage Floor",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -63241,7 +63242,7 @@
     },
     {
       "rid": 2716764264,
-      "name": "4★  Explorer Station Piercing",
+      "name": "4\u2605  Explorer Station Piercing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -64451,7 +64452,7 @@
     },
     {
       "rid": 2775890300,
-      "name": "4★ Explorer Weaponry",
+      "name": "4\u2605 Explorer Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -64617,7 +64618,7 @@
     },
     {
       "rid": 2787465230,
-      "name": "4★ Battleship Pillager",
+      "name": "4\u2605 Battleship Pillager",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -65713,7 +65714,7 @@
     },
     {
       "rid": 2832835071,
-      "name": "4★ Evasive Maneuvers",
+      "name": "4\u2605 Evasive Maneuvers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -66037,7 +66038,7 @@
     },
     {
       "rid": 2838424936,
-      "name": "Ω Faction Warfare Isolytic Damage",
+      "name": "\u03a9 Faction Warfare Isolytic Damage",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -66379,7 +66380,7 @@
     },
     {
       "rid": 2854400060,
-      "name": "▷ Enhanced PvE Apex Shred",
+      "name": "\u25b7 Enhanced PvE Apex Shred",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -66647,7 +66648,7 @@
     },
     {
       "rid": 2867017099,
-      "name": "4★  Interceptor Pure Crystal",
+      "name": "4\u2605  Interceptor Pure Crystal",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -66843,7 +66844,7 @@
     },
     {
       "rid": 2868507817,
-      "name": "4★ Offensive Strategies",
+      "name": "4\u2605 Offensive Strategies",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -66951,7 +66952,7 @@
     },
     {
       "rid": 2875366414,
-      "name": "4★  Explorer Defense Formation",
+      "name": "4\u2605  Explorer Defense Formation",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -67815,7 +67816,7 @@
     },
     {
       "rid": 2958184913,
-      "name": "6⇵ Tactical Advantage",
+      "name": "6\u21f5 Tactical Advantage",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -67923,7 +67924,7 @@
     },
     {
       "rid": 2967356068,
-      "name": "5★ Explorer Armaments",
+      "name": "5\u2605 Explorer Armaments",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -68400,7 +68401,7 @@
     },
     {
       "rid": 3007155061,
-      "name": "6⇵ Explorer Absorbers",
+      "name": "6\u21f5 Explorer Absorbers",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -68832,7 +68833,7 @@
     },
     {
       "rid": 3012881852,
-      "name": "6⇵ Isolytic Weaponry",
+      "name": "6\u21f5 Isolytic Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -69940,7 +69941,7 @@
     },
     {
       "rid": 3051640276,
-      "name": "Ω Energy Weaponry",
+      "name": "\u03a9 Energy Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -70686,7 +70687,7 @@
     },
     {
       "rid": 3077583485,
-      "name": "6⇵ Fortress Tactics",
+      "name": "6\u21f5 Fortress Tactics",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -71228,7 +71229,7 @@
     },
     {
       "rid": 3111263072,
-      "name": "Ω Invading Entity Weakpoints",
+      "name": "\u03a9 Invading Entity Weakpoints",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -71603,7 +71604,7 @@
     },
     {
       "rid": 3134112627,
-      "name": "4★  Interceptor Repair Cost",
+      "name": "4\u2605  Interceptor Repair Cost",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -71869,7 +71870,7 @@
     },
     {
       "rid": 3138317717,
-      "name": "Ω Faction Warfare Isolytic Defense",
+      "name": "\u03a9 Faction Warfare Isolytic Defense",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -71987,7 +71988,7 @@
     },
     {
       "rid": 3146647716,
-      "name": "Borg Queen’s Remains",
+      "name": "Borg Queen\u2019s Remains",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -73805,7 +73806,7 @@
     },
     {
       "rid": 3211942148,
-      "name": "4★  Interceptor Defense Formation",
+      "name": "4\u2605  Interceptor Defense Formation",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -75191,7 +75192,7 @@
     },
     {
       "rid": 3250791615,
-      "name": "5★ Interceptor Protection",
+      "name": "5\u2605 Interceptor Protection",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -75761,7 +75762,7 @@
     },
     {
       "rid": 3276089606,
-      "name": "5★ Explorer Targeting Array",
+      "name": "5\u2605 Explorer Targeting Array",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -77441,7 +77442,7 @@
     },
     {
       "rid": 3330566322,
-      "name": "4★  Battleship Pure Ore",
+      "name": "4\u2605  Battleship Pure Ore",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -77891,7 +77892,7 @@
     },
     {
       "rid": 3351234911,
-      "name": "5★ Section 31 Station Damage",
+      "name": "5\u2605 Section 31 Station Damage",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -79189,7 +79190,7 @@
     },
     {
       "rid": 3408741846,
-      "name": "5★ Explorer Weaponry",
+      "name": "5\u2605 Explorer Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -79297,7 +79298,7 @@
     },
     {
       "rid": 3414000040,
-      "name": "6⇵ Hit-and-Run Tactics",
+      "name": "6\u21f5 Hit-and-Run Tactics",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -80199,7 +80200,7 @@
     },
     {
       "rid": 3452187201,
-      "name": "4★ Explorer Regeneration",
+      "name": "4\u2605 Explorer Regeneration",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -80877,7 +80878,7 @@
     },
     {
       "rid": 3486647506,
-      "name": "4★ Piercing Shots",
+      "name": "4\u2605 Piercing Shots",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -81533,7 +81534,7 @@
     },
     {
       "rid": 3511569176,
-      "name": "▷ Enhanced PvP Crit Dmg Reduction",
+      "name": "\u25b7 Enhanced PvP Crit Dmg Reduction",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -81769,7 +81770,7 @@
     },
     {
       "rid": 3522460410,
-      "name": "4★ Battleship Weaponry",
+      "name": "4\u2605 Battleship Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -82465,7 +82466,7 @@
     },
     {
       "rid": 3545711618,
-      "name": "4★ Reinforced Bulkheads",
+      "name": "4\u2605 Reinforced Bulkheads",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -82573,7 +82574,7 @@
     },
     {
       "rid": 3551355003,
-      "name": "Ω Faction Warfare Apex Barrier",
+      "name": "\u03a9 Faction Warfare Apex Barrier",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -83238,7 +83239,7 @@
     },
     {
       "rid": 3590289104,
-      "name": "Prime Ω Advanced Warfare",
+      "name": "Prime \u03a9 Advanced Warfare",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -83638,7 +83639,7 @@
     },
     {
       "rid": 3626531049,
-      "name": "5★ Battleship Weaponry",
+      "name": "5\u2605 Battleship Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -84346,7 +84347,7 @@
     },
     {
       "rid": 3665418986,
-      "name": "5★ Battleship Shield Piercing",
+      "name": "5\u2605 Battleship Shield Piercing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -85640,7 +85641,7 @@
     },
     {
       "rid": 3726470636,
-      "name": "5★ Explorer Shield Modulation",
+      "name": "5\u2605 Explorer Shield Modulation",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -86883,7 +86884,7 @@
     },
     {
       "rid": 3794054275,
-      "name": "5★ Explorer Protection",
+      "name": "5\u2605 Explorer Protection",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -86991,7 +86992,7 @@
     },
     {
       "rid": 3799864906,
-      "name": "Captain Proton’s Blaster",
+      "name": "Captain Proton\u2019s Blaster",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -86999,9 +87000,10 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.01,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87009,9 +87011,10 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.014,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87019,9 +87022,10 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.018,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87029,9 +87033,10 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.022,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87039,9 +87044,10 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.026,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87049,9 +87055,10 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.03,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87059,9 +87066,10 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.034,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87069,9 +87077,10 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.038,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87079,9 +87088,10 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.042,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87089,9 +87099,10 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.046,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87099,9 +87110,10 @@
           "level": 11,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.05,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87109,9 +87121,10 @@
           "level": 12,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.054,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87119,9 +87132,10 @@
           "level": 13,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.058,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87129,9 +87143,10 @@
           "level": 14,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.063,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87139,9 +87154,10 @@
           "level": 15,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.07,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87149,9 +87165,10 @@
           "level": 16,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.072,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87159,9 +87176,10 @@
           "level": 17,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.074,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87169,9 +87187,10 @@
           "level": 18,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.076,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87179,9 +87198,10 @@
           "level": 19,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.078,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -87189,9 +87209,10 @@
           "level": 20,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.08,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         }
@@ -88193,7 +88214,7 @@
     },
     {
       "rid": 3830360873,
-      "name": "4★ Fortified Battleships",
+      "name": "4\u2605 Fortified Battleships",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -88989,7 +89010,7 @@
     },
     {
       "rid": 3861242947,
-      "name": "5★ Battleship Armaments",
+      "name": "5\u2605 Battleship Armaments",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -90287,7 +90308,7 @@
     },
     {
       "rid": 3901576373,
-      "name": "Ω Protector Isolytic Damage vs I.S.S. Enterprise-E",
+      "name": "\u03a9 Protector Isolytic Damage vs I.S.S. Enterprise-E",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -92449,7 +92470,7 @@
     },
     {
       "rid": 3993504428,
-      "name": "4★ Unyielding Combatant",
+      "name": "4\u2605 Unyielding Combatant",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -92753,7 +92774,7 @@
     },
     {
       "rid": 4005578639,
-      "name": "6⇵ Offensive Battleships",
+      "name": "6\u21f5 Offensive Battleships",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -93323,7 +93344,7 @@
     },
     {
       "rid": 4034052305,
-      "name": "5★ Romulan Armada Defects",
+      "name": "5\u2605 Romulan Armada Defects",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -95036,7 +95057,7 @@
     },
     {
       "rid": 4103481588,
-      "name": "5★ Explorer Susceptibility",
+      "name": "5\u2605 Explorer Susceptibility",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -95202,7 +95223,7 @@
     },
     {
       "rid": 4106620233,
-      "name": "5★ Interceptor Armor Piercing",
+      "name": "5\u2605 Interceptor Armor Piercing",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -95758,9 +95779,10 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.05,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95768,9 +95790,10 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.06,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95778,9 +95801,10 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.07,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95788,9 +95812,10 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.09,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95798,9 +95823,10 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.1,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95808,9 +95834,10 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.12,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95818,9 +95845,10 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.14,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95828,9 +95856,10 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.16,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95838,9 +95867,10 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.18,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         },
@@ -95848,9 +95878,10 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "isolytic_damage_morale",
+              "stat": "isolytic_damage",
               "value": 0.2,
-              "operator": "add"
+              "operator": "add",
+              "requires_morale": true
             }
           ]
         }
@@ -97393,7 +97424,7 @@
     },
     {
       "rid": 4197251274,
-      "name": "Ω Critical Damage Reduction",
+      "name": "\u03a9 Critical Damage Reduction",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -98395,7 +98426,7 @@
     },
     {
       "rid": 4238981973,
-      "name": "5★ Interceptor Weaponry",
+      "name": "5\u2605 Interceptor Weaponry",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -98611,7 +98642,7 @@
     },
     {
       "rid": 4242813677,
-      "name": "4★ Interceptor Pillager",
+      "name": "4\u2605 Interceptor Pillager",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -98719,7 +98750,7 @@
     },
     {
       "rid": 4247533312,
-      "name": "4★ Tactical Battleships",
+      "name": "4\u2605 Tactical Battleships",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -98935,7 +98966,7 @@
     },
     {
       "rid": 4254087973,
-      "name": "6⇵ Intimidation Tactics",
+      "name": "6\u21f5 Intimidation Tactics",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [
@@ -99347,7 +99378,7 @@
     },
     {
       "rid": 4276318477,
-      "name": "Ω Omega-13 Device",
+      "name": "\u03a9 Omega-13 Device",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [

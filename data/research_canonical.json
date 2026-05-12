@@ -88,6 +88,7 @@
           "modifier": "isolytic_damage",
           "operation": "add",
           "by_level": [0.05, 0.06, 0.07, 0.09, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2],
+          "trigger": "round_start",
           "conditions": [{ "type": "morale_active" }],
           "category": "combat",
           "confidence": "authoritative",

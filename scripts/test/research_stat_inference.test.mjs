@@ -32,6 +32,15 @@ test("description: mitigation stats UI line does not collapse to a single stat",
   );
 });
 
+test("description: morale isolytic offense maps to isolytic_damage + requires_morale shape", () => {
+  assert.deepEqual(
+    inferCombatStatFromDescription(
+      "Increases Isolytic Damage while Morale is active during combat."
+    ),
+    { stat: "isolytic_damage", requires_morale: true }
+  );
+});
+
 test("project name: shield deflection before dodge / bare deflection", () => {
   assert.equal(inferCombatStatFromProjectName("Prime Shield Deflection"), "shield_deflection");
   assert.equal(inferCombatStatFromProjectName("Shield Mitigation Bonus"), "shield_mitigation");

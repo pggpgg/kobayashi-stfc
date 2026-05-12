@@ -229,11 +229,13 @@ For each `ResearchBonusEntry`:
 
 - `trigger = attack_phase` for conditional attack-scoped stats (`weapon_damage`, `crit_*`) that currently emit derived seats.
 - Otherwise `trigger = combat_begin` equivalent static bonus semantics.
-- `conditions` from `ResearchBonusConditionKey`:
+- `conditions` from `ResearchBonusConditionKey` (same conjunctive order as [`ability_condition_from_research_bonus_key`](../src/combat/condition.rs); every set field **AND**s together):
   - `requires_morale` -> `morale_active`
   - `requires_defender_burning` -> `defender_burning`
   - `requires_defender_hull_breach` -> `defender_hull_breach`
-  - `defender_ship_class` / `defender_faction` -> typed condition nodes
+  - `defender_ship_class` / `defender_faction` -> typed defender condition nodes
+  - `attacker_faction` (single slug) / `attacker_factions` (OR of slugs when several majors apply) -> `attacker_owner_faction_is` node(s); together with defender gates this yields an overall **AND** (owner disjunction only inside `attacker_factions`)
+- Morale-gated catalog `isolytic_damage` (`requires_morale: true`) uses `round_start` timing; `conditions` merge `morale_active` with other [`ResearchBonusConditionKey`](../src/data/research.rs) gates (AND).
 
 ### stfc.cc row -> CombatEffectSpec
 

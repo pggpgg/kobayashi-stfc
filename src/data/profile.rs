@@ -1235,7 +1235,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 /// | `officer_attack`, `officer_health` | yes | Multiplicative with `weapon_damage` / `hull_hp`: attack × `(1+weapon_damage)×(1+officer_attack)`, hull × `(1+hull_hp)×(1+officer_health)` |
 /// | `officer_defense` | yes | Additive with `shield_mitigation` into [`Combatant::shield_mitigation`] (same cap `[0,1]`) |
 /// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
-/// | `isolytic_damage_morale` | yes | `scenario.rs` — `extend_crew_with_morale_gated_profile_bonuses` (round-start seat, morale gate) |
+/// | `isolytic_damage` (conditional, e.g. `requires_morale`) | no | [`research_derived_attack_phase_seats`] → compiled seats (not `profile.bonuses` flat merge) |
 /// | Conditional `weapon_damage`, `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
 ///
 /// Aliases: `armor_pierce`, `shield_pierce` → `pierce`.
@@ -1249,9 +1249,8 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         "weapon_damage" => Some("weapon_damage"),
         "hull_hp" => Some("hull_hp"),
         "shield_hp" => Some("shield_hp"),
+        // Morale-gated isolytic catalog rows use `stat: isolytic_damage` + `requires_morale` (compiled to seats).
         "isolytic_damage" => Some("isolytic_damage"),
-        // Morale-gated isolytic (research NS Morale Isolytic Damage, rid 4133019450): scenario injects a round-start seat.
-        "isolytic_damage_morale" => Some("isolytic_damage_morale"),
         "isolytic_defense" => Some("isolytic_defense"),
         // Isolytic cascade stacks in the isolytic damage leg (see `mitigation::isolytic_damage`); applied
         // from profile/buildings/research/FT via scenario attack-phase seat, not as a Combatant scalar.
@@ -1905,7 +1904,6 @@ pub fn estimate_officer_stats_with_profile_bonuses(
 /// shield_mitigation + officer_defense on [`Combatant::shield_mitigation`]; shield_hp, crit_chance, crit_damage, pierce (additive),
 /// armor/dodge/damage_reduction (additive to mitigation),
 /// isolytic_damage / isolytic_defense, apex_shred / apex_barrier (additive; counter-attack uses player apex_barrier).
-/// `isolytic_damage_morale` stays in `profile.bonuses` for the scenario morale seat (not added to flat `isolytic_damage` here).
 /// `isolytic_cascade_damage` stays in `profile.bonuses` for the scenario attack-phase cascade seat.
 ///
 /// `owner_faction_slug`: lowercase-trimmed [`ShipRecord::faction`] when known (e.g. `"federation"`); merges
@@ -2213,9 +2211,10 @@ mod tests {
     }
 
     #[test]
-    fn merge_research_bonuses_into_profile_merges_isolytic_damage_morale() {
+    fn merge_research_bonuses_into_profile_skips_conditional_morale_isolytic_for_flat_bonuses() {
         use crate::data::research::{
-            ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
+            ResearchBonusConditionKey, ResearchBonusEntry, ResearchCatalog, ResearchLevel,
+            ResearchRecord,
         };
 
         let imported_research = vec![ResearchEntry {
@@ -2233,18 +2232,23 @@ mod tests {
                 levels: vec![ResearchLevel {
                     level: 1,
                     bonuses: vec![ResearchBonusEntry {
-                        stat: "isolytic_damage_morale".to_string(),
+                        stat: "isolytic_damage".to_string(),
                         value: 0.05,
                         operator: "add".to_string(),
-                        condition: Default::default(),
+                        condition: ResearchBonusConditionKey {
+                            requires_morale: true,
+                            ..Default::default()
+                        },
                     }],
                 }],
             }],
         };
         let mut profile = PlayerProfile::default();
         merge_research_bonuses_into_profile(&mut profile, &imported_research, &catalog, None);
-        assert_eq!(profile.bonuses.get("isolytic_damage_morale"), Some(&0.05));
-        assert!(!profile.bonuses.contains_key("isolytic_damage"));
+        assert!(
+            !profile.bonuses.contains_key("isolytic_damage"),
+            "conditional morale isolytic must not flat-merge into profile.bonuses"
+        );
     }
 
     #[test]
@@ -2301,7 +2305,7 @@ mod tests {
     }
 
     #[test]
-    fn apply_profile_to_attacker_does_not_flat_merge_isolytic_damage_morale() {
+    fn apply_profile_to_attacker_does_not_flat_merge_deprecated_morale_isolytic_profile_key() {
         let attacker = Combatant {
             id: "test".to_string(),
             attack: 100.0,

@@ -79,6 +79,22 @@ pub fn research_bonus_key_to_condition_specs(
     }
 }
 
+/// Catalog `isolytic_damage` + `requires_morale` uses round-start timing; merge an explicit morale
+/// gate with any other [`ResearchBonusConditionKey`] fields so dual gates are not dropped. Skips a
+/// duplicate `MoraleActive` when the key also sets `requires_morale`.
+fn morale_gated_isolytic_research_condition_specs(key: &ResearchBonusConditionKey) -> Vec<AbilityConditionSpec> {
+    let mut parts = vec![AbilityConditionSpec::MoraleActive];
+    if let Some(from_key) = research_bonus_key_to_condition_specs(key) {
+        for spec in from_key {
+            if spec == AbilityConditionSpec::MoraleActive {
+                continue;
+            }
+            parts.push(spec);
+        }
+    }
+    parts
+}
+
 fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
     match norm {
         "weapon_damage" => Some(AbilityModifierSpec::WeaponDamage),
@@ -94,7 +110,7 @@ fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
         "accuracy" => Some(AbilityModifierSpec::Accuracy),
-        "isolytic_damage" | "isolytic_damage_morale" => Some(AbilityModifierSpec::IsolyticDamage),
+        "isolytic_damage" => Some(AbilityModifierSpec::IsolyticDamage),
         "isolytic_defense" => Some(AbilityModifierSpec::IsolyticDefense),
         "isolytic_cascade_damage" | "isolytic_cascade" => {
             Some(AbilityModifierSpec::IsolyticCascadeDamage)
@@ -143,12 +159,15 @@ fn compile_canonical_override_seats(
         }
 
         let name_idx = idx.saturating_add(1);
+        let trigger = effect
+            .trigger
+            .unwrap_or(AbilityTriggerSpec::AttackPhase);
         let spec = CombatEffectSpec {
             id: format!("canonical_{}_{name_idx}", effect.id),
             source: EffectSource::ResearchCatalog,
             source_ref: effect.source_ref.clone(),
             text: None,
-            trigger: AbilityTriggerSpec::AttackPhase,
+            trigger,
             target: AbilityTargetSpec::AttackerSelf,
             modifier: effect.modifier,
             operation: effect.operation,
@@ -173,6 +192,22 @@ fn compile_canonical_override_seats(
         if let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) {
             *idx = name_idx;
             out.push(ctx);
+        } else if let Ok((timing, ability_effect, condition)) = compile_officer_combat_spec(&spec) {
+            *idx = name_idx;
+            out.push(CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: spec.id.clone(),
+                    class: AbilityClass::ShipAbility,
+                    timing,
+                    boostable: false,
+                    effect: ability_effect,
+                    condition,
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            });
         }
     }
     out
@@ -290,13 +325,14 @@ pub fn research_derived_attack_phase_seats_from_spec(
                     };
 
                     // isolytic_cascade_damage always uses attack-phase timing (cascade stacks
-                    // applied during the isolytic damage leg). isolytic_damage_morale uses
-                    // round-start timing with a morale gate.
+                    // applied during the isolytic damage leg). Morale-gated catalog `isolytic_damage`
+                    // (`requires_morale`) uses round-start timing (matches legacy profile seat).
                     let is_cascade = norm == "isolytic_cascade_damage";
-                    let is_morale_gated = norm == "isolytic_damage_morale";
+                    let is_morale_gated_isolytic =
+                        norm == "isolytic_damage" && key.requires_morale;
 
-                    let condition_specs = if is_morale_gated {
-                        Some(vec![AbilityConditionSpec::MoraleActive])
+                    let condition_specs = if is_morale_gated_isolytic {
+                        Some(morale_gated_isolytic_research_condition_specs(&key))
                     } else {
                         research_bonus_key_to_condition_specs(&key)
                     };
@@ -304,7 +340,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
 
                     let trigger = if is_cascade {
                         AbilityTriggerSpec::AttackPhase
-                    } else if is_morale_gated {
+                    } else if is_morale_gated_isolytic {
                         AbilityTriggerSpec::RoundStart
                     } else if has_conditions {
                         AbilityTriggerSpec::AttackPhase
@@ -340,7 +376,8 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         continue;
                     }
 
-                    let use_attack_phase_path = is_cascade || (!is_morale_gated && has_conditions);
+                    let use_attack_phase_path =
+                        is_cascade || (!is_morale_gated_isolytic && has_conditions);
                     if use_attack_phase_path {
                         if let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) {
                             idx = name_idx;
@@ -418,6 +455,7 @@ mod tests {
                     operation: AbilityOperationSpec::Add,
                     by_level: vec![0.005, 0.01, 0.015, 0.02, 0.025],
                     conditions: vec![],
+                    trigger: None,
                     category: None,
                     confidence: None,
                     source_ref: None,

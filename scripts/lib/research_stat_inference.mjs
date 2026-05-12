@@ -51,7 +51,7 @@ export function inferCombatStatFromDescription(text) {
       /\bmorale\b/.test(t) &&
       /\b(damage|attack|potency|offense)\b/.test(t)
     ) {
-      return "isolytic_damage_morale";
+      return { stat: "isolytic_damage", requires_morale: true };
     }
     if (/\b(damage|attack|potency|offense)\b/.test(t)) return "isolytic_damage";
     return null;
@@ -158,7 +158,7 @@ export function inferCombatStatFromProjectName(name) {
   }
   if (/\bisolytic\b/.test(t)) {
     if (/\b(defense|defence|resist)\b/.test(t)) return "isolytic_defense";
-    if (/\bmorale\b/.test(t)) return "isolytic_damage_morale";
+    if (/\bmorale\b/.test(t)) return { stat: "isolytic_damage", requires_morale: true };
     return "isolytic_damage";
   }
   if (/damage reduction|critical damage reduction|resilience vs/.test(t)) return "damage_reduction";

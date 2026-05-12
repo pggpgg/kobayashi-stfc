@@ -38,7 +38,6 @@ const ALLOWED_COMBAT_STATS = new Set([
   "isolytic_damage",
   "isolytic_cascade",
   "isolytic_cascade_damage",
-  "isolytic_damage_morale",
   "isolytic_defense",
   "crit_chance",
   "crit_damage",
@@ -112,25 +111,31 @@ function deriveFactionSpec(bucket, projectName, descFull) {
 
   if (bucket === "likely_defender") {
     defender = inferDefender(name, descFull, bucket);
+    ({ atk, atks } = inferOwner(name, descFull));
   } else if (bucket === "likely_owner" || bucket === "likely_owner_weak") {
     ({ atk, atks } = inferOwner(name, descFull));
+    defender = inferDefender(name, descFull, "likely_defender");
   } else if (bucket === "unclear") {
     defender = inferDefender(name, descFull, bucket);
-    if (!defender) ({ atk, atks } = inferOwner(name, descFull));
+    ({ atk, atks } = inferOwner(name, descFull));
   } else if (bucket === "name_only") {
     ({ atk, atks } = inferOwner(name, descFull));
     if (!atk && !atks) {
       const d = fk(name.trim());
       if (d && inferDefender(name, descFull, "likely_defender") == null) atk = d;
     }
+    defender = inferDefender(name, descFull, "likely_defender");
   } else {
     return null;
   }
 
-  if (defender) return { defender_faction: defender };
-  if (atks && atks.length) return { attacker_factions: atks };
-  if (atk) return { attacker_faction: atk };
-  return null;
+  /** @type {Record<string, string|string[]>} */
+  const out = {};
+  if (defender) out.defender_faction = defender;
+  if (atks && atks.length) out.attacker_factions = atks;
+  else if (atk) out.attacker_faction = atk;
+  if (Object.keys(out).length === 0) return null;
+  return out;
 }
 
 function mappingHasAttackerFaction(entry) {

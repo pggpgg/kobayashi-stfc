@@ -11,7 +11,11 @@ use kobayashi::data::profile::{
 use kobayashi::data::research::{
     ResearchBonusConditionKey, ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
 };
+use kobayashi::combat::abilities::{AbilityCondition, AbilityEffect};
+use kobayashi::combat::types::OpponentFactionTag;
+use kobayashi::combat::TimingWindow;
 use kobayashi::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec;
+use std::collections::HashMap;
 
 fn seat_signature(c: &kobayashi::combat::CrewSeatContext) -> String {
     format!(
@@ -367,4 +371,121 @@ fn parity_dual_support_buff_gate_requires_cerritos_and_fortify_before_spec_compi
         String::from(TITAN_A_FORTIFY_SUPPORT_BUFF_IDS[0]),
     ]);
     assert_public_matches_adapter_with_gates(&imported, &catalog, &both, &imported);
+}
+
+fn condition_mentions_defender_faction(cond: &AbilityCondition, tag: OpponentFactionTag) -> bool {
+    match cond {
+        AbilityCondition::DefenderFactionIs(t) => *t == tag,
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
+            parts.iter().any(|c| condition_mentions_defender_faction(c, tag))
+        }
+        _ => false,
+    }
+}
+
+fn condition_mentions_owner_faction(cond: &AbilityCondition, tag: OpponentFactionTag) -> bool {
+    match cond {
+        AbilityCondition::AttackerOwnerFactionIs(t) => *t == tag,
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
+            parts.iter().any(|c| condition_mentions_owner_faction(c, tag))
+        }
+        _ => false,
+    }
+}
+
+fn condition_mentions_morale_active(cond: &AbilityCondition) -> bool {
+    match cond {
+        AbilityCondition::MoraleActive => true,
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
+            parts.iter().any(condition_mentions_morale_active)
+        }
+        _ => false,
+    }
+}
+
+/// Single catalog row requires **both** player hull owner faction and opponent faction (AND).
+#[test]
+fn dual_owner_and_defender_faction_gates_weapon_damage_research_seat() {
+    const RID: i64 = 88001900;
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: RID,
+            name: Some("Golden dual-faction weapon_damage".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "weapon_damage".into(),
+                    value: 0.04,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        defender_faction: Some("klingon".into()),
+                        attacker_faction: Some("federation".into()),
+                        ..Default::default()
+                    },
+                }],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry { rid: RID, level: 1 }];
+    let seats =
+        research_derived_attack_phase_seats_from_spec(&imported, &catalog, &HashMap::new());
+    let seat = seats
+        .iter()
+        .find(|s| matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_)))
+        .expect("weapon_damage seat");
+    assert_eq!(seat.ability.timing, TimingWindow::AttackPhase);
+    let cond = seat.ability.condition.as_ref().expect("gated seat");
+    assert!(condition_mentions_defender_faction(cond, OpponentFactionTag::Klingon));
+    assert!(condition_mentions_owner_faction(cond, OpponentFactionTag::Federation));
+    assert_public_matches_adapter(&imported, &catalog);
+}
+
+/// Morale-gated catalog `isolytic_damage` + `requires_morale` must compile with defender/owner faction ANDs.
+#[test]
+fn dual_owner_and_defender_faction_gates_morale_isolytic_damage_research_seat() {
+    const RID: i64 = 88001901;
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: RID,
+            name: Some("Golden dual-faction morale isolytic_damage".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "isolytic_damage".into(),
+                    value: 0.06,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        defender_faction: Some("romulan".into()),
+                        attacker_faction: Some("federation".into()),
+                        requires_morale: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry { rid: RID, level: 1 }];
+    let seats =
+        research_derived_attack_phase_seats_from_spec(&imported, &catalog, &HashMap::new());
+    let seat = seats
+        .iter()
+        .find(|s| matches!(s.ability.effect, AbilityEffect::IsolyticDamageBonus(_)))
+        .expect("morale-gated isolytic_damage seat");
+    assert_eq!(seat.ability.timing, TimingWindow::RoundStart);
+    let cond = seat.ability.condition.as_ref().expect("gated seat");
+    assert!(
+        condition_mentions_morale_active(cond),
+        "morale arm must remain for morale-gated isolytic_damage"
+    );
+    assert!(condition_mentions_defender_faction(cond, OpponentFactionTag::Romulan));
+    assert!(condition_mentions_owner_faction(cond, OpponentFactionTag::Federation));
+    assert_public_matches_adapter(&imported, &catalog);
 }
