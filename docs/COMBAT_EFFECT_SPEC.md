@@ -127,7 +127,8 @@ type AbilityModifier =
   | "crit_damage"
   | "pierce"
   | "shield_mitigation"
-  | "armor"
+  | "armor" // Rust IR: `MitigationAdditive` (serde wire name)
+  | "shield_deflection" // Rust IR: `ShieldDeflection`; same compile path as `armor`
   | "dodge"
   | "damage_reduction"
   | "accuracy"

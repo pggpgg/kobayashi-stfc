@@ -24,10 +24,6 @@ Speeding up crew discovery is primarily a search-efficiency problem, not a raw s
 
 - **Still open / next:** Support-gated **research** from `augment_static_buffs_with_support_gated_research` stays on the **attacker** merge; defender-only profile maps (today [`apply_profile_to_attacker`](../src/data/profile.rs) is attacker-named); hostile-applied modifiers and full Mantis combat stats; **genetic** optimize with `defender_crew`; SPA / `POST /api/compare` if we want defender crew there; single merged inbound stack vs summed accumulators (risk called out in DESIGN); broader golden tests for shield break / self shield break / receive_damage when both sides have crews.
 
-## Research faction gating (`attacker_faction` / `defender_faction`) — polishing
-
-- **Polishing backlog:** Research bonuses now distinguish **player hull** gates (`attacker_faction` / `attacker_factions` → `research_owner_faction_bonuses`) vs **opponent** gates (`defender_faction` → conditional / seat path). Improvements still needed: hand-review ambiguous catalog strings (dual “your faction vs theirs” wording); tighten or replace heuristic `buff_id_to_stat.json` patches where `gen_research_faction_buff_patch.mjs` is wrong; extend engine **`ResearchBonusConditionKey`** when a single modifier must require **both** owner and defender faction; fix lossy merges for gated **`hull_hp` / `shield_hp`** (add vs multiply story); broaden tests, `research_combat_summary` / UI, and docs so gated lines are observable and assumptions are labeled.
-
 ---
 
 ## Unified CombatEffectSpec (cross-source normalization)
@@ -52,6 +48,6 @@ Current state: officers are **authored** in LCARS; dynamic (non-static) effects 
 
 ### Open roadmap / backlog
 
-- **`AbilityModifierSpec::Armor` vs `shield_deflection` (housekeeping):** The compiler maps LCARS `armor` and catalog **`shield_deflection`** (including research seat compile via `research_effect_spec_adapter.rs`) onto `AbilityModifierSpec::Armor`, which actually lowers to **`AbilityEffect::MitigationAdditive`** — a generic additive mitigation fraction for certain seat/counter-fire paths. Flat profile merge still uses **separate** bonus keys but adds both into `Combatant::mitigation`. **Work:** rename or split the modifier spec so labels match STFC semantics (armor ≠ shield deflection); e.g. rename `Armor` → `MitigationAdditive` at the spec layer, or add `ShieldDeflection` that compiles identically; update `effect_spec_compile.rs`, LCARS/research/hostile adapters, and tests; align docs so maintainers are not misled.
+- **`AbilityModifierSpec` mitigation IR (done):** LCARS/catalog `armor` is [`AbilityModifierSpec::MitigationAdditive`](../src/data/combat_effect_spec.rs) with serde wire `"armor"`. Catalog `shield_deflection` is [`AbilityModifierSpec::ShieldDeflection`](../src/data/combat_effect_spec.rs). Both compile to [`AbilityEffect::MitigationAdditive`](../src/combat/abilities.rs); flat profile merge still uses separate bonus keys summed into `Combatant::mitigation`.
 - **Future effect types:** Extend the IR/compiler when new `effect_type` values appear in `captain_ability` data (the allow-list test in `tests/lcars_captain_spec_parity_tests.rs` gates this).
 - **Remove `resolve_lcars_condition`** after parity confidence and full caller migration.

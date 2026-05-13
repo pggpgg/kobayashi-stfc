@@ -304,7 +304,7 @@ Hull slugs match `[ShipType::from_data_slug](src/combat/types.rs)`: `battleship`
 
 **Passive + permanent `stat_modify`** is merged into `static_buffs` at resolve time and **does not** evaluate `condition` today. Use ship-class (and other) gates on timed effects (e.g. `on_combat_start`) or extend the resolver/engine before conditioning passive stats such as `armor`.
 
-**Timed `armor` (`on_combat_start` / `on_round_start`):** resolved to `[AbilityEffect::MitigationAdditive](../src/combat/abilities.rs)`, summed from combat-begin officer rows and applied when **hostiles return fire** (increases effective player mitigation). LCARS magnitudes `|v| > 1` are treated as percent points (`v / 100`) for the mitigation fraction; this is an approximation of “all defenses” / sheet-style values, not a full armor–deflection–dodge split.
+**Timed `armor` (`on_combat_start` / `on_round_start`):** resolved to [`AbilityEffect::MitigationAdditive`](../src/combat/abilities.rs) via IR [`AbilityModifierSpec::MitigationAdditive`](../src/data/combat_effect_spec.rs) (JSON/YAML token remains `armor`). Research/catalog **`shield_deflection`** uses [`AbilityModifierSpec::ShieldDeflection`](../src/data/combat_effect_spec.rs) and compiles through the same mitigation-additive path (labeling only; no separate engine split yet). Summed from combat-begin officer rows and applied when **hostiles return fire** (increases effective player mitigation). LCARS magnitudes `|v| > 1` are treated as percent points (`v / 100`) for the mitigation fraction; this is an approximation of “all defenses” / sheet-style values, not a full armor–deflection–dodge split.
 
 Conditions are composable with `and` / `or` / `not` (exactly one child for `not`):
 

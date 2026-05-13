@@ -34,7 +34,7 @@ fn get_csv_field<'a>(
 /// Map cheat-sheet `AbilityModifier` cell → canonical modifier.
 ///
 /// Aligns with [`crate::bin::generate_lcars::map_modifier`] where there is a single primary stat.
-/// `AllDefenses` maps to [`AbilityModifierSpec::Armor`] (the “add” branch); `MultiplySub` rows are
+/// `AllDefenses` maps to [`AbilityModifierSpec::MitigationAdditive`] (the “add” branch); `MultiplySub` rows are
 /// still folded to [`AbilityModifierSpec::Add`] via [`map_stfc_cc_operation`], so mitigation-specific
 /// sign handling is lossy here. Composite `OfficerStatAll` maps to [`AbilityModifierSpec::TagOnly`]
 /// (same bucket as `generate_lcars` tag / non-single-stat modifiers).
@@ -53,7 +53,7 @@ pub fn map_stfc_cc_modifier(raw: &str) -> Result<AbilityModifierSpec, String> {
         | "AllPiercing" => Ok(AbilityModifierSpec::Pierce),
         "ShieldMitigation" => Ok(AbilityModifierSpec::ShieldMitigation),
         "Armor" | "ShipArmor" | "OfficerStatDefense" | "AllDefenses" => {
-            Ok(AbilityModifierSpec::Armor)
+            Ok(AbilityModifierSpec::MitigationAdditive)
         }
         "Dodge" | "ShipDodge" => Ok(AbilityModifierSpec::Dodge),
         "HullHP" | "HullHealth" | "HullHPRepair" | "HullRegen" | "OfficerStatHealth" => {

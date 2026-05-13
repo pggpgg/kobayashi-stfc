@@ -572,7 +572,7 @@ pub fn compile_officer_combat_spec(
                 compiled_condition.clone(),
             ))
         }
-        AbilityModifierSpec::Armor => {
+        AbilityModifierSpec::MitigationAdditive | AbilityModifierSpec::ShieldDeflection => {
             let v = scalar_fraction(
                 spec.value
                     .as_ref()

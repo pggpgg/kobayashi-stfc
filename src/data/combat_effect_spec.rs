@@ -129,7 +129,11 @@ pub enum AbilityModifierSpec {
     CritDamage,
     Pierce,
     ShieldMitigation,
-    Armor,
+    /// LCARS `armor`; serde wire remains `"armor"` for existing combat specs.
+    #[serde(rename = "armor")]
+    MitigationAdditive,
+    /// Research/catalog `shield_deflection`; compiles identically to [`MitigationAdditive`](AbilityModifierSpec::MitigationAdditive).
+    ShieldDeflection,
     Dodge,
     DamageReduction,
     Accuracy,

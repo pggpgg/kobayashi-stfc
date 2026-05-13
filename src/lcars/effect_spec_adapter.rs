@@ -276,7 +276,7 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "crit_damage" => Some(AbilityModifierSpec::CritDamage),
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
-        "armor" => Some(AbilityModifierSpec::Armor),
+        "armor" => Some(AbilityModifierSpec::MitigationAdditive),
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
         "accuracy" => Some(AbilityModifierSpec::Accuracy),

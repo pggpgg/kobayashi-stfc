@@ -104,9 +104,8 @@ fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
         "crit_damage" => Some(AbilityModifierSpec::CritDamage),
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
-        "armor" => Some(AbilityModifierSpec::Armor),
-        // Shares the mitigation additive channel used by flat profile `armor`/`shield_deflection`.
-        "shield_deflection" => Some(AbilityModifierSpec::Armor),
+        "armor" => Some(AbilityModifierSpec::MitigationAdditive),
+        "shield_deflection" => Some(AbilityModifierSpec::ShieldDeflection),
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
         "accuracy" => Some(AbilityModifierSpec::Accuracy),
@@ -385,7 +384,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         } else if let Ok((timing, effect, condition)) =
                             compile_officer_combat_spec(&spec)
                         {
-                            // Mitigation (`armor`/`dodge`/…) + `shield_deflection` (mapped to Armor) compile
+                            // Mitigation (`armor`/`dodge`/…) + `shield_deflection` compile
                             // via LCARS/officer rules; WD/crit narrow path may reject other modifiers.
                             idx = name_idx;
                             out.push(CrewSeatContext {
