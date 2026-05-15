@@ -27,6 +27,7 @@ enum Command {
     Optimize,
     Import,
     Validate,
+    ValidateLog,
     GenerateLcars,
     MitigationSensitivity,
     Battlelogs,
@@ -64,6 +65,7 @@ fn parse_command() -> Option<Command> {
         Some("optimize") => Some(Command::Optimize),
         Some("import") => Some(Command::Import),
         Some("validate") => Some(Command::Validate),
+        Some("validate-log") => Some(Command::ValidateLog),
         Some("generate-lcars") => Some(Command::GenerateLcars),
         Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
         Some("battlelogs") => Some(Command::Battlelogs),
@@ -487,6 +489,26 @@ fn handle_import(args: &[String]) -> i32 {
     }
 }
 
+fn validate_log_command(args: &[String]) -> Result<(), String> {
+    let path = args
+        .first()
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "usage: kobayashi validate-log <path.json>".to_string())?;
+    let json = std::fs::read_to_string(path).map_err(|e| format!("read {path}: {e}"))?;
+    let log = kobayashi::combat::parse_combat_log_json(&json)?;
+    let outcome = kobayashi::combat::validate_canonical_timeline(&log);
+    for w in &outcome.warnings {
+        eprintln!("warning: {w}");
+    }
+    for e in &outcome.errors {
+        eprintln!("error: {e}");
+    }
+    if !outcome.errors.is_empty() {
+        return Err("timeline validation failed".to_string());
+    }
+    Ok(())
+}
+
 fn handle_validate(args: &[String]) -> i32 {
     let path = args
         .first()
@@ -685,12 +707,13 @@ fn battlelogs_command(args: &[String]) -> Result<(), String> {
 
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate|generate-lcars|mitigation-sensitivity|battlelogs> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|battlelogs> [args]\n\
 simulate: kobayashi simulate <rounds> <seed> [--profile <id>] [--defender-faction <slug>] [--hostile <id>]\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--defender-faction <slug>] [--hostile <id>] [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
   or kobayashi optimize --ship <id> --hostile <id> --sims <u32> [--max-candidates <u32>] [--profile <id>]\n\
 import: kobayashi import <path> [--profile <id>]\n\
+validate-log: kobayashi validate-log <path.json>\n\
 mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]\n\
 battlelogs: kobayashi battlelogs [--profile <id>] [--sample]"
     );
@@ -734,6 +757,12 @@ fn main() {
         }
         Some(Command::Validate) => {
             exit_code = handle_validate(&command_args);
+        }
+        Some(Command::ValidateLog) => {
+            if let Err(err) = validate_log_command(&command_args) {
+                eprintln!("{err}");
+                exit_code = 2;
+            }
         }
         Some(Command::GenerateLcars) => {
             exit_code = handle_generate_lcars(&command_args);

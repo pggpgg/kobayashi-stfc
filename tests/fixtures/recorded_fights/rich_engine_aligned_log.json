@@ -1,0 +1,71 @@
+{
+  "schema_version": 2,
+  "rounds_simulated": 2,
+  "total_damage": 400.0,
+  "attacker_won": true,
+  "winner_by_round_limit": false,
+  "defender_hull_remaining": 0.0,
+  "defender_shield_remaining": 0.0,
+  "events": [
+    {
+      "event_type": "round_start",
+      "round_index": 1,
+      "phase": "round",
+      "sequence": 1,
+      "values": {}
+    },
+    {
+      "event_type": "attack_roll",
+      "round_index": 1,
+      "phase": "attack",
+      "weapon_index": 0,
+      "sequence": 2,
+      "values": {}
+    },
+    {
+      "event_type": "mitigation_calc",
+      "round_index": 1,
+      "phase": "defense",
+      "weapon_index": 0,
+      "sequence": 3,
+      "values": {}
+    },
+    {
+      "event_type": "pierce_calc",
+      "round_index": 1,
+      "phase": "attack",
+      "sequence": 4,
+      "values": {}
+    },
+    {
+      "event_type": "crit_resolution",
+      "round_index": 1,
+      "phase": "attack",
+      "sequence": 5,
+      "values": {}
+    },
+    {
+      "event_type": "proc_triggers",
+      "round_index": 1,
+      "phase": "proc",
+      "sequence": 6,
+      "values": {}
+    },
+    {
+      "event_type": "stack_resolution",
+      "round_index": 1,
+      "phase": "attack",
+      "weapon_index": 0,
+      "sequence": 7,
+      "values": {}
+    },
+    {
+      "event_type": "damage_application",
+      "round_index": 1,
+      "phase": "damage",
+      "weapon_index": 0,
+      "sequence": 8,
+      "values": {}
+    }
+  ]
+}

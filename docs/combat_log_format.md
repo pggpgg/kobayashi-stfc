@@ -18,6 +18,7 @@ A single JSON object with:
 
 | Field                       | Type              | Description                                     |
 | --------------------------- | ----------------- | ----------------------------------------------- |
+| `schema_version`            | number (optional) | Ingest format revision; omit or `1` for legacy logs. `2` enables strict canonical timeline validation ([`validate_canonical_timeline`](../../src/combat/log_validate.rs)). |
 | `rounds_simulated`          | number            | Number of rounds completed.                     |
 | `total_damage`              | number            | Total damage dealt to defender (hull + shield). |
 | `attacker_won`              | boolean           | True if attacker won.                           |
@@ -29,21 +30,28 @@ A single JSON object with:
 Each event in `events`:
 
 
-| Field          | Type              | Description                                                                                               |
-| -------------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
-| `event_type`   | string            | e.g. `round_start`, `damage_application`, `mitigation_calc`.                                              |
-| `round_index`  | number            | 1-based round.                                                                                            |
-| `phase`        | string            | e.g. `round`, `attack`, `damage`, `end`.                                                                  |
-| `values`       | object (optional) | Key-value pairs (e.g. `final_damage`, `running_total`, `shield_damage`, `hull_damage`).                   |
-| `weapon_index` | number (optional) | Sub-round (weapon) index when the simulator uses multi-weapon resolution; omitted for round-level events. |
+| Field             | Type              | Description                                                                                               |
+| ----------------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
+| `event_type`      | string            | e.g. `round_start`, `damage_application`, `mitigation_calc`.                                              |
+| `round_index`     | number            | 1-based round.                                                                                            |
+| `phase`           | string            | e.g. `round`, `attack`, `damage`, `proc`, `defense`, `counter`, `end`.                                   |
+| `values`          | object (optional) | Key-value pairs (e.g. `final_damage`, `running_total`, `shield_damage`, `hull_damage`).                   |
+| `weapon_index`    | number (optional) | Sub-round (weapon) index when the simulator uses multi-weapon resolution; omitted for round-level events. |
+| `sequence`        | number (optional) | Strictly increasing timeline index within the log; when present on any event, timeline validation runs (warnings only when `schema_version` is 1). |
+| `client_kind`     | string (optional) | Opaque upstream/toolbox label for correlation only — **not** trusted as equivalent to Kobayashi `phase`. |
+| `client_payload`  | any JSON (optional) | Raw snippet from upstream capture for debugging / future mapping.                                       |
+| `stats_snapshot`  | object (optional) | Flat map of observable stats at this step for reverse-engineering (keys are conventional; document what you emit). |
 
 
 Event types aligned with simulator trace for parity:
 
 - `round_start` — start of round
+- `attack_roll`, `pierce_calc`, `crit_resolution`, `proc_triggers`, `stack_resolution` — outbound weapon pipeline when captured from Kobayashi trace or enriched imports
 - `damage_application` — damage applied this step (may include `shield_damage`, `hull_damage`, `running_hull_damage`, `defender_shield_remaining`)
-- `mitigation_calc` — mitigation used
+- `mitigation_calc` — mitigation used (outbound phase `defense`, counter-fire phase `counter` when emitted)
 - `end_of_round_effects` — bonus/burning
+
+**CLI validation:** `kobayashi validate-log <path.json>` parses JSON and runs [`validate_canonical_timeline`](../../src/combat/log_validate.rs) (strict errors when `schema_version` ≥ 2).
 
 ## Round/sub-round ordering
 
@@ -93,6 +101,9 @@ The game can export a fight log as a **tab-separated** file with several section
 ## Fixtures
 
 - `tests/fixtures/recorded_fights/*.json` — sample logs for parser and parity tests (including `sample_combat_log.json` and `multi_weapon_round_log.json` for multi–sub-round `weapon_index` in one round).
+- `tests/fixtures/recorded_fights/rich_engine_aligned_log.json` — synthetic `schema_version` 2 excerpt aligned with Kobayashi trace ordering for subsequence parity tests.
+- `tests/fixtures/recorded_fights/invalid_timeline_v2.json` — intentional timeline violation for validator tests.
+- `tests/fixtures/recorded_fights/invalid_sequence_v2.json` — non-monotonic `sequence` under `schema_version` 2 for validator tests.
 - `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` — minimal TSV with optional `Weapon Index` column (fight export parser).
 - `fight samples/*.csv` — game CSV/TSV exports for calibration (e.g. Realta vs Takret Militia 10).
 

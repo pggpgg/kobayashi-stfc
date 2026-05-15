@@ -3,8 +3,10 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
-    parse_combat_log_json, IngestedCombatLog,
+    compare_ingested_trace_to_simulator, ingested_events_to_combat_events, ingested_to_comparable,
+    parity_within_tolerance, parse_combat_log_json, simulate_combat, validate_canonical_timeline,
+    Combatant, CrewConfiguration, OpponentFactionTag, SimulationConfig, TraceCompareOptions,
+    TraceMode,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -19,7 +21,8 @@ fn fixture_path(name: &str) -> std::path::PathBuf {
 fn parse_sample_combat_log_fixture() {
     let path = fixture_path("sample_combat_log.json");
     let json = std::fs::read_to_string(&path).expect("read fixture");
-    let log: IngestedCombatLog = parse_combat_log_json(&json).expect("parse");
+    let log = parse_combat_log_json(&json).expect("parse");
+    assert_eq!(log.schema_version, 1);
     assert_eq!(log.rounds_simulated, 2);
     assert_eq!(log.events.len(), 6);
     assert!((log.total_damage - 380.5).abs() < 1e-9);
@@ -103,6 +106,7 @@ fn parity_within_tolerance_matches_when_close() {
 fn parse_minimal_log() {
     let json = r#"{"rounds_simulated":1,"total_damage":100.0,"attacker_won":true,"defender_hull_remaining":0.0,"events":[]}"#;
     let log = parse_combat_log_json(json).expect("parse");
+    assert_eq!(log.schema_version, 1);
     assert_eq!(log.rounds_simulated, 1);
     assert_eq!(log.total_damage, 100.0);
     assert!(log.attacker_won);
@@ -113,7 +117,7 @@ fn parse_minimal_log() {
 fn parse_multi_weapon_round_fixture() {
     let path = fixture_path("multi_weapon_round_log.json");
     let json = std::fs::read_to_string(&path).expect("read fixture");
-    let log: IngestedCombatLog = parse_combat_log_json(&json).expect("parse");
+    let log = parse_combat_log_json(&json).expect("parse");
     assert_eq!(log.rounds_simulated, 1);
     assert!((log.total_damage - 15.0).abs() < 1e-9);
     assert_eq!(log.events.len(), 4);
@@ -133,4 +137,146 @@ fn parse_multi_weapon_round_fixture() {
         .map(|e| e.weapon_index)
         .collect();
     assert_eq!(w_idx, vec![Some(0), Some(1)]);
+}
+
+#[test]
+fn optional_metadata_round_trips_json() {
+    let json = r#"{"schema_version":2,"rounds_simulated":1,"total_damage":1.0,"attacker_won":true,"defender_hull_remaining":0.0,"events":[{"event_type":"round_start","round_index":1,"phase":"round","sequence":1,"client_kind":"START_ROUND","client_payload":{"id":9},"stats_snapshot":{"attacker_hull":1000.0},"values":{}}]}"#;
+    let log = parse_combat_log_json(json).unwrap();
+    assert_eq!(log.schema_version, 2);
+    let ev = &log.events[0];
+    assert_eq!(ev.sequence, Some(1));
+    assert_eq!(ev.client_kind.as_deref(), Some("START_ROUND"));
+    assert_eq!(
+        ev.client_payload.as_ref().and_then(|v| v.get("id")),
+        Some(&serde_json::json!(9))
+    );
+    assert_eq!(
+        ev.stats_snapshot
+            .as_ref()
+            .and_then(|m| m.get("attacker_hull")),
+        Some(&serde_json::json!(1000.0))
+    );
+}
+
+#[test]
+fn validate_timeline_v2_rich_fixture_passes() {
+    let json = std::fs::read_to_string(fixture_path("rich_engine_aligned_log.json"))
+        .expect("read fixture");
+    let log = parse_combat_log_json(&json).expect("parse");
+    let o = validate_canonical_timeline(&log);
+    assert!(
+        o.errors.is_empty(),
+        "errors={:?} warnings={:?}",
+        o.errors,
+        o.warnings
+    );
+}
+
+#[test]
+fn validate_timeline_invalid_damage_before_round_start_strict_errors() {
+    let json =
+        std::fs::read_to_string(fixture_path("invalid_timeline_v2.json")).expect("read fixture");
+    let log = parse_combat_log_json(&json).expect("parse");
+    let o = validate_canonical_timeline(&log);
+    assert!(
+        o.errors.iter().any(|e| e.contains("damage_application")),
+        "{:?}",
+        o.errors
+    );
+}
+
+#[test]
+fn validate_timeline_invalid_sequence_strict_errors() {
+    let json =
+        std::fs::read_to_string(fixture_path("invalid_sequence_v2.json")).expect("read fixture");
+    let log = parse_combat_log_json(&json).expect("parse");
+    let o = validate_canonical_timeline(&log);
+    assert!(
+        o.errors.iter().any(|e| e.contains("sequence")),
+        "{:?}",
+        o.errors
+    );
+}
+
+#[test]
+fn validate_timeline_v1_partial_sequence_warns_not_errors() {
+    let json = r#"{"schema_version":1,"rounds_simulated":1,"total_damage":0.0,"attacker_won":true,"defender_hull_remaining":100.0,"events":[{"event_type":"round_start","round_index":1,"phase":"round","sequence":1,"values":{}},{"event_type":"round_start","round_index":1,"phase":"round","values":{}}]}"#;
+    let log = parse_combat_log_json(json).unwrap();
+    let o = validate_canonical_timeline(&log);
+    assert!(o.errors.is_empty());
+    assert!(
+        o.warnings.iter().any(|w| w.contains("sequence")),
+        "{:?}",
+        o.warnings
+    );
+}
+
+#[test]
+fn rich_engine_aligned_fixture_matches_canonical_sim_trace_subsequence() {
+    let attacker = Combatant {
+        id: "nero".to_string(),
+        attack: 120.0,
+        mitigation: 0.1,
+        pierce: 0.15,
+        crit_chance: 0.5,
+        crit_multiplier: 1.8,
+        proc_chance: 0.4,
+        proc_multiplier: 1.25,
+        end_of_round_damage: 3.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+        hostile_mitigation_params: None,
+    };
+    let defender = Combatant {
+        id: "swarm".to_string(),
+        attack: 10.0,
+        mitigation: 0.35,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+        hostile_mitigation_params: None,
+    };
+    let config = SimulationConfig {
+        rounds: 2,
+        seed: 7,
+        trace_mode: TraceMode::Events,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
+        engagement_enemy_types: Default::default(),
+        defender_level: None,
+        attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
+    };
+    let crew = CrewConfiguration::default();
+    let sim = simulate_combat(&attacker, &defender, &config, &crew);
+
+    let json = std::fs::read_to_string(fixture_path("rich_engine_aligned_log.json"))
+        .expect("read fixture");
+    let log = parse_combat_log_json(&json).expect("parse");
+
+    compare_ingested_trace_to_simulator(&sim.events, &log.events, &TraceCompareOptions::default())
+        .expect("ingested excerpt should match simulator trace subsequence");
 }

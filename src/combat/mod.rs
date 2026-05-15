@@ -11,6 +11,7 @@ pub mod evolutionary_assimilation;
 pub mod export_csv;
 pub mod hostile_tags;
 pub mod log_ingest;
+pub mod log_validate;
 pub mod mitigation;
 pub mod mitigation_sensitivity;
 pub mod proc;
@@ -51,9 +52,11 @@ pub use hostile_tags::{
     HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
 };
 pub use log_ingest::{
-    ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
-    parse_combat_log_json, IngestedCombatLog, IngestedEvent,
+    compare_ingested_trace_to_simulator, ingested_events_to_combat_events, ingested_to_comparable,
+    parity_within_tolerance, parse_combat_log_json, trace_event_matches_skeleton,
+    IngestedCombatLog, IngestedEvent, TraceCompareOptions,
 };
+pub use log_validate::{validate_canonical_timeline, TimelineValidationOutcome};
 pub use mitigation_sensitivity::{
     default_percent_sensitivity_rows, direct_scalar_row, format_sensitivity_tsv,
     HostileMitigationBaseline, MitigationSensitivityRow,

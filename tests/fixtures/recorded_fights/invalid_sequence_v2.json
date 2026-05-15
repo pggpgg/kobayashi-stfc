@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "rounds_simulated": 1,
+  "total_damage": 0.0,
+  "attacker_won": false,
+  "winner_by_round_limit": false,
+  "defender_hull_remaining": 100.0,
+  "defender_shield_remaining": 0.0,
+  "events": [
+    {
+      "event_type": "round_start",
+      "round_index": 1,
+      "phase": "round",
+      "sequence": 5,
+      "values": {}
+    },
+    {
+      "event_type": "round_start",
+      "round_index": 1,
+      "phase": "round",
+      "sequence": 3,
+      "values": {}
+    }
+  ]
+}

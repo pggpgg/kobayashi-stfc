@@ -7,9 +7,16 @@ use serde_json::Value;
 
 use crate::combat::{CombatEvent, EventSource, SimulationResult};
 
+fn default_schema_version() -> u32 {
+    1
+}
+
 /// Ingested combat log (parsed from raw JSON or export).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IngestedCombatLog {
+    /// Format revision; defaults to `1` for backward compatibility. [`crate::combat::log_validate::validate_canonical_timeline`] applies strict checks when ≥ 2.
+    #[serde(default = "default_schema_version")]
+    pub schema_version: u32,
     pub rounds_simulated: u32,
     pub total_damage: f64,
     pub attacker_won: bool,
@@ -21,7 +28,7 @@ pub struct IngestedCombatLog {
     pub events: Vec<IngestedEvent>,
 }
 
-/// Single event from an ingested log (aligns with CombatEvent for parity).
+/// Single event from an ingested log (aligns with [`CombatEvent`] for parity).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IngestedEvent {
     pub event_type: String,
@@ -33,6 +40,26 @@ pub struct IngestedEvent {
     /// Omitted for round-level events in the exported log format.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub weapon_index: Option<u32>,
+    /// Monotonic timeline position within the log when validating canonical ordering (optional on legacy logs).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequence: Option<u32>,
+    /// Opaque toolbox/client discriminator for correlation (does not imply engine phase equality).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_kind: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_payload: Option<Value>,
+    /// Optional flat snapshot of observable stats at this step (labels are convention; document keys you emit).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stats_snapshot: Option<serde_json::Map<String, Value>>,
+}
+
+/// Options for [`compare_ingested_trace_to_simulator`].
+#[derive(Debug, Clone, Default)]
+pub struct TraceCompareOptions {
+    /// When set, numeric equality for overlapping keys uses this tolerance.
+    pub value_tolerance: Option<f64>,
+    /// Keys in `values` to compare when present on both matched events.
+    pub compare_value_keys: Vec<String>,
 }
 
 /// Parse a combat log from JSON string (format per docs/combat_log_format.md).
@@ -63,6 +90,75 @@ pub fn parity_within_tolerance(
         && sim.rounds_simulated == log.rounds_simulated
         && (sim.defender_hull_remaining - log.defender_hull_remaining).abs() <= hull_tol
         && (sim.defender_shield_remaining - log.defender_shield_remaining).abs() <= hull_tol
+}
+
+/// Structural match between simulator trace row and ingested row (ignores [`EventSource`] and extra ingest-only fields).
+pub fn trace_event_matches_skeleton(sim: &CombatEvent, ing: &IngestedEvent) -> bool {
+    sim.event_type == ing.event_type
+        && sim.round_index == ing.round_index
+        && sim.phase == ing.phase
+        && sim.weapon_index == ing.weapon_index
+}
+
+fn compare_values_if_requested(
+    sim: &CombatEvent,
+    ing: &IngestedEvent,
+    opts: &TraceCompareOptions,
+    ing_idx: usize,
+    errs: &mut Vec<String>,
+) {
+    if opts.compare_value_keys.is_empty() {
+        return;
+    }
+    let tol = opts.value_tolerance.unwrap_or(0.0);
+    for key in &opts.compare_value_keys {
+        let sv = sim.values.get(key).and_then(|v| v.as_f64());
+        let iv = ing.values.get(key).and_then(|v| v.as_f64());
+        if let (Some(a), Some(b)) = (sv, iv) {
+            if (a - b).abs() > tol {
+                errs.push(format!(
+                    "ingested[{ing_idx}] values[{key}] sim={a} ingested={b} tol={tol}"
+                ));
+            }
+        }
+    }
+}
+
+/// Ensure `ingested` appears as an ordered subsequence of `sim_events` (same event_type / round_index / phase / weapon_index).
+///
+/// Extra simulator-only rows (sources, additional trace kinds) are skipped until each ingested row matches.
+pub fn compare_ingested_trace_to_simulator(
+    sim_events: &[CombatEvent],
+    ingested: &[IngestedEvent],
+    opts: &TraceCompareOptions,
+) -> Result<(), Vec<String>> {
+    let mut errs = Vec::new();
+    let mut sim_pos = 0usize;
+
+    for (ing_idx, ing) in ingested.iter().enumerate() {
+        let mut matched = false;
+        while sim_pos < sim_events.len() {
+            let sim = &sim_events[sim_pos];
+            sim_pos += 1;
+            if trace_event_matches_skeleton(sim, ing) {
+                compare_values_if_requested(sim, ing, opts, ing_idx, &mut errs);
+                matched = true;
+                break;
+            }
+        }
+        if !matched {
+            errs.push(format!(
+                "ingested[{ing_idx}] {} phase={} round={} weapon={:?}: no matching simulator event",
+                ing.event_type, ing.phase, ing.round_index, ing.weapon_index
+            ));
+        }
+    }
+
+    if errs.is_empty() {
+        Ok(())
+    } else {
+        Err(errs)
+    }
 }
 
 /// Convert ingested events to engine CombatEvents (same shape for trace comparison).
