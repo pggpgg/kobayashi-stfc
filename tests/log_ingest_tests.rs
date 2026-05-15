@@ -3,9 +3,10 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    compare_ingested_trace_to_simulator, hydrate_ingested_state_snapshots_from_values,
-    ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
-    parse_combat_log_json, simulate_combat, validate_canonical_timeline, Combatant,
+    compare_ingested_trace_to_simulator, expand_collapsed_repeat_events,
+    hydrate_ingested_state_snapshots_from_values, ingested_events_to_combat_events,
+    ingested_to_comparable, parity_within_tolerance, parse_combat_log_json, simulate_combat,
+    tag_stats_snapshot_sources_client_default, validate_canonical_timeline, Combatant,
     CrewConfiguration, OpponentFactionTag, SimulationConfig, TraceCompareOptions, TraceMode,
 };
 
@@ -417,4 +418,157 @@ fn schema_v3_damage_without_following_snapshot_errors() {
         "expected pairing error, got {:?}",
         outcome.errors
     );
+}
+
+#[test]
+fn schema_v4_client_minimal_fixture_passes_timeline() {
+    let json = std::fs::read_to_string(fixture_path("schema_v4_client_minimal.json")).unwrap();
+    let log = parse_combat_log_json(&json).expect("parse");
+    let outcome = validate_canonical_timeline(&log);
+    assert!(
+        outcome.errors.is_empty(),
+        "unexpected errors: {:?}",
+        outcome.errors
+    );
+}
+
+#[test]
+fn schema_v4_with_snapshots_uses_pairing_rules_like_v3() {
+    let json =
+        std::fs::read_to_string(fixture_path("schema_v3_minimal_snapshot_log.json")).unwrap();
+    let mut log = parse_combat_log_json(&json).expect("parse");
+    log.schema_version = 4;
+    hydrate_ingested_state_snapshots_from_values(&mut log);
+    let outcome = validate_canonical_timeline(&log);
+    assert!(
+        outcome.errors.is_empty(),
+        "unexpected errors: {:?}",
+        outcome.errors
+    );
+}
+
+#[test]
+fn schema_v4_stats_snapshot_requires_provenance_or_prefixes() {
+    let json = r#"{
+        "schema_version": 4,
+        "rounds_simulated": 1,
+        "total_damage": 1.0,
+        "attacker_won": true,
+        "defender_hull_remaining": 99.0,
+        "events": [
+            {"event_type": "round_start", "round_index": 1, "phase": "round"},
+            {"event_type": "damage_application", "round_index": 1, "phase": "damage",
+             "stats_snapshot": {"hull_remaining": 99.0}},
+            {"event_type": "end_of_round_effects", "round_index": 1, "phase": "end"}
+        ]
+    }"#;
+    let log = parse_combat_log_json(json).expect("parse");
+    let outcome = validate_canonical_timeline(&log);
+    assert!(
+        outcome.errors.iter().any(|e| e.contains("stats_snapshot")),
+        "expected stats_snapshot provenance error, got {:?}",
+        outcome.errors
+    );
+}
+
+#[test]
+fn schema_v4_registered_client_kind_must_match_event_type() {
+    let json = r#"{
+        "schema_version": 4,
+        "rounds_simulated": 1,
+        "total_damage": 1.0,
+        "attacker_won": true,
+        "defender_hull_remaining": 99.0,
+        "events": [
+            {"event_type": "round_start", "round_index": 1, "phase": "round",
+             "client_kind": "fixture_kob_outbound_damage"},
+            {"event_type": "end_of_round_effects", "round_index": 1, "phase": "end"}
+        ]
+    }"#;
+    let log = parse_combat_log_json(json).expect("parse");
+    let outcome = validate_canonical_timeline(&log);
+    assert!(
+        outcome.errors.iter().any(|e| e.contains("client_kind")),
+        "expected client_kind mismatch error, got {:?}",
+        outcome.errors
+    );
+}
+
+#[test]
+fn schema_v4_collapsed_ambiguous_emits_warning() {
+    let json = r#"{
+        "schema_version": 4,
+        "rounds_simulated": 1,
+        "total_damage": 0.0,
+        "attacker_won": true,
+        "defender_hull_remaining": 100.0,
+        "events": [
+            {"event_type": "round_start", "round_index": 1, "phase": "round"},
+            {"event_type": "damage_application", "round_index": 1, "phase": "damage",
+             "values": {"collapsed_ambiguous": true},
+             "stats_snapshot": {"_provenance": {"source": "client"}}},
+            {"event_type": "end_of_round_effects", "round_index": 1, "phase": "end"}
+        ]
+    }"#;
+    let log = parse_combat_log_json(json).expect("parse");
+    let outcome = validate_canonical_timeline(&log);
+    assert!(outcome.errors.is_empty(), "{:?}", outcome.errors);
+    assert!(
+        outcome.warnings.iter().any(|w| w.contains("collapsed_ambiguous")),
+        "expected warning, got {:?}",
+        outcome.warnings
+    );
+}
+
+#[test]
+fn expand_collapsed_repeat_events_matches_fixture() {
+    let before = std::fs::read_to_string(fixture_path("collapsed_repeat_before.json")).unwrap();
+    let after = std::fs::read_to_string(fixture_path("collapsed_repeat_expanded.json")).unwrap();
+    let mut log = parse_combat_log_json(&before).expect("parse before");
+    let expected = parse_combat_log_json(&after).expect("parse after");
+    expand_collapsed_repeat_events(&mut log).expect("expand");
+    assert_eq!(log, expected);
+}
+
+#[test]
+fn tag_stats_snapshot_adds_provenance_for_plain_keys() {
+    let json = r#"{
+        "schema_version": 4,
+        "rounds_simulated": 1,
+        "total_damage": 1.0,
+        "attacker_won": true,
+        "defender_hull_remaining": 99.0,
+        "events": [
+            {"event_type": "round_start", "round_index": 1, "phase": "round"},
+            {"event_type": "damage_application", "round_index": 1, "phase": "damage",
+             "stats_snapshot": {"hull_remaining": 99.0}},
+            {"event_type": "end_of_round_effects", "round_index": 1, "phase": "end"}
+        ]
+    }"#;
+    let mut log = parse_combat_log_json(json).expect("parse");
+    let outcome = validate_canonical_timeline(&log);
+    assert!(!outcome.errors.is_empty());
+    tag_stats_snapshot_sources_client_default(&mut log);
+    let outcome = validate_canonical_timeline(&log);
+    assert!(outcome.errors.is_empty(), "{:?}", outcome.errors);
+}
+
+#[test]
+fn expand_collapsed_repeat_events_rejects_huge_count() {
+    let json = r#"{
+        "schema_version": 4,
+        "rounds_simulated": 1,
+        "total_damage": 0.0,
+        "attacker_won": true,
+        "defender_hull_remaining": 100.0,
+        "events": [
+            {"event_type": "round_start", "round_index": 1, "phase": "round"},
+            {"event_type": "damage_application", "round_index": 1, "phase": "damage",
+             "values": {"collapsed_repeat_count": 999}},
+            {"event_type": "end_of_round_effects", "round_index": 1, "phase": "end"}
+        ]
+    }"#;
+    let mut log = parse_combat_log_json(json).expect("parse");
+    let err = expand_collapsed_repeat_events(&mut log).unwrap_err();
+    assert!(err.contains("exceeds max"), "{err}");
 }

@@ -10,6 +10,7 @@ pub mod events;
 pub mod evolutionary_assimilation;
 pub mod export_csv;
 pub mod hostile_tags;
+pub mod log_import_normalize;
 pub mod log_ingest;
 pub mod log_validate;
 pub mod mitigation;
@@ -51,6 +52,9 @@ pub use export_csv::{
 pub use hostile_tags::{
     HOSTILE_TAG_MASK_CONQUEROR_BORG, HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR,
     HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
+};
+pub use log_import_normalize::{
+    expand_collapsed_repeat_events, tag_stats_snapshot_sources_client_default,
 };
 pub use log_ingest::{
     compare_ingested_trace_to_simulator, hydrate_ingested_state_snapshots_from_values,

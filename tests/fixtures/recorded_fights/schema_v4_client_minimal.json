@@ -1,0 +1,32 @@
+{
+  "schema_version": 4,
+  "rounds_simulated": 1,
+  "total_damage": 10.0,
+  "attacker_won": true,
+  "defender_hull_remaining": 40.0,
+  "defender_shield_remaining": 0.0,
+  "events": [
+    {
+      "event_type": "round_start",
+      "round_index": 1,
+      "phase": "round"
+    },
+    {
+      "event_type": "damage_application",
+      "round_index": 1,
+      "phase": "damage",
+      "client_kind": "fixture_kob_outbound_damage",
+      "stats_snapshot": {
+        "_provenance": { "source": "client" },
+        "observed.defender_hull_remaining": 40.0
+      },
+      "values": { "hull_damage": 10.0 }
+    },
+    {
+      "event_type": "end_of_round_effects",
+      "round_index": 1,
+      "phase": "end",
+      "values": { "bonus_damage": 0.0 }
+    }
+  ]
+}

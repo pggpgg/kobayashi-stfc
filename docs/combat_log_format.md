@@ -18,7 +18,7 @@ A single JSON object with:
 
 | Field                       | Type              | Description                                     |
 | --------------------------- | ----------------- | ----------------------------------------------- |
-| `schema_version`            | number (optional) | Ingest format revision; omit or `1` for legacy logs. `2` enables strict canonical timeline validation ([`validate_canonical_timeline`](../src/combat/log_validate.rs)). `3` adds strict structured **state snapshot** pairing rules (see below). |
+| `schema_version`            | number (optional) | Ingest format revision; omit or `1` for legacy logs. `2` enables strict canonical timeline validation ([`validate_canonical_timeline`](../src/combat/log_validate.rs)). `3` adds strict structured **state snapshot** pairing for **simulator-style** logs. `4` adds **client/toolbox** provenance rules ([`stats_snapshot` conventions](#stats_snapshot-provenance-client-vs-simulator)) and optional [`client_kind` registry](client_combat_log_mapping.md) checks; round tails follow the client profile (no mandatory closing `state_snapshot` unless you emit simulator snapshots). See [client_combat_log_mapping.md](client_combat_log_mapping.md). |
 | `rounds_simulated`          | number            | Number of rounds completed.                     |
 | `total_damage`              | number            | Total damage dealt to defender (hull + shield). |
 | `attacker_won`              | boolean           | True if attacker won.                           |
@@ -53,15 +53,61 @@ Event types aligned with simulator trace for parity:
 - `end_of_round_effects` — bonus/burning
 - `state_snapshot` — **Simulator-only** enriched row when `SimulationConfig.emit_state_snapshots` is true with `TraceMode::Events`. Carries a structured [`CombatStateSnapshot`](../src/combat/snapshot.rs) at canonical anchors (`after_round_start`, `before_outbound_shot`, `after_outbound_damage`, `after_subround`, `end_of_round_post_effects`). All fields are **simulator-sourced** unless you label external enrichment.
 
-**CLI validation:** `kobayashi validate-log <path.json>` parses JSON, hydrates `values.snapshot` into `state_snapshot` when needed, and runs [`validate_canonical_timeline`](../src/combat/log_validate.rs) (strict errors when `schema_version` ≥ 2; **≥ 3** enforces snapshot pairing described below).
+**CLI validation:** `kobayashi validate-log <path.json>` parses JSON, hydrates `values.snapshot` into `state_snapshot` when needed, and runs [`validate_canonical_timeline`](../src/combat/log_validate.rs) (strict errors when `schema_version` ≥ 2; **3** = simulator snapshot tail + pairing when using `state_snapshot` rows; **4** = client provenance / registered `client_kind` expectations).
 
-### schema_version 3 (structured state snapshots)
+### Source fidelity matrix (TSV vs ingested JSON vs simulator trace)
+
+| Concern | Game TSV export ([`export_csv`](../src/combat/export_csv.rs)) | Ingested JSON (`IngestedCombatLog`) | Simulator `TraceMode::Events` |
+| ------- | ------------------------------------------------------------- | ----------------------------------- | ------------------------------ |
+| Fight summary (outcome, end hull/shield) | **Observable** (summary rows) | **Observable** (top-level numeric fields) | **Observable** (`SimulationResult` totals) |
+| Fleet stats → `Combatant` | **Observable** (aggregated columns); some inferred defaults (e.g. shield mitigation 0.8) | N/A (inputs come from elsewhere) | From scenario/`Combatant` you pass in |
+| Per-round event list | **Partial** — coarse `Type` column, damage columns | **Configurable** — any `event_type` / `weapon_index` you encode | **High** — `mitigation_calc`, `stack_resolution`, etc. |
+| Sub-round (`weapon_index`) | **Optional** — column may be absent in vanilla export | **Optional** on each `IngestedEvent` | **Yes** when multi-weapon |
+| Intermediate stat stacks / mitigation breakdown | **Unavailable** in TSV | **Optional** — `stats_snapshot`, `state_snapshot`, `values` | **Yes** — trace `values` + optional `state_snapshot` emission |
+| Canonical timeline ordering | **Not validated** (TSV is not `IngestedCombatLog`) | **Validated** (`validate_canonical_timeline`) | Matches engine order |
+
+Use this table when choosing `schema_version` and when claiming parity: **never label simulator-only trace fields as client-observed** unless you captured them from the game or toolbox with known provenance.
+
+### `stats_snapshot` provenance (client vs simulator)
+
+For reverse-engineering, consumers must not mix **measured** and **derived** numbers.
+
+- Prefer **key prefixes** on entries inside `stats_snapshot` (flat map of string → JSON value):
+  - `observed.*` — read from client/toolbox/game export without formula applied in Kobayashi.
+  - `inferred.*` — computed in your import pipeline (e.g. derived from other observed fields); document the formula in commit or doc.
+  - `sim.*` — copied from Kobayashi simulator output (for hybrid logs only).
+- Alternatively (or additionally), include a **`_provenance`** object on the same map:
+  - `\"_provenance\": { \"source\": \"client\" }` — whole map is client-leaning.
+  - `\"source\": \"sim\"` | `\"merged\"` for hybrid toolchains.
+
+**schema_version 4:** when `stats_snapshot` is present, validation requires either `_provenance.source` **or** that every key is `_provenance`, `_repeat_meta`, or starts with `observed.`, `inferred.`, or `sim.` (underscore-prefixed internal keys reserved).
+
+### Collapsed UI repeats (optional expansion)
+
+When the game UI **collapses** multiple identical mechanical applications into one line but the capture still records **how many** applied, you may encode:
+
+- `values.collapsed_repeat_count` — integer **≥ 2** meaning “this row stands for N applications”.
+
+**Normalization (no new combat math):** call [`expand_collapsed_repeat_events`](../src/combat/log_import_normalize.rs) to replace one row with **N** copies, each with `values.application_index` (0-based) and `values.application_count`. If the source does not expose `N`, do **not** invent it — keep a single row and document lossy parity.
+
+Optional companion keys for ambiguous UIs:
+
+- `values.repeat_group_id` — stable string shared by expanded siblings for debugging.
+- `values.collapsed_ambiguous: true` — **schema_version 4** validation may **warn** (future: optional strict forbid).
+
+See fixtures `tests/fixtures/recorded_fights/collapsed_repeat_before.json` and `collapsed_repeat_expanded.json` (after normalization).
+
+Mapping toolbox/client strings to `event_type` / `phase` / `client_kind`: [client_combat_log_mapping.md](client_combat_log_mapping.md).
+
+### schema_version 3 (simulator-style state snapshots)
 
 Use when logs include Kobayashi-style `state_snapshot` events for full timeline regression.
 
 - Each `state_snapshot` row must include a parseable [`CombatStateSnapshot`](../src/combat/snapshot.rs) (via `state_snapshot` or `values.snapshot`).
 - **Pairing (strict errors):** every outbound `damage_application` (`phase` `damage`) must be **immediately** followed by a `state_snapshot` whose `anchor` is `after_outbound_damage`. Every `end_of_round_effects` must be **immediately** followed by a `state_snapshot` whose `anchor` is `end_of_round_post_effects`.
 - **Round tail:** for each round, the last two events in timeline order must be `end_of_round_effects` then that closing `state_snapshot`.
+
+**schema_version 4 with snapshots:** if the log contains any `state_snapshot` rows, the same pairing and round-tail rules apply (hybrid client + simulator traces).
 
 Fixture: `tests/fixtures/recorded_fights/schema_v3_minimal_snapshot_log.json`.
 
@@ -118,6 +164,8 @@ The game can export a fight log as a **tab-separated** file with several section
 - `tests/fixtures/recorded_fights/rich_engine_aligned_log.json` — synthetic `schema_version` 2 excerpt aligned with Kobayashi trace ordering for subsequence parity tests.
 - `tests/fixtures/recorded_fights/invalid_timeline_v2.json` — intentional timeline violation for validator tests.
 - `tests/fixtures/recorded_fights/invalid_sequence_v2.json` — non-monotonic `sequence` under `schema_version` 2 for validator tests.
+- `tests/fixtures/recorded_fights/schema_v4_client_minimal.json` — `schema_version` 4 client-profile log (no `state_snapshot` rows).
+- `tests/fixtures/recorded_fights/collapsed_repeat_before.json` / `collapsed_repeat_expanded.json` — collapsed vs expanded repeat encoding ([`expand_collapsed_repeat_events`](../src/combat/log_import_normalize.rs)).
 - `tests/fixtures/recorded_fights/fight_export_weapon_index.tsv` — minimal TSV with optional `Weapon Index` column (fight export parser).
 - `fight samples/*.csv` — game CSV/TSV exports for calibration (e.g. Realta vs Takret Militia 10).
 

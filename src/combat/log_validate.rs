@@ -2,6 +2,8 @@
 //!
 //! See [docs/combat_log_format.md](../../../docs/combat_log_format.md) for schema versioning and ordering rules.
 
+use serde_json::Value;
+
 use crate::combat::log_ingest::{try_event_state_snapshot, IngestedCombatLog, IngestedEvent};
 use crate::combat::snapshot::SnapshotAnchor;
 
@@ -32,7 +34,8 @@ fn ordered_event_refs(log: &IngestedCombatLog) -> Vec<(usize, &IngestedEvent)> {
 ///
 /// - **Strict (`schema_version` ≥ 2):** violations go to [`TimelineValidationOutcome::errors`].
 /// - **Lenient (`schema_version` == 1 with sequences):** same checks produce [`TimelineValidationOutcome::warnings`] only.
-/// - **`schema_version` ≥ 3:** additionally validates structured [`crate::combat::snapshot::CombatStateSnapshot`] pairing (strict [`TimelineValidationOutcome::errors`] only).
+/// - **`schema_version` == 3 or hybrid `schema_version` ≥ 4 with `state_snapshot` rows:** validates structured [`crate::combat::snapshot::CombatStateSnapshot`] pairing and simulator-style round tails (strict errors).
+/// - **`schema_version` ≥ 4:** validates [`crate::combat::log_ingest::IngestedEvent::stats_snapshot`] provenance and registered [`crate::combat::log_ingest::IngestedEvent::client_kind`] expectations (see `docs/client_combat_log_mapping.md`).
 pub fn validate_canonical_timeline(log: &IngestedCombatLog) -> TimelineValidationOutcome {
     let mut errors = Vec::new();
     let mut warnings = Vec::new();
@@ -81,6 +84,11 @@ pub fn validate_canonical_timeline(log: &IngestedCombatLog) -> TimelineValidatio
         by_round.entry(ev.round_index).or_default().push(ev);
     }
 
+    let has_state_snapshots = log
+        .events
+        .iter()
+        .any(|e| e.event_type == "state_snapshot");
+
     for (round, evts) in &by_round {
         let mut saw_round_start = false;
         let mut damage_before_rs = false;
@@ -119,23 +127,23 @@ pub fn validate_canonical_timeline(log: &IngestedCombatLog) -> TimelineValidatio
             );
         }
 
-        if log.schema_version >= 3 {
+        if log.schema_version == 3 || (log.schema_version >= 4 && has_state_snapshots) {
             let n = evts.len();
             if n < 2 {
                 errors.push(format!(
-                    "round {round}: schema_version 3 expects end_of_round_effects then state_snapshot (need at least 2 trailing events)"
+                    "round {round}: expected end_of_round_effects then closing state_snapshot (need at least 2 trailing events)"
                 ));
             } else {
                 let last = evts[n - 1];
                 let prev = evts[n - 2];
                 if prev.event_type != "end_of_round_effects" {
                     errors.push(format!(
-                        "round {round}: schema_version 3 requires end_of_round_effects immediately before final state_snapshot"
+                        "round {round}: requires end_of_round_effects immediately before final state_snapshot"
                     ));
                 }
                 if last.event_type != "state_snapshot" {
                     errors.push(format!(
-                        "round {round}: schema_version 3 requires final event to be state_snapshot"
+                        "round {round}: requires final event to be state_snapshot"
                     ));
                 } else if let Some(s) = try_event_state_snapshot(last) {
                     if s.anchor != SnapshotAnchor::EndOfRoundPostEffects {
@@ -167,11 +175,78 @@ pub fn validate_canonical_timeline(log: &IngestedCombatLog) -> TimelineValidatio
         }
     }
 
-    if log.schema_version >= 3 {
+    if log.schema_version == 3 || (log.schema_version >= 4 && has_state_snapshots) {
         validate_schema_v3_state_snapshots(log, &mut errors);
     }
 
+    if log.schema_version >= 4 {
+        validate_schema_v4(log, &mut errors, &mut warnings);
+    }
+
     TimelineValidationOutcome { errors, warnings }
+}
+
+#[derive(Clone, Copy)]
+struct ClientKindExpectation {
+    event_type: &'static str,
+    phase: &'static str,
+}
+
+/// Registry of known `client_kind` values → expected Kobayashi `event_type` / `phase` for schema_version 4 strict checks.
+/// Extend only with maintainer-reviewed samples; unknown kinds remain opaque.
+fn known_client_kind_expectation(kind: &str) -> Option<ClientKindExpectation> {
+    match kind {
+        "fixture_kob_outbound_damage" => Some(ClientKindExpectation {
+            event_type: "damage_application",
+            phase: "damage",
+        }),
+        _ => None,
+    }
+}
+
+fn stats_snapshot_satisfies_v4_provenance(snap: &serde_json::Map<String, Value>) -> bool {
+    if snap
+        .get("_provenance")
+        .and_then(|p| p.get("source"))
+        .and_then(|v| v.as_str())
+        .map(|s| !s.is_empty())
+        .unwrap_or(false)
+    {
+        return true;
+    }
+    snap.keys().all(|k| {
+        k.starts_with("observed.")
+            || k.starts_with("inferred.")
+            || k.starts_with("sim.")
+            || k.starts_with('_')
+    })
+}
+
+fn validate_schema_v4(log: &IngestedCombatLog, errors: &mut Vec<String>, warnings: &mut Vec<String>) {
+    for (i, ev) in log.events.iter().enumerate() {
+        if let Some(ref ck) = ev.client_kind {
+            if let Some(exp) = known_client_kind_expectation(ck) {
+                if ev.event_type != exp.event_type || ev.phase != exp.phase {
+                    errors.push(format!(
+                        "schema_version 4: client_kind {ck:?} expects event_type={} phase={}, got {} / {}",
+                        exp.event_type, exp.phase, ev.event_type, ev.phase
+                    ));
+                }
+            }
+        }
+        if let Some(ref snap) = ev.stats_snapshot {
+            if !stats_snapshot_satisfies_v4_provenance(snap) {
+                errors.push(format!(
+                    "schema_version 4: stats_snapshot at event index {i} must set _provenance.source or use observed./inferred./sim. key prefixes (or underscore-prefixed internal keys only)"
+                ));
+            }
+        }
+        if ev.values.get("collapsed_ambiguous").and_then(|v| v.as_bool()) == Some(true) {
+            warnings.push(format!(
+                "schema_version 4: event index {i} marks collapsed_ambiguous=true; repeat expansion may be lossy — verify against source"
+            ));
+        }
+    }
 }
 
 fn validate_schema_v3_state_snapshots(log: &IngestedCombatLog, errors: &mut Vec<String>) {
