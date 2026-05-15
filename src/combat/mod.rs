@@ -17,6 +17,7 @@ pub mod mitigation_sensitivity;
 pub mod proc;
 pub mod rng;
 pub mod simd_damage_kernel;
+pub mod snapshot;
 pub mod stacking;
 pub mod types;
 
@@ -52,14 +53,19 @@ pub use hostile_tags::{
     HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
 };
 pub use log_ingest::{
-    compare_ingested_trace_to_simulator, ingested_events_to_combat_events, ingested_to_comparable,
-    parity_within_tolerance, parse_combat_log_json, trace_event_matches_skeleton,
+    compare_ingested_trace_to_simulator, hydrate_ingested_state_snapshots_from_values,
+    ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
+    parse_combat_log_json, trace_event_matches_skeleton, try_event_state_snapshot,
     IngestedCombatLog, IngestedEvent, TraceCompareOptions,
 };
 pub use log_validate::{validate_canonical_timeline, TimelineValidationOutcome};
 pub use mitigation_sensitivity::{
     default_percent_sensitivity_rows, direct_scalar_row, format_sensitivity_tsv,
     HostileMitigationBaseline, MitigationSensitivityRow,
+};
+pub use snapshot::{
+    state_snapshot_as_combat_event, CombatSnapshotFlags, CombatStateSnapshot,
+    CombatantSnapshotResources, SnapshotAnchor,
 };
 pub use stacking::{
     aggregate_contributions, compose_totals, CategoryTotals, StackCategory, StackContribution,

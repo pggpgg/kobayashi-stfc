@@ -76,6 +76,10 @@ After pre-attack damage is folded into the stacking model and attack-phase damag
 
 **When you need a table, not a single fight:** use the CLI `kobayashi mitigation-sensitivity <ship_id> <hostile_id> [--delta-pct <f64>]` (from the project root, with data loaded — ids are the same as in `data/ships_extended` / `data/hostiles`, e.g. `uss_enterprise` and `2918121098` (data.stfc.space numeric hostile id)), or the library helpers in [`src/combat/mitigation_sensitivity.rs`](../src/combat/mitigation_sensitivity.rs) to sweep baseline stats with small deltas.
 
+## Structured state snapshots (`state_snapshot`)
+
+When `SimulationConfig.emit_state_snapshots` is enabled together with `TraceMode::Events`, the engine emits additional `state_snapshot` rows carrying a serialized [`CombatStateSnapshot`](../src/combat/snapshot.rs) under `values.snapshot` (hull/shield remaining, flags, optional attacker stacking summary). See [`combat_log_format.md`](combat_log_format.md) schema_version 3 and pairing rules for ingest.
+
 ## Officers: one seat each
 
 The game does not allow duplicate officers on a crew. The optimizer and [`resolve_crew_to_buff_set`](../src/lcars/resolver.rs) enforce **at most one contribution per officer id** (captain, then bridge order, then below decks). [`apply_duplicate_officer_policy`](../src/combat/abilities.rs) drops duplicate `officer_id` groups if malformed input ever reaches the engine.

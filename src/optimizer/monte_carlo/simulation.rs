@@ -363,6 +363,7 @@ fn run_candidate_monte_carlo(
         attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
         incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
+        emit_state_snapshots: false,
     };
 
     // Precompute values that don't change per trial
@@ -964,6 +965,7 @@ pub fn replay_optimize_iteration_with_registry(
         attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
         incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
+        emit_state_snapshots: false,
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(
@@ -1026,8 +1028,13 @@ fn run_monte_carlo_with_parallelism(
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
 ) -> Vec<SimulationResult> {
-    let shared =
-        build_shared_scenario_data_standalone(ship, hostile, support_buffs, defender_opponent, None);
+    let shared = build_shared_scenario_data_standalone(
+        ship,
+        hostile,
+        support_buffs,
+        defender_opponent,
+        None,
+    );
     run_monte_carlo_with_shared(shared, candidates, iterations, seed, parallel, chain_grind)
 }
 

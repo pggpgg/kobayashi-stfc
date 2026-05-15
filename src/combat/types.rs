@@ -297,6 +297,10 @@ pub struct SimulationConfig {
     /// (round 1 = first combat round).
     #[serde(default)]
     pub incoming_shield_mitigation_bonus_rounds: u32,
+    /// When `true` and [`Self::trace_mode`] is [`TraceMode::Events`], emit `state_snapshot` trace rows
+    /// ([`crate::combat::snapshot::CombatStateSnapshot`]). Ignored when tracing is off.
+    #[serde(default)]
+    pub emit_state_snapshots: bool,
 }
 
 impl Default for SimulationConfig {
@@ -316,6 +320,7 @@ impl Default for SimulationConfig {
             attacker_roster_officer_ids: Vec::new(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         }
     }
 }

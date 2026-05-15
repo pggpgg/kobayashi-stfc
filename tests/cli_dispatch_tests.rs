@@ -83,8 +83,8 @@ fn simulate_command_dispatches_and_emits_json() {
     let json_text = extract_cli_json_payload(&stdout).expect("simulate should emit json");
     let payload: serde_json::Value =
         serde_json::from_str(&json_text).expect("simulate should emit json");
-    // Includes per-shot `stack_resolution` trace events (see combat engine).
-    assert_eq!(payload["events"].as_array().map(Vec::len), Some(21));
+    // Per-shot trace events; count depends on rounds/shots/weapons (see combat engine).
+    assert_eq!(payload["events"].as_array().map(Vec::len), Some(23));
     assert!(payload["total_damage"].is_number());
 }
 

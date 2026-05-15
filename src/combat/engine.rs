@@ -41,6 +41,9 @@ use crate::combat::evolutionary_assimilation::evolutionary_assimilation_instant_
 use crate::combat::proc::{accumulate_proc_attack_effects, roll_weapon_intrinsic_proc};
 use crate::combat::rng::Rng;
 use crate::combat::simd_damage_kernel::{avx2_supported, compute_damage_after_apex_batch};
+use crate::combat::snapshot::{
+    build_combat_state_snapshot, state_snapshot_as_combat_event, SnapshotAnchor,
+};
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
 
 #[inline]
@@ -279,6 +282,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     let mut rng = Rng::new(seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
+    let emit_snapshots = config.emit_state_snapshots && trace.is_enabled();
     let use_experimental_simd_damage_after_apex_base = avx2_supported() && !trace.is_enabled();
     let mut total_hull_damage = 0.0;
     let mut total_shield_damage = 0.0;
@@ -841,6 +845,26 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         defender_shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
         let def_b_shots: f64 = defender_shots_bonus_entries.iter().map(|(b, _)| b).sum();
 
+        if emit_snapshots {
+            let snap = build_combat_state_snapshot(
+                SnapshotAnchor::AfterRoundStart,
+                round_index,
+                None,
+                None,
+                attacker,
+                defender,
+                total_hull_damage,
+                total_attacker_hull_damage,
+                defender_shield_remaining,
+                attacker_shield_remaining,
+                &combat_ctx,
+                assimilated_rounds_remaining,
+                defender_assimilated_rounds_remaining,
+                Some(&phase_effects),
+            );
+            trace.record(state_snapshot_as_combat_event(&snap));
+        }
+
         let round_end_assimilated_early = assimilated_rounds_remaining > 0;
         let round_end_filtered = filter_effects_by_condition(round_end_effects, &combat_ctx);
         // RoundEnd stacking (apex, isolytic, shield mitigation, round-end damage multipliers, regen)
@@ -919,6 +943,27 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 round_index,
             );
 
+            let weapon_index_u = weapon_index as u32;
+            if emit_snapshots {
+                let snap = build_combat_state_snapshot(
+                    SnapshotAnchor::BeforeOutboundShot,
+                    round_index,
+                    Some(weapon_index_u),
+                    None,
+                    attacker,
+                    defender,
+                    total_hull_damage,
+                    total_attacker_hull_damage,
+                    defender_shield_remaining,
+                    attacker_shield_remaining,
+                    &combat_ctx,
+                    assimilated_rounds_remaining,
+                    defender_assimilated_rounds_remaining,
+                    Some(&phase_effects),
+                );
+                trace.record(state_snapshot_as_combat_event(&snap));
+            }
+
             let effective_apex_shred =
                 (attacker.apex_shred + phase_effects.composed_apex_shred_bonus()).max(0.0);
             let effective_apex_barrier =
@@ -954,7 +999,6 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     Vec::new()
                 };
 
-            let weapon_index_u = weapon_index as u32;
             for hit_index in 0..effective_shots {
                 if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
                     let pre_mult = phase_effects.pre_attack_multiplier();
@@ -1536,6 +1580,25 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             ("hit_index".to_string(), Value::from(hit_index)),
                         ]),
                     });
+                    if emit_snapshots {
+                        let snap = build_combat_state_snapshot(
+                            SnapshotAnchor::AfterOutboundDamage,
+                            round_index,
+                            Some(weapon_index_u),
+                            Some(hit_index),
+                            attacker,
+                            defender,
+                            total_hull_damage,
+                            total_attacker_hull_damage,
+                            defender_shield_remaining,
+                            attacker_shield_remaining,
+                            &combat_ctx,
+                            assimilated_rounds_remaining,
+                            defender_assimilated_rounds_remaining,
+                            Some(&phase_effects),
+                        );
+                        trace.record(state_snapshot_as_combat_event(&snap));
+                    }
                 }
             }
 
@@ -2683,6 +2746,62 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 ),
             ]),
         });
+
+        if emit_snapshots {
+            let ctx_end = CombatContext {
+                round_index,
+                defender_hull_pct: 1.0
+                    - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+                defender_shield_pct: if defender.shield_health > 0.0 {
+                    defender_shield_remaining / defender.shield_health
+                } else {
+                    1.0
+                },
+                attacker_hull_pct: 1.0
+                    - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+                attacker_shield_pct: if attacker.shield_health > 0.0 {
+                    attacker_shield_remaining / attacker.shield_health
+                } else {
+                    1.0
+                },
+                attacker_morale_active: combat_ctx.attacker_morale_active,
+                defender_burning_active: defender_burning_rounds > 0,
+                defender_hull_breach_active: defender_hull_breach_rounds > 0,
+                attacker_burning_active: attacker_burning_rounds > 0,
+                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
+                defender_faction,
+                attacker_owner_faction: config.attacker_owner_faction,
+                defender_hull_faction_id: config.defender_hull_faction_id,
+                defender_ship_type,
+                attacker_ship_type,
+                attacker_ship_id: attacker.id.clone(),
+                defender_is_npc_hostile,
+                defender_is_player_ship,
+                attacker_tal_assigned_captain_or_bridge,
+                defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+                engagement_enemy_types: config.engagement_enemy_types.clone(),
+                combat_battle_type_id: None,
+                defender_level: config.defender_level,
+            };
+            let snap = build_combat_state_snapshot(
+                SnapshotAnchor::EndOfRoundPostEffects,
+                round_index,
+                None,
+                None,
+                attacker,
+                defender,
+                total_hull_damage,
+                total_attacker_hull_damage,
+                defender_shield_remaining,
+                attacker_shield_remaining,
+                &ctx_end,
+                assimilated_rounds_remaining,
+                defender_assimilated_rounds_remaining,
+                Some(&phase_effects_round),
+            );
+            trace.record(state_snapshot_as_combat_event(&snap));
+        }
 
         // Fight ends when defender or attacker runs out of hull (HHP).
         let defender_hull_now = (defender.hull_health - total_hull_damage).max(0.0);

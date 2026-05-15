@@ -658,6 +658,11 @@ impl EffectAccumulator {
         out
     }
 
+    /// Stacking channel summary for [`crate::combat::snapshot::CombatStateSnapshot`].
+    pub fn stacking_summary_for_snapshot(&self) -> Map<String, Value> {
+        self.stack_resolution_values()
+    }
+
     pub(crate) fn add_effects(
         &mut self,
         timing: TimingWindow,

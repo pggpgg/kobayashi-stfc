@@ -104,6 +104,7 @@ fn bench_simulator(c: &mut Criterion) {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
@@ -133,6 +134,7 @@ fn bench_simulator(c: &mut Criterion) {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
@@ -162,6 +164,7 @@ fn bench_simulator(c: &mut Criterion) {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         };
         b.iter_batched(
             || (attacker.clone(), defender.clone()),
@@ -194,6 +197,7 @@ fn bench_simulator(c: &mut Criterion) {
                 attacker_roster_officer_ids: Default::default(),
                 incoming_shield_mitigation_bonus: 0.0,
                 incoming_shield_mitigation_bonus_rounds: 0,
+                emit_state_snapshots: false,
             };
             b.iter_batched(
                 || (attacker.clone(), defender.clone()),

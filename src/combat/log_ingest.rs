@@ -5,6 +5,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::combat::snapshot::CombatStateSnapshot;
 use crate::combat::{CombatEvent, EventSource, SimulationResult};
 
 fn default_schema_version() -> u32 {
@@ -48,6 +49,11 @@ pub struct IngestedEvent {
     pub client_kind: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_payload: Option<Value>,
+    /// Structured simulator snapshot ([`CombatStateSnapshot`]) for schema_version ≥ 3 tooling.
+    /// May be omitted when the same object appears under `values.snapshot` (Kobayashi trace export);
+    /// use [`hydrate_ingested_state_snapshots_from_values`] or [`try_event_state_snapshot`] to read it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub state_snapshot: Option<CombatStateSnapshot>,
     /// Optional flat snapshot of observable stats at this step (labels are convention; document keys you emit).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stats_snapshot: Option<serde_json::Map<String, Value>>,
@@ -65,6 +71,28 @@ pub struct TraceCompareOptions {
 /// Parse a combat log from JSON string (format per docs/combat_log_format.md).
 pub fn parse_combat_log_json(input: &str) -> Result<IngestedCombatLog, String> {
     serde_json::from_str(input).map_err(|e| e.to_string())
+}
+
+/// Copy `values.snapshot` into [`IngestedEvent::state_snapshot`] when the typed field is absent (trace export shape).
+pub fn hydrate_ingested_state_snapshots_from_values(log: &mut IngestedCombatLog) {
+    for ev in &mut log.events {
+        if ev.state_snapshot.is_none() {
+            if let Some(v) = ev.values.get("snapshot") {
+                if let Ok(s) = serde_json::from_value::<CombatStateSnapshot>(v.clone()) {
+                    ev.state_snapshot = Some(s);
+                }
+            }
+        }
+    }
+}
+
+/// Resolve structured snapshot from [`IngestedEvent::state_snapshot`] or embedded `values.snapshot`.
+pub fn try_event_state_snapshot(ev: &IngestedEvent) -> Option<CombatStateSnapshot> {
+    ev.state_snapshot.clone().or_else(|| {
+        ev.values
+            .get("snapshot")
+            .and_then(|v| serde_json::from_value::<CombatStateSnapshot>(v.clone()).ok())
+    })
 }
 
 /// Convert ingested log to a result comparable to SimulationResult (for parity checks).

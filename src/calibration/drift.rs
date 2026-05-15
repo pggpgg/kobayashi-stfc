@@ -346,6 +346,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         attacker_roster_officer_ids: Vec::new(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     }
 }
 

@@ -3,10 +3,10 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    compare_ingested_trace_to_simulator, ingested_events_to_combat_events, ingested_to_comparable,
-    parity_within_tolerance, parse_combat_log_json, simulate_combat, validate_canonical_timeline,
-    Combatant, CrewConfiguration, OpponentFactionTag, SimulationConfig, TraceCompareOptions,
-    TraceMode,
+    compare_ingested_trace_to_simulator, hydrate_ingested_state_snapshots_from_values,
+    ingested_events_to_combat_events, ingested_to_comparable, parity_within_tolerance,
+    parse_combat_log_json, simulate_combat, validate_canonical_timeline, Combatant,
+    CrewConfiguration, OpponentFactionTag, SimulationConfig, TraceCompareOptions, TraceMode,
 };
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -269,6 +269,7 @@ fn rich_engine_aligned_fixture_matches_canonical_sim_trace_subsequence() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration::default();
     let sim = simulate_combat(&attacker, &defender, &config, &crew);
@@ -279,4 +280,141 @@ fn rich_engine_aligned_fixture_matches_canonical_sim_trace_subsequence() {
 
     compare_ingested_trace_to_simulator(&sim.events, &log.events, &TraceCompareOptions::default())
         .expect("ingested excerpt should match simulator trace subsequence");
+}
+
+#[test]
+fn emit_state_snapshots_adds_state_snapshot_events() {
+    let attacker = Combatant {
+        id: "a1".to_string(),
+        attack: 100.0,
+        mitigation: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 500.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+        hostile_mitigation_params: None,
+    };
+    let defender = Combatant {
+        id: "d1".to_string(),
+        attack: 0.0,
+        mitigation: 0.2,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 400.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![],
+        hostile_mitigation_params: None,
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 1,
+        trace_mode: TraceMode::Events,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
+        engagement_enemy_types: Default::default(),
+        defender_level: None,
+        attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: true,
+    };
+    let crew = CrewConfiguration::default();
+    let sim = simulate_combat(&attacker, &defender, &config, &crew);
+    let snaps: Vec<_> = sim
+        .events
+        .iter()
+        .filter(|e| e.event_type == "state_snapshot")
+        .collect();
+    assert!(
+        !snaps.is_empty(),
+        "emit_state_snapshots should emit state_snapshot trace rows"
+    );
+    let mut saw_after_round_start = false;
+    let mut saw_end_of_round = false;
+    for e in &snaps {
+        let payload = e
+            .values
+            .get("snapshot")
+            .expect("state_snapshot row should carry values.snapshot");
+        assert!(
+            payload.get("anchor").is_some(),
+            "snapshot should include anchor: {payload}"
+        );
+        match payload.get("anchor").and_then(|v| v.as_str()) {
+            Some("after_round_start") => saw_after_round_start = true,
+            Some("end_of_round_post_effects") => saw_end_of_round = true,
+            _ => {}
+        }
+    }
+    assert!(
+        saw_after_round_start && saw_end_of_round,
+        "anchors present: count={}",
+        snaps.len()
+    );
+}
+
+#[test]
+fn schema_v3_fixture_passes_timeline_and_snapshots() {
+    let json = std::fs::read_to_string(fixture_path("schema_v3_minimal_snapshot_log.json"))
+        .expect("read fixture");
+    let mut log = parse_combat_log_json(&json).expect("parse");
+    assert_eq!(log.schema_version, 3);
+    hydrate_ingested_state_snapshots_from_values(&mut log);
+    let outcome = validate_canonical_timeline(&log);
+    assert!(
+        outcome.errors.is_empty(),
+        "unexpected errors: {:?}",
+        outcome.errors
+    );
+}
+
+#[test]
+fn schema_v3_damage_without_following_snapshot_errors() {
+    let json = r#"{
+        "schema_version": 3,
+        "rounds_simulated": 1,
+        "total_damage": 10.0,
+        "attacker_won": true,
+        "defender_hull_remaining": 0.0,
+        "events": [
+            {"event_type": "round_start", "round_index": 1, "phase": "round"},
+            {"event_type": "damage_application", "round_index": 1, "phase": "damage", "weapon_index": 0},
+            {"event_type": "end_of_round_effects", "round_index": 1, "phase": "end"},
+            {"event_type": "state_snapshot", "round_index": 1, "phase": "snapshot", "values": {"snapshot": {"anchor": "end_of_round_post_effects", "round_index": 1, "attacker": {"id": "a", "hull_remaining": 100.0, "shield_remaining": 0.0, "max_hull": 100.0, "max_shield": 0.0}, "defender": {"id": "d", "hull_remaining": 0.0, "shield_remaining": 0.0, "max_hull": 50.0, "max_shield": 0.0}, "flags": {"attacker_morale_active": false, "defender_burning_active": false, "attacker_burning_active": false, "defender_hull_breach_active": false, "attacker_hull_breach_active": false, "assimilated_rounds_remaining": 0, "defender_assimilated_rounds_remaining": 0}, "total_defender_hull_damage": 50.0, "total_attacker_hull_damage": 0.0}}}
+        ]
+    }"#;
+    let mut log = parse_combat_log_json(json).expect("parse");
+    hydrate_ingested_state_snapshots_from_values(&mut log);
+    let outcome = validate_canonical_timeline(&log);
+    assert!(
+        outcome
+            .errors
+            .iter()
+            .any(|e| e.contains("damage_application") && e.contains("state_snapshot")),
+        "expected pairing error, got {:?}",
+        outcome.errors
+    );
 }

@@ -378,6 +378,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         attacker_roster_officer_ids: Vec::new(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let defender_faction = defender_faction_for_cli_simulate(
@@ -495,7 +496,8 @@ fn validate_log_command(args: &[String]) -> Result<(), String> {
         .filter(|s| !s.is_empty())
         .ok_or_else(|| "usage: kobayashi validate-log <path.json>".to_string())?;
     let json = std::fs::read_to_string(path).map_err(|e| format!("read {path}: {e}"))?;
-    let log = kobayashi::combat::parse_combat_log_json(&json)?;
+    let mut log = kobayashi::combat::parse_combat_log_json(&json)?;
+    kobayashi::combat::hydrate_ingested_state_snapshots_from_values(&mut log);
     let outcome = kobayashi::combat::validate_canonical_timeline(&log);
     for w in &outcome.warnings {
         eprintln!("warning: {w}");

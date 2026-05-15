@@ -18,7 +18,7 @@ A single JSON object with:
 
 | Field                       | Type              | Description                                     |
 | --------------------------- | ----------------- | ----------------------------------------------- |
-| `schema_version`            | number (optional) | Ingest format revision; omit or `1` for legacy logs. `2` enables strict canonical timeline validation ([`validate_canonical_timeline`](../../src/combat/log_validate.rs)). |
+| `schema_version`            | number (optional) | Ingest format revision; omit or `1` for legacy logs. `2` enables strict canonical timeline validation ([`validate_canonical_timeline`](../src/combat/log_validate.rs)). `3` adds strict structured **state snapshot** pairing rules (see below). |
 | `rounds_simulated`          | number            | Number of rounds completed.                     |
 | `total_damage`              | number            | Total damage dealt to defender (hull + shield). |
 | `attacker_won`              | boolean           | True if attacker won.                           |
@@ -41,6 +41,7 @@ Each event in `events`:
 | `client_kind`     | string (optional) | Opaque upstream/toolbox label for correlation only — **not** trusted as equivalent to Kobayashi `phase`. |
 | `client_payload`  | any JSON (optional) | Raw snippet from upstream capture for debugging / future mapping.                                       |
 | `stats_snapshot`  | object (optional) | Flat map of observable stats at this step for reverse-engineering (keys are conventional; document what you emit). |
+| `state_snapshot`  | object (optional) | Typed combat state row ([`CombatStateSnapshot`](../src/combat/snapshot.rs)) for schema_version ≥ 3; Kobayashi trace rows use `event_type` `state_snapshot` with the same JSON under `values.snapshot`. |
 
 
 Event types aligned with simulator trace for parity:
@@ -50,8 +51,21 @@ Event types aligned with simulator trace for parity:
 - `damage_application` — damage applied this step (may include `shield_damage`, `hull_damage`, `running_hull_damage`, `defender_shield_remaining`)
 - `mitigation_calc` — mitigation used (outbound phase `defense`, counter-fire phase `counter` when emitted)
 - `end_of_round_effects` — bonus/burning
+- `state_snapshot` — **Simulator-only** enriched row when `SimulationConfig.emit_state_snapshots` is true with `TraceMode::Events`. Carries a structured [`CombatStateSnapshot`](../src/combat/snapshot.rs) at canonical anchors (`after_round_start`, `before_outbound_shot`, `after_outbound_damage`, `after_subround`, `end_of_round_post_effects`). All fields are **simulator-sourced** unless you label external enrichment.
 
-**CLI validation:** `kobayashi validate-log <path.json>` parses JSON and runs [`validate_canonical_timeline`](../../src/combat/log_validate.rs) (strict errors when `schema_version` ≥ 2).
+**CLI validation:** `kobayashi validate-log <path.json>` parses JSON, hydrates `values.snapshot` into `state_snapshot` when needed, and runs [`validate_canonical_timeline`](../src/combat/log_validate.rs) (strict errors when `schema_version` ≥ 2; **≥ 3** enforces snapshot pairing described below).
+
+### schema_version 3 (structured state snapshots)
+
+Use when logs include Kobayashi-style `state_snapshot` events for full timeline regression.
+
+- Each `state_snapshot` row must include a parseable [`CombatStateSnapshot`](../src/combat/snapshot.rs) (via `state_snapshot` or `values.snapshot`).
+- **Pairing (strict errors):** every outbound `damage_application` (`phase` `damage`) must be **immediately** followed by a `state_snapshot` whose `anchor` is `after_outbound_damage`. Every `end_of_round_effects` must be **immediately** followed by a `state_snapshot` whose `anchor` is `end_of_round_post_effects`.
+- **Round tail:** for each round, the last two events in timeline order must be `end_of_round_effects` then that closing `state_snapshot`.
+
+Fixture: `tests/fixtures/recorded_fights/schema_v3_minimal_snapshot_log.json`.
+
+Enable emission from the simulator: `TraceMode::Events` and `emit_state_snapshots: true` on [`SimulationConfig`](../src/combat/types.rs).
 
 ## Round/sub-round ordering
 

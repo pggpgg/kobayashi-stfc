@@ -56,6 +56,7 @@ fn defender_counter_respects_weapon_base_shots() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let player = Combatant {
         id: "player".into(),
@@ -135,6 +136,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let player = Combatant {
         id: "player".into(),
@@ -458,6 +460,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -576,6 +579,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -686,6 +690,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let baseline = simulate_combat(
         &attacker,
@@ -873,6 +878,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration::default();
 
@@ -972,6 +978,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     // 200 damage: 80% = 160 to shield, 20% = 40 to hull.
@@ -1038,6 +1045,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.total_damage, 1000.0, 1e-12);
@@ -1102,6 +1110,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
@@ -1167,6 +1176,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_shred = CrewConfiguration {
@@ -1259,6 +1269,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_barrier = CrewConfiguration {
@@ -1352,6 +1363,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew_no_ship_ability = CrewConfiguration::default();
     let crew_with_ship_ability = CrewConfiguration {
@@ -1440,6 +1452,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1560,6 +1573,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let cfg_tagged = SimulationConfig {
         defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
@@ -1651,6 +1665,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let cfg_tagged = SimulationConfig {
         defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
@@ -1741,6 +1756,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let cfg_tagged = SimulationConfig {
         defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
@@ -1820,6 +1836,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         ],
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let r_kill = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -1933,6 +1950,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2042,6 +2060,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2152,6 +2171,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2263,6 +2283,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2401,6 +2422,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let uncapped = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2530,6 +2552,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew_plain = CrewConfiguration::default();
     let crew_crozier_style = CrewConfiguration {
@@ -2646,6 +2669,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -2740,6 +2764,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let baseline = simulate_combat(&attacker, &defender, &config, &no_morale);
@@ -2850,6 +2875,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let never_morale =
@@ -2974,6 +3000,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let baseline = simulate_combat(&attacker, &defender, &config, &baseline_crew);
@@ -3082,6 +3109,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -3181,6 +3209,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -3281,6 +3310,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -3379,6 +3409,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -3468,6 +3499,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -3541,6 +3573,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let crew = CrewConfiguration::default();
@@ -3700,6 +3733,7 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration::default();
     let result = simulate_combat(&attacker, &defender, &config, &crew);
@@ -3949,6 +3983,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let valid_crew = CrewConfiguration {
@@ -4063,6 +4098,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let boosted = CrewConfiguration {
@@ -4159,6 +4195,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let attack_phase_crew = CrewConfiguration {
@@ -4302,6 +4339,7 @@ fn burning_deals_one_percent_hull_per_round() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_crew,
     );
@@ -4414,6 +4452,7 @@ fn burning_triggers_on_combat_begin() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_only_crew(TimingWindow::CombatBegin),
     );
@@ -4480,6 +4519,7 @@ fn burning_triggers_on_defense_phase_per_shot() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_only_crew(TimingWindow::DefensePhase),
     );
@@ -4546,6 +4586,7 @@ fn burning_triggers_on_round_end_before_tick() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_only_crew(TimingWindow::RoundEnd),
     );
@@ -4619,6 +4660,7 @@ fn burning_triggers_on_shield_break() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_only_crew(TimingWindow::ShieldBreak),
     );
@@ -4725,6 +4767,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -4791,6 +4834,7 @@ fn burning_triggers_on_receive_damage_hull() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_only_crew(TimingWindow::ReceiveDamage),
     );
@@ -4857,6 +4901,7 @@ fn burning_triggers_on_kill() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_only_crew(TimingWindow::Kill),
     );
@@ -4923,6 +4968,7 @@ fn burning_triggers_on_after_subround() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &burning_only_crew(TimingWindow::AfterSubround),
     );
@@ -5079,6 +5125,7 @@ fn emits_ability_activation_for_each_timing_window() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -5205,6 +5252,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let summed = simulate_combat(&attacker, &defender, &config, &two_ten_percent);
@@ -5291,6 +5339,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &decay_crew);
     assert!(result.total_damage > 0.0);
@@ -5374,6 +5423,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &accumulate_crew);
     assert!(result.total_damage > 0.0);
@@ -5441,6 +5491,7 @@ fn combat_rounds_are_capped_at_100() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &CrewConfiguration::default(),
     );
@@ -5542,6 +5593,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew_no_regen,
     );
@@ -5563,6 +5615,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew_with_regen,
     );
@@ -5637,6 +5690,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &CrewConfiguration::default(),
     );
@@ -5712,6 +5766,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew = CrewConfiguration::default();
     let result_no_iso = simulate_combat(&attacker_no_iso, &defender, &config, &crew);
@@ -5786,6 +5841,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew_empty = CrewConfiguration::default();
     let crew_with_iso = CrewConfiguration {
@@ -5869,6 +5925,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let crew_base_iso = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -5994,6 +6051,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -6088,6 +6146,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -6173,6 +6232,7 @@ fn shots_bonus_increases_damage() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let no_bonus = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 
@@ -6299,6 +6359,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -6392,6 +6453,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew_with_regen,
     );
@@ -6413,6 +6475,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &CrewConfiguration::default(),
     );
@@ -6527,6 +6590,7 @@ fn combat_end_window_respects_condition_filtering() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -6624,6 +6688,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
             attacker_roster_officer_ids: Default::default(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            emit_state_snapshots: false,
         },
         &crew,
     );
@@ -6764,6 +6829,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let res = simulate_combat(&attacker, &defender, &config, &crew);
     // Round 1–3 each heal 100 at round start: 400 − 300 = 100 net hull damage.
@@ -6843,6 +6909,7 @@ fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let res = simulate_combat(&attacker, &defender, &config, &crew);
     // Round 1-3 each heal 10% of max hull: 400 - 3 * 100 = 100 net hull damage.
@@ -6927,6 +6994,7 @@ fn defender_round_start_hull_regen_heals_defender() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let without = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -7045,6 +7113,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -7164,6 +7233,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let cfg_group = SimulationConfig {
         engagement_enemy_types: EnemyTypes::single(EnemyType::GroupArmadas),
@@ -7269,6 +7339,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
     let baseline_armada = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -7398,6 +7469,7 @@ fn defender_inbound_defense_phase_reduces_incoming_damage() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        emit_state_snapshots: false,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
